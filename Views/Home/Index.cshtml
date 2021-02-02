@@ -1,0 +1,151 @@
+﻿<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="~/lib/signalr/signalr.js"></script>
+<script src="~/dist/main/view.js" defer asp-append-version="true"></script>
+
+<style>
+    .wt-block {
+        table-layout: fixed;
+        width: 100%;
+        white-space: nowrap;
+    }
+
+    .wt-block td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
+<div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;">
+
+    <h1>Carl Watchtower</h1>
+    <div>
+        Socket status: {{socketState}}
+    </div>
+
+    <h4>Kills</h4>
+    <div class="row">
+        <div class="col-4">
+            <player-kill-block :block="worldData.vs.playerKills"></player-kill-block>
+        </div>
+        <div class="col-4">
+            <player-kill-block :block="worldData.nc.playerKills"></player-kill-block>
+        </div>
+        <div class="col-4">
+            <player-kill-block :block="worldData.tr.playerKills"></player-kill-block>
+        </div>
+    </div>
+
+    <h4>Outfits</h4>
+    <div class="row">
+        <div class="col-4">
+            <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
+        </div>
+        <div class="col-4">
+            <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
+        </div>
+        <div class="col-4">
+            <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
+        </div>
+    </div>
+
+    <h4>Heals</h4>
+    <div class="row">
+        <div class="col-2 pr-0">
+            VS / Players
+            <block-view :block="worldData.vs.playerHeals"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            VS / Outfits
+            <block-view :block="worldData.vs.outfitHeals" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            NC / Players
+            <block-view :block="worldData.nc.playerHeals"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            NC / Outfits
+            <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            TR / Players
+            <block-view :block="worldData.tr.playerHeals"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            TR / Outfits
+            <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
+        </div>
+    </div>
+
+    <h4>Revives</h4>
+    <div class="row">
+        <div class="col-2 pr-0">
+            VS / Players
+            <block-view :block="worldData.vs.playerRevives"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            VS / Outfits
+            <block-view :block="worldData.vs.outfitRevives" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            NC / Players
+            <block-view :block="worldData.nc.playerRevives"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            NC / Outfits
+            <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            TR / Players
+            <block-view :block="worldData.tr.playerRevives"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            TR / Outfits
+            <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
+        </div>
+    </div>
+
+    <h4>Resupplies</h4>
+    <div class="row">
+        <div class="col-2 pr-0">
+            VS / Players
+            <block-view :block="worldData.vs.playerResupplies"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            VS / Outfits
+            <block-view :block="worldData.vs.outfitResupplies" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            NC / Players
+            <block-view :block="worldData.nc.playerResupplies"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            NC / Outfits
+            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            TR / Players
+            <block-view :block="worldData.tr.playerResupplies"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            TR / Outfits
+            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
+        </div>
+    </div>
+
+</div>
