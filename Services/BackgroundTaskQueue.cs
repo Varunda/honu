@@ -25,7 +25,7 @@ namespace watchtower.Services {
 
         public async Task<JToken> DequeueAsync(CancellationToken cancel) {
             await _Signal.WaitAsync(cancel);
-            _Items.TryDequeue(out JToken token);
+            _Items.TryDequeue(out JToken? token);
 
             return token!;
         }

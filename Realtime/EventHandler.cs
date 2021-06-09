@@ -17,15 +17,29 @@ namespace watchtower.Realtime {
 
         private readonly ICharacterCollection _Characters;
 
+        private readonly List<JToken> _Recent;
+
         public EventHandler(ILogger<EventHandler> logger,
             ICharacterCollection charCollection) {
 
             _Logger = logger;
 
+            _Recent = new List<JToken>();
+
             _Characters = charCollection ?? throw new ArgumentNullException(nameof(charCollection));
         }
 
         public void Process(JToken ev) {
+            if (_Recent.Contains(ev)) {
+                _Logger.LogInformation($"Skipping duplicate event {ev}");
+                return;
+            }
+
+            _Recent.Add(ev);
+            if (_Recent.Count > 10) {
+                _Recent.RemoveAt(0);
+            }
+
             string? type = ev.Value<string?>("type");
 
             if (type == "serviceMessage") {
@@ -36,7 +50,7 @@ namespace watchtower.Realtime {
                 }
 
                 string? worldID = payloadToken.Value<string?>("world_id");
-                if (worldID != "10") {
+                if (worldID != "1") {
                     return;
                 }
 
@@ -59,20 +73,32 @@ namespace watchtower.Realtime {
         }
 
         private void _ProcessPlayerLogin(JToken payload) {
-            _Logger.LogInformation($"Processing login: {payload}");
-
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _Characters.Cache(charID);
+
+                lock (CharacterStore.Get().Players) {
+                    if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
+                        if (p != null) {
+                            p.Online = true;
+                        }
+                    }
+                }
             }
         }
 
         private void _ProcessPlayerLogout(JToken payload) {
-            _Logger.LogInformation($"Processing logout: {payload}");
-
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _Characters.Cache(charID);
+
+                lock (CharacterStore.Get().Players) {
+                    if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
+                        if (p != null) {
+                            p.Online = false;
+                        }
+                    }
+                }
             }
         }
 
@@ -97,12 +123,14 @@ namespace watchtower.Realtime {
             lock (CharacterStore.Get().Players) {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(attackerID, new TrackedPlayer() {
                     ID = attackerID,
-                    FactionID = attackerFactionID
+                    FactionID = attackerFactionID,
+                    Online = true
                 });
 
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
-                    FactionID = factionID
+                    FactionID = factionID,
+                    Online = true
                 });
 
                 attacker.Kills.Add(timestamp);
@@ -137,6 +165,7 @@ namespace watchtower.Realtime {
                 } else if (expId == Experience.REVIVE || expId == Experience.SQUAD_REVIVE) {
                     p.Revives.Add(timestamp);
 
+                    // Remove the most recent death
                     string? targetID = payload.Value<string?>("other_id");
                     if (targetID != null && targetID != "0") {
                         if (CharacterStore.Get().Players.TryGetValue(targetID, out TrackedPlayer? player) == true) {

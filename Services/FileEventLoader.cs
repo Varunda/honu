@@ -12,9 +12,7 @@ using watchtower.Models;
 
 namespace watchtower.Services {
 
-    public class FileEventLoader : BackgroundService {
-
-        private const string _EventsFile = "PreviousEvents.json";
+    public class FileEventLoader : IFileEventLoader {
 
         private readonly ILogger<FileEventLoader> _Logger;
         private readonly ICharacterCollection _Characters;
@@ -27,64 +25,73 @@ namespace watchtower.Services {
             _Characters = charCollection;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+        public async Task Load(string filename) {
             try {
-                string json = await File.ReadAllTextAsync(_EventsFile);
+                string json = await File.ReadAllTextAsync(filename);
 
                 JToken root = JToken.Parse(json);
-
-                EventStore store = new EventStore();
-
-                // Dunno why I need a force here
-                try {
-                    store = root.ToObject<EventStore>()!;
-                } catch (Exception ex) {
-                    _Logger.LogError(ex, "Failed to turn JSON to EventStore");
+                if (root == null) {
+                    return;
+                }
+                if (root.Type != JTokenType.Array) {
+                    _Logger.LogWarning($"Cannot load events: root type is not Array ({root.Type})");
                     return;
                 }
 
-                EventStore.Get().TrKills.AddRange(store.TrKills);
-                EventStore.Get().TrHeals.AddRange(store.TrHeals);
-                EventStore.Get().TrRevives.AddRange(store.TrRevives);
-                EventStore.Get().TrResupplies.AddRange(store.TrResupplies);
-                EventStore.Get().TrRepairs.AddRange(store.TrRepairs);
+                List<TrackedPlayer>? players;
 
-                EventStore.Get().NcKills.AddRange(store.NcKills);
-                EventStore.Get().NcHeals.AddRange(store.NcHeals);
-                EventStore.Get().NcRevives.AddRange(store.NcRevives);
-                EventStore.Get().NcResupplies.AddRange(store.NcResupplies);
-                EventStore.Get().NcRepairs.AddRange(store.NcRepairs);
+                try {
+                    players = (root as JArray).ToObject<List<TrackedPlayer>>();
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, "Failed to parse JSON from {filename}", filename);
+                    return;
+                }
 
-                EventStore.Get().VsKills.AddRange(store.VsKills);
-                EventStore.Get().VsHeals.AddRange(store.VsHeals);
-                EventStore.Get().VsRevives.AddRange(store.VsRevives);
-                EventStore.Get().VsResupplies.AddRange(store.VsResupplies);
-                EventStore.Get().VsRepairs.AddRange(store.VsRepairs);
+                if (players == null) {
+                    _Logger.LogWarning($"players was null");
+                    return;
+                }
 
-                List<string> charIDs = store.TrKills.Select(i => i.CharacterID).ToList();
-                charIDs.AddRange(store.TrKills.Select(i => i.CharacterID));
-                charIDs.AddRange(store.TrHeals.Select(i => i.CharacterID));
-                charIDs.AddRange(store.TrRevives.Select(i => i.CharacterID));
-                charIDs.AddRange(store.TrResupplies.Select(i => i.CharacterID));
-                charIDs.AddRange(store.TrRepairs.Select(i => i.CharacterID));
-                charIDs.AddRange(store.NcKills.Select(i => i.CharacterID));
-                charIDs.AddRange(store.NcHeals.Select(i => i.CharacterID));
-                charIDs.AddRange(store.NcRevives.Select(i => i.CharacterID));
-                charIDs.AddRange(store.NcResupplies.Select(i => i.CharacterID));
-                charIDs.AddRange(store.NcRepairs.Select(i => i.CharacterID));
-                charIDs.AddRange(store.VsKills.Select(i => i.CharacterID));
-                charIDs.AddRange(store.VsHeals.Select(i => i.CharacterID));
-                charIDs.AddRange(store.VsRevives.Select(i => i.CharacterID));
-                charIDs.AddRange(store.VsResupplies.Select(i => i.CharacterID));
-                charIDs.AddRange(store.VsRepairs.Select(i => i.CharacterID));
-                charIDs = charIDs.Distinct().ToList();
+                lock (CharacterStore.Get().Players) {
+                    foreach (TrackedPlayer player in players) {
+                        if (CharacterStore.Get().Players.TryGetValue(player.ID, out TrackedPlayer? existingPlayer) == true) {
+                            if (existingPlayer == null) {
+                                continue;
+                            }
 
-                _ = _Characters.CacheBlock(charIDs);
-            } catch (FileNotFoundException) {
-                _Logger.LogInformation("No previous events found in '{File}'", _EventsFile);
+                            existingPlayer.Kills.AddRange(player.Kills);
+                            existingPlayer.Deaths.AddRange(player.Deaths);
+                            existingPlayer.Heals.AddRange(player.Heals);
+                            existingPlayer.Revives.AddRange(player.Revives);
+                            existingPlayer.Repairs.AddRange(player.Repairs);
+                            existingPlayer.Resupplies.AddRange(player.Resupplies);
+                            existingPlayer.SundySpawns.AddRange(player.SundySpawns);
+                        } else {
+                            CharacterStore.Get().Players.TryAdd(player.ID, player);
+                        }
+                    }
+                }
+
+                await _Characters.CacheBlock(players.Select(i => i.ID).ToList());
             } catch (Exception ex) {
-                _Logger.LogError(ex, "Failed to perform FileEventLoader");
+                _Logger.LogError(ex, "Failed to load events");
             }
+        }
+
+        public async Task Save(string filename) {
+            Dictionary<string, TrackedPlayer> players;
+            lock (CharacterStore.Get().Players) {
+                players = new Dictionary<string, TrackedPlayer>(CharacterStore.Get().Players);
+            }
+
+            List<TrackedPlayer> list = new List<TrackedPlayer>(players.Count);
+            foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
+                list.Add(entry.Value);
+            }
+
+            JToken json = JToken.FromObject(list);
+
+            File.WriteAllText("PreviousEvents.json", json.ToString());
         }
 
     }

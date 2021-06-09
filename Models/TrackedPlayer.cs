@@ -11,6 +11,8 @@ namespace watchtower.Models {
 
         public string FactionID { get; set; } = "";
 
+        public bool Online { get; set; }
+
         public List<int> Kills { get; set; } = new List<int>();
 
         public List<int> Deaths { get; set; } = new List<int>();

@@ -20,9 +20,14 @@ using IApplicationLifetime = Microsoft.Extensions.Hosting.IApplicationLifetime;
 using Newtonsoft.Json.Linq;
 using watchtower.Models;
 using System.IO;
+using watchtower.Services.Hosted;
 
 namespace watchtower {
+
     public class Startup {
+
+        private IFileEventLoader? _EventLoader;
+
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
         }
@@ -54,12 +59,15 @@ namespace watchtower {
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<ICommandBus, CommandBus>();
+            services.AddSingleton<IFileEventLoader, FileEventLoader>();
 
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();
-            services.AddHostedService<FileEventLoader>();
+            services.AddHostedService<HostedFileEventLoader>();
             services.AddHostedService<EventProcessService>();
+
+            _EventLoader = services.BuildServiceProvider().GetRequiredService<IFileEventLoader>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -87,9 +95,9 @@ namespace watchtower {
         }
 
         private void OnShutdown() {
-            JToken json = JToken.FromObject(EventStore.Get());
-
-            File.WriteAllText("PreviousEvents.json", json.ToString());
+            if (_EventLoader != null) {
+                _EventLoader.Save("PreviousEvents.json");
+            }
         }
 
     }

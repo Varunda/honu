@@ -128,7 +128,7 @@ namespace watchtower.Services {
             StringBuilder msg = new StringBuilder();
             msg.AppendLine("Commands available: ");
             foreach (MethodInfo method in clazz.GetMethods()) {
-                if (method.IsStatic == true || method.IsPublic == false || method.IsVirtual == true) {
+                if (method.IsStatic == true || method.IsPublic == false || method.IsVirtual == true || method.Name == "GetType") {
                     continue;
                 }
                 msg.AppendLine($"\t{clazz.Name} {method.Name} {String.Join(" ", method.GetParameters().Select(i => $"{i.Name}:{i.ParameterType.Name}"))}");

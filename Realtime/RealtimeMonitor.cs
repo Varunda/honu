@@ -34,7 +34,10 @@ namespace watchtower.Realtime {
             IBackgroundTaskQueue queue) {
 
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
-            _Subscription.EventNames = _Subscription.EventNames.Append("Death");
+            _Subscription.EventNames = _Subscription.EventNames
+                .Append("Death")
+                .Append("PlayerLogin")
+                .Append("PlayerLogout");
 
             _Logger = logger;
 

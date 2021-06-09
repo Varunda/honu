@@ -101,7 +101,7 @@ namespace watchtower.Census {
                     }
                 }
 
-                _Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
+                //_Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
             }
             _Logger.LogInformation($"Cached all characters");
         }
