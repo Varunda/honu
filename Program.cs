@@ -20,9 +20,9 @@ namespace watchtower {
         public static async Task Main(string[] args) {
             Console.WriteLine($"Starting at {DateTime.UtcNow}");
 
-            _ = Task.Run(() => {
+            _ = Task.Run(async () => {
                 _Host = CreateHostBuilder(args).Build();
-                _Host.Run();
+                await _Host.RunAsync();
             });
 
             await Task.Delay(1000);

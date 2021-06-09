@@ -23,7 +23,7 @@ namespace watchtower.Services {
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
-                await Task.Delay(5000);
+                await Task.Delay(5000, stoppingToken);
 
                 while (!stoppingToken.IsCancellationRequested) {
                     Int64 currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -51,7 +51,7 @@ namespace watchtower.Services {
                     time.Stop();
                     _Logger.LogInformation($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
 
-                    await Task.Delay(_CleanupDelay * 1000);
+                    await Task.Delay(_CleanupDelay * 1000, stoppingToken);
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, "EventCleanupService exception");

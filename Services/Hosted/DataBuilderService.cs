@@ -373,7 +373,7 @@ namespace watchtower.Services {
 
                     _ = _DataHub.Clients.All.SendAsync("DataUpdate", json);
 
-                    await Task.Delay(_RunDelay * 1000);
+                    await Task.Delay(_RunDelay * 1000, stoppingToken);
                 }
                 _Logger.LogError($"Token cancelled");
 
