@@ -20,26 +20,28 @@ Vue.component("outfit-kill-block", {
 		<table class="wt-block table table-sm">
 			<thead>
 				<tr class="table-secondary">
-					<th style="width: 40ch">Outfit</th>
-					<th>Kills (Avg)</th>
-					<th>Deaths (Avg)</th>
-					<th>K/D</th>
+					<th style="width: 30ch">Outfit</th>
 					<th>Kills</th>
 					<th>Deaths</th>
-					<th>Players</th>
+					<th>K/D</th>
+					<th>Online</th>
 				</tr>
 			</thead>
 
 			<tbody>
 				<tr v-for="entry in block.entries">
 					<td :title="entry.name">[{{entry.tag}}] {{entry.name}}</td>
-					<td>{{entry.kills / entry.members}}</td>
-					<td>{{entry.deaths / entry.members}}</td>
+					<td>
+						{{entry.kills}}
+						({{(entry.kills / (entry.members || 1)).toFixed(2)}})
+					</td>
+					<td>
+						{{entry.deaths}}
+						({{(entry.deaths / (entry.members || 1)).toFixed(2)}})
+					</td>
 					<td>
 						{{(entry.kills / (entry.deaths || 1)).toFixed(2)}}
 					</td>
-					<td>{{entry.kills}}</td>
-					<td>{{entry.deaths}}</td>
 					<td>{{entry.members}}</td>
 				</tr>
 			</tbody>

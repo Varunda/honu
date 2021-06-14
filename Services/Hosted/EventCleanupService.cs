@@ -13,7 +13,7 @@ namespace watchtower.Services {
     public class EventCleanupService : BackgroundService {
 
         private const int _CleanupDelay = 15;
-        private const int _KeepPeriod = 60 * 60 * 1; // 60 seconds, 60 minutes, 1 hour
+        private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
 
         private readonly ILogger<EventCleanupService> _Logger;
 
@@ -26,8 +26,8 @@ namespace watchtower.Services {
                 await Task.Delay(5000, stoppingToken);
 
                 while (!stoppingToken.IsCancellationRequested) {
-                    Int64 currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    Int64 adjustedTime = currentTime - _KeepPeriod;
+                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    long adjustedTime = currentTime - _KeepPeriod;
 
                     Stopwatch time = Stopwatch.StartNew();
 
@@ -43,13 +43,15 @@ namespace watchtower.Services {
                             entry.Value.Revives = entry.Value.Revives.Where(iter => iter >= adjustedTime).ToList();
                             entry.Value.Resupplies = entry.Value.Resupplies.Where(iter => iter >= adjustedTime).ToList();
                             entry.Value.Repairs = entry.Value.Repairs.Where(iter => iter >= adjustedTime).ToList();
+                            entry.Value.Spawns = entry.Value.Spawns.Where(iter => iter >= adjustedTime).ToList();
+                            entry.Value.Assists = entry.Value.Assists.Where(iter => iter >= adjustedTime).ToList();
                         }
                     }
 
-                    _Logger.LogInformation($"Removed {killsRemove} kills");
+                    _Logger.LogTrace($"Removed {killsRemove} kills");
 
                     time.Stop();
-                    _Logger.LogInformation($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
+                    _Logger.LogDebug($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
 
                     await Task.Delay(_CleanupDelay * 1000, stoppingToken);
                 }

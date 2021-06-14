@@ -36,5 +36,10 @@ namespace watchtower.Models {
         /// </summary>
         public int Deaths { get; set; }
 
+        /// <summary>
+        /// How many assists the player got
+        /// </summary>
+        public int Assists { get; set; }
+
     }
 }

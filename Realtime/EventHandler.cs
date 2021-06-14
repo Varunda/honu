@@ -180,6 +180,10 @@ namespace watchtower.Realtime {
                     p.Resupplies.Add(timestamp);
                 } else if (expId == Experience.MAX_REPAIR || expId == Experience.SQUAD_MAX_REPAIR) {
                     p.Resupplies.Add(timestamp);
+                } else if (Experience.IsSpawn(expId)) {
+                    p.Spawns.Add(timestamp);
+                } else if (Experience.IsAssist(expId)) {
+                    p.Assists.Add(timestamp);
                 }
             }
         }

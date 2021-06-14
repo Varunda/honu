@@ -1,0 +1,17 @@
+﻿
+[v-cloak] {
+    display: none;
+}
+
+.strike::before, strike::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+.strike::before {
+    margin-right: 0.25rem;
+    max-width: 1rem;
+}
+.strike::after {
+    margin-left: 0.25rem;
+}

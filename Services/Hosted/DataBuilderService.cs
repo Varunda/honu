@@ -206,18 +206,21 @@ namespace watchtower.Services {
                     Dictionary<string, int> trRevives = new Dictionary<string, int>();
                     Dictionary<string, int> trResupplies = new Dictionary<string, int>();
                     Dictionary<string, int> trRepairs = new Dictionary<string, int>();
+                    Dictionary<string, int> trSpawns = new Dictionary<string, int>();
 
                     Dictionary<string, int> ncKills = new Dictionary<string, int>();
                     Dictionary<string, int> ncHeals = new Dictionary<string, int>();
                     Dictionary<string, int> ncRevives = new Dictionary<string, int>();
                     Dictionary<string, int> ncResupplies = new Dictionary<string, int>();
                     Dictionary<string, int> ncRepairs = new Dictionary<string, int>();
+                    Dictionary<string, int> ncSpawns = new Dictionary<string, int>();
 
                     Dictionary<string, int> vsKills = new Dictionary<string, int>();
                     Dictionary<string, int> vsHeals = new Dictionary<string, int>();
                     Dictionary<string, int> vsRevives = new Dictionary<string, int>();
                     Dictionary<string, int> vsResupplies = new Dictionary<string, int>();
                     Dictionary<string, int> vsRepairs = new Dictionary<string, int>();
+                    Dictionary<string, int> vsSpawns = new Dictionary<string, int>();
 
                     KillBlock trPlayerBlock = new KillBlock();
                     KillBlock ncPlayerBlock = new KillBlock();
@@ -236,16 +239,19 @@ namespace watchtower.Services {
                             if (entry.Value.Revives.Count > 0) { trRevives.Add(entry.Key, entry.Value.Revives.Count); }
                             if (entry.Value.Repairs.Count > 0) { trRepairs.Add(entry.Key, entry.Value.Repairs.Count); }
                             if (entry.Value.Resupplies.Count > 0) { trResupplies.Add(entry.Key, entry.Value.Resupplies.Count); }
+                            if (entry.Value.Spawns.Count > 0) { trSpawns.Add(entry.Key, entry.Value.Spawns.Count); }
                         } else if (entry.Value.FactionID == Faction.NC) {
                             if (entry.Value.Heals.Count > 0) { ncHeals.Add(entry.Key, entry.Value.Heals.Count); }
                             if (entry.Value.Revives.Count > 0) { ncRevives.Add(entry.Key, entry.Value.Revives.Count); }
                             if (entry.Value.Repairs.Count > 0) { ncRepairs.Add(entry.Key, entry.Value.Repairs.Count); }
                             if (entry.Value.Resupplies.Count > 0) { ncResupplies.Add(entry.Key, entry.Value.Resupplies.Count); }
+                            if (entry.Value.Spawns.Count > 0) { ncSpawns.Add(entry.Key, entry.Value.Spawns.Count); }
                         } else if (entry.Value.FactionID == Faction.VS) {
                             if (entry.Value.Heals.Count > 0) { vsHeals.Add(entry.Key, entry.Value.Heals.Count); }
                             if (entry.Value.Revives.Count > 0) { vsRevives.Add(entry.Key, entry.Value.Revives.Count); }
                             if (entry.Value.Repairs.Count > 0) { vsRepairs.Add(entry.Key, entry.Value.Repairs.Count); }
                             if (entry.Value.Resupplies.Count > 0) { vsResupplies.Add(entry.Key, entry.Value.Resupplies.Count); }
+                            if (entry.Value.Spawns.Count > 0) { vsSpawns.Add(entry.Key, entry.Value.Spawns.Count); }
                         }
 
                         if (entry.Value.Kills.Count == 0 && entry.Value.Deaths.Count == 0) {
@@ -255,7 +261,8 @@ namespace watchtower.Services {
                         KillData datum = new KillData() {
                             ID = entry.Value.ID,
                             Kills = entry.Value.Kills.Count,
-                            Deaths = entry.Value.Deaths.Count
+                            Deaths = entry.Value.Deaths.Count,
+                            Assists = entry.Value.Assists.Count
                         };
 
                         bool r = characters.TryGetValue(entry.Value.ID, out Character? c);
@@ -282,10 +289,19 @@ namespace watchtower.Services {
 
                         if (entry.Value.FactionID == Faction.VS) {
                             vsPlayerBlock.Entries.Add(datum);
+                            data.VS.TotalKills += entry.Value.Kills.Count;
+                            data.VS.TotalDeaths += entry.Value.Deaths.Count;
+                            data.VS.TotalAssists += entry.Value.Assists.Count;
                         } else if (entry.Value.FactionID == Faction.NC) {
                             ncPlayerBlock.Entries.Add(datum);
+                            data.NC.TotalKills += entry.Value.Kills.Count;
+                            data.NC.TotalDeaths += entry.Value.Deaths.Count;
+                            data.NC.TotalAssists += entry.Value.Assists.Count;
                         } else if (entry.Value.FactionID == Faction.TR) {
                             trPlayerBlock.Entries.Add(datum);
+                            data.TR.TotalKills += entry.Value.Kills.Count;
+                            data.TR.TotalDeaths += entry.Value.Deaths.Count;
+                            data.TR.TotalAssists += entry.Value.Assists.Count;
                         }
                     }
 
@@ -297,6 +313,8 @@ namespace watchtower.Services {
                     data.TR.OutfitHeals = _BuildOutfitBlock(trHeals, characters);
                     data.TR.OutfitRevives = _BuildOutfitBlock(trRevives, characters);
                     data.TR.OutfitResupplies = _BuildOutfitBlock(trResupplies, characters);
+                    data.TR.PlayerSpawns = _BuildBlock("", trSpawns, characters);
+                    data.TR.OutfitSpawns = _BuildOutfitBlock(trSpawns, characters);
 
                     data.NC.PlayerHeals = _BuildBlock("", ncHeals, characters);
                     data.NC.PlayerRevives = _BuildBlock("", ncRevives, characters);
@@ -304,6 +322,8 @@ namespace watchtower.Services {
                     data.NC.OutfitHeals = _BuildOutfitBlock(ncHeals, characters);
                     data.NC.OutfitRevives = _BuildOutfitBlock(ncRevives, characters);
                     data.NC.OutfitResupplies = _BuildOutfitBlock(ncResupplies, characters);
+                    data.NC.PlayerSpawns = _BuildBlock("", ncSpawns, characters);
+                    data.NC.OutfitSpawns = _BuildOutfitBlock(ncSpawns, characters);
 
                     data.VS.PlayerHeals = _BuildBlock("", vsHeals, characters);
                     data.VS.PlayerRevives = _BuildBlock("", vsRevives, characters);
@@ -311,6 +331,8 @@ namespace watchtower.Services {
                     data.VS.OutfitHeals = _BuildOutfitBlock(vsHeals, characters);
                     data.VS.OutfitRevives = _BuildOutfitBlock(vsRevives, characters);
                     data.VS.OutfitResupplies = _BuildOutfitBlock(vsResupplies, characters);
+                    data.VS.PlayerSpawns = _BuildBlock("", vsSpawns, characters);
+                    data.VS.OutfitSpawns = _BuildOutfitBlock(vsSpawns, characters);
 
                     long timeToBuildBlocks = time.ElapsedMilliseconds;
 

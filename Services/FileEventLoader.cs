@@ -41,7 +41,7 @@ namespace watchtower.Services {
                 List<TrackedPlayer>? players;
 
                 try {
-                    players = (root as JArray).ToObject<List<TrackedPlayer>>();
+                    players = ((JArray)root).ToObject<List<TrackedPlayer>>();
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Failed to parse JSON from {filename}", filename);
                     return;
@@ -65,7 +65,7 @@ namespace watchtower.Services {
                             existingPlayer.Revives.AddRange(player.Revives);
                             existingPlayer.Repairs.AddRange(player.Repairs);
                             existingPlayer.Resupplies.AddRange(player.Resupplies);
-                            existingPlayer.SundySpawns.AddRange(player.SundySpawns);
+                            existingPlayer.Spawns.AddRange(player.Spawns);
                         } else {
                             CharacterStore.Get().Players.TryAdd(player.ID, player);
                         }
@@ -91,7 +91,7 @@ namespace watchtower.Services {
 
             JToken json = JToken.FromObject(list);
 
-            File.WriteAllText("PreviousEvents.json", json.ToString());
+            await File.WriteAllTextAsync("PreviousEvents.json", json.ToString());
         }
 
     }

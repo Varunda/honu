@@ -18,25 +18,31 @@
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;">
 
-    <h1>Carl Watchtower</h1>
+    <h1>
+        <img src="~/img/beans.png" style="height: 100%; width: 48px;" />
+        Carl Watchtower
+    </h1>
     <div>
         Socket status: {{socketState}}
+        |
+        Last update: {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
     </div>
 
-    <h4>Kills</h4>
+    <hr />
+
+    <h4 class="strike">Kills</h4>
     <div class="row">
         <div class="col-4">
-            <player-kill-block :block="worldData.vs.playerKills"></player-kill-block>
+            <player-kill-block :block="worldData.vs"></player-kill-block>
         </div>
         <div class="col-4">
-            <player-kill-block :block="worldData.nc.playerKills"></player-kill-block>
+            <player-kill-block :block="worldData.nc"></player-kill-block>
         </div>
         <div class="col-4">
-            <player-kill-block :block="worldData.tr.playerKills"></player-kill-block>
+            <player-kill-block :block="worldData.tr"></player-kill-block>
         </div>
     </div>
 
-    <h4>Outfits</h4>
     <div class="row">
         <div class="col-4">
             <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
@@ -49,7 +55,7 @@
         </div>
     </div>
 
-    <h4>Heals</h4>
+    <h4 class="strike">Heals</h4>
     <div class="row">
         <div class="col-2 pr-0">
             VS / Players
@@ -82,7 +88,7 @@
         </div>
     </div>
 
-    <h4>Revives</h4>
+    <h4 class="strike">Revives</h4>
     <div class="row">
         <div class="col-2 pr-0">
             VS / Players
@@ -115,7 +121,7 @@
         </div>
     </div>
 
-    <h4>Resupplies</h4>
+    <h4 class="strike">Resupplies</h4>
     <div class="row">
         <div class="col-2 pr-0">
             VS / Players
@@ -145,6 +151,39 @@
         <div class="col-2 pl-0">
             TR / Outfits
             <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
+        </div>
+    </div>
+
+    <h4 class="strike">Spawns &lt;3</h4>
+    <div class="row">
+        <div class="col-2 pr-0">
+            VS / Players
+            <block-view :block="worldData.vs.playerSpawns"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            VS / Outfits
+            <block-view :block="worldData.vs.outfitSpawns" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            NC / Players
+            <block-view :block="worldData.nc.playerSpawns"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            NC / Outfits
+            <block-view :block="worldData.nc.outfitSpawns" title="Outfits"></block-view>
+        </div>
+
+        <div class="col-2 pr-0">
+            TR / Players
+            <block-view :block="worldData.tr.playerSpawns"></block-view>
+        </div>
+
+        <div class="col-2 pl-0">
+            TR / Outfits
+            <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
         </div>
     </div>
 

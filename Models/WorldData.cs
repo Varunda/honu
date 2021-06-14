@@ -92,6 +92,31 @@ namespace watchtower.Models {
         /// </summary>
         public Block PlayerResupplies { get; set; } = new Block();
 
+        /// <summary>
+        /// Top players for spawns for that faction
+        /// </summary>
+        public Block PlayerSpawns { get; set; } = new Block();
+
+        /// <summary>
+        /// Top outfits for spawns for that faction
+        /// </summary>
+        public Block OutfitSpawns { get; set; } = new Block();
+
+        /// <summary>
+        /// Total number of kills a faction has gotten
+        /// </summary>
+        public int TotalKills { get; set; }
+
+        /// <summary>
+        /// Total number of assists a faction has
+        /// </summary>
+        public int TotalAssists { get; set; }
+
+        /// <summary>
+        /// Total number of deaths a faction has gotten
+        /// </summary>
+        public int TotalDeaths { get; set; }
+
     }
 
 }

@@ -16,6 +16,7 @@ export class KillData {
 	public name: string = "";
 	public kills: number = 0;
 	public deaths: number = 0;
+	public assists: number = 0;
 }
 
 export class OutfitKillData {
@@ -44,9 +45,14 @@ export class FactionData {
 	public outfitHeals: Block = new Block();
 	public outfitResupplies: Block = new Block();
 	public outfitRevives: Block = new Block();
+	public outfitSpawns: Block = new Block();
 	public playerHeals: Block = new Block();
 	public playerResupplies: Block = new Block();
 	public playerRevives: Block = new Block();
+	public playerSpawns: Block = new Block();
+	public totalKills: number = 0;
+	public totalDeaths: number = 0;
+	public totalAssists: number = 0;
 }
 
 export class WorldData {

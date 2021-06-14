@@ -47,7 +47,6 @@ namespace watchtower.Services {
                 return;
             }
 
-
             Type? cmdClass = _Commands.Find(iter => iter.Name.ToLower() == $"{args[0]}Command".ToLower() || iter.Name.ToLower() == args[0].ToLower());
             if (cmdClass == null) {
                 _Logger.LogWarning($"{args[0]} is not a valid command");

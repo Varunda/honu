@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Constants;
 using watchtower.Services;
 using Websocket.Client;
 
@@ -14,10 +15,13 @@ namespace watchtower.Realtime {
     public class RealtimeMonitor : IDisposable, IRealtimeMonitor {
 
         private readonly List<string> _Events = new List<string>() {
-            "4", "51",  // Heals
-            "6", "53",  // Revives
-            "7", "55",  // Resupplies
-            "34", "142" // MAX repairs
+            Experience.HEAL, Experience.SQUAD_HEAL, // 4, 51
+            Experience.REVIVE, Experience.SQUAD_REVIVE, // 6, 53
+            Experience.RESUPPLY, Experience.SQUAD_RESUPPLY, // 7, 55
+            Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR, // 34, 142
+            Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
+            Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
+            Experience.ASSIST, Experience.SPAWN_ASSIST, Experience.PRIORITY_ASSIST, Experience.HIGH_PRIORITY_ASSIST
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {

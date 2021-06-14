@@ -5,6 +5,7 @@ import { WorldData } from "./WorldData";
 import "./BlockView";
 import "./KillData";
 import "./OutfitKillData";
+import "./MomentFilter";
 
 const vm = new Vue({
 	el: "#app",
@@ -18,6 +19,7 @@ const vm = new Vue({
 			.build();
 
 		conn.on("DataUpdate", (data: any) => {
+			//console.log(data);
 			this.worldData = JSON.parse(data);
 			this.lastUpdate = new Date();
 		});
@@ -48,7 +50,7 @@ const vm = new Vue({
 	data: {
 		worldData: new WorldData() as WorldData,
 		socketState: "" as string,
-		lastUpdate: new Date() as Date
+		lastUpdate: null as Date | null
 	},
 
 	methods: {
