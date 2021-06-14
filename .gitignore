@@ -14,3 +14,4 @@ x86/
 node_modules/
 
 PreviousEvents.json
+build/
