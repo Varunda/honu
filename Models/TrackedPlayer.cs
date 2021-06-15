@@ -18,6 +18,11 @@ namespace watchtower.Models {
         public string FactionID { get; set; } = "";
 
         /// <summary>
+        /// ID of the server/world the player is on
+        /// </summary>
+        public string WorldID { get; set; } = "";
+
+        /// <summary>
         /// If the character is online or not
         /// </summary>
         public bool Online { get; set; }

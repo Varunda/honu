@@ -29,6 +29,8 @@ namespace watchtower.Services {
 
         private readonly IHubContext<DataHub> _DataHub;
 
+        private DateTime _TrackingStart = DateTime.UtcNow;
+
         public DataBuilderService(ILogger<DataBuilderService> logger,
             ICharacterCollection charColl, IHubContext<DataHub> hub) {
 
@@ -183,6 +185,7 @@ namespace watchtower.Services {
 
                     data.WorldID = "1";
                     data.WorldName = "Connery";
+                    data.TrackingDuration = (_TrackingStart - DateTime.UtcNow).Seconds;
 
                     long timeToMakeBlock = time.ElapsedMilliseconds;
 
@@ -191,12 +194,16 @@ namespace watchtower.Services {
                         players = new Dictionary<string, TrackedPlayer>(CharacterStore.Get().Players);
                     }
 
+                    //players = players.Where(iter => iter.Value.WorldID == data.WorldID).ToDictionary();
+
                     long timeToCopyPlayers = time.ElapsedMilliseconds;
 
                     List<Character> cachedCharacters = new List<Character>(_Characters.GetCache());
                     Dictionary<string, Character> characters = new Dictionary<string, Character>(cachedCharacters.Count);
                     foreach (Character ch in cachedCharacters) {
-                        characters.Add(ch.ID, ch);
+                        //if (ch.WorldID == data.WorldID) {
+                            characters.Add(ch.ID, ch);
+                        //}
                     }
 
                     long timeToBuildCharacters = time.ElapsedMilliseconds;
@@ -233,6 +240,8 @@ namespace watchtower.Services {
 
                     long timeToCtorProcessingVars = time.ElapsedMilliseconds;
 
+                    int start = 1999999999;
+
                     foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
                         if (entry.Value.FactionID == Faction.TR) {
                             if (entry.Value.Heals.Count > 0) { trHeals.Add(entry.Key, entry.Value.Heals.Count); }
@@ -256,6 +265,12 @@ namespace watchtower.Services {
 
                         if (entry.Value.Kills.Count == 0 && entry.Value.Deaths.Count == 0) {
                             continue;
+                        }
+
+                        foreach (int timestamp in entry.Value.Kills) {
+                            if (timestamp <= start) {
+                                start = timestamp;
+                            }
                         }
 
                         KillData datum = new KillData() {
@@ -304,6 +319,8 @@ namespace watchtower.Services {
                             data.TR.TotalAssists += entry.Value.Assists.Count;
                         }
                     }
+
+                    data.TrackingDuration = (int)(DateTime.UtcNow - DateTimeOffset.FromUnixTimeSeconds(start)).TotalSeconds;
 
                     long timeToProcessData = time.ElapsedMilliseconds;
 

@@ -30,16 +30,27 @@
 
     <hr />
 
-    <h4 class="strike">Kills</h4>
     <div class="row">
         <div class="col-4">
-            <player-kill-block :block="worldData.vs"></player-kill-block>
+            <h4>
+                <img src="~/img/logo_vs.png" style="width: 32px; " />
+                Vanu Sovereignty
+            </h4>
+            <player-kill-block :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
         <div class="col-4">
-            <player-kill-block :block="worldData.nc"></player-kill-block>
+            <h4>
+                <img src="~/img/logo_nc.png" style="width: 32px; " />
+                New Conglomerate
+            </h4>
+            <player-kill-block :block="worldData.nc" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
         <div class="col-4">
-            <player-kill-block :block="worldData.tr"></player-kill-block>
+            <h4>
+                <img src="~/img/logo_tr.png" style="width: 32px; " />
+                Terran Republic
+            </h4>
+            <player-kill-block :block="worldData.tr" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
     </div>
 
@@ -58,32 +69,26 @@
     <h4 class="strike">Heals</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            VS / Players
             <block-view :block="worldData.vs.playerHeals"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            VS / Outfits
             <block-view :block="worldData.vs.outfitHeals" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            NC / Players
             <block-view :block="worldData.nc.playerHeals"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            NC / Outfits
             <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            TR / Players
             <block-view :block="worldData.tr.playerHeals"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            TR / Outfits
             <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
         </div>
     </div>
@@ -91,32 +96,26 @@
     <h4 class="strike">Revives</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            VS / Players
             <block-view :block="worldData.vs.playerRevives"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            VS / Outfits
             <block-view :block="worldData.vs.outfitRevives" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            NC / Players
             <block-view :block="worldData.nc.playerRevives"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            NC / Outfits
             <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            TR / Players
             <block-view :block="worldData.tr.playerRevives"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            TR / Outfits
             <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
         </div>
     </div>
@@ -124,32 +123,26 @@
     <h4 class="strike">Resupplies</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            VS / Players
             <block-view :block="worldData.vs.playerResupplies"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            VS / Outfits
             <block-view :block="worldData.vs.outfitResupplies" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            NC / Players
             <block-view :block="worldData.nc.playerResupplies"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            NC / Outfits
             <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            TR / Players
             <block-view :block="worldData.tr.playerResupplies"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            TR / Outfits
             <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
         </div>
     </div>
@@ -157,32 +150,26 @@
     <h4 class="strike">Spawns &lt;3</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            VS / Players
             <block-view :block="worldData.vs.playerSpawns"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            VS / Outfits
             <block-view :block="worldData.vs.outfitSpawns" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            NC / Players
             <block-view :block="worldData.nc.playerSpawns"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            NC / Outfits
             <block-view :block="worldData.nc.outfitSpawns" title="Outfits"></block-view>
         </div>
 
         <div class="col-2 pr-0">
-            TR / Players
             <block-view :block="worldData.tr.playerSpawns"></block-view>
         </div>
 
         <div class="col-2 pl-0">
-            TR / Outfits
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
         </div>
     </div>

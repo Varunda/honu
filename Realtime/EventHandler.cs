@@ -124,13 +124,15 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(attackerID, new TrackedPlayer() {
                     ID = attackerID,
                     FactionID = attackerFactionID,
-                    Online = true
+                    Online = true,
+                    WorldID = payload.Value<string?>("world_id") ?? "-1"
                 });
 
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
                     FactionID = factionID,
-                    Online = true
+                    Online = true,
+                    WorldID = payload.Value<string?>("world_id") ?? "-1"
                 });
 
                 attacker.Kills.Add(timestamp);
@@ -157,7 +159,8 @@ namespace watchtower.Realtime {
             lock (CharacterStore.Get().Players) {
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
-                    FactionID = factionID
+                    FactionID = factionID,
+                    WorldID = payload.Value<string?>("world_id") ?? "-1"
                 });
 
                 if (expId == Experience.HEAL || expId == Experience.SQUAD_HEAL) {

@@ -90,8 +90,8 @@ namespace watchtower.Census {
                     query.Where("character_id").Equals(ID);
                 }
                 query.AddResolve("outfit");
-                query.AddResolve("outfit", "online_status");
-                query.ShowFields("character_id", "name", "faction_id", "outfit", "online_status");
+                query.AddResolve("outfit", "online_status", "world");
+                query.ShowFields("character_id", "name", "faction_id", "outfit", "online_status", "world_id");
 
                 List<JToken> tokens = (await query.GetListAsync()).ToList();
                 foreach (JToken token in tokens) {
@@ -101,7 +101,7 @@ namespace watchtower.Census {
                     }
                 }
 
-                //_Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
+                _Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
             }
             _Logger.LogInformation($"Cached all characters");
         }
@@ -161,7 +161,8 @@ namespace watchtower.Census {
             Character player = new Character {
                 ID = result.Value<string?>("character_id") ?? "0",
                 FactionID = result.Value<string?>("faction_id") ?? "-1",
-                Online = (result.Value<string?>("online_status") ?? "0") != "0"
+                Online = (result.Value<string?>("online_status") ?? "0") != "0",
+                WorldID = result.Value<string?>("world_id") ?? "0"
             };
 
             JToken? nameToken = result.SelectToken("name");

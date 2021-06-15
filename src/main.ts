@@ -19,7 +19,7 @@ const vm = new Vue({
 			.build();
 
 		conn.on("DataUpdate", (data: any) => {
-			//console.log(data);
+			console.log(data);
 			this.worldData = JSON.parse(data);
 			this.lastUpdate = new Date();
 		});

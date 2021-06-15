@@ -21500,6 +21500,7 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
     props: {
         block: { required: true },
         title: { type: String, required: false, default: "Player" },
+        seconds: { type: Number, required: true },
     },
     data: function () {
         return {};
@@ -21509,8 +21510,9 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 		<table class="wt-block table table-sm">
 			<thead>
 				<tr class="table-secondary">
-					<th style="width: 40ch">Player</th>
+					<th style="width: 30ch">Player</th>
 					<th>Kills</th>
+					<th>KPM</th>
 					<th>Deaths</th>
 					<th>Assists</th>
 					<th>K/D</th>
@@ -21522,6 +21524,7 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 				<tr v-for="entry in block.playerKills.entries">
 					<td :title="entry.name">{{entry.name}}</td>
 					<td>{{entry.kills}}</td>
+					<td>{{(entry.kills / (seconds / 60)).toFixed(2)}}</td>
 					<td>{{entry.deaths}}</td>
 					<td>{{entry.assists}}</td>
 					<td>
@@ -21533,7 +21536,7 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 				</tr>
 				<tr class="table-secondary">
 					<td><b>Total</b></td>
-					<td>{{block.totalKills}}</td>
+					<td colspan="2">{{block.totalKills}}</td>
 					<td>{{block.totalDeaths}}</td>
 					<td>{{block.totalAssists}}</td>
 					<td>
@@ -21718,12 +21721,12 @@ class FactionData {
     constructor() {
         this.factionID = "";
         this.factionName = "";
-        this.playerKills = new KillBlock();
         this.outfitKills = new OutfitKillBlock();
         this.outfitHeals = new Block();
         this.outfitResupplies = new Block();
         this.outfitRevives = new Block();
         this.outfitSpawns = new Block();
+        this.playerKills = new KillBlock();
         this.playerHeals = new Block();
         this.playerResupplies = new Block();
         this.playerRevives = new Block();
@@ -21737,6 +21740,7 @@ class WorldData {
     constructor() {
         this.worldID = "";
         this.worldName = "";
+        this.trackingDuration = 0;
         this.nc = new FactionData();
         this.tr = new FactionData();
         this.vs = new FactionData();
@@ -21779,7 +21783,7 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
             .withAutomaticReconnect([5000, 10000, 20000, 20000])
             .build();
         conn.on("DataUpdate", (data) => {
-            //console.log(data);
+            console.log(data);
             this.worldData = JSON.parse(data);
             this.lastUpdate = new Date();
         });

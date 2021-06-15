@@ -21,6 +21,11 @@ namespace watchtower.Models {
         public string WorldName { get; set; } = "";
 
         /// <summary>
+        /// How many seconds the tracking has happened for
+        /// </summary>
+        public int TrackingDuration { get; set; } = 0;
+
+        /// <summary>
         /// TR specific data
         /// </summary>
         public FactionData TR { get; set; } = new FactionData();

@@ -4,6 +4,7 @@ Vue.component("player-kill-block", {
 	props: {
 		block: { required: true },
 		title: { type: String, required: false, default: "Player" },
+		seconds: { type: Number, required: true },
 	},
 
 	data: function () {
@@ -20,8 +21,9 @@ Vue.component("player-kill-block", {
 		<table class="wt-block table table-sm">
 			<thead>
 				<tr class="table-secondary">
-					<th style="width: 40ch">Player</th>
+					<th style="width: 30ch">Player</th>
 					<th>Kills</th>
+					<th>KPM</th>
 					<th>Deaths</th>
 					<th>Assists</th>
 					<th>K/D</th>
@@ -33,6 +35,7 @@ Vue.component("player-kill-block", {
 				<tr v-for="entry in block.playerKills.entries">
 					<td :title="entry.name">{{entry.name}}</td>
 					<td>{{entry.kills}}</td>
+					<td>{{(entry.kills / (seconds / 60)).toFixed(2)}}</td>
 					<td>{{entry.deaths}}</td>
 					<td>{{entry.assists}}</td>
 					<td>
@@ -44,7 +47,7 @@ Vue.component("player-kill-block", {
 				</tr>
 				<tr class="table-secondary">
 					<td><b>Total</b></td>
-					<td>{{block.totalKills}}</td>
+					<td colspan="2">{{block.totalKills}}</td>
 					<td>{{block.totalDeaths}}</td>
 					<td>{{block.totalAssists}}</td>
 					<td>
