@@ -26,6 +26,16 @@ namespace watchtower.Models {
         public int TrackingDuration { get; set; } = 0;
 
         /// <summary>
+        /// How many characters are on each continent
+        /// </summary>
+        public ContinentCount ContinentCount { get; set; } = new ContinentCount();
+
+        /// <summary>
+        /// Count of how many are currently online
+        /// </summary>
+        public int OnlineCount { get; set; } = 0;
+
+        /// <summary>
         /// TR specific data
         /// </summary>
         public FactionData TR { get; set; } = new FactionData();
@@ -39,6 +49,8 @@ namespace watchtower.Models {
         /// VS specific data
         /// </summary>
         public FactionData VS { get; set; } = new FactionData();
+
+        public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
     }
 

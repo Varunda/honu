@@ -27,6 +27,16 @@ namespace watchtower.Models {
         public string Name { get; set; } = "";
 
         /// <summary>
+        /// Is the player currently online
+        /// </summary>
+        public bool Online { get; set; } = true;
+
+        /// <summary>
+        /// How many seconds online the character has been
+        /// </summary>
+        public int SecondsOnline { get; set; } = 0;
+
+        /// <summary>
         /// How many kills they got
         /// </summary>
         public int Kills { get; set; }

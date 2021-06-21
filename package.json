@@ -17,6 +17,8 @@
     "webpack": "^5.18.0"
   },
   "devDependencies": {
+    "@types/bootstrap": "^5.0.16",
+    "@types/jquery": "^3.5.5",
     "webpack-cli": "^4.4.0"
   },
   "scripts": {

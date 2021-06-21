@@ -21485,6 +21485,48 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("block-view", {
 
 /***/ }),
 
+/***/ "./src/InfoHover.ts":
+/*!**************************!*\
+  !*** ./src/InfoHover.ts ***!
+  \**************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "vue");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_0__);
+
+vue__WEBPACK_IMPORTED_MODULE_0___default().component("info-hover", {
+    props: {
+        text: { type: String, required: true }
+    },
+    data: function () {
+        return {
+            ID: 0
+        };
+    },
+    created: function () {
+        this.ID = Math.floor(Math.random() * 10000);
+    },
+    mounted: function () {
+        this.$nextTick(() => {
+            $(`#info-hover-${this.ID}`).popover();
+        });
+    },
+    template: `
+		<span :id="'info-hover-' + ID"
+				class="d-inline-block" data-toggle="popover" data-trigger="hover"
+				:data-content="text"
+				style="filter: invert(1);">
+
+			<img src="/img/question-circle.svg" />
+		</span>
+	`
+});
+
+
+/***/ }),
+
 /***/ "./src/KillData.ts":
 /*!*************************!*\
   !*** ./src/KillData.ts ***!
@@ -21511,9 +21553,9 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 			<thead>
 				<tr class="table-secondary">
 					<th style="width: 30ch">Player</th>
-					<th>Kills</th>
+					<th title="NSO not included">Kills</th>
 					<th>KPM</th>
-					<th>Deaths</th>
+					<th title="Revives remove deaths">Deaths</th>
 					<th>Assists</th>
 					<th>K/D</th>
 					<th>KDA</th>
@@ -21522,9 +21564,26 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 
 			<tbody>
 				<tr v-for="entry in block.playerKills.entries">
-					<td :title="entry.name">{{entry.name}}</td>
+					<td :title="entry.name">
+						<span style="display: flex;">
+							<span v-if="entry.online == true" style="color: green;" title="Online">
+								●
+							</span>
+							<span v-else style="color: red;" title="Offline">
+								●
+							</span>
+
+							<span style="flex-grow: 1">
+								{{entry.name}}
+							</span>
+
+							<span title="hours:minutes">
+								{{entry.secondsOnline | duration}}
+							</span>
+						</span>
+					</td>
 					<td>{{entry.kills}}</td>
-					<td>{{(entry.kills / (seconds / 60)).toFixed(2)}}</td>
+					<td>{{(entry.kills / (entry.secondsOnline / 60)).toFixed(2)}}</td>
 					<td>{{entry.deaths}}</td>
 					<td>{{entry.assists}}</td>
 					<td>
@@ -21595,6 +21654,48 @@ function vueMoment(input, format = "YYYY-MM-DD hh:mmA") {
     }
 }
 vue__WEBPACK_IMPORTED_MODULE_0___default().filter("moment", vueMoment);
+vue__WEBPACK_IMPORTED_MODULE_0___default().filter("duration", (input, format) => {
+    const val = (typeof (input) == "string") ? Number.parseInt(input) : input;
+    if (Number.isNaN(val)) {
+        return `NaN ${val}`;
+    }
+    if (val == 0) {
+        return "Never";
+    }
+    const parts = {
+        seconds: 0,
+        minutes: 0,
+        hour: 0
+    };
+    if (val == 1) {
+        parts.seconds = 1;
+        return "1s";
+    }
+    if (val < 60) {
+        parts.seconds = val % 60;
+        return `${val % 60}s`;
+    }
+    if (val == 0) {
+        parts.minutes = 1;
+        return `00:01`;
+    }
+    if (val < (60 * 60)) {
+        parts.minutes = Math.round(val / 60);
+        parts.seconds = val % 60;
+        return `00:${Math.round(val / 60).toString().padStart(2, "0")}`;
+    }
+    if (val == 60 * 60) {
+        parts.hour = 1;
+        return `01:00`;
+    }
+    const hours = Math.floor(val / 3600);
+    const mins = Math.floor((val - (3600 * hours)) / 60);
+    const secs = val % 60;
+    parts.hour = hours;
+    parts.minutes = mins;
+    parts.seconds = secs;
+    return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
+});
 
 
 /***/ }),
@@ -21668,8 +21769,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "Block": () => /* binding */ Block,
 /* harmony export */   "KillData": () => /* binding */ KillData,
 /* harmony export */   "OutfitKillData": () => /* binding */ OutfitKillData,
+/* harmony export */   "SpawnEntries": () => /* binding */ SpawnEntries,
+/* harmony export */   "SpawnEntry": () => /* binding */ SpawnEntry,
 /* harmony export */   "KillBlock": () => /* binding */ KillBlock,
 /* harmony export */   "OutfitKillBlock": () => /* binding */ OutfitKillBlock,
+/* harmony export */   "ContinentCount": () => /* binding */ ContinentCount,
+/* harmony export */   "FactionCount": () => /* binding */ FactionCount,
 /* harmony export */   "FactionData": () => /* binding */ FactionData,
 /* harmony export */   "WorldData": () => /* binding */ WorldData
 /* harmony export */ });
@@ -21707,6 +21812,19 @@ class OutfitKillData {
         this.members = 0;
     }
 }
+class SpawnEntries {
+    constructor() {
+        this.entries = [];
+    }
+}
+class SpawnEntry {
+    constructor() {
+        this.owner = "";
+        this.spawnCount = 0;
+        this.secondsAlive = 0;
+        this.firstSeenAt = 0;
+    }
+}
 class KillBlock {
     constructor() {
         this.entries = [];
@@ -21715,6 +21833,24 @@ class KillBlock {
 class OutfitKillBlock {
     constructor() {
         this.entires = [];
+    }
+}
+class ContinentCount {
+    constructor() {
+        this.indar = new FactionCount();
+        this.hossin = new FactionCount();
+        this.amerish = new FactionCount();
+        this.esamir = new FactionCount();
+        this.other = new FactionCount();
+    }
+}
+class FactionCount {
+    constructor() {
+        this.vs = 0;
+        this.nc = 0;
+        this.tr = 0;
+        this.ns = 0;
+        this.other = 0;
     }
 }
 class FactionData {
@@ -21741,9 +21877,11 @@ class WorldData {
         this.worldID = "";
         this.worldName = "";
         this.trackingDuration = 0;
+        this.continentCount = new ContinentCount();
         this.nc = new FactionData();
         this.tr = new FactionData();
         this.vs = new FactionData();
+        this.topSpawns = new SpawnEntries();
     }
 }
 
@@ -21766,7 +21904,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _BlockView__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./BlockView */ "./src/BlockView.ts");
 /* harmony import */ var _KillData__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./KillData */ "./src/KillData.ts");
 /* harmony import */ var _OutfitKillData__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./OutfitKillData */ "./src/OutfitKillData.ts");
-/* harmony import */ var _MomentFilter__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./MomentFilter */ "./src/MomentFilter.ts");
+/* harmony import */ var _InfoHover__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./InfoHover */ "./src/InfoHover.ts");
+/* harmony import */ var _MomentFilter__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./MomentFilter */ "./src/MomentFilter.ts");
+
 
 
 
@@ -21786,13 +21926,16 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
             console.log(data);
             this.worldData = JSON.parse(data);
             this.lastUpdate = new Date();
+            this.trackingPeriodStart = new Date(Date.now() - this.worldData.trackingDuration * 1000);
         });
         conn.start().then(() => {
             this.socketState = "opened";
         }).catch(err => {
             console.error(err);
         });
-        conn.onreconnected(() => { this.socketState = "opened"; });
+        conn.onreconnected(() => {
+            this.socketState = "opened";
+        });
         conn.onclose((err) => {
             this.socketState = "closed";
             if (err) {
@@ -21809,7 +21952,8 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
     data: {
         worldData: new _WorldData__WEBPACK_IMPORTED_MODULE_2__.WorldData(),
         socketState: "",
-        lastUpdate: null
+        lastUpdate: null,
+        trackingPeriodStart: null
     },
     methods: {}
 });

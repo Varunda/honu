@@ -181,11 +181,14 @@ namespace watchtower.Services {
                 while (!stoppingToken.IsCancellationRequested) {
                     Stopwatch time = Stopwatch.StartNew();
 
+                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
                     WorldData data = new WorldData();
 
                     data.WorldID = "1";
                     data.WorldName = "Connery";
                     data.TrackingDuration = (_TrackingStart - DateTime.UtcNow).Seconds;
+                    data.ContinentCount = new ContinentCount();
 
                     long timeToMakeBlock = time.ElapsedMilliseconds;
 
@@ -240,6 +243,7 @@ namespace watchtower.Services {
 
                     long timeToCtorProcessingVars = time.ElapsedMilliseconds;
 
+                    // Set the start high cause we want to find the minimum, so go down from here
                     int start = 1999999999;
 
                     foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
@@ -263,10 +267,27 @@ namespace watchtower.Services {
                             if (entry.Value.Spawns.Count > 0) { vsSpawns.Add(entry.Key, entry.Value.Spawns.Count); }
                         }
 
+                        if (entry.Value.Online == true) {
+                            ++data.OnlineCount;
+
+                            // Add the current interval the online has been online for
+                            entry.Value.OnlineIntervals.Add(new TimestampPair() {
+                                Start = (int)currentTime,
+                                End = (int)currentTime + _RunDelay
+                            });
+                        }
+
+                        int secondsOnline = 0;
+                        foreach (TimestampPair pair in entry.Value.OnlineIntervals) {
+                            secondsOnline += pair.End - pair.Start;
+                        }
+
                         if (entry.Value.Kills.Count == 0 && entry.Value.Deaths.Count == 0) {
                             continue;
                         }
 
+                        // Get when the most recent event timestamp was, used for KPM calculation when the
+                        // tracker hasn't been running for the tracking period (2 hours currently)
                         foreach (int timestamp in entry.Value.Kills) {
                             if (timestamp <= start) {
                                 start = timestamp;
@@ -277,7 +298,9 @@ namespace watchtower.Services {
                             ID = entry.Value.ID,
                             Kills = entry.Value.Kills.Count,
                             Deaths = entry.Value.Deaths.Count,
-                            Assists = entry.Value.Assists.Count
+                            Assists = entry.Value.Assists.Count,
+                            Online = entry.Value.Online,
+                            SecondsOnline = secondsOnline
                         };
 
                         bool r = characters.TryGetValue(entry.Value.ID, out Character? c);
@@ -307,16 +330,28 @@ namespace watchtower.Services {
                             data.VS.TotalKills += entry.Value.Kills.Count;
                             data.VS.TotalDeaths += entry.Value.Deaths.Count;
                             data.VS.TotalAssists += entry.Value.Assists.Count;
+
+                            if (entry.Value.Online == true) {
+                                data.ContinentCount.AddToVS(entry.Value.ZoneID);
+                            }
                         } else if (entry.Value.FactionID == Faction.NC) {
                             ncPlayerBlock.Entries.Add(datum);
                             data.NC.TotalKills += entry.Value.Kills.Count;
                             data.NC.TotalDeaths += entry.Value.Deaths.Count;
                             data.NC.TotalAssists += entry.Value.Assists.Count;
+
+                            if (entry.Value.Online == true) {
+                                data.ContinentCount.AddToNC(entry.Value.ZoneID);
+                            }
                         } else if (entry.Value.FactionID == Faction.TR) {
                             trPlayerBlock.Entries.Add(datum);
                             data.TR.TotalKills += entry.Value.Kills.Count;
                             data.TR.TotalDeaths += entry.Value.Deaths.Count;
                             data.TR.TotalAssists += entry.Value.Assists.Count;
+
+                            if (entry.Value.Online == true) {
+                                data.ContinentCount.AddToTR(entry.Value.ZoneID);
+                            }
                         }
                     }
 
@@ -327,28 +362,28 @@ namespace watchtower.Services {
                     data.TR.PlayerHeals = _BuildBlock("", trHeals, characters);
                     data.TR.PlayerRevives = _BuildBlock("", trRevives, characters);
                     data.TR.PlayerResupplies = _BuildBlock("", trResupplies, characters);
+                    data.TR.PlayerSpawns = _BuildBlock("", trSpawns, characters);
                     data.TR.OutfitHeals = _BuildOutfitBlock(trHeals, characters);
                     data.TR.OutfitRevives = _BuildOutfitBlock(trRevives, characters);
                     data.TR.OutfitResupplies = _BuildOutfitBlock(trResupplies, characters);
-                    data.TR.PlayerSpawns = _BuildBlock("", trSpawns, characters);
                     data.TR.OutfitSpawns = _BuildOutfitBlock(trSpawns, characters);
 
                     data.NC.PlayerHeals = _BuildBlock("", ncHeals, characters);
                     data.NC.PlayerRevives = _BuildBlock("", ncRevives, characters);
                     data.NC.PlayerResupplies = _BuildBlock("", ncResupplies, characters);
+                    data.NC.PlayerSpawns = _BuildBlock("", ncSpawns, characters);
                     data.NC.OutfitHeals = _BuildOutfitBlock(ncHeals, characters);
                     data.NC.OutfitRevives = _BuildOutfitBlock(ncRevives, characters);
                     data.NC.OutfitResupplies = _BuildOutfitBlock(ncResupplies, characters);
-                    data.NC.PlayerSpawns = _BuildBlock("", ncSpawns, characters);
                     data.NC.OutfitSpawns = _BuildOutfitBlock(ncSpawns, characters);
 
                     data.VS.PlayerHeals = _BuildBlock("", vsHeals, characters);
                     data.VS.PlayerRevives = _BuildBlock("", vsRevives, characters);
                     data.VS.PlayerResupplies = _BuildBlock("", vsResupplies, characters);
+                    data.VS.PlayerSpawns = _BuildBlock("", vsSpawns, characters);
                     data.VS.OutfitHeals = _BuildOutfitBlock(vsHeals, characters);
                     data.VS.OutfitRevives = _BuildOutfitBlock(vsRevives, characters);
                     data.VS.OutfitResupplies = _BuildOutfitBlock(vsResupplies, characters);
-                    data.VS.PlayerSpawns = _BuildBlock("", vsSpawns, characters);
                     data.VS.OutfitSpawns = _BuildOutfitBlock(vsSpawns, characters);
 
                     long timeToBuildBlocks = time.ElapsedMilliseconds;
@@ -390,6 +425,23 @@ namespace watchtower.Services {
 
                     long timeToChars = time.ElapsedMilliseconds;
 
+                    data.TopSpawns = new SpawnEntries();
+
+                    Dictionary<string, TrackedNpc> npcs;
+                    lock (NpcStore.Get().Npcs) {
+                        npcs = new Dictionary<string, TrackedNpc>(NpcStore.Get().Npcs);
+                    }
+
+                    data.TopSpawns.Entries = npcs.Values.OrderByDescending(iter => iter.SpawnCount).Take(8).Select(iter => {
+                        bool hasOwner = characters.TryGetValue(iter.OwnerID, out Character? c);
+                        return new SpawnEntry() {
+                            FirstSeenAt = iter.FirstSeenAt,
+                            SecondsAlive = (int)(DateTime.UtcNow - iter.FirstSeenAt).TotalSeconds,
+                            SpawnCount = iter.SpawnCount,
+                            Owner = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {iter.OwnerID}"
+                        };
+                    }).ToList();
+
                     time.Stop();
 
                     _Logger.LogInformation(
@@ -415,7 +467,6 @@ namespace watchtower.Services {
                     await Task.Delay(_RunDelay * 1000, stoppingToken);
                 }
                 _Logger.LogError($"Token cancelled");
-
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Exception in DataBuilderService");
                 throw ex;

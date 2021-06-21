@@ -14,11 +14,17 @@ namespace watchtower.Services {
 
         private const int _CleanupDelay = 15;
         private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
+        private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 15 minutes
 
         private readonly ILogger<EventCleanupService> _Logger;
+        private readonly IFileEventLoader _EventLoader;
 
-        public EventCleanupService(ILogger<EventCleanupService> logger) {
+        public EventCleanupService(ILogger<EventCleanupService> logger,
+                IFileEventLoader loader) {
+
             _Logger = logger;
+
+            _EventLoader = loader ?? throw new ArgumentNullException(nameof(loader));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -28,6 +34,7 @@ namespace watchtower.Services {
                 while (!stoppingToken.IsCancellationRequested) {
                     long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     long adjustedTime = currentTime - _KeepPeriod;
+                    long sundyAdjustedTime = currentTime - _SundyKeepPeriod;
 
                     Stopwatch time = Stopwatch.StartNew();
 
@@ -45,6 +52,21 @@ namespace watchtower.Services {
                             entry.Value.Repairs = entry.Value.Repairs.Where(iter => iter >= adjustedTime).ToList();
                             entry.Value.Spawns = entry.Value.Spawns.Where(iter => iter >= adjustedTime).ToList();
                             entry.Value.Assists = entry.Value.Assists.Where(iter => iter >= adjustedTime).ToList();
+                            entry.Value.OnlineIntervals = entry.Value.OnlineIntervals.Where(iter => iter.End >= adjustedTime).ToList();
+                        }
+                    }
+
+                    lock (NpcStore.Get().Npcs) {
+                        List<string> toRemove = new List<string>();
+                        foreach (KeyValuePair<string, TrackedNpc> entry in NpcStore.Get().Npcs) {
+                            if (entry.Value.LatestEventAt < sundyAdjustedTime) {
+                                // Don't want to delete keys while iterating, save the ones to delete
+                                toRemove.Add(entry.Key);
+                            }
+                        }
+
+                        foreach (string key in toRemove) {
+                            NpcStore.Get().Npcs.TryRemove(key, out _);
                         }
                     }
 

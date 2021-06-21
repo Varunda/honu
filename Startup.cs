@@ -66,13 +66,14 @@ namespace watchtower {
             services.AddHostedService<DataBuilderService>();
             services.AddHostedService<HostedFileEventLoader>();
             services.AddHostedService<EventProcessService>();
-
-            _EventLoader = services.BuildServiceProvider().GetRequiredService<IFileEventLoader>();
+            services.AddHostedService<BackgroundFileSaver>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
-            IHostApplicationLifetime lifetime) {
+            IHostApplicationLifetime lifetime, IFileEventLoader fileLoader) {
+
+            _EventLoader = fileLoader;
 
             lifetime.ApplicationStopping.Register(OnShutdown);
 
@@ -96,7 +97,9 @@ namespace watchtower {
 
         private void OnShutdown() {
             if (_EventLoader != null) {
-                _EventLoader.Save("PreviousEvents.json");
+                _EventLoader.Save("PreviousEvents.json").ConfigureAwait(false).GetAwaiter().GetResult();
+            } else {
+                Console.WriteLine($"_EventLoader is null");
             }
         }
 

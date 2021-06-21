@@ -26,6 +26,7 @@ namespace watchtower.Services.Hosted {
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
+                _Logger.LogInformation($"Loading previous events from '{_EventsFile}'");
                 await _Loader.Load(_EventsFile);
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to load events");

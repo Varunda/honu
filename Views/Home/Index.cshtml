@@ -16,38 +16,76 @@
     }
 </style>
 
-<div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;">
-
+<div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
     <h1>
         <img src="~/img/beans.png" style="height: 100%; width: 48px;" />
         Carl Watchtower
     </h1>
     <div>
         Socket status: {{socketState}}
-        |
+        <br />
         Last update: {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
+        <br />
+        Tracking period: {{trackingPeriodStart | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
     </div>
 
     <hr />
 
     <div class="row">
+        <div class="col-12">
+            <h4>Continent counts</h4>
+
+            <table class="table" style="table-layout: fixed; text-align: center;">
+                <tr>
+                    <th colspan="3">Indar</th>
+                    <th colspan="3">Hossin</th>
+                    <th colspan="3">Amerish</th>
+                    <th colspan="3">Esamir</th>
+                    <th colspan="3">
+                        Other
+                        <info-hover text="Zones such as Koltyr or Desolation"></info-hover>
+                    </th>
+                </tr>
+
+                <tr>
+                    <td>{{worldData.continentCount.indar.vs}} VS</td>
+                    <td>{{worldData.continentCount.indar.nc}} NC</td>
+                    <td class="border-right">{{worldData.continentCount.indar.tr}} TR</td>
+                    <td>{{worldData.continentCount.hossin.vs}} VS</td>
+                    <td>{{worldData.continentCount.hossin.nc}} NC</td>
+                    <td class="border-right">{{worldData.continentCount.hossin.tr}} TR</td>
+                    <td>{{worldData.continentCount.amerish.vs}} VS</td>
+                    <td>{{worldData.continentCount.amerish.nc}} NC</td>
+                    <td class="border-right">{{worldData.continentCount.amerish.tr}} TR</td>
+                    <td>{{worldData.continentCount.esamir.vs}} VS</td>
+                    <td>{{worldData.continentCount.esamir.nc}} NC</td>
+                    <td class="border-right">{{worldData.continentCount.esamir.tr}} TR</td>
+                    <td>{{worldData.continentCount.other.vs}} VS</td>
+                    <td>{{worldData.continentCount.other.nc}} NC</td>
+                    <td>{{worldData.continentCount.other.tr}} TR</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="col-4">
             <h4>
-                <img src="~/img/logo_vs.png" style="width: 32px; " />
+                <img src="~/img/logo_vs.png" style="width: 32px; "/>
                 Vanu Sovereignty
             </h4>
             <player-kill-block :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
         <div class="col-4">
             <h4>
-                <img src="~/img/logo_nc.png" style="width: 32px; " />
+                <img src="~/img/logo_nc.png" style="width: 32px; "/>
                 New Conglomerate
             </h4>
             <player-kill-block :block="worldData.nc" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
         <div class="col-4">
             <h4>
-                <img src="~/img/logo_tr.png" style="width: 32px; " />
+                <img src="~/img/logo_tr.png" style="width: 32px; "/>
                 Terran Republic
             </h4>
             <player-kill-block :block="worldData.tr" :seconds="worldData.trackingDuration"></player-kill-block>
@@ -171,6 +209,44 @@
 
         <div class="col-2 pl-0">
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
+        </div>
+    </div>
+
+    <h4>Misc stats (all factions)</h4>
+    <hr />
+
+    <div class="row">
+        <div class="col-4">
+            <h4>Current top sundies</h4>
+            <table class="table table-sm">
+                <tr>
+                    <th>Owner</th>
+                    <th>Spawn count</th>
+                    <th>Spawns per minute</th>
+                    <th>Deployed at</th>
+                    <th>Time alive</th>
+                </tr>
+
+                <tr v-for="entry in worldData.topSpawns.entries">
+                    <td>{{entry.owner}}</td>
+                    <td>{{entry.spawnCount}}</td>
+                    <td>{{(entry.spawnCount / (entry.secondsAlive / 60)).toFixed(2)}}</td>
+                    <td>{{entry.firstSeenAt | moment}}</td>
+                    <td>{{entry.secondsAlive | duration}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-4">
+            <h4>Most orbital kills</h4>
+
+            work in progress
+        </div>
+
+        <div class="col-4">
+            <h4>Squad leader ribbons</h4>
+
+            work in progress
         </div>
     </div>
 

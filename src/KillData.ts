@@ -22,9 +22,9 @@ Vue.component("player-kill-block", {
 			<thead>
 				<tr class="table-secondary">
 					<th style="width: 30ch">Player</th>
-					<th>Kills</th>
+					<th title="NSO not included">Kills</th>
 					<th>KPM</th>
-					<th>Deaths</th>
+					<th title="Revives remove deaths">Deaths</th>
 					<th>Assists</th>
 					<th>K/D</th>
 					<th>KDA</th>
@@ -33,9 +33,26 @@ Vue.component("player-kill-block", {
 
 			<tbody>
 				<tr v-for="entry in block.playerKills.entries">
-					<td :title="entry.name">{{entry.name}}</td>
+					<td :title="entry.name">
+						<span style="display: flex;">
+							<span v-if="entry.online == true" style="color: green;" title="Online">
+								●
+							</span>
+							<span v-else style="color: red;" title="Offline">
+								●
+							</span>
+
+							<span style="flex-grow: 1">
+								{{entry.name}}
+							</span>
+
+							<span title="hours:minutes">
+								{{entry.secondsOnline | duration}}
+							</span>
+						</span>
+					</td>
 					<td>{{entry.kills}}</td>
-					<td>{{(entry.kills / (seconds / 60)).toFixed(2)}}</td>
+					<td>{{(entry.kills / (entry.secondsOnline / 60)).toFixed(2)}}</td>
 					<td>{{entry.deaths}}</td>
 					<td>{{entry.assists}}</td>
 					<td>

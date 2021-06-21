@@ -101,9 +101,9 @@ namespace watchtower.Census {
                     }
                 }
 
-                _Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
+                //_Logger.LogInformation($"Cached {i}/{IDs.Count} characters");
             }
-            _Logger.LogInformation($"Cached all characters");
+            _Logger.LogInformation($"Cached all {IDs.Count} characters");
         }
 
         private async Task<Character?> _GetCharacterFromCensus(string ID, bool retry) {

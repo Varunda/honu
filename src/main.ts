@@ -5,12 +5,13 @@ import { WorldData } from "./WorldData";
 import "./BlockView";
 import "./KillData";
 import "./OutfitKillData";
+import "./InfoHover";
 import "./MomentFilter";
 
 const vm = new Vue({
 	el: "#app",
 
-	created: function(): void {
+	created: function (): void {
 		this.socketState = "unconnected";
 
 		const conn = new sR.HubConnectionBuilder()
@@ -22,6 +23,8 @@ const vm = new Vue({
 			console.log(data);
 			this.worldData = JSON.parse(data);
 			this.lastUpdate = new Date();
+
+			this.trackingPeriodStart = new Date(Date.now() - this.worldData.trackingDuration * 1000);
 		});
 
 		conn.start().then(() => {
@@ -30,7 +33,9 @@ const vm = new Vue({
 			console.error(err);
 		});
 
-		conn.onreconnected(() => { this.socketState = "opened"; });
+		conn.onreconnected(() => {
+			this.socketState = "opened";
+		});
 
 		conn.onclose((err?: Error) => {
 			this.socketState = "closed";
@@ -50,7 +55,8 @@ const vm = new Vue({
 	data: {
 		worldData: new WorldData() as WorldData,
 		socketState: "" as string,
-		lastUpdate: null as Date | null
+		lastUpdate: null as Date | null,
+		trackingPeriodStart: null as Date | null
 	},
 
 	methods: {

@@ -29,12 +29,39 @@ export class OutfitKillData {
 	public members: number = 0;
 }
 
+export class SpawnEntries {
+	public entries: SpawnEntry[] = [];
+}
+
+export class SpawnEntry {
+	public owner: string = "";
+	public spawnCount: number = 0;
+	public secondsAlive: number = 0;
+	public firstSeenAt: number = 0;
+}
+
 export class KillBlock {
 	public entries: KillData[] = [];
 }
 
 export class OutfitKillBlock {
 	public entires: OutfitKillData[] = [];
+}
+
+export class ContinentCount {
+	public indar: FactionCount = new FactionCount();
+	public hossin: FactionCount = new FactionCount();
+	public amerish: FactionCount = new FactionCount();
+	public esamir: FactionCount = new FactionCount();
+	public other: FactionCount = new FactionCount();
+}
+
+export class FactionCount {
+	public vs: number = 0;
+	public nc: number = 0;
+	public tr: number = 0;
+	public ns: number = 0;
+	public other: number = 0;
 }
 
 export class FactionData {
@@ -62,7 +89,9 @@ export class WorldData {
 	public worldID: string = "";
 	public worldName: string = "";
 	public trackingDuration: number = 0;
+	public continentCount: ContinentCount = new ContinentCount();
 	public nc: FactionData = new FactionData();
 	public tr: FactionData = new FactionData();
 	public vs: FactionData = new FactionData();
+	public topSpawns: SpawnEntries = new SpawnEntries();
 }

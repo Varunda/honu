@@ -81,6 +81,7 @@ namespace watchtower.Realtime {
                     if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
                         if (p != null) {
                             p.Online = true;
+                            p.LatestEventTimestamp = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                         }
                     }
                 }
@@ -135,6 +136,13 @@ namespace watchtower.Realtime {
                     WorldID = payload.Value<string?>("world_id") ?? "-1"
                 });
 
+                attacker.Online = true;
+                killed.Online = true;
+
+                int nowSeconds = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                attacker.LatestEventTimestamp = nowSeconds;
+                killed.LatestEventTimestamp = nowSeconds;
+
                 attacker.Kills.Add(timestamp);
                 killed.Deaths.Add(timestamp);
             }
@@ -153,6 +161,8 @@ namespace watchtower.Realtime {
             string expId = payload.Value<string?>("experience_id") ?? "-1";
             string loadoutId = payload.Value<string?>("loadout_id") ?? "-1";
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
+            string zoneID = payload.Value<string?>("zone_id") ?? "-1";
+            string? otherID = payload.Value<string?>("other_id");
 
             string factionID = Loadout.GetFaction(loadoutId);
 
@@ -160,8 +170,13 @@ namespace watchtower.Realtime {
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
                     FactionID = factionID,
+                    Online = true,
                     WorldID = payload.Value<string?>("world_id") ?? "-1"
                 });
+
+                p.Online = true;
+                p.LatestEventTimestamp = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                p.ZoneID = zoneID;
 
                 if (expId == Experience.HEAL || expId == Experience.SQUAD_HEAL) {
                     p.Heals.Add(timestamp);
@@ -169,9 +184,8 @@ namespace watchtower.Realtime {
                     p.Revives.Add(timestamp);
 
                     // Remove the most recent death
-                    string? targetID = payload.Value<string?>("other_id");
-                    if (targetID != null && targetID != "0") {
-                        if (CharacterStore.Get().Players.TryGetValue(targetID, out TrackedPlayer? player) == true) {
+                    if (otherID != null && otherID != "0") {
+                        if (CharacterStore.Get().Players.TryGetValue(otherID, out TrackedPlayer? player) == true) {
                             if (player != null) {
                                 if (player.Deaths.Count > 0) {
                                     player.Deaths.RemoveAt(player.Deaths.Count - 1);
@@ -181,13 +195,30 @@ namespace watchtower.Realtime {
                     }
                 } else if (expId == Experience.RESUPPLY || expId == Experience.SQUAD_RESUPPLY) {
                     p.Resupplies.Add(timestamp);
-                } else if (expId == Experience.MAX_REPAIR || expId == Experience.SQUAD_MAX_REPAIR) {
-                    p.Resupplies.Add(timestamp);
                 } else if (Experience.IsSpawn(expId)) {
                     p.Spawns.Add(timestamp);
+
+                    if (expId == Experience.SUNDERER_SPAWN_BONUS) {
+
+                    }
                 } else if (Experience.IsAssist(expId)) {
                     p.Assists.Add(timestamp);
                 }
+            }
+
+            if (expId == Experience.SUNDERER_SPAWN_BONUS && otherID != null && otherID != "0") {
+                lock (NpcStore.Get().Npcs) {
+                    TrackedNpc npc = NpcStore.Get().Npcs.GetOrAdd(otherID, new TrackedNpc() {
+                        OwnerID = charID,
+                        FirstSeenAt = DateTime.UtcNow,
+                        NpcID = otherID,
+                        SpawnCount = 0,
+                        Type = "Sundy"
+                    });
+
+                    ++npc.SpawnCount;
+                    npc.LatestEventAt = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                };
             }
         }
 
