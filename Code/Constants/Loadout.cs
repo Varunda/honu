@@ -7,28 +7,28 @@ namespace watchtower.Constants {
 
     public sealed class Loadout {
 
-        public static string NC_INFILTRATOR = "1";
-        public static string NC_LIGHT_ASSAULT = "3";
-        public static string NC_MEDIC = "4";
-        public static string NC_ENGINEER = "5";
-        public static string NC_HEAVY_ASSAULT = "6";
-        public static string NC_MAX = "7";
+        public static short NC_INFILTRATOR = 1;
+        public static short NC_LIGHT_ASSAULT = 3;
+        public static short NC_MEDIC = 4;
+        public static short NC_ENGINEER = 5;
+        public static short NC_HEAVY_ASSAULT = 6;
+        public static short NC_MAX = 7;
 
-        public static string TR_INFILTRATOR = "8";
-        public static string TR_LIGHT_ASSAULT = "10";
-        public static string TR_MEDIC = "11";
-        public static string TR_ENGINEER = "12";
-        public static string TR_HEAVY_ASSAULT = "13";
-        public static string TR_MAX = "14";
+        public static short TR_INFILTRATOR = 8;
+        public static short TR_LIGHT_ASSAULT = 10;
+        public static short TR_MEDIC = 11;
+        public static short TR_ENGINEER = 12;
+        public static short TR_HEAVY_ASSAULT = 13;
+        public static short TR_MAX = 14;
 
-        public static string VS_INFILTRATOR = "15";
-        public static string VS_LIGHT_ASSAULT = "17";
-        public static string VS_MEDIC = "18";
-        public static string VS_ENGINEER = "19";
-        public static string VS_HEAVY_ASSAULT = "20";
-        public static string VS_MAX = "21";
+        public static short VS_INFILTRATOR = 15;
+        public static short VS_LIGHT_ASSAULT = 17;
+        public static short VS_MEDIC = 18;
+        public static short VS_ENGINEER = 19;
+        public static short VS_HEAVY_ASSAULT = 20;
+        public static short VS_MAX = 21;
 
-        public static string GetFaction(string loadoutID) {
+        public static short GetFaction(short loadoutID) {
             if (loadoutID == NC_INFILTRATOR
                     || loadoutID == NC_LIGHT_ASSAULT
                     || loadoutID == NC_MEDIC 

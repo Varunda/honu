@@ -27,5 +27,7 @@ namespace watchtower.Models {
 
         public int Members { get; set; }
 
+        public int MembersOnline { get; set; }
+
     }
 }

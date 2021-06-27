@@ -241,6 +241,8 @@ namespace watchtower.Services {
                     OutfitKillBlock ncOutfitBlock = new OutfitKillBlock();
                     OutfitKillBlock vsOutfitBlock = new OutfitKillBlock();
 
+                    Dictionary<string, OutfitOnlineEntry> outfitsOnline = new Dictionary<string, OutfitOnlineEntry>();
+
                     long timeToCtorProcessingVars = time.ElapsedMilliseconds;
 
                     // Set the start high cause we want to find the minimum, so go down from here
@@ -307,21 +309,24 @@ namespace watchtower.Services {
                         datum.Name = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {entry.Key}";
 
                         if (r == true && c != null) {
-                            if (c.OutfitID != null) {
-                                if (outfits.TryGetValue(c.OutfitID, out TrackedOutfit? outfit) == false) { 
-                                    outfit = new TrackedOutfit {
-                                        ID = c.OutfitID,
-                                        Tag = c.OutfitTag,
-                                        Name = c.OutfitName ?? "Missing name",
-                                        FactionID = c.FactionID
-                                    };
+                            if (outfits.TryGetValue(c.OutfitID ?? "-1", out TrackedOutfit? outfit) == false) { 
+                                outfit = new TrackedOutfit() {
+                                    ID = c.OutfitID ?? "-1",
+                                    Tag = c.OutfitTag,
+                                    Name = c.OutfitID == null ? "No outfit" : c.OutfitName ?? "Missing name",
+                                    FactionID = c.FactionID,
+                                    MembersOnline = 0
+                                };
 
-                                    outfits.Add(c.OutfitID, outfit);
-                                }
+                                outfits.Add(c.OutfitID ?? "-1", outfit);
+                            }
 
-                                outfit.Kills += datum.Kills;
-                                outfit.Deaths += datum.Deaths;
-                                outfit.Members += 1;
+                            outfit.Kills += datum.Kills;
+                            outfit.Deaths += datum.Deaths;
+                            ++outfit.Members;
+
+                            if (entry.Value.Online == true) {
+                                ++outfit.MembersOnline;
                             }
                         }
 
@@ -393,11 +398,11 @@ namespace watchtower.Services {
                             continue;
                         }
 
-                        if (entry.Value.FactionID == Faction.VS) {
+                        if (entry.Value.FactionID == Faction.VS.ToString()) {
                             vsOutfitBlock.Entries.Add(entry.Value);
-                        } else if (entry.Value.FactionID == Faction.NC) {
+                        } else if (entry.Value.FactionID == Faction.NC.ToString()) {
                             ncOutfitBlock.Entries.Add(entry.Value);
-                        } else if (entry.Value.FactionID == Faction.TR) {
+                        } else if (entry.Value.FactionID == Faction.TR.ToString()) {
                             trOutfitBlock.Entries.Add(entry.Value);
                         }
                     }

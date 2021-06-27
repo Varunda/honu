@@ -29,7 +29,7 @@ namespace watchtower.Services {
             while (cancel.IsCancellationRequested == false) {
                 JToken token = await _Queue.DequeueAsync(cancel);
                 try {
-                    _Handler.Process(token);
+                    await _Handler.Process(token);
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Failed to process {token}", token);
                 }

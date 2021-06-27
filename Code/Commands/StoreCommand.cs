@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,9 @@ using System.Threading.Tasks;
 using watchtower.Census;
 using watchtower.Constants;
 using watchtower.Models;
+using watchtower.Models.Db;
 using watchtower.Services;
+using watchtower.Services.Db;
 
 namespace watchtower.Commands {
 
@@ -16,12 +19,29 @@ namespace watchtower.Commands {
         private readonly ILogger<StoreCommand> _Logger;
         private readonly ICharacterCollection _Characters;
         private readonly IFileEventLoader _Loader;
+        private readonly IExpEventDbStore _ExpEventDb;
 
         public StoreCommand(IServiceProvider services) {
             _Logger = (ILogger<StoreCommand>)services.GetService(typeof(ILogger<StoreCommand>));
 
             _Characters = (ICharacterCollection)services.GetService(typeof(ICharacterCollection));
             _Loader = (IFileEventLoader)services.GetService(typeof(IFileEventLoader));
+            _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
+        }
+
+        public async Task Exp(int id1, int id2) {
+            ExpEntryOptions options = new ExpEntryOptions() {
+                WorldID = 1,
+                FactionID = null,
+                ExperienceIDs = new List<int>() { id1, id2 },
+                Interval = 120
+            };
+
+            List<ExpDbEntry> entries = await _ExpEventDb.GetEntries(options);
+
+            foreach (ExpDbEntry entry in entries) {
+                _Logger.LogInformation($"{entry.CharacterID} => {entry.Count}");
+            }
         }
 
         public async Task Print(string nameOrId) {

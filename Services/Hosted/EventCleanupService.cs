@@ -14,7 +14,8 @@ namespace watchtower.Services {
 
         private const int _CleanupDelay = 15;
         private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
-        private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 15 minutes
+        private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
+        private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
 
         private readonly ILogger<EventCleanupService> _Logger;
         private readonly IFileEventLoader _EventLoader;
@@ -35,6 +36,7 @@ namespace watchtower.Services {
                     long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     long adjustedTime = currentTime - _KeepPeriod;
                     long sundyAdjustedTime = currentTime - _SundyKeepPeriod;
+                    long afkAdjustedTime = currentTime - _AfkPeriod;
 
                     Stopwatch time = Stopwatch.StartNew();
 
@@ -42,6 +44,10 @@ namespace watchtower.Services {
 
                     lock (CharacterStore.Get().Players) {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
+                            if (entry.Value.LatestEventTimestamp <= afkAdjustedTime) {
+                                entry.Value.Online = false;
+                            }
+
                             int pk = entry.Value.Kills.Count;
                             entry.Value.Kills = entry.Value.Kills.Where(iter => iter >= adjustedTime).ToList();
                             killsRemove += pk - entry.Value.Kills.Count;

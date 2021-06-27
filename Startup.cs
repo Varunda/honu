@@ -21,6 +21,9 @@ using Newtonsoft.Json.Linq;
 using watchtower.Models;
 using System.IO;
 using watchtower.Services.Hosted;
+using watchtower.Models.Db;
+using watchtower.Services.Db;
+using watchtower.Services.Db.Implementations;
 
 namespace watchtower {
 
@@ -53,14 +56,26 @@ namespace watchtower {
             }).AddRazorRuntimeCompilation();
 
             services.AddRazorPages();
+            services.AddMemoryCache();
+
+            services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
+
+            services.AddSingleton<IDbHelper, DbHelper>();
+            services.AddSingleton<IDbCreator, DefaultDbCreator>();
 
             services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
             services.AddSingleton<IEventHandler, Realtime.EventHandler>();
-            services.AddSingleton<ICharacterCollection, CharacterCollection>();
-            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+
             services.AddSingleton<ICommandBus, CommandBus>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<IFileEventLoader, FileEventLoader>();
 
+            services.AddSingleton<ICharacterCollection, CharacterCollection>();
+            services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
+            services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
+
+            // Hosted services
+            services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();

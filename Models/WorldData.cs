@@ -50,6 +50,9 @@ namespace watchtower.Models {
         /// </summary>
         public FactionData VS { get; set; } = new FactionData();
 
+        /// <summary>
+        /// Top sundies that have been placed on the continent
+        /// </summary>
         public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
     }
@@ -78,6 +81,8 @@ namespace watchtower.Models {
         /// Top outfits for average kills per player
         /// </summary>
         public OutfitKillBlock OutfitKills { get; set; } = new OutfitKillBlock();
+
+        public OutfitsOnline OutfitsOnline { get; set; } = new OutfitsOnline();
 
         /// <summary>
         /// Top outfits for heals for that faction

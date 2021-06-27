@@ -14,7 +14,7 @@ namespace watchtower.Realtime {
 
     public class RealtimeMonitor : IDisposable, IRealtimeMonitor {
 
-        private readonly List<string> _Events = new List<string>() {
+        private readonly List<short> _Events = new List<short>() {
             Experience.HEAL, Experience.SQUAD_HEAL, // 4, 51
             Experience.REVIVE, Experience.SQUAD_REVIVE, // 6, 53
             Experience.RESUPPLY, Experience.SQUAD_RESUPPLY, // 7, 55

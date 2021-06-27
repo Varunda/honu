@@ -21882,6 +21882,7 @@ class WorldData {
         this.tr = new FactionData();
         this.vs = new FactionData();
         this.topSpawns = new SpawnEntries();
+        this.onlineCount = 0;
     }
 }
 

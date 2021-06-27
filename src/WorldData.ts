@@ -94,4 +94,5 @@ export class WorldData {
 	public tr: FactionData = new FactionData();
 	public vs: FactionData = new FactionData();
 	public topSpawns: SpawnEntries = new SpawnEntries();
+	public onlineCount: number = 0;
 }

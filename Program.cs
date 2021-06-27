@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using watchtower.Models;
@@ -22,8 +23,12 @@ namespace watchtower {
             Console.WriteLine($"Starting at {DateTime.UtcNow}");
 
             _ = Task.Run(async () => {
-                _Host = CreateHostBuilder(args).Build();
-                await _Host.RunAsync();
+                try {
+                    _Host = CreateHostBuilder(args).Build();
+                    await _Host.RunAsync();
+                } catch (Exception ex) {
+                    Console.WriteLine($"{ex.Message}");
+                }
             });
 
             await Task.Delay(1000);

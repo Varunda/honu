@@ -15,7 +15,7 @@ namespace watchtower.Models {
         /// <summary>
         /// Faction the character is on
         /// </summary>
-        public string FactionID { get; set; } = "";
+        public short FactionID { get; set; }
 
         /// <summary>
         /// ID of the server/world the player is on

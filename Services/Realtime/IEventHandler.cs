@@ -8,7 +8,7 @@ namespace watchtower.Realtime {
 
     public interface IEventHandler {
 
-        void Process(JToken ev);
+        Task Process(JToken ev);
 
     }
 }
