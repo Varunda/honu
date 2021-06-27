@@ -11,7 +11,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using watchtower.Census;
 using watchtower.Constants;
 using watchtower.Hubs;
 using watchtower.Models;
@@ -25,18 +24,15 @@ namespace watchtower.Services {
 
         private readonly ILogger<DataBuilderService> _Logger;
 
-        private readonly ICharacterCollection _Characters;
-
         private readonly IHubContext<DataHub> _DataHub;
 
         private DateTime _TrackingStart = DateTime.UtcNow;
 
         public DataBuilderService(ILogger<DataBuilderService> logger,
-            ICharacterCollection charColl, IHubContext<DataHub> hub) {
+            IHubContext<DataHub> hub) {
 
             _Logger = logger;
 
-            _Characters = charColl;
             _DataHub = hub;
         }
 
@@ -201,13 +197,15 @@ namespace watchtower.Services {
 
                     long timeToCopyPlayers = time.ElapsedMilliseconds;
 
-                    List<Character> cachedCharacters = new List<Character>(_Characters.GetCache());
-                    Dictionary<string, Character> characters = new Dictionary<string, Character>(cachedCharacters.Count);
+                    //List<Character> cachedCharacters = new List<Character>(_Characters.GetCache());
+                    Dictionary<string, Character> characters = new Dictionary<string, Character>(0);// cachedCharacters.Count);
+                    /*
                     foreach (Character ch in cachedCharacters) {
                         //if (ch.WorldID == data.WorldID) {
                             characters.Add(ch.ID, ch);
                         //}
                     }
+                    */
 
                     long timeToBuildCharacters = time.ElapsedMilliseconds;
 
@@ -449,6 +447,7 @@ namespace watchtower.Services {
 
                     time.Stop();
 
+                    /*
                     _Logger.LogInformation(
                         $"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to build world data\n"
                         + $"\tTime to make WorldData: {timeToMakeBlock}\n"
@@ -462,6 +461,7 @@ namespace watchtower.Services {
                         + $"\tTime to build player block: {timeToBuildPlayerBlock}\n"
                         + $"\tTime to chars: {timeToChars}\n"
                     );
+                    */
 
                     string json = JsonConvert.SerializeObject(data, new JsonSerializerSettings() {
                         ContractResolver = new CamelCasePropertyNamesContractResolver()

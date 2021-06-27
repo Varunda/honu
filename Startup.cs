@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Logging;
-using watchtower.Census;
 using watchtower.Controllers;
 using watchtower.Hubs;
 using watchtower.Realtime;
@@ -24,6 +23,11 @@ using watchtower.Services.Hosted;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
 using watchtower.Services.Db.Implementations;
+using watchtower.Services.Census;
+using watchtower.Services.Census.Implementations;
+using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.Implementations;
+using watchtower.Services.Implementations;
 
 namespace watchtower {
 
@@ -68,11 +72,22 @@ namespace watchtower {
 
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+            services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
             services.AddSingleton<IFileEventLoader, FileEventLoader>();
 
-            services.AddSingleton<ICharacterCollection, CharacterCollection>();
+            // Db services
+            services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
             services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
             services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
+            services.AddSingleton<ICharacterDbStore, CharacterDbStore>();
+
+            // Census services
+            services.AddSingleton<ICharacterCollection, CharacterCollection>();
+            services.AddSingleton<IOutfitCollection, OutfitCollection>();
+
+            // Repositories
+            services.AddSingleton<ICharacterRepository, CharacterRepository>();
+            services.AddSingleton<IOutfitRepository, OutfitRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist
@@ -80,6 +95,7 @@ namespace watchtower {
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();
             services.AddHostedService<HostedFileEventLoader>();
+            services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<BackgroundFileSaver>();
         }

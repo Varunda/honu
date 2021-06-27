@@ -76,10 +76,10 @@ namespace watchtower.Services {
                         }
                     }
 
-                    _Logger.LogTrace($"Removed {killsRemove} kills");
+                    //_Logger.LogTrace($"Removed {killsRemove} kills");
 
                     time.Stop();
-                    _Logger.LogDebug($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
+                    //_Logger.LogDebug($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
 
                     await Task.Delay(_CleanupDelay * 1000, stoppingToken);
                 }

@@ -4,12 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using watchtower.Census;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Events;
+using watchtower.Services;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Realtime {
 
@@ -17,23 +18,24 @@ namespace watchtower.Realtime {
 
         private readonly ILogger<EventHandler> _Logger;
 
-        private readonly ICharacterCollection _Characters;
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
+
+        private readonly IBackgroundCharacterCacheQueue _CacheQueue;
 
         private readonly List<JToken> _Recent;
 
         public EventHandler(ILogger<EventHandler> logger,
-            ICharacterCollection charCollection, IKillEventDbStore killEventDb,
-            IExpEventDbStore expDb) {
+            IKillEventDbStore killEventDb, IExpEventDbStore expDb,
+            IBackgroundCharacterCacheQueue cacheQueue) {
 
             _Logger = logger;
 
             _Recent = new List<JToken>();
 
-            _Characters = charCollection ?? throw new ArgumentNullException(nameof(charCollection));
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
+            _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
         }
 
         public async Task Process(JToken ev) {
@@ -84,7 +86,7 @@ namespace watchtower.Realtime {
 
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
-                _Characters.Cache(charID);
+                _CacheQueue.Queue(charID);
 
                 string worldID = payload.Value<string?>("world_id") ?? "0";
 
@@ -105,7 +107,7 @@ namespace watchtower.Realtime {
         private void _ProcessPlayerLogout(JToken payload) {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
-                _Characters.Cache(charID);
+                _CacheQueue.Queue(charID);
 
                 lock (CharacterStore.Get().Players) {
                     if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
@@ -129,8 +131,8 @@ namespace watchtower.Realtime {
             short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
             short factionID = Loadout.GetFaction(loadoutID);
 
-            _Characters.Cache(attackerID);
-            _Characters.Cache(charID);
+            _CacheQueue.Queue(charID);
+            _CacheQueue.Queue(attackerID);
 
             KillEvent ev = new KillEvent() {
                 AttackerCharacterID = attackerID,
@@ -191,7 +193,8 @@ namespace watchtower.Realtime {
             if (charID == null) {
                 return;
             }
-            _Characters.Cache(charID);
+
+            _CacheQueue.Queue(charID);
 
             int expId = payload.Value<int?>("experience_id") ?? -1;
             short loadoutId = payload.Value<short?>("loadout_id") ?? -1;

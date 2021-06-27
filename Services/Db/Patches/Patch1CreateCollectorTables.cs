@@ -56,6 +56,37 @@ namespace watchtower.Services.Db.Patches {
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            using (NpgsqlConnection conn = helper.Connection()) {
+                using NpgsqlCommand cmd = await helper.Command(conn, @"
+                    CREATE TABLE IF NOT EXISTS wt_character (
+                        id varchar NOT NULL PRIMARY KEY,
+                        name varchar NOT NULL,
+                        world_id smallint NOT NULl,
+                        outfit_id varchar NULL,
+                        faction_id smallint NOT NULL,
+                        battle_rank smallint NOT NULL,
+                        prestige bool NOT NULL,
+                        last_updated_on timestamptz NOT NULL,
+                        timestamp timestamptz NOT NULL DEFAULT (NOW() at time zone 'utc')
+                    );
+                ");
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            using (NpgsqlConnection conn = helper.Connection()) {
+                using NpgsqlCommand cmd = await helper.Command(conn, @"
+                    CREATE TABLE IF NOT EXISTS wt_outfit (
+                        id varchar NOT NULL PRIMARY KEY,
+                        name varchar NOT NULL,
+                        tag varchar NULL,
+                        faction_id smallint NOT NULL,
+                        last_updated_on timestamptz NOT NULL,
+                        timestamp timestamptz NOT NULL DEFAULT (NOW() at time zone 'utc')
+                    );
+                ");
+                await cmd.ExecuteNonQueryAsync();
+            }
+
         }
 
     }

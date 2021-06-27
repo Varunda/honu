@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using watchtower.Census;
 using watchtower.Models;
 
 namespace watchtower.Services {
@@ -15,14 +14,9 @@ namespace watchtower.Services {
     public class FileEventLoader : IFileEventLoader {
 
         private readonly ILogger<FileEventLoader> _Logger;
-        private readonly ICharacterCollection _Characters;
 
-        public FileEventLoader(ILogger<FileEventLoader> logger,
-            ICharacterCollection charCollection) {
-
+        public FileEventLoader(ILogger<FileEventLoader> logger) { 
             _Logger = logger;
-
-            _Characters = charCollection;
         }
 
         public async Task Load(string filename) {
@@ -72,7 +66,7 @@ namespace watchtower.Services {
                     }
                 }
 
-                await _Characters.CacheBlock(players.Select(i => i.ID).ToList());
+                //await _Characters.CacheBlock(players.Select(i => i.ID).ToList());
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to load events");
             }
