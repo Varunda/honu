@@ -13,6 +13,8 @@ namespace watchtower.Models.Events {
 
         public short LoadoutID { get; set; }
 
+        public short TeamID { get; set; }
+
         public string OtherID { get; set; } = "";
 
         public int Amount { get; set; }

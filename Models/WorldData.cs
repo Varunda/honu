@@ -13,17 +13,12 @@ namespace watchtower.Models {
         /// <summary>
         /// ID of the world this data is for
         /// </summary>
-        public string WorldID { get; set; } = "";
+        public short WorldID { get; set; }
 
         /// <summary>
         /// Name of the world this data is for
         /// </summary>
         public string WorldName { get; set; } = "";
-
-        /// <summary>
-        /// How many seconds the tracking has happened for
-        /// </summary>
-        public int TrackingDuration { get; set; } = 0;
 
         /// <summary>
         /// How many characters are on each continent
@@ -81,8 +76,6 @@ namespace watchtower.Models {
         /// Top outfits for average kills per player
         /// </summary>
         public OutfitKillBlock OutfitKills { get; set; } = new OutfitKillBlock();
-
-        public OutfitsOnline OutfitsOnline { get; set; } = new OutfitsOnline();
 
         /// <summary>
         /// Top outfits for heals for that faction

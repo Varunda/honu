@@ -31,6 +31,10 @@ namespace watchtower.Services.Repositories.Implementations {
         }
 
         public async Task<PsOutfit?> GetByID(string outfitID) {
+            if (outfitID == "") {
+                return null;
+            }
+
             string key = string.Format(_CacheKeyID, outfitID);
 
             if (_Cache.TryGetValue(key, out PsOutfit? outfit) == false) {

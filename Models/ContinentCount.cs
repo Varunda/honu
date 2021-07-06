@@ -67,6 +67,20 @@ namespace watchtower.Models {
             }
         }
 
+        public void AddToNS(string zoneID) {
+            if (zoneID == Zone.Indar) {
+                ++Indar.NS;
+            } else if (zoneID == Zone.Hossin) {
+                ++Hossin.NS;
+            } else if (zoneID == Zone.Amerish) {
+                ++Amerish.NS;
+            } else if (zoneID == Zone.Esamir) {
+                ++Esamir.NS;
+            } else {
+                ++Other.NS;
+            }
+        }
+
     }
 
     /// <summary>
@@ -74,14 +88,44 @@ namespace watchtower.Models {
     /// </summary>
     public class FactionCount {
 
+        /// <summary>
+        /// How many are on VS, including NSO
+        /// </summary>
         public int VS { get; set; } = 0;
 
+        /// <summary>
+        /// How many robots are on NS
+        /// </summary>
+        public int VS_NS { get; set; } = 0;
+
+        /// <summary>
+        /// How many are on NC, including NSO
+        /// </summary>
         public int NC { get; set; } = 0;
 
+        /// <summary>
+        /// How many robots are on NC
+        /// </summary>
+        public int NC_NS { get; set; } = 0;
+
+        /// <summary>
+        /// How many are on TR, including NSO
+        /// </summary>
         public int TR { get; set; } = 0;
 
+        /// <summary>
+        /// How many robots are on TR
+        /// </summary>
+        public int TR_NS { get; set; } = 0;
+
+        /// <summary>
+        /// How many NSO robots are online in total
+        /// </summary>
         public int NS { get; set; } = 0;
 
+        /// <summary>
+        /// How many are not known
+        /// </summary>
         public int Other { get; set; } = 0;
 
     }

@@ -25,9 +25,10 @@ namespace watchtower.Services.Db.Implementations {
         public async Task<PsCharacter?> GetByID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM wt_character
-                    WHERE id = @ID
+                SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
+                    FROM wt_character c
+                        LEFT JOIN wt_outfit o ON c.outfit_id = o.id
+                    WHERE c.id = @ID
             ");
 
             cmd.AddParameter("@ID", charID);
@@ -40,9 +41,10 @@ namespace watchtower.Services.Db.Implementations {
         public async Task<PsCharacter?> GetByName(string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM wt_character
-                    WHERE name = @Name
+                SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
+                    FROM wt_character c
+                        LEFT JOIN wt_outfit o ON c.outfit_id = o.id
+                    WHERE c.name = @Name
             ");
 
             cmd.AddParameter("Name", name);
@@ -94,11 +96,20 @@ namespace watchtower.Services.Db.Implementations {
             c.BattleRank = reader.GetInt16("battle_rank");
             c.Prestige = reader.GetBoolean("prestige");
 
-            if (reader.IsDBNull("outfit_id") == true) {
-                c.OutfitID = null;
-            } else {
-                c.OutfitID = reader.GetString("outfit_id");
+            c.OutfitID = reader.GetNullableString("outfit_id");
+            c.OutfitTag = reader.GetNullableString("outfit_tag");
+            c.OutfitName = reader.GetNullableString("outfit_name");
+
+            /*
+            if ((c.OutfitID != null && c.OutfitTag == null) || c.OutfitID == "37540434320689686") {
+                string s = $"ID: {c.OutfitID} TAG: {c.OutfitTag} NAME: {c.OutfitName}\n";
+                for (int i = 0; i < reader.FieldCount; ++i) {
+                    s += $"{reader.GetName(i)}/{reader.GetFieldType(i).Name} => {reader.GetValue(i)}\n";
+                }
+
+                _Logger.LogDebug(s);
             }
+            */
 
             return c;
         }

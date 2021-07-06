@@ -13,12 +13,12 @@ namespace watchtower.Models {
         /// <summary>
         /// First value, name is some what arbitrary
         /// </summary>
-        public int Start { get; set; }
+        public long Start { get; set; }
 
         /// <summary>
-        /// Second value, nameis some what arbitrary
+        /// Second value, name is some what arbitrary
         /// </summary>
-        public int End { get; set; }
+        public long End { get; set; }
 
     }
 }

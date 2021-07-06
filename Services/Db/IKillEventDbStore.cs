@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Db;
 using watchtower.Models.Events;
 
 namespace watchtower.Services.Db {
@@ -24,6 +25,15 @@ namespace watchtower.Services.Db {
         /// <param name="revivedID">ID of the exp event for the revive</param>
         /// <returns>A task for when the operation is complete</returns>
         Task SetRevivedID(string charID, long revivedID);
+
+        /// <summary>
+        /// Get the top 8 killers from the parameters given
+        /// </summary>
+        /// <param name="options">Options used to generate the data</param>
+        /// <returns></returns>
+        Task<List<KillDbEntry>> GetTopKillers(KillDbOptions options);
+
+        Task<List<KillDbOutfitEntry>> GetTopOutfitKillers(KillDbOptions options);
 
     }
 }

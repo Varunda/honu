@@ -19,14 +19,14 @@ namespace watchtower.Commands {
 
         private readonly ILogger<StoreCommand> _Logger;
         private readonly ICharacterCollection _Characters;
-        private readonly IFileEventLoader _Loader;
         private readonly IExpEventDbStore _ExpEventDb;
+        private readonly IKillEventDbStore _KillEventDb;
 
         public StoreCommand(IServiceProvider services) {
             _Logger = (ILogger<StoreCommand>)services.GetService(typeof(ILogger<StoreCommand>));
 
-            _Loader = (IFileEventLoader)services.GetService(typeof(IFileEventLoader));
             _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
+            _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
             _Characters = services.GetRequiredService<ICharacterCollection>();
         }
 
@@ -41,7 +41,21 @@ namespace watchtower.Commands {
             List<ExpDbEntry> entries = await _ExpEventDb.GetEntries(options);
 
             foreach (ExpDbEntry entry in entries) {
-                _Logger.LogInformation($"{entry.CharacterID} => {entry.Count}");
+                _Logger.LogInformation($"{entry.ID} => {entry.Count}");
+            }
+        }
+
+        public async Task Top(int factionID) {
+            KillDbOptions options = new KillDbOptions() {
+                FactionID = (short)factionID,
+                Interval = 120,
+                WorldID = 1
+            };
+
+            List<KillDbEntry> entries = await _KillEventDb.GetTopKillers(options);
+
+            foreach (KillDbEntry entry in entries) {
+                _Logger.LogInformation($"{entry.CharacterID} => {entry.Kills}/{entry.Deaths}");
             }
         }
 
@@ -73,26 +87,42 @@ namespace watchtower.Commands {
                 $"Character {nameOrId}:\n"
                 + $"\tName: {c.Name}\n"
                 + $"\tID: {c.ID}\n"
-                + $"\tFactionID: {c.FactionID}\n"
-                + $"\tKills: {player.Kills.Count}\n"
-                + $"\tDeaths: {player.Deaths.Count}\n"
-                + $"\tHeals: {player.Heals.Count}\n"
-                + $"\tRevives: {player.Revives.Count}\n"
-                + $"\tRepairs: {player.Repairs.Count}\n"
-                + $"\tResupplies: {player.Resupplies.Count}\n"
+                + $"\tFactionID: {c.FactionID}"
             );
         }
 
-        public async Task Save() {
-            await _Loader.Save("PreviousEvents.json");
+        public void Count() {
+            lock (CharacterStore.Get().Players) {
+                int totalCount = CharacterStore.Get().Players.Count;
 
-            _Logger.LogInformation($"Saved previous events");
-        }
+                int Count(Func<KeyValuePair<string, TrackedPlayer>, bool> predicate) {
+                    return CharacterStore.Get().Players.Where(predicate).Count();
+                }
 
-        public async Task Load() {
-            await _Loader.Load("PreviousEvents.json");
+                int vsCount = Count(iter => iter.Value.TeamID == Faction.VS);
+                int ncCount = Count(iter => iter.Value.TeamID == Faction.NC);
+                int trCount = Count(iter => iter.Value.TeamID == Faction.TR);
+                int nsCount = Count(iter => iter.Value.TeamID == Faction.NS);
 
-            _Logger.LogInformation($"Loaded previous events");
+                int indarCount = Count(iter => iter.Value.ZoneID == Zone.Indar);
+                int esamirCount = Count(iter => iter.Value.ZoneID == Zone.Esamir);
+                int hossinCount = Count(iter => iter.Value.ZoneID == Zone.Hossin);
+                int amerishCount = Count(iter => iter.Value.ZoneID == Zone.Amerish);
+                int otherCount = Count(iter => iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1");
+
+                _Logger.LogInformation($"Characters being tracked:\n"
+                    + $"Total: {totalCount}\n"
+                    + $"VS: {vsCount}\n"
+                    + $"NC: {ncCount}\n"
+                    + $"TR: {trCount}\n"
+                    + $"NS: {nsCount}\n"
+                    + $"Indar: {indarCount}\n"
+                    + $"Hossin: {hossinCount}\n"
+                    + $"Amerish: {amerishCount}\n"
+                    + $"Esamir: {esamirCount}\n"
+                    + $"Other: {otherCount}\n"
+                );
+            }
         }
 
     }

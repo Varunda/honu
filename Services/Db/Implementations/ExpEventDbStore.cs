@@ -28,13 +28,13 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_exp (
-                    source_character_id, experience_id, source_loadout_id, source_faction_id,
+                    source_character_id, experience_id, source_loadout_id, source_faction_id, source_team_id,
                     other_id,
                     amount,
                     world_id, zone_id,
                     timestamp
                 ) VALUES (
-                    @SourceCharacterID, @ExperienceID, @SourceLoadoutID, @SourceFactionID,
+                    @SourceCharacterID, @ExperienceID, @SourceLoadoutID, @SourceFactionID, @SourceTeamID,
                     @OtherID,
                     @Amount,
                     @WorldID, @ZoneID,
@@ -46,6 +46,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("ExperienceID", ev.ExperienceID);
             cmd.AddParameter("SourceLoadoutID", ev.LoadoutID);
             cmd.AddParameter("SourceFactionID", Loadout.GetFaction(ev.LoadoutID));
+            cmd.AddParameter("SourceTeamID", ev.TeamID);
             cmd.AddParameter("OtherID", ev.OtherID);
             cmd.AddParameter("Amount", ev.Amount);
             cmd.AddParameter("WorldID", ev.WorldID);
@@ -63,11 +64,12 @@ namespace watchtower.Services.Db.Implementations {
         public async Task<List<ExpDbEntry>> GetEntries(ExpEntryOptions parameters) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT source_character_id, COUNT(source_character_id)
+                SELECT source_character_id AS id, COUNT(source_character_id) AS count
 	                FROM wt_exp
 	                WHERE world_id = @WorldID
-                        AND (timestamp + (@Interval || ' minutes')::INTERVAl) > NOW() at time zone 'utc'
+                        AND (timestamp + (@Interval || ' minutes')::INTERVAl) >= NOW() at time zone 'utc'
 		                AND experience_id = ANY(@ExperienceIDs)
+                        AND source_team_id = @FactionID
 	                GROUP BY source_character_id
 	                ORDER BY COUNT(source_character_id) DESC
 	                LIMIT 5;
@@ -76,6 +78,39 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Interval", parameters.Interval);
             cmd.AddParameter("WorldID", parameters.WorldID);
             cmd.AddParameter("ExperienceIDs", parameters.ExperienceIDs);
+            cmd.AddParameter("FactionID", parameters.FactionID);
+
+            List<ExpDbEntry> entries = await ReadList(cmd);
+
+            return entries;
+        }
+
+        public async Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                WITH evs AS (
+                    SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '') AS outfit_id
+                        FROM wt_exp e
+                            JOIN wt_character c ON e.source_character_id = c.id
+                        WHERE (e.timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                            AND e.world_id = @WorldID
+                            AND e.source_team_id = @FactionID
+                            AND e.experience_id = ANY(@ExperienceIDs)
+                ), outfits AS (
+                    SELECT outfit_id
+                        FROM evs
+                        GROUP BY outfit_id
+                )
+                SELECT outfits.outfit_id AS id,
+                    (SELECT COUNT(*) FROM evs e WHERE e.outfit_id = outfits.outfit_id) AS count
+                    FROM outfits
+                    ORDER BY count DESC
+            ");
+
+            cmd.AddParameter("Interval", options.Interval);
+            cmd.AddParameter("WorldID", options.WorldID);
+            cmd.AddParameter("ExperienceIDs", options.ExperienceIDs);
+            cmd.AddParameter("FactionID", options.FactionID);
 
             List<ExpDbEntry> entries = await ReadList(cmd);
 
@@ -85,7 +120,7 @@ namespace watchtower.Services.Db.Implementations {
         public override ExpDbEntry ReadEntry(NpgsqlDataReader reader) {
             ExpDbEntry entry = new ExpDbEntry();
 
-            entry.CharacterID = reader.GetString("source_character_id");
+            entry.ID = reader.GetString("id");
             entry.Count = reader.GetInt32("count");
 
             return entry;

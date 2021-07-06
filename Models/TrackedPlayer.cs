@@ -18,9 +18,14 @@ namespace watchtower.Models {
         public short FactionID { get; set; }
 
         /// <summary>
+        /// Team the character is on. Different only on NS (FactionID = 4) characters
+        /// </summary>
+        public short TeamID { get; set; }
+
+        /// <summary>
         /// ID of the server/world the player is on
         /// </summary>
-        public string WorldID { get; set; } = "";
+        public short WorldID { get; set; }
 
         /// <summary>
         /// If the character is online or not
@@ -45,46 +50,6 @@ namespace watchtower.Models {
         ///     the time online is accurate (up to how often the interval is checked)
         /// </summary>
         public List<TimestampPair> OnlineIntervals { get; set; } = new List<TimestampPair>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets a kill
-        /// </summary>
-        public List<int> Kills { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player is killed
-        /// </summary>
-        public List<int> Deaths { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets an assist
-        /// </summary>
-        public List<int> Assists { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets heal experience
-        /// </summary>
-        public List<int> Heals { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets revive experience
-        /// </summary>
-        public List<int> Revives { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets resupply experience
-        /// </summary>
-        public List<int> Resupplies { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets repair experience
-        /// </summary>
-        public List<int> Repairs { get; set; } = new List<int>();
-
-        /// <summary>
-        /// List of timestamps of when a player gets spawn experience, such as sundy and beacon spawns
-        /// </summary>
-        public List<int> Spawns { get; set; } = new List<int>();
 
     }
 }

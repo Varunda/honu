@@ -42,11 +42,11 @@ Vue.component("player-kill-block", {
 								●
 							</span>
 
-							<span style="flex-grow: 1">
+							<span style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;">
 								{{entry.name}}
 							</span>
 
-							<span title="hours:minutes">
+							<span style="flex-grow: 1;" title="hours:minutes">
 								{{entry.secondsOnline | duration}}
 							</span>
 						</span>

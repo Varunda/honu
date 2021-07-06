@@ -28,12 +28,11 @@ using watchtower.Services.Census.Implementations;
 using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.Implementations;
 using watchtower.Services.Implementations;
+using watchtower.Services.Db.Readers;
 
 namespace watchtower {
 
     public class Startup {
-
-        private IFileEventLoader? _EventLoader;
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
@@ -48,7 +47,8 @@ namespace watchtower {
             services.AddCensusServices(options => {
                 options.CensusServiceId = "asdf";
                 options.CensusServiceNamespace = "ps2";
-                options.LogCensusErrors = true;
+                //options.LogCensusErrors = true;
+                options.LogCensusErrors = false;
             });
 
             services.AddSignalR(options => {
@@ -73,13 +73,17 @@ namespace watchtower {
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
-            services.AddSingleton<IFileEventLoader, FileEventLoader>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
             services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
             services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
             services.AddSingleton<ICharacterDbStore, CharacterDbStore>();
+            services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
+
+            // Readers
+            services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
+            services.AddSingleton<IDataReader<KillDbOutfitEntry>, KillDbOutfitEntryReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -94,19 +98,13 @@ namespace watchtower {
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();
-            services.AddHostedService<HostedFileEventLoader>();
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
-            services.AddHostedService<BackgroundFileSaver>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
-            IHostApplicationLifetime lifetime, IFileEventLoader fileLoader) {
-
-            _EventLoader = fileLoader;
-
-            lifetime.ApplicationStopping.Register(OnShutdown);
+            IHostApplicationLifetime lifetime) {
 
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
@@ -124,14 +122,6 @@ namespace watchtower {
 
                 endpoints.MapHub<DataHub>("/ws/data");
             });
-        }
-
-        private void OnShutdown() {
-            if (_EventLoader != null) {
-                _EventLoader.Save("PreviousEvents.json").ConfigureAwait(false).GetAwaiter().GetResult();
-            } else {
-                Console.WriteLine($"_EventLoader is null");
-            }
         }
 
     }

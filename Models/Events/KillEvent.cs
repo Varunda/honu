@@ -20,6 +20,8 @@ namespace watchtower.Models.Events {
         /// </summary>
         public short AttackerLoadoutID { get; set; }
 
+        public short AttackerTeamID { get; set; }
+
         /// <summary>
         /// Fire mode
         /// </summary>
@@ -33,6 +35,8 @@ namespace watchtower.Models.Events {
         public string KilledCharacterID { get; set; } = "";
 
         public short KilledLoadoutID { get; set; }
+
+        public short KilledTeamID { get; set; }
 
         public short WorldID { get; set; }
 

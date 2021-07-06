@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace watchtower.Models.Db {
 
-    public class ExpDbEntry {
+    public class WorldTotalOptions {
 
-        public string ID { get; set; } = "";
+        public int Interval { get; set; }
 
-        public int Count { get; set; }
+        public int WorldID { get; set; }
 
     }
 }

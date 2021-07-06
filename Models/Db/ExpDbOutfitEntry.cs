@@ -5,9 +5,12 @@ using System.Threading.Tasks;
 
 namespace watchtower.Models.Db {
 
-    public class ExpDbEntry {
+    public class ExpDbOutfitEntry {
 
-        public string ID { get; set; } = "";
+        /// <summary>
+        /// ID of the outfit 
+        /// </summary>
+        public string OutfitID { get; set; } = "";
 
         public int Count { get; set; }
 

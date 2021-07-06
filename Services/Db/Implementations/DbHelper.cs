@@ -18,7 +18,7 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         public NpgsqlConnection Connection() {
-            string connStr = $"Host={_DbOptions.ServerUrl};Username={_DbOptions.Username};Password={_DbOptions.Password};Database={_DbOptions.DatabaseName};Include Error Detail=true";
+            string connStr = $"Host={_DbOptions.ServerUrl};Username={_DbOptions.Username};Password={_DbOptions.Password};Database={_DbOptions.DatabaseName};Include Error Detail=true;ApplicationName=watchtower";
 
             NpgsqlConnection conn = new NpgsqlConnection(connStr);
 

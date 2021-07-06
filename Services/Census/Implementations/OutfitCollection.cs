@@ -31,6 +31,8 @@ namespace watchtower.Services.Census.Implementations {
             CensusQuery query = _Census.Create("outfit");
             query.Where("outfit_id").Equals(outfitID);
 
+            _Logger.LogDebug($"Getting {outfitID}");
+
             query.AddResolve("leader");
 
             PsOutfit? outfit = null;

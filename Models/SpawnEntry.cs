@@ -19,6 +19,8 @@ namespace watchtower.Models {
 
         public DateTime FirstSeenAt { get; set; }
 
+        public short FactionID { get; set; }
+
         public int SecondsAlive { get; set; }
 
     }

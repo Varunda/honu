@@ -103,6 +103,8 @@ namespace watchtower.Services.Census.Implementations {
             }
 
             player.OutfitID = result.SelectToken("outfit")?.Value<string?>("outfit_id");
+            player.OutfitName = result.SelectToken("outfit")?.Value<string?>("name");
+            player.OutfitTag = result.SelectToken("outfit")?.Value<string?>("alias");
             player.BattleRank = result.SelectToken("battle_rank")?.GetInt16("value", 0) ?? 0;
 
             return player;

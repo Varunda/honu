@@ -18,5 +18,7 @@ namespace watchtower.Services.Db {
 
         Task<List<ExpDbEntry>> GetEntries(ExpEntryOptions parameters);
 
+        Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options);
+
     }
 }

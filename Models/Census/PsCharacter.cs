@@ -28,6 +28,16 @@ namespace watchtower.Models.Census {
         public string? OutfitID { get; set; }
 
         /// <summary>
+        /// Tag of the outfit, if the character is in one
+        /// </summary>
+        public string? OutfitTag { get; set; }
+
+        /// <summary>
+        /// Name of the outfit, if the character is in one
+        /// </summary>
+        public string? OutfitName { get; set; }
+
+        /// <summary>
         /// Faction ID of the character
         /// </summary>
         public short FactionID { get; set; }

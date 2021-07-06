@@ -30,6 +30,18 @@ namespace watchtower.Constants {
                 || expId == PRIORITY_ASSIST || expId == HIGH_PRIORITY_ASSIST;
         }
 
+        public static bool IsHeal(int expID) {
+            return expID == HEAL || expID == SQUAD_HEAL;
+        }
+
+        public static bool IsRevive(int expId) {
+            return expId == REVIVE || expId == SQUAD_REVIVE;
+        }
+
+        public static bool IsResupply(int expId) {
+            return expId == RESUPPLY || expId == SQUAD_RESUPPLY;
+        }
+
         public static bool IsSpawn(int expId) {
             return expId == SQUAD_SPAWN || expId == SQUAD_VEHICLE_SPAWN_BONUS
                 || expId == GALAXY_SPAWN_BONUS || expId == GENERIC_NPC_SPAWN
