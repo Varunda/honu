@@ -17,7 +17,10 @@ namespace watchtower.Models {
 
         public DateTime FirstSeenAt { get; set; } = DateTime.UtcNow;
 
-        public int LatestEventAt { get; set; }
+        /// <summary>
+        /// Milliseconds
+        /// </summary>
+        public long LatestEventAt { get; set; }
 
     }
 }

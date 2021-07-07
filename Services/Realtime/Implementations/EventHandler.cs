@@ -103,7 +103,7 @@ namespace watchtower.Realtime {
                     });
 
                     p.Online = true;
-                    p.LatestEventTimestamp = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 }
             }
         }
@@ -199,7 +199,7 @@ namespace watchtower.Realtime {
                 killed.FactionID = factionID;
                 killed.TeamID = ev.KilledTeamID;
 
-                int nowSeconds = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
                 killed.LatestEventTimestamp = nowSeconds;
             }
@@ -247,7 +247,7 @@ namespace watchtower.Realtime {
                 ev.TeamID = p.TeamID;
 
                 p.Online = true;
-                p.LatestEventTimestamp = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID.ToString();
 
                 // Update the team_id field if needed
@@ -286,7 +286,7 @@ namespace watchtower.Realtime {
                     });
 
                     ++npc.SpawnCount;
-                    npc.LatestEventAt = (int) DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    npc.LatestEventAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 };
             }
 

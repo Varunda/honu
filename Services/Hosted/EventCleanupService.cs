@@ -28,16 +28,17 @@ namespace watchtower.Services {
 
             while (!stoppingToken.IsCancellationRequested) {
                 try {
-                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    long adjustedTime = currentTime - _KeepPeriod;
-                    long sundyAdjustedTime = currentTime - _SundyKeepPeriod;
-                    long afkAdjustedTime = currentTime - _AfkPeriod;
+                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    long adjustedTime = currentTime - (_KeepPeriod * 1000);
+                    long sundyAdjustedTime = currentTime - (_SundyKeepPeriod * 1000);
+                    long afkAdjustedTime = currentTime - (_AfkPeriod * 1000);
 
                     Stopwatch time = Stopwatch.StartNew();
 
                     lock (CharacterStore.Get().Players) {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
-                            if (entry.Value.LatestEventTimestamp <= afkAdjustedTime) {
+                            if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
+                                _Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
                                 entry.Value.Online = false;
                             }
 
@@ -50,6 +51,7 @@ namespace watchtower.Services {
                         foreach (KeyValuePair<string, TrackedNpc> entry in NpcStore.Get().Npcs) {
                             if (entry.Value.LatestEventAt < sundyAdjustedTime) {
                                 // Don't want to delete keys while iterating, save the ones to delete
+                                _Logger.LogDebug($"NPC {entry.Value.NpcID}, latest: {entry.Value.LatestEventAt}, need: {sundyAdjustedTime}");
                                 toRemove.Add(entry.Key);
                             }
                         }
@@ -65,6 +67,8 @@ namespace watchtower.Services {
                     _Logger.LogDebug($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
 
                     await Task.Delay(_CleanupDelay * 1000, stoppingToken);
+                } catch (Exception) when (stoppingToken.IsCancellationRequested) {
+                    _Logger.LogInformation($"Event cleanup service stopped");
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "EventCleanupService exception");
                 }

@@ -392,13 +392,11 @@ namespace watchtower.Services {
 
                     await Task.Delay(_RunDelay * 1000, stoppingToken);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested) {
-                    _Logger.LogInformation($"Stopped");
+                    _Logger.LogInformation($"Stopped data builder service");
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Exception in DataBuilderService");
                 }
             }
-
-            _Logger.LogError($"Out of loop");
         }
 
     }

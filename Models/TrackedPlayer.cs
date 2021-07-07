@@ -38,9 +38,9 @@ namespace watchtower.Models {
         public string ZoneID { get; set; } = "";
 
         /// <summary>
-        /// Timestamp (in unix seconds) of when the last event a player got. Used for determining AFK players
+        /// Timestamp (in unix milliseconds) of when the last event a player got. Used for determining AFK players
         /// </summary>
-        public int LatestEventTimestamp { get; set; }
+        public long LatestEventTimestamp { get; set; }
 
         /// <summary>
         /// To get an accurate timer of how long a player has been online, we track the intervals the player has been online,
