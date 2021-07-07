@@ -38,7 +38,7 @@ namespace watchtower.Services {
                     lock (CharacterStore.Get().Players) {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
-                                _Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
+                                //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
                                 entry.Value.Online = false;
                             }
 
@@ -51,7 +51,7 @@ namespace watchtower.Services {
                         foreach (KeyValuePair<string, TrackedNpc> entry in NpcStore.Get().Npcs) {
                             if (entry.Value.LatestEventAt < sundyAdjustedTime) {
                                 // Don't want to delete keys while iterating, save the ones to delete
-                                _Logger.LogDebug($"NPC {entry.Value.NpcID}, latest: {entry.Value.LatestEventAt}, need: {sundyAdjustedTime}");
+                                //_Logger.LogDebug($"NPC {entry.Value.NpcID}, latest: {entry.Value.LatestEventAt}, need: {sundyAdjustedTime}");
                                 toRemove.Add(entry.Key);
                             }
                         }

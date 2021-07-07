@@ -92,6 +92,7 @@ namespace watchtower {
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
             services.AddSingleton<IOutfitRepository, OutfitRepository>();
+            services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist

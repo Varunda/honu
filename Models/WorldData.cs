@@ -20,6 +20,8 @@ namespace watchtower.Models {
         /// </summary>
         public string WorldName { get; set; } = "";
 
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
         /// <summary>
         /// How many characters are on each continent
         /// </summary>

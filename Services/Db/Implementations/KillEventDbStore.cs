@@ -91,7 +91,7 @@ namespace watchtower.Services.Db.Implementations {
                         FROM wt_kills
                         WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
                             AND world_id = @WorldID
-                            AND attacker_faction_id = @FactionID
+                            AND attacker_team_id = @FactionID
                         GROUP BY attacker_character_id
                         ORDER BY count(attacker_character_id) DESC
                         LIMIT 8
@@ -100,12 +100,21 @@ namespace watchtower.Services.Db.Implementations {
                         FROM wt_kills
                         WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
                             AND world_id = @WorldID
-                            AND attacker_faction_id != killed_faction_id
+                            AND attacker_team_id != killed_team_id
+                ), exp as (
+                    SELECT id, source_character_id
+                        FROM wt_exp 
+                        WHERE (timestamp + interval '120 minutes') >= NOW() at time zone 'utc'
+                            AND world_id = 1
+                            AND source_team_id = 1
+                            AND (experience_id = 2 OR experience_id = 3 OR experience_id = 371 OR experience_id = 372)
+                            AND source_character_id IN (SELECT attacker_character_id FROM top_killers)
                 )
                 SELECT
                     attacker_character_id,
                     (SELECT COUNT(*) FROM evs k WHERE k.attacker_character_id = top_killers.attacker_character_id) AS kills,
-                    (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND revived_event_id IS null) AS deaths
+                    (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND revived_event_id IS null) AS deaths,
+                    (SELECT COUNT(*) FROM exp e WHERE e.source_character_id = top_killers.attacker_character_id) AS assists
                 FROM
                     top_killers
                 GROUP BY attacker_character_id

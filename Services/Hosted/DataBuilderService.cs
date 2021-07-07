@@ -36,6 +36,7 @@ namespace watchtower.Services {
 
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _OutfitRepository;
+        private readonly IWorldDataRepository _WorldDataRepository;
 
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
 
@@ -45,7 +46,7 @@ namespace watchtower.Services {
             IHubContext<DataHub> hub, IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
-            IWorldTotalDbStore worldTotalDb) {
+            IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo) {
 
             _Logger = logger;
 
@@ -55,6 +56,7 @@ namespace watchtower.Services {
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
+            _WorldDataRepository = worldDataRepo ?? throw new ArgumentNullException(nameof(worldDataRepo));
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));
 
@@ -89,7 +91,7 @@ namespace watchtower.Services {
                     ID = entry.CharacterID,
                     Kills = entry.Kills,
                     Deaths = entry.Deaths,
-                    Assists = 0,
+                    Assists = entry.Assist,
                     Name = (c == null) ? $"Missing {entry.CharacterID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}]" : $"[]")} {c.Name}",
                     Online = p?.Online ?? true,
                     SecondsOnline = (int)(p?.OnlineIntervals.Sum(iter => iter.End - iter.Start) ?? 1) / 1000
@@ -191,83 +193,71 @@ namespace watchtower.Services {
                         WorldID = 1
                     };
 
-                    expOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
-                    expOptions.FactionID = Faction.VS;
-                    data.VS.PlayerHeals.Entries = await GetExpBlock(expOptions);
-                    data.VS.OutfitHeals.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.NC;
-                    data.NC.PlayerHeals.Entries = await GetExpBlock(expOptions);
-                    data.NC.OutfitHeals.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.TR;
-                    data.TR.PlayerHeals.Entries = await GetExpBlock(expOptions);
-                    data.TR.OutfitHeals.Entries = await GetOutfitExpBlock(expOptions);
+                    ExpEntryOptions vsExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = 1, FactionID = Faction.VS };
+                    ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = 1, FactionID = Faction.NC };
+                    ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = 1, FactionID = Faction.TR };
 
+                    ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
+                    await Task.WhenAll(
+                        GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerHeals.Entries = t.Result),
+                        GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitHeals.Entries = t.Result),
+                        GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerHeals.Entries = t.Result),
+                        GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitHeals.Entries = t.Result),
+                        GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerHeals.Entries = t.Result),
+                        GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitHeals.Entries = t.Result)
+                    );
                     long timeToGetHealEntries = time.ElapsedMilliseconds;
 
-                    expOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
-                    expOptions.FactionID = Faction.VS;
-                    data.VS.PlayerRevives.Entries = await GetExpBlock(expOptions);
-                    data.VS.OutfitRevives.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.NC;
-                    data.NC.PlayerRevives.Entries = await GetExpBlock(expOptions);
-                    data.NC.OutfitRevives.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.TR;
-                    data.TR.PlayerRevives.Entries = await GetExpBlock(expOptions);
-                    data.TR.OutfitRevives.Entries = await GetOutfitExpBlock(expOptions);
-
+                    ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
+                    await Task.WhenAll(
+                        GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerRevives.Entries = t.Result),
+                        GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitRevives.Entries = t.Result),
+                        GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerRevives.Entries = t.Result),
+                        GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitRevives.Entries = t.Result),
+                        GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerRevives.Entries = t.Result),
+                        GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitRevives.Entries = t.Result)
+                    );
                     long timeToGetReviveEntries = time.ElapsedMilliseconds;
 
-                    expOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
-                    expOptions.FactionID = Faction.VS;
-                    data.VS.PlayerResupplies.Entries = await GetExpBlock(expOptions);
-                    data.VS.OutfitResupplies.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.NC;
-                    data.NC.PlayerResupplies.Entries = await GetExpBlock(expOptions);
-                    data.NC.OutfitResupplies.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.TR;
-                    data.TR.PlayerResupplies.Entries = await GetExpBlock(expOptions);
-                    data.TR.OutfitResupplies.Entries = await GetOutfitExpBlock(expOptions);
-
+                    ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+                    await Task.WhenAll(
+                        GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerResupplies.Entries = t.Result),
+                        GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitResupplies.Entries = t.Result),
+                        GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerResupplies.Entries = t.Result),
+                        GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitResupplies.Entries = t.Result),
+                        GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerResupplies.Entries = t.Result),
+                        GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitResupplies.Entries = t.Result)
+                    );
                     long timeToGetResupplyEntries = time.ElapsedMilliseconds;
 
-                    expOptions.ExperienceIDs = new List<int>() {
+                    ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() {
                         Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
                         Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN
                     };
-                    expOptions.FactionID = Faction.VS;
-                    data.VS.PlayerSpawns.Entries = await GetExpBlock(expOptions);
-                    data.VS.OutfitSpawns.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.NC;
-                    data.NC.PlayerSpawns.Entries = await GetExpBlock(expOptions);
-                    data.NC.OutfitSpawns.Entries = await GetOutfitExpBlock(expOptions);
-                    expOptions.FactionID = Faction.TR;
-                    data.TR.PlayerSpawns.Entries = await GetExpBlock(expOptions);
-                    data.TR.OutfitSpawns.Entries = await GetOutfitExpBlock(expOptions);
-
+                    await Task.WhenAll(
+                        GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerSpawns.Entries = t.Result),
+                        GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitSpawns.Entries = t.Result),
+                        GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerSpawns.Entries = t.Result),
+                        GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitSpawns.Entries = t.Result),
+                        GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerSpawns.Entries = t.Result),
+                        GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitSpawns.Entries = t.Result)
+                    );
                     long timeToGetSpawnEntries = time.ElapsedMilliseconds;
 
-                    KillDbOptions killOptions = new KillDbOptions() {
-                        Interval = 120,
-                        WorldID = data.WorldID
-                    };
+                    KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
+                    KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
+                    KillDbOptions trKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.TR };
 
-                    killOptions.FactionID = Faction.VS;
-                    data.VS.PlayerKills.Entries = await GetTopKillers(killOptions, players);
-                    data.VS.OutfitKills = await GetTopOutfitKillers(killOptions);
+                    await Task.WhenAll(
+                        GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
+                        GetTopOutfitKillers(vsKillOptions).ContinueWith(t => data.VS.OutfitKills = t.Result),
+                        GetTopKillers(ncKillOptions, players).ContinueWith(t => data.NC.PlayerKills.Entries = t.Result),
+                        GetTopOutfitKillers(ncKillOptions).ContinueWith(t => data.NC.OutfitKills = t.Result),
+                        GetTopKillers(trKillOptions, players).ContinueWith(t => data.TR.PlayerKills.Entries = t.Result),
+                        GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result)
+                    );
 
-                    long timeToGetVSKills = time.ElapsedMilliseconds;
-
-                    killOptions.FactionID = Faction.NC;
-                    data.NC.PlayerKills.Entries = await GetTopKillers(killOptions, players);
-                    data.NC.OutfitKills = await GetTopOutfitKillers(killOptions);
-
-                    long timeToGetNCKills = time.ElapsedMilliseconds;
-
-                    killOptions.FactionID = Faction.TR;
-                    data.TR.PlayerKills.Entries = await GetTopKillers(killOptions, players);
-                    data.TR.OutfitKills = await GetTopOutfitKillers(killOptions);
-
-                    long timeToGetTRKills = time.ElapsedMilliseconds;
+                    long timeToGetTopKills = time.ElapsedMilliseconds;
 
                     data.TopSpawns = new SpawnEntries();
 
@@ -375,14 +365,14 @@ namespace watchtower.Services {
                         + $"\ttime to get revive entries: {timeToGetReviveEntries}ms\n"
                         + $"\ttime to get resupply entries: {timeToGetResupplyEntries}ms\n"
                         + $"\ttime to get spawn entries: {timeToGetSpawnEntries}ms\n"
-                        + $"\ttime to get vs kills: {timeToGetVSKills}ms\n"
-                        + $"\ttime to get nc kills: {timeToGetNCKills}ms\n"
-                        + $"\ttime to get tr kills: {timeToGetTRKills}ms\n"
+                        + $"\ttime to get top kills: {timeToGetTopKills}ms\n"
                         + $"\ttime to copy npc store: {timeToCopyNpcStore}ms\n"
                         + $"\ttime to get biggest spawns: {timeToGetBiggestSpawns}ms\n"
                         + $"\ttime to update seconds online: {timeToUpdateSecondsOnline}ms\n"
                         + $"\ttime to get world totals: {timeToGetWorldTotals}ms\n"
                     );
+
+                    _WorldDataRepository.Set(1, data);
 
                     string json = JsonConvert.SerializeObject(data, new JsonSerializerSettings() {
                         ContractResolver = new CamelCasePropertyNamesContractResolver()

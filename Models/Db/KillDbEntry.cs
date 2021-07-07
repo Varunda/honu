@@ -13,5 +13,7 @@ namespace watchtower.Models.Db {
 
         public int Deaths { get; set; }
 
+        public int Assist { get; set; }
+
     }
 }
