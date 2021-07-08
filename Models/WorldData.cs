@@ -20,6 +20,9 @@ namespace watchtower.Models {
         /// </summary>
         public string WorldName { get; set; } = "";
 
+        /// <summary>
+        /// Timestamp of when this data was generated
+        /// </summary>
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
         /// <summary>

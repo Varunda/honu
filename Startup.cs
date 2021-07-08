@@ -1,24 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.Logging;
-using watchtower.Controllers;
-using watchtower.Hubs;
+using watchtower.Code.Hubs.Implementations;
 using watchtower.Realtime;
 using watchtower.Services;
-using IApplicationLifetime = Microsoft.Extensions.Hosting.IApplicationLifetime;
-using Newtonsoft.Json.Linq;
-using watchtower.Models;
-using System.IO;
 using watchtower.Services.Hosted;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
@@ -29,6 +16,8 @@ using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.Implementations;
 using watchtower.Services.Implementations;
 using watchtower.Services.Db.Readers;
+using watchtower.Code.Hubs;
+using System.Text.Json;
 
 namespace watchtower {
 
@@ -53,6 +42,8 @@ namespace watchtower {
 
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
+            }).AddJsonProtocol(options => {
+                options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
             services.AddMvc(options => {
@@ -68,7 +59,7 @@ namespace watchtower {
             services.AddSingleton<IDbCreator, DefaultDbCreator>();
 
             services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
-            services.AddSingleton<IEventHandler, Realtime.EventHandler>();
+            services.AddSingleton<IEventHandler, EventHandler>();
 
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
@@ -121,7 +112,7 @@ namespace watchtower {
                     pattern: "{controller=Home}/{action=Index}"
                 );
 
-                endpoints.MapHub<DataHub>("/ws/data");
+                endpoints.MapHub<WorldDataHub>("/ws/data");
             });
         }
 

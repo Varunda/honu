@@ -37,6 +37,11 @@ namespace watchtower.Models {
         public int SecondsOnline { get; set; } = 0;
 
         /// <summary>
+        /// What faction the character is on
+        /// </summary>
+        public short FactionID { get; set; }
+
+        /// <summary>
         /// How many kills they got
         /// </summary>
         public int Kills { get; set; }

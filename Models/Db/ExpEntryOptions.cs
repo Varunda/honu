@@ -9,7 +9,7 @@ namespace watchtower.Models.Db {
 
         public List<int> ExperienceIDs { get; set; } = new List<int>();
 
-        public short? FactionID { get; set; }
+        public short FactionID { get; set; }
 
         public int Interval { get; set; }
 

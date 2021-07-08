@@ -21445,6 +21445,8 @@ webpackContext.id = "./node_modules/moment/locale sync recursive ^\\.\\/.*$";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "vue");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var FactionColors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! FactionColors */ "./src/FactionColors.ts");
+
 
 vue__WEBPACK_IMPORTED_MODULE_0___default().component("block-view", {
     props: {
@@ -21454,7 +21456,11 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("block-view", {
     data: function () {
         return {};
     },
-    methods: {},
+    methods: {
+        getFactionColor: function (factionID) {
+            return FactionColors__WEBPACK_IMPORTED_MODULE_1__.default.getFactionColor(factionID);
+        }
+    },
     template: `
 		<table class="wt-block table table-sm">
 			<thead>
@@ -21466,7 +21472,7 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("block-view", {
 
 			<tbody>
 				<tr v-for="entry in block.entries">
-					<td :title="entry.name">{{entry.name}}</td>
+					<td :title="entry.name" :style="{ color: getFactionColor(entry.factionID) }">{{entry.name}}</td>
 					<td>
 						{{entry.value}} / 
 						{{(entry.value / block.total * 100).toFixed(2)}}%
@@ -21481,6 +21487,42 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("block-view", {
 		</table>
 	`
 });
+
+
+/***/ }),
+
+/***/ "./src/FactionColors.ts":
+/*!******************************!*\
+  !*** ./src/FactionColors.ts ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ FactionColors
+/* harmony export */ });
+class FactionColors {
+    static getFactionColor(factionID) {
+        if (factionID == 1) {
+            return FactionColors.VS;
+        }
+        else if (factionID == 2) {
+            return FactionColors.NC;
+        }
+        else if (factionID == 3) {
+            return FactionColors.TR;
+        }
+        else if (factionID == 4) {
+            return FactionColors.NS;
+        }
+        return "";
+    }
+}
+FactionColors.VS = "#cf17cf";
+FactionColors.NC = "#3f7fff";
+FactionColors.TR = "#ea5e5e";
+FactionColors.NS = "#cbcbcb";
 
 
 /***/ }),
@@ -21537,28 +21579,33 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("info-hover", {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "vue");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var FactionColors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! FactionColors */ "./src/FactionColors.ts");
+
 
 vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
     props: {
         block: { required: true },
-        title: { type: String, required: false, default: "Player" },
-        seconds: { type: Number, required: true },
+        title: { type: String, required: false, default: "Player" }
     },
     data: function () {
         return {};
     },
-    methods: {},
+    methods: {
+        getFactionColor: function (factionID) {
+            return FactionColors__WEBPACK_IMPORTED_MODULE_1__.default.getFactionColor(factionID);
+        }
+    },
     template: `
 		<table class="wt-block table table-sm">
 			<thead>
 				<tr class="table-secondary">
 					<th style="width: 30ch">Player</th>
-					<th title="NSO not included">Kills</th>
-					<th>KPM</th>
+					<th>Kills</th>
+					<th title="Kills / Minutes Online">KPM</th>
 					<th title="Revives remove deaths">Deaths</th>
 					<th>Assists</th>
-					<th>K/D</th>
-					<th>KDA</th>
+					<th title="Kills / Deaths">K/D</th>
+					<th title="(Kills + Assists) / Deaths">KDA</th>
 				</tr>
 			</thead>
 
@@ -21573,11 +21620,11 @@ vue__WEBPACK_IMPORTED_MODULE_0___default().component("player-kill-block", {
 								●
 							</span>
 
-							<span style="flex-grow: 1">
+							<span style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;" :style="{ color: getFactionColor(entry.factionID) }">
 								{{entry.name}}
 							</span>
 
-							<span title="hours:minutes">
+							<span style="flex-grow: 0;" title="hours:minutes">
 								{{entry.secondsOnline | duration}}
 							</span>
 						</span>
@@ -21796,6 +21843,7 @@ class KillData {
     constructor() {
         this.id = "";
         this.name = "";
+        this.factionID = 0;
         this.kills = 0;
         this.deaths = 0;
         this.assists = 0;
@@ -21923,18 +21971,19 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
             .withUrl("/ws/data")
             .withAutomaticReconnect([5000, 10000, 20000, 20000])
             .build();
-        conn.on("DataUpdate", (data) => {
+        conn.on("UpdateData", (data) => {
             console.log(data);
-            this.worldData = JSON.parse(data);
+            this.worldData = data; //JSON.parse(data);
             this.lastUpdate = new Date();
-            this.trackingPeriodStart = new Date(Date.now() - this.worldData.trackingDuration * 1000);
         });
         conn.start().then(() => {
             this.socketState = "opened";
+            console.log(`connected`);
         }).catch(err => {
             console.error(err);
         });
         conn.onreconnected(() => {
+            console.log(`reconnected`);
             this.socketState = "opened";
         });
         conn.onclose((err) => {

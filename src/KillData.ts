@@ -1,10 +1,11 @@
 ﻿import Vue from "vue";
 
+import FactionColors from "FactionColors";
+
 Vue.component("player-kill-block", {
 	props: {
 		block: { required: true },
-		title: { type: String, required: false, default: "Player" },
-		seconds: { type: Number, required: true },
+		title: { type: String, required: false, default: "Player" }
 	},
 
 	data: function () {
@@ -14,6 +15,9 @@ Vue.component("player-kill-block", {
 	},
 
 	methods: {
+		getFactionColor: function(factionID: number): string {
+			return FactionColors.getFactionColor(factionID);
+		}
 
 	},
 
@@ -22,12 +26,12 @@ Vue.component("player-kill-block", {
 			<thead>
 				<tr class="table-secondary">
 					<th style="width: 30ch">Player</th>
-					<th title="NSO not included">Kills</th>
-					<th>KPM</th>
+					<th>Kills</th>
+					<th title="Kills / Minutes Online">KPM</th>
 					<th title="Revives remove deaths">Deaths</th>
 					<th>Assists</th>
-					<th>K/D</th>
-					<th>KDA</th>
+					<th title="Kills / Deaths">K/D</th>
+					<th title="(Kills + Assists) / Deaths">KDA</th>
 				</tr>
 			</thead>
 
@@ -42,11 +46,11 @@ Vue.component("player-kill-block", {
 								●
 							</span>
 
-							<span style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;">
+							<span style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;" :style="{ color: getFactionColor(entry.factionID) }">
 								{{entry.name}}
 							</span>
 
-							<span style="flex-grow: 1;" title="hours:minutes">
+							<span style="flex-grow: 0;" title="hours:minutes">
 								{{entry.secondsOnline | duration}}
 							</span>
 						</span>

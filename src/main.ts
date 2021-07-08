@@ -19,21 +19,21 @@ const vm = new Vue({
 			.withAutomaticReconnect([5000, 10000, 20000, 20000])
 			.build();
 
-		conn.on("DataUpdate", (data: any) => {
+		conn.on("UpdateData", (data: any) => {
 			console.log(data);
-			this.worldData = JSON.parse(data);
+			this.worldData = data; //JSON.parse(data);
 			this.lastUpdate = new Date();
-
-			this.trackingPeriodStart = new Date(Date.now() - this.worldData.trackingDuration * 1000);
 		});
 
 		conn.start().then(() => {
 			this.socketState = "opened";
+			console.log(`connected`);
 		}).catch(err => {
 			console.error(err);
 		});
 
 		conn.onreconnected(() => {
+			console.log(`reconnected`);
 			this.socketState = "opened";
 		});
 

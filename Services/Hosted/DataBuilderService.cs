@@ -12,13 +12,14 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Constants;
-using watchtower.Hubs;
+using watchtower.Code.Hubs.Implementations;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
+using watchtower.Code.Hubs;
 
 namespace watchtower.Services {
 
@@ -28,7 +29,7 @@ namespace watchtower.Services {
 
         private readonly ILogger<DataBuilderService> _Logger;
 
-        private readonly IHubContext<DataHub> _DataHub;
+        private readonly IHubContext<WorldDataHub, IWorldDataHub> _DataHub;
 
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
@@ -43,7 +44,7 @@ namespace watchtower.Services {
         private DateTime _LastUpdate = DateTime.UtcNow;
 
         public DataBuilderService(ILogger<DataBuilderService> logger,
-            IHubContext<DataHub> hub, IBackgroundCharacterCacheQueue charQueue,
+            IHubContext<WorldDataHub, IWorldDataHub> hub, IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo) {
@@ -94,7 +95,8 @@ namespace watchtower.Services {
                     Assists = entry.Assist,
                     Name = (c == null) ? $"Missing {entry.CharacterID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}]" : $"[]")} {c.Name}",
                     Online = p?.Online ?? true,
-                    SecondsOnline = (int)(p?.OnlineIntervals.Sum(iter => iter.End - iter.Start) ?? 1) / 1000
+                    SecondsOnline = (int)(p?.OnlineIntervals.Sum(iter => iter.End - iter.Start) ?? 1) / 1000,
+                    FactionID = p?.FactionID ?? options.FactionID
                 };
 
                 data.Add(killDatum);
@@ -140,7 +142,8 @@ namespace watchtower.Services {
                 BlockEntry b = new BlockEntry() {
                     ID = entry.ID,
                     Name = (c == null) ? $"Missing {entry.ID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}]" : $"[]")} {c.Name}",
-                    Value = entry.Count
+                    Value = entry.Count,
+                    FactionID = c?.FactionID ?? options.FactionID
                 };
 
                 blockEntries.Add(b);
@@ -378,7 +381,7 @@ namespace watchtower.Services {
                         ContractResolver = new CamelCasePropertyNamesContractResolver()
                     });
 
-                    _ = _DataHub.Clients.All.SendAsync("DataUpdate", json);
+                    _ = _DataHub.Clients.All.UpdateData(data);
 
                     await Task.Delay(_RunDelay * 1000, stoppingToken);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested) {

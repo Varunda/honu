@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Repositories;
@@ -54,8 +55,14 @@ namespace watchtower.Services.Hosted {
                                 WorldID = character.WorldID
                             });
 
-                            tracked.FactionID = character.FactionID;
+                            /*
+                            // Prevent the TeamID field from being overriden whenever a character is cached
+                            if (tracked.FactionID != Faction.NS) {
+                                tracked.TeamID = character.FactionID;
+                            }
+
                             tracked.TeamID = character.FactionID;
+                            */
                         }
                     }
 

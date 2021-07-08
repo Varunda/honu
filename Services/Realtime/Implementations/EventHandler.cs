@@ -154,22 +154,6 @@ namespace watchtower.Realtime {
                 IsHeadshot = (payload.Value<string?>("is_headshot") ?? "0") != "0"
             };
 
-            lock (NsoStore.Get().Entries) {
-                if (ev.AttackerTeamID == Faction.NS) {
-                    if (NsoStore.Get().Entries.TryGetValue(attackerID, out NsoTrackingEntry? attackerNsoEntry) == true) {
-                        ev.AttackerTeamID = attackerNsoEntry.TeamID;
-                    }
-                }
-
-                if (ev.KilledTeamID == Faction.NS) {
-                    if (NsoStore.Get().Entries.TryGetValue(charID, out NsoTrackingEntry? killedNsoEntry) == true) {
-                        ev.KilledTeamID = killedNsoEntry.TeamID;
-                    }
-                }
-            }
-
-            await _KillEventDb.Insert(ev);
-
             //_Logger.LogTrace($"Processing death: {payload}");
 
             lock (CharacterStore.Get().Players) {
@@ -183,8 +167,13 @@ namespace watchtower.Realtime {
 
                 attacker.Online = true;
                 attacker.ZoneID = zoneID;
-                attacker.FactionID = attackerFactionID; // If a tracked player was made from a login, no faction ID is given
-                attacker.TeamID = ev.AttackerTeamID;
+
+                if (attacker.FactionID == Faction.UNKNOWN) {
+                    attacker.FactionID = attackerFactionID; // If a tracked player was made from a login, no faction ID is given
+                    attacker.TeamID = ev.AttackerTeamID;
+                }
+
+                ev.AttackerTeamID = attacker.TeamID;
 
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
@@ -196,13 +185,19 @@ namespace watchtower.Realtime {
 
                 killed.Online = true;
                 killed.ZoneID = zoneID;
-                killed.FactionID = factionID;
-                killed.TeamID = ev.KilledTeamID;
+                if (killed.FactionID == Faction.UNKNOWN) {
+                    killed.FactionID = factionID;
+                    killed.TeamID = ev.KilledTeamID;
+                }
+
+                ev.KilledTeamID = killed.TeamID;
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
                 killed.LatestEventTimestamp = nowSeconds;
             }
+
+            await _KillEventDb.Insert(ev);
         }
 
         private async Task _ProcessExperience(JToken payload) {
@@ -244,8 +239,6 @@ namespace watchtower.Realtime {
                     WorldID = payload.GetWorldID()
                 });
 
-                ev.TeamID = p.TeamID;
-
                 p.Online = true;
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID.ToString();
@@ -255,17 +248,19 @@ namespace watchtower.Realtime {
                     // If either character was not NSO, update the team_id of the character
                     // If both are NSO, this field is not updated, as one bad team_id could then spread to other NSOs, messing up tracking
                     if (CharacterStore.Get().Players.TryGetValue(otherID, out TrackedPlayer? otherPlayer)) {
-                        if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS && otherPlayer.FactionID != Faction.UNKNOWN) {
-                            //_Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID}");
+                        if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
+                            _Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID} from {p.TeamID}");
                             p.TeamID = otherPlayer.FactionID;
                         }
 
-                        if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN && otherPlayer.FactionID == Faction.NS) {
-                            //_Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}");
+                        if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN && otherPlayer.FactionID == Faction.NS && otherPlayer.TeamID != p.FactionID) {
+                            _Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}, from {otherPlayer.TeamID}");
                             otherPlayer.TeamID = p.FactionID;
                         }
                     }
                 }
+
+                ev.TeamID = p.TeamID;
             }
 
             long ID = await _ExpEventDb.Insert(ev);

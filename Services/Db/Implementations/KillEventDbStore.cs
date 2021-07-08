@@ -104,9 +104,9 @@ namespace watchtower.Services.Db.Implementations {
                 ), exp as (
                     SELECT id, source_character_id
                         FROM wt_exp 
-                        WHERE (timestamp + interval '120 minutes') >= NOW() at time zone 'utc'
-                            AND world_id = 1
-                            AND source_team_id = 1
+                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                            AND world_id = @WorldID
+                            AND source_team_id = @FactionID
                             AND (experience_id = 2 OR experience_id = 3 OR experience_id = 371 OR experience_id = 372)
                             AND source_character_id IN (SELECT attacker_character_id FROM top_killers)
                 )

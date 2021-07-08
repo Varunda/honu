@@ -11,6 +11,8 @@ namespace watchtower.Models {
 
         public string Name { get; set; } = "";
 
+        public short FactionID { get; set; }
+
         public int Value { get; set; }
 
     }

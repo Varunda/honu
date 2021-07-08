@@ -9,7 +9,7 @@ namespace watchtower.Models {
 
         public string Name { get; set; } = "";
 
-        public List<BlockEntry> Entries = new List<BlockEntry>();
+        public List<BlockEntry> Entries { get; set; } = new List<BlockEntry>();
 
         public int Total { get; set; } = 0;
 

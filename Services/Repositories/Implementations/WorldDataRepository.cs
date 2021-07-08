@@ -27,7 +27,9 @@ namespace watchtower.Services.Repositories.Implementations {
 
         public void Set(short worldID, WorldData data) {
             lock (_WorldData) {
-                _WorldData.TryAdd(worldID, data);
+                _WorldData.AddOrUpdate(worldID, data, (key, oldValue) => {
+                    return data;
+                });
             }
         }
 

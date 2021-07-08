@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -30,10 +31,10 @@ namespace watchtower.Commands {
             _Characters = services.GetRequiredService<ICharacterCollection>();
         }
 
-        public async Task Exp(int id1, int id2) {
+        public async Task Exp(short factionID, int id1, int id2) {
             ExpEntryOptions options = new ExpEntryOptions() {
                 WorldID = 1,
-                FactionID = null,
+                FactionID = factionID,
                 ExperienceIDs = new List<int>() { id1, id2 },
                 Interval = 120
             };
@@ -122,6 +123,28 @@ namespace watchtower.Commands {
                     + $"Esamir: {esamirCount}\n"
                     + $"Other: {otherCount}\n"
                 );
+            }
+        }
+
+        public void Nso() {
+            lock (CharacterStore.Get().Players) {
+                IEnumerable<KeyValuePair<string, TrackedPlayer>> robots = CharacterStore.Get().Players.Where(iter => iter.Value.FactionID == 4);
+
+                int vsCount = robots.Where(iter => iter.Value.TeamID == 1).Count();
+                int ncCount = robots.Where(iter => iter.Value.TeamID == 2).Count();
+                int trCount = robots.Where(iter => iter.Value.TeamID == 3).Count();
+                int nsCount = robots.Where(iter => iter.Value.TeamID == 4).Count();
+                int otherCount = robots.Where(iter => iter.Value.TeamID != 1 && iter.Value.TeamID != 2 && iter.Value.TeamID != 3 && iter.Value.TeamID != 4).Count();
+
+                _Logger.LogInformation($"NSO faction placement:\n"
+                    + $"Total: {robots.Count()}\n"
+                    + $"VS: {vsCount}\n"
+                    + $"NC: {ncCount}\n"
+                    + $"TR: {trCount}\n"
+                    + $"NS: {nsCount}\n"
+                    + $"Other: {otherCount}"
+                );
+
             }
         }
 

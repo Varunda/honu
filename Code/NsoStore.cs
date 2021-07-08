@@ -12,7 +12,7 @@ namespace watchtower.Code {
         private static NsoStore _Instance = new NsoStore();
         public static NsoStore Get() { return NsoStore._Instance; }
 
-        public ConcurrentDictionary<string, NsoTrackingEntry> Entries = new ConcurrentDictionary<string, NsoTrackingEntry>();
+        private ConcurrentDictionary<string, NsoTrackingEntry> Entries = new ConcurrentDictionary<string, NsoTrackingEntry>();
 
     }
 }

@@ -14,6 +14,7 @@ export class Block {
 export class KillData {
 	public id: string = "";
 	public name: string = "";
+	public factionID: number = 0;
 	public kills: number = 0;
 	public deaths: number = 0;
 	public assists: number = 0;

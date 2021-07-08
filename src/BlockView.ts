@@ -1,5 +1,7 @@
 ﻿import Vue from "vue";
 
+import FactionColors from "FactionColors";
+
 Vue.component("block-view", {
 	props: {
 		block: { required: true },
@@ -13,6 +15,9 @@ Vue.component("block-view", {
 	},
 
 	methods: {
+		getFactionColor: function (factionID: number): string {
+			return FactionColors.getFactionColor(factionID);
+		}
 
 	},
 
@@ -27,7 +32,7 @@ Vue.component("block-view", {
 
 			<tbody>
 				<tr v-for="entry in block.entries">
-					<td :title="entry.name">{{entry.name}}</td>
+					<td :title="entry.name" :style="{ color: getFactionColor(entry.factionID) }">{{entry.name}}</td>
 					<td>
 						{{entry.value}} / 
 						{{(entry.value / block.total * 100).toFixed(2)}}%

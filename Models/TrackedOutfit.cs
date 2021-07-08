@@ -7,7 +7,7 @@ namespace watchtower.Models {
 
     public class OutfitKillBlock {
 
-        public List<TrackedOutfit> Entries = new List<TrackedOutfit>();
+        public List<TrackedOutfit> Entries { get; set; } = new List<TrackedOutfit>();
 
     }
 
