@@ -37,7 +37,7 @@ namespace watchtower.Models {
         public int SecondsOnline { get; set; } = 0;
 
         /// <summary>
-        /// What faction the character is on
+        /// What faction the character is. Used to allow NSO characters to show up in VS/NC/TR lists
         /// </summary>
         public short FactionID { get; set; }
 

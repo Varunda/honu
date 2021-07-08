@@ -377,10 +377,6 @@ namespace watchtower.Services {
 
                     _WorldDataRepository.Set(1, data);
 
-                    string json = JsonConvert.SerializeObject(data, new JsonSerializerSettings() {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver()
-                    });
-
                     _ = _DataHub.Clients.All.UpdateData(data);
 
                     await Task.Delay(_RunDelay * 1000, stoppingToken);

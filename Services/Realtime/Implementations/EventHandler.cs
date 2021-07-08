@@ -117,6 +117,10 @@ namespace watchtower.Realtime {
                     if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
                         if (p != null) {
                             p.Online = false;
+
+                            if (p.FactionID == Faction.NS) {
+                                p.TeamID = Faction.NS;
+                            }
                         }
                     }
                 }
@@ -242,6 +246,11 @@ namespace watchtower.Realtime {
                 p.Online = true;
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID.ToString();
+
+                if (p.FactionID == Faction.UNKNOWN) {
+                    p.FactionID = factionID;
+                    p.TeamID = factionID;
+                }
 
                 // Update the team_id field if needed
                 if (Experience.IsRevive(expId) || Experience.IsHeal(expId) || Experience.IsResupply(expId)) {
