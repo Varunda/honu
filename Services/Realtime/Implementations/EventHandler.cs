@@ -253,12 +253,12 @@ namespace watchtower.Realtime {
                     // If both are NSO, this field is not updated, as one bad team_id could then spread to other NSOs, messing up tracking
                     if (CharacterStore.Get().Players.TryGetValue(otherID, out TrackedPlayer? otherPlayer)) {
                         if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
-                            _Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID} from {p.TeamID}");
+                            //_Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID} from {p.TeamID}");
                             p.TeamID = otherPlayer.FactionID;
                         }
 
                         if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN && otherPlayer.FactionID == Faction.NS && otherPlayer.TeamID != p.FactionID) {
-                            _Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}, from {otherPlayer.TeamID}");
+                            //_Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}, from {otherPlayer.TeamID}");
                             otherPlayer.TeamID = p.FactionID;
                         }
                     }

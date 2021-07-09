@@ -356,10 +356,15 @@ namespace watchtower.Services {
                 if (entry.Value.Online == true) {
                     ++data.OnlineCount;
 
+                    TimestampPair? previousPair = null;
+                    if (entry.Value.OnlineIntervals.Count > 0) {
+                        previousPair = entry.Value.OnlineIntervals.Last();
+                    }
+
                     // Add the current interval the character has been online for
                     entry.Value.OnlineIntervals.Add(new TimestampPair() {
-                        Start = currentTime * 1000,
-                        End = (currentTime + _RunDelay) * 1000 + time.ElapsedMilliseconds
+                        Start = previousPair?.End ?? currentTime * 1000,
+                        End = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
                     });
 
                     if (entry.Value.FactionID == Faction.VS) {
@@ -372,11 +377,6 @@ namespace watchtower.Services {
                         data.ContinentCount.AddToNS(entry.Value.ZoneID);
                     }
                 }
-
-                long secondsOnline = 0;
-                foreach (TimestampPair pair in entry.Value.OnlineIntervals) {
-                    secondsOnline += pair.End - pair.Start;
-                }
             }
 
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;
@@ -385,6 +385,8 @@ namespace watchtower.Services {
 
             _Logger.LogInformation(
                 $"{DateTime.UtcNow} took {time.ElapsedMilliseconds}ms to build world data for {worldID}\n"
+            );
+            /*
                 + $"\ttime to copy players: {timeToCopyPlayers}ms\n"
                 + $"\ttime to get heal entries: {timeToGetHealEntries}ms\n"
                 + $"\ttime to get revive entries: {timeToGetReviveEntries}ms\n"
@@ -396,6 +398,7 @@ namespace watchtower.Services {
                 + $"\ttime to get world totals: {timeToGetWorldTotals}ms\n"
                 + $"\ttime to update seconds online: {timeToUpdateSecondsOnline}ms\n"
             );
+            */
 
             return data;
         }

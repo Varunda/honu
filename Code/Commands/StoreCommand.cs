@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +89,12 @@ namespace watchtower.Commands {
                 $"Character {nameOrId}:\n"
                 + $"\tName: {c.Name}\n"
                 + $"\tID: {c.ID}\n"
-                + $"\tFactionID: {c.FactionID}"
+                + $"\tFactionID: {c.FactionID}\n"
+                + $"\tTeamID: {player.TeamID}\n"
+                + $"\tWorldID: {player.WorldID}\n"
+                + $"\tZoneID: {player.ZoneID}\n"
+                + $"\tOnline: {player.Online}\n"
+                + $"\tOnlineIntervals: {string.Join(", ", player.OnlineIntervals.Select(iter => $"{iter.Start} - {iter.End}"))}"
             );
         }
 
