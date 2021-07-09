@@ -1,7 +1,7 @@
 ﻿import * as sR from "signalR";
 import Vue from "vue";
 import { WorldData } from "./WorldData";
-import FactionColors from "/FactionColors";
+import FactionColors from "FactionColors";
 
 import "./BlockView";
 import "./KillData";
