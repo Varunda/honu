@@ -39,12 +39,12 @@ namespace watchtower.Services.Db.Implementations {
                 WITH kills AS (
                     SELECT *
                         FROM wt_kills
-                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                 ), exp AS (
                     SELECT *
                         FROM wt_exp
-                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                 )
                 SELECT 'vs_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1) AS value

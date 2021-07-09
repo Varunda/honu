@@ -92,6 +92,7 @@ namespace watchtower {
             services.AddHostedService<DataBuilderService>();
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
+            services.AddHostedService<WorldDataBroadcastService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -108,8 +109,15 @@ namespace watchtower {
             app.UseRouting();
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}"
+                    name: "selectworld",
+                    pattern: "/",
+                    defaults: new { controller = "Home", action = "SelectWorld" }
+                );
+
+                endpoints.MapControllerRoute(
+                    name: "worlddata",
+                    pattern: "{*.}",
+                    defaults: new { controller = "Home", action = "Index" }
                 );
 
                 endpoints.MapHub<WorldDataHub>("/ws/data");

@@ -14,70 +14,133 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    #world_pop td {
+        padding: 0.25rem;
+    }
 </style>
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
-    <h1>
-        <img src="~/img/beans.png" style="height: 100%; width: 48px;" />
-        Carl Watchtower
-    </h1>
-    <div>
-        Socket status: {{socketState}}
-        <br />
-        Last update: {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
-        <br />
-        Tracking period: {{trackingPeriodStart | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
-    </div>
 
-    <hr />
+    <div class="d-flex align-items-center">
+        <h1 class="d-inline-block flex-grow-1">
+            <img src="~/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
 
-    <div class="row">
-        <div class="col-12">
-            <h4>Continent counts</h4>
+            <a href="/" title="Return to home page">
+                Carl Watchtower
+            </a>
+        </h1>
 
-            <table class="table" style="table-layout: fixed; text-align: center;">
+        <div>
+            <table class="table table-sm">
                 <tr>
-                    <th colspan="4">Indar</th>
-                    <th colspan="4">Hossin</th>
-                    <th colspan="4">Amerish</th>
-                    <th colspan="4">Esamir</th>
-                    <th colspan="4">
-                        Other
-                        <info-hover text="Zones such as Koltyr or Desolation"></info-hover>
-                    </th>
+                    <td>Socket status:</td>
+                    <td>{{socketState}}</td>
                 </tr>
 
                 <tr>
-                    <td>{{worldData.continentCount.indar.vs}} VS</td>
-                    <td>{{worldData.continentCount.indar.nc}} NC</td>
-                    <td>{{worldData.continentCount.indar.tr}} TR</td>
-                    <td class="border-right">{{worldData.continentCount.indar.ns}} NS</td>
-                    <td>{{worldData.continentCount.hossin.vs}} VS</td>
-                    <td>{{worldData.continentCount.hossin.nc}} NC</td>
-                    <td>{{worldData.continentCount.hossin.tr}} TR</td>
-                    <td class="border-right">{{worldData.continentCount.hossin.ns}} NS</td>
-                    <td>{{worldData.continentCount.amerish.vs}} VS</td>
-                    <td>{{worldData.continentCount.amerish.nc}} NC</td>
-                    <td>{{worldData.continentCount.amerish.tr}} TR</td>
-                    <td class="border-right">{{worldData.continentCount.amerish.ns}} NS</td>
-                    <td>{{worldData.continentCount.esamir.vs}} VS</td>
-                    <td>{{worldData.continentCount.esamir.nc}} NC</td>
-                    <td>{{worldData.continentCount.esamir.tr}} TR</td>
-                    <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
-                    <td>{{worldData.continentCount.other.vs}} VS</td>
-                    <td>{{worldData.continentCount.other.nc}} NC</td>
-                    <td>{{worldData.continentCount.other.tr}} TR</td>
-                    <td class="border-right">{{worldData.continentCount.other.ns}} NS</td>
+                    <td>
+                        Last socket update:
+                        <info-hover text="When the last data was received from the server"></info-hover>
+                    </td>
+                    <td>
+                        {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        Last data update:
+                        <info-hover text="When the data was last updated by the server"></info-hover>
+                    </td>
+                    <td>
+                        {{worldData.timestamp | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
+                    </td>
                 </tr>
             </table>
         </div>
     </div>
 
     <div class="row">
+        <div class="col-12">
+            <h4>
+                Player count
+                <info-hover text="Continents are hidden if they have less than 5 players"></info-hover>
+            </h4>
+
+            <table id="world_pop" class="table" style="table-layout: fixed; text-align: center;">
+                <tr>
+                    <th colspan="5" class="border-right">
+                        Server
+                        <info-hover text="Players currently online"></info-hover>
+                    </th>
+                    <th colspan="5" v-if="indarCount > 4" class="border-right">Indar</th>
+                    <th colspan="5" v-if="hossinCount > 4" class="border-right">Hossin</th>
+                    <th colspan="5" v-if="amerishCount > 4" class="border-right">Amerish</th>
+                    <th colspan="5" v-if="esamirCount > 4" class="border-right">Esamir</th>
+                    <th colspan="5">
+                        Other
+                        <info-hover text="Zones such as Koltyr, Desolation or Santuary"></info-hover>
+                    </th>
+                </tr>
+
+                <tr>
+                    <td>All: {{totalCount}}</td>
+                    <td>{{totalVSCount}} VS</td>
+                    <td>{{totalNCCount}} NC</td>
+                    <td>{{totalTRCount}} TR</td>
+                    <td class="border-right">{{totalNSCount}} NS</td>
+
+                    <template v-if="indarCount > 4">
+                        <td>All: {{indarCount}}</td>
+                        <td>{{worldData.continentCount.indar.vs}} VS</td>
+                        <td>{{worldData.continentCount.indar.nc}} NC</td>
+                        <td>{{worldData.continentCount.indar.tr}} TR</td>
+                        <td class="border-right">{{worldData.continentCount.indar.ns}} NS</td>
+                    </template>
+
+                    <template v-if="hossinCount > 4">
+                        <td>All: {{hossinCount}}</td>
+                        <td>{{worldData.continentCount.hossin.vs}} VS</td>
+                        <td>{{worldData.continentCount.hossin.nc}} NC</td>
+                        <td>{{worldData.continentCount.hossin.tr}} TR</td>
+                        <td class="border-right">{{worldData.continentCount.hossin.ns}} NS</td>
+                    </template>
+
+                    <template v-if="amerishCount > 4">
+                        <td>All: {{amerishCount}}</td>
+                        <td>{{worldData.continentCount.amerish.vs}} VS</td>
+                        <td>{{worldData.continentCount.amerish.nc}} NC</td>
+                        <td>{{worldData.continentCount.amerish.tr}} TR</td>
+                        <td class="border-right">{{worldData.continentCount.amerish.ns}} NS</td>
+                    </template>
+
+                    <template v-if="esamirCount > 4">
+                        <td>All: {{esamirCount}}</td>
+                        <td>{{worldData.continentCount.esamir.vs}} VS</td>
+                        <td>{{worldData.continentCount.esamir.nc}} NC</td>
+                        <td>{{worldData.continentCount.esamir.tr}} TR</td>
+                        <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
+                    </template>
+
+                    <td>All: {{otherCount}}</td>
+                    <td>{{worldData.continentCount.other.vs}} VS</td>
+                    <td>{{worldData.continentCount.other.nc}} NC</td>
+                    <td>{{worldData.continentCount.other.tr}} TR</td>
+                    <td>{{worldData.continentCount.other.ns}} NS</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
         <div class="col-4">
             <h4>
                 <img src="~/img/logo_vs.png" style="width: 32px; "/>
                 Vanu Sovereignty
+                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
             </h4>
             <player-kill-block :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
@@ -85,6 +148,7 @@
             <h4>
                 <img src="~/img/logo_nc.png" style="width: 32px; "/>
                 New Conglomerate
+                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
             </h4>
             <player-kill-block :block="worldData.nc" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
@@ -92,6 +156,7 @@
             <h4>
                 <img src="~/img/logo_tr.png" style="width: 32px; "/>
                 Terran Republic
+                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
             </h4>
             <player-kill-block :block="worldData.tr" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
@@ -222,7 +287,11 @@
 
     <div class="row">
         <div class="col-4">
-            <h4>Current top sundies</h4>
+            <h4>
+                Current top sundies
+                <info-hover text="Sundies are removed when they haven't spawned anyone in 5 minutes, not when they're killed"></info-hover>
+            </h4>
+
             <table class="table table-sm">
                 <tr>
                     <th>Owner</th>
@@ -233,7 +302,7 @@
                 </tr>
 
                 <tr v-for="entry in worldData.topSpawns.entries">
-                    <td>{{entry.owner}}</td>
+                    <td :style="{ color: getFactionColor(entry.factionID) }">{{entry.owner}}</td>
                     <td>{{entry.spawnCount}}</td>
                     <td>{{(entry.spawnCount / (entry.secondsAlive / 60)).toFixed(2)}}</td>
                     <td>{{entry.firstSeenAt | moment}}</td>

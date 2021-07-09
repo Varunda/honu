@@ -21950,11 +21950,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "vue");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(vue__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _WorldData__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./WorldData */ "./src/WorldData.ts");
-/* harmony import */ var _BlockView__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./BlockView */ "./src/BlockView.ts");
-/* harmony import */ var _KillData__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./KillData */ "./src/KillData.ts");
-/* harmony import */ var _OutfitKillData__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./OutfitKillData */ "./src/OutfitKillData.ts");
-/* harmony import */ var _InfoHover__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./InfoHover */ "./src/InfoHover.ts");
-/* harmony import */ var _MomentFilter__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./MomentFilter */ "./src/MomentFilter.ts");
+/* harmony import */ var _FactionColors__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../FactionColors */ "./src/FactionColors.ts");
+/* harmony import */ var _BlockView__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./BlockView */ "./src/BlockView.ts");
+/* harmony import */ var _KillData__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./KillData */ "./src/KillData.ts");
+/* harmony import */ var _OutfitKillData__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./OutfitKillData */ "./src/OutfitKillData.ts");
+/* harmony import */ var _InfoHover__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./InfoHover */ "./src/InfoHover.ts");
+/* harmony import */ var _MomentFilter__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./MomentFilter */ "./src/MomentFilter.ts");
+
 
 
 
@@ -21967,32 +21969,34 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
     el: "#app",
     created: function () {
         this.socketState = "unconnected";
-        const conn = new signalR__WEBPACK_IMPORTED_MODULE_0__.HubConnectionBuilder()
+        this.connection = new signalR__WEBPACK_IMPORTED_MODULE_0__.HubConnectionBuilder()
             .withUrl("/ws/data")
             .withAutomaticReconnect([5000, 10000, 20000, 20000])
             .build();
-        conn.on("UpdateData", (data) => {
+        this.connection.on("UpdateData", (data) => {
             console.log(data);
-            this.worldData = data; //JSON.parse(data);
+            this.worldData = data;
             this.lastUpdate = new Date();
         });
-        conn.start().then(() => {
+        this.connection.start().then(() => {
             this.socketState = "opened";
             console.log(`connected`);
+            this.subscribeBasedOnWorldPath();
         }).catch(err => {
             console.error(err);
         });
-        conn.onreconnected(() => {
+        this.connection.onreconnected(() => {
             console.log(`reconnected`);
             this.socketState = "opened";
+            this.subscribeBasedOnWorldPath();
         });
-        conn.onclose((err) => {
+        this.connection.onclose((err) => {
             this.socketState = "closed";
             if (err) {
                 console.error("onclose: ", err);
             }
         });
-        conn.onreconnecting((err) => {
+        this.connection.onreconnecting((err) => {
             this.socketState = "reconnecting";
             if (err) {
                 console.error("onreconnecting: ", err);
@@ -22003,9 +22007,117 @@ const vm = new (vue__WEBPACK_IMPORTED_MODULE_1___default())({
         worldData: new _WorldData__WEBPACK_IMPORTED_MODULE_2__.WorldData(),
         socketState: "",
         lastUpdate: null,
-        trackingPeriodStart: null
+        trackingPeriodStart: null,
+        connection: null
     },
-    methods: {}
+    methods: {
+        subscribeToWorld: function (worldID) {
+            if (this.connection == null) {
+                console.warn(`Cannot subscribe to world ${worldID}, connection is null`);
+                return;
+            }
+            this.connection.invoke("SubscribeToWorld", worldID).then(() => {
+                console.log(`Successfully subscribed to ${worldID}`);
+            }).catch((err) => {
+                console.error(`Error subscribing to world ${worldID}: ${err}`);
+            });
+        },
+        subscribeBasedOnWorldPath: function () {
+            const path = location.pathname;
+            const parts = path.split("/");
+            console.log(`path: ${path}, parts: ${parts.join(", ")}`);
+            if (parts.length == 2) {
+                const world = parts[1].toLowerCase();
+                if (world == "connery" || world == "1") {
+                    this.subscribeToWorld(1);
+                }
+                else if (world == "miller" || world == "10") {
+                    this.subscribeToWorld(10);
+                }
+                else if (world == "cobalt" || world == "13") {
+                    this.subscribeToWorld(13);
+                }
+                else if (world == "emerald" || world == "17") {
+                    this.subscribeToWorld(17);
+                }
+                else if (world == "jaeger" || world == "jeager" || world == "19") { // common misspelling
+                    this.subscribeToWorld(19);
+                }
+                else if (world == "soltech" || world == "40") {
+                    this.subscribeToWorld(40);
+                }
+                else {
+                    console.error(`Unknown world ${world}`);
+                }
+            }
+        },
+        getFactionColor: function (factionID) {
+            return _FactionColors__WEBPACK_IMPORTED_MODULE_3__.default.getFactionColor(factionID);
+        }
+    },
+    computed: {
+        indarCount: function () {
+            return this.worldData.continentCount.indar.vs
+                + this.worldData.continentCount.indar.nc
+                + this.worldData.continentCount.indar.tr
+                + this.worldData.continentCount.indar.ns;
+        },
+        hossinCount: function () {
+            return this.worldData.continentCount.hossin.vs
+                + this.worldData.continentCount.hossin.nc
+                + this.worldData.continentCount.hossin.tr
+                + this.worldData.continentCount.hossin.ns;
+        },
+        amerishCount: function () {
+            return this.worldData.continentCount.amerish.vs
+                + this.worldData.continentCount.amerish.nc
+                + this.worldData.continentCount.amerish.tr
+                + this.worldData.continentCount.amerish.ns;
+        },
+        esamirCount: function () {
+            return this.worldData.continentCount.esamir.vs
+                + this.worldData.continentCount.esamir.nc
+                + this.worldData.continentCount.esamir.tr
+                + this.worldData.continentCount.esamir.ns;
+        },
+        otherCount: function () {
+            return this.worldData.continentCount.other.vs
+                + this.worldData.continentCount.other.nc
+                + this.worldData.continentCount.other.tr
+                + this.worldData.continentCount.other.ns;
+        },
+        totalCount: function () {
+            return this.worldData.onlineCount;
+        },
+        totalVSCount: function () {
+            return this.worldData.continentCount.indar.vs
+                + this.worldData.continentCount.hossin.vs
+                + this.worldData.continentCount.amerish.vs
+                + this.worldData.continentCount.esamir.vs
+                + this.worldData.continentCount.other.vs;
+        },
+        totalNCCount: function () {
+            return this.worldData.continentCount.indar.nc
+                + this.worldData.continentCount.hossin.nc
+                + this.worldData.continentCount.amerish.nc
+                + this.worldData.continentCount.esamir.nc
+                + this.worldData.continentCount.other.nc;
+        },
+        totalTRCount: function () {
+            return this.worldData.continentCount.indar.tr
+                + this.worldData.continentCount.hossin.tr
+                + this.worldData.continentCount.amerish.tr
+                + this.worldData.continentCount.esamir.tr
+                + this.worldData.continentCount.other.tr;
+        },
+        totalNSCount: function () {
+            return this.worldData.continentCount.indar.ns
+                + this.worldData.continentCount.hossin.ns
+                + this.worldData.continentCount.amerish.ns
+                + this.worldData.continentCount.esamir.ns
+                + this.worldData.continentCount.other.ns;
+        },
+    }
 });
 window.vm = vm;
 

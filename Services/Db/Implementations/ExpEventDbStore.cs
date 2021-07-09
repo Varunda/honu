@@ -66,8 +66,8 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT source_character_id AS id, COUNT(source_character_id) AS count
 	                FROM wt_exp
-	                WHERE world_id = @WorldID
-                        AND (timestamp + (@Interval || ' minutes')::INTERVAl) >= NOW() at time zone 'utc'
+                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND world_id = @WorldID
 		                AND experience_id = ANY(@ExperienceIDs)
                         AND source_team_id = @FactionID
 	                GROUP BY source_character_id
@@ -92,7 +92,7 @@ namespace watchtower.Services.Db.Implementations {
                     SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '') AS outfit_id
                         FROM wt_exp e
                             JOIN wt_character c ON e.source_character_id = c.id
-                        WHERE (e.timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE e.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND e.world_id = @WorldID
                             AND e.source_team_id = @FactionID
                             AND e.experience_id = ANY(@ExperienceIDs)

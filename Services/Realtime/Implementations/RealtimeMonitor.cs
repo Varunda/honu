@@ -25,7 +25,7 @@ namespace watchtower.Realtime {
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {
-            Worlds = new[] { "1" },
+            Worlds = new[] { "1", "17" },
             Characters = new[] { "all" },
         };
 

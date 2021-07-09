@@ -62,11 +62,6 @@ namespace watchtower.Realtime {
                     return;
                 }
 
-                string? worldID = payloadToken.Value<string?>("world_id");
-                if (worldID != "1") {
-                    return;
-                }
-
                 string? eventName = payloadToken.Value<string?>("event_name");
 
                 if (eventName == null) {

@@ -92,7 +92,7 @@ namespace watchtower.Commands {
             );
         }
 
-        public void Count() {
+        public void Count(short worldID) {
             lock (CharacterStore.Get().Players) {
                 int totalCount = CharacterStore.Get().Players.Count;
 
@@ -100,18 +100,52 @@ namespace watchtower.Commands {
                     return CharacterStore.Get().Players.Where(predicate).Count();
                 }
 
-                int vsCount = Count(iter => iter.Value.TeamID == Faction.VS);
-                int ncCount = Count(iter => iter.Value.TeamID == Faction.NC);
-                int trCount = Count(iter => iter.Value.TeamID == Faction.TR);
-                int nsCount = Count(iter => iter.Value.TeamID == Faction.NS);
+                int vsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.VS);
+                int ncCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.NC);
+                int trCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.TR);
+                int nsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.NS);
 
-                int indarCount = Count(iter => iter.Value.ZoneID == Zone.Indar);
-                int esamirCount = Count(iter => iter.Value.ZoneID == Zone.Esamir);
-                int hossinCount = Count(iter => iter.Value.ZoneID == Zone.Hossin);
-                int amerishCount = Count(iter => iter.Value.ZoneID == Zone.Amerish);
-                int otherCount = Count(iter => iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1");
+                int indarCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Indar);
+                int esamirCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Esamir);
+                int hossinCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Hossin);
+                int amerishCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Amerish);
+                int otherCount = Count(iter => iter.Value.WorldID == worldID && (iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1"));
 
                 _Logger.LogInformation($"Characters being tracked:\n"
+                    + $"Total: {totalCount}\n"
+                    + $"VS: {vsCount}\n"
+                    + $"NC: {ncCount}\n"
+                    + $"TR: {trCount}\n"
+                    + $"NS: {nsCount}\n"
+                    + $"Indar: {indarCount}\n"
+                    + $"Hossin: {hossinCount}\n"
+                    + $"Amerish: {amerishCount}\n"
+                    + $"Esamir: {esamirCount}\n"
+                    + $"Other: {otherCount}\n"
+                );
+            }
+        }
+
+        public void Online(short worldID) {
+            lock (CharacterStore.Get().Players) {
+                int totalCount = CharacterStore.Get().Players.Count;
+
+                int Count(Func<KeyValuePair<string, TrackedPlayer>, bool> predicate) {
+                    return CharacterStore.Get().Players.Where(predicate).Count();
+                }
+
+                int vsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.TeamID == Faction.VS);
+                int ncCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.TeamID == Faction.NC);
+                int trCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.TeamID == Faction.TR);
+                int nsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.TeamID == Faction.NS);
+
+                int indarCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Indar);
+                int esamirCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Esamir);
+                int hossinCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Hossin);
+                int amerishCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Amerish);
+                int otherCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && (iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1"));
+
+                _Logger.LogInformation($"Characters being tracked (only online):\n"
                     + $"Total: {totalCount}\n"
                     + $"VS: {vsCount}\n"
                     + $"NC: {ncCount}\n"

@@ -89,7 +89,7 @@ namespace watchtower.Services.Db.Implementations {
                 WITH top_killers AS (
                     SELECT attacker_character_id
                         FROM wt_kills
-                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id = @FactionID
                         GROUP BY attacker_character_id
@@ -98,13 +98,13 @@ namespace watchtower.Services.Db.Implementations {
                 ), evs AS (
                     SELECT ID, attacker_character_id, killed_character_id, revived_event_id
                         FROM wt_kills
-                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
                 ), exp as (
                     SELECT id, source_character_id
                         FROM wt_exp 
-                        WHERE (timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND source_team_id = @FactionID
                             AND (experience_id = 2 OR experience_id = 3 OR experience_id = 371 OR experience_id = 372)

@@ -12,5 +12,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult SelectWorld() {
+            return View();
+        }
+
     }
 }
