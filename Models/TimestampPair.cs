@@ -20,5 +20,10 @@ namespace watchtower.Models {
         /// </summary>
         public long End { get; set; }
 
+        /// <summary>
+        /// Is this <see cref="TimestampPair"/> continous from the previous one
+        /// </summary>
+        public bool Open { get; set; }
+
     }
 }

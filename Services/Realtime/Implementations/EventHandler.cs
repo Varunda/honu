@@ -113,6 +113,11 @@ namespace watchtower.Realtime {
                         if (p != null) {
                             p.Online = false;
 
+                            if (p.OnlineIntervals.Count > 0) {
+                                TimestampPair last = p.OnlineIntervals.Last();
+                                last.Open = false;
+                            }
+
                             if (p.FactionID == Faction.NS) {
                                 p.TeamID = Faction.NS;
                             }

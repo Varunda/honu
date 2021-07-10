@@ -96,6 +96,11 @@ namespace watchtower.Services {
                     FactionID = p?.FactionID ?? options.FactionID
                 };
 
+                // TEMP: Fix for players being online for more than 2 hours
+                if (killDatum.SecondsOnline > (120 * 60)) {
+                    killDatum.SecondsOnline = 120 * 60;
+                }
+
                 data.Add(killDatum);
             }
 
@@ -361,10 +366,16 @@ namespace watchtower.Services {
                         previousPair = entry.Value.OnlineIntervals.Last();
                     }
 
+                    long start = currentTime * 1000;
+                    if (previousPair != null && previousPair.Value.Open == true) {
+                        start = previousPair.Value.End;
+                    }
+
                     // Add the current interval the character has been online for
                     entry.Value.OnlineIntervals.Add(new TimestampPair() {
-                        Start = previousPair?.End ?? currentTime * 1000,
-                        End = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                        Start = start,
+                        End = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                        Open = true
                     });
 
                     if (entry.Value.FactionID == Faction.VS) {

@@ -40,6 +40,11 @@ namespace watchtower.Services {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
                                 //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
                                 entry.Value.Online = false;
+
+                                if (entry.Value.OnlineIntervals.Count > 0) {
+                                    TimestampPair last = entry.Value.OnlineIntervals.Last();
+                                    last.Open = false;
+                                }
                             }
 
                             entry.Value.OnlineIntervals = entry.Value.OnlineIntervals.Where(iter => iter.End >= adjustedTime).ToList();
