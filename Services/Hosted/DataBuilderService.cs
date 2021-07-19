@@ -445,11 +445,11 @@ namespace watchtower.Services {
 
             time.Stop();
 
+            /*
             _Logger.LogInformation(
                 $"{DateTime.UtcNow} took {time.ElapsedMilliseconds}ms to build world data for {worldID}\n"
             );
 
-            /*
                 + $"\ttime to copy players: {timeToCopyPlayers}ms\n"
                 + $"\ttime to get heal entries: {timeToGetHealEntries}ms\n"
                 + $"\ttime to get revive entries: {timeToGetReviveEntries}ms\n"
