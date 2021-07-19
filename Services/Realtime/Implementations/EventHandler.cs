@@ -216,6 +216,7 @@ namespace watchtower.Realtime {
 
             int expId = payload.GetInt32("experience_id", -1);
             short loadoutId = payload.GetInt16("loadout_id", -1);
+            short worldID = payload.GetWorldID();
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
             int zoneID = payload.GetZoneID();
             string otherID = payload.GetString("other_id", "0");
@@ -230,7 +231,7 @@ namespace watchtower.Realtime {
                 ExperienceID = expId,
                 OtherID = otherID,
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime,
-                WorldID = payload.Value<short?>("world_id") ?? -1,
+                WorldID = worldID,
                 ZoneID = zoneID
             };
 
@@ -240,7 +241,7 @@ namespace watchtower.Realtime {
                     FactionID = factionID,
                     TeamID = factionID,
                     Online = true,
-                    WorldID = payload.GetWorldID()
+                    WorldID = worldID
                 });
 
                 p.Online = true;
@@ -286,7 +287,8 @@ namespace watchtower.Realtime {
                         FirstSeenAt = DateTime.UtcNow,
                         NpcID = otherID,
                         SpawnCount = 0,
-                        Type = "Sundy"
+                        Type = "Sundy",
+                        WorldID = worldID
                     });
 
                     ++npc.SpawnCount;

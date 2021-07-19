@@ -142,7 +142,7 @@
                 Vanu Sovereignty
                 <info-hover text="NS kills only count when that player is on this faction"></info-hover>
             </h4>
-            <player-kill-block :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
+            <player-kill-block @@set-modal-data="setModalData" :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
         </div>
         <div class="col-4">
             <h4>
@@ -321,6 +321,53 @@
             <h4>Squad leader ribbons</h4>
 
             work in progress
+        </div>
+    </div>
+
+    <div id="stat-table" style="display: hidden; background-color: var(--secondary); text: white; border: 2px var(--light) solid;">
+        <div class="d-flex bg-dark" style="align-items: center;">
+            <span class="flex-grow-1 px-2">
+                {{modalData.title}}
+            </span>
+
+            <button type="button" class="btn flex-grow-0" @@click="closeStatTooltip">
+                &times;
+            </button>
+        </div>
+
+        <table class="table table-sm table-striped mb-0">
+            <thead>
+                <tr>
+                    <th v-for="column in modalData.columnNames">
+                        {{column}}
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr v-for="datum in modalData.data">
+                    <td v-for="field in modalData.columnFields">
+                        {{datum[field]}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal" id="stat-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"> 
+                        {{modalData.title}} 
+                    </h4>
+
+                    <button type="button" class="close">
+                        &times;
+                    </button>
+                </div>
+
+            </div>
         </div>
     </div>
 

@@ -76,6 +76,11 @@ namespace watchtower.Realtime {
             return _Stream.DisconnectAsync();
         }
 
+        public Task Resubscribe() {
+            _Stream.Subscribe(_Subscription);
+            return Task.CompletedTask;
+        }
+
         private Task _OnConnectAsync(ReconnectionType type) {
             if (type == ReconnectionType.Initial) {
                 _Logger.LogInformation($"Stream connected");

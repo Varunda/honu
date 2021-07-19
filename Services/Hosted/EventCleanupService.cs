@@ -12,15 +12,21 @@ namespace watchtower.Services {
 
     public class EventCleanupService : BackgroundService {
 
+        private const string SERVICE_NAME = "event_cleanup";
+
         private const int _CleanupDelay = 15;
         private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
         private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
         private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
 
         private readonly ILogger<EventCleanupService> _Logger;
+        private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
-        public EventCleanupService(ILogger<EventCleanupService> logger) { 
+        public EventCleanupService(ILogger<EventCleanupService> logger,
+            IServiceHealthMonitor healthMon) { 
+
             _Logger = logger;
+            _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -34,6 +40,13 @@ namespace watchtower.Services {
                     long afkAdjustedTime = currentTime - (_AfkPeriod * 1000);
 
                     Stopwatch time = Stopwatch.StartNew();
+
+                    ServiceHealthEntry? healthEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                    if (healthEntry == null) {
+                        healthEntry = new ServiceHealthEntry() {
+                            Name = SERVICE_NAME
+                        };
+                    }
 
                     lock (CharacterStore.Get().Players) {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
@@ -66,10 +79,11 @@ namespace watchtower.Services {
                         }
                     }
 
-                    //_Logger.LogTrace($"Removed {killsRemove} kills");
-
                     time.Stop();
-                    _Logger.LogDebug($"{DateTime.UtcNow} Took {time.ElapsedMilliseconds}ms to clean events beyond {_KeepPeriod} seconds");
+
+                    healthEntry.LastRan = DateTime.UtcNow;
+                    healthEntry.RunDuration = time.ElapsedMilliseconds;
+                    _ServiceHealthMonitor.Set(SERVICE_NAME, healthEntry);
 
                     await Task.Delay(_CleanupDelay * 1000, stoppingToken);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested) {

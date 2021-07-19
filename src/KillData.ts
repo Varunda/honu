@@ -1,6 +1,9 @@
 ﻿import Vue from "vue";
+import EventBus from "EventBus";
 
 import FactionColors from "FactionColors";
+import { StatModalData } from "StatModalData";
+import { CharacterKillApi, CharacterWeaponKillEntry } from "api/CharacterKillApi";
 
 Vue.component("player-kill-block", {
 	props: {
@@ -17,8 +20,34 @@ Vue.component("player-kill-block", {
 	methods: {
 		getFactionColor: function(factionID: number): string {
 			return FactionColors.getFactionColor(factionID);
-		}
+		},
 
+		openCharacterWeaponKills: async function(event: any, charID: string): Promise<void> {
+			const modalData: StatModalData = new StatModalData();
+
+			const target: any = event.target;
+
+			const kills: CharacterWeaponKillEntry[] = await CharacterKillApi.getWeaponEntries(charID);
+
+			const totalKills: number = kills.reduce((acc, iter) => acc + iter.kills, 0);
+
+			console.log(`Total kills: ${totalKills}`);
+
+			modalData.title = "Weapon usage";
+			modalData.columnFields = [ "weaponName", "kills", "headshotRatio", "percent" ];
+			modalData.columnNames = [ "Weapon", "Kills", "Headshots", "Usage" ];
+			modalData.root = target;
+
+			modalData.data = kills.map((iter: CharacterWeaponKillEntry) => {
+				return {
+					...iter,
+					headshotRatio: `${(iter.headshotKills / iter.kills * 100).toFixed(2)}%`,
+					percent: `${(iter.kills / totalKills * 100).toFixed(2)}%`
+				}
+			});
+
+			EventBus.$emit("set-modal-data", modalData);
+		}
 	},
 
 	template: `
@@ -55,7 +84,9 @@ Vue.component("player-kill-block", {
 							</span>
 						</span>
 					</td>
-					<td>{{entry.kills}}</td>
+					<td>
+						<a @click="openCharacterWeaponKills($event, entry.id)" href="#">{{entry.kills}}</a>
+					</td>
 					<td>{{(entry.kills / (entry.secondsOnline / 60)).toFixed(2)}}</td>
 					<td>{{entry.deaths}}</td>
 					<td>{{entry.assists}}</td>

@@ -24,5 +24,22 @@ namespace watchtower.Code.Constants {
                 || worldID == Emerald || worldID == Jaeger || worldID == SolTech;
         }
 
+        /// <summary>
+        /// Get a display friendly name of a world
+        /// </summary>
+        /// <param name="worldID">World ID to get the name of</param>
+        /// <returns></returns>
+        public static string GetName(short worldID) {
+            switch (worldID) {
+                case Connery: return "Connery";
+                case Miller: return "Miller";
+                case Cobalt: return "Cobalt";
+                case Emerald: return "Emerald";
+                case Jaeger: return "Jaeger";
+                case SolTech: return "SolTech";
+                default: return $"Unknown {worldID}";
+            }
+        }
+
     }
 }

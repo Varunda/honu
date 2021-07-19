@@ -40,14 +40,14 @@ namespace watchtower {
 
             Console.WriteLine($"Ran host");
 
-            string line = "";
+            string? line = "";
             while (line != ".close") {
                 line = Console.ReadLine();
 
                 if (line == ".close") {
                     break;
                 } else {
-                    if (commands != null) {
+                    if (line != null && commands != null) {
                         await commands.Execute(line);
                     }
                 }

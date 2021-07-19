@@ -15,3 +15,5 @@ node_modules/
 
 PreviousEvents.json
 build/
+
+.vscode/

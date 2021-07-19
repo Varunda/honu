@@ -1,13 +1,17 @@
 ﻿import * as sR from "signalR";
 import Vue from "vue";
+import { createPopper, Instance } from "../node_modules/@popperjs/core/lib/popper";
+
 import { WorldData } from "./WorldData";
-import FactionColors from "FactionColors";
+import FactionColors from "./FactionColors";
+import EventBus from "EventBus";
 
 import "./BlockView";
 import "./KillData";
 import "./OutfitKillData";
 import "./InfoHover";
 import "./MomentFilter";
+import { StatModalData } from "StatModalData";
 
 const vm = new Vue({
 	el: "#app",
@@ -54,6 +58,9 @@ const vm = new Vue({
 			}
 		});
 
+		EventBus.$on("set-modal-data", (modalData: StatModalData) => {
+			this.setModalData(modalData);
+		});
 	},
 
 	data: {
@@ -61,7 +68,11 @@ const vm = new Vue({
 		socketState: "" as string,
 		lastUpdate: null as Date | null,
 		trackingPeriodStart: null as Date | null,
-		connection: null as sR.HubConnection | null
+		connection: null as sR.HubConnection | null,
+
+		modalData: new StatModalData() as StatModalData,
+
+		popperInstance: null as Instance | null,
 	},
 
 	methods: {
@@ -84,8 +95,8 @@ const vm = new Vue({
 
 			console.log(`path: ${path}, parts: ${parts.join(", ")}`);
 
-			if (parts.length == 2) {
-				const world: string = parts[1].toLowerCase();
+			if (parts.length == 3) {
+				const world: string = parts[2].toLowerCase();
 
 				if (world == "connery" || world == "1") {
 					this.subscribeToWorld(1);
@@ -107,7 +118,36 @@ const vm = new Vue({
 
 		getFactionColor: function (factionID: number): string {
 			return FactionColors.getFactionColor(factionID);
+		},
+
+		setModalData: function(modalData: StatModalData): void {
+			this.modalData = modalData;
+
+			this.$nextTick(() => {
+				if (modalData.root == null) {
+					console.error(`Missing root element`);
+					return;
+				}
+
+				const tooltip: HTMLElement | null = document.getElementById("stat-table");
+				if (tooltip == null) {
+					console.error(`Missing tooltip element '#stat-table'`);
+					return;
+				}
+
+				const popper: Instance = createPopper(modalData.root, tooltip, {
+					placement: "auto",
+				});
+				this.popperInstance = popper;
+			});
+		},
+
+		closeStatTooltip: function(): void {
+			if (this.popperInstance != null) {
+				this.popperInstance.destroy();
+			}
 		}
+
 	},
 
 	computed: {

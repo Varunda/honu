@@ -89,6 +89,12 @@ namespace watchtower.Services {
                         methodParams[i - 2] = args[i];
                     } else if (paramType == typeof(int)) {
                         methodParams[i - 2] = int.Parse(args[i]);
+                    } else if (paramType == typeof(short)) {
+                        methodParams[i - 2] = short.Parse(args[i]);
+                    } else if (paramType == typeof(bool)) {
+                        methodParams[i - 2] = bool.Parse(args[i]);
+                    } else {
+                        _Logger.LogWarning($"Unhandled type {paramType.Name}");
                     }
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Failed to convert {param} to {type}", args[i], paramType.Name);

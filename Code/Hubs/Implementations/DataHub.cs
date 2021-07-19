@@ -32,7 +32,7 @@ namespace watchtower.Code.Hubs.Implementations {
             await base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(Exception exception) {
+        public override Task OnDisconnectedAsync(Exception? exception) {
             _Logger.LogInformation($"Hub disconnect: {Context.ConnectionId}, count {--_ConnectionCount}");
 
             return base.OnDisconnectedAsync(exception);

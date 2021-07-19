@@ -18,6 +18,7 @@ using watchtower.Services.Implementations;
 using watchtower.Services.Db.Readers;
 using watchtower.Code.Hubs;
 using System.Text.Json;
+using watchtower.Models.Events;
 
 namespace watchtower {
 
@@ -64,6 +65,7 @@ namespace watchtower {
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
+            services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
@@ -71,19 +73,23 @@ namespace watchtower {
             services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
             services.AddSingleton<ICharacterDbStore, CharacterDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
+            services.AddSingleton<IItemDbStore, ItemDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
             services.AddSingleton<IDataReader<KillDbOutfitEntry>, KillDbOutfitEntryReader>();
+            services.AddSingleton<IDataReader<KillEvent>, KillEventReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
             services.AddSingleton<IOutfitCollection, OutfitCollection>();
+            services.AddSingleton<IItemCollection, ItemCollection>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
             services.AddSingleton<IOutfitRepository, OutfitRepository>();
             services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
+            services.AddSingleton<IItemRepository, ItemRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist
@@ -116,8 +122,13 @@ namespace watchtower {
 
                 endpoints.MapControllerRoute(
                     name: "worlddata",
-                    pattern: "{*.}",
+                    pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }
+                );
+
+                endpoints.MapControllerRoute(
+                    name: "api",
+                    pattern: "/api/{controller}/{action}"
                 );
 
                 endpoints.MapHub<WorldDataHub>("/ws/data");

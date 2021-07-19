@@ -21,7 +21,7 @@ namespace watchtower.Commands {
         private readonly IOutfitRepository _Outfitrepository;
 
         public CharCommand(IServiceProvider services) {
-            _Logger = (ILogger<CharCommand>)services.GetService(typeof(ILogger<CharCommand>));
+            _Logger = services.GetRequiredService<ILogger<CharCommand>>();
 
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
             _Outfitrepository = services.GetRequiredService<IOutfitRepository>();

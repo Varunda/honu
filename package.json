@@ -5,6 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "@microsoft/signalr": "^5.0.2",
+    "@popperjs/core": "^2.9.2",
+    "axios": "^0.21.1",
     "chartjs": "^0.3.24",
     "clean-webpack-plugin": "^1.0.1",
     "moment": "^2.29.1",
@@ -14,6 +16,7 @@
     "vue": "^2.6.12",
     "vue-loader": "^15.9.6",
     "vue-template-compiler": "^2.6.12",
+    "vuex": "^3.6.2",
     "webpack": "^5.18.0"
   },
   "devDependencies": {

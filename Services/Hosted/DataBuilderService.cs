@@ -20,14 +20,18 @@ using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 using watchtower.Code.Hubs;
+using watchtower.Code.Constants;
 
 namespace watchtower.Services {
 
     public class DataBuilderService : BackgroundService {
 
-        private const int _RunDelay = 5;
+        private const int _RunDelay = 5; // seconds
+
+        private const string SERVICE_NAME = "data_builder";
 
         private readonly ILogger<DataBuilderService> _Logger;
+        private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
@@ -40,16 +44,18 @@ namespace watchtower.Services {
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
 
         private List<short> _WorldIDs = new List<short>() {
-            1, 17 // 10, 13, 17, 19, 40
+            1, 10, 13, 17, 19, 40
         };
 
         public DataBuilderService(ILogger<DataBuilderService> logger,
             IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
-            IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo) {
+            IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo,
+            IServiceHealthMonitor healthMon) {
 
             _Logger = logger;
+            _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
 
             _KillEventDb = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
@@ -60,15 +66,6 @@ namespace watchtower.Services {
             _WorldDataRepository = worldDataRepo ?? throw new ArgumentNullException(nameof(worldDataRepo));
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));
-        }
-
-        public override Task StartAsync(CancellationToken cancellationToken) {
-            return base.StartAsync(cancellationToken);
-        }
-
-        public override Task StopAsync(CancellationToken cancellationToken) {
-            _Logger.LogError($"DataBuilder service stopped");
-            return base.StopAsync(cancellationToken);
         }
 
         public async Task<List<KillData>> GetTopKillers(KillDbOptions options, Dictionary<string, TrackedPlayer> players) {
@@ -178,12 +175,42 @@ namespace watchtower.Services {
                 try {
                     Stopwatch timer = Stopwatch.StartNew();
 
+                    ServiceHealthEntry? entry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                    if (entry == null) {
+                        entry = new ServiceHealthEntry() {
+                            Name = SERVICE_NAME
+                        };
+                    }
+
+                    // Useful for debugging on my laptop which can't handle running the queries and run vscode at the same time
+                    if (entry.Enabled == false) {
+                        await Task.Delay(1000, stoppingToken);
+                        continue;
+                    }
+
                     foreach (short worldID in _WorldIDs) {
-                        WorldData data = await _BuildWorldData(worldID);
+                        WorldData data = await _BuildWorldData(worldID, stoppingToken);
                         _WorldDataRepository.Set(worldID, data);
+
+                        if (stoppingToken.IsCancellationRequested) {
+                            _Logger.LogDebug($"Stopping token sent, disabling early");
+                            entry.Enabled = false;
+                            break;
+                        }
+
+                        ServiceHealthEntry? iterEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                        if (iterEntry != null && iterEntry.Enabled == false) {
+                            _Logger.LogInformation($"{SERVICE_NAME} ended early");
+                            entry.Enabled = false;
+                            break;
+                        }
                     }
 
                     long elapsedTime = timer.ElapsedMilliseconds;
+
+                    entry.RunDuration = elapsedTime;
+                    entry.LastRan = DateTime.UtcNow;
+                    _ServiceHealthMonitor.Set(SERVICE_NAME, entry);
 
                     long timeToHold = (_RunDelay * 1000) - elapsedTime;
 
@@ -199,7 +226,7 @@ namespace watchtower.Services {
             }
         }
 
-        private async Task<WorldData> _BuildWorldData(short worldID) {
+        private async Task<WorldData> _BuildWorldData(short worldID, CancellationToken? stoppingToken = null) {
             Stopwatch time = Stopwatch.StartNew();
 
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -207,7 +234,7 @@ namespace watchtower.Services {
             WorldData data = new WorldData();
 
             data.WorldID = worldID;
-            //data.WorldName = "Connery";
+            data.WorldName = World.GetName(worldID);
             data.ContinentCount = new ContinentCount();
 
             Dictionary<string, TrackedPlayer> players;
@@ -238,6 +265,9 @@ namespace watchtower.Services {
             );
             long timeToGetHealEntries = time.ElapsedMilliseconds;
 
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
+
             ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
             await Task.WhenAll(
                 GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerRevives.Entries = t.Result),
@@ -249,6 +279,9 @@ namespace watchtower.Services {
             );
             long timeToGetReviveEntries = time.ElapsedMilliseconds;
 
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
+
             ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
             await Task.WhenAll(
                 GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerResupplies.Entries = t.Result),
@@ -259,6 +292,9 @@ namespace watchtower.Services {
                 GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitResupplies.Entries = t.Result)
             );
             long timeToGetResupplyEntries = time.ElapsedMilliseconds;
+
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() {
                 Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
@@ -273,6 +309,9 @@ namespace watchtower.Services {
                 GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitSpawns.Entries = t.Result)
             );
             long timeToGetSpawnEntries = time.ElapsedMilliseconds;
+
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
             KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
@@ -289,6 +328,9 @@ namespace watchtower.Services {
 
             long timeToGetTopKills = time.ElapsedMilliseconds;
 
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
+
             data.TopSpawns = new SpawnEntries();
 
             Dictionary<string, TrackedNpc> npcs;
@@ -298,17 +340,20 @@ namespace watchtower.Services {
 
             long timeToCopyNpcStore = time.ElapsedMilliseconds;
 
-            data.TopSpawns.Entries = npcs.Values.OrderByDescending(iter => iter.SpawnCount).Take(8).Select(async iter => {
-                PsCharacter? c = await _CharacterRepository.GetByID(iter.OwnerID);
+            data.TopSpawns.Entries = npcs.Values
+                .Where(iter => iter.WorldID == worldID)
+                .OrderByDescending(iter => iter.SpawnCount).Take(8)
+                .Select(async iter => {
+                    PsCharacter? c = await _CharacterRepository.GetByID(iter.OwnerID);
 
-                return new SpawnEntry() {
-                    FirstSeenAt = iter.FirstSeenAt,
-                    SecondsAlive = (int)(DateTime.UtcNow - iter.FirstSeenAt).TotalSeconds,
-                    SpawnCount = iter.SpawnCount,
-                    FactionID = c?.FactionID ?? Faction.UNKNOWN,
-                    Owner = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {iter.OwnerID}"
-                };
-            }).Select(iter => iter.Result).ToList();
+                    return new SpawnEntry() {
+                        FirstSeenAt = iter.FirstSeenAt,
+                        SecondsAlive = (int)(DateTime.UtcNow - iter.FirstSeenAt).TotalSeconds,
+                        SpawnCount = iter.SpawnCount,
+                        FactionID = c?.FactionID ?? Faction.UNKNOWN,
+                        Owner = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {iter.OwnerID}"
+                    };
+                }).Select(iter => iter.Result).ToList();
 
             long timeToGetBiggestSpawns = time.ElapsedMilliseconds;
 
@@ -318,6 +363,9 @@ namespace watchtower.Services {
             };
 
             WorldTotal worldTotal = await _WorldTotalDb.Get(totalOptions);
+
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             data.VS.TotalKills = worldTotal.GetValue(WorldTotal.TOTAL_VS_KILLS);
             data.VS.TotalDeaths = worldTotal.GetValue(WorldTotal.TOTAL_VS_DEATHS);
@@ -356,6 +404,9 @@ namespace watchtower.Services {
             data.TR.OutfitSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SPAWNS);
 
             long timeToGetWorldTotals = time.ElapsedMilliseconds;
+
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
                 if (entry.Value.Online == true) {
@@ -397,6 +448,7 @@ namespace watchtower.Services {
             _Logger.LogInformation(
                 $"{DateTime.UtcNow} took {time.ElapsedMilliseconds}ms to build world data for {worldID}\n"
             );
+
             /*
                 + $"\ttime to copy players: {timeToCopyPlayers}ms\n"
                 + $"\ttime to get heal entries: {timeToGetHealEntries}ms\n"

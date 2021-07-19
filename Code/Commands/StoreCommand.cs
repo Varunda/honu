@@ -25,7 +25,7 @@ namespace watchtower.Commands {
         private readonly IKillEventDbStore _KillEventDb;
 
         public StoreCommand(IServiceProvider services) {
-            _Logger = (ILogger<StoreCommand>)services.GetService(typeof(ILogger<StoreCommand>));
+            _Logger = services.GetRequiredService<ILogger<StoreCommand>>();
 
             _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
             _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
@@ -100,13 +100,16 @@ namespace watchtower.Commands {
 
         public void Count(short worldID) {
             lock (CharacterStore.Get().Players) {
-                int totalCount = CharacterStore.Get().Players.Count;
-
                 int Count(Func<KeyValuePair<string, TrackedPlayer>, bool> predicate) {
-                    return CharacterStore.Get().Players.Where(predicate).Count();
+                    return CharacterStore.Get().Players.Count(predicate);
                 }
 
+                int totalCount = Count(iter => iter.Value.WorldID == worldID);
+
+                totalCount = CharacterStore.Get().Players.Where(iter => iter.Value.WorldID == worldID).Count();
+
                 int vsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.VS);
+                int vsCountWorld = Count(iter => iter.Value.TeamID == Faction.VS);
                 int ncCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.NC);
                 int trCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.TR);
                 int nsCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.TeamID == Faction.NS);
@@ -119,7 +122,7 @@ namespace watchtower.Commands {
 
                 _Logger.LogInformation($"Characters being tracked:\n"
                     + $"Total: {totalCount}\n"
-                    + $"VS: {vsCount}\n"
+                    + $"VS: {vsCount}/{vsCountWorld}\n"
                     + $"NC: {ncCount}\n"
                     + $"TR: {trCount}\n"
                     + $"NS: {nsCount}\n"

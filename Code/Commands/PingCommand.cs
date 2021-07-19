@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace watchtower.Commands {
         private readonly ILogger<PingCommand> _Logger;
 
         public PingCommand(IServiceProvider services) {
-            _Logger = (ILogger<PingCommand>)services.GetService(typeof(ILogger<PingCommand>));
+            _Logger = services.GetRequiredService<ILogger<PingCommand>>();
         }
 
         public void Ping() {

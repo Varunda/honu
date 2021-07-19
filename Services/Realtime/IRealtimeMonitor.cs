@@ -12,5 +12,7 @@ namespace watchtower.Realtime {
 
         Task OnShutdownAsync(CancellationToken cancel);
 
+        Task Resubscribe();
+
     }
 }

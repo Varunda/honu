@@ -22,5 +22,7 @@ namespace watchtower.Models {
         /// </summary>
         public long LatestEventAt { get; set; }
 
+        public short WorldID { get; set; }
+
     }
 }

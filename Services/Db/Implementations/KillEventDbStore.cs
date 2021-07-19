@@ -19,10 +19,11 @@ namespace watchtower.Services.Db.Implementations {
 
         private readonly IDataReader<KillDbEntry> _KillDbReader;
         private readonly IDataReader<KillDbOutfitEntry> _KillOutfitReader;
+        private readonly IDataReader<KillEvent> _KillEventReader;
 
         public KillEventDbStore(ILogger<KillEventDbStore> logger,
             IDbHelper dbHelper, IDataReader<KillDbEntry> killDbReader,
-            IDataReader<KillDbOutfitEntry> outfitDbReader) {
+            IDataReader<KillDbOutfitEntry> outfitDbReader, IDataReader<KillEvent> evReader) {
 
             _Logger = logger;
 
@@ -30,6 +31,7 @@ namespace watchtower.Services.Db.Implementations {
 
             _KillDbReader = killDbReader ?? throw new ArgumentNullException(nameof(killDbReader));
             _KillOutfitReader = outfitDbReader ?? throw new ArgumentNullException(nameof(outfitDbReader));
+            _KillEventReader = evReader ?? throw new ArgumentNullException(nameof(evReader));
         }
 
         public async Task Insert(KillEvent ev) {
@@ -138,7 +140,7 @@ namespace watchtower.Services.Db.Implementations {
                         FROM wt_kills k
                             INNER JOIN wt_character c on k.attacker_character_id = c.id
                             INNER JOIN wt_character c2 on k.killed_character_id = c2.id
-                        WHERE (k.timestamp + (@Interval || ' minutes')::INTERVAL) >= NOW() at time zone 'utc'
+                        WHERE k.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND k.world_id = @WorldID
                             AND attacker_faction_id != killed_faction_id
                             AND (attacker_faction_id = @FactionID OR killed_faction_id = @FactionID)
@@ -165,6 +167,23 @@ namespace watchtower.Services.Db.Implementations {
             List<KillDbOutfitEntry> entries = await _KillOutfitReader.ReadList(cmd);
 
             return entries;
+        }
+
+        public async Task<List<KillEvent>> GetByCharacterID(string charID, int interval) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_kills
+                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID)
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("Interval", interval);
+
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+
+            return evs;
         }
 
     }
