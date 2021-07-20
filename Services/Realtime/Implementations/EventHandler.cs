@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models;
@@ -287,13 +288,27 @@ namespace watchtower.Realtime {
                         FirstSeenAt = DateTime.UtcNow,
                         NpcID = otherID,
                         SpawnCount = 0,
-                        Type = "Sundy",
+                        Type = NpcType.Sunderer,
                         WorldID = worldID
                     });
 
                     ++npc.SpawnCount;
                     npc.LatestEventAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 };
+            } else if (expId == Experience.GENERIC_NPC_SPAWN && otherID != null && otherID != "0") {
+                lock (NpcStore.Get().Npcs) {
+                    TrackedNpc npc = NpcStore.Get().Npcs.GetOrAdd(otherID, new TrackedNpc() {
+                        OwnerID = charID,
+                        FirstSeenAt = DateTime.UtcNow,
+                        NpcID = otherID,
+                        SpawnCount = 0,
+                        Type = NpcType.Router,
+                        WorldID = worldID
+                    });
+
+                    ++npc.SpawnCount;
+                    npc.LatestEventAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                }
             }
 
         }

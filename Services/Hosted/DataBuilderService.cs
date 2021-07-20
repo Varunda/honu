@@ -348,6 +348,7 @@ namespace watchtower.Services {
 
                     return new SpawnEntry() {
                         FirstSeenAt = iter.FirstSeenAt,
+                        NpcType = iter.Type,
                         SecondsAlive = (int)(DateTime.UtcNow - iter.FirstSeenAt).TotalSeconds,
                         SpawnCount = iter.SpawnCount,
                         FactionID = c?.FactionID ?? Faction.UNKNOWN,

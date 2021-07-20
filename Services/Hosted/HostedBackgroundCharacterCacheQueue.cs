@@ -15,6 +15,8 @@ namespace watchtower.Services.Hosted {
 
     public class HostedBackgroundCharacterCacheQueue : BackgroundService {
 
+        private const string SERVICE_NAME = "background_character_cache";
+
         private readonly ILogger<HostedBackgroundCharacterCacheQueue> _Logger;
         private readonly IBackgroundCharacterCacheQueue _Queue;
 
@@ -71,8 +73,10 @@ namespace watchtower.Services.Hosted {
                     }
                 } catch (CensusServiceUnavailableException) {
                     _Logger.LogWarning($"Failed to get character from API");
-                } catch (Exception ex) {
+                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error while caching character");
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
+                    _Logger.LogInformation($"Stopping {SERVICE_NAME}");
                 }
             }
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 
 namespace watchtower.Models {
 
@@ -9,7 +10,7 @@ namespace watchtower.Models {
 
         public string NpcID { get; set; } = "";
 
-        public string Type { get; set; } = "";
+        public NpcType Type { get; set; } = NpcType.Unknown;
 
         public string OwnerID { get; set; } = "";
 

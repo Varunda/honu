@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 
 namespace watchtower.Models {
 
@@ -14,6 +15,8 @@ namespace watchtower.Models {
     public class SpawnEntry {
 
         public string Owner { get; set; } = "";
+
+        public NpcType NpcType { get; set; } = NpcType.Unknown;
 
         public int SpawnCount { get; set; }
 

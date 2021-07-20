@@ -1,6 +1,7 @@
 ﻿<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <script src="~/lib/signalr/signalr.js"></script>
 <script src="~/dist/main/view.js" defer asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/wt-grid.css">
 
 <style>
     .wt-block {
@@ -23,7 +24,6 @@
         cursor: pointer !important;
         color: var(--success) !important;
     }
-
 </style>
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
@@ -141,149 +141,97 @@
 
     <hr />
 
-    <div class="row">
-        <div class="col-4">
-            <h4>
-                <img src="~/img/logo_vs.png" style="width: 32px; "/>
-                Vanu Sovereignty
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
-            <player-kill-block @@set-modal-data="setModalData" :block="worldData.vs" :seconds="worldData.trackingDuration"></player-kill-block>
-        </div>
-        <div class="col-4">
-            <h4>
-                <img src="~/img/logo_nc.png" style="width: 32px; "/>
-                New Conglomerate
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
-            <player-kill-block :block="worldData.nc" :seconds="worldData.trackingDuration"></player-kill-block>
-        </div>
-        <div class="col-4">
-            <h4>
-                <img src="~/img/logo_tr.png" style="width: 32px; "/>
-                Terran Republic
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
-            <player-kill-block :block="worldData.tr" :seconds="worldData.trackingDuration"></player-kill-block>
-        </div>
-    </div>
+    <div class="wt-grid-container" style="display: grid;">
+        <h4 class="grid-11">
+            <img src="~/img/logo_vs.png" style="width: 32px; "/>
+            Vanu Sovereignty
+            <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+        </h4>
 
-    <div class="row">
-        <div class="col-4">
+        <div class="grid-12">
+            <player-kill-block :block="worldData.vs"></player-kill-block>
             <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
         </div>
-        <div class="col-4">
-            <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
-        </div>
-        <div class="col-4">
-            <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
-        </div>
-    </div>
 
-    <h4 class="strike">Heals</h4>
-    <div class="row">
-        <div class="col-2 pr-0">
+        <div class="grid-13 d-flex">
             <block-view :block="worldData.vs.playerHeals" :source="expSources.heal"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
             <block-view :block="worldData.vs.outfitHeals" title="Outfits"></block-view>
         </div>
 
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerHeals" :source="expSources.heal"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
-        </div>
-
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerHeals" :source="expSources.heal"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
-        </div>
-    </div>
-
-    <h4 class="strike">Revives</h4>
-    <div class="row">
-        <div class="col-2 pr-0">
+        <div class="grid-14 d-flex">
             <block-view :block="worldData.vs.playerRevives" :source="expSources.revive"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
             <block-view :block="worldData.vs.outfitRevives" title="Outfits"></block-view>
         </div>
 
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerRevives" :source="expSources.revive"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
-        </div>
-
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerRevives" :source="expSources.revive"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
-        </div>
-    </div>
-
-    <h4 class="strike">Resupplies</h4>
-    <div class="row">
-        <div class="col-2 pr-0">
+        <div class="grid-15 d-flex">
             <block-view :block="worldData.vs.playerResupplies" :source="expSources.resupply"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
             <block-view :block="worldData.vs.outfitResupplies" title="Outfits"></block-view>
         </div>
 
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerResupplies" :source="expSources.resupply"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
-        </div>
-
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerResupplies" :source="expSources.resupply"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
-            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
-        </div>
-    </div>
-
-    <h4 class="strike">Spawns &lt;3</h4>
-    <div class="row">
-        <div class="col-2 pr-0">
+        <div class="grid-16 d-flex">
             <block-view :block="worldData.vs.playerSpawns" :source="expSources.spawn"></block-view>
-        </div>
-
-        <div class="col-2 pl-0">
             <block-view :block="worldData.vs.outfitSpawns" title="Outfits"></block-view>
         </div>
 
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerSpawns" :source="expSources.spawn"></block-view>
+        <h4 class="grid-21">
+            <img src="~/img/logo_nc.png" style="width: 32px; "/>
+            New Conglomerate
+            <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+        </h4>
+
+        <div class="grid-22">
+            <player-kill-block :block="worldData.nc"></player-kill-block>
+            <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
         </div>
 
-        <div class="col-2 pl-0">
+        <div class="grid-23 d-flex">
+            <block-view :block="worldData.nc.playerHeals" :source="expSources.heal"></block-view>
+            <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-24 d-flex">
+            <block-view :block="worldData.nc.playerRevives" :source="expSources.revive"></block-view>
+            <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-25 d-flex">
+            <block-view :block="worldData.nc.playerResupplies" :source="expSources.resupply"></block-view>
+            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-26 d-flex">
+            <block-view :block="worldData.nc.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.nc.outfitSpawns" title="Outfits"></block-view>
         </div>
 
-        <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
+        <h4 class="grid-31">
+            <img src="~/img/logo_tr.png" style="width: 32px; "/>
+            Terran Republic
+            <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+        </h4>
+
+        <div class="grid-32">
+            <player-kill-block :block="worldData.tr"></player-kill-block>
+            <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
         </div>
 
-        <div class="col-2 pl-0">
+        <div class="grid-33 d-flex">
+            <block-view :block="worldData.tr.playerHeals" :source="expSources.heal"></block-view>
+            <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-34 d-flex">
+            <block-view :block="worldData.tr.playerRevives" :source="expSources.revive"></block-view>
+            <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-35 d-flex">
+            <block-view :block="worldData.tr.playerResupplies" :source="expSources.resupply"></block-view>
+            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
+        </div>
+
+        <div class="grid-36 d-flex">
+            <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
         </div>
     </div>
@@ -294,21 +242,35 @@
     <div class="row">
         <div class="col-4">
             <h4>
-                Current top sundies
+                Current top spawns
                 <info-hover text="Sundies are removed when they haven't spawned anyone in 5 minutes, not when they're killed"></info-hover>
             </h4>
 
             <table class="table table-sm">
                 <tr>
                     <th>Owner</th>
-                    <th>Spawn count</th>
-                    <th>Spawns per minute</th>
+                    <th>Type</th>
+                    <th>Spawns</th>
+                    <th>Spawns/min</th>
                     <th>Deployed at</th>
-                    <th>Time alive</th>
+                    <th>Lifespan</th>
                 </tr>
 
                 <tr v-for="entry in worldData.topSpawns.entries">
                     <td :style="{ color: getFactionColor(entry.factionID) }">{{entry.owner}}</td>
+                    <td>
+                        <span v-if="entry.npcType == 1" title="Sunderer">
+                            S
+                        </span>
+
+                        <span v-else-if="entry.npcType == 2" title="Router">
+                            R
+                        </span>
+
+                        <span v-else title="Unknown">
+                            U
+                        </span>
+                    </td>
                     <td>{{entry.spawnCount}}</td>
                     <td>{{(entry.spawnCount / (entry.secondsAlive / 60)).toFixed(2)}}</td>
                     <td>{{entry.firstSeenAt | moment}}</td>

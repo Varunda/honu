@@ -100,6 +100,7 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<WorldDataBroadcastService>();
+            services.AddHostedService<RealtimeResubcribeService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
