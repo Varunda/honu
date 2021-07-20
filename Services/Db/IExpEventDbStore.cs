@@ -36,5 +36,7 @@ namespace watchtower.Services.Db {
         /// </returns>
         Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options);
 
+        Task<List<ExpEvent>> GetByCharacterID(string charID, int interval);
+
     }
 }

@@ -1,5 +1,10 @@
 ﻿import Vue from "vue";
 
+import EventBus from "EventBus";
+
+import { StatModalData } from "StatModalData";
+import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
+
 Vue.component("outfit-kill-block", {
 	props: {
 		block: { required: true },
@@ -13,7 +18,41 @@ Vue.component("outfit-kill-block", {
 	},
 
 	methods: {
+		openOutfitKillers: async function(event: any, outfitID: string): Promise<void> {
+			const modalData: StatModalData = new StatModalData();
+			modalData.root = event.target;
+			modalData.title = "Outfit top killers";
+			modalData.columnFields = [ "characterName", "kills", "percent" ];
+			modalData.columnNames = [ "Character", "Kills", "Usage" ];
+			modalData.loading = true;
 
+			EventBus.$emit("set-modal-data", modalData);
+
+			let kills: OutfitKillerEntry[] = await KillStatApi.getOutfitKillers(outfitID);
+			const totalKills: number = kills.reduce((acc, iter) => acc + iter.kills, 0);
+
+			// Trim to only show the top 6 killers
+			if (kills.length > 7) {
+				const hiddenKillers: OutfitKillerEntry[] = kills.slice(6);
+				kills = kills.slice(0, 6);
+
+				kills.push({
+					characterID: "",
+					characterName:  "Other",
+					kills: hiddenKillers.reduce((acc, iter) => acc + iter.kills, 0)
+				});
+			}
+
+			modalData.data = kills.map((iter: OutfitKillerEntry) => {
+				return {
+					...iter,
+					percent: `${(iter.kills / totalKills * 100).toFixed(2)}%`
+				}
+			});
+			modalData.loading = false;
+
+			EventBus.$emit("set-modal-data", modalData);
+		}
 	},
 
 	template: `
@@ -32,7 +71,9 @@ Vue.component("outfit-kill-block", {
 				<tr v-for="entry in block.entries">
 					<td :title="entry.name">[{{entry.tag}}] {{entry.name}}</td>
 					<td>
-						{{entry.kills}}
+						<a @click="openOutfitKillers($event, entry.id)">
+							{{entry.kills}}
+						</a>
 						({{(entry.kills / (entry.members || 1)).toFixed(2)}})
 					</td>
 					<td>

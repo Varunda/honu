@@ -3,6 +3,8 @@ import Vue from "vue";
 import { createPopper, Instance } from "../node_modules/@popperjs/core/lib/popper";
 
 import { WorldData } from "./WorldData";
+import { StatModalData } from "StatModalData";
+import { ExpStatApi } from "api/ExpStatApi";
 import FactionColors from "./FactionColors";
 import EventBus from "EventBus";
 
@@ -11,7 +13,6 @@ import "./KillData";
 import "./OutfitKillData";
 import "./InfoHover";
 import "./MomentFilter";
-import { StatModalData } from "StatModalData";
 
 const vm = new Vue({
 	el: "#app",
@@ -73,6 +74,14 @@ const vm = new Vue({
 		modalData: new StatModalData() as StatModalData,
 
 		popperInstance: null as Instance | null,
+
+		expSources: {
+			heal: ExpStatApi.getCharacterHealEntries,
+			revive: ExpStatApi.getCharacterReviveEntries,
+			resupply: ExpStatApi.getCharacterResupplyEntries,
+			spawn: ExpStatApi.getCharacterSpawnEntries
+		}
+
 	},
 
 	methods: {
@@ -123,28 +132,39 @@ const vm = new Vue({
 		setModalData: function(modalData: StatModalData): void {
 			this.modalData = modalData;
 
-			this.$nextTick(() => {
-				if (modalData.root == null) {
-					console.error(`Missing root element`);
-					return;
-				}
+			if (this.modalData.root == null) {
+				console.error(`Missing root element`);
+				return;
+			}
 
-				const tooltip: HTMLElement | null = document.getElementById("stat-table");
-				if (tooltip == null) {
-					console.error(`Missing tooltip element '#stat-table'`);
-					return;
-				}
+			const tooltip: HTMLElement | null = document.getElementById("stat-table");
+			if (tooltip == null) {
+				console.error(`Missing tooltip element '#stat-table'`);
+				return;
+			}
 
-				const popper: Instance = createPopper(modalData.root, tooltip, {
-					placement: "auto",
-				});
-				this.popperInstance = popper;
+			tooltip.style.display = "block";
+
+			if (this.popperInstance != null) {
+				this.popperInstance.destroy();
+				this.popperInstance = null;
+			}
+
+			const popper: Instance = createPopper(this.modalData.root, tooltip, {
+				placement: "auto",
 			});
+			this.popperInstance = popper;
 		},
 
 		closeStatTooltip: function(): void {
 			if (this.popperInstance != null) {
 				this.popperInstance.destroy();
+
+				const tooltip: HTMLElement | null = document.getElementById("stat-table");
+				if (tooltip != null) {
+					tooltip.style.display = "none";
+					console.log(`hidiing tooltip`);
+				}
 			}
 		}
 

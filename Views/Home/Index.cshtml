@@ -18,6 +18,12 @@
     #world_pop td {
         padding: 0.25rem;
     }
+
+    a {
+        cursor: pointer !important;
+        color: var(--success) !important;
+    }
+
 </style>
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
@@ -177,7 +183,7 @@
     <h4 class="strike">Heals</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            <block-view :block="worldData.vs.playerHeals"></block-view>
+            <block-view :block="worldData.vs.playerHeals" :source="expSources.heal"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -185,7 +191,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerHeals"></block-view>
+            <block-view :block="worldData.nc.playerHeals" :source="expSources.heal"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -193,7 +199,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerHeals"></block-view>
+            <block-view :block="worldData.tr.playerHeals" :source="expSources.heal"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -204,7 +210,7 @@
     <h4 class="strike">Revives</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            <block-view :block="worldData.vs.playerRevives"></block-view>
+            <block-view :block="worldData.vs.playerRevives" :source="expSources.revive"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -212,7 +218,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerRevives"></block-view>
+            <block-view :block="worldData.nc.playerRevives" :source="expSources.revive"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -220,7 +226,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerRevives"></block-view>
+            <block-view :block="worldData.tr.playerRevives" :source="expSources.revive"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -231,7 +237,7 @@
     <h4 class="strike">Resupplies</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            <block-view :block="worldData.vs.playerResupplies"></block-view>
+            <block-view :block="worldData.vs.playerResupplies" :source="expSources.resupply"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -239,7 +245,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerResupplies"></block-view>
+            <block-view :block="worldData.nc.playerResupplies" :source="expSources.resupply"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -247,7 +253,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerResupplies"></block-view>
+            <block-view :block="worldData.tr.playerResupplies" :source="expSources.resupply"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -258,7 +264,7 @@
     <h4 class="strike">Spawns &lt;3</h4>
     <div class="row">
         <div class="col-2 pr-0">
-            <block-view :block="worldData.vs.playerSpawns"></block-view>
+            <block-view :block="worldData.vs.playerSpawns" :source="expSources.spawn"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -266,7 +272,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.nc.playerSpawns"></block-view>
+            <block-view :block="worldData.nc.playerSpawns" :source="expSources.spawn"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -274,7 +280,7 @@
         </div>
 
         <div class="col-2 pr-0">
-            <block-view :block="worldData.tr.playerSpawns"></block-view>
+            <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
         </div>
 
         <div class="col-2 pl-0">
@@ -324,7 +330,7 @@
         </div>
     </div>
 
-    <div id="stat-table" style="display: hidden; background-color: var(--secondary); text: white; border: 2px var(--light) solid;">
+    <div id="stat-table" style="display: none; background-color: var(--secondary); text: white; border: 2px var(--light) solid;">
         <div class="d-flex bg-dark" style="align-items: center;">
             <span class="flex-grow-1 px-2">
                 {{modalData.title}}
@@ -344,31 +350,22 @@
                 </tr>
             </thead>
 
-            <tbody>
+            <tbody v-if="modalData.loading == false">
                 <tr v-for="datum in modalData.data">
                     <td v-for="field in modalData.columnFields">
                         {{datum[field]}}
                     </td>
                 </tr>
             </tbody>
+
+            <tbody v-else>
+                <tr>
+                    <td :colspan="modalData.columnNames.length">
+                        Loading...
+                    </td>
+                </tr>
+            </tbody>
         </table>
-    </div>
-
-    <div class="modal" id="stat-modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title"> 
-                        {{modalData.title}} 
-                    </h4>
-
-                    <button type="button" class="close">
-                        &times;
-                    </button>
-                </div>
-
-            </div>
-        </div>
     </div>
 
 </div>

@@ -17,11 +17,15 @@ namespace watchtower.Services.Db.Implementations {
         private readonly ILogger<ExpEventDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
 
+        private readonly IDataReader<ExpEvent> _ExpDataReader;
+
         public ExpEventDbStore(ILogger<ExpEventDbStore> logger,
-            IDbHelper dbHelper) {
+            IDbHelper dbHelper, IDataReader<ExpEvent> expReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
+
+            _ExpDataReader = expReader ?? throw new ArgumentNullException(nameof(expReader));
         }
 
         public async Task<long> Insert(ExpEvent ev) {
@@ -115,6 +119,23 @@ namespace watchtower.Services.Db.Implementations {
             List<ExpDbEntry> entries = await ReadList(cmd);
 
             return entries;
+        }
+
+        public async Task<List<ExpEvent>> GetByCharacterID(string charID, int interval) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_exp
+                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND source_character_id = @CharacterID
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("Interval", interval);
+
+            List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
+
+            return events;
         }
 
         public override ExpDbEntry ReadEntry(NpgsqlDataReader reader) {

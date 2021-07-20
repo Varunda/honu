@@ -65,7 +65,7 @@ namespace watchtower.Services.Hosted {
                                     _Logger.LogWarning($"WorldData for {worldID} is out of date! Timestamp: {data.Timestamp}");
                                 }
                             } else {
-                                _Logger.LogWarning($"Missing world data for {worldID}");
+                                //_Logger.LogWarning($"Missing world data for {worldID}");
                             }
                         } catch (Exception ex) {
                             _Logger.LogError(ex, "Error updating clients listening on worldID {worldID}", worldID);

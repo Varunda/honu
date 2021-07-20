@@ -169,16 +169,34 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
-        public async Task<List<KillEvent>> GetByCharacterID(string charID, int interval) {
+        public async Task<List<KillEvent>> GetKillsByCharacterID(string charID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_kills
                     WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
-                        AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID)
+                        AND attacker_character_id = @CharacterID
             ");
 
             cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("Interval", interval);
+
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+
+            return evs;
+        }
+
+        public async Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT wt_kills.*
+                    FROM wt_kills
+                        INNER JOIN wt_character ON wt_kills.attacker_character_id = wt_character.id
+                    WHERE wt_kills.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND wt_character.outfit_id = @OutfitID
+            ");
+
+            cmd.AddParameter("OutfitID", outfitID);
             cmd.AddParameter("Interval", interval);
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);

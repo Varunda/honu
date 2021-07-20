@@ -58,4 +58,13 @@ namespace watchtower.Models.Census {
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 
     }
+
+    public static class PsCharacterExtensionMethods {
+
+        public static string GetDisplayName(this PsCharacter c) {
+            return $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : "")}{c.Name}";
+        }
+
+    }
+
 }
