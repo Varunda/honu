@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
+using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Commands {
@@ -17,14 +18,17 @@ namespace watchtower.Commands {
     public class CharCommand {
 
         private readonly ILogger<CharCommand> _Logger;
+
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _Outfitrepository;
+        private readonly ISessionDbStore _SessionDb;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
 
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
             _Outfitrepository = services.GetRequiredService<IOutfitRepository>();
+            _SessionDb = services.GetRequiredService<ISessionDbStore>();
         }
 
         public async Task Get(string name) {

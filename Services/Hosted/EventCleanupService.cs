@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
+using watchtower.Services.Db;
 
 namespace watchtower.Services {
 
@@ -16,17 +17,22 @@ namespace watchtower.Services {
 
         private const int _CleanupDelay = 15;
         private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
+        //private const int _KeepPeriod = 60 * 10 * 1; // 60 seconds, 60 minutes, 2 hours
         private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
         private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
 
         private readonly ILogger<EventCleanupService> _Logger;
+
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
+        private readonly ISessionDbStore _SessionDb;
 
         public EventCleanupService(ILogger<EventCleanupService> logger,
-            IServiceHealthMonitor healthMon) { 
+            IServiceHealthMonitor healthMon, ISessionDbStore sessionDb) { 
 
             _Logger = logger;
+
             _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
+            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -52,15 +58,8 @@ namespace watchtower.Services {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
                                 //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
-                                entry.Value.Online = false;
-
-                                if (entry.Value.OnlineIntervals.Count > 0) {
-                                    TimestampPair last = entry.Value.OnlineIntervals.Last();
-                                    last.Open = false;
-                                }
+                                _ = _SessionDb.End(entry.Value);
                             }
-
-                            entry.Value.OnlineIntervals = entry.Value.OnlineIntervals.Where(iter => iter.End >= adjustedTime).ToList();
                         }
                     }
 

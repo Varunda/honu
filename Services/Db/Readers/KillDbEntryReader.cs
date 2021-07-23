@@ -17,6 +17,7 @@ namespace watchtower.Services.Db.Readers {
             entry.Kills = reader.GetInt32("kills");
             entry.Deaths = reader.GetInt32("deaths");
             entry.Assist = reader.GetInt32("assists");
+            entry.SecondsOnline = reader.GetDouble("seconds_online");
 
             return entry;
         }

@@ -20,9 +20,11 @@ namespace watchtower.Commands {
     public class StoreCommand {
 
         private readonly ILogger<StoreCommand> _Logger;
+
         private readonly ICharacterCollection _Characters;
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly IKillEventDbStore _KillEventDb;
+        private readonly ISessionDbStore _SessionDb;
 
         public StoreCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<StoreCommand>>();
@@ -30,6 +32,7 @@ namespace watchtower.Commands {
             _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
             _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
             _Characters = services.GetRequiredService<ICharacterCollection>();
+            _SessionDb = services.GetRequiredService<ISessionDbStore>();
         }
 
         public async Task Exp(short factionID, int id1, int id2) {
@@ -85,6 +88,10 @@ namespace watchtower.Commands {
                 return;
             }
 
+            List<Session> sessions = await _SessionDb.GetByCharacterID(c.ID, 120);
+
+            double sessionLength = sessions.Sum(iter => ((iter.End ?? DateTime.UtcNow) - iter.Start).TotalSeconds);
+
             _Logger.LogInformation(
                 $"Character {nameOrId}:\n"
                 + $"\tName: {c.Name}\n"
@@ -94,7 +101,8 @@ namespace watchtower.Commands {
                 + $"\tWorldID: {player.WorldID}\n"
                 + $"\tZoneID: {player.ZoneID}\n"
                 + $"\tOnline: {player.Online}\n"
-                + $"\tOnlineIntervals: {string.Join(", ", player.OnlineIntervals.Select(iter => $"{iter.Start} - {iter.End}"))}"
+                + $"\tSessions: {sessions.Count} sessions, {sessionLength} seconds\n"
+                + $"{String.Join("\n", sessions.Select(iter => $"\t\t{iter.Start} - {iter.End} {((iter.End ?? DateTime.UtcNow) - iter.Start).TotalSeconds}"))}"
             );
         }
 

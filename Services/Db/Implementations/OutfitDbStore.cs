@@ -32,7 +32,10 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("ID", outfitID);
 
-            return await ReadSingle(cmd);
+            PsOutfit? outfit = await ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return outfit;
         }
 
         public async Task Upsert(PsOutfit outfit) {
@@ -56,6 +59,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("LastUpdatedOn", DateTime.UtcNow);
 
             await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         public override PsOutfit ReadEntry(NpgsqlDataReader reader) {

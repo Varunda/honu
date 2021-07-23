@@ -16,7 +16,7 @@ namespace watchtower.Services.Db.Patches {
             if (await helper.HasIndex("wt_kills", "idx_wt_kills_world_id") == false) {
                 using NpgsqlConnection conn = helper.Connection();
                 using NpgsqlCommand cmd = await helper.Command(conn, @"
-                    CREATE INDEX id_wt_kills_world_id ON wt_kills (world_id)
+                    CREATE INDEX idx_wt_kills_world_id ON wt_kills (world_id)
                 ");
 
                 await cmd.ExecuteNonQueryAsync();

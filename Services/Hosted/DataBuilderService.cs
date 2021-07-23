@@ -78,25 +78,21 @@ namespace watchtower.Services {
                 bool hasPlayer = players.TryGetValue(entry.CharacterID, out TrackedPlayer? p);
 
                 if (hasPlayer == false && c != null) {
-                    _Logger.LogWarning($"Missing {c?.Name}/{entry.CharacterID} in players passed, seconds online will be wrong");
                     _CharacterCacheQueue.Queue(entry.CharacterID);
                 }
+
+                //_Logger.LogTrace($"{c?.Name ?? entry.CharacterID} has been online for {entry.SecondsOnline} seconds");
 
                 KillData killDatum = new KillData() {
                     ID = entry.CharacterID,
                     Kills = entry.Kills,
                     Deaths = entry.Deaths,
                     Assists = entry.Assist,
-                    Name = (c == null) ? $"Missing {entry.CharacterID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}]" : $"[]")} {c.Name}",
+                    Name = (c == null) ? $"Missing {entry.CharacterID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : "")}{c.Name}",
                     Online = p?.Online ?? true,
-                    SecondsOnline = (int)(p?.OnlineIntervals.Sum(iter => iter.End - iter.Start) ?? 1) / 1000,
+                    SecondsOnline = (int)entry.SecondsOnline,
                     FactionID = p?.FactionID ?? options.FactionID
                 };
-
-                // TEMP: Fix for players being online for more than 2 hours
-                if (killDatum.SecondsOnline > (120 * 60)) {
-                    killDatum.SecondsOnline = 120 * 60;
-                }
 
                 data.Add(killDatum);
             }
@@ -140,7 +136,7 @@ namespace watchtower.Services {
 
                 BlockEntry b = new BlockEntry() {
                     ID = entry.ID,
-                    Name = (c == null) ? $"Missing {entry.ID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}]" : $"[]")} {c.Name}",
+                    Name = (c == null) ? $"Missing {entry.ID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : $"")}{c.Name}",
                     Value = entry.Count,
                     FactionID = c?.FactionID ?? options.FactionID
                 };
@@ -412,23 +408,6 @@ namespace watchtower.Services {
             foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
                 if (entry.Value.Online == true) {
                     ++data.OnlineCount;
-
-                    TimestampPair? previousPair = null;
-                    if (entry.Value.OnlineIntervals.Count > 0) {
-                        previousPair = entry.Value.OnlineIntervals.Last();
-                    }
-
-                    long start = currentTime * 1000;
-                    if (previousPair != null && previousPair.Value.Open == true) {
-                        start = previousPair.Value.End;
-                    }
-
-                    // Add the current interval the character has been online for
-                    entry.Value.OnlineIntervals.Add(new TimestampPair() {
-                        Start = start,
-                        End = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                        Open = true
-                    });
 
                     if (entry.Value.FactionID == Faction.VS) {
                         data.ContinentCount.AddToVS(entry.Value.ZoneID);

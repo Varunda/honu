@@ -27,7 +27,6 @@
 </style>
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
-
     <div class="d-flex align-items-center">
         <h1 class="d-inline-block flex-grow-1">
             <img src="~/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
@@ -67,8 +66,10 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-12">
+    <hr />
+
+    <div class="wt-grid-container" style="display: grid;">
+        <div class="grid-continent-population">
             <h4>
                 Player count
                 <info-hover text="Continents are hidden if they have less than 5 players"></info-hover>
@@ -91,6 +92,7 @@
                 </tr>
 
                 <tr>
+                    <!-- All across the server -->
                     <td>All: {{totalCount}}</td>
                     <td>{{totalVSCount}} VS</td>
                     <td>{{totalNCCount}} NC</td>
@@ -129,6 +131,7 @@
                         <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
                     </template>
 
+                    <!-- Other, currently unknown -->
                     <td>All: {{otherCount}}</td>
                     <td>{{worldData.continentCount.other.vs}} VS</td>
                     <td>{{worldData.continentCount.other.nc}} NC</td>
@@ -137,100 +140,121 @@
                 </tr>
             </table>
         </div>
-    </div>
 
-    <hr />
-
-    <div class="wt-grid-container" style="display: grid;">
-        <h4 class="grid-11">
+        <h4 class="grid-title-vs">
             <img src="~/img/logo_vs.png" style="width: 32px; "/>
             Vanu Sovereignty
             <info-hover text="NS kills only count when that player is on this faction"></info-hover>
         </h4>
 
-        <div class="grid-12">
+        <h4 class="grid-title-heals">
+            Heals
+        </h4>
+
+        <h4 class="grid-title-revives">
+            Revives
+        </h4>
+
+        <h4 class="grid-title-resupplies">
+            Resupplies
+        </h4>
+
+        <h4 class="grid-title-spawns">
+            Spawns
+        </h4>
+
+        <div class="grid-vs-player-kills">
             <player-kill-block :block="worldData.vs"></player-kill-block>
+        </div>
+
+        <div class="grid-vs-outfit-kills">
             <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
         </div>
 
-        <div class="grid-13 d-flex">
+        <div class="grid-vs-heals d-flex">
             <block-view :block="worldData.vs.playerHeals" :source="expSources.heal"></block-view>
             <block-view :block="worldData.vs.outfitHeals" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-14 d-flex">
+        <div class="grid-vs-revives d-flex">
             <block-view :block="worldData.vs.playerRevives" :source="expSources.revive"></block-view>
             <block-view :block="worldData.vs.outfitRevives" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-15 d-flex">
+        <div class="grid-vs-resupplies d-flex">
             <block-view :block="worldData.vs.playerResupplies" :source="expSources.resupply"></block-view>
             <block-view :block="worldData.vs.outfitResupplies" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-16 d-flex">
+        <div class="grid-vs-spawns d-flex">
             <block-view :block="worldData.vs.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.vs.outfitSpawns" title="Outfits"></block-view>
         </div>
 
-        <h4 class="grid-21">
+        <h4 class="grid-title-nc">
             <img src="~/img/logo_nc.png" style="width: 32px; "/>
             New Conglomerate
             <info-hover text="NS kills only count when that player is on this faction"></info-hover>
         </h4>
 
-        <div class="grid-22">
+        <div class="grid-nc-player-kills">
             <player-kill-block :block="worldData.nc"></player-kill-block>
+        </div>
+        
+        <div class="grid-nc-outfit-kills">
             <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
         </div>
 
-        <div class="grid-23 d-flex">
+        <div class="grid-nc-heals d-flex">
             <block-view :block="worldData.nc.playerHeals" :source="expSources.heal"></block-view>
             <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-24 d-flex">
+        <div class="grid-nc-revives d-flex">
             <block-view :block="worldData.nc.playerRevives" :source="expSources.revive"></block-view>
             <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-25 d-flex">
+        <div class="grid-nc-resupplies d-flex">
             <block-view :block="worldData.nc.playerResupplies" :source="expSources.resupply"></block-view>
             <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-26 d-flex">
+        <div class="grid-nc-spawns d-flex">
             <block-view :block="worldData.nc.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.nc.outfitSpawns" title="Outfits"></block-view>
         </div>
 
-        <h4 class="grid-31">
+        <h4 class="grid-title-tr">
             <img src="~/img/logo_tr.png" style="width: 32px; "/>
             Terran Republic
             <info-hover text="NS kills only count when that player is on this faction"></info-hover>
         </h4>
 
-        <div class="grid-32">
+        <div class="grid-tr-player-kills">
             <player-kill-block :block="worldData.tr"></player-kill-block>
+        </div>
+
+        <div class="grid-tr-outfit-kills">
             <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
         </div>
 
-        <div class="grid-33 d-flex">
+        <div class="grid-tr-heals d-flex">
             <block-view :block="worldData.tr.playerHeals" :source="expSources.heal"></block-view>
             <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-34 d-flex">
+        <div class="grid-tr-revives d-flex">
             <block-view :block="worldData.tr.playerRevives" :source="expSources.revive"></block-view>
             <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-35 d-flex">
+        <div class="grid-tr-resupplies d-flex">
             <block-view :block="worldData.tr.playerResupplies" :source="expSources.resupply"></block-view>
             <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
         </div>
 
-        <div class="grid-36 d-flex">
+        <div class="grid-tr-spawns d-flex">
             <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
         </div>

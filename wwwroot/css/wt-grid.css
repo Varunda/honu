@@ -1,94 +1,135 @@
 
-.grid-11 {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.grid-12 {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.grid-13 {
-    grid-column: 1;
-    grid-row: 3;
-}
-
-.grid-14 {
-    grid-column: 1;
-    grid-row: 4;
-}
-
-.grid-15 {
-    grid-column: 1;
-    grid-row: 5;
-}
-
-.grid-16 {
-    grid-column: 1;
-    grid-row: 6;
-}
-
-.grid-21 {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-.grid-22 {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-.grid-23 {
-    grid-column: 2;
-    grid-row: 3;
-}
-
-.grid-24 {
-    grid-column: 2;
-    grid-row: 4;
-}
-
-.grid-25 {
-    grid-column: 2;
-    grid-row: 5;
-}
-
-.grid-26 {
-    grid-column: 2;
-    grid-row: 6;
-}
-
-.grid-31 {
-    grid-column: 3;
-    grid-row: 1;
-}
-
-.grid-33 {
-    grid-column: 3;
-    grid-row: 3;
-}
-
-.grid-33 {
-    grid-column: 3;
-    grid-row: 3;
-}
-
-.grid-34 {
-    grid-column: 3;
-    grid-row: 4;
-}
-
-.grid-35 {
-    grid-column: 3;
-    grid-row: 5;
-}
-
-.grid-36 {
-    grid-column: 3;
-    grid-row: 6;
-}
-
 .wt-grid-container {
-    column-gap: 0.5rem;
+    column-gap: 0.75rem;
 }
+
+.grid-continent-population {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+}
+
+.grid-title-vs {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.grid-title-nc {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.grid-title-tr {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.grid-title-heals {
+    grid-column: 1 / span 3;
+    grid-row: 5;
+}
+
+.grid-title-revives {
+    grid-column: 1 / span 3;
+    grid-row: 7;
+}
+
+.grid-title-resupplies {
+    grid-column: 1 / span 3;
+    grid-row: 9;
+}
+
+.grid-title-spawns {
+    grid-column: 1 / span 3;
+    grid-row: 11;
+}
+
+.grid-vs-player-kills {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.grid-vs-outfit-kills {
+    grid-column: 1;
+    grid-row: 4;
+}
+
+.grid-vs-heals {
+    grid-column: 1;
+    grid-row: 6;
+}
+
+.grid-vs-revives {
+    grid-column: 1;
+    grid-row: 8;
+}
+
+.grid-vs-resupplies {
+    grid-column: 1;
+    grid-row: 10;
+}
+
+.grid-vs-spawns {
+    grid-column: 1;
+    grid-row: 12;
+}
+
+.grid-nc-player-kills {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.grid-nc-outfit-kills {
+    grid-column: 2;
+    grid-row: 4;
+}
+
+.grid-nc-heals {
+    grid-column: 2;
+    grid-row: 6;
+}
+
+.grid-nc-revives {
+    grid-column: 2;
+    grid-row: 8;
+}
+
+.grid-nc-resupplies {
+    grid-column: 2;
+    grid-row: 10;
+}
+
+.grid-nc-spawns {
+    grid-column: 2;
+    grid-row: 12;
+}
+
+.grid-tr-player-kills {
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.grid-tr-outfit-kills {
+    grid-column: 3;
+    grid-row: 4;
+}
+
+.grid-tr-heals {
+    grid-column: 3;
+    grid-row: 6;
+}
+
+.grid-tr-revives {
+    grid-column: 3;
+    grid-row: 8;
+}
+
+.grid-tr-resupplies {
+    grid-column: 3;
+    grid-row: 10;
+}
+
+.grid-tr-spawns {
+    grid-column: 3;
+    grid-row: 12;
+}
+

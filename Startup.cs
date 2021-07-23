@@ -65,6 +65,7 @@ namespace watchtower {
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
+            services.AddSingleton<IBackgroundSessionStarterQueue, BackgroundSessionStarterQueue>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
 
             // Db services
@@ -74,6 +75,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterDbStore, CharacterDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<IItemDbStore, ItemDbStore>();
+            services.AddSingleton<ISessionDbStore, SessionDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -94,13 +96,16 @@ namespace watchtower {
 
             // Hosted services
             services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist
+
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();
-            services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
-            services.AddHostedService<EventProcessService>();
             services.AddHostedService<WorldDataBroadcastService>();
             services.AddHostedService<RealtimeResubcribeService>();
+
+            services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
+            services.AddHostedService<EventProcessService>();
+            services.AddHostedService<HostedSessionStarterQueue>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

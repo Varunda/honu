@@ -15,5 +15,7 @@ namespace watchtower.Models.Db {
 
         public int Assist { get; set; }
 
+        public double SecondsOnline { get; set; } = 0.0d;
+
     }
 }

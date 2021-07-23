@@ -68,6 +68,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Timestamp", ev.Timestamp);
 
             await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         public async Task SetRevivedID(string charID, long revivedID) {
@@ -83,6 +84,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("RevivedCharacterID", charID);
 
             await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         public async Task<List<KillDbEntry>> GetTopKillers(KillDbOptions options) {
@@ -116,7 +118,12 @@ namespace watchtower.Services.Db.Implementations {
                     attacker_character_id,
                     (SELECT COUNT(*) FROM evs k WHERE k.attacker_character_id = top_killers.attacker_character_id) AS kills,
                     (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND revived_event_id IS null) AS deaths,
-                    (SELECT COUNT(*) FROM exp e WHERE e.source_character_id = top_killers.attacker_character_id) AS assists
+                    (SELECT COUNT(*) FROM exp e WHERE e.source_character_id = top_killers.attacker_character_id) AS assists,
+                    (SELECT LEAST(@Interval * 60, EXTRACT('epoch' FROM SUM(COALESCE(s.finish, NOW() at time zone 'utc') - s.start)))
+                        FROM wt_session s 
+                        WHERE s.character_id = top_killers.attacker_character_id
+                            AND (s.finish IS NULL OR s.finish >= NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                    ) AS seconds_online
                 FROM
                     top_killers
                 GROUP BY attacker_character_id
@@ -128,6 +135,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("FactionID", options.FactionID);
 
             List<KillDbEntry> entries = await _KillDbReader.ReadList(cmd);
+            await conn.CloseAsync();
 
             return entries;
         }
@@ -165,6 +173,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("FactionID", options.FactionID);
 
             List<KillDbOutfitEntry> entries = await _KillOutfitReader.ReadList(cmd);
+            await conn.CloseAsync();
 
             return entries;
         }
@@ -182,6 +191,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Interval", interval);
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
 
             return evs;
         }
@@ -200,6 +210,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Interval", interval);
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
 
             return evs;
         }

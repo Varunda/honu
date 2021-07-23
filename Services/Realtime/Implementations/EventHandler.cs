@@ -23,15 +23,18 @@ namespace watchtower.Realtime {
 
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
+        private readonly ISessionDbStore _SessionDb;
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
+        private readonly IBackgroundSessionStarterQueue _SessionQueue;
         private readonly ICharacterRepository _CharacterRepository;
 
         private readonly List<JToken> _Recent;
 
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
-            IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo) {
+            IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
+            ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue) {
 
             _Logger = logger;
 
@@ -39,7 +42,10 @@ namespace watchtower.Realtime {
 
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
+            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
+            _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
         }
 
@@ -68,9 +74,9 @@ namespace watchtower.Realtime {
                 if (eventName == null) {
                     _Logger.LogWarning($"Missing 'event_name' from {ev}");
                 } else if (eventName == "PlayerLogin") {
-                    _ProcessPlayerLogin(payloadToken);
+                    await _ProcessPlayerLogin(payloadToken);
                 } else if (eventName == "PlayerLogout") {
-                    _ProcessPlayerLogout(payloadToken);
+                    await _ProcessPlayerLogout(payloadToken);
                 } else if (eventName == "GainExperience") {
                     await  _ProcessExperience(payloadToken);
                 } else if (eventName == "Death") {
@@ -81,48 +87,49 @@ namespace watchtower.Realtime {
             }
         }
 
-        private void _ProcessPlayerLogin(JToken payload) {
+        private async Task _ProcessPlayerLogin(JToken payload) {
             //_Logger.LogTrace($"Processing login: {payload}");
 
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
 
+                TrackedPlayer p;
+
                 lock (CharacterStore.Get().Players) {
                     // The FactionID and TeamID are updated as part of caching the character
-                    TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
+                    p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                         ID = charID,
                         WorldID = payload.GetWorldID(),
                         ZoneID = "-1",
                         FactionID = Faction.UNKNOWN,
-                        TeamID = Faction.UNKNOWN
+                        TeamID = Faction.UNKNOWN,
+                        Online = false
                     });
-
-                    p.Online = true;
-                    p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 }
+
+                await _SessionDb.Start(p);
+
+                p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
         }
 
-        private void _ProcessPlayerLogout(JToken payload) {
+        private async Task _ProcessPlayerLogout(JToken payload) {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
 
+                TrackedPlayer? p;
                 lock (CharacterStore.Get().Players) {
-                    if (CharacterStore.Get().Players.TryGetValue(charID, out TrackedPlayer? p) == true) {
-                        if (p != null) {
-                            p.Online = false;
+                    _ = CharacterStore.Get().Players.TryGetValue(charID, out p);
+                }
 
-                            if (p.OnlineIntervals.Count > 0) {
-                                TimestampPair last = p.OnlineIntervals.Last();
-                                last.Open = false;
-                            }
+                if (p != null) {
+                    await _SessionDb.End(p);
 
-                            if (p.FactionID == Faction.NS) {
-                                p.TeamID = Faction.NS;
-                            }
-                        }
+                    // Reset team of the NSO player as they're now offline
+                    if (p.FactionID == Faction.NS) {
+                        p.TeamID = Faction.NS;
                     }
                 }
             }
@@ -162,15 +169,21 @@ namespace watchtower.Realtime {
             //_Logger.LogTrace($"Processing death: {payload}");
 
             lock (CharacterStore.Get().Players) {
+                // The default value for Online must be false, else when a new TrackedPlayer is constructed,
+                //      the session will never start, as the handler already sees the character online,
+                //      so no need to start a new session
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(attackerID, new TrackedPlayer() {
                     ID = attackerID,
                     FactionID = attackerFactionID,
                     TeamID = ev.AttackerTeamID,
-                    Online = true,
+                    Online = false,
                     WorldID = ev.WorldID
                 });
 
-                attacker.Online = true;
+                if (attacker.Online == false) {
+                    _SessionQueue.Queue(attacker);
+                }
+
                 attacker.ZoneID = zoneID;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
@@ -180,15 +193,20 @@ namespace watchtower.Realtime {
 
                 ev.AttackerTeamID = attacker.TeamID;
 
+                // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
                     FactionID = factionID,
                     TeamID = ev.KilledTeamID,
-                    Online = true,
+                    Online = false,
                     WorldID = ev.WorldID
                 });
 
-                killed.Online = true;
+                // Ensure that 2 sessions aren't started if the attacker and killed are the same
+                if (killed.Online == false && attacker.ID != killed.ID) {
+                    _SessionQueue.Queue(attacker);
+                }
+
                 killed.ZoneID = zoneID;
                 if (killed.FactionID == Faction.UNKNOWN) {
                     killed.FactionID = factionID;
@@ -237,15 +255,19 @@ namespace watchtower.Realtime {
             };
 
             lock (CharacterStore.Get().Players) {
+                // Default false for |Online| to ensure a session is started
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
                     FactionID = factionID,
                     TeamID = factionID,
-                    Online = true,
+                    Online = false,
                     WorldID = worldID
                 });
 
-                p.Online = true;
+                if (p.Online == false) {
+                    _SessionQueue.Queue(p);
+                }
+
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID.ToString();
 
@@ -259,12 +281,16 @@ namespace watchtower.Realtime {
                     // If either character was not NSO, update the team_id of the character
                     // If both are NSO, this field is not updated, as one bad team_id could then spread to other NSOs, messing up tracking
                     if (CharacterStore.Get().Players.TryGetValue(otherID, out TrackedPlayer? otherPlayer)) {
-                        if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
+                        if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS
+                            && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
+
                             //_Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID} from {p.TeamID}");
                             p.TeamID = otherPlayer.FactionID;
                         }
 
-                        if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN && otherPlayer.FactionID == Faction.NS && otherPlayer.TeamID != p.FactionID) {
+                        if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN
+                            && otherPlayer.FactionID == Faction.NS && otherPlayer.TeamID != p.FactionID) {
+
                             //_Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}, from {otherPlayer.TeamID}");
                             otherPlayer.TeamID = p.FactionID;
                         }

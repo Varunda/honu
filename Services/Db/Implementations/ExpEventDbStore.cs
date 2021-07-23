@@ -58,6 +58,8 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Timestamp", ev.Timestamp);
 
             object? objID = await cmd.ExecuteScalarAsync();
+            await conn.CloseAsync();
+
             if (objID != null && int.TryParse(objID.ToString(), out int ID) == true) {
                 return ID;
             } else {
@@ -85,6 +87,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("FactionID", parameters.FactionID);
 
             List<ExpDbEntry> entries = await ReadList(cmd);
+            await conn.CloseAsync();
 
             return entries;
         }
@@ -117,6 +120,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("FactionID", options.FactionID);
 
             List<ExpDbEntry> entries = await ReadList(cmd);
+            await conn.CloseAsync();
 
             return entries;
         }
@@ -134,6 +138,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Interval", interval);
 
             List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
 
             return events;
         }

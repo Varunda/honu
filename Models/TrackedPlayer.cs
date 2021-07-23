@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 
 namespace watchtower.Models {
 
@@ -41,15 +42,6 @@ namespace watchtower.Models {
         /// Timestamp (in unix milliseconds) of when the last event a player got. Used for determining AFK players
         /// </summary>
         public long LatestEventTimestamp { get; set; }
-
-        /// <summary>
-        /// To get an accurate timer of how long a player has been online, we track the intervals the player has been online,
-        ///     and to get how many seconds a player has been online, the time period for each each interval is added together.
-        ///     
-        /// This approach has the benefit that if a player goes offline, then comes back online within the tracking period,
-        ///     the time online is accurate (up to how often the interval is checked)
-        /// </summary>
-        public List<TimestampPair> OnlineIntervals { get; set; } = new List<TimestampPair>();
 
     }
 }

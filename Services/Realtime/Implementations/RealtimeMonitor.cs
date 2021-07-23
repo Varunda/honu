@@ -68,8 +68,12 @@ namespace watchtower.Realtime {
             return Task.CompletedTask;
         }
 
-        public Task OnStartAsync(CancellationToken cancel) {
-            return _Stream.ConnectAsync();
+        public async Task OnStartAsync(CancellationToken cancel) {
+            try {
+                await _Stream.ConnectAsync();
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"Failed to start RealtimeMonitor");
+            }
         }
 
         public Task OnShutdownAsync(CancellationToken cancel) {

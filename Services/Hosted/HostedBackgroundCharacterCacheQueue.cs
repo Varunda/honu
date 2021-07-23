@@ -23,8 +23,6 @@ namespace watchtower.Services.Hosted {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _OutfitRepository;
 
-        private int _CacheCount = 0;
-
         public HostedBackgroundCharacterCacheQueue(ILogger<HostedBackgroundCharacterCacheQueue> logger,
             IBackgroundCharacterCacheQueue queue, ICharacterRepository charRepo,
             IOutfitRepository outfitRepo) {
@@ -40,10 +38,6 @@ namespace watchtower.Services.Hosted {
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     string charID = await _Queue.DequeueAsync(stoppingToken);
-
-                    if (++_CacheCount % 200 == 0) {
-                        //_Logger.LogDebug($"Cached {_CacheCount} characters");
-                    }
 
                     PsCharacter? character = await _CharacterRepository.GetByID(charID);
 

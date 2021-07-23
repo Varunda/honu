@@ -22,5 +22,12 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetString(field);
         }
 
+        public static DateTime? GetNullableDateTime(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return reader.GetDateTime(field);
+        }
+
     }
 }

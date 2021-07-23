@@ -24,7 +24,6 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         public async Task<WorldTotal> Get(WorldTotalOptions options) {
-
             string isHeal = $"experience_id = {Experience.HEAL} OR experience_id = {Experience.SQUAD_HEAL}";
             string isRevive = $"experience_id = {Experience.REVIVE} OR experience_id = {Experience.SQUAD_REVIVE}";
             string isResupply = $"experience_id = {Experience.RESUPPLY} OR experience_id = {Experience.SQUAD_RESUPPLY}";
@@ -79,6 +78,7 @@ namespace watchtower.Services.Db.Implementations {
 
             WorldTotal total = new WorldTotal();
             total.Entries = await ReadList(cmd);
+            await conn.CloseAsync();
 
             return total;
         }

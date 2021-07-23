@@ -32,7 +32,10 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("ID", itemID);
 
-            return await ReadSingle(cmd);
+            PsItem? item = await ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return item;
         }
 
         public async Task Upsert(PsItem item) {
@@ -54,6 +57,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Name", item.Name);
 
             await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         public override PsItem ReadEntry(NpgsqlDataReader reader) {

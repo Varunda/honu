@@ -34,6 +34,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("@ID", charID);
 
             PsCharacter? c = await ReadSingle(cmd);
+            await conn.CloseAsync();
 
             return c;
         }
@@ -50,6 +51,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Name", name);
 
             PsCharacter? c = await ReadSingle(cmd);
+            await conn.CloseAsync();
 
             return c;
         }
@@ -81,6 +83,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("LastUpdatedOn", DateTime.UtcNow);
 
             await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         public override PsCharacter ReadEntry(NpgsqlDataReader reader) {
@@ -99,17 +102,6 @@ namespace watchtower.Services.Db.Implementations {
             c.OutfitID = reader.GetNullableString("outfit_id");
             c.OutfitTag = reader.GetNullableString("outfit_tag");
             c.OutfitName = reader.GetNullableString("outfit_name");
-
-            /*
-            if ((c.OutfitID != null && c.OutfitTag == null) || c.OutfitID == "37540434320689686") {
-                string s = $"ID: {c.OutfitID} TAG: {c.OutfitTag} NAME: {c.OutfitName}\n";
-                for (int i = 0; i < reader.FieldCount; ++i) {
-                    s += $"{reader.GetName(i)}/{reader.GetFieldType(i).Name} => {reader.GetValue(i)}\n";
-                }
-
-                _Logger.LogDebug(s);
-            }
-            */
 
             return c;
         }

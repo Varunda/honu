@@ -31,7 +31,7 @@ namespace watchtower.Models {
         public ContinentCount ContinentCount { get; set; } = new ContinentCount();
 
         /// <summary>
-        /// Count of how many are currently online
+        /// Count of how many are currently online in this world
         /// </summary>
         public int OnlineCount { get; set; } = 0;
 
