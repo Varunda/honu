@@ -1,11 +1,17 @@
 
 .wt-grid-container {
     column-gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .grid-continent-population {
     grid-column: 1 / span 3;
     grid-row: 1;
+}
+
+.grid-title-misc {
+    grid-column: 1 / span 3;
+    grid-row: 13;
 }
 
 .grid-title-vs {
@@ -133,3 +139,7 @@
     grid-row: 12;
 }
 
+.grid-misc-spawns {
+    grid-column: 1;
+    grid-row: 14;
+}

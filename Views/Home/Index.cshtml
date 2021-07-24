@@ -160,7 +160,7 @@
         </h4>
 
         <h4 class="grid-title-spawns">
-            Spawns
+            Spawns &lt;3
         </h4>
 
         <div class="grid-vs-player-kills">
@@ -258,20 +258,20 @@
             <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
         </div>
-    </div>
 
-    <h4>Misc stats (all factions)</h4>
-    <hr />
+        <div class="grid-title-misc">
+            <h4>Misc stats (all factions)</h4>
+            <hr />
+        </div>
 
-    <div class="row">
-        <div class="col-4">
+        <div class="grid-misc-spawns">
             <h4>
                 Current top spawns
-                <info-hover text="Sundies are removed when they haven't spawned anyone in 5 minutes, not when they're killed"></info-hover>
+                <info-hover text="Spawns are removed when they haven't spawned anyone in 5 minutes, not when they're killed"></info-hover>
             </h4>
 
             <table class="table table-sm">
-                <tr>
+                <tr class="table-secondary">
                     <th>Owner</th>
                     <th>Type</th>
                     <th>Spawns</th>
@@ -292,7 +292,7 @@
                         </span>
 
                         <span v-else title="Unknown">
-                            U
+                            U {{entry.npcType}}
                         </span>
                     </td>
                     <td>{{entry.spawnCount}}</td>
@@ -301,18 +301,6 @@
                     <td>{{entry.secondsAlive | duration}}</td>
                 </tr>
             </table>
-        </div>
-
-        <div class="col-4">
-            <h4>Outfit Assets Used</h4>
-
-            work in progress
-        </div>
-
-        <div class="col-4">
-            <h4>Squad leader ribbons</h4>
-
-            work in progress
         </div>
     </div>
 
