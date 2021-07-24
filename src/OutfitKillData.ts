@@ -60,7 +60,7 @@ Vue.component("outfit-kill-block", {
 			<thead>
 				<tr class="table-secondary">
 					<th style="width: 30ch">Outfit</th>
-					<th>Kills</th>
+					<th title="Per Players (Total)">Kills</th>
 					<th>Deaths</th>
 					<th>K/D</th>
 					<th>Online</th>
@@ -71,14 +71,14 @@ Vue.component("outfit-kill-block", {
 				<tr v-for="entry in block.entries">
 					<td :title="entry.name">[{{entry.tag}}] {{entry.name}}</td>
 					<td>
+						{{(entry.kills / (entry.members || 1)).toFixed(2)}}
 						<a @click="openOutfitKillers($event, entry.id)">
-							{{entry.kills}}
+							({{entry.kills}})
 						</a>
-						({{(entry.kills / (entry.members || 1)).toFixed(2)}})
 					</td>
 					<td>
-						{{entry.deaths}}
-						({{(entry.deaths / (entry.members || 1)).toFixed(2)}})
+						{{(entry.deaths / (entry.members || 1)).toFixed(2)}}
+						({{entry.deaths}})
 					</td>
 					<td>
 						{{(entry.kills / (entry.deaths || 1)).toFixed(2)}}
