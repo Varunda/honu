@@ -155,7 +155,7 @@ namespace watchtower.Services {
                 PsOutfit? outfit = await _OutfitRepository.GetByID(entry.ID);
 
                 BlockEntry b = new BlockEntry() {
-                    ID = entry.ID,
+                    ID = (entry.ID == "") ? "0" : entry.ID,
                     Name = (entry.ID == "") ? "No outfit" : (outfit == null) ? $"Missing {entry.ID}" : $"[{outfit.Tag}] {outfit.Name}",
                     Value = entry.Count
                 };

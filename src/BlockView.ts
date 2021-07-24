@@ -12,7 +12,9 @@ Vue.component("block-view", {
 
 		source: { type: Function, required: false, default: null },
 
-		sourceLimit: { type: Number, required: false, default: 6}
+		sourceLimit: { type: Number, required: false, default: 6 },
+		sourceWorldId: { type: Number, required: false },
+		sourceTeamId: { type: Number, required: false }
 	},
 
 	data: function () {
@@ -37,7 +39,7 @@ Vue.component("block-view", {
 
 				EventBus.$emit("set-modal-data", modalData);
 
-				let data: CharacterExpSupportEntry[] = await this.source(charID);
+				let data: CharacterExpSupportEntry[] = await this.source(charID, this.sourceWorldId, this.sourceTeamId);
 				const total: number = data.reduce((acc, iter) => acc + iter.amount, 0);
 
 				// Trim to only show the top 6 killers
@@ -47,7 +49,7 @@ Vue.component("block-view", {
 
 					data.push({
 						characterID: "",
-						characterName:  "Other",
+						characterName:  `${hidden.length} others`,
 						amount: hidden.reduce((acc, iter) => acc + iter.amount, 0)
 					});
 				}

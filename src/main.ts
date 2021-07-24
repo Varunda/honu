@@ -66,20 +66,26 @@ const vm = new Vue({
 
 	data: {
 		worldData: new WorldData() as WorldData,
+		connection: null as sR.HubConnection | null,
 		socketState: "" as string,
 		lastUpdate: null as Date | null,
 		trackingPeriodStart: null as Date | null,
-		connection: null as sR.HubConnection | null,
+
+		worldID: 0 as number,
 
 		modalData: new StatModalData() as StatModalData,
 
 		popperInstance: null as Instance | null,
 
 		expSources: {
-			heal: ExpStatApi.getCharacterHealEntries,
-			revive: ExpStatApi.getCharacterReviveEntries,
-			resupply: ExpStatApi.getCharacterResupplyEntries,
-			spawn: ExpStatApi.getCharacterSpawnEntries
+			charHeal: ExpStatApi.getCharacterHealEntries,
+			charRevive: ExpStatApi.getCharacterReviveEntries,
+			charResupply: ExpStatApi.getCharacterResupplyEntries,
+			charSpawn: ExpStatApi.getCharacterSpawnEntries,
+			outfitHeal: ExpStatApi.getOutfitHealEntries,
+			outfitRevive: ExpStatApi.getOutfitReviveEntries,
+			outfitResupply: ExpStatApi.getOutfitResupplyEntries,
+			outfitSpawn: ExpStatApi.getOutfitSpawnEntries,
 		}
 
 	},
@@ -90,6 +96,8 @@ const vm = new Vue({
 				console.warn(`Cannot subscribe to world ${worldID}, connection is null`);
 				return;
 			}
+
+			this.worldID = worldID;
 
 			this.connection.invoke("SubscribeToWorld", worldID).then(() => {
 				console.log(`Successfully subscribed to ${worldID}`);

@@ -6,12 +6,26 @@ export class CharacterExpSupportEntry {
     public amount: number = 0;
 }
 
+export class OutfitExpEntry {
+    public characterID: string = "";
+    public characterName: string = "";
+    public amount: number = 0;
+}
+
 export class ExpStatApi {
 
     private static _instance: ExpStatApi = new ExpStatApi();
     public static get(): ExpStatApi { return ExpStatApi._instance; }
 
     private static parseCharacterExpSupportEntry(elem: any): CharacterExpSupportEntry {
+        return {
+            characterID: elem.characterID,
+            characterName: elem.characterName,
+            amount: elem.amount
+        };
+    }
+
+    private static parseOutfitExpSupportEntry(elem: any): OutfitExpEntry {
         return {
             characterID: elem.characterID,
             characterName: elem.characterName,
@@ -44,16 +58,32 @@ export class ExpStatApi {
         return ExpStatApi.getList(`/api/exp/character/${charID}/heals`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
+    public static async getOutfitHealEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    }
+
     public static async getCharacterReviveEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
         return ExpStatApi.getList(`/api/exp/character/${charID}/revives`, ExpStatApi.parseCharacterExpSupportEntry);
+    }
+
+    public static async getOutfitReviveEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
     public static async getCharacterResupplyEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
         return ExpStatApi.getList(`/api/exp/character/${charID}/resupplies`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
+    public static async getOutfitResupplyEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    }
+
     public static async getCharacterSpawnEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
         return ExpStatApi.getList(`/api/exp/character/${charID}/spawns`, ExpStatApi.parseCharacterExpSupportEntry);
+    }
+
+    public static async getOutfitSpawnEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
 }

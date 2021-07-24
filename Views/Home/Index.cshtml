@@ -172,23 +172,31 @@
         </div>
 
         <div class="grid-vs-heals d-flex">
-            <block-view :block="worldData.vs.playerHeals" :source="expSources.heal"></block-view>
-            <block-view :block="worldData.vs.outfitHeals" title="Outfits"></block-view>
+            <block-view :block="worldData.vs.playerHeals" :source="expSources.charHeal"></block-view>
+            <block-view :block="worldData.vs.outfitHeals" title="Outfits"
+                :source="expSources.outfitHeal" :source-team-id="1" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-vs-revives d-flex">
-            <block-view :block="worldData.vs.playerRevives" :source="expSources.revive"></block-view>
-            <block-view :block="worldData.vs.outfitRevives" title="Outfits"></block-view>
+            <block-view :block="worldData.vs.playerRevives" :source="expSources.charRevive"></block-view>
+            <block-view :block="worldData.vs.outfitRevives" title="Outfits"
+                :source="expSources.outfitRevive" :source-team-id="1" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-vs-resupplies d-flex">
-            <block-view :block="worldData.vs.playerResupplies" :source="expSources.resupply"></block-view>
-            <block-view :block="worldData.vs.outfitResupplies" title="Outfits"></block-view>
+            <block-view :block="worldData.vs.playerResupplies" :source="expSources.charResupply"></block-view>
+            <block-view :block="worldData.vs.outfitResupplies" title="Outfits"
+                :source="expSources.outfitResupply" :source-team-id="1" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-vs-spawns d-flex">
-            <block-view :block="worldData.vs.playerSpawns" :source="expSources.spawn"></block-view>
-            <block-view :block="worldData.vs.outfitSpawns" title="Outfits"></block-view>
+            <block-view :block="worldData.vs.playerSpawns" :source="expSources.charSpawn"></block-view>
+            <block-view :block="worldData.vs.outfitSpawns" title="Outfits"
+                :source="expSources.outfitSpawn" :source-team-id="1" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <h4 class="grid-title-nc">
@@ -206,23 +214,31 @@
         </div>
 
         <div class="grid-nc-heals d-flex">
-            <block-view :block="worldData.nc.playerHeals" :source="expSources.heal"></block-view>
-            <block-view :block="worldData.nc.outfitHeals" title="Outfits"></block-view>
+            <block-view :block="worldData.nc.playerHeals" :source="expSources.charHeal"></block-view>
+            <block-view :block="worldData.nc.outfitHeals" title="Outfits"
+                :source="expSources.outfitHeal" :source-team-id="2" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-nc-revives d-flex">
-            <block-view :block="worldData.nc.playerRevives" :source="expSources.revive"></block-view>
-            <block-view :block="worldData.nc.outfitRevives" title="Outfits"></block-view>
+            <block-view :block="worldData.nc.playerRevives" :source="expSources.charRevive"></block-view>
+            <block-view :block="worldData.nc.outfitRevives" title="Outfits"
+                :source="expSources.outfitRevive" :source-team-id="2" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-nc-resupplies d-flex">
-            <block-view :block="worldData.nc.playerResupplies" :source="expSources.resupply"></block-view>
-            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"></block-view>
+            <block-view :block="worldData.nc.playerResupplies" :source="expSources.charResupply"></block-view>
+            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"
+                :source="expSources.outfitResupply" :source-team-id="2" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-nc-spawns d-flex">
-            <block-view :block="worldData.nc.playerSpawns" :source="expSources.spawn"></block-view>
-            <block-view :block="worldData.nc.outfitSpawns" title="Outfits"></block-view>
+            <block-view :block="worldData.nc.playerSpawns" :source="expSources.charSpawn"></block-view>
+            <block-view :block="worldData.nc.outfitSpawns" title="Outfits"
+                :source="expSources.outfitSpawn" :source-team-id="2" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <h4 class="grid-title-tr">
@@ -240,23 +256,31 @@
         </div>
 
         <div class="grid-tr-heals d-flex">
-            <block-view :block="worldData.tr.playerHeals" :source="expSources.heal"></block-view>
-            <block-view :block="worldData.tr.outfitHeals" title="Outfits"></block-view>
+            <block-view :block="worldData.tr.playerHeals" :source="expSources.charHeal"></block-view>
+            <block-view :block="worldData.tr.outfitHeals" title="Outfits"
+                :source="expSources.outfitHeal" :source-team-id="3" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-tr-revives d-flex">
-            <block-view :block="worldData.tr.playerRevives" :source="expSources.revive"></block-view>
-            <block-view :block="worldData.tr.outfitRevives" title="Outfits"></block-view>
+            <block-view :block="worldData.tr.playerRevives" :source="expSources.charRevive"></block-view>
+            <block-view :block="worldData.tr.outfitRevives" title="Outfits"
+                :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-tr-resupplies d-flex">
-            <block-view :block="worldData.tr.playerResupplies" :source="expSources.resupply"></block-view>
-            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"></block-view>
+            <block-view :block="worldData.tr.playerResupplies" :source="expSources.charResupply"></block-view>
+            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"
+                :source="expSources.outfitResupply" :source-team-id="3" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-tr-spawns d-flex">
-            <block-view :block="worldData.tr.playerSpawns" :source="expSources.spawn"></block-view>
-            <block-view :block="worldData.tr.outfitSpawns" title="Outfits"></block-view>
+            <block-view :block="worldData.tr.playerSpawns" :source="expSources.charSpawn"></block-view>
+            <block-view :block="worldData.tr.outfitSpawns" title="Outfits"
+                :source="expSources.outfitSpawn" :source-team-id="3" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-title-misc">

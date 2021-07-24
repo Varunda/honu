@@ -143,6 +143,29 @@ namespace watchtower.Services.Db.Implementations {
             return events;
         }
 
+        public async Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT wt_exp.*
+                    FROM wt_exp
+                        INNER JOIN wt_character ON wt_exp.source_character_id = wt_character.id
+                    WHERE wt_exp.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND wt_exp.world_id = @WorldID
+                        AND wt_exp.source_team_id = @TeamID
+                        AND (wt_character.outfit_id = @OutfitID OR (@OutfitID = '0' AND wt_character.outfit_id IS NULL));
+            ");
+
+            cmd.AddParameter("OutfitID", outfitID);
+            cmd.AddParameter("WorldID", worldID);
+            cmd.AddParameter("TeamID", teamID);
+            cmd.AddParameter("Interval", interval);
+
+            List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return events;
+        }
+
         public override ExpDbEntry ReadEntry(NpgsqlDataReader reader) {
             ExpDbEntry entry = new ExpDbEntry();
 

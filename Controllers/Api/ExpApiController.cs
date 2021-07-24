@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
@@ -41,56 +42,66 @@ namespace watchtower.Controllers {
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
         }
 
-        [HttpGet("character/{charID}/heals")]
-        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterHeals(string charID) {
+        [HttpGet("character/{charID}/{type}")]
+        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID);
-
             if (c == null) {
                 return NotFound($"{nameof(PsCharacter)} {charID}");
             }
 
-            List<CharacterExpSupportEntry> list = 
-                await GetByCharacterAndExpIDs(charID, new List<int> { Experience.HEAL, Experience.SQUAD_HEAL });
+            if (type == "spawns") {
+                List<CharacterExpSupportEntry> spawns = await CharacterSpawns(charID);
+                return spawns;
+            }
+
+            List<int> expTypes = new List<int>();
+
+            if (type == "heals") {
+                expTypes = new List<int> { Experience.HEAL, Experience.SQUAD_HEAL };
+            } else if (type == "revives") {
+                expTypes = new List<int> { Experience.REVIVE, Experience.SQUAD_REVIVE };
+            } else if (type == "resupplies") {
+                expTypes = new List<int> { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+            } else {
+                return BadRequest($"Unknown type '{type}'");
+            }
+
+            List<CharacterExpSupportEntry> list = await GetByCharacterAndExpIDs(charID, expTypes);
 
             return Ok(list);
         }
 
-        [HttpGet("character/{charID}/revives")]
-        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterRevives(string charID) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID);
-
-            if (c == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
+        [HttpGet("outfit/{outfitID}/{type}/{worldID}/{teamID}")]
+        public async Task<ActionResult<List<OutfitExpEntry>>> OutfitEntries(string outfitID, string type, short worldID, short teamID) {
+            PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
+            if (outfitID != "0" && outfit == null) {
+                return NotFound($"{nameof(PsOutfit)} {outfitID}");
             }
 
-            List<CharacterExpSupportEntry> list = 
-                await GetByCharacterAndExpIDs(charID, new List<int> { Experience.REVIVE, Experience.SQUAD_REVIVE });
+            List<int> expTypes = new List<int>();
+
+            if (type == "heals") {
+                expTypes = new List<int> { Experience.HEAL, Experience.SQUAD_HEAL };
+            } else if (type == "revives") {
+                expTypes = new List<int> { Experience.REVIVE, Experience.SQUAD_REVIVE };
+            } else if (type == "resupplies") {
+                expTypes = new List<int> { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+            } else if (type == "spawns") {
+                expTypes = new List<int> {
+                    Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS,
+                    Experience.SUNDERER_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN,
+                    Experience.SQUAD_VEHICLE_SPAWN_BONUS
+                };
+            } else {
+                return BadRequest($"Unknown type '{type}'");
+            }
+
+            List<OutfitExpEntry> list = await GetByOutfitAndExpIDs(outfitID, expTypes, worldID, teamID);
 
             return Ok(list);
         }
 
-        [HttpGet("character/{charID}/resupplies")]
-        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterResupplies(string charID) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID);
-
-            if (c == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
-            }
-
-            List<CharacterExpSupportEntry> list = 
-                await GetByCharacterAndExpIDs(charID, new List<int> { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY });
-
-            return Ok(list);
-        }
-
-        [HttpGet("character/{charID}/spawns")]
-        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterSpawns(string charID) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID);
-
-            if (c == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
-            }
-
+        private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID) {
             List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, 120);
 
             CharacterExpSupportEntry sundySpawns = new CharacterExpSupportEntry() { CharacterName = "Sunderers" };
@@ -114,7 +125,7 @@ namespace watchtower.Controllers {
                 sundySpawns, routerSpawns, squadSpawns, squadVehicleSpawns
             }).OrderByDescending(iter => iter.Amount).ToList();
 
-            return Ok(list);
+            return list;
         }
 
         private async Task<List<CharacterExpSupportEntry>> GetByCharacterAndExpIDs(string charID, List<int> events) {
@@ -142,6 +153,36 @@ namespace watchtower.Controllers {
             }
 
             List<CharacterExpSupportEntry> list = entries.Values
+                .OrderByDescending(iter => iter.Amount)
+                .ToList();
+
+            return list;
+        }
+
+        private async Task<List<OutfitExpEntry>> GetByOutfitAndExpIDs(string outfitID, List<int> events, short worldID, short teamID) {
+            List<ExpEvent> exp = await _ExpDbStore.GetByOutfitID(outfitID, worldID, teamID, 120);
+
+            Dictionary<string, OutfitExpEntry> entries = new Dictionary<string, OutfitExpEntry>();
+
+            foreach (ExpEvent ev in exp) {
+                if (events.Contains(ev.ExperienceID) == false) {
+                    continue;
+                }
+
+                if (entries.TryGetValue(ev.SourceID, out OutfitExpEntry? entry) == false) {
+                    PsCharacter? character = await _CharacterRepository.GetByID(ev.SourceID);
+                    entry = new OutfitExpEntry() {
+                        CharacterID = ev.SourceID,
+                        CharacterName = character?.Name ?? $"Missing {ev.SourceID}"
+                    };
+                }
+
+                ++entry.Amount;
+
+                entries[ev.SourceID] = entry;
+            }
+
+            List<OutfitExpEntry> list = entries.Values
                 .OrderByDescending(iter => iter.Amount)
                 .ToList();
 

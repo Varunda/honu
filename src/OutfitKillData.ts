@@ -38,7 +38,7 @@ Vue.component("outfit-kill-block", {
 
 				kills.push({
 					characterID: "",
-					characterName:  "Other",
+					characterName:  `${hiddenKillers.length} others`,
 					kills: hiddenKillers.reduce((acc, iter) => acc + iter.kills, 0)
 				});
 			}
@@ -61,8 +61,8 @@ Vue.component("outfit-kill-block", {
 				<tr class="table-secondary">
 					<th style="width: 30ch">Outfit</th>
 					<th title="Per Players (Total)">Kills</th>
-					<th>Deaths</th>
-					<th>K/D</th>
+					<th title="Revives remove a death, like in game">Deaths</th>
+					<th title="Kills / Deaths">K/D</th>
 					<th>Online</th>
 				</tr>
 			</thead>

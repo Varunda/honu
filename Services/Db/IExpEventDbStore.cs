@@ -38,5 +38,7 @@ namespace watchtower.Services.Db {
 
         Task<List<ExpEvent>> GetByCharacterID(string charID, int interval);
 
+        Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval);
+
     }
 }
