@@ -119,7 +119,10 @@ namespace watchtower.Services.Db.Implementations {
                     (SELECT COUNT(*) FROM evs k WHERE k.attacker_character_id = top_killers.attacker_character_id) AS kills,
                     (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND revived_event_id IS null) AS deaths,
                     (SELECT COUNT(*) FROM exp e WHERE e.source_character_id = top_killers.attacker_character_id) AS assists,
-                    (SELECT LEAST(@Interval * 60, EXTRACT('epoch' FROM SUM(COALESCE(s.finish, NOW() at time zone 'utc') - s.start)))
+                    (SELECT LEAST(@Interval * 60, 
+                            EXTRACT('epoch' FROM SUM(COALESCE(s.finish, NOW() at time zone 'utc')
+                            - GREATEST(NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL, s.start))
+                        ))
                         FROM wt_session s 
                         WHERE s.character_id = top_killers.attacker_character_id
                             AND (s.finish IS NULL OR s.finish >= NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)

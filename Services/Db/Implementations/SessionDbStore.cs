@@ -31,7 +31,7 @@ namespace watchtower.Services.Db.Implementations {
                 SELECT *
                     FROM wt_session
                     WHERE character_id = @CharacterID
-                        AND finish >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)    
+                        AND (finish IS NULL OR finish >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL))
             ");
 
             cmd.AddParameter("CharacterID", charID);
