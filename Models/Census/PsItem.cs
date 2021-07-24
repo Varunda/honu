@@ -12,6 +12,13 @@ namespace watchtower.Models.Census {
 
         public string Name { get; set; } = "";
 
+        public static PsItem NoItem = new PsItem() {
+            ID = "0",
+            TypeID = 0,
+            CategoryID = 0,
+            Name = "No weapon"
+        };
+
     }
 
 }

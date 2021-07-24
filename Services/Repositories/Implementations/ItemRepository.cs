@@ -35,6 +35,10 @@ namespace watchtower.Services.Repositories.Implementations {
                 return null;
             }
 
+            if (itemID == "0") {
+                return PsItem.NoItem;
+            }
+
             string key = string.Format(_CacheKeyID, itemID);
 
             if (_Cache.TryGetValue(key, out PsItem? item) == false) {

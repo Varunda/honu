@@ -44,7 +44,7 @@ namespace watchtower.Controllers {
             PsCharacter? c = await _CharacterRepository.GetByID(charID);
 
             if (c == null) {
-                return NoContent();
+                return NotFound($"{nameof(PsCharacter)} {charID}");
             }
 
             List<KillEvent> kills = await _KillDbStore.GetKillsByCharacterID(charID, 120);
@@ -62,7 +62,7 @@ namespace watchtower.Controllers {
 
                     entry = new CharacterWeaponKillEntry() {
                         WeaponID = ev.WeaponID,
-                        WeaponName = item?.Name ?? $"<Missing {ev.WeaponID}>"
+                        WeaponName = item?.Name ?? $"<missing {ev.WeaponID}>"
                     };
                 }
 

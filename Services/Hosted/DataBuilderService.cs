@@ -44,7 +44,7 @@ namespace watchtower.Services {
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
 
         private List<short> _WorldIDs = new List<short>() {
-            1, 10, 13, 17, 19, 40
+            World.Connery, World.Cobalt, World.Emerald, World.Jaeger, World.Miller, World.SolTech
         };
 
         public DataBuilderService(ILogger<DataBuilderService> logger,
@@ -88,7 +88,7 @@ namespace watchtower.Services {
                     Kills = entry.Kills,
                     Deaths = entry.Deaths,
                     Assists = entry.Assist,
-                    Name = (c == null) ? $"Missing {entry.CharacterID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : "")}{c.Name}",
+                    Name = c?.GetDisplayName() ?? $"Missing {entry.CharacterID}",
                     Online = p?.Online ?? true,
                     SecondsOnline = (int)entry.SecondsOnline,
                     FactionID = p?.FactionID ?? options.FactionID
@@ -136,7 +136,7 @@ namespace watchtower.Services {
 
                 BlockEntry b = new BlockEntry() {
                     ID = entry.ID,
-                    Name = (c == null) ? $"Missing {entry.ID}" : $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : $"")}{c.Name}",
+                    Name = c?.GetDisplayName() ?? $"Missing {entry.ID}",
                     Value = entry.Count,
                     FactionID = c?.FactionID ?? options.FactionID
                 };
