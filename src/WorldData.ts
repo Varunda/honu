@@ -49,6 +49,16 @@ export class OutfitKillBlock {
 	public entires: OutfitKillData[] = [];
 }
 
+export class WeaponKillsBlock {
+	public entries: WeaponKillEntry[] = [];
+}
+
+export class WeaponKillEntry {
+	public itemId: string = "";
+	public itemName: string = "";
+	public kills: number = 0;
+}
+
 export class ContinentCount {
 	public indar: FactionCount = new FactionCount();
 	public hossin: FactionCount = new FactionCount();
@@ -80,6 +90,8 @@ export class FactionData {
 	public playerResupplies: Block = new Block();
 	public playerRevives: Block = new Block();
 	public playerSpawns: Block = new Block();
+
+	public weaponKills: WeaponKillsBlock = new WeaponKillsBlock();
 
 	public totalKills: number = 0;
 	public totalDeaths: number = 0;

@@ -122,6 +122,8 @@ namespace watchtower.Models {
         /// </summary>
         public Block OutfitSpawns { get; set; } = new Block();
 
+        public WeaponKillsBlock WeaponKills { get; set; } = new WeaponKillsBlock();
+
         /// <summary>
         /// Total number of kills a faction has gotten
         /// </summary>

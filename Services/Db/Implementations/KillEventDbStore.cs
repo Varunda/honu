@@ -20,10 +20,12 @@ namespace watchtower.Services.Db.Implementations {
         private readonly IDataReader<KillDbEntry> _KillDbReader;
         private readonly IDataReader<KillDbOutfitEntry> _KillOutfitReader;
         private readonly IDataReader<KillEvent> _KillEventReader;
+        private readonly IDataReader<KillItemEntry> _KillItemEntryReader;
 
         public KillEventDbStore(ILogger<KillEventDbStore> logger,
             IDbHelper dbHelper, IDataReader<KillDbEntry> killDbReader,
-            IDataReader<KillDbOutfitEntry> outfitDbReader, IDataReader<KillEvent> evReader) {
+            IDataReader<KillDbOutfitEntry> outfitDbReader, IDataReader<KillEvent> evReader,
+            IDataReader<KillItemEntry> itemReader) {
 
             _Logger = logger;
 
@@ -32,6 +34,7 @@ namespace watchtower.Services.Db.Implementations {
             _KillDbReader = killDbReader ?? throw new ArgumentNullException(nameof(killDbReader));
             _KillOutfitReader = outfitDbReader ?? throw new ArgumentNullException(nameof(outfitDbReader));
             _KillEventReader = evReader ?? throw new ArgumentNullException(nameof(evReader));
+            _KillItemEntryReader = itemReader ?? throw new ArgumentNullException(nameof(itemReader));
         }
 
         public async Task Insert(KillEvent ev) {
@@ -176,6 +179,29 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("FactionID", options.FactionID);
 
             List<KillDbOutfitEntry> entries = await _KillOutfitReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entries;
+        }
+
+        public async Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT weapon_id as item_id, COUNT(weapon_id) AS count
+                    FROM wt_kills
+                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND world_id = @WorldID
+                        AND attacker_team_id = @FactionID
+                        AND attacker_team_id != killed_team_id
+                    GROUP BY weapon_id
+                    ORDER BY COUNT(*) DESC;
+            ");
+
+            cmd.AddParameter("Interval", options.Interval);
+            cmd.AddParameter("WorldID", options.WorldID);
+            cmd.AddParameter("FactionID", options.FactionID);
+
+            List<KillItemEntry> entries = await _KillItemEntryReader.ReadList(cmd);
             await conn.CloseAsync();
 
             return entries;

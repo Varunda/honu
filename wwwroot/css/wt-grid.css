@@ -11,7 +11,7 @@
 
 .grid-title-misc {
     grid-column: 1 / span 3;
-    grid-row: 13;
+    grid-row: 15;
 }
 
 .grid-title-vs {
@@ -49,6 +49,11 @@
     grid-row: 11;
 }
 
+.grid-title-weapon-kills {
+    grid-column: 1 / span 3;
+    grid-row: 13;
+}
+
 .grid-vs-player-kills {
     grid-column: 1;
     grid-row: 3;
@@ -77,6 +82,11 @@
 .grid-vs-spawns {
     grid-column: 1;
     grid-row: 12;
+}
+
+.grid-vs-weapon-kills {
+    grid-column: 1;
+    grid-row: 14;
 }
 
 .grid-nc-player-kills {
@@ -109,6 +119,11 @@
     grid-row: 12;
 }
 
+.grid-nc-weapon-kills {
+    grid-column: 2;
+    grid-row: 14;
+}
+
 .grid-tr-player-kills {
     grid-column: 3;
     grid-row: 3;
@@ -139,7 +154,12 @@
     grid-row: 12;
 }
 
+.grid-tr-weapon-kills {
+    grid-column: 3;
+    grid-row: 14;
+}
+
 .grid-misc-spawns {
     grid-column: 1;
-    grid-row: 14;
+    grid-row: 16;
 }

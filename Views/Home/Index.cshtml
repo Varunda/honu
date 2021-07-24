@@ -163,6 +163,10 @@
             Spawns &lt;3
         </h4>
 
+        <h4 class="grid-title-weapon-kills">
+            Weapon kills
+        </h4>
+
         <div class="grid-vs-player-kills">
             <player-kill-block :block="worldData.vs"></player-kill-block>
         </div>
@@ -197,6 +201,12 @@
             <block-view :block="worldData.vs.outfitSpawns" title="Outfits"
                 :source="expSources.outfitSpawn" :source-team-id="1" :source-world-id="worldID">
             </block-view>
+        </div>
+
+        <div class="grid-vs-weapon-kills">
+            <weapon-kills :weapon-kills="worldData.vs.weaponKills"
+                :total="worldData.vs.totalKills">
+            </weapon-kills>
         </div>
 
         <h4 class="grid-title-nc">
@@ -241,6 +251,12 @@
             </block-view>
         </div>
 
+        <div class="grid-nc-weapon-kills">
+            <weapon-kills :weapon-kills="worldData.nc.weaponKills"
+                :total="worldData.nc.totalKills">
+            </weapon-kills>
+        </div>
+
         <h4 class="grid-title-tr">
             <img src="~/img/logo_tr.png" style="width: 32px; "/>
             Terran Republic
@@ -281,6 +297,12 @@
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"
                 :source="expSources.outfitSpawn" :source-team-id="3" :source-world-id="worldID">
             </block-view>
+        </div>
+
+        <div class="grid-tr-weapon-kills">
+            <weapon-kills :weapon-kills="worldData.tr.weaponKills"
+                :total="worldData.tr.totalKills">
+            </weapon-kills>
         </div>
 
         <div class="grid-title-misc">

@@ -9,6 +9,7 @@ import FactionColors from "./FactionColors";
 import EventBus from "EventBus";
 
 import "./BlockView";
+import "./WeaponKillsView";
 import "./KillData";
 import "./OutfitKillData";
 import "./InfoHover";

@@ -40,6 +40,7 @@ namespace watchtower.Services {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _OutfitRepository;
         private readonly IWorldDataRepository _WorldDataRepository;
+        private readonly IItemRepository _ItemRepository;
 
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
 
@@ -52,7 +53,7 @@ namespace watchtower.Services {
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo,
-            IServiceHealthMonitor healthMon) {
+            IServiceHealthMonitor healthMon, IItemRepository itemRepo) {
 
             _Logger = logger;
             _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
@@ -64,6 +65,7 @@ namespace watchtower.Services {
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
             _WorldDataRepository = worldDataRepo ?? throw new ArgumentNullException(nameof(worldDataRepo));
+            _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));
         }
@@ -98,6 +100,28 @@ namespace watchtower.Services {
             }
 
             return data;
+        }
+
+        private async Task<WeaponKillsBlock> GetTopWeapons(KillDbOptions options) {
+            WeaponKillsBlock block = new WeaponKillsBlock();
+
+            List<KillItemEntry> items = (await _KillEventDb.GetTopWeapons(options))
+                .OrderByDescending(iter => iter.Kills)
+                .Take(12).ToList();
+
+            foreach (KillItemEntry itemIter in items) {
+                PsItem? item = await _ItemRepository.GetByID(itemIter.ItemID);
+
+                WeaponKillEntry entry = new WeaponKillEntry() {
+                    ItemID = itemIter.ItemID,
+                    ItemName = item?.Name ?? $"missing {itemIter.ItemID}",
+                    Kills = itemIter.Kills
+                };
+
+                block.Entries.Add(entry);
+            }
+
+            return block;
         }
 
         public async Task<OutfitKillBlock> GetTopOutfitKillers(KillDbOptions options) {
@@ -316,10 +340,15 @@ namespace watchtower.Services {
             await Task.WhenAll(
                 GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
                 GetTopOutfitKillers(vsKillOptions).ContinueWith(t => data.VS.OutfitKills = t.Result),
+                GetTopWeapons(vsKillOptions).ContinueWith(t => data.VS.WeaponKills = t.Result),
+
                 GetTopKillers(ncKillOptions, players).ContinueWith(t => data.NC.PlayerKills.Entries = t.Result),
                 GetTopOutfitKillers(ncKillOptions).ContinueWith(t => data.NC.OutfitKills = t.Result),
+                GetTopWeapons(ncKillOptions).ContinueWith(t => data.NC.WeaponKills = t.Result),
+
                 GetTopKillers(trKillOptions, players).ContinueWith(t => data.TR.PlayerKills.Entries = t.Result),
-                GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result)
+                GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result),
+                GetTopWeapons(trKillOptions).ContinueWith(t => data.TR.WeaponKills = t.Result)
             );
 
             long timeToGetTopKills = time.ElapsedMilliseconds;

@@ -82,6 +82,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<KillDbOutfitEntry>, KillDbOutfitEntryReader>();
             services.AddSingleton<IDataReader<KillEvent>, KillEventReader>();
             services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
+            services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();

@@ -39,5 +39,7 @@ namespace watchtower.Services.Db {
 
         Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval);
 
+        Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options);
+
     }
 }
