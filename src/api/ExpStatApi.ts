@@ -86,4 +86,12 @@ export class ExpStatApi {
         return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/spawns/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
+    public static async getCharacterVehicleKillEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
+        return ExpStatApi.getList(`/api/exp/character/${charID}/vehicleKills`, ExpStatApi.parseCharacterExpSupportEntry);
+    }
+
+    public static async getOutfitVehicleKillEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/vehicleKills/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    }
+
 }

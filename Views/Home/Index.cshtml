@@ -209,8 +209,10 @@
         </div>
 
         <div class="grid-vs-vehicle-kills d-flex">
-            <block-view :block="worldData.vs.playerVehicleKills"></block-view>
-            <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit"></block-view>
+            <block-view :block="worldData.vs.playerVehicleKills" :source="expSources.charVKills"></block-view>
+            <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit"
+                :source="expSources.outfitVKills" :source-team-id="1" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-vs-weapon-kills">
@@ -262,8 +264,10 @@
         </div>
 
         <div class="grid-nc-vehicle-kills d-flex">
-            <block-view :block="worldData.nc.playerVehicleKills"></block-view>
-            <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit"></block-view>
+            <block-view :block="worldData.nc.playerVehicleKills" :source="expSources.charVKills"></block-view>
+            <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit"
+                :source="expSources.outfitVKills" :source-team-id="2" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-nc-weapon-kills">
@@ -315,8 +319,10 @@
         </div>
 
         <div class="grid-tr-vehicle-kills d-flex">
-            <block-view :block="worldData.tr.playerVehicleKills"></block-view>
-            <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit"></block-view>
+            <block-view :block="worldData.tr.playerVehicleKills" :source="expSources.charVKills"></block-view>
+            <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit"
+                :source="expSources.outfitVKills" :source-team-id="3" :source-world-id="worldID">
+            </block-view>
         </div>
 
         <div class="grid-tr-weapon-kills">

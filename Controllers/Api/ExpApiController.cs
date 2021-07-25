@@ -54,6 +54,11 @@ namespace watchtower.Controllers {
                 return spawns;
             }
 
+            if (type == "vehicleKills") {
+                List<CharacterExpSupportEntry> kills = await CharacterVehicleKills(charID);
+                return kills;
+            }
+
             List<int> expTypes = new List<int>();
 
             if (type == "heals") {
@@ -92,6 +97,8 @@ namespace watchtower.Controllers {
                     Experience.SUNDERER_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN,
                     Experience.SQUAD_VEHICLE_SPAWN_BONUS
                 };
+            } else if (type == "vehicleKills") {
+                expTypes = Experience.VehicleKillEvents;
             } else {
                 return BadRequest($"Unknown type '{type}'");
             }
@@ -124,6 +131,71 @@ namespace watchtower.Controllers {
             List<CharacterExpSupportEntry> list = (new List<CharacterExpSupportEntry>() {
                 sundySpawns, routerSpawns, squadSpawns, squadVehicleSpawns
             }).OrderByDescending(iter => iter.Amount).ToList();
+
+            return list;
+        }
+
+        private async Task<List<CharacterExpSupportEntry>> CharacterVehicleKills(string charID) {
+            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, 120);
+
+            CharacterExpSupportEntry flashKills = new CharacterExpSupportEntry() { CharacterName = "Flashes" };
+            CharacterExpSupportEntry galaxyKills = new CharacterExpSupportEntry() { CharacterName = "Galaxies" };
+            CharacterExpSupportEntry libKills = new CharacterExpSupportEntry() { CharacterName = "Liberators" };
+            CharacterExpSupportEntry lightningKills = new CharacterExpSupportEntry() { CharacterName = "Lightnings" };
+            CharacterExpSupportEntry magriderKills = new CharacterExpSupportEntry() { CharacterName = "Magriders" };
+            CharacterExpSupportEntry mosquitoKills = new CharacterExpSupportEntry() { CharacterName = "Mosquitos" };
+            CharacterExpSupportEntry prowlerKills = new CharacterExpSupportEntry() { CharacterName = "Prowlers" };
+            CharacterExpSupportEntry reaverKills = new CharacterExpSupportEntry() { CharacterName = "Reavers" };
+            CharacterExpSupportEntry scytheKills = new CharacterExpSupportEntry() { CharacterName = "Scythes" };
+            CharacterExpSupportEntry vanguardKills = new CharacterExpSupportEntry() { CharacterName = "Vanguards" };
+            CharacterExpSupportEntry harasserKills = new CharacterExpSupportEntry() { CharacterName = "Harassers" };
+            CharacterExpSupportEntry valkKills = new CharacterExpSupportEntry() { CharacterName = "Valkyries" };
+            CharacterExpSupportEntry antKills = new CharacterExpSupportEntry() { CharacterName = "ANTs" };
+            CharacterExpSupportEntry colossusKills = new CharacterExpSupportEntry() { CharacterName = "Colossuses" };
+            CharacterExpSupportEntry javelinKills = new CharacterExpSupportEntry() { CharacterName = "Javelins" };
+
+            foreach (ExpEvent ev in events) {
+                if (ev.ExperienceID == Experience.VKILL_FLASH) {
+                    ++flashKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_GALAXY) {
+                    ++galaxyKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_LIBERATOR) {
+                    ++libKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_LIGHTNING) {
+                    ++lightningKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_MAGRIDER) {
+                    ++magriderKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_MOSQUITO) {
+                    ++mosquitoKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_PROWLER) {
+                    ++prowlerKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_REAVER) {
+                    ++reaverKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_SCYTHE) {
+                    ++scytheKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_VANGUARD) {
+                    ++vanguardKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_HARASSER) {
+                    ++harasserKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_VALKYRIE) {
+                    ++valkKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_ANT) {
+                    ++antKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_COLOSSUS) {
+                    ++colossusKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_JAVELIN) {
+                    ++javelinKills.Amount;
+                }
+            }
+
+            List<CharacterExpSupportEntry> list = (new List<CharacterExpSupportEntry>() {
+                    flashKills, galaxyKills, libKills,
+                    lightningKills, magriderKills, mosquitoKills,
+                    prowlerKills, reaverKills, scytheKills,
+                    vanguardKills, harasserKills, valkKills,
+                    antKills, colossusKills, javelinKills
+            }).Where(iter => iter.Amount > 0)
+                .OrderByDescending(iter => iter.Amount).ToList();
 
             return list;
         }
