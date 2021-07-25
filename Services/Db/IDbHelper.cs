@@ -35,7 +35,7 @@ namespace watchtower.Services.Db {
                     pg_class t, pg_class i, pg_index ix, pg_attribute a
                 WHERE
                     t.oid = ix.indrelid AND i.oid = ix.indexrelid AND a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-                    AND t.relkind = 'r' AND t.relname like 'wt_kills' AND i.relname = 'idx_wt_kills'
+                    AND t.relkind = 'r' AND t.relname = @TableName AND i.relname = @IndexName
             ");
 
             cmd.AddParameter("TableName", tableName);
