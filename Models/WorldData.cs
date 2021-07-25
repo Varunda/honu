@@ -122,6 +122,13 @@ namespace watchtower.Models {
         /// </summary>
         public Block OutfitSpawns { get; set; } = new Block();
 
+        public Block PlayerVehicleKills { get; set; } = new Block();
+
+        public Block OutfitVehicleKills { get; set; } = new Block();
+
+        /// <summary>
+        /// Top weapons used for this faction
+        /// </summary>
         public WeaponKillsBlock WeaponKills { get; set; } = new WeaponKillsBlock();
 
         /// <summary>

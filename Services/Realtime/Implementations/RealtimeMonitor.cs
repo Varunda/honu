@@ -15,13 +15,22 @@ namespace watchtower.Realtime {
     public class RealtimeMonitor : IDisposable, IRealtimeMonitor {
 
         private readonly List<short> _Events = new List<short>() {
-            Experience.HEAL, Experience.SQUAD_HEAL, // 4, 51
-            Experience.REVIVE, Experience.SQUAD_REVIVE, // 6, 53
-            Experience.RESUPPLY, Experience.SQUAD_RESUPPLY, // 7, 55
-            Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR, // 34, 142
+            Experience.HEAL, Experience.SQUAD_HEAL,
+            Experience.REVIVE, Experience.SQUAD_REVIVE,
+            Experience.RESUPPLY, Experience.SQUAD_RESUPPLY,
+            Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR,
+
             Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
             Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
-            Experience.ASSIST, Experience.SPAWN_ASSIST, Experience.PRIORITY_ASSIST, Experience.HIGH_PRIORITY_ASSIST
+
+            Experience.ASSIST, Experience.SPAWN_ASSIST, Experience.PRIORITY_ASSIST, Experience.HIGH_PRIORITY_ASSIST,
+
+            // I hope they don't add another vehicle cause this list is absurd
+            Experience.VKILL_FLASH, Experience.VKILL_GALAXY, Experience.VKILL_LIBERATOR,
+            Experience.VKILL_LIGHTNING, Experience.VKILL_MAGRIDER, Experience.VKILL_MOSQUITO,
+            Experience.VKILL_PROWLER, Experience.VKILL_REAVER, Experience.VKILL_SCYTHE,
+            Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER, Experience.VKILL_VALKYRIE,
+            Experience.VKILL_ANT, Experience.VKILL_COLOSSUS, Experience.VKILL_JAVELIN,
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {

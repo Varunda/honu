@@ -14,6 +14,7 @@ namespace watchtower.Models.Db {
         public const string TOTAL_VS_REVIVES = "vs_revives";
         public const string TOTAL_VS_RESUPPLIES = "vs_resupplies";
         public const string TOTAL_VS_SPAWNS = "vs_spawns";
+        public const string TOTAL_VS_VEHICLE_KILLS = "vs_vehicle_kills";
 
         public const string TOTAL_NC_KILLS = "nc_kills";
         public const string TOTAL_NC_DEATHS = "nc_deaths";
@@ -22,6 +23,7 @@ namespace watchtower.Models.Db {
         public const string TOTAL_NC_REVIVES = "nc_revives";
         public const string TOTAL_NC_RESUPPLIES = "nc_resupplies";
         public const string TOTAL_NC_SPAWNS = "nc_spawns";
+        public const string TOTAL_NC_VEHICLE_KILLS = "nc_vehicle_kills";
 
         public const string TOTAL_TR_KILLS = "tr_kills";
         public const string TOTAL_TR_DEATHS = "tr_deaths";
@@ -30,6 +32,7 @@ namespace watchtower.Models.Db {
         public const string TOTAL_TR_REVIVES = "tr_revives";
         public const string TOTAL_TR_RESUPPLIES = "tr_resupplies";
         public const string TOTAL_TR_SPAWNS = "tr_spawns";
+        public const string TOTAL_TR_VEHICLE_KILLS = "tr_vehicle_kills";
 
         public List<WorldTotalEntry> Entries { get; set; } = new List<WorldTotalEntry>();
 

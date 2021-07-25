@@ -84,12 +84,14 @@ export class FactionData {
 	public outfitResupplies: Block = new Block();
 	public outfitRevives: Block = new Block();
 	public outfitSpawns: Block = new Block();
+	public outfitVehicleKills: Block = new Block();
 
 	public playerKills: KillBlock = new KillBlock();
 	public playerHeals: Block = new Block();
 	public playerResupplies: Block = new Block();
 	public playerRevives: Block = new Block();
 	public playerSpawns: Block = new Block();
+	public playerVehicleKills: Block = new Block();
 
 	public weaponKills: WeaponKillsBlock = new WeaponKillsBlock();
 

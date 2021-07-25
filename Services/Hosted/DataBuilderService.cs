@@ -333,6 +333,17 @@ namespace watchtower.Services {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
+            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = Experience.VehicleKillEvents;
+            await Task.WhenAll(
+                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerVehicleKills.Entries = t.Result),
+                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitVehicleKills.Entries = t.Result),
+                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerVehicleKills.Entries = t.Result),
+                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitVehicleKills.Entries = t.Result),
+                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerVehicleKills.Entries = t.Result),
+                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitVehicleKills.Entries = t.Result)
+            );
+            long timeToGetVehicleKills = time.ElapsedMilliseconds;
+
             KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
             KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
             KillDbOptions trKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.TR };
@@ -404,6 +415,8 @@ namespace watchtower.Services {
             data.VS.OutfitResupplies.Total = worldTotal.GetValue(WorldTotal.TOTAL_VS_RESUPPLIES);
             data.VS.PlayerSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_VS_SPAWNS);
             data.VS.OutfitSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_VS_SPAWNS);
+            data.VS.PlayerVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_VS_VEHICLE_KILLS);
+            data.VS.OutfitVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_VS_VEHICLE_KILLS);
 
             data.NC.TotalKills = worldTotal.GetValue(WorldTotal.TOTAL_NC_KILLS);
             data.NC.TotalDeaths = worldTotal.GetValue(WorldTotal.TOTAL_NC_DEATHS);
@@ -416,6 +429,8 @@ namespace watchtower.Services {
             data.NC.OutfitResupplies.Total = worldTotal.GetValue(WorldTotal.TOTAL_NC_RESUPPLIES);
             data.NC.PlayerSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_NC_SPAWNS);
             data.NC.OutfitSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_NC_SPAWNS);
+            data.NC.PlayerVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_NC_VEHICLE_KILLS);
+            data.NC.OutfitVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_NC_VEHICLE_KILLS);
 
             data.TR.TotalKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS);
             data.TR.TotalDeaths = worldTotal.GetValue(WorldTotal.TOTAL_TR_DEATHS);
@@ -428,6 +443,8 @@ namespace watchtower.Services {
             data.TR.OutfitResupplies.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_RESUPPLIES);
             data.TR.PlayerSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SPAWNS);
             data.TR.OutfitSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SPAWNS);
+            data.TR.PlayerVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
+            data.TR.OutfitVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
 
             long timeToGetWorldTotals = time.ElapsedMilliseconds;
 
