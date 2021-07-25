@@ -67,7 +67,7 @@ export class ExpStatApi {
     }
 
     public static async getOutfitReviveEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/revives/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
     public static async getCharacterResupplyEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
@@ -75,7 +75,7 @@ export class ExpStatApi {
     }
 
     public static async getOutfitResupplyEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/resupplies/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
     public static async getCharacterSpawnEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
@@ -83,7 +83,7 @@ export class ExpStatApi {
     }
 
     public static async getOutfitSpawnEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/spawns/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
 }
