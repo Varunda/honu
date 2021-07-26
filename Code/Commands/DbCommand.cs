@@ -28,7 +28,9 @@ namespace watchtower.Commands {
         }
 
         public void FlushPool() {
+            _Logger.LogInformation($"Flushing pools...");
             NpgsqlConnection.ClearAllPools();
+            _Logger.LogInformation($"Flushed all pools");
         }
 
     }
