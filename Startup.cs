@@ -19,10 +19,15 @@ using watchtower.Services.Db.Readers;
 using watchtower.Code.Hubs;
 using System.Text.Json;
 using watchtower.Models.Events;
+using DaybreakGames.Census;
+using watchtower.Services.Offline;
+using DaybreakGames.Census.Stream;
 
 namespace watchtower {
 
     public class Startup {
+
+        private bool OFFLINE_MODE = true;
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
@@ -34,12 +39,18 @@ namespace watchtower {
         public void ConfigureServices(IServiceCollection services) {
             services.AddRouting();
 
-            services.AddCensusServices(options => {
-                options.CensusServiceId = "asdf";
-                options.CensusServiceNamespace = "ps2";
-                //options.LogCensusErrors = true;
-                options.LogCensusErrors = false;
-            });
+            if (OFFLINE_MODE == false) {
+                services.AddCensusServices(options => {
+                    options.CensusServiceId = "asdf";
+                    options.CensusServiceNamespace = "ps2";
+                    //options.LogCensusErrors = true;
+                    options.LogCensusErrors = false;
+                });
+            } else {
+                services.AddSingleton<ICensusQueryFactory, OfflineCensusQueryFactory>();
+                services.AddSingleton<ICensusClient, OfflineCensusClient>();
+                services.AddSingleton<ICensusStreamClient, OfflineCensusStreamClient>();
+            }
 
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
@@ -107,6 +118,10 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
+
+            if (OFFLINE_MODE == true) {
+                services.AddHostedService<OfflineDataMockService>();
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
