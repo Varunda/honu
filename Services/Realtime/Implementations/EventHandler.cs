@@ -166,9 +166,7 @@ namespace watchtower.Realtime {
                 IsHeadshot = (payload.Value<string?>("is_headshot") ?? "0") != "0"
             };
 
-            _Logger.LogDebug($"Timestamp: {ev.Timestamp}");
-
-            _Logger.LogTrace($"Processing death: {payload}");
+            //_Logger.LogTrace($"Processing death: {payload}");
 
             lock (CharacterStore.Get().Players) {
                 // The default value for Online must be false, else when a new TrackedPlayer is constructed,

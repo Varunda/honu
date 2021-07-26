@@ -399,6 +399,9 @@ namespace watchtower.Services {
                 WorldID = worldID
             };
 
+            // Early stop for a quicker shutdown. Saves seconds per restart!
+            if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
+
             WorldTotal worldTotal = await _WorldTotalDb.Get(totalOptions);
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
@@ -445,6 +448,15 @@ namespace watchtower.Services {
             data.TR.OutfitSpawns.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SPAWNS);
             data.TR.PlayerVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
             data.TR.OutfitVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
+
+            FactionFocus focus = new FactionFocus();
+            focus.VS.NcKills = worldTotal.GetValue(WorldTotal.TOTAL_VS_KILLS_NC);
+            focus.VS.TrKills = worldTotal.GetValue(WorldTotal.TOTAL_VS_KILLS_TR);
+            focus.NC.VsKills = worldTotal.GetValue(WorldTotal.TOTAL_NC_KILLS_VS);
+            focus.NC.TrKills = worldTotal.GetValue(WorldTotal.TOTAL_NC_KILLS_TR);
+            focus.TR.VsKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_NC);
+            focus.TR.NcKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_VS);
+            data.FactionFocus = focus;
 
             long timeToGetWorldTotals = time.ElapsedMilliseconds;
 

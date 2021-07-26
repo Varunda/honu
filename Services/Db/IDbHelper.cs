@@ -42,6 +42,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("IndexName", indexName);
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+            await conn.CloseAsync();
             return reader.Read();
         }
 

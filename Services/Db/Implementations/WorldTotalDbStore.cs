@@ -59,7 +59,10 @@ namespace watchtower.Services.Db.Implementations {
                 )
                 SELECT 'vs_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1) AS value
                 UNION SELECT 'vs_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 1 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'vs_kills_nc' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1 AND kills.killed_team_id = 2 AND kills.revived_event_id IS NULL) AS value
+                UNION SELECT 'vs_kills_tr' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1 AND kills.killed_team_id = 3 AND kills.revived_event_id IS NULL) AS value
                 UNION SELECT 'vs_assists' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isAssist})) AS value
+
                 UNION SELECT 'vs_heals' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isHeal})) AS value
                 UNION SELECT 'vs_revives' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isRevive})) AS value
                 UNION SELECT 'vs_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isResupply})) AS value
@@ -68,7 +71,10 @@ namespace watchtower.Services.Db.Implementations {
 
                 UNION SELECT 'nc_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2) AS value
                 UNION SELECT 'nc_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 2 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'nc_kills_vs' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2 AND kills.killed_team_id = 1 AND kills.revived_event_id IS NULL) AS value
+                UNION SELECT 'nc_kills_tr' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2 AND kills.killed_team_id = 3 AND kills.revived_event_id IS NULL) AS value
                 UNION SELECT 'nc_assists' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isAssist})) AS value
+
                 UNION SELECT 'nc_heals' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isHeal})) AS value
                 UNION SELECT 'nc_revives' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isRevive})) AS value
                 UNION SELECT 'nc_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isResupply})) AS value
@@ -77,7 +83,10 @@ namespace watchtower.Services.Db.Implementations {
 
                 UNION SELECT 'tr_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3) AS value
                 UNION SELECT 'tr_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 3 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'tr_kills_vs' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3 AND kills.killed_team_id = 1 AND kills.revived_event_id IS NULL) AS value
+                UNION SELECT 'tr_kills_tr' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3 AND kills.killed_team_id = 2 AND kills.revived_event_id IS NULL) AS value
                 UNION SELECT 'tr_assists' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isAssist})) AS value
+
                 UNION SELECT 'tr_heals' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isHeal})) AS value
                 UNION SELECT 'tr_revives' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isRevive})) AS value
                 UNION SELECT 'tr_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isResupply})) AS value

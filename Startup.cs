@@ -27,6 +27,9 @@ namespace watchtower {
 
     public class Startup {
 
+        // Will watchtower attempt to connect to the Census Streaming service?
+        //      if false, yes, operation is performed as normal and events are recorded in real time
+        //      if true, no, no connections are made, and mock events are created to create fake data
         private bool OFFLINE_MODE = true;
 
         public Startup(IConfiguration configuration) {

@@ -75,6 +75,18 @@ export class FactionCount {
 	public other: number = 0;
 }
 
+export class FactionFocus {
+	public vs: FactionFocusEntry = new FactionFocusEntry();
+	public nc: FactionFocusEntry = new FactionFocusEntry();
+	public tr: FactionFocusEntry = new FactionFocusEntry();
+}
+
+export class FactionFocusEntry {
+	public vsKills: number = 0;
+	public ncKills: number = 0;
+	public trKills: number = 0;
+}
+
 export class FactionData {
 	public factionID: string = "";
 	public factionName: string = "";
@@ -109,5 +121,6 @@ export class WorldData {
 	public tr: FactionData = new FactionData();
 	public vs: FactionData = new FactionData();
 	public topSpawns: SpawnEntries = new SpawnEntries();
+	public factionFocus: FactionFocus = new FactionFocus();
 	public onlineCount: number = 0;
 }
