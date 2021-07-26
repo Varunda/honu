@@ -50,6 +50,7 @@ namespace watchtower.Services.Db.Implementations {
                         FROM wt_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
+                            AND attacker_team_id != killed_team_id
                 ), exp AS (
                     SELECT *
                         FROM wt_exp
