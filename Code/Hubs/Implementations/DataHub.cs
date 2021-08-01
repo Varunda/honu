@@ -29,11 +29,21 @@ namespace watchtower.Code.Hubs.Implementations {
         public override async Task OnConnectedAsync() {
             _Logger.LogInformation($"New connection: {Context.ConnectionId}, count: {++_ConnectionCount}");
 
+            lock (ConnectionStore.Get().Connections) {
+                ConnectionStore.Get().Connections.GetOrAdd(Context.ConnectionId, new TrackedConnection() {
+                    ConnectionId = Context.ConnectionId
+                });
+            }
+
             await base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception? exception) {
             _Logger.LogInformation($"Hub disconnect: {Context.ConnectionId}, count {--_ConnectionCount}");
+
+            lock (ConnectionStore.Get().Connections) {
+                ConnectionStore.Get().Connections.TryRemove(Context.ConnectionId, out _);
+            }
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -54,10 +64,18 @@ namespace watchtower.Code.Hubs.Implementations {
             if (World.IsValidWorld(worldID)) {
                 await Groups.AddToGroupAsync(connID, worldID.ToString());
 
+                lock (ConnectionStore.Get().Connections) {
+                    TrackedConnection conn = ConnectionStore.Get().Connections.GetOrAdd(connID, new TrackedConnection() {
+                        ConnectionId = connID,
+                        WorldID = worldID
+                    });
+                    conn.WorldID = worldID;
+                }
+
                 WorldData? data = _WorldDataRepository.Get(worldID);
                 if (data != null) {
                     await Clients.Caller.UpdateData(data);
-                    _Logger.LogDebug($"Sent previous data made at {data.Timestamp}");
+                    //_Logger.LogDebug($"Sent previous data made at {data.Timestamp}");
                 }
             }
         }
