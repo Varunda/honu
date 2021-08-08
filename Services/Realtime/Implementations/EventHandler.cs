@@ -184,6 +184,8 @@ namespace watchtower.Realtime {
                     _SessionQueue.Queue(attacker);
                 }
 
+                _CacheQueue.Queue(attacker.ID);
+
                 attacker.ZoneID = zoneID;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
@@ -201,6 +203,8 @@ namespace watchtower.Realtime {
                     Online = false,
                     WorldID = ev.WorldID
                 });
+
+                _CacheQueue.Queue(killed.ID);
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
                 if (killed.Online == false && attacker.ID != killed.ID) {

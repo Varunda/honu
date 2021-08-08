@@ -13,6 +13,8 @@ namespace watchtower.Models {
         /// </summary>
         public string ID { get; set; } = "";
 
+        public string? OutfitID { get; set; } = null;
+
         /// <summary>
         /// Faction the character is on
         /// </summary>

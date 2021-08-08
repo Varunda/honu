@@ -45,7 +45,10 @@ namespace watchtower.Services.Repositories.Implementations {
                 item = await _Db.GetByID(itemID);
 
                 if (item == null) {
-                    item = await _Census.GetByID(itemID);
+                    PsItem? censusItem = await _Census.GetByID(itemID);
+                    if (censusItem != null) {
+                        item = censusItem;
+                    }
 
                     if (item != null) {
                         await _Db.Upsert(item);

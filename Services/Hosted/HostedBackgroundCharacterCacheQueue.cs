@@ -48,8 +48,11 @@ namespace watchtower.Services.Hosted {
                                 FactionID = character.FactionID,
                                 TeamID = character.FactionID,
                                 Online = false,
-                                WorldID = character.WorldID
+                                WorldID = character.WorldID,
+                                OutfitID = character.OutfitID
                             });
+
+                            tracked.OutfitID = character.OutfitID;
 
                             /*
                             // Prevent the TeamID field from being overriden whenever a character is cached

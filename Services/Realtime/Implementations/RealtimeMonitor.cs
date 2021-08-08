@@ -31,6 +31,7 @@ namespace watchtower.Realtime {
             Experience.VKILL_PROWLER, Experience.VKILL_REAVER, Experience.VKILL_SCYTHE,
             Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER, Experience.VKILL_VALKYRIE,
             Experience.VKILL_ANT, Experience.VKILL_COLOSSUS, Experience.VKILL_JAVELIN,
+            Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {

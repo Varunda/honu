@@ -19,7 +19,7 @@ namespace watchtower.Models {
 
         public int AmountOnline { get; set; }
 
-        public string FactionID { get; set; } = "";
+        public short FactionID { get; set; }
 
     }
 }

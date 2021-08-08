@@ -21,6 +21,7 @@ using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 using watchtower.Code.Hubs;
 using watchtower.Code.Constants;
+using watchtower.Code;
 
 namespace watchtower.Services {
 
@@ -190,6 +191,64 @@ namespace watchtower.Services {
             return blockEntries.OrderByDescending(iter => iter.Value).Take(5).ToList();
         }
 
+        public async Task<OutfitsOnline> GetOutfitsOnline(Dictionary<string, TrackedPlayer> players, short teamID, short worldID) {
+            Dictionary<string, OutfitOnlineEntry> outfits = new Dictionary<string, OutfitOnlineEntry>();
+
+            int total = 0;
+
+            foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
+                if (entry.Value.Online == false || entry.Value.TeamID != teamID || entry.Value.WorldID != worldID) {
+                    continue;
+                }
+
+                string outfitID = entry.Value.OutfitID ?? "0";
+
+                /*
+                if (teamID == Faction.VS && worldID == World.Emerald) {
+                    _Logger.LogDebug(outfitID);
+                }
+                */
+
+                if (outfits.TryGetValue(outfitID, out OutfitOnlineEntry? outfit) == false) {
+                    PsOutfit? psOutfit;
+                    if (outfitID == "0") {
+                        psOutfit = new PsOutfit() {
+                            ID = outfitID,
+                            FactionID = teamID,
+                            Name = "No outfit"
+                        };
+                    } else {
+                        psOutfit = await _OutfitRepository.GetByID(outfitID);
+                    }
+
+                    outfit = new OutfitOnlineEntry() {
+                        Display = $"{(psOutfit?.Tag == null ? $"" : $"[{psOutfit?.Tag}] ")}{psOutfit?.Name}",
+                        FactionID = teamID
+                    };
+
+                    /*
+                    if (teamID == Faction.VS && worldID == World.Emerald) {
+                        _Logger.LogDebug($"Made new outfit {psOutfit?.Name}");
+                    }
+                    */
+                }
+
+                ++outfit.AmountOnline;
+                ++total;
+
+                outfits[outfitID] = outfit;
+            }
+
+            return new OutfitsOnline() {
+                TotalOnline = total,
+                Outfits = outfits.Values
+                    .OrderByDescending(iter => iter.AmountOnline)
+                    .Take(10)
+                    .ToList()
+            };
+
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             while (!stoppingToken.IsCancellationRequested) {
                 try {
@@ -209,6 +268,13 @@ namespace watchtower.Services {
                     }
 
                     foreach (short worldID in _WorldIDs) {
+                        lock (ConnectionStore.Get().Connections) {
+                            int count = ConnectionStore.Get().Connections.Where(iter => iter.Value.WorldID == worldID).Count();
+                            if (count == 0) {
+                                continue;
+                            }
+                        }
+
                         WorldData data = await _BuildWorldData(worldID, stoppingToken);
                         _WorldDataRepository.Set(worldID, data);
 
@@ -457,6 +523,12 @@ namespace watchtower.Services {
             focus.TR.VsKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_NC);
             focus.TR.NcKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_VS);
             data.FactionFocus = focus;
+
+            await Task.WhenAll(
+                GetOutfitsOnline(players, Faction.VS, worldID).ContinueWith(result => data.VS.Outfits = result.Result),
+                GetOutfitsOnline(players, Faction.NC, worldID).ContinueWith(result => data.NC.Outfits = result.Result),
+                GetOutfitsOnline(players, Faction.TR, worldID).ContinueWith(result => data.TR.Outfits = result.Result)
+            );
 
             long timeToGetWorldTotals = time.ElapsedMilliseconds;
 

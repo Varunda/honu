@@ -39,10 +39,12 @@ namespace watchtower.Services.Repositories.Implementations {
 
                 // Only update the character if it's expired
                 if (character == null || await HasExpired(character) == true) {
-                    character = await _Census.GetByID(charID);
-
-                    if (character != null) {
-                        await _Db.Upsert(character);
+                    // If we have the character in DB, but not in Census, return it from DB
+                    //      Useful if census is down, or a character has been deleted
+                    PsCharacter? censusChar = await _Census.GetByID(charID);
+                    if (censusChar != null) {
+                        character = await _Census.GetByID(charID);
+                        await _Db.Upsert(censusChar);
                     }
                 }
 

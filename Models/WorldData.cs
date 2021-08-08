@@ -158,6 +158,8 @@ namespace watchtower.Models {
         /// </summary>
         public WeaponKillsBlock WeaponKills { get; set; } = new WeaponKillsBlock();
 
+        public OutfitsOnline Outfits { get; set; } = new OutfitsOnline();
+
         /// <summary>
         /// Total number of kills a faction has gotten
         /// </summary>

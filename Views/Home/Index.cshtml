@@ -173,6 +173,11 @@
             <info-hover text="Counts all kills except sunderer kills, that is a hill I will die on"></info-hover>
         </h4>
 
+        <h4 class="grid-title-outfit">
+            Outfits currently online
+            <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
+        </h4>
+
         <div class="grid-vs-player-kills">
             <player-kill-block :block="worldData.vs"></player-kill-block>
         </div>
@@ -220,6 +225,10 @@
             <weapon-kills :weapon-kills="worldData.vs.weaponKills"
                 :total="worldData.vs.totalKills">
             </weapon-kills>
+        </div>
+
+        <div class="grid-vs-outfits">
+            <outfits-online :data="worldData.vs.outfits"></outfits-online>
         </div>
 
         <h4 class="grid-title-nc">
@@ -277,6 +286,10 @@
             </weapon-kills>
         </div>
 
+        <div class="grid-nc-outfits">
+            <outfits-online :data="worldData.nc.outfits"></outfits-online>
+        </div>
+
         <h4 class="grid-title-tr">
             <img src="~/img/logo_tr.png" style="width: 32px; "/>
             Terran Republic
@@ -330,6 +343,10 @@
             <weapon-kills :weapon-kills="worldData.tr.weaponKills"
                 :total="worldData.tr.totalKills">
             </weapon-kills>
+        </div>
+
+        <div class="grid-tr-outfits">
+            <outfits-online :data="worldData.tr.outfits"></outfits-online>
         </div>
 
         <div class="grid-title-misc">

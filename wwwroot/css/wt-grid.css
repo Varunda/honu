@@ -9,11 +9,6 @@
     grid-row: 1;
 }
 
-.grid-title-misc {
-    grid-column: 1 / span 3;
-    grid-row: 17;
-}
-
 .grid-title-vs {
     grid-column: 1;
     grid-row: 2;
@@ -59,6 +54,16 @@
     grid-row: 15;
 }
 
+.grid-title-outfits {
+    grid-column: 1 / spawn 3;
+    grid-row: 17;
+}
+
+.grid-title-misc {
+    grid-column: 1 / span 3;
+    grid-row: 19;
+}
+
 .grid-vs-player-kills {
     grid-column: 1;
     grid-row: 3;
@@ -97,6 +102,11 @@
 .grid-vs-weapon-kills {
     grid-column: 1;
     grid-row: 16;
+}
+
+.grid-vs-outfits {
+    grid-column: 1;
+    grid-row: 18;
 }
 
 .grid-nc-player-kills {
@@ -139,6 +149,11 @@
     grid-row: 16;
 }
 
+.grid-nc-outfits {
+    grid-column: 2;
+    grid-row: 18;
+}
+
 .grid-tr-player-kills {
     grid-column: 3;
     grid-row: 3;
@@ -179,7 +194,12 @@
     grid-row: 16;
 }
 
+.grid-tr-outfits {
+    grid-column: 3;
+    grid-row: 18;
+}
+
 .grid-misc-spawns {
     grid-column: 1;
-    grid-row: 18;
+    grid-row: 20;
 }

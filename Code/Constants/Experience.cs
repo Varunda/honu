@@ -44,6 +44,8 @@ namespace watchtower.Constants {
         public const int VKILL_ANT = 651;
         public const int VKILL_COLOSSUS = 1449;
         public const int VKILL_JAVELIN = 1480;
+        public const int VKILL_CHIMERA = 1565;
+        public const int VKILL_DERVISH = 1635;
 
         public static List<int> VehicleKillEvents = new List<int>() {
             VKILL_FLASH, VKILL_GALAXY, VKILL_LIBERATOR,
@@ -51,6 +53,7 @@ namespace watchtower.Constants {
             VKILL_PROWLER, VKILL_REAVER, VKILL_SCYTHE,
             VKILL_VANGUARD, VKILL_HARASSER, VKILL_VALKYRIE,
             VKILL_ANT, VKILL_COLOSSUS, VKILL_JAVELIN,
+            VKILL_CHIMERA, VKILL_DERVISH
         };
 
         public static bool IsAssist(int expId) {

@@ -41,10 +41,12 @@ namespace watchtower.Services.Repositories.Implementations {
                 outfit = await _Db.GetByID(outfitID);
 
                 if (outfit == null || HasExpired(outfit) == true) {
-                    outfit = await _Census.GetByID(outfitID);
-
-                    if (outfit != null) {
-                        await _Db.Upsert(outfit);
+                    // If the outfit is in DB but not Census, might as well return from DB
+                    //      Useful if census is down, or outfit is deleted
+                    PsOutfit? censusOutfit = await _Census.GetByID(outfitID);
+                    if (censusOutfit != null) {
+                        outfit = await _Census.GetByID(outfitID);
+                        await _Db.Upsert(censusOutfit);
                     }
                 }
 

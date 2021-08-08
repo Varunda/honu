@@ -99,11 +99,12 @@ namespace watchtower.Services.Db.Implementations {
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id = @FactionID
+                            AND attacker_team_id != killed_team_id
                         GROUP BY attacker_character_id
                         ORDER BY count(attacker_character_id) DESC
                         LIMIT 8
                 ), evs AS (
-                    SELECT ID, attacker_character_id, killed_character_id, revived_event_id
+                    SELECT ID, attacker_character_id, killed_character_id, revived_event_id, attacker_team_id, killed_team_id
                         FROM wt_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
@@ -119,8 +120,8 @@ namespace watchtower.Services.Db.Implementations {
                 )
                 SELECT
                     attacker_character_id,
-                    (SELECT COUNT(*) FROM evs k WHERE k.attacker_character_id = top_killers.attacker_character_id) AS kills,
-                    (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND revived_event_id IS null) AS deaths,
+                    (SELECT COUNT(*) FROM evs k WHERE k.attacker_character_id = top_killers.attacker_character_id AND k.attacker_team_id = @FactionID) AS kills,
+                    (SELECT COUNT(*) FROM evs d WHERE d.killed_character_id = top_killers.attacker_character_id AND d.attacker_team_id != @FactionID AND revived_event_id IS null) AS deaths,
                     (SELECT COUNT(*) FROM exp e WHERE e.source_character_id = top_killers.attacker_character_id) AS assists,
                     (SELECT LEAST(@Interval * 60, 
                             EXTRACT('epoch' FROM SUM(COALESCE(s.finish, NOW() at time zone 'utc')
@@ -156,8 +157,8 @@ namespace watchtower.Services.Db.Implementations {
                             INNER JOIN wt_character c2 on k.killed_character_id = c2.id
                         WHERE k.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND k.world_id = @WorldID
-                            AND attacker_faction_id != killed_faction_id
-                            AND (attacker_faction_id = @FactionID OR killed_faction_id = @FactionID)
+                            AND attacker_team_id != killed_team_id
+                            AND (attacker_team_id = @FactionID OR killed_team_id = @FactionID)
                             AND c.outfit_id IS NOT NULL
                 ), outfits AS (
                     SELECT attacker_outfit_id

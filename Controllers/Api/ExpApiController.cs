@@ -153,6 +153,8 @@ namespace watchtower.Controllers {
             CharacterExpSupportEntry antKills = new CharacterExpSupportEntry() { CharacterName = "ANTs" };
             CharacterExpSupportEntry colossusKills = new CharacterExpSupportEntry() { CharacterName = "Colossuses" };
             CharacterExpSupportEntry javelinKills = new CharacterExpSupportEntry() { CharacterName = "Javelins" };
+            CharacterExpSupportEntry chimeraKills = new CharacterExpSupportEntry() { CharacterName = "Chimeras" };
+            CharacterExpSupportEntry dervishKills = new CharacterExpSupportEntry() { CharacterName = "Dervishes" };
 
             foreach (ExpEvent ev in events) {
                 if (ev.ExperienceID == Experience.VKILL_FLASH) {
@@ -185,6 +187,10 @@ namespace watchtower.Controllers {
                     ++colossusKills.Amount;
                 } else if (ev.ExperienceID == Experience.VKILL_JAVELIN) {
                     ++javelinKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_CHIMERA) {
+                    ++chimeraKills.Amount;
+                } else if (ev.ExperienceID == Experience.VKILL_DERVISH) {
+                    ++dervishKills.Amount;
                 }
             }
 
@@ -193,7 +199,8 @@ namespace watchtower.Controllers {
                     lightningKills, magriderKills, mosquitoKills,
                     prowlerKills, reaverKills, scytheKills,
                     vanguardKills, harasserKills, valkKills,
-                    antKills, colossusKills, javelinKills
+                    antKills, colossusKills, javelinKills,
+                    dervishKills, chimeraKills
             }).Where(iter => iter.Amount > 0)
                 .OrderByDescending(iter => iter.Amount).ToList();
 
