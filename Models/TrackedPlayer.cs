@@ -38,7 +38,7 @@ namespace watchtower.Models {
         /// <summary>
         /// Zone ID of the last event the player got
         /// </summary>
-        public string ZoneID { get; set; } = "";
+        public int ZoneID { get; set; } = -1;
 
         /// <summary>
         /// Timestamp (in unix milliseconds) of when the last event a player got. Used for determining AFK players

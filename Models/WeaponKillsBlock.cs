@@ -17,6 +17,10 @@ namespace watchtower.Models {
 
         public int Kills { get; set; }
 
+        public int HeadshotKills { get; set; }
+
+        public int Users { get; set; }
+
     }
 
 }

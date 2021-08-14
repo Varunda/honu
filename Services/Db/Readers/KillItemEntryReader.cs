@@ -15,7 +15,9 @@ namespace watchtower.Services.Db.Readers {
             KillItemEntry entry = new KillItemEntry();
 
             entry.ItemID = reader.GetString("item_id");
-            entry.Kills = reader.GetInt32("count");
+            entry.Kills = reader.GetInt32("kills");
+            entry.HeadshotKills = reader.GetInt32("headshots");
+            entry.Users = reader.GetInt32("users");
 
             return entry;
         }

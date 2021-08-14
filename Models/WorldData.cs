@@ -55,17 +55,6 @@ namespace watchtower.Models {
         /// </summary>
         public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
-        public FactionFocus FactionFocus { get; set; } = new FactionFocus();
-
-    }
-
-    public class FactionFocus {
-
-        public FactionFocusEntry VS { get; set; } = new FactionFocusEntry();
-
-        public FactionFocusEntry NC { get; set; } = new FactionFocusEntry();
-
-        public FactionFocusEntry TR { get; set; } = new FactionFocusEntry();
     }
 
     public class FactionFocusEntry {

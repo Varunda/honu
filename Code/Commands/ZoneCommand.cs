@@ -1,0 +1,85 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using watchtower.Commands;
+using watchtower.Models;
+
+namespace watchtower.Code.Commands {
+
+    [Command]
+    public class ZoneCommand {
+
+        private readonly ILogger<ZoneCommand> _Logger;
+
+        public ZoneCommand(IServiceProvider services) {
+            _Logger = services.GetRequiredService<ILogger<ZoneCommand>>();
+        }
+
+        public void Print() {
+            string s = $"Zone metadata currently stored:";
+
+            lock (ZoneStateStore.Get().Zones) {
+                foreach (KeyValuePair<string, ZoneState> zone in ZoneStateStore.Get().Zones) {
+                    s += $"\n\t{zone.Key} => {JToken.FromObject(zone.Value)}";
+                }
+            }
+
+            _Logger.LogInformation(s);
+        }
+
+        public void StartAlert(short worldID, int zoneID, int duration) {
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState? zone = ZoneStateStore.Get().GetZone(worldID, zoneID);
+
+                if (zone == null) {
+                    zone = new ZoneState() {
+                        ZoneID = zoneID,
+                        WorldID = worldID,
+                        IsOpened = true
+                    };
+                }
+
+                zone.AlertStart = DateTime.UtcNow;
+                zone.AlertEnd = zone.AlertStart + TimeSpan.FromMinutes(duration);
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
+            }
+        }
+
+        public void EndAlert(short worldID, int zoneID) {
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
+
+                zone.AlertStart = null;
+                zone.AlertEnd = null;
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
+            }
+        }
+
+        public void Lock(short worldID, int zoneID) {
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
+
+                zone.IsOpened = false;
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
+            }
+        }
+
+        public void Unlock(short worldID, int zoneID) {
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
+
+                zone.IsOpened = true;
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
+            }
+        }
+
+    }
+}

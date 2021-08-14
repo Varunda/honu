@@ -126,7 +126,7 @@ namespace watchtower.Commands {
                 int esamirCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Esamir);
                 int hossinCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Hossin);
                 int amerishCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.ZoneID == Zone.Amerish);
-                int otherCount = Count(iter => iter.Value.WorldID == worldID && (iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1"));
+                int otherCount = Count(iter => iter.Value.WorldID == worldID && (iter.Value.ZoneID == 0 || iter.Value.ZoneID == -1));
 
                 _Logger.LogInformation($"Characters being tracked:\n"
                     + $"Total: {totalCount}\n"
@@ -160,7 +160,7 @@ namespace watchtower.Commands {
                 int esamirCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Esamir);
                 int hossinCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Hossin);
                 int amerishCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && iter.Value.ZoneID == Zone.Amerish);
-                int otherCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && (iter.Value.ZoneID == "0" || iter.Value.ZoneID == "-1"));
+                int otherCount = Count(iter => iter.Value.WorldID == worldID && iter.Value.Online == true && (iter.Value.ZoneID == 0 || iter.Value.ZoneID == -1));
 
                 _Logger.LogInformation($"Characters being tracked (only online):\n"
                     + $"Total: {totalCount}\n"

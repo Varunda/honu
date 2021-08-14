@@ -14,7 +14,8 @@ Vue.component("block-view", {
 
 		sourceLimit: { type: Number, required: false, default: 6 },
 		sourceWorldId: { type: Number, required: false },
-		sourceTeamId: { type: Number, required: false }
+		sourceTeamId: { type: Number, required: false },
+		sourceTitle: { type: String, required: false, default: "Supported" }
 	},
 
 	data: function () {
@@ -32,7 +33,7 @@ Vue.component("block-view", {
 			if (this.source) {
 				const modalData: StatModalData = new StatModalData();
 				modalData.root = event.target;
-				modalData.title = "Supported";
+				modalData.title = this.sourceTitle;
 				modalData.columnFields = [ "characterName", "amount", "percent" ];
 				modalData.columnNames = [ "Character", "Amount", "Percent" ];
 				modalData.loading = true;

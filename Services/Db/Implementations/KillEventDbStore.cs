@@ -80,8 +80,14 @@ namespace watchtower.Services.Db.Implementations {
                 UPDATE wt_kills
                     SET revived_event_id = @RevivedID
                     WHERE killed_character_id = @RevivedCharacterID
-                        AND timestamp = (SELECT MAX(timestamp) FROM wt_kills WHERE killed_character_id = @RevivedCharacterID);
+                        AND timestamp = (
+                            SELECT MAX(timestamp)
+                                FROM wt_kills 
+                                WHERE timestamp >= (NOW() at time zone 'utc' - interval '50 seconds')
+                                    AND killed_character_id = @RevivedCharacterID
+                        );
             ");
+            // revives can only happen for 30 seconds, then 50 for lag and waiting to accept it
 
             cmd.AddParameter("RevivedID", revivedID);
             cmd.AddParameter("RevivedCharacterID", charID);
@@ -188,14 +194,18 @@ namespace watchtower.Services.Db.Implementations {
         public async Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT weapon_id as item_id, COUNT(weapon_id) AS count
-                    FROM wt_kills
-                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
-                        AND world_id = @WorldID
-                        AND attacker_team_id = @FactionID
-                        AND attacker_team_id != killed_team_id
-                    GROUP BY weapon_id
-                    ORDER BY COUNT(*) DESC;
+                SELECT 
+                    weapon_id as item_id,
+                    COUNT(weapon_id) AS kills,
+                    COUNT(weapon_id) FILTER (WHERE is_headshot = true) AS headshots,
+                    COUNT(DISTINCT attacker_character_id) AS users
+                FROM wt_kills
+                WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                    AND world_id = @WorldID
+                    AND attacker_team_id = @FactionID
+                    AND attacker_team_id != killed_team_id
+                GROUP BY weapon_id
+                ORDER BY COUNT(*) DESC;
             ");
 
             cmd.AddParameter("Interval", options.Interval);

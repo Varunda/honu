@@ -41,7 +41,8 @@ namespace watchtower.Services.Db.Implementations {
                 + $"OR experience_id = {Experience.VKILL_MAGRIDER} OR experience_id = {Experience.VKILL_MOSQUITO} "
                 + $"OR experience_id = {Experience.VKILL_PROWLER} OR experience_id = {Experience.VKILL_REAVER} "
                 + $"OR experience_id = {Experience.VKILL_SCYTHE} OR experience_id = {Experience.VKILL_VALKYRIE} "
-                + $"OR experience_id = {Experience.VKILL_VANGUARD} ";
+                + $"OR experience_id = {Experience.VKILL_VANGUARD} OR experience_id = {Experience.VKILL_DERVISH} "
+                + $"OR experience_id = {Experience.VKILL_CHIMERA} ";
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"

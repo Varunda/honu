@@ -116,7 +116,9 @@ namespace watchtower.Services {
                 WeaponKillEntry entry = new WeaponKillEntry() {
                     ItemID = itemIter.ItemID,
                     ItemName = item?.Name ?? $"missing {itemIter.ItemID}",
-                    Kills = itemIter.Kills
+                    Kills = itemIter.Kills,
+                    HeadshotKills = itemIter.HeadshotKills,
+                    Users = itemIter.Users
                 };
 
                 block.Entries.Add(entry);
@@ -515,15 +517,6 @@ namespace watchtower.Services {
             data.TR.PlayerVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
             data.TR.OutfitVehicleKills.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_VEHICLE_KILLS);
 
-            FactionFocus focus = new FactionFocus();
-            focus.VS.NcKills = worldTotal.GetValue(WorldTotal.TOTAL_VS_KILLS_NC);
-            focus.VS.TrKills = worldTotal.GetValue(WorldTotal.TOTAL_VS_KILLS_TR);
-            focus.NC.VsKills = worldTotal.GetValue(WorldTotal.TOTAL_NC_KILLS_VS);
-            focus.NC.TrKills = worldTotal.GetValue(WorldTotal.TOTAL_NC_KILLS_TR);
-            focus.TR.VsKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_NC);
-            focus.TR.NcKills = worldTotal.GetValue(WorldTotal.TOTAL_TR_KILLS_VS);
-            data.FactionFocus = focus;
-
             await Task.WhenAll(
                 GetOutfitsOnline(players, Faction.VS, worldID).ContinueWith(result => data.VS.Outfits = result.Result),
                 GetOutfitsOnline(players, Faction.NC, worldID).ContinueWith(result => data.NC.Outfits = result.Result),
@@ -549,6 +542,13 @@ namespace watchtower.Services {
                         data.ContinentCount.AddToNS(entry.Value.ZoneID);
                     }
                 }
+            }
+
+            lock (ZoneStateStore.Get().Zones) {
+                data.ContinentCount.Indar.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Indar);
+                data.ContinentCount.Hossin.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Hossin);
+                data.ContinentCount.Amerish.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Amerish);
+                data.ContinentCount.Esamir.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Esamir);
             }
 
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;

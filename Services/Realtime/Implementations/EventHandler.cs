@@ -78,11 +78,17 @@ namespace watchtower.Realtime {
                 } else if (eventName == "PlayerLogout") {
                     await _ProcessPlayerLogout(payloadToken);
                 } else if (eventName == "GainExperience") {
-                    await  _ProcessExperience(payloadToken);
+                    await _ProcessExperience(payloadToken);
                 } else if (eventName == "Death") {
                     await _ProcessDeath(payloadToken);
+                } else if (eventName == "ContinentUnlock") {
+                    _ProcessContinentUnlock(payloadToken);
+                } else if (eventName == "ContinentLock") {
+                    _ProcessContinentLock(payloadToken);
+                } else if (eventName == "MetagameEvent") {
+                    _ProcessMetagameEvent(payloadToken);
                 } else {
-                    _Logger.LogWarning($"Untracked event_name: '{eventName}'");
+                    _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
             }
         }
@@ -101,7 +107,7 @@ namespace watchtower.Realtime {
                     p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                         ID = charID,
                         WorldID = payload.GetWorldID(),
-                        ZoneID = "-1",
+                        ZoneID = -1,
                         FactionID = Faction.UNKNOWN,
                         TeamID = Faction.UNKNOWN,
                         Online = false
@@ -135,10 +141,90 @@ namespace watchtower.Realtime {
             }
         }
 
+        private void _ProcessMetagameEvent(JToken payload) {
+            short worldID = payload.GetWorldID();
+            int zoneID = payload.GetZoneID();
+            string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
+            int metagameEventID = payload.GetInt32("metagame_event_id", 0);
+
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+
+                if (state == null) {
+                    state = new() {
+                        ZoneID = zoneID,
+                        WorldID = worldID,
+                        IsOpened = true
+                    };
+                }
+
+                if (metagameEventName == "started") {
+                    state.AlertStart = DateTime.UtcNow;
+
+                    TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
+                    if (duration == null) {
+                        _Logger.LogWarning($"Failed to find duration of metagame event {metagameEventID}\n{payload}");
+                    } else {
+                        state.AlertEnd = state.AlertStart + duration;
+                    }
+                } else if (metagameEventName == "ended") {
+                    state.AlertStart = null;
+                }
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, state);
+            }
+
+            _Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}");
+        }
+
+        private void _ProcessContinentUnlock(JToken payload) {
+            short worldID = payload.GetWorldID();
+            int zoneID = payload.GetZoneID();
+
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+
+                if (state == null) {
+                    state = new() {
+                        ZoneID = zoneID,
+                        WorldID = worldID,
+                    };
+                }
+
+                state.IsOpened = true;
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, state);
+            }
+
+            _Logger.LogDebug($"OPENED In world {worldID} zone {zoneID} was opened");
+        }
+
+        private void _ProcessContinentLock(JToken payload) {
+            short worldID = payload.GetWorldID();
+            int zoneID = payload.GetZoneID();
+
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+
+                if (state == null) {
+                    state = new() {
+                        ZoneID = zoneID,
+                        WorldID = worldID,
+                    };
+                }
+
+                state.IsOpened = false;
+
+                ZoneStateStore.Get().SetZone(worldID, zoneID, state);
+            }
+
+            _Logger.LogDebug($" CLOSE In world {worldID} zone {zoneID} was closed");
+        }
+
         private async Task _ProcessDeath(JToken payload) {
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
 
-            string zoneID = payload.Value<string?>("zone_id") ?? "-1";
+            int zoneID = payload.GetZoneID();
             string attackerID = payload.Value<string?>("attacker_character_id") ?? "0";
             short attackerLoadoutID = payload.Value<short?>("attacker_loadout_id") ?? -1;
             string charID = payload.Value<string?>("character_id") ?? "0";
@@ -273,7 +359,7 @@ namespace watchtower.Realtime {
                 }
 
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                p.ZoneID = zoneID.ToString();
+                p.ZoneID = zoneID;
 
                 if (p.FactionID == Faction.UNKNOWN) {
                     p.FactionID = factionID;

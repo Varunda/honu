@@ -23,6 +23,13 @@ Vue.component("outfits-online", {
 						<td>{{entry.amountOnline}}</td>
 						<td>{{(entry.amountOnline / data.totalOnline * 100).toFixed(2)}}%</td>
 					</tr>
+
+					<tr class="table-secondary">
+						<td colspan="2">Total</td>
+						<td>
+							{{data.totalOnline}}	
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

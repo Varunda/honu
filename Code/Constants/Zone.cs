@@ -7,13 +7,13 @@ namespace watchtower.Constants {
 
     public static class Zone {
 
-        public const string Indar = "2";
+        public const int Indar = 2;
 
-        public const string Hossin = "4";
+        public const int Hossin = 4;
 
-        public const string Amerish = "6";
+        public const int Amerish = 6;
 
-        public const string Esamir = "8";
+        public const int Esamir = 8;
 
     }
 }

@@ -25,7 +25,7 @@ namespace watchtower.Models {
         /// These methods are gross
         /// </summary>
         /// <param name="zoneID"></param>
-        public void AddToVS(string zoneID) {
+        public void AddToVS(int zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.VS;
             } else if (zoneID == Zone.Hossin) {
@@ -39,7 +39,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToNC(string zoneID) {
+        public void AddToNC(int zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.NC;
             } else if (zoneID == Zone.Hossin) {
@@ -53,7 +53,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToTR(string zoneID) {
+        public void AddToTR(int zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.TR;
             } else if (zoneID == Zone.Hossin) {
@@ -67,7 +67,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToNS(string zoneID) {
+        public void AddToNS(int zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.NS;
             } else if (zoneID == Zone.Hossin) {
@@ -94,29 +94,14 @@ namespace watchtower.Models {
         public int VS { get; set; } = 0;
 
         /// <summary>
-        /// How many robots are on NS
-        /// </summary>
-        public int VS_NS { get; set; } = 0;
-
-        /// <summary>
         /// How many are on NC, including NSO
         /// </summary>
         public int NC { get; set; } = 0;
 
         /// <summary>
-        /// How many robots are on NC
-        /// </summary>
-        public int NC_NS { get; set; } = 0;
-
-        /// <summary>
         /// How many are on TR, including NSO
         /// </summary>
         public int TR { get; set; } = 0;
-
-        /// <summary>
-        /// How many robots are on TR
-        /// </summary>
-        public int TR_NS { get; set; } = 0;
 
         /// <summary>
         /// How many NSO robots are online in total
@@ -127,6 +112,11 @@ namespace watchtower.Models {
         /// How many are not known
         /// </summary>
         public int Other { get; set; } = 0;
+
+        /// <summary>
+        /// Metadata about the zone, such as alerts and locked/unlocked
+        /// </summary>
+        public ZoneState? Metadata { get; set; } = null;
 
     }
 

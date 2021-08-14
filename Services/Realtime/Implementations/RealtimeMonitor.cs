@@ -51,7 +51,10 @@ namespace watchtower.Realtime {
             _Subscription.EventNames = _Subscription.EventNames
                 .Append("Death")
                 .Append("PlayerLogin")
-                .Append("PlayerLogout");
+                .Append("PlayerLogout")
+                .Append("ContinentLock")
+                .Append("ContinentUnlock")
+                .Append("MetagameEvent");
 
             _Logger = logger;
 

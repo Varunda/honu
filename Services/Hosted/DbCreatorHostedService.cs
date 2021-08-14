@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,9 +23,13 @@ namespace watchtower.Services.Hosted {
         }
 
         public async Task StartAsync(CancellationToken cancellationToken) {
+            Stopwatch timer = Stopwatch.StartNew();
+
             _Logger.LogInformation($"Starting hosted db creator");
             await _DbCreator.Execute();
-            _Logger.LogInformation($"Db creator finished");
+            _Logger.LogInformation($"Db creator finished in {timer.ElapsedMilliseconds}ms");
+
+            timer.Stop();
         }
 
         public Task StopAsync(CancellationToken cancellationToken) {

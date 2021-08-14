@@ -17,7 +17,7 @@ namespace watchtower.Services {
 
         private const int _CleanupDelay = 15;
         private const int _KeepPeriod = 60 * 60 * 2; // 60 seconds, 60 minutes, 2 hours
-        //private const int _KeepPeriod = 60 * 10 * 1; // 60 seconds, 60 minutes, 2 hours
+        //private const int _KeepPeriod = 60 * 10 * 1; // 60 seconds, 10 minutes, 1 hours
         private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
         private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
 

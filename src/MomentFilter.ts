@@ -81,3 +81,7 @@ Vue.filter("duration", (input: string | number, format: string): string => {
 
     return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
 });
+
+Vue.filter("til", (time: Date) => {
+    return moment(time).fromNow();
+});
