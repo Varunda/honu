@@ -214,6 +214,8 @@ namespace watchtower.Realtime {
                 }
 
                 state.IsOpened = false;
+                state.AlertEnd = null;
+                state.AlertStart = null;
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
