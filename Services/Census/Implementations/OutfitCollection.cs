@@ -27,6 +27,10 @@ namespace watchtower.Services.Census.Implementations {
             return GetFromCensusByID(outfitID, true);
         }
 
+        public Task<PsOutfit?> GetByTag(string tag) {
+            return null;
+        }
+
         private async Task<PsOutfit?> GetFromCensusByID(string outfitID, bool retry) {
             CensusQuery query = _Census.Create("outfit");
             query.Where("outfit_id").Equals(outfitID);
@@ -46,6 +50,38 @@ namespace watchtower.Services.Census.Implementations {
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to get outfit {outfitID}", outfitID);
                 return await GetFromCensusByID(outfitID, false);
+            }
+
+            return outfit;
+        }
+
+        private async Task<PsOutfit?> GetFromCensusByTag(string tag, bool retry) {
+            _Logger.LogInformation("1");
+            CensusQuery query = _Census.Create("outfit");
+            query.Where("alias_lower").Equals(tag.ToLower());
+
+            _Logger.LogInformation("1");
+
+            query.AddResolve("leader");
+            _Logger.LogInformation("1");
+
+            PsOutfit? outfit = null;
+            _Logger.LogInformation("1");
+
+            try {
+                JToken? result = await query.GetAsync();
+            _Logger.LogInformation("1");
+
+                if (result != null) {
+                    outfit = Parse(result);
+                }
+            _Logger.LogInformation("1");
+            } catch (Exception ex) {
+                _Logger.LogError(ex, "Failed to get outfit {outfitID}", tag);
+                if (retry == true) {
+                    return await GetFromCensusByTag(tag, false);
+                }
+                throw;
             }
 
             return outfit;

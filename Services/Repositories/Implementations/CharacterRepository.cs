@@ -103,7 +103,7 @@ namespace watchtower.Services.Repositories.Implementations {
         }
         
         private Task<bool> HasExpired(PsCharacter character) {
-            return Task.FromResult(character.LastUpdated >= DateTime.UtcNow - TimeSpan.FromHours(24));
+            return Task.FromResult(character.LastUpdated >= DateTime.UtcNow + TimeSpan.FromHours(24));
         }
 
     }

@@ -65,7 +65,8 @@ namespace watchtower.Services.Repositories.Implementations {
         }
 
         private bool HasExpired(PsOutfit outfit) {
-            return false;
+            bool expired = DateTime.UtcNow > outfit.LastUpdated + TimeSpan.FromDays(3);
+            return expired;
         }
 
     }
