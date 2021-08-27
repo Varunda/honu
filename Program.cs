@@ -58,7 +58,9 @@ namespace watchtower {
 
         public static IHostBuilder CreateHostBuilder(string[] args) {
             IHostBuilder? host = Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => {
+                /*.ConfigureAppConfiguration(appConfig => {
+                    appConfig.AddUserSecrets<Startup>();
+                })*/.ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
                 });
 

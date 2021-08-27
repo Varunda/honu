@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Code.Constants;
@@ -12,6 +13,7 @@ using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Services;
+using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -27,14 +29,17 @@ namespace watchtower.Realtime {
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
+        private readonly IDiscordMessageQueue _MessageQueue;
         private readonly ICharacterRepository _CharacterRepository;
+        private readonly IMapCollection _MapCensus;
 
         private readonly List<JToken> _Recent;
 
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
-            ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue) {
+            ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
+            IDiscordMessageQueue msgQueue, IMapCollection mapColl) {
 
             _Logger = logger;
 
@@ -46,7 +51,10 @@ namespace watchtower.Realtime {
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
+            _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
+
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
+            _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
         }
 
         public async Task Process(JToken ev) {
@@ -169,12 +177,28 @@ namespace watchtower.Realtime {
                     }
                 } else if (metagameEventName == "ended") {
                     state.AlertStart = null;
+
+                    new Thread(async () => {
+                        // Ensure census has times to update
+                        await Task.Delay(5000);
+
+                        short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
+                        short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
+                        short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
+                        short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
+
+                        if (indarOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
+                        if (hossinOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
+                        if (amerishOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
+                        if (esamirOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
+
+                        _Logger.LogInformation($"ALERT ended in {worldID}, current owners:\nIndar: {indarOwner}\nHossin: {hossinOwner}\nAmerish: {amerishOwner}\nEsamir: {esamirOwner}");
+                    }).Start();
                 }
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
-
-            _Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}");
+            //_Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}");
         }
 
         private void _ProcessContinentUnlock(JToken payload) {
@@ -196,7 +220,7 @@ namespace watchtower.Realtime {
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
 
-            _Logger.LogDebug($"OPENED In world {worldID} zone {zoneID} was opened");
+            //_Logger.LogDebug($"OPENED In world {worldID} zone {zoneID} was opened");
         }
 
         private void _ProcessContinentLock(JToken payload) {
@@ -220,7 +244,7 @@ namespace watchtower.Realtime {
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
 
-            _Logger.LogDebug($" CLOSE In world {worldID} zone {zoneID} was closed");
+            //_Logger.LogDebug($" CLOSE In world {worldID} zone {zoneID} was closed");
         }
 
         private async Task _ProcessDeath(JToken payload) {
@@ -427,6 +451,35 @@ namespace watchtower.Realtime {
                     ++npc.SpawnCount;
                     npc.LatestEventAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 }
+            }
+
+            if (expId == Experience.VKILL_SUNDY && worldID == World.Jaeger) {
+            //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
+                TrackedNpc? bus = null;
+
+                if (otherID != null && otherID != "0") {
+                    lock (NpcStore.Get().Npcs) {
+                        NpcStore.Get().Npcs.TryGetValue(otherID, out bus);
+                    }
+                }
+
+                new Thread(async () => {
+                    PsCharacter? attacker = await _CharacterRepository.GetByID(charID);
+                    PsCharacter? owner = (bus != null) ? await _CharacterRepository.GetByID(bus.OwnerID) : null;
+
+                    string msg = $"A bus was blown up by {attacker?.GetDisplayName() ?? $"<Missing {charID}>"}\n";
+                    msg += $"Owner: {owner?.GetDisplayName() ?? $"<Missing {bus?.OwnerID}>"}\n";
+
+                    if (bus != null) {
+                        DateTime lastUsed = DateTimeOffset.FromUnixTimeMilliseconds(bus.LatestEventAt).UtcDateTime;
+
+                        msg += $"First spawn at: {bus.FirstSeenAt} UTC\n";
+                        msg += $"Spawns: {bus.SpawnCount}\n";
+                        msg += $"Last used: {(int) (DateTime.UtcNow - lastUsed).TotalSeconds} seconds ago";
+                    }
+
+                    _MessageQueue.Queue(msg);
+                }).Start();
             }
 
         }

@@ -28,7 +28,7 @@ namespace watchtower.Services.Census.Implementations {
         }
 
         public Task<PsOutfit?> GetByTag(string tag) {
-            return null;
+            return GetFromCensusByTag(tag, true);
         }
 
         private async Task<PsOutfit?> GetFromCensusByID(string outfitID, bool retry) {
@@ -56,26 +56,19 @@ namespace watchtower.Services.Census.Implementations {
         }
 
         private async Task<PsOutfit?> GetFromCensusByTag(string tag, bool retry) {
-            _Logger.LogInformation("1");
             CensusQuery query = _Census.Create("outfit");
             query.Where("alias_lower").Equals(tag.ToLower());
 
-            _Logger.LogInformation("1");
-
             query.AddResolve("leader");
-            _Logger.LogInformation("1");
 
             PsOutfit? outfit = null;
-            _Logger.LogInformation("1");
 
             try {
                 JToken? result = await query.GetAsync();
-            _Logger.LogInformation("1");
 
                 if (result != null) {
                     outfit = Parse(result);
                 }
-            _Logger.LogInformation("1");
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to get outfit {outfitID}", tag);
                 if (retry == true) {

@@ -37,7 +37,7 @@ namespace watchtower.Constants {
         public const int VKILL_PROWLER = 65;
         public const int VKILL_REAVER = 66;
         public const int VKILL_SCYTHE = 67;
-        // Where'd VKILL_SUNDERER go? :)
+        public const int VKILL_SUNDY = 68;
         public const int VKILL_VANGUARD = 69;
         public const int VKILL_HARASSER = 301;
         public const int VKILL_VALKYRIE = 501;

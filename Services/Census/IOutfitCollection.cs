@@ -18,7 +18,7 @@ namespace watchtower.Services.Census {
         /// </returns>
         Task<PsOutfit?> GetByID(string outfitID);
 
-        Task<PsOutfit> GetByTag(string tag);
+        Task<PsOutfit?> GetByTag(string tag);
 
     }
 }

@@ -7,6 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Commands;
 using watchtower.Models;
+using watchtower.Models.Census;
+using watchtower.Services.Census;
 
 namespace watchtower.Code.Commands {
 
@@ -14,9 +16,11 @@ namespace watchtower.Code.Commands {
     public class ZoneCommand {
 
         private readonly ILogger<ZoneCommand> _Logger;
+        private readonly IMapCollection _MapCollection;
 
         public ZoneCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<ZoneCommand>>();
+            _MapCollection = services.GetRequiredService<IMapCollection>();
         }
 
         public void Print() {
@@ -79,6 +83,19 @@ namespace watchtower.Code.Commands {
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
             }
+        }
+
+        public async Task Map(short worldID, int zoneID) {
+            List<PsMap> regions = await _MapCollection.GetZoneMap(worldID, zoneID);
+
+            foreach (PsMap region in regions) {
+                _Logger.LogInformation($"{region.RegionID} => {region.FactionID}");
+            }
+        }
+
+        public async Task Owner(short worldID, int zoneID) {
+            short? ownerFactionID = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
+            _Logger.LogInformation($"Owners of {worldID}:{zoneID} => {ownerFactionID}");
         }
 
     }

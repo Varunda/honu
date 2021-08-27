@@ -28,10 +28,10 @@ namespace watchtower.Realtime {
             // I hope they don't add another vehicle cause this list is absurd
             Experience.VKILL_FLASH, Experience.VKILL_GALAXY, Experience.VKILL_LIBERATOR,
             Experience.VKILL_LIGHTNING, Experience.VKILL_MAGRIDER, Experience.VKILL_MOSQUITO,
-            Experience.VKILL_PROWLER, Experience.VKILL_REAVER, Experience.VKILL_SCYTHE,
-            Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER, Experience.VKILL_VALKYRIE,
-            Experience.VKILL_ANT, Experience.VKILL_COLOSSUS, Experience.VKILL_JAVELIN,
-            Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
+            Experience.VKILL_SUNDY, Experience.VKILL_PROWLER, Experience.VKILL_REAVER,
+            Experience.VKILL_SCYTHE, Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER,
+            Experience.VKILL_VALKYRIE, Experience.VKILL_ANT, Experience.VKILL_COLOSSUS,
+            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {

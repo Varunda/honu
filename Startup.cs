@@ -22,6 +22,7 @@ using watchtower.Models.Events;
 using DaybreakGames.Census;
 using watchtower.Services.Offline;
 using DaybreakGames.Census.Stream;
+using watchtower.Models;
 
 namespace watchtower {
 
@@ -69,6 +70,7 @@ namespace watchtower {
             services.AddMemoryCache();
 
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
+            services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
 
             services.AddSingleton<IDbHelper, DbHelper>();
             services.AddSingleton<IDbCreator, DefaultDbCreator>();
@@ -81,6 +83,7 @@ namespace watchtower {
             services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
             services.AddSingleton<IBackgroundSessionStarterQueue, BackgroundSessionStarterQueue>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
+            services.AddSingleton<IDiscordMessageQueue, DiscordMessageQueue>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
@@ -102,6 +105,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
             services.AddSingleton<IOutfitCollection, OutfitCollection>();
             services.AddSingleton<IItemCollection, ItemCollection>();
+            services.AddSingleton<IMapCollection, MapCollection>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
@@ -121,6 +125,10 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
+
+            if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
+                services.AddHostedService<DiscordService>();
+            }
 
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();

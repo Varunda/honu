@@ -23,5 +23,13 @@ namespace watchtower.Code {
             Zones[$"{worldID}:{zoneID}"] = state;
         }
 
+        public void UnlockZone(short worldID, int zoneID) {
+            ZoneState? zone = GetZone(worldID, zoneID);
+            if (zone != null) {
+                zone.IsOpened = true;
+                SetZone(worldID, zoneID, zone);
+            }
+        }
+
     }
 }
