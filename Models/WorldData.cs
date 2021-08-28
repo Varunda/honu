@@ -63,7 +63,9 @@ namespace watchtower.Models {
 
         public int NcKills { get; set; }
 
-        public int TrKills { get; set;}
+        public int TrKills { get; set; }
+
+        public int TotalKills { get; set; }
 
     }
 
@@ -147,7 +149,12 @@ namespace watchtower.Models {
         /// </summary>
         public WeaponKillsBlock WeaponKills { get; set; } = new WeaponKillsBlock();
 
+        /// <summary>
+        /// Outfits currently online when the data was created
+        /// </summary>
         public OutfitsOnline Outfits { get; set; } = new OutfitsOnline();
+
+        public FactionFocusEntry FactionFocus { get; set; } = new FactionFocusEntry();
 
         /// <summary>
         /// Total number of kills a faction has gotten

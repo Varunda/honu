@@ -15,6 +15,7 @@ import "./OutfitKillData";
 import "./InfoHover";
 import "./OutfitsOnline";
 import "./ContinentMetadata";
+import "./FactionFocus";
 import "./MomentFilter";
 
 const vm = new Vue({

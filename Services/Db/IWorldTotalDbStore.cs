@@ -10,5 +10,7 @@ namespace watchtower.Services.Db {
 
         Task<WorldTotal> Get(WorldTotalOptions options);
 
+        Task<WorldTotal> GetFocus(WorldTotalOptions options);
+
     }
 }

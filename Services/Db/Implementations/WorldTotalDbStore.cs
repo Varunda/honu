@@ -107,6 +107,49 @@ namespace watchtower.Services.Db.Implementations {
             return total;
         }
 
+        public async Task<WorldTotal> GetFocus(WorldTotalOptions options) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
+                WITH kills AS (
+                    SELECT *
+                        FROM wt_kills
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                            AND world_id = @WorldID
+                            AND attacker_team_id != killed_team_id
+                ), exp AS (
+                    SELECT *
+                        FROM wt_exp
+                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                            AND world_id = @WorldID
+                )
+                SELECT 'vs_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1) AS value
+                UNION SELECT 'vs_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 1 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'vs_kills_nc' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1 AND kills.killed_team_id = 2) AS value
+                UNION SELECT 'vs_kills_tr' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1 AND kills.killed_team_id = 3) AS value
+
+                UNION SELECT 'nc_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2) AS value
+                UNION SELECT 'nc_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 2 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'nc_kills_vs' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2 AND kills.killed_team_id = 1) AS value
+                UNION SELECT 'nc_kills_tr' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2 AND kills.killed_team_id = 3) AS value
+
+                UNION SELECT 'tr_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3) AS value
+                UNION SELECT 'tr_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 3 AND kills.revived_event_id IS null) AS value
+                UNION SELECT 'tr_kills_vs' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3 AND kills.killed_team_id = 1) AS value
+                UNION SELECT 'tr_kills_nc' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3 AND kills.killed_team_id = 2) AS value
+            ");
+
+            cmd.AddParameter("Interval", options.Interval);
+            cmd.AddParameter("WorldID", options.WorldID);
+
+            //_Logger.LogDebug($"TEXT:\n{cmd.CommandText}");
+
+            WorldTotal total = new WorldTotal();
+            total.Entries = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return total;
+        }
+
         public override WorldTotalEntry ReadEntry(NpgsqlDataReader reader) {
             WorldTotalEntry entry = new WorldTotalEntry();
 

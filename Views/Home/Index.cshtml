@@ -69,7 +69,7 @@
 
     <hr />
 
-    <div class="wt-grid-container" style="display: grid;">
+    <div v-if="worldData != null" class="wt-grid-container" style="display: grid;">
         <div class="grid-continent-population">
             <h4>
                 Player count
@@ -154,10 +154,8 @@
             </table>
         </div>
 
-        <h4 class="grid-title-vs">
-            <img src="~/img/logo_vs.png" style="width: 32px; "/>
-            Vanu Sovereignty
-            <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+        <h4 class="grid-title-focus">
+            Current faction focus
         </h4>
 
         <h4 class="grid-title-heals">
@@ -182,12 +180,18 @@
 
         <h4 class="grid-title-vehicle-kills">
             Vehicle kills
-            <info-hover text="Counts all kills except sunderer kills, that is a hill I will die on"></info-hover>
+            <info-hover text="Counts all vehicle kills except sunderer kills, that is a hill I will die on"></info-hover>
         </h4>
 
-        <h4 class="grid-title-outfit">
+        <h4 class="grid-title-outfits">
             Outfits currently online
             <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
+        </h4>
+
+        <h4 class="grid-title-vs">
+            <img src="~/img/logo_vs.png" style="width: 32px; "/>
+            Vanu Sovereignty
+            <info-hover text="NS kills only count when that player is on this faction"></info-hover>
         </h4>
 
         <div class="grid-vs-player-kills">
@@ -196,6 +200,10 @@
 
         <div class="grid-vs-outfit-kills">
             <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
+        </div>
+
+        <div class="grid-vs-focus">
+            <faction-focus :focus="worldData.vs.factionFocus"></faction-focus>
         </div>
 
         <div class="grid-vs-heals d-flex">
@@ -267,6 +275,10 @@
             <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
         </div>
 
+        <div class="grid-nc-focus">
+            <faction-focus :focus="worldData.nc.factionFocus"></faction-focus>
+        </div>
+
         <div class="grid-nc-heals d-flex">
             <block-view class="mr-3" :block="worldData.nc.playerHeals" 
                 :source="expSources.charHeal" source-title="Players healed">
@@ -334,6 +346,10 @@
 
         <div class="grid-tr-outfit-kills">
             <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
+        </div>
+
+        <div class="grid-tr-focus">
+            <faction-focus :focus="worldData.tr.factionFocus"></faction-focus>
         </div>
 
         <div class="grid-tr-heals d-flex">
