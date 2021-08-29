@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Models;
 using watchtower.Services.Db;
 
@@ -20,6 +21,7 @@ namespace watchtower.Services {
         //private const int _KeepPeriod = 60 * 10 * 1; // 60 seconds, 10 minutes, 1 hours
         private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
         private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
+        private const int _ControlPeriod = 60; // 60 seconds
 
         private readonly ILogger<EventCleanupService> _Logger;
 
@@ -44,6 +46,7 @@ namespace watchtower.Services {
                     long adjustedTime = currentTime - (_KeepPeriod * 1000);
                     long sundyAdjustedTime = currentTime - (_SundyKeepPeriod * 1000);
                     long afkAdjustedTime = currentTime - (_AfkPeriod * 1000);
+                    long controlAdjustedTime = currentTime - (_ControlPeriod * 1000);
 
                     Stopwatch time = Stopwatch.StartNew();
 
@@ -76,6 +79,13 @@ namespace watchtower.Services {
                         foreach (string key in toRemove) {
                             NpcStore.Get().Npcs.TryRemove(key, out _);
                         }
+                    }
+
+                    lock (PlayerFacilityControlStore.Get().Events) {
+                        PlayerFacilityControlStore.Get().Events = PlayerFacilityControlStore.Get().Events.Where(iter => {
+                            long timestamp = new DateTimeOffset(iter.Timestamp).ToUnixTimeMilliseconds();
+                            return timestamp <= controlAdjustedTime;
+                        }).ToList();
                     }
 
                     time.Stop();

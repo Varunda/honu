@@ -11,7 +11,7 @@ namespace watchtower.Code {
         private static PlayerFacilityControlStore _Instance = new PlayerFacilityControlStore();
         public static PlayerFacilityControlStore Get() { return _Instance; }
 
-        public List<PlayerControlEvent> Events { get; } = new List<PlayerControlEvent>();
+        public List<PlayerControlEvent> Events { get; set; } = new List<PlayerControlEvent>();
 
     }
 }

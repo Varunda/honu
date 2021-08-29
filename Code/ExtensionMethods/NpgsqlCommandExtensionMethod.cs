@@ -15,6 +15,8 @@ namespace watchtower.Code.ExtensionMethods {
         ///     Useful, as <see cref="NpgsqlParameterCollection.AddWithValue(string, object)"/> doesn't
         ///     allow nullable values for the value parameter. Null is allowed, but it's safer to pass
         ///     <see cref="DBNull.Value"/>, which this extension method checks for and does
+        ///     
+        ///     Unsigned ints are turned into ints, as unsigned ints aren't supported
         /// </remarks>
         /// <param name="command">Extension instance</param>
         /// <param name="name">Name of the parameter</param>

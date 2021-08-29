@@ -31,6 +31,10 @@ namespace watchtower.Services.Db.Implementations {
                 );
             ");
 
+            if (ev.Players == 0) {
+                _Logger.LogWarning($"Have a count of 0 players in {ev}");
+            }
+
             cmd.AddParameter("FacilityID", ev.FacilityID);
             cmd.AddParameter("OldFactionID", ev.OldFactionID);
             cmd.AddParameter("NewFactionID", ev.NewFactionID);
