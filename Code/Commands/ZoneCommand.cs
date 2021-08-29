@@ -35,7 +35,7 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation(s);
         }
 
-        public void StartAlert(short worldID, int zoneID, int duration) {
+        public void StartAlert(short worldID, uint zoneID, int duration) {
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? zone = ZoneStateStore.Get().GetZone(worldID, zoneID);
 
@@ -54,7 +54,7 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public void EndAlert(short worldID, int zoneID) {
+        public void EndAlert(short worldID, uint zoneID) {
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
 
@@ -65,7 +65,7 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public void Lock(short worldID, int zoneID) {
+        public void Lock(short worldID, uint zoneID) {
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
 
@@ -75,7 +75,7 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public void Unlock(short worldID, int zoneID) {
+        public void Unlock(short worldID, uint zoneID) {
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState zone = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { ZoneID = zoneID, WorldID = worldID };
 
@@ -85,7 +85,7 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public async Task Map(short worldID, int zoneID) {
+        public async Task Map(short worldID, uint zoneID) {
             List<PsMap> regions = await _MapCollection.GetZoneMap(worldID, zoneID);
 
             foreach (PsMap region in regions) {
@@ -93,7 +93,7 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public async Task Owner(short worldID, int zoneID) {
+        public async Task Owner(short worldID, uint zoneID) {
             short? ownerFactionID = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
             _Logger.LogInformation($"Owners of {worldID}:{zoneID} => {ownerFactionID}");
         }

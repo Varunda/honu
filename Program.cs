@@ -22,6 +22,12 @@ namespace watchtower {
         public static async Task Main(string[] args) {
             Console.WriteLine($"Starting at {DateTime.UtcNow}");
 
+            int test = -1;
+            uint utest = unchecked((uint)test);
+            int itest = unchecked((int)utest);
+
+            Console.WriteLine($"{test} {utest} {itest}");
+
             _ = Task.Run(async () => {
                 try {
                     _Host = CreateHostBuilder(args).Build();

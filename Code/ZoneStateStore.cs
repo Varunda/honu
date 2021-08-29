@@ -10,20 +10,20 @@ namespace watchtower.Code {
     public class ZoneStateStore {
 
         private static ZoneStateStore _Instance = new ZoneStateStore();
-        public static ZoneStateStore Get() { return ZoneStateStore._Instance; }
+        public static ZoneStateStore Get() { return _Instance; }
 
         public ConcurrentDictionary<string, ZoneState> Zones = new();
 
-        public ZoneState? GetZone(short worldID, int zoneID) {
+        public ZoneState? GetZone(short worldID, uint zoneID) {
             Zones.TryGetValue($"{worldID}:{zoneID}", out ZoneState? state);
             return state;
         }
 
-        public void SetZone(short worldID, int zoneID, ZoneState state) {
+        public void SetZone(short worldID, uint zoneID, ZoneState state) {
             Zones[$"{worldID}:{zoneID}"] = state;
         }
 
-        public void UnlockZone(short worldID, int zoneID) {
+        public void UnlockZone(short worldID, uint zoneID) {
             ZoneState? zone = GetZone(worldID, zoneID);
             if (zone != null) {
                 zone.IsOpened = true;

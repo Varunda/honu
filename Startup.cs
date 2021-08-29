@@ -93,6 +93,7 @@ namespace watchtower {
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<IItemDbStore, ItemDbStore>();
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
+            services.AddSingleton<IFacilityControlDbStore, FacilityControlDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();

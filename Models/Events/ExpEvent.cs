@@ -21,7 +21,7 @@ namespace watchtower.Models.Events {
 
         public short WorldID { get; set; }
 
-        public int ZoneID { get; set; }
+        public uint ZoneID { get; set; }
 
         public DateTime Timestamp { get; set; }
 

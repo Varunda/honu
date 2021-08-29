@@ -40,7 +40,7 @@ namespace watchtower.Models.Events {
 
         public short WorldID { get; set; }
 
-        public int ZoneID { get; set; }
+        public uint ZoneID { get; set; }
 
         public string WeaponID { get; set; } = "";
 

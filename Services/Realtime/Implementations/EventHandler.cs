@@ -26,6 +26,7 @@ namespace watchtower.Realtime {
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly ISessionDbStore _SessionDb;
+        private readonly IFacilityControlDbStore _ControlDb;
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
@@ -39,7 +40,8 @@ namespace watchtower.Realtime {
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
-            IDiscordMessageQueue msgQueue, IMapCollection mapColl) {
+            IDiscordMessageQueue msgQueue, IMapCollection mapColl,
+            IFacilityControlDbStore controlDb) {
 
             _Logger = logger;
 
@@ -48,6 +50,7 @@ namespace watchtower.Realtime {
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+            _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -89,6 +92,12 @@ namespace watchtower.Realtime {
                     await _ProcessExperience(payloadToken);
                 } else if (eventName == "Death") {
                     await _ProcessDeath(payloadToken);
+                } else if (eventName == "FacilityControl") {
+                    _ProcessFacilityControl(payloadToken);
+                } else if (eventName == "PlayerFacilityCapture") {
+                    _ProcessPlayerCapture(payloadToken);
+                } else if (eventName == "PlayerFacilityDefend") {
+                    _ProcessPlayerDefend(payloadToken);
                 } else if (eventName == "ContinentUnlock") {
                     _ProcessContinentUnlock(payloadToken);
                 } else if (eventName == "ContinentLock") {
@@ -98,6 +107,82 @@ namespace watchtower.Realtime {
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
+            }
+        }
+
+        private void _ProcessFacilityControl(JToken payload) {
+            FacilityControlEvent ev = new() {
+                FacilityID = payload.GetInt32("facility_id", 0),
+                DurationHeld = payload.GetInt32("duration_held", 0),
+                OutfitID = payload.NullableString("outfit_id"),
+                OldFactionID = payload.GetInt16("old_faction_id", 0),
+                NewFactionID = payload.GetInt16("new_faction_id", 0),
+                ZoneID = payload.GetZoneID(),
+                WorldID = payload.GetWorldID(),
+                Timestamp = payload.CensusTimestamp("timestamp")
+            };
+
+            ushort defID = (ushort) (ev.ZoneID & 0xFFFF);
+            ushort instanceID = (ushort) ((ev.ZoneID & 0xFFFF0000) >> 4);
+
+            // Exclude flips that aren't interesting
+            if (ev.OldFactionID == 0 || ev.NewFactionID == 0 // Came from a cont unlock
+                || defID == 95 // A tutorial area
+                ) {
+
+                return;
+            }
+
+            new Thread(async () => {
+                await Task.Delay(1000);
+
+                lock (PlayerFacilityControlStore.Get().Events) {
+                    List<PlayerControlEvent> events = PlayerFacilityControlStore.Get().Events.Where(iter => {
+                        return iter.FacilityID == ev.FacilityID
+                            && iter.WorldID == ev.WorldID
+                            && iter.ZoneID == ev.ZoneID
+                            && iter.Timestamp == ev.Timestamp;
+                    }).ToList();
+
+                    ev.Players = events.Count;
+                }
+
+                if (ev.Players == 0) {
+                    return;
+                }
+
+                await _ControlDb.Insert(ev);
+                _Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, {ev.Timestamp}");
+            }).Start();
+        }
+
+        private void _ProcessPlayerCapture(JToken payload) {
+            PlayerControlEvent ev = new() {
+                IsCapture = true,
+                FacilityID = payload.GetInt32("facility_id", 0),
+                OutfitID = payload.NullableString("outfit_id"),
+                WorldID = payload.GetWorldID(),
+                ZoneID = payload.GetZoneID(),
+                Timestamp = payload.CensusTimestamp("timestamp")
+            };
+
+            lock (PlayerFacilityControlStore.Get().Events) {
+                PlayerFacilityControlStore.Get().Events.Add(ev);
+            }
+        }
+
+        private void _ProcessPlayerDefend(JToken payload) {
+            PlayerControlEvent ev = new() {
+                IsCapture = false,
+                FacilityID = payload.GetInt32("facility_id", 0),
+                OutfitID = payload.NullableString("outfit_id"),
+                WorldID = payload.GetWorldID(),
+                ZoneID = payload.GetZoneID(),
+                Timestamp = payload.CensusTimestamp("timestamp")
+            };
+
+            lock (PlayerFacilityControlStore.Get().Events) {
+                PlayerFacilityControlStore.Get().Events.Add(ev);
             }
         }
 
@@ -115,7 +200,7 @@ namespace watchtower.Realtime {
                     p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                         ID = charID,
                         WorldID = payload.GetWorldID(),
-                        ZoneID = -1,
+                        ZoneID = 0,
                         FactionID = Faction.UNKNOWN,
                         TeamID = Faction.UNKNOWN,
                         Online = false
@@ -151,7 +236,7 @@ namespace watchtower.Realtime {
 
         private void _ProcessMetagameEvent(JToken payload) {
             short worldID = payload.GetWorldID();
-            int zoneID = payload.GetZoneID();
+            uint zoneID = payload.GetZoneID();
             string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
             int metagameEventID = payload.GetInt32("metagame_event_id", 0);
 
@@ -178,6 +263,9 @@ namespace watchtower.Realtime {
                 } else if (metagameEventName == "ended") {
                     state.AlertStart = null;
 
+                    // Continent unlock events are not sent. To check if a continent is open,
+                    //      we get the owner of each continent. If there is no owner, then 
+                    //      a continent must be open
                     new Thread(async () => {
                         // Ensure census has times to update
                         await Task.Delay(5000);
@@ -192,7 +280,7 @@ namespace watchtower.Realtime {
                         if (amerishOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
                         if (esamirOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
 
-                        _Logger.LogInformation($"ALERT ended in {worldID}, current owners:\nIndar: {indarOwner}\nHossin: {hossinOwner}\nAmerish: {amerishOwner}\nEsamir: {esamirOwner}");
+                        _Logger.LogDebug($"ALERT ended in {worldID}, current owners:\nIndar: {indarOwner}\nHossin: {hossinOwner}\nAmerish: {amerishOwner}\nEsamir: {esamirOwner}");
                     }).Start();
                 }
 
@@ -203,7 +291,7 @@ namespace watchtower.Realtime {
 
         private void _ProcessContinentUnlock(JToken payload) {
             short worldID = payload.GetWorldID();
-            int zoneID = payload.GetZoneID();
+            uint zoneID = payload.GetZoneID();
 
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
@@ -225,7 +313,7 @@ namespace watchtower.Realtime {
 
         private void _ProcessContinentLock(JToken payload) {
             short worldID = payload.GetWorldID();
-            int zoneID = payload.GetZoneID();
+            uint zoneID = payload.GetZoneID();
 
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
@@ -250,7 +338,7 @@ namespace watchtower.Realtime {
         private async Task _ProcessDeath(JToken payload) {
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
 
-            int zoneID = payload.GetZoneID();
+            uint zoneID = payload.GetZoneID();
             string attackerID = payload.Value<string?>("attacker_character_id") ?? "0";
             short attackerLoadoutID = payload.Value<short?>("attacker_loadout_id") ?? -1;
             string charID = payload.Value<string?>("character_id") ?? "0";
@@ -353,7 +441,7 @@ namespace watchtower.Realtime {
             short loadoutId = payload.GetInt16("loadout_id", -1);
             short worldID = payload.GetWorldID();
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
-            int zoneID = payload.GetZoneID();
+            uint zoneID = payload.GetZoneID();
             string otherID = payload.GetString("other_id", "0");
 
             short factionID = Loadout.GetFaction(loadoutId);

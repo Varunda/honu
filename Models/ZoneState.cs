@@ -13,7 +13,7 @@ namespace watchtower.Models {
         /// <summary>
         /// ID of the zone
         /// </summary>
-        public int ZoneID { get; set; }
+        public uint ZoneID { get; set; }
 
         /// <summary>
         /// What world this zone datat is for

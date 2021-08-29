@@ -25,7 +25,7 @@ namespace watchtower.Models {
         /// These methods are gross
         /// </summary>
         /// <param name="zoneID"></param>
-        public void AddToVS(int zoneID) {
+        public void AddToVS(uint zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.VS;
             } else if (zoneID == Zone.Hossin) {
@@ -39,7 +39,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToNC(int zoneID) {
+        public void AddToNC(uint zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.NC;
             } else if (zoneID == Zone.Hossin) {
@@ -53,7 +53,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToTR(int zoneID) {
+        public void AddToTR(uint zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.TR;
             } else if (zoneID == Zone.Hossin) {
@@ -67,7 +67,7 @@ namespace watchtower.Models {
             }
         }
 
-        public void AddToNS(int zoneID) {
+        public void AddToNS(uint zoneID) {
             if (zoneID == Zone.Indar) {
                 ++Indar.NS;
             } else if (zoneID == Zone.Hossin) {

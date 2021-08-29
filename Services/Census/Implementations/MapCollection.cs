@@ -24,7 +24,7 @@ namespace watchtower.Services.Census.Implementations {
             _Census = census;
         }
 
-        public async Task<List<PsMap>> GetZoneMap(short worldID, int zoneID) {
+        public async Task<List<PsMap>> GetZoneMap(short worldID, uint zoneID) {
             CensusQuery query = _Census.Create("map");
             query.Where("world_id").Equals(worldID);
             query.Where("zone_ids").Equals(zoneID);

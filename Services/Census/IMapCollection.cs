@@ -8,13 +8,13 @@ namespace watchtower.Services.Census {
 
     public interface IMapCollection {
 
-        Task<List<PsMap>> GetZoneMap(short worldID, int zoneID);
+        Task<List<PsMap>> GetZoneMap(short worldID, uint zoneID);
 
     }
 
     public static class IMapCollectionExtensions {
 
-        public static async Task<short?> GetZoneMapOwner(this IMapCollection census, short worldID, int zoneID) {
+        public static async Task<short?> GetZoneMapOwner(this IMapCollection census, short worldID, uint zoneID) {
             List<PsMap> map = await census.GetZoneMap(worldID, zoneID);
 
             int total = map.Count;

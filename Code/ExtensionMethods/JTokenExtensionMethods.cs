@@ -31,8 +31,8 @@ namespace watchtower.Code.ExtensionMethods {
             return token.GetInt16("world_id", -1);
         }
 
-        public static int GetZoneID(this JToken token) {
-            return token.GetInt32("zone_id", -1);
+        public static uint GetZoneID(this JToken token) {
+            return token.Value<uint?>("zone_id") ?? 0;
         }
 
         public static DateTime CensusTimestamp(this JToken token, string name) {

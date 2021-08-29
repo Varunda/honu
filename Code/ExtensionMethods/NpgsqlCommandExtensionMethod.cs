@@ -21,7 +21,15 @@ namespace watchtower.Code.ExtensionMethods {
         /// <param name="value">Value of the parameter</param>
         public static void AddParameter(this NpgsqlCommand command, string name, object? value) {
             if (value != null) {
-                command.Parameters.AddWithValue(name, value);
+                // PostgreSQL as far as I can tell, doesn't have a type for unsigned ints, so to handle this,
+                //      it's first unboxed to a uint, then cast to an int byte for byte
+                // not including the unchecked would mean values that couldn't be represents as ints,
+                //      but could be represented by uints, would throw an exception
+                if (value.GetType() == typeof(uint)) {
+                    command.Parameters.AddWithValue(name, unchecked((int)((uint)value)));
+                } else {
+                    command.Parameters.AddWithValue(name, value);
+                }
             } else {
                 command.Parameters.AddWithValue(name, DBNull.Value);
             }

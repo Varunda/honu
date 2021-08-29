@@ -29,5 +29,9 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetDateTime(field);
         }
 
+        public static uint GetUInt32(this NpgsqlDataReader reader, string field) {
+            return unchecked((uint)reader.GetInt32(field));
+        }
+
     }
 }

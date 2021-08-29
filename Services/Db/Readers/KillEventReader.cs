@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 
@@ -27,7 +28,7 @@ namespace watchtower.Services.Db.Readers {
             ev.Timestamp = reader.GetDateTime("timestamp");
             ev.IsHeadshot = reader.GetBoolean("is_headshot");
             ev.WeaponID = reader.GetString("weapon_id");
-            ev.ZoneID = reader.GetInt32("zone_id");
+            ev.ZoneID = reader.GetUInt32("zone_id");
             ev.WorldID = reader.GetInt16("world_id");
 
             return ev;
