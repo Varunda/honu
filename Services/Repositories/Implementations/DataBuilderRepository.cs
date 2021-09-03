@@ -24,7 +24,6 @@ namespace watchtower.Services.Repositories.Implementations {
 
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _OutfitRepository;
-        private readonly IWorldDataRepository _WorldDataRepository;
         private readonly IItemRepository _ItemRepository;
 
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
@@ -33,8 +32,7 @@ namespace watchtower.Services.Repositories.Implementations {
             IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
-            IWorldTotalDbStore worldTotalDb, IWorldDataRepository worldDataRepo,
-            IItemRepository itemRepo) {
+            IWorldTotalDbStore worldTotalDb, IItemRepository itemRepo) {
 
             _Logger = logger;
 
@@ -44,7 +42,6 @@ namespace watchtower.Services.Repositories.Implementations {
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
-            _WorldDataRepository = worldDataRepo ?? throw new ArgumentNullException(nameof(worldDataRepo));
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));

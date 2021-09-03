@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace watchtower.Code.ExtensionMethods {
@@ -35,6 +36,43 @@ namespace watchtower.Code.ExtensionMethods {
             } else {
                 command.Parameters.AddWithValue(name, DBNull.Value);
             }
+        }
+
+        /// <summary>
+        /// Turn a command into text that's useful
+        /// </summary>
+        /// <param name="cmd"></param>
+        /// <returns></returns>
+        public static string Print(this NpgsqlCommand cmd) {
+            string s = cmd.CommandText + "\n";
+
+            foreach (NpgsqlParameter param in cmd.Parameters) {
+                Type? valueType = param.Value?.GetType();
+
+                s += $"{param.ParameterName} => ";
+
+                if (valueType != null && valueType.IsGenericType && valueType.GetGenericTypeDefinition() == typeof(List<>)) {
+                    Type listType = valueType.GetGenericArguments()[0];
+                    MethodInfo? boundPrint = typeof(NpgsqlCommandExtensionMethod).GetMethod("IterateUnboundGeneric")?.MakeGenericMethod(listType);
+                    if (boundPrint == null) {
+                        s += "<failed to get IterateUnboundGeneric>";
+                    } else {
+                        object? ret = boundPrint.Invoke(null, new[] { param.Value });
+                        s += (string?)ret;
+                    }
+                } else {
+                    s += param.Value?.ToString();
+                }
+
+                s += "\n";
+            }
+
+            return s;
+        }
+
+        public static string IterateUnboundGeneric<T>(object o) {
+            List<T> list = (List<T>) o;
+            return string.Join(", ", list);
         }
 
     }

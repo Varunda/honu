@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Models.Db;
 using watchtower.Models.Events;
 
 namespace watchtower.Services.Db.Implementations {
@@ -13,12 +16,55 @@ namespace watchtower.Services.Db.Implementations {
 
         private readonly ILogger<FacilityControlDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
+        private readonly IDataReader<FacilityControlDbEntry> _ControlReader;
 
         public FacilityControlDbStore(ILogger<FacilityControlDbStore> logger,
-            IDbHelper helper) {
+            IDbHelper helper, IDataReader<FacilityControlDbEntry> reader) {
 
             _Logger = logger;
             _DbHelper = helper;
+            _ControlReader = reader ?? throw new ArgumentNullException(nameof(reader));
+        }
+
+        public async Task<List<FacilityControlDbEntry>> Get(FacilityControlOptions parameters) {
+            string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp <= @PeriodStart ";
+            string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp >= @PeriodEnd ";
+            string zoneIDWhere = parameters.ZoneID == null ? "" : "AND zone_id = @ZoneID ";
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
+                SELECT
+                    facility_id,
+                    COUNT(facility_id) FILTER (WHERE old_faction_id != new_faction_id) AS captured,
+                    COUNT(facility_id) FILTER (WHERE old_faction_id = new_faction_id) AS defended,
+                    COALESCE(AVG(players) FILTER(WHERE old_faction_id != new_faction_id), 0) AS capture_average,
+                    COALESCE(AVG(players) FILTER(WHERE old_faction_id = new_faction_id), 0) AS defend_average,
+                    AVG(players) AS total_average
+                FROM 
+                    wt_ledger
+                WHERE
+                    players >= @PlayerThreshold
+                    AND world_id = ANY(@Worlds)
+                    {periodStartWhere}
+                    {periodEndWhere}
+                    {zoneIDWhere}
+                GROUP BY facility_id;
+            ");
+
+            List<short> worldIDs = parameters.WorldIDs.Count == 0 ? new() { World.Connery, World.Cobalt, World.Emerald, World.Miller, World.SolTech } : parameters.WorldIDs;
+
+            cmd.AddParameter("PlayerThreshold", parameters.PlayerThreshold ?? 1);
+            cmd.AddParameter("ZoneID", parameters.ZoneID);
+            cmd.AddParameter("PeriodStart", parameters.PeriodStart);
+            cmd.AddParameter("PeriodEnd", parameters.PeriodEnd);
+            cmd.AddParameter("Worlds", worldIDs);
+
+            _Logger.LogDebug(cmd.Print());
+
+            List<FacilityControlDbEntry> entries = await _ControlReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entries;
         }
 
         public async Task Insert(FacilityControlEvent ev) {

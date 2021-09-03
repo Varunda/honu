@@ -29,6 +29,12 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetDateTime(field);
         }
 
+        /// <summary>
+        /// Get a <see cref="uint"/> from a column
+        /// </summary>
+        /// <param name="reader">Extension instance</param>
+        /// <param name="field">Name of that field that has the <c>uint</c></param>
+        /// <returns>The <c>uint</c> in the column, cast from an int32</returns>
         public static uint GetUInt32(this NpgsqlDataReader reader, string field) {
             return unchecked((uint)reader.GetInt32(field));
         }

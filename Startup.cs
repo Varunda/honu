@@ -101,12 +101,14 @@ namespace watchtower {
             services.AddSingleton<IDataReader<KillEvent>, KillEventReader>();
             services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
             services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
+            services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlEntryReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
             services.AddSingleton<IOutfitCollection, OutfitCollection>();
             services.AddSingleton<IItemCollection, ItemCollection>();
             services.AddSingleton<IMapCollection, MapCollection>();
+            services.AddSingleton<IFacilityCollection, FacilityCollection>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();

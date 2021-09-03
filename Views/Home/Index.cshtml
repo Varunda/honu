@@ -72,7 +72,8 @@
     <div v-if="worldData != null" class="wt-grid-container" style="display: grid;">
         <div class="grid-continent-population">
             <h4>
-                Player count
+                {{worldID | world}}
+                player count
                 <info-hover text="Continents are hidden if they have less than 20 players"></info-hover>
             </h4>
 
