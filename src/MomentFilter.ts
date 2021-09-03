@@ -90,9 +90,9 @@ Vue.filter("world", (worldID: number) => {
     if (worldID == 1) {
         return "Connery";
     } else if (worldID == 10) {
-        return "Cobalt";
-    } else if (worldID == 13) {
         return "Miller";
+    } else if (worldID == 13) {
+        return "Cobalt";
     } else if (worldID == 17) {
         return "Emerald";
     } else if (worldID == 19) {
