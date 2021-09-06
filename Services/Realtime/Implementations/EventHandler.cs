@@ -134,6 +134,7 @@ namespace watchtower.Realtime {
             }
 
             new Thread(async () => {
+                // Wait a second for all the PlayerCapture and PlayerDefend events to come in
                 await Task.Delay(1000);
 
                 lock (PlayerFacilityControlStore.Get().Events) {
@@ -151,8 +152,11 @@ namespace watchtower.Realtime {
                     return;
                 }
 
+                UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
+                ev.UnstableState = state;
+
                 await _ControlDb.Insert(ev);
-                _Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, {ev.Timestamp}");
+                _Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
         }
 

@@ -23,6 +23,7 @@ using DaybreakGames.Census;
 using watchtower.Services.Offline;
 using DaybreakGames.Census.Stream;
 using watchtower.Models;
+using watchtower.Services.Hosted.Startup;
 
 namespace watchtower {
 
@@ -94,6 +95,7 @@ namespace watchtower {
             services.AddSingleton<IItemDbStore, ItemDbStore>();
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
             services.AddSingleton<IFacilityControlDbStore, FacilityControlDbStore>();
+            services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -118,7 +120,7 @@ namespace watchtower {
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
 
             // Hosted services
-            services.AddHostedService<DbCreatorHostedService>(); // Have first to ensure DBs exist
+            services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
 
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
@@ -129,6 +131,7 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
+            services.AddHostedService<FacilityPopulatorStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

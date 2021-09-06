@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -17,23 +18,56 @@ namespace watchtower.Controllers.Api {
     public class LedgerApiController : ControllerBase {
 
         private readonly ILogger<LedgerApiController> _Logger;
+
         private readonly IFacilityCollection _FacilityCollection;
+        private readonly IFacilityDbStore _FacilityDb;
         private readonly IFacilityControlDbStore _ControlDb;
 
         public LedgerApiController(ILogger<LedgerApiController> logger,
-            IFacilityCollection facilityCollection, IFacilityControlDbStore controlDb) {
+            IFacilityCollection facilityCollection, IFacilityControlDbStore controlDb,
+            IFacilityDbStore facDb) {
 
             _Logger = logger;
+
             _FacilityCollection = facilityCollection ?? throw new ArgumentNullException(nameof(facilityCollection));
+            _FacilityDb = facDb ?? throw new ArgumentNullException(nameof(facDb));
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<FacilityControlEntry>>> GetAll() {
-            FacilityControlOptions parameters = new FacilityControlOptions();
+        public async Task<ActionResult<List<FacilityControlEntry>>> GetAll(
+                [FromQuery] uint? zoneID = null,
+                [FromQuery] List<short>? worldID = null,
+                [FromQuery] int? playerThreshold = null,
+                [FromQuery] long? periodStart = null,
+                [FromQuery] long? periodEnd = null,
+                [FromQuery] int? unstableState = null) {
+
+            FacilityControlOptions parameters = new();
+            parameters.ZoneID = zoneID;
+            parameters.WorldIDs = worldID ?? new();
+            parameters.PlayerThreshold = playerThreshold ?? 12;
+
+            if (periodStart != null) {
+                parameters.PeriodStart = DateTimeOffset.FromUnixTimeSeconds(periodStart.Value).UtcDateTime;
+            }
+            if (periodEnd != null) {
+                parameters.PeriodEnd = DateTimeOffset.FromUnixTimeSeconds(periodEnd.Value).UtcDateTime;
+            }
+
+            if (unstableState != null) {
+                if (Enum.IsDefined(typeof(UnstableState), unstableState.Value) == false) {
+                    return BadRequest($"{nameof(unstableState)} is an invalid value");
+                }
+
+                parameters.UnstableState = (UnstableState)unstableState.Value;
+            } else {
+                parameters.UnstableState = UnstableState.UNLOCKED;
+            }
+
             List<FacilityControlDbEntry> entries = await _ControlDb.Get(parameters);
 
-            List<PsFacility> facilities = await _FacilityCollection.GetAll();
+            List<PsFacility> facilities = await _FacilityDb.GetAll();
 
             List<FacilityControlEntry> ret = new List<FacilityControlEntry>();
 

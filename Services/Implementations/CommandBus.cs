@@ -94,6 +94,8 @@ namespace watchtower.Services {
                         methodParams[i - 2] = short.Parse(args[i]);
                     } else if (paramType == typeof(bool)) {
                         methodParams[i - 2] = bool.Parse(args[i]);
+                    } else if (paramType == typeof(uint)) {
+                        methodParams[i - 2] = uint.Parse(args[i]);
                     } else {
                         _Logger.LogWarning($"Unhandled type {paramType.Name}");
                     }

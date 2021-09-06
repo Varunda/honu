@@ -53,7 +53,7 @@ namespace watchtower.Services.Db.Implementations {
 
             List<short> worldIDs = parameters.WorldIDs.Count == 0 ? new() { World.Connery, World.Cobalt, World.Emerald, World.Miller, World.SolTech } : parameters.WorldIDs;
 
-            cmd.AddParameter("PlayerThreshold", parameters.PlayerThreshold ?? 1);
+            cmd.AddParameter("PlayerThreshold", parameters.PlayerThreshold);
             cmd.AddParameter("ZoneID", parameters.ZoneID);
             cmd.AddParameter("PeriodStart", parameters.PeriodStart);
             cmd.AddParameter("PeriodEnd", parameters.PeriodEnd);
@@ -71,9 +71,9 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_ledger (
-                    facility_id, old_faction_id, new_faction_id, outfit_id, world_id, zone_id, players, duration_held, timestamp
+                    facility_id, old_faction_id, new_faction_id, outfit_id, world_id, zone_id, players, duration_held, timestamp, zone_state
                 ) VALUES (
-                    @FacilityID, @OldFactionID, @NewFactionID, @OutfitID, @WorldID, @ZoneID, @Players, @DurationHeld, @Timestamp
+                    @FacilityID, @OldFactionID, @NewFactionID, @OutfitID, @WorldID, @ZoneID, @Players, @DurationHeld, @Timestamp, @ZoneState
                 );
             ");
 
@@ -90,6 +90,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Players", ev.Players);
             cmd.AddParameter("DurationHeld", ev.DurationHeld);
             cmd.AddParameter("Timestamp", ev.Timestamp);
+            cmd.AddParameter("ZoneState", (int?)ev.UnstableState);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

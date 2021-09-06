@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Commands;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -91,6 +92,9 @@ namespace watchtower.Code.Commands {
             foreach (PsMap region in regions) {
                 _Logger.LogInformation($"{region.RegionID} => {region.FactionID}");
             }
+
+            UnstableState unstableState = await _MapCollection.GetUnstableState(worldID, zoneID);
+            _Logger.LogInformation($"{unstableState}");
         }
 
         public async Task Owner(short worldID, uint zoneID) {
