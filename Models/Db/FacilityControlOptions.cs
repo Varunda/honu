@@ -34,7 +34,7 @@ namespace watchtower.Models.Db {
         /// <summary>
         /// Will control events from single or double lane zones be included? Or just when the map is fully open?
         /// </summary>
-        public UnstableState UnstableState { get; set; } = UnstableState.UNLOCKED;
+        public UnstableState? UnstableState { get; set; }
 
         /// <summary>
         /// What world IDs will be included in this data, empty list means all but Jaeger

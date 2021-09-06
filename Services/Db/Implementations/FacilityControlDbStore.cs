@@ -30,6 +30,7 @@ namespace watchtower.Services.Db.Implementations {
             string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp <= @PeriodStart ";
             string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp >= @PeriodEnd ";
             string zoneIDWhere = parameters.ZoneID == null ? "" : "AND zone_id = @ZoneID ";
+            string stateWhere = parameters.UnstableState == null ? "" : "AND zone_state = @ZoneState ";
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
@@ -58,6 +59,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("PeriodStart", parameters.PeriodStart);
             cmd.AddParameter("PeriodEnd", parameters.PeriodEnd);
             cmd.AddParameter("Worlds", worldIDs);
+            cmd.AddParameter("ZoneState", (int?)parameters.UnstableState);
 
             _Logger.LogDebug(cmd.Print());
 
