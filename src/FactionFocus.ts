@@ -43,7 +43,7 @@ Vue.component("faction-focus", {
 				{{trWidth}}%
 			</span>
 			<span v-if="otherKillsTotal > 0" :style="{ 'flex-grow': otherKills, 'background-color': 'var(--color-bg-ns)' }" class="focus-entry" title="Percent of kills on unknown factions">
-				{{otherKillsTotal}}%
+				{{otherKills}}%
 			</span>
 		</div>
 	`
