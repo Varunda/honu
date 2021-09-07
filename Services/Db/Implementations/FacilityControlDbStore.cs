@@ -61,8 +61,6 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Worlds", worldIDs);
             cmd.AddParameter("ZoneState", (int?)parameters.UnstableState);
 
-            _Logger.LogDebug(cmd.Print());
-
             List<FacilityControlDbEntry> entries = await _ControlReader.ReadList(cmd);
             await conn.CloseAsync();
 

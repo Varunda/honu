@@ -1,10 +1,22 @@
 ﻿const path = require("path");
+const glob = require("glob");
 
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const VueLoaderPlugin = require("vue-loader/lib/plugin");
 
 const ModuleDependencyWarning = require("webpack/lib/ModuleDependencyWarning");
+
+const entryFiles = glob.sync("./src/**/main.ts");
+const entries = entryFiles.reduce((acc, item) => {
+    // Get the filename and remove it ('./src/Safety/TempPermit/Appeals.View.ts' => '/Safety/TempPermit')
+    // \/       Match to the first slash
+    //  [^\/]*  Match the first character not in this list, a '/', greedily (*)
+    //      $   At the end of the line
+    const name = item.replace("/src", "").replace(/\/[^\/]*$/, "");
+    acc[name] = item;
+    return acc;
+}, {});
 
 const IgnoreNotFoundPlugin = class IgnoreNotFoundPlugin {
     apply(compiler) {
@@ -86,7 +98,7 @@ module.exports = {
         ]
     },
 
-    entry: "./src/main.ts",
+    entry: entries,
     output: {
         publicPath: "/dist/",
         filename: "[name]/view.js",

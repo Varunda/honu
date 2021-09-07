@@ -1,5 +1,4 @@
 ﻿
-
 export default class FactionColors {
 
 	public static VS: string = "#cf17cf";

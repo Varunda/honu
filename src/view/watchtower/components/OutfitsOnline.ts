@@ -1,5 +1,4 @@
-﻿
-import Vue from "vue";
+﻿import Vue from "vue";
 
 Vue.component("outfits-online", {
 	props: {

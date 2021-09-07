@@ -2,7 +2,7 @@
 import EventBus from "EventBus";
 
 import FactionColors from "FactionColors";
-import { StatModalData } from "StatModalData";
+import { StatModalData } from "../StatModalData";
 import { KillStatApi, CharacterWeaponKillEntry } from "api/KillStatApi";
 
 Vue.component("player-kill-block", {

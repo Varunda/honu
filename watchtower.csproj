@@ -34,9 +34,5 @@
     <Folder Include="wwwroot\lib\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <TypeScriptCompile Include="src\WorldData.ts" />
-  </ItemGroup>
-
 
 </Project>

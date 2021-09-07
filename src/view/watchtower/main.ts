@@ -1,22 +1,22 @@
 ﻿import * as sR from "signalR";
 import Vue from "vue";
-import { createPopper, Instance } from "../node_modules/@popperjs/core/lib/popper";
+import { createPopper, Instance } from "../../../node_modules/@popperjs/core/lib/popper";
 
 import { WorldData } from "./WorldData";
-import { StatModalData } from "StatModalData";
+import { StatModalData } from "./StatModalData";
 import { ExpStatApi } from "api/ExpStatApi";
-import FactionColors from "./FactionColors";
+import FactionColors from "FactionColors";
 import EventBus from "EventBus";
 
-import "./BlockView";
-import "./WeaponKillsView";
-import "./KillData";
-import "./OutfitKillData";
-import "./InfoHover";
-import "./OutfitsOnline";
-import "./ContinentMetadata";
-import "./FactionFocus";
-import "./MomentFilter";
+import "./components/BlockView";
+import "./components/WeaponKillsView";
+import "./components/KillData";
+import "./components/OutfitKillData";
+import "./components/OutfitsOnline";
+import "./components/ContinentMetadata.vue";
+import "./components/FactionFocus";
+import "InfoHover";
+import "MomentFilter";
 
 const vm = new Vue({
 	el: "#app",

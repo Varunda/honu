@@ -2,7 +2,7 @@
 import EventBus from "EventBus";
 
 import FactionColors from "FactionColors";
-import { StatModalData } from "StatModalData";
+import { StatModalData } from "../StatModalData";
 import { CharacterExpSupportEntry } from "api/ExpStatApi";
 
 Vue.component("block-view", {

@@ -2,7 +2,7 @@
 
 import EventBus from "EventBus";
 
-import { StatModalData } from "StatModalData";
+import { StatModalData } from "../StatModalData";
 import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
 
 Vue.component("outfit-kill-block", {
