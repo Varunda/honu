@@ -95,7 +95,10 @@ module.exports = {
         extensions: [".ts", ".js", ".vue"],
         plugins: [
             new TsconfigPathsPlugin({configFile: "./tsconfig.json"})
-        ]
+        ],
+        alias: {
+            node_modules: path.resolve(__dirname, "./node_modules/")
+        }
     },
 
     entry: entries,

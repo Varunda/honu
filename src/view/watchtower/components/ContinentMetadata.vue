@@ -18,7 +18,7 @@
     export const ContinentMetadata = Vue.extend({
         props: {
             metadata: { required: false }
-        }
+        },
     });
     export default ContinentMetadata;
 </script>

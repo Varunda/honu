@@ -19,6 +19,7 @@
             "loglevel": [ "../node_modules/loglevel/index" ],
             "signalR": [ "../node_modules/@microsoft/signalr/src/index" ],
             "@popperjs": [ "../node_modules/@popperjs/core/index" ],
+            "node_modules/*": [ "../node_modules/*" ],
             "*": [ "./*" ]
         },
 

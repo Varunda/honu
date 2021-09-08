@@ -1,6 +1,6 @@
 ﻿import * as sR from "signalR";
 import Vue from "vue";
-import { createPopper, Instance } from "../../../node_modules/@popperjs/core/lib/popper";
+import { createPopper, Instance } from "node_modules/@popperjs/core/lib/popper";
 
 import { WorldData } from "./WorldData";
 import { StatModalData } from "./StatModalData";
@@ -8,14 +8,15 @@ import { ExpStatApi } from "api/ExpStatApi";
 import FactionColors from "FactionColors";
 import EventBus from "EventBus";
 
-import "./components/BlockView";
-import "./components/WeaponKillsView";
-import "./components/KillData";
-import "./components/OutfitKillData";
-import "./components/OutfitsOnline";
-import "./components/ContinentMetadata.vue";
-import "./components/FactionFocus";
-import "InfoHover";
+import BlockView from "./components/BlockView.vue";
+import WeaponKillsView from "./components/WeaponKillsView.vue";
+import KillData from "./components/KillData.vue";
+import OutfitKillData from "./components/OutfitKillData.vue";
+import OutfitsOnline from "./components/OutfitsOnline.vue";
+import ContinentMetadata from "./components/ContinentMetadata.vue";
+import FactionFocus from "./components/FactionFocus.vue";
+
+import InfoHover from "components/InfoHover.vue";
 import "MomentFilter";
 
 const vm = new Vue({
@@ -144,7 +145,7 @@ const vm = new Vue({
 			return FactionColors.getFactionColor(factionID);
 		},
 
-		setModalData: function(modalData: StatModalData): void {
+		setModalData: function (modalData: StatModalData): void {
 			this.modalData = modalData;
 
 			if (this.modalData.root == null) {
@@ -171,7 +172,7 @@ const vm = new Vue({
 			this.popperInstance = popper;
 		},
 
-		closeStatTooltip: function(): void {
+		closeStatTooltip: function (): void {
 			if (this.popperInstance != null) {
 				this.popperInstance.destroy();
 
@@ -256,8 +257,17 @@ const vm = new Vue({
 				+ this.worldData.continentCount.esamir.ns
 				+ this.worldData.continentCount.other.ns;
 		},
+	},
 
+	components: {
+		ContinentMetadata,
+		BlockView,
+		FactionFocus,
+		"PlayerKillBlock": KillData,
+		"OutfitKillBlock": OutfitKillData,
+		OutfitsOnline,
+		"WeaponKills": WeaponKillsView,
+		InfoHover
 	}
-
 });
 (window as any).vm = vm;
