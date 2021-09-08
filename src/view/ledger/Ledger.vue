@@ -6,7 +6,7 @@
             default-sort-field="facilityName"
             display-type="table">
 
-            <a-col>
+            <a-col sort-field="facilityName">
                 <a-header>
                     <b>Facility</b>
                 </a-header>
@@ -53,6 +53,10 @@
                     <b>Captured</b>
                 </a-header>
 
+                <a-filter method="input" type="number" field="captured" max-width="12ch"
+                    :conditions="[ 'greater_than', 'less_than' ]">
+                </a-filter>
+
                 <a-body v-slot="entry">
                     {{entry.captured}}
                 </a-body>
@@ -62,6 +66,10 @@
                 <a-header>
                     <b>Defended</b>
                 </a-header>
+
+                <a-filter method="input" type="number" field="defended" max-width="12ch"
+                    :conditions="[ 'greater_than', 'less_than' ]">
+                </a-filter>
 
                 <a-body v-slot="entry">
                     {{entry.defended}}
@@ -73,8 +81,34 @@
                     <b>Total</b>
                 </a-header>
 
+                <a-filter method="input" type="number" field="total" max-width="12ch"
+                    :conditions="[ 'greater_than', 'less_than' ]">
+                </a-filter>
+
                 <a-body v-slot="entry">
                     {{entry.total}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="captureAverage">
+                <a-header>
+                    <b>Capture average</b>
+                    <info-hover text="How many on average get credit for a capture"></info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.captureAverage.toFixed(2)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="defenseAverage">
+                <a-header>
+                    <b>Defend average</b>
+                    <info-hover text="How many on average get credit for a capture"></info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.defenseAverage.toFixed(2)}}
                 </a-body>
             </a-col>
 

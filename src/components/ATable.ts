@@ -834,7 +834,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.paging.page = 0; }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-double-left", "far")]
+                        [this.createIcon(createElement, "fa-chevron-circle-left", "fas")]
                     ),
 
                     // Previous page button
@@ -848,7 +848,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page - 1) }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-left", "far")]
+                        [this.createIcon(createElement, "fa-chevron-left", "fas")]
                     ),
 
                     // Page selection buttons, show 10 max
@@ -883,7 +883,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page + 1) }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-right", "far")]
+                        [this.createIcon(createElement, "fa-chevron-right", "fas")]
                     ),
 
                     // Last page button
@@ -897,7 +897,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.pageCount - 1); }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-double-right", "far")]
+                        [this.createIcon(createElement, "fa-chevron-circle-right", "fas")]
                     )]
                 ),
 
@@ -1025,8 +1025,8 @@ export const ATable = Vue.extend({
             if (this.sorting.field == fieldName) {
                 return createElement("span", {
                     staticClass: (this.sorting.order == "asc")
-                        ? "fas fa-caret-circle-up fa-fw mr-auto"
-                        : "fas fa-caret-circle-down fa-fw mr-auto",
+                        ? "fas fa-caret-square-up fa-fw mr-auto"
+                        : "fas fa-caret-square-down fa-fw mr-auto",
                 });
             }
 
