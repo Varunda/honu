@@ -1,6 +1,6 @@
 ﻿import Vue, { VNode, VNodeData, CreateElement } from "vue";
 
-import DateTimePicker from "components/DateTimePicker.vue";
+//import DateTimePicker from "components/DateTimePicker.vue";
 import { Loading, Loadable } from "Loading";
 
 const ValidFilterTypes: string[] = ["string", "number", "date"];
@@ -727,6 +727,7 @@ export const ATable = Vue.extend({
                     }
                 });
             } else if (filter.type == "date") {
+                /*
                 input = createElement(DateTimePicker, {
                     staticClass: "a-table-filter-date",
                     props: {
@@ -746,6 +747,8 @@ export const ATable = Vue.extend({
                         }
                     }
                 });
+                */
+                throw `Type 'date' currently broken`;
             } else {
                 throw `Unknown type: '${filter.type}'`;
             }
