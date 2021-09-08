@@ -49,6 +49,7 @@ namespace watchtower.Services.Db.Implementations {
                     {periodStartWhere}
                     {periodEndWhere}
                     {zoneIDWhere}
+                    {stateWhere}
                 GROUP BY facility_id;
             ");
 

@@ -162,6 +162,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "ledger",
+                    pattern: "/ledger",
+                    defaults: new { controller = "Home", action = "Ledger" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "worlddata",
                     pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }

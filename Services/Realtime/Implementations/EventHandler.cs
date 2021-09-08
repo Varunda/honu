@@ -138,6 +138,7 @@ namespace watchtower.Realtime {
                 await Task.Delay(1000);
 
                 lock (PlayerFacilityControlStore.Get().Events) {
+                    // Clean up is handled in a period hosted service
                     List<PlayerControlEvent> events = PlayerFacilityControlStore.Get().Events.Where(iter => {
                         return iter.FacilityID == ev.FacilityID
                             && iter.WorldID == ev.WorldID

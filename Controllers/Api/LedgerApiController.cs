@@ -45,7 +45,7 @@ namespace watchtower.Controllers.Api {
 
             FacilityControlOptions parameters = new();
             parameters.ZoneID = zoneID;
-            parameters.WorldIDs = worldID ?? new();
+            parameters.WorldIDs = worldID ?? new List<short>();
             parameters.PlayerThreshold = playerThreshold ?? 12;
 
             if (periodStart != null) {
@@ -74,6 +74,10 @@ namespace watchtower.Controllers.Api {
             foreach (FacilityControlDbEntry entry in entries) {
                 PsFacility? facility = facilities.FirstOrDefault(iter => iter.FacilityID == entry.FacilityID);
 
+                if (facility == null) {
+                    continue;
+                }
+
                 FacilityControlEntry elem = new();
                 elem.FacilityID = entry.FacilityID;
                 elem.Captured = entry.Captured;
@@ -82,7 +86,7 @@ namespace watchtower.Controllers.Api {
                 elem.DefenseAverage = entry.DefenseAverage;
                 elem.TotalAverage = entry.TotalAverage;
 
-                elem.FacilityName = facility?.Name ?? $"<missing facility {elem.FacilityID}";
+                elem.FacilityName = facility?.Name ?? $"<missing facility {elem.FacilityID}>";
                 elem.TypeID = facility?.TypeID ?? 0;
                 elem.TypeName = facility?.TypeName ?? "";
                 elem.ZoneID = facility?.ZoneID ?? 0;
