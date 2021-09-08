@@ -90,7 +90,7 @@ namespace watchtower.Services.Census {
                     return UnstableState.SINGLE_LANE;
                 }
 
-                if (value > (total / 3)) {
+                if (value > 10) {
                     return UnstableState.DOUBLE_LANE;
                 }
             }

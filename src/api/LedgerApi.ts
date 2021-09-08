@@ -23,7 +23,7 @@ export class LedgerApi {
 	private static parseControlEntry(elem: any): FacilityControlEntry {
 		return {
 			...elem,
-			ratio: elem.defended / (elem.captured || 1),
+			ratio: (elem.defended || 1) / (elem.captured || 1),
 			total: elem.captured + elem.defended
 		};
 	}

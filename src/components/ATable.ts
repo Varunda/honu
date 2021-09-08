@@ -226,8 +226,6 @@ export const ATable = Vue.extend({
                 if (filter.method == "dropdown") {
                     filter.source = (filterNode.componentOptions!.propsData as any).source;
 
-                    console.log(`source found: ${filter.source}`, filter.source);
-
                     // A function was passed as the source, validate and begin the
                     if (typeof (filter.source) == "function") {
                         filter.sourceKey = (filterNode.componentOptions!.propsData as any).SourceKey;
@@ -244,8 +242,6 @@ export const ATable = Vue.extend({
                         if (typeof (sourceRet.ok) != "function") {
                             throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
                         }
-
-                        console.log(`filter source is a Function()`);
 
                         /*
                         const response: ApiResponse<object[]> = sourceRet as ApiResponse<object[]>;
@@ -773,7 +769,6 @@ export const ATable = Vue.extend({
         },
 
         createDropdownFilter(createElement: CreateElement, filter: Filter): VNode {
-            console.log(`Dropdown filter: `, filter.source);
             return createElement("select",
                 {
                     staticClass: "form-control a-table-filter-select",

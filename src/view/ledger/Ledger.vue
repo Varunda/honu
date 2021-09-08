@@ -1,5 +1,9 @@
 ﻿<template>
     <div>
+        <div class="mb-3">
+            other filters
+        </div>
+
         <a-table
             :source="listSources.ledger"
             :show-filters="true"
