@@ -1,11 +1,25 @@
 ﻿<template>
     <div>
-        <div class="mb-3">
-            other filters
+        <div class="mb-3 d-flex">
+            <div class="input-group">
+                <input class="form-control" type="number" />
+            </div>
+
+            <div class="input-group">
+                <input class="form-control" type="number" />
+            </div>
+
+            world IDs
+
+            player threshold
+
+            dates
+
+            unstable state
         </div>
 
         <a-table
-            :source="listSources.ledger"
+            :entries="entries"
             :show-filters="true"
             default-sort-field="facilityName"
             display-type="table">

@@ -56,7 +56,7 @@ export type FilterKeyValue = {
 export const ATable = Vue.extend({
     props: {
         // Where the data comes from
-        source: { type: Function, required: true },
+        entries: { type: Object, required: true },
 
         // After data is bound this function is called
         PostProcess: { type: Function, required: false, default: undefined },
@@ -93,8 +93,6 @@ export const ATable = Vue.extend({
                 headers: [] as Header[]
             },
 
-            entries: Loadable.idle() as Loading<any[]>,
-
             sorting: {
                 field: "" as string,
                 type: "unknown" as "string" | "number" | "date" | "unknown",
@@ -111,8 +109,6 @@ export const ATable = Vue.extend({
     },
 
     created: function(): void {
-        this.bindData();
-
         this.nodes.columns = (this.$slots["default"] || [])
             .filter((iter: VNode) => iter.tag != undefined && iter.componentOptions != undefined);
 
@@ -395,26 +391,6 @@ export const ATable = Vue.extend({
             return createElement("span", { staticClass: `${style} fa-fw ${icon}` });
         },
 
-        bindData: function(skipLoading: boolean = false): void {
-            if (skipLoading == false) {
-                this.entries = Loadable.loading();
-            }
-
-            const timer: number = new Date().getTime();
-            this.source().then((data: object[]) => {
-                const nowMs: number = new Date().getTime();
-                console.log(`<a-table>: Took ${nowMs - timer}ms to load`);
-                if (this.PostProcess != undefined) {
-                    for (let i = 0; i < data.length; ++i) {
-                        data[i] = this.PostProcess(data[i]);
-                    }
-                    console.log(`<a-table>: Took ${new Date().getTime() - nowMs}ms to post process ${data.length} entries`);
-                }
-
-                this.entries = Loadable.loaded(data);
-            });
-        },
-
         setPage: function(page: number): void {
             if (page > this.pageCount - 1) {
                 this.paging.page = this.pageCount - 1;
@@ -621,8 +597,8 @@ export const ATable = Vue.extend({
                     // https://stackoverflow.com/questions/11246758
                     const uniqueFields: FilterKeyValue[] = this.entries.data
                         .map((iter: any) => iter[filter.field]) // Collect the field
-                        .filter((iter, i, ar) => ar.indexOf(iter) == i) // Find unique
-                        .map((iter) => ({ key: iter, value: iter })); // Map to the pair
+                        .filter((iter: any, i: any, ar: any) => ar.indexOf(iter) == i) // Find unique
+                        .map((iter: any) => ({ key: iter, value: iter })); // Map to the pair
 
                     // Include an all field
                     uniqueFields.unshift({ key: "All", value: null });
