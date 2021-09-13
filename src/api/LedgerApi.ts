@@ -16,6 +16,12 @@ export class FacilityControlEntry {
 	public total: number = 0;
 }
 
+export class LedgerOptions {
+	public zoneID: number | null = null;
+	public worldID: number[] = [];
+	public playerThreshold: number | null = null;
+}
+
 export class LedgerApi {
 	private static _instance: LedgerApi = new LedgerApi();
 	public static get(): LedgerApi { return LedgerApi._instance; }
@@ -28,8 +34,22 @@ export class LedgerApi {
 		};
 	}
 
-	public static async getLedger(): Promise<FacilityControlEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/ledger/`);
+	public static async getLedger(options?: LedgerOptions): Promise<FacilityControlEntry[]> {
+		const param: URLSearchParams = new URLSearchParams();
+
+		if (options) {
+			if (options.worldID.length > 0) {
+				for (const worldID of options.worldID) {
+					param.append("worldID", worldID);
+				}
+			}
+
+			if (options.playerThreshold) {
+				param.set("playerThreshold", options.playerThreshold.toString());
+			}
+		}
+
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/ledger/?${param.toString()}`);
 
         if (response.status != 200) {
             return [];

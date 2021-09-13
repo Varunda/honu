@@ -47,8 +47,12 @@
                     <input type="checkbox" value="40" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">SolTech</label>
                 </div>
+
             </div>
 
+            <div class="col-auto">
+                <button type="button" @click="bindLedgerData" class="btn btn-primary">Load</button>
+            </div>
             <!--
             <div class="form-group">
                 <label>Start date</label>
@@ -192,7 +196,7 @@
 <script lang="ts">
     import Vue from "vue";
 
-    import { LedgerApi, FacilityControlEntry } from "api/LedgerApi";
+    import { LedgerApi, FacilityControlEntry, LedgerOptions } from "api/LedgerApi";
 
     import { Loading, Loadable } from "Loading";
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
@@ -218,8 +222,12 @@
 
         methods: {
             bindLedgerData: async function(): Promise<void> {
+                const options: LedgerOptions = new LedgerOptions();
+                options.playerThreshold = this.filter.playerThreshold;
+                options.worldID = this.filter.worldID;
+
                 this.entries = Loadable.loading();
-                this.entries = Loadable.loaded(await LedgerApi.getLedger());
+                this.entries = Loadable.loaded(await LedgerApi.getLedger(options));
             }
         },
 

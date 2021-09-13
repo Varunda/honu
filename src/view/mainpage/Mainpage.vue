@@ -50,6 +50,12 @@
         <hr />
 
         <div>
+            <h4>Ledger</h4>
+
+            <a href="/ledger">View</a>
+        </div>
+
+        <div>
             <h4>Contact</h4>
             
             <div>

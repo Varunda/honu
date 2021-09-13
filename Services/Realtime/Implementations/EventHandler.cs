@@ -251,7 +251,7 @@ namespace watchtower.Realtime {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
 
                 if (state == null) {
-                    state = new() {
+                    state = new ZoneState() {
                         ZoneID = zoneID,
                         WorldID = worldID,
                         IsOpened = true
