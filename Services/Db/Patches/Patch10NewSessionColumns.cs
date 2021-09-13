@@ -21,6 +21,9 @@ namespace watchtower.Services.Db.Patches {
                 ALTER TABLE wt_session
                     ADD IF NOT EXISTS outfit_id varchar NULL DEFAULT 0;
             ");
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
     }
