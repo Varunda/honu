@@ -24,6 +24,10 @@ namespace watchtower.Code.Constants {
                 || worldID == Emerald || worldID == Jaeger || worldID == SolTech;
         }
 
+        public static List<short> All = new() {
+            Connery, Miller, Cobalt, Emerald, Jaeger, SolTech
+        };
+
         /// <summary>
         /// Get a display friendly name of a world
         /// </summary>

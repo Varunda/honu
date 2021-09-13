@@ -127,11 +127,13 @@ namespace watchtower {
             services.AddHostedService<DataBuilderService>();
             services.AddHostedService<WorldDataBroadcastService>();
             services.AddHostedService<RealtimeResubcribeService>();
+            services.AddHostedService<WorldOverviewBroadcastService>();
 
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
             services.AddHostedService<FacilityPopulatorStartupService>();
+            services.AddHostedService<ZoneStateStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();
@@ -179,6 +181,7 @@ namespace watchtower {
                 );
 
                 endpoints.MapHub<WorldDataHub>("/ws/data");
+                endpoints.MapHub<WorldOverviewHub>("/ws/overview");
             });
         }
 

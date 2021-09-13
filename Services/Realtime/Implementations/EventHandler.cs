@@ -245,6 +245,8 @@ namespace watchtower.Realtime {
             string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
             int metagameEventID = payload.GetInt32("metagame_event_id", 0);
 
+            _Logger.LogDebug($"{payload}");
+
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
 

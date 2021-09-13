@@ -13,9 +13,9 @@ import WeaponKillsView from "./components/WeaponKillsView.vue";
 import KillData from "./components/KillData.vue";
 import OutfitKillData from "./components/OutfitKillData.vue";
 import OutfitsOnline from "./components/OutfitsOnline.vue";
-import ContinentMetadata from "./components/ContinentMetadata.vue";
 import FactionFocus from "./components/FactionFocus.vue";
 
+import ContinentMetadata from "components/ContinentMetadata.vue";
 import InfoHover from "components/InfoHover.vue";
 import "MomentFilter";
 
@@ -179,7 +179,6 @@ const vm = new Vue({
 				const tooltip: HTMLElement | null = document.getElementById("stat-table");
 				if (tooltip != null) {
 					tooltip.style.display = "none";
-					console.log(`hidiing tooltip`);
 				}
 			}
 		}

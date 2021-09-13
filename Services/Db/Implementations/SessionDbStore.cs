@@ -56,13 +56,15 @@ namespace watchtower.Services.Db.Implementations {
                         AND finish IS NULL;
                 
                 INSERT INTO wt_session (
-                    character_id, start, finish
+                    character_id, start, finish, outfit_id, team_id
                 ) VALUES (
-                    @CharacterID, NOW() at time zone 'utc', null
+                    @CharacterID, NOW() at time zone 'utc', null, @OutfitID, @TeamID
                 );
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
+            cmd.AddParameter("OutfitID", player.OutfitID);
+            cmd.AddParameter("TeamID", player.FactionID); // Yes, faction ID is correct here, it's updated in End
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -78,7 +80,8 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = NOW() at time zone 'utc'
+                    SET finish = NOW() at time zone 'utc',
+                        team_id = @TeamID
                     WHERE id = (
                         SELECT MAX(id)
                             FROM wt_session 
@@ -86,7 +89,14 @@ namespace watchtower.Services.Db.Implementations {
                     ) AND finish IS NULL;
             ");
 
+            // Until I know where the -1 values are coming from, set it to saner value
+            short teamID = player.TeamID;
+            if (teamID == -1) {
+                teamID = player.FactionID;
+            }
+
             cmd.AddParameter("CharacterID", player.ID);
+            cmd.AddParameter("TeamID", teamID);
 
             player.Online = false;
 
@@ -112,6 +122,8 @@ namespace watchtower.Services.Db.Implementations {
             s.CharacterID = reader.GetString("character_id");
             s.Start = reader.GetDateTime("start");
             s.End = reader.GetNullableDateTime("finish");
+            s.OutfitID = reader.GetNullableString("outfit_id");
+            s.TeamID = reader.GetInt16("team_id");
 
             return s;
         }

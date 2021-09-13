@@ -26,6 +26,15 @@ namespace watchtower.Services.Db {
 
     public static class IDbHelperExtensions {
 
+        /// <summary>
+        ///     Check if an index exists
+        /// </summary>
+        /// <param name="instance">Extension instance</param>
+        /// <param name="tableName">Table the index is for</param>
+        /// <param name="indexName">Index name on the table</param>
+        /// <returns>
+        ///     A boolean value if the index exists on that table
+        /// </returns>
         public static async Task<bool> HasIndex(this IDbHelper instance, string tableName, string indexName) {
             using NpgsqlConnection conn = instance.Connection();
             using NpgsqlCommand cmd = await instance.Command(conn, @"

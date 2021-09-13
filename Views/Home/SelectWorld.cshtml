@@ -1,67 +1,8 @@
-﻿
-<div class="container-fluid">
-    <h1 class="d-inline-block flex-grow-1">
-        <img src="~/img/beans.png" style="height: 100%; width: 48px;" />
-        Carl Watchtower
-    </h1>
+﻿<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="~/lib/signalr/signalr.js"></script>
+<script src="~/dist/view/mainpage/view.js" defer asp-append-version="true"></script>
+<link rel="stylesheet" href="~/css/mainpage-grid.css">
 
-    <hr />
-
-    <div class="text-cente">
-        <h5>About</h5>
-        <div>
-            Carl Watchtower is a realtime tracking server for Planetside 2 PC servers
-        </div>
-
-        <hr />
-
-        <h5>Features from other activity trackers</h5>
-        <div>
-            <ul>
-                <li>Revives remove a death</li>
-                <li>The numbers are from a 2 hour window, more useful for outfit ops</li>
-            </ul>
-        </div>
-
-        <hr />
-    </div>
-
-    <div>
-        <h4>Select server</h4>
-
-        <a class="btn btn-primary" href="/view/cobalt">
-            Cobalt
-        </a>
-
-        <a class="btn btn-primary" href="/view/connery">
-            Connery
-        </a>
-
-        <a class="btn btn-primary" href="/view/emerald">
-            Emerald
-        </a>
-
-        <a class="btn btn-primary" href="/view/jaeger">
-            Jaeger
-        </a>
-
-        <a class="btn btn-primary" href="/view/miller">
-            Miller
-        </a>
-
-        <a class="btn btn-primary" href="/view/soltech">
-            SolTech
-        </a>
-    </div>
-
-    <hr />
-
-    <div>
-        <h4>Contact</h4>
-        
-        <div>
-            Discord: Hdt#1468
-        </div>
-    </div>
-
+<div id="app">
+    <Mainpage></Mainpage>
 </div>

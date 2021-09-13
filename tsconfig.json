@@ -21,6 +21,7 @@
             "@popperjs": [ "../node_modules/@popperjs/core/index" ],
             "flatpickr": [ "../node_modules/flatpickr/dist/typings" ],
             "node_modules/*": [ "../node_modules/*" ],
+            "vue-fragment": [ "../node_modules/vue-fragment/types" ],
             "*": [ "./*" ]
         },
 
