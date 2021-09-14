@@ -9,7 +9,25 @@ namespace watchtower.Services.Census {
 
     public interface IMapCollection {
 
+        /// <summary>
+        ///     Get who owns each base in a zone
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <param name="zoneID">ID of the zone</param>
+        /// <returns>
+        ///     A list containing <see cref="PsMap"/>s for each facility in the zone
+        /// </returns>
         Task<List<PsMap>> GetZoneMap(short worldID, uint zoneID);
+
+        /// <summary>
+        /// Get all map hexes from census
+        /// </summary>
+        Task<List<PsMapHex>> GetHexes();
+
+        /// <summary>
+        /// Get all facility links from census
+        /// </summary>
+        Task<List<PsFacilityLink>> GetFacilityLinks();
 
     }
 

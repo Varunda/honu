@@ -40,7 +40,7 @@ export class LedgerApi {
 		if (options) {
 			if (options.worldID.length > 0) {
 				for (const worldID of options.worldID) {
-					param.append("worldID", worldID);
+					param.append("worldID", worldID.toString());
 				}
 			}
 

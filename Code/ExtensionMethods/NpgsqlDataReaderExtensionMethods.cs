@@ -29,6 +29,13 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetDateTime(field);
         }
 
+        public static decimal? GetNullableDecimal(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return (decimal?) reader.GetFloat(field);
+        }
+
         /// <summary>
         /// Get a <see cref="uint"/> from a column
         /// </summary>

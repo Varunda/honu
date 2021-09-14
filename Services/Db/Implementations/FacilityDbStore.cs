@@ -55,15 +55,18 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_facility (
-                    id, zone_id, region_id, name, type_id, type_name
+                    id, zone_id, region_id, name, type_id, type_name, location_x, location_y, location_z
                 ) VALUES (
-                    @ID, @ZoneID, @RegionID, @Name, @TypeID, @TypeName
+                    @ID, @ZoneID, @RegionID, @Name, @TypeID, @TypeName, @LocationX, @LocationY, @LocationZ
                 ) ON CONFLICT (id) DO
                     UPDATE SET zone_id = @ZoneID,
                         region_id = @RegionID,
                         name = @Name,
                         type_id = @TypeID,
-                        type_name = @TypeName
+                        type_name = @TypeName,
+                        location_x = @LocationX,
+                        location_y = @LocationY,
+                        location_z = @LocationZ
             ");
 
             cmd.AddParameter("ID", facilityID);
@@ -72,6 +75,9 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Name", facility.Name);
             cmd.AddParameter("TypeID", facility.TypeID);
             cmd.AddParameter("TypeName", facility.TypeName);
+            cmd.AddParameter("LocationX", facility.LocationX);
+            cmd.AddParameter("LocationY", facility.LocationY);
+            cmd.AddParameter("LocationZ", facility.LocationZ);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -86,6 +92,9 @@ namespace watchtower.Services.Db.Implementations {
             fac.Name = reader.GetString("name");
             fac.TypeID = reader.GetInt32("type_id");
             fac.TypeName = reader.GetString("type_name");
+            fac.LocationX = reader.GetNullableDecimal("location_x");
+            fac.LocationY = reader.GetNullableDecimal("location_y");
+            fac.LocationZ = reader.GetNullableDecimal("location_z");
 
             return fac;
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace watchtower.Models.Census {
+
     public class PsMap {
 
         public string RegionID { get; set; } = "";

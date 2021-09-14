@@ -24,6 +24,7 @@ using watchtower.Services.Offline;
 using DaybreakGames.Census.Stream;
 using watchtower.Models;
 using watchtower.Services.Hosted.Startup;
+using watchtower.Models.Census;
 
 namespace watchtower {
 
@@ -96,6 +97,7 @@ namespace watchtower {
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
             services.AddSingleton<IFacilityControlDbStore, FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
+            services.AddSingleton<IMapDbStore, MapDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -104,6 +106,8 @@ namespace watchtower {
             services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
             services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
             services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlEntryReader>();
+            services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
+            services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -118,6 +122,7 @@ namespace watchtower {
             services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
             services.AddSingleton<IItemRepository, ItemRepository>();
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
+            services.AddSingleton<IMapRepository, MapRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist

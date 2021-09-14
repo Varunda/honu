@@ -55,12 +55,16 @@ namespace watchtower.Services.Census.Implementations {
 
         private PsFacility _Parse(JToken token) {
             PsFacility facility = new PsFacility();
+
             facility.FacilityID = token.GetInt32("facility_id", 0);
-            facility.RegionID = token.GetInt32("region_id", 0);
+            facility.RegionID = token.GetInt32("map_region_id", 0);
             facility.ZoneID = token.GetZoneID();
             facility.Name = token.GetString("facility_name", "<missing name>");
             facility.TypeID = token.GetInt32("facility_type_id", 0);
             facility.TypeName = token.GetString("facility_type", "<missing type name>");
+            facility.LocationX = token.Value<decimal?>("location_x");
+            facility.LocationY = token.Value<decimal?>("location_y");
+            facility.LocationZ = token.Value<decimal?>("location_z");
 
             return facility;
         }
