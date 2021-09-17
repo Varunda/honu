@@ -27,6 +27,7 @@ namespace watchtower.Services.Db.Implementations {
             string isHeal = $"experience_id = {Experience.HEAL} OR experience_id = {Experience.SQUAD_HEAL}";
             string isRevive = $"experience_id = {Experience.REVIVE} OR experience_id = {Experience.SQUAD_REVIVE}";
             string isResupply = $"experience_id = {Experience.RESUPPLY} OR experience_id = {Experience.SQUAD_RESUPPLY}";
+            string isShield = $"experience_id = {Experience.SHIELD_REPAIR} OR experience_id = {Experience.SQUAD_SHIELD_REPAIR}";
 
             string isSpawn = $"experience_id = {Experience.SQUAD_SPAWN} OR experience_id = {Experience.GALAXY_SPAWN_BONUS} "
                 + $"OR experience_id = {Experience.GENERIC_NPC_SPAWN} OR experience_id = {Experience.SQUAD_VEHICLE_SPAWN_BONUS} "
@@ -69,6 +70,7 @@ namespace watchtower.Services.Db.Implementations {
                 UNION SELECT 'vs_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isResupply})) AS value
                 UNION SELECT 'vs_spawns' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isSpawn})) AS value
                 UNION SELECT 'vs_vehicle_kills' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isVehicleKill})) AS value
+                UNION SELECT 'vs_shield_repair' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 1 AND ({isShield})) AS value
 
                 UNION SELECT 'nc_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 2) AS value
                 UNION SELECT 'nc_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 2 AND kills.revived_event_id IS null) AS value
@@ -81,6 +83,7 @@ namespace watchtower.Services.Db.Implementations {
                 UNION SELECT 'nc_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isResupply})) AS value
                 UNION SELECT 'nc_spawns' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isSpawn})) AS value
                 UNION SELECT 'nc_vehicle_kills' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isVehicleKill})) AS value
+                UNION SELECT 'nc_shield_repair' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 2 AND ({isShield})) AS value
 
                 UNION SELECT 'tr_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 3) AS value
                 UNION SELECT 'tr_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 3 AND kills.revived_event_id IS null) AS value
@@ -93,6 +96,7 @@ namespace watchtower.Services.Db.Implementations {
                 UNION SELECT 'tr_resupplies' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isResupply})) AS value
                 UNION SELECT 'tr_spawns' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isSpawn})) AS value
                 UNION SELECT 'tr_vehicle_kills' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isVehicleKill})) AS value
+                UNION SELECT 'tr_shield_repair' AS key, (SELECT COUNT(*) FROM exp WHERE exp.source_team_id = 3 AND ({isShield})) AS value
             ");
 
             cmd.AddParameter("Interval", options.Interval);

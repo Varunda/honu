@@ -16,11 +16,13 @@ namespace watchtower.Constants {
         public const int MAX_REPAIR = 6;
         public const int REVIVE = 7;
         public const int RESUPPLY = 34;
+        public const int SHIELD_REPAIR = 438;
 
         public const int SQUAD_HEAL = 51;
         public const int SQUAD_REVIVE = 53;
         public const int SQUAD_RESUPPLY = 55;
         public const int SQUAD_MAX_REPAIR = 142;
+        public const int SQUAD_SHIELD_REPAIR = 439;
 
         public const int SQUAD_SPAWN = 56;
         public const int GALAXY_SPAWN_BONUS = 201;
@@ -71,6 +73,10 @@ namespace watchtower.Constants {
 
         public static bool IsResupply(int expId) {
             return expId == RESUPPLY || expId == SQUAD_RESUPPLY;
+        }
+
+        public static bool IsShieldRepair(int expId) {
+            return expId == SHIELD_REPAIR || expId == SQUAD_SHIELD_REPAIR;
         }
 
         public static bool IsSpawn(int expId) {

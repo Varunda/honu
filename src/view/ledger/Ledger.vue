@@ -69,7 +69,7 @@
 
         <ledger-list :entries="entries"></ledger-list>
 
-        <ledger-map :entries="entries"></ledger-map>
+        <ledger-map v-if="entries.state == 'loaded'" :entries="entries" :zone-id="4" zone-name="hossin"></ledger-map>
     </div>
 </template>
 

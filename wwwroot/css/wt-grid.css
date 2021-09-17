@@ -38,34 +38,39 @@
     grid-row: 9;
 }
 
-.grid-title-resupplies {
+.grid-title-shields {
     grid-column: 1 / span 3;
     grid-row: 11;
 }
 
-.grid-title-spawns {
+.grid-title-resupplies {
     grid-column: 1 / span 3;
     grid-row: 13;
 }
 
-.grid-title-vehicle-kills {
+.grid-title-spawns {
     grid-column: 1 / span 3;
     grid-row: 15;
 }
 
-.grid-title-weapon-kills {
+.grid-title-vehicle-kills {
     grid-column: 1 / span 3;
     grid-row: 17;
 }
 
-.grid-title-outfits {
+.grid-title-weapon-kills {
     grid-column: 1 / span 3;
     grid-row: 19;
 }
 
-.grid-title-misc {
+.grid-title-outfits {
     grid-column: 1 / span 3;
     grid-row: 21;
+}
+
+.grid-title-misc {
+    grid-column: 1 / span 3;
+    grid-row: 23;
 }
 
 .grid-vs-player-kills {
@@ -93,29 +98,34 @@
     grid-row: 10;
 }
 
-.grid-vs-resupplies {
+.grid-vs-shields {
     grid-column: 1;
     grid-row: 12;
 }
 
-.grid-vs-spawns {
+.grid-vs-resupplies {
     grid-column: 1;
     grid-row: 14;
 }
 
-.grid-vs-vehicle-kills {
+.grid-vs-spawns {
     grid-column: 1;
     grid-row: 16;
 }
 
-.grid-vs-weapon-kills {
+.grid-vs-vehicle-kills {
     grid-column: 1;
     grid-row: 18;
 }
 
-.grid-vs-outfits {
+.grid-vs-weapon-kills {
     grid-column: 1;
     grid-row: 20;
+}
+
+.grid-vs-outfits {
+    grid-column: 1;
+    grid-row: 22;
 }
 
 .grid-nc-player-kills {
@@ -143,29 +153,34 @@
     grid-row: 10;
 }
 
-.grid-nc-resupplies {
+.grid-nc-shields {
     grid-column: 2;
     grid-row: 12;
 }
 
-.grid-nc-spawns {
+.grid-nc-resupplies {
     grid-column: 2;
     grid-row: 14;
 }
 
-.grid-nc-vehicle-kills {
+.grid-nc-spawns {
     grid-column: 2;
     grid-row: 16;
 }
 
-.grid-nc-weapon-kills {
+.grid-nc-vehicle-kills {
     grid-column: 2;
     grid-row: 18;
 }
 
-.grid-nc-outfits {
+.grid-nc-weapon-kills {
     grid-column: 2;
     grid-row: 20;
+}
+
+.grid-nc-outfits {
+    grid-column: 2;
+    grid-row: 22;
 }
 
 .grid-tr-player-kills {
@@ -193,32 +208,37 @@
     grid-row: 10;
 }
 
-.grid-tr-resupplies {
+.grid-tr-shields {
     grid-column: 3;
     grid-row: 12;
 }
 
-.grid-tr-spawns {
+.grid-tr-resupplies {
     grid-column: 3;
     grid-row: 14;
 }
 
-.grid-tr-vehicle-kills {
+.grid-tr-spawns {
     grid-column: 3;
     grid-row: 16;
 }
 
-.grid-tr-weapon-kills {
+.grid-tr-vehicle-kills {
     grid-column: 3;
     grid-row: 18;
 }
 
-.grid-tr-outfits {
+.grid-tr-weapon-kills {
     grid-column: 3;
     grid-row: 20;
 }
 
+.grid-tr-outfits {
+    grid-column: 3;
+    grid-row: 22;
+}
+
 .grid-misc-spawns {
     grid-column: 1;
-    grid-row: 22;
+    grid-row: 24;
 }

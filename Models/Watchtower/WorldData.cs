@@ -144,6 +144,10 @@ namespace watchtower.Models {
         /// </summary>
         public Block OutfitVehicleKills { get; set; } = new Block();
 
+        public Block PlayerShieldRepair { get; set; } = new Block();
+
+        public Block OutfitShieldRepair { get; set; } = new Block();
+
         /// <summary>
         /// Top weapons used for this faction
         /// </summary>

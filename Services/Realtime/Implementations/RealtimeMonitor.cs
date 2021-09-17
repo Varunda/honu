@@ -19,6 +19,7 @@ namespace watchtower.Realtime {
             Experience.REVIVE, Experience.SQUAD_REVIVE,
             Experience.RESUPPLY, Experience.SQUAD_RESUPPLY,
             Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR,
+            Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR,
 
             Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
             Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,

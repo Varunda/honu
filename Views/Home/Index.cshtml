@@ -168,6 +168,10 @@
             Revives
         </h4>
 
+        <h4 class="grid-title-shields">
+            Shield repairs
+        </h4>
+
         <h4 class="grid-title-resupplies">
             Resupplies
         </h4>
@@ -223,6 +227,15 @@
             </block-view>
             <block-view :block="worldData.vs.outfitRevives" title="Outfits"
                 :source="expSources.outfitRevive" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+            </block-view>
+        </div>
+
+        <div class="grid-vs-shields d-flex">
+            <block-view class="mr-3" :block="worldData.vs.playerShieldRepair">
+
+            </block-view>
+            <block-view :block="worldData.vs.outfitShieldRepair">
+
             </block-view>
         </div>
 
@@ -299,6 +312,15 @@
             </block-view>
         </div>
 
+        <div class="grid-nc-shields d-flex">
+            <block-view class="mr-3" :block="worldData.nc.playerShieldRepair">
+
+            </block-view>
+            <block-view :block="worldData.nc.outfitShieldRepair">
+
+            </block-view>
+        </div>
+
         <div class="grid-nc-resupplies d-flex">
             <block-view class="mr-3" :block="worldData.nc.playerResupplies" 
                 :source="expSources.charResupply" source-title="Players resupplies">
@@ -369,6 +391,15 @@
             </block-view>
             <block-view :block="worldData.tr.outfitRevives" title="Outfits"
                 :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+            </block-view>
+        </div>
+
+        <div class="grid-tr-shields d-flex">
+            <block-view class="mr-3" :block="worldData.tr.playerShieldRepair">
+
+            </block-view>
+            <block-view :block="worldData.tr.outfitShieldRepair">
+
             </block-view>
         </div>
 
