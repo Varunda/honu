@@ -1,22 +1,65 @@
 ﻿<template>
     <div>
-        <div class="mb-3 form-row align-items-center">
+        <div class="d-flex align-items-center">
+            <h1 class="d-inline-block flex-grow-1">
+                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+
+                <a href="/" title="Return to home page">Honu</a>
+
+                 / Ledger
+            </h1>
+
+        </div>
+
+        <div>
+            <div class="btn-group w-100 mb-2">
+                <button class="btn btn-primary flex-grow-0" data-toggle="collapse" href="#ledger-readme">
+                    View help
+                </button>
+
+                <button type="button" class="btn btn-secondary" @click="view = 'map'">
+                    View map
+                </button>
+
+                <button type="button" class="btn btn-success" @click="view = 'list'">
+                    View list
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div id="ledger-readme" class="collapse">
+                <h3>
+                    What is this?
+                </h3>
+                <p>
+                    Ledger is a facility control tracker. Everytime a base is captured or defended (since collection started), it is recorded, along with how many players particpated.
+                    This is a display of that data, viewable as a map or a list.
+                </p>
+
+                <h3>When did data collection start?</h3>
+                <p>2021-09-06</p>
+
+                <h3>Do you include captures/defenses when a continent is not fully unlocked?</h3>
+                <p>No</p>
+
+                <h3>
+                    What is the ratio?
+                </h3>
+                <p>The ratio is how many times a base is defended per once capture. For example, a ratio of 3 would mean a base is defended 3 times per 1 capture.</p>
+                <p>
+                    A defense happens when any point is flipped in favor of the attacker, and once all points have been flipped back to the defenders.
+                    For bases where attackers never flip the point, this is not recorded.
+                </p>
+                <p>The ratio is <b>NOT</b> a measure of how difficult it is to take a base, but can indicate it</p>
+            </div>
+        </div>
+
+        <div v-if="view == 'list'" class="mb-3 form-row align-items-center">
             <div class="col-auto">
                 <label>Player theshold</label>
                 <input class="form-control" type="number" v-model.number="filter.playerThreshold" />
             </div>
-
-            <!--
-            <div class="form-group">
-                <label>Unstable</label>
-                <select class="form-control" v-model="filter.unstableState">
-                    <option :value="null">All</option>
-                    <option :value="1">Fully unlocked</option>
-                    <option :value="2">Double lane</option>
-                    <option :value="3">Single lane</option>
-                </select>
-            </div>
-            -->
 
             <div class="col-auto">
                 <label class="d-block">
@@ -67,9 +110,9 @@
             -->
         </div>
 
-        <ledger-list :entries="entries"></ledger-list>
+        <ledger-list v-if="view == 'list'" :entries="entries"></ledger-list>
 
-        <ledger-map></ledger-map>
+        <ledger-map v-if="view == 'map'"></ledger-map>
     </div>
 </template>
 
@@ -88,6 +131,8 @@
     export const Ledger = Vue.extend({
         data: function () {
             return {
+                view: "map" as string,
+
                 entries: Loadable.idle() as Loading<FacilityControlEntry[]>,
 
                 filter: {
