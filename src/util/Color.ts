@@ -6,7 +6,6 @@ export class RGB {
 }
 
 export function colorGradient(fade: number, c1: RGB, c2: RGB, c3?: RGB): RGB {
-
 	let color1: RGB = c1;
 	let color2: RGB = c2;
 

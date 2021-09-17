@@ -97,6 +97,7 @@ export class FactionData {
 	public outfitRevives: Block = new Block();
 	public outfitSpawns: Block = new Block();
 	public outfitVehicleKills: Block = new Block();
+	public outfitShieldRepair: Block = new Block();
 
 	public playerKills: KillBlock = new KillBlock();
 	public playerHeals: Block = new Block();
@@ -104,6 +105,7 @@ export class FactionData {
 	public playerRevives: Block = new Block();
 	public playerSpawns: Block = new Block();
 	public playerVehicleKills: Block = new Block();
+	public playerShieldRepair: Block = new Block();
 
 	public weaponKills: WeaponKillsBlock = new WeaponKillsBlock();
 

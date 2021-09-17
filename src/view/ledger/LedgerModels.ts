@@ -73,8 +73,6 @@ export class ZoneRegion extends Polygon {
         for (const regionId of regionHexes.keys()) {
             const hexs: PsMapHex[] | undefined = regionHexes.get(regionId);
 
-            console.log(`Processing ${regionId}: `, hexs);
-
             if (hexs == undefined) {
                 console.error(`Skipping region with no hexes: ${regionId}`);
                 continue;
@@ -198,36 +196,30 @@ export class ZoneRegion extends Polygon {
 }
 
 export class LatticeLink {
-    public facilities: PsFacility[] = [];
-
     public outline: Polyline | null = null;
     public line: Polyline | null = null;
 
-    public facilityA: PsFacility;
-    public facilityB: PsFacility;
+    public facilityA: ZoneRegion;
+    public facilityB: ZoneRegion;
 
-    constructor(facA: PsFacility, facB: PsFacility) {
-        this.facilities = [facA, facB];
-
+    constructor(facA: ZoneRegion, facB: ZoneRegion) {
         this.facilityA = facA;
         this.facilityB = facB;
 
-        const AlatLng = latLng(facA.locationY ?? 0, facA.locationX ?? 0);
-        const BlatLng = latLng(facB.locationY ?? 0, facB.locationX ?? 0);
-
-        const points = [AlatLng, BlatLng];
+        const points = [facA.getCenter(), facB.getCenter()];
 
 		this.outline = polyline(points, {
-			className: 'lattice-outline',
-			pane: 'latticePane',
-			interactive: false
+			pane: 'lattices',
+            interactive: false,
+            color: "#000",
+            weight: 6
 		});
 
 		this.line = polyline(points, {
-			className: 'lattice-line',
-			pane: 'latticePane',
-			dashArray: undefined,
-			interactive: false
+			pane: 'lattices',
+			interactive: false,
+            color: "#9999ff",
+            weight: 4
 		});
     }
 
