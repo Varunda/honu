@@ -12,16 +12,18 @@
         </div>
 
         <div>
-            <div class="btn-group w-100 mb-2">
-                <button class="btn btn-primary flex-grow-0" data-toggle="collapse" href="#ledger-readme">
+            <div class="w-100 mb-1">
+                <button class="btn btn-success w-100" data-toggle="collapse" href="#ledger-readme">
                     View help
                 </button>
+            </div>
 
+            <div class="btn-group w-100 mb-2">
                 <button type="button" class="btn btn-secondary" @click="view = 'map'">
                     View map
                 </button>
 
-                <button type="button" class="btn btn-success" @click="view = 'list'">
+                <button type="button" class="btn btn-secondary" @click="view = 'list'">
                     View list
                 </button>
             </div>
