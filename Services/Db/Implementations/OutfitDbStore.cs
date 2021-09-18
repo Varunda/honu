@@ -66,18 +66,18 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
-        public async Task<List<OutfitPopulation>> GetPopulation(DateTime start, DateTime end, short worldID) {
+        public async Task<List<OutfitPopulation>> GetPopulation(DateTime time, short worldID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH outfits AS (
                 SELECT wt_session.outfit_id, COUNT(wt_session.outfit_id)
                     FROM wt_session
                         INNER JOIN wt_character c on c.id = wt_session.character_id
-                    WHERE ((start < @StartDate AND finish > @EndDate)
-                        OR (start >= @StartDate AND finish <= @EndDate)
-                        OR (start >= @StartDate AND start <= @EndDate)
-		                OR (finish >= @StartDate AND finish <= @EndDate)
-                        ) AND world_id = @WorldID
+                    WHERE (
+                            (start <= @Time AND finish >= @Time)
+                            OR (start <= @Time AND finish IS NULL)
+                        )
+                        AND world_id = @WorldID
                     GROUP BY wt_session.outfit_id
                 )
                 SELECT *
@@ -85,8 +85,7 @@ namespace watchtower.Services.Db.Implementations {
                     INNER JOIN wt_outfit o ON o.id = os.outfit_id
             ");
 
-            cmd.AddParameter("StartDate", start);
-            cmd.AddParameter("EndDate", end);
+            cmd.AddParameter("Time", time);
             cmd.AddParameter("WorldID", worldID);
 
             List<OutfitPopulation> pop = await _PopulationReader.ReadList(cmd);

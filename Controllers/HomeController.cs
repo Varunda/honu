@@ -20,5 +20,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult OutfitPop() {
+            return View();
+        }
+
     }
 }

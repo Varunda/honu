@@ -13,7 +13,7 @@ namespace watchtower.Services.Db {
 
         Task Upsert(PsOutfit outfit);
 
-        Task<List<OutfitPopulation>> GetPopulation(DateTime start, DateTime end, short worldID);
+        Task<List<OutfitPopulation>> GetPopulation(DateTime time, short worldID);
 
     }
 }

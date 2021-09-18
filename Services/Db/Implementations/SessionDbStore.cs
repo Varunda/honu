@@ -48,6 +48,7 @@ namespace watchtower.Services.Db.Implementations {
                 return;
             }
 
+            // Insert the outfit_id and team_id based on what's in wt_character, and the TrackedPlayer might not have that data set yet
             NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
@@ -57,14 +58,13 @@ namespace watchtower.Services.Db.Implementations {
                 
                 INSERT INTO wt_session (
                     character_id, start, finish, outfit_id, team_id
-                ) VALUES (
-                    @CharacterID, NOW() at time zone 'utc', null, @OutfitID, @TeamID
-                );
+                )
+                SELECT @CharacterID, NOW() at time zone 'utc', null, c.outfit_id, c.faction_id
+                    FROM wt_character c
+                    WHERE c.id = @CharacterID;
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
-            cmd.AddParameter("OutfitID", player.OutfitID);
-            cmd.AddParameter("TeamID", player.FactionID); // Yes, faction ID is correct here, it's updated in End
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -81,7 +81,8 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = NOW() at time zone 'utc',
-                        team_id = @TeamID
+                        team_id = @TeamID,
+                        outfit_id = @OutfitID
                     WHERE id = (
                         SELECT MAX(id)
                             FROM wt_session 
@@ -96,6 +97,7 @@ namespace watchtower.Services.Db.Implementations {
             }
 
             cmd.AddParameter("CharacterID", player.ID);
+            cmd.AddParameter("OutfitID", player.OutfitID);
             cmd.AddParameter("TeamID", teamID);
 
             player.Online = false;

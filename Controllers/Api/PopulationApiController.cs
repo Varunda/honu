@@ -25,13 +25,12 @@ namespace watchtower.Controllers.Api {
         }
 
         [HttpGet("{worldID}")]
-        public async Task<ActionResult<List<OutfitPopulation>>> Get(short worldID, [FromQuery] DateTime? start, [FromQuery] DateTime? end) {
-            DateTime startPeriod = start ?? DateTime.UtcNow;
-            DateTime endPeriod = end ?? DateTime.UtcNow.AddHours(-2);
+        public async Task<ActionResult<List<OutfitPopulation>>> Get(short worldID, [FromQuery] DateTime? time) {
+            DateTime when = time ?? DateTime.UtcNow;
 
-            _Logger.LogInformation($"{startPeriod} {endPeriod}");
+            _Logger.LogInformation($"{when}");
 
-            List<OutfitPopulation> pops = await _OutfitDb.GetPopulation(startPeriod, endPeriod, worldID);
+            List<OutfitPopulation> pops = await _OutfitDb.GetPopulation(when, worldID);
             return Ok(pops);
         }
 
