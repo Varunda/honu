@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <div>
+        <div class="mb-4">
             <h4>Select server</h4>
 
             <div class="mainpage-grid">
@@ -49,7 +49,7 @@
 
         <hr />
 
-        <div>
+        <div class="mb-4">
             <h4>Ledger</h4>
 
             <a href="/ledger">View</a>

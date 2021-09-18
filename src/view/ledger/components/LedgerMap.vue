@@ -1,6 +1,56 @@
 ﻿<template>
     <div class="ledger-map-parent row" style="height: 1024px;">
-        <div id="ledger-map-main" class="ledger-map-map col-10" style="height: 1024px;"></div>
+        <div class="col-2">
+            <div v-if="selectedFacility == null">
+                Click a facility!
+            </div>
+
+            <div v-else>
+                <table class="table table">
+                    <tr>
+                        <td>Facility</td>
+                        <td>{{selectedFacility.facilityName}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Type</td>
+                        <td>{{selectedFacility.typeName}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Ratio</td>
+                        <td>{{selectedFacility.ratio.toFixed(2)}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Total fights</td>
+                        <td>{{selectedFacility.total}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Capture count</td>
+                        <td>{{selectedFacility.captured}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Defended count</td>
+                        <td>{{selectedFacility.defended}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Average players for capture</td>
+                        <td>{{selectedFacility.captureAverage.toFixed(2)}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Average players for defense</td>
+                        <td>{{selectedFacility.defenseAverage.toFixed(2)}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="ledger-map-main" class="ledger-map-map col-8" style="height: 1024px;"></div>
 
         <div class="ledger-map-list col-2 d-flex" style="flex-direction: column; ">
             <div class="flex-grow-0 mb-1" style="position: relative;">
@@ -141,6 +191,10 @@
                     fillOpacity: 0.4 as number
                 },
 
+                ledgerData: Loadable.idle() as Loading<FacilityControlEntry[]>,
+                selectedFacility: null as FacilityControlEntry | null,
+                zoneData: null as ZoneMap | null,
+
                 tooltipsOn: true as boolean,
 
                 regions: [] as ZoneRegion[],
@@ -176,10 +230,27 @@
                 this.createMap(this.zoneID, zoneName);
             },
 
+            loadFacility: async function(facilityID: number): Promise<void> {
+                this.selectedFacility = null;
+
+                if (this.ledgerData.state != "loaded") {
+                    return console.error(`ledgerData is not loaded`);
+                }
+
+                const entry: FacilityControlEntry | null = this.ledgerData.data.find(iter => iter.facilityID == facilityID) || null;
+                if (entry == null) {
+                    return console.error(`Failed to find facility ID ${facilityID}`);
+                }
+
+                this.selectedFacility = entry;
+            },
+
             loadLedgerData: async function(zoneID: number): Promise<void> {
                 this.ledgerEntries = Loadable.loading();
+                this.ledgerData = Loadable.loading();
 
                 const ledgerData: FacilityControlEntry[] = (await LedgerApi.getLedger()).filter(iter => iter.zoneID == zoneID);
+                this.ledgerData = Loadable.loaded(ledgerData);
 
                 const arr: LedgerEntry[] = [];
                 for (const datum of ledgerData) {
@@ -225,6 +296,7 @@
                 if (zoneData == null) {
                     throw `Failed to get zone data for ${zoneID}`;
                 }
+                this.zoneData = zoneData;
 
                 const regions: ZoneRegion[] = ZoneRegion.setupMapRegions(zoneData.hexes);
 
@@ -333,27 +405,25 @@
             regionClickHandler: function(ev: L.LeafletEvent): void {
                 const region: ZoneRegion = ev.target;
 
-                console.log(`Clicked on ${region.facility?.name}`);
+                if (region.facility) {
+                    this.loadFacility(region.facility.facilityID);
+                }
             },
 
             regionMouseoverHandler: function(ev: L.LeafletEvent): void {
                 const region: ZoneRegion = ev.target;
 
-                /*
                 region.setStyle({
-                    fillOpacity: 1
+                    fillOpacity: 0.75
                 });
-                */
             },
 
             regionMouseoutHandler: function(ev: L.LeafletEvent): void {
                 const region: ZoneRegion = ev.target;
 
-                /*
                 region.setStyle({
                     fillOpacity: this.colors.fillOpacity
                 });
-                */
             },
 
             toggleBlackwhite: function(): void {
@@ -383,8 +453,6 @@
 
                 const t_min = sorted[0].value;
                 const t_max = sorted[sorted.length - 1].value;
-
-                console.log(`${t_min} ${min} ${max} ${t_max}`);
 
                 for (const entry of sorted) {
                     let v = (entry.value - min) / (max - min);

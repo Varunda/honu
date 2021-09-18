@@ -43,15 +43,20 @@
                 <h3>Do you include captures/defenses when a continent is not fully unlocked?</h3>
                 <p>No</p>
 
-                <h3>
-                    What is the ratio?
-                </h3>
-                <p>The ratio is how many times a base is defended per once capture. For example, a ratio of 3 would mean a base is defended 3 times per 1 capture.</p>
+                <h3>What do the different numbers mean?</h3>
+                <ul>
+                    <li><b>Ratio: </b>How many times a base is defended per one capture. For example, a ratio of 3 means a base is defended 3 times per 1 capture</li>
+                    <li><b>Total: </b>How many times in total a base has been captured or defended</li>
+                    <li><b>Avg capture: </b>On average, the number of players who get credit for a capture</li>
+                    <li><b>Avg defend: </b>On average, the number of players who get credit for a defense</li>
+                    <li><b>Avg players: </b>On average, the number of players who get credit for a capture or defense</li>
+                </ul>
+
+                <h3>When is defend credit given out?</h3>
                 <p>
                     A defense happens when any point is flipped in favor of the attacker, and once all points have been flipped back to the defenders.
                     For bases where attackers never flip the point, this is not recorded.
                 </p>
-                <p>The ratio is <b>NOT</b> a measure of how difficult it is to take a base, but can indicate it</p>
             </div>
         </div>
 
