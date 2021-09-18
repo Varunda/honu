@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 
 namespace watchtower.Services.Db.Implementations {
 
@@ -15,11 +16,14 @@ namespace watchtower.Services.Db.Implementations {
         private readonly ILogger<OutfitDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
 
+        private readonly IDataReader<OutfitPopulation> _PopulationReader;
+
         public OutfitDbStore(ILogger<OutfitDbStore> logger,
-            IDbHelper dbHelper) {
+            IDbHelper dbHelper, IDataReader<OutfitPopulation> popReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
+            _PopulationReader = popReader ?? throw new ArgumentNullException(nameof(popReader));
         }
 
         public async Task<PsOutfit?> GetByID(string outfitID) {
@@ -62,6 +66,35 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        public async Task<List<OutfitPopulation>> GetPopulation(DateTime start, DateTime end, short worldID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                WITH outfits AS (
+                SELECT wt_session.outfit_id, COUNT(wt_session.outfit_id)
+                    FROM wt_session
+                        INNER JOIN wt_character c on c.id = wt_session.character_id
+                    WHERE ((start < @StartDate AND finish > @EndDate)
+                        OR (start >= @StartDate AND finish <= @EndDate)
+                        OR (start >= @StartDate AND start <= @EndDate)
+		                OR (finish >= @StartDate AND finish <= @EndDate)
+                        ) AND world_id = @WorldID
+                    GROUP BY wt_session.outfit_id
+                )
+                SELECT *
+                    FROM outfits os
+                    INNER JOIN wt_outfit o ON o.id = os.outfit_id
+            ");
+
+            cmd.AddParameter("StartDate", start);
+            cmd.AddParameter("EndDate", end);
+            cmd.AddParameter("WorldID", worldID);
+
+            List<OutfitPopulation> pop = await _PopulationReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return pop;
+        }
+
         public override PsOutfit ReadEntry(NpgsqlDataReader reader) {
             PsOutfit outfit = new PsOutfit();
 
@@ -78,6 +111,5 @@ namespace watchtower.Services.Db.Implementations {
 
             return outfit;
         }
-
     }
 }

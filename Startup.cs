@@ -108,6 +108,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlEntryReader>();
             services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
             services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
+            services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
