@@ -13,6 +13,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Views\Home\OutfitPop.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="src\WorldData.ts" />
   </ItemGroup>
 
@@ -32,6 +36,10 @@
     <Folder Include="wwwroot\dist\" />
     <Folder Include="wwwroot\js\" />
     <Folder Include="wwwroot\lib\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Views\Home\OutfitPop.cshtml" />
   </ItemGroup>
 
 

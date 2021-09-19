@@ -104,7 +104,7 @@
             <a-col sort-field="defenseAverage">
                 <a-header>
                     <b>Defend average</b>
-                    <info-hover text="How many on average get credit for a capture"></info-hover>
+                    <info-hover text="How many on average get credit for a defense"></info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">
