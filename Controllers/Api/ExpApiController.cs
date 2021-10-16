@@ -67,6 +67,8 @@ namespace watchtower.Controllers {
                 expTypes = new List<int> { Experience.REVIVE, Experience.SQUAD_REVIVE };
             } else if (type == "resupplies") {
                 expTypes = new List<int> { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+            } else if (type == "shield_repair") {
+                expTypes = new List<int> { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
             } else {
                 return BadRequest($"Unknown type '{type}'");
             }
@@ -91,6 +93,8 @@ namespace watchtower.Controllers {
                 expTypes = new List<int> { Experience.REVIVE, Experience.SQUAD_REVIVE };
             } else if (type == "resupplies") {
                 expTypes = new List<int> { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+            } else if (type == "shield_repair") {
+                expTypes = new List<int> { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
             } else if (type == "spawns") {
                 expTypes = new List<int> {
                     Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS,

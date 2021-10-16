@@ -88,12 +88,14 @@ const vm = new Vue({
 			charResupply: ExpStatApi.getCharacterResupplyEntries,
 			charSpawn: ExpStatApi.getCharacterSpawnEntries,
 			charVKills: ExpStatApi.getCharacterVehicleKillEntries,
+			charShield: ExpStatApi.getCharacterShieldEntries,
 
 			outfitHeal: ExpStatApi.getOutfitHealEntries,
 			outfitRevive: ExpStatApi.getOutfitReviveEntries,
 			outfitResupply: ExpStatApi.getOutfitResupplyEntries,
 			outfitSpawn: ExpStatApi.getOutfitSpawnEntries,
-			outfitVKills: ExpStatApi.getOutfitVehicleKillEntries
+			outfitVKills: ExpStatApi.getOutfitVehicleKillEntries,
+			outfitShield: ExpStatApi.getOutfitShieldEntries
 		}
 
 	},

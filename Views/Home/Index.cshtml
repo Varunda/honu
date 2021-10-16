@@ -231,11 +231,11 @@
         </div>
 
         <div class="grid-vs-shields d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerShieldRepair">
-
+            <block-view class="mr-3" :block="worldData.vs.playerShieldRepair"
+                :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.vs.outfitShieldRepair">
-
+            <block-view :block="worldData.vs.outfitShieldRepair"
+                :source="expSources.outfitShield" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
 
@@ -313,11 +313,11 @@
         </div>
 
         <div class="grid-nc-shields d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerShieldRepair">
-
+            <block-view class="mr-3" :block="worldData.nc.playerShieldRepair"
+                :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.nc.outfitShieldRepair">
-
+            <block-view :block="worldData.nc.outfitShieldRepair"
+                :source="expSources.outfitShield" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
 
@@ -395,11 +395,11 @@
         </div>
 
         <div class="grid-tr-shields d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerShieldRepair">
-
+            <block-view class="mr-3" :block="worldData.tr.playerShieldRepair"
+                :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.tr.outfitShieldRepair">
-
+            <block-view :block="worldData.tr.outfitShieldRepair"
+                :source="expSources.outfitShield" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
 

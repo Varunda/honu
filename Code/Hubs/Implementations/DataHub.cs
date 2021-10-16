@@ -27,7 +27,7 @@ namespace watchtower.Code.Hubs.Implementations {
         }
 
         public override async Task OnConnectedAsync() {
-            _Logger.LogInformation($"New connection: {Context.ConnectionId}, count: {++_ConnectionCount}");
+            //_Logger.LogInformation($"New connection: {Context.ConnectionId}, count: {++_ConnectionCount}");
 
             lock (ConnectionStore.Get().Connections) {
                 ConnectionStore.Get().Connections.GetOrAdd(Context.ConnectionId, new TrackedConnection() {
@@ -39,7 +39,7 @@ namespace watchtower.Code.Hubs.Implementations {
         }
 
         public override Task OnDisconnectedAsync(Exception? exception) {
-            _Logger.LogInformation($"Hub disconnect: {Context.ConnectionId}, count {--_ConnectionCount}");
+            //_Logger.LogInformation($"Hub disconnect: {Context.ConnectionId}, count {--_ConnectionCount}");
 
             lock (ConnectionStore.Get().Connections) {
                 ConnectionStore.Get().Connections.TryRemove(Context.ConnectionId, out _);
@@ -74,8 +74,11 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 WorldData? data = _WorldDataRepository.Get(worldID);
                 if (data != null) {
-                    await Clients.Caller.UpdateData(data);
-                    //_Logger.LogDebug($"Sent previous data made at {data.Timestamp}");
+                    // If the data was generated too long ago, don't send the data
+                    TimeSpan diff = DateTime.UtcNow - data.Timestamp;
+                    if (diff < TimeSpan.FromMinutes(5)) {
+                        await Clients.Caller.UpdateData(data);
+                    }
                 }
             }
         }

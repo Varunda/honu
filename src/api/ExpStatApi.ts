@@ -62,6 +62,14 @@ export class ExpStatApi {
         return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
     }
 
+    public static async getCharacterShieldEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
+        return ExpStatApi.getList(`/api/exp/character/${charID}/shield_repair`, ExpStatApi.parseCharacterExpSupportEntry);
+    }
+
+    public static async getOutfitShieldEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
+        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/shield_repair/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    }
+
     public static async getCharacterReviveEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
         return ExpStatApi.getList(`/api/exp/character/${charID}/revives`, ExpStatApi.parseCharacterExpSupportEntry);
     }
