@@ -69,7 +69,7 @@ export class CharacterWeaponStatApi {
 			kdPercent: elem.killDeathRatioPercentile,
 			kpmPercent: elem.killsPerMinutePercentile,
 			accPercent: elem.accuracyPercentile,
-			hsrPercent: elem.headshotRatioPercentil
+			hsrPercent: elem.headshotRatioPercentile
 		}
 	}
 

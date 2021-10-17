@@ -77,7 +77,7 @@ namespace watchtower.Controllers.Api {
             WeaponStatPercentileCache? kdCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KD);
             if (kdCache != null) {
                 if (needsRegen == false && kdCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
-                    _Logger.LogDebug($"percentile cache for {entry.ItemID} is {kdCache.Timestamp - DateTime.UtcNow} old, will regen");
+                    //_Logger.LogDebug($"percentile cache for {entry.ItemID} is {hsrCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
 
@@ -89,7 +89,6 @@ namespace watchtower.Controllers.Api {
             WeaponStatPercentileCache? kpmCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KPM);
             if (kpmCache != null) {
                 if (needsRegen == false && kpmCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
-                    _Logger.LogDebug($"percentile cache for {entry.ItemID} is {kpmCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
 
@@ -101,7 +100,6 @@ namespace watchtower.Controllers.Api {
             WeaponStatPercentileCache? accCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.ACC);
             if (accCache != null) {
                 if (needsRegen == false && accCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
-                    _Logger.LogDebug($"percentile cache for {entry.ItemID} is {accCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
 
@@ -113,11 +111,10 @@ namespace watchtower.Controllers.Api {
             WeaponStatPercentileCache? hsrCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.HSR);
             if (hsrCache != null) {
                 if (needsRegen == false && hsrCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
-                    _Logger.LogDebug($"percentile cache for {entry.ItemID} is {hsrCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
 
-                entry.AccuracyPercentile = _InterpolatePercentile(hsrCache, entry.Stat.HeadshotRatio);
+                entry.HeadshotRatioPercentile = _InterpolatePercentile(hsrCache, entry.Stat.HeadshotRatio);
             } else {
                 needsRegen = true;
             }
@@ -147,6 +144,7 @@ namespace watchtower.Controllers.Api {
                 percentiles.Q80, percentiles.Q85, percentiles.Q90, percentiles.Q95, percentiles.Q100
             };
 
+            // The percentiles are broken into 5% chunks. Find what chunk this value fits between
             int i;
             for (i = 1; i <= 20; ++i) {
                 double iter = values[i];
@@ -157,6 +155,7 @@ namespace watchtower.Controllers.Api {
                 }
             }
 
+            // Get what percent the value is between the min and max bounds
             double range = max - min;
             double offset = range - value + min;
             //_Logger.LogDebug($"MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%");
@@ -169,6 +168,7 @@ namespace watchtower.Controllers.Api {
 
             //_Logger.LogDebug($"MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%, percent = {(i * 5m) + (5m / percent)}%");
 
+            // Divide by 5d cause each chunk is 5%
             double percentile = (i * 5d) + (5d / percent);
             if (percentile > 100d) {
                 return 100d;

@@ -1,5 +1,15 @@
 ﻿<template>
     <div>
+        <div>
+            <button type="button" class="btn btn-secondary" @click="showDebug = !showDebug">
+                Show IDs
+            </button>
+
+            <button type="button" class="btn btn-primary" @click="loadEntries">
+                Reload
+            </button>
+        </div>
+
         <a-table
             :entries="entries"
             :show-filters="true"
@@ -16,7 +26,10 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.itemName}} / {{entry.itemID}}
+                    {{entry.itemName}}
+                    <span v-if="showDebug == true">
+                        / {{entry.itemID}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -37,6 +50,7 @@
             <a-col sort-field="killsPerMinute">
                 <a-header>
                     <b title="Kills per minute">KPM</b>
+                    <info-hover text="Kills per minute"></info-hover>
                 </a-header>
 
                 <a-filter method="input" type="number" field="killsPerMinute"
@@ -51,15 +65,11 @@
             <a-col sort-field="kpmPercent">
                 <a-header>
                     <b>KPM%</b>
+                    <info-hover text="What percentage of players have lower KPM.<br> E.G. 80% would mean this KPM is in the 80th percentile" :allow-html="true"></info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.kpmPercent != null">
-                        {{(entry.kpmPercent).toFixed(2)}}%
-                    </span>
-                    <span v-else>
-                        --
-                    </span>
+                    <percentile-cell :value="entry.kpmPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -83,12 +93,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.kdPercent != null">
-                        {{(entry.kdPercent).toFixed(2)}}%
-                    </span>
-                    <span v-else>
-                        --
-                    </span>
+                    <percentile-cell :value="entry.kdPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -112,12 +117,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.accPercent != null">
-                        {{(entry.accPercent).toFixed(2)}}%
-                    </span>
-                    <span v-else>
-                        --
-                    </span>
+                    <percentile-cell :value="entry.accPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -141,12 +141,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.hsrPercent != null">
-                        {{(entry.hsrPercent).toFixed(2)}}%
-                    </span>
-                    <span v-else>
-                        --
-                    </span>
+                    <percentile-cell :value="entry.hsrPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -168,6 +163,8 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import InfoHover from "components/InfoHover.vue";
+    import PercentileCell from "./PercentileCell.vue";
     import "MomentFilter";
 
     import { Loading, Loadable } from "Loading";
@@ -181,7 +178,8 @@
 
         data: function() {
             return {
-                entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>
+                entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>,
+                showDebug: false as boolean
             }
         },
 
@@ -213,6 +211,8 @@
             AHeader,
             ABody,
             AFilter,
+            InfoHover,
+            PercentileCell,
         }
 
     });

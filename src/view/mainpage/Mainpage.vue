@@ -29,9 +29,14 @@
             </div>
         </div>
 
-        <div class="mb-4">
-            <h4>Select server</h4>
+        <hr class="border" />
 
+        <h1 class="d-inline-block mr-2">Carl Watchtower</h1>
+        <h3 class="d-inline-block">
+            <small class="text-muted">Realtime activity tracker</small>
+        </h3>
+
+        <div class="mb-4">
             <div class="mainpage-grid">
                 <world-overview name="cobalt" display-name="Cobalt" :data="cobalt"></world-overview>
                 <div class="mp-grid-line"></div>
@@ -47,13 +52,39 @@
             </div>
         </div>
 
-        <hr />
+        <hr class="border" />
 
-        <div class="mb-4">
-            <h4>Ledger</h4>
-
-            <a href="/ledger">View</a>
+        <div>
+            <h1 class="d-inline-block mr-2">
+                <a href="/ledger">
+                    Ledger
+                </a>
+            </h1>
+            <h3 class="d-inline-block">
+                <small class="text-muted">Base capture/defend stats</small>
+            </h3>
+            <div>
+                <a href="/ledger">View</a>
+            </div>
         </div>
+
+        <hr class="border" />
+
+        <div>
+            <h1 class="d-inline-block mr-2">
+                <a href="/character">
+                    Character Viewer
+                </a>
+            </h1>
+            <h3 class="d-inline-block">
+                <small class="text-muted">Heavy heavy in progress</small>
+            </h3>
+            <div>
+                <a href="/character">View</a>
+            </div>
+        </div>
+
+        <hr class="border" />
 
         <div>
             <h4>Contact</h4>

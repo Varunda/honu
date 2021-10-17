@@ -55,6 +55,26 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation($"done");
         }
 
+        public async Task Regen(string itemID) {
+            PsItem? item = await _ItemRepository.GetByID(itemID);
+
+            _Logger.LogInformation($"Regening all cached percentile stats for {item?.Name}/{itemID}");
+
+            WeaponStatPercentileCache? kd = await _PercentileDb.GenerateKd(itemID);
+            if (kd != null) { await _PercentileDb.Upsert(itemID, kd); }
+
+            WeaponStatPercentileCache? kpm = await _PercentileDb.GenerateKpm(itemID);
+            if (kpm != null) { await _PercentileDb.Upsert(itemID, kpm); }
+
+            WeaponStatPercentileCache? acc = await _PercentileDb.GenerateAcc(itemID);
+            if (acc != null) { await _PercentileDb.Upsert(itemID, acc); }
+
+            WeaponStatPercentileCache? hsr = await _PercentileDb.GenerateHsr(itemID);
+            if (hsr != null) { await _PercentileDb.Upsert(itemID, hsr); }
+
+            _Logger.LogInformation($"Percentile weapon stats for {item?.Name}/{itemID} remade");
+        }
+
         public async Task RegenKPM(string itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
             WeaponStatPercentileCache? entry = await _PercentileDb.GenerateKpm(itemID);

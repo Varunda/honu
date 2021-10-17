@@ -22,7 +22,7 @@
             </h1>
         </div>
 
-        <hr />
+        <hr class="border" />
 
         <div v-if="character.state == 'idle'">
 
@@ -43,19 +43,19 @@
 
             <character-header :character="character.data"></character-header>
 
-            <ul class="nav nav-tabs">
+            <ul class="nav nav-tabs mb-2">
                 <li class="nav-item" @click="selectTab('overview')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab == 'overview' }">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'overview' }">
                         Overview
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('weapons')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab == 'weapons' }">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'weapons' }">
                         Weapon stats
                     </a>
                 </li>
                 <li class="nav-item" disable="disabled">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab == 'sessions' }">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'sessions' }">
                         Sessions
                     </a>
                 </li>
@@ -97,8 +97,8 @@
                 charID: "" as string,
                 character: Loadable.idle() as Loading<PsCharacter>,
 
-                selectedTab: "Overview" as string,
-                selectedComponent: "CharacterOverview" as string
+                selectedTab: "weapons" as string,
+                selectedComponent: "CharacterWeaponStats" as string
             }
         },
 
@@ -122,7 +122,7 @@
             loadCharacterID: function(): void {
                 const parts: string[] = location.pathname.split("/");
                 if (parts.length < 3) {
-                    throw `Invalid URL passed '${location.pathname}': Expected 3 parts after split on '/'`;
+                    throw `Invalid URL passed '${location.pathname}': Expected at least 3 parts after split on '/'`;
                 }
 
                 if (parts[1] != "c") {

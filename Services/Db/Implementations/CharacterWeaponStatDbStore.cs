@@ -28,10 +28,10 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT weapon_stats.*
 	                FROM weapon_stats
-		                JOIN wt_item i ON weapon_stats.item_id = i.id
+		                LEFT JOIN wt_item i ON weapon_stats.item_id = i.id
 	                WHERE weapon_stats.character_id = @CharID
-		                AND i.type_id = 26
-		                AND i.category_id != 139 AND i.category_id != 104
+		                AND (i.type_id IS NULL OR i.type_id = 26)
+		                AND (i.category_id IS NULL OR (i.category_id != 139 AND i.category_id != 104))
 		                AND weapon_stats.kills > 0 AND weapon_stats.seconds_with > 299
             ");
 

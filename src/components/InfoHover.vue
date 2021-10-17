@@ -2,6 +2,7 @@
     <span :id="'info-hover-' + ID"
             class="d-inline-block" data-toggle="popover" data-trigger="hover"
             :data-content="text"
+            :data-html="AllowHtml"
             style="filter: invert(1);">
 
         <img src="/img/question-circle.svg" />
@@ -13,7 +14,8 @@
 
     export const InfoHover = Vue.extend({
         props: {
-            text: { type: String, required: true }
+            text: { type: String, required: true },
+            AllowHtml: { type: Boolean, required: false, default: false }
         },
 
         data: function () {
