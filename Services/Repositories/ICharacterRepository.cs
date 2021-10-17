@@ -26,9 +26,24 @@ namespace watchtower.Services.Repositories {
         ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.Name"/> of <paramref name="name"/>,
         ///     or <c>null</c> if it doesn't exist
         /// </returns>
-        Task<PsCharacter?> GetByName(string name);
+        Task<List<PsCharacter>> GetByName(string name);
 
         Task Upsert(PsCharacter character);
 
     }
+
+    public static class ICharacterRepositoryExtensions {
+
+        public static async Task<PsCharacter?> GetFirstByName(this ICharacterRepository repo, string name) {
+            List<PsCharacter> chars = await repo.GetByName(name);
+
+            if (chars.Count == 0) {
+                return null;
+            }
+
+            return chars[0];
+        }
+
+    }
+
 }

@@ -24,5 +24,13 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Character() {
+            return View();
+        }
+
+        public IActionResult CharacterViewer(string charID) {
+            return View();
+        }
+
     }
 }

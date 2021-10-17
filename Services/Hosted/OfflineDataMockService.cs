@@ -54,7 +54,7 @@ namespace watchtower.Services.Hosted {
 
         public override async Task StartAsync(CancellationToken cancellationToken) {
             foreach (string charName in _RandomCharacterNames) {
-                PsCharacter? c = await _CharacterRepository.GetByName(charName);
+                PsCharacter? c = await _CharacterRepository.GetFirstByName(charName);
 
                 if (c != null) {
                     _Logger.LogDebug($"Loaded character: {c.Name}/{c.ID}, on faction {c.FactionID}");

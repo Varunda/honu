@@ -86,6 +86,8 @@ namespace watchtower {
             services.AddSingleton<IBackgroundSessionStarterQueue, BackgroundSessionStarterQueue>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
             services.AddSingleton<IDiscordMessageQueue, DiscordMessageQueue>();
+            services.AddSingleton<IBackgroundCharacterWeaponStatQueue, BackgroundCharacterWeaponStatQueue>();
+            services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
@@ -98,6 +100,8 @@ namespace watchtower {
             services.AddSingleton<IFacilityControlDbStore, FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
             services.AddSingleton<IMapDbStore, MapDbStore>();
+            services.AddSingleton<ICharacterWeaponStatDbStore, CharacterWeaponStatDbStore>();
+            services.AddSingleton<IWeaponStatPercentileCacheDbStore, WeaponStatPercentileCacheDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -116,6 +120,7 @@ namespace watchtower {
             services.AddSingleton<IItemCollection, ItemCollection>();
             services.AddSingleton<IMapCollection, MapCollection>();
             services.AddSingleton<IFacilityCollection, FacilityCollection>();
+            services.AddSingleton<ICharacterWeaponStatCollection, CharacterWeaponStatCollection>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
@@ -124,6 +129,7 @@ namespace watchtower {
             services.AddSingleton<IItemRepository, ItemRepository>();
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
             services.AddSingleton<IMapRepository, MapRepository>();
+            services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
@@ -140,6 +146,8 @@ namespace watchtower {
             services.AddHostedService<HostedSessionStarterQueue>();
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<ZoneStateStartupService>();
+            services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
+            services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();
@@ -165,20 +173,14 @@ namespace watchtower {
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(
                     name: "selectworld",
-                    pattern: "/",
+                    pattern: "/{action}",
                     defaults: new { controller = "Home", action = "SelectWorld" }
                 );
 
                 endpoints.MapControllerRoute(
-                    name: "ledger",
-                    pattern: "/ledger",
-                    defaults: new { controller = "Home", action = "Ledger" }
-                );
-
-                endpoints.MapControllerRoute(
-                    name: "outfit-pop",
-                    pattern: "/outfitpop",
-                    defaults: new { controller = "Home", action = "OutfitPop" }
+                    name: "charview",
+                    pattern: "/c/{charID}/{*.}",
+                    defaults: new { controller = "Home", action = "CharacterViewer" }
                 );
 
                 endpoints.MapControllerRoute(

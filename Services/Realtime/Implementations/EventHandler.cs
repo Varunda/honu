@@ -30,6 +30,7 @@ namespace watchtower.Realtime {
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
+        private readonly IBackgroundCharacterWeaponStatQueue _WeaponQueue;
         private readonly IDiscordMessageQueue _MessageQueue;
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IMapCollection _MapCensus;
@@ -41,7 +42,7 @@ namespace watchtower.Realtime {
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
             IDiscordMessageQueue msgQueue, IMapCollection mapColl,
-            IFacilityControlDbStore controlDb) {
+            IFacilityControlDbStore controlDb, IBackgroundCharacterWeaponStatQueue weaponQueue) {
 
             _Logger = logger;
 
@@ -55,6 +56,7 @@ namespace watchtower.Realtime {
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
+            _WeaponQueue = weaponQueue ?? throw new ArgumentNullException(nameof(weaponQueue));
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
@@ -157,7 +159,7 @@ namespace watchtower.Realtime {
                 ev.UnstableState = state;
 
                 await _ControlDb.Insert(ev);
-                _Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
+                //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
         }
 
@@ -222,6 +224,7 @@ namespace watchtower.Realtime {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
+                _WeaponQueue.Queue(charID);
 
                 TrackedPlayer? p;
                 lock (CharacterStore.Get().Players) {

@@ -63,19 +63,35 @@ namespace watchtower.Services.Repositories.Implementations {
             return character;
         }
 
-        public async Task<PsCharacter?> GetByName(string name) {
-            PsCharacter? character;
-
+        public async Task<List<PsCharacter>> GetByName(string name) {
             string key = string.Format(_CacheKeyName, name);
 
+            if (_Cache.TryGetValue(key, out List<PsCharacter> characters) == false) {
+                characters = await _Db.GetByName(name);
+
+                PsCharacter? live = await _Census.GetByName(name);
+
+                // If the character exists in db and census only add once
+                if (live != null && characters.FirstOrDefault(iter => iter.ID == live.ID) == null) {
+                    characters.Add(live);
+                }
+
+                _Cache.Set(key, characters, new MemoryCacheEntryOptions() {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
+                });
+            }
+
+            return characters;
+
+            /*
             if (_Cache.TryGetValue(key, out string charID) == false) {
                 character = await _Db.GetByName(name);
 
                 if (character == null || await HasExpired(character) == true) {
-                    character = await _Census.GetByName(name);
-
-                    if (character != null) {
-                        await _Db.Upsert(character);
+                    PsCharacter? c = await _Census.GetByName(name);
+                    if (c != null) {
+                        character = new List<PsCharacter>() { c };
+                        await _Db.Upsert(c);
                     }
                 }
 
@@ -92,8 +108,7 @@ namespace watchtower.Services.Repositories.Implementations {
             } else {
                 character = await GetByID(charID);
             }
-
-            return character;
+            */
         }
 
         public async Task Upsert(PsCharacter character) {

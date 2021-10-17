@@ -39,7 +39,7 @@ namespace watchtower.Services.Db.Implementations {
             return c;
         }
 
-        public async Task<PsCharacter?> GetByName(string name) {
+        public async Task<List<PsCharacter>> GetByName(string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
@@ -50,7 +50,7 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("Name", name);
 
-            PsCharacter? c = await ReadSingle(cmd);
+            List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();
 
             return c;

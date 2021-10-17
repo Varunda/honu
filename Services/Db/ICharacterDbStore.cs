@@ -26,7 +26,7 @@ namespace watchtower.Services.Db {
         ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.Name"/> of <paramref name="name"/>,
         ///     or <c>null</c> if it doesn't exist in the database, but it may exist in Census
         /// </returns>
-        Task<PsCharacter?> GetByName(string name);
+        Task<List<PsCharacter>> GetByName(string name);
 
         /// <summary>
         ///     Insert or update (Upsert) a character in the backing database
@@ -38,4 +38,19 @@ namespace watchtower.Services.Db {
         Task Upsert(PsCharacter character);
 
     }
+
+    public static class ICharacterDbStoreExtensionMethods {
+
+        public static async Task<PsCharacter?> GetFirstByName(this ICharacterDbStore repo, string name) {
+            List<PsCharacter> chars = await repo.GetByName(name);
+
+            if (chars.Count == 0) {
+                return null;
+            }
+
+            return chars[0];
+        }
+
+    }
+
 }

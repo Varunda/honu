@@ -26,25 +26,30 @@ namespace watchtower.Services.Hosted.Startup {
             _MapCollection = mapColl;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken) {
-            Stopwatch timer = Stopwatch.StartNew();
+        public Task StartAsync(CancellationToken cancellationToken) {
+            // Don't have this stop startup by blocking until it's done
+            new Thread(async () => {
+                Stopwatch timer = Stopwatch.StartNew();
 
-            foreach (short worldID in World.All) {
-                foreach (uint zoneID in Zone.All) {
-                    short? owner = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
+                foreach (short worldID in World.All) {
+                    foreach (uint zoneID in Zone.All) {
+                        short? owner = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
 
-                    lock (ZoneStateStore.Get().Zones) {
-                        ZoneState state = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { WorldID = worldID, ZoneID = zoneID };
+                        lock (ZoneStateStore.Get().Zones) {
+                            ZoneState state = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { WorldID = worldID, ZoneID = zoneID };
 
-                        state.IsOpened = (owner == null);
+                            state.IsOpened = (owner == null);
 
-                        ZoneStateStore.Get().SetZone(worldID, zoneID, state);
+                            ZoneStateStore.Get().SetZone(worldID, zoneID, state);
+                        }
                     }
                 }
-            }
 
-            timer.Stop();
-            _Logger.LogInformation($"Finished in {timer.ElapsedMilliseconds}ms");
+                timer.Stop();
+                _Logger.LogInformation($"Finished in {timer.ElapsedMilliseconds}ms");
+            }).Start();
+
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken) {

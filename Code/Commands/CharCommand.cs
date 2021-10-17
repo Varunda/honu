@@ -32,7 +32,7 @@ namespace watchtower.Commands {
         }
 
         public async Task Get(string name) {
-            PsCharacter? c = await _CharacterRepository.GetByName(name);
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
             if (c != null) {
                 _Logger.LogInformation($"{name} => {JToken.FromObject(c)}");
 
