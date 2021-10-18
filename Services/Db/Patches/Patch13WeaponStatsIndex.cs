@@ -16,8 +16,9 @@ namespace watchtower.Services.Db.Patches {
             if (await helper.HasIndex("weapon_stats", "idx_weapon_stats_item_id") == false) {
                 using NpgsqlConnection conn = helper.Connection();
                 using NpgsqlCommand cmd = await helper.Command(conn, @"
-                    CREATE INDEX idx_weapon_stats_item_d ON weapon_stats(item_id, kills);
+                    CREATE INDEX idx_weapon_stats_item_id ON weapon_stats(item_id, kills);
                 ");
+                await cmd.ExecuteNonQueryAsync();
                 await conn.CloseAsync();
             }
         }

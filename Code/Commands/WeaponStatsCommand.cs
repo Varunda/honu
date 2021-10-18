@@ -12,6 +12,7 @@ using watchtower.Models.Db;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
+using watchtower.Services;
 
 namespace watchtower.Code.Commands {
 
@@ -24,6 +25,7 @@ namespace watchtower.Code.Commands {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
+        private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
 
         public WeaponStatsCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<WeaponStatsCommand>>();
@@ -32,6 +34,7 @@ namespace watchtower.Code.Commands {
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
             _ItemRepository = services.GetRequiredService<IItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
+            _PercentileQueue = services.GetRequiredService<IBackgroundWeaponPercentileCacheQueue>();
         }
 
         public async Task Char(string charName) {
@@ -48,6 +51,7 @@ namespace watchtower.Code.Commands {
                     continue;
                 }
                 PsItem? weapon = await _ItemRepository.GetByID(entry.WeaponID);
+                _PercentileQueue.Queue(entry.WeaponID);
 
                 _Logger.LogInformation($"{entry.WeaponID}/{weapon?.Name}: KD = {entry.Kills}/{entry.Deaths}:{entry.KillDeathRatio} KPM = {entry.Kills}/{entry.SecondsWith}:{entry.KillsPerMinute} S{entry.Shots} H{entry.ShotsHit} HS{entry.Headshots}");
             }

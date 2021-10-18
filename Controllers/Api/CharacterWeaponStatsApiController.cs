@@ -134,7 +134,7 @@ namespace watchtower.Controllers.Api {
                 return 0.0d;
             }
 
-            double min = 0;
+            double min = percentiles.Q95;
             double max = percentiles.Q100;
 
             List<double> values = new List<double>() {
@@ -146,7 +146,7 @@ namespace watchtower.Controllers.Api {
 
             // The percentiles are broken into 5% chunks. Find what chunk this value fits between
             int i;
-            for (i = 1; i <= 20; ++i) {
+            for (i = 1; i <= 19; ++i) {
                 double iter = values[i];
                 if (value < iter) {
                     min = values[i - 1];
@@ -158,13 +158,12 @@ namespace watchtower.Controllers.Api {
             // Get what percent the value is between the min and max bounds
             double range = max - min;
             double offset = range - value + min;
-            //_Logger.LogDebug($"MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%");
             double percent = 1d - (offset / range);
 
-            //_Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%, {percent} {5d * percent} ANS = {(i * 5d) + (5d * percent)}%");
+            //_Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {(i - 1) * 5}% - {i * 5}%, {percent} {5d * percent} ANS = {((i - 1) * 5d) + (5d * percent)}%");
 
             // Divide by 5d cause each chunk is 5%
-            double percentile = (i * 5d) + (5d * percent);
+            double percentile = ((i - 1) * 5d) + (5d * percent);
 
             return percentile;
         }
