@@ -75,6 +75,7 @@
                     <option value="capture">Avg capture</option>
                     <option value="defend">Avg defend</option>
                     <option value="all">Avg players</option>
+                    <option value="layna">Fight inequality</option>
                 </select>
 
                 <label>Order:</label>
@@ -199,7 +200,7 @@
 
                 regions: [] as ZoneRegion[],
 
-                orderBy: "ratio" as "ratio" | "total" | "capture" | "defend" | "all",
+                orderBy: "ratio" as "ratio" | "total" | "capture" | "defend" | "all" | "layna",
                 orderAsc: "desc" as "asc" | "desc",
                 orderByName: "" as string
             }
@@ -265,6 +266,8 @@
                         value = datum.defenseAverage;
                     } else if (this.orderBy == "all") {
                         value = datum.totalAverage;
+                    } else if (this.orderBy == "layna") {
+                        value = datum.captureAverage / datum.defenseAverage;
                     } else {
                         throw `Unchecked orderBy value: '${this.orderBy}'`;
                     }
