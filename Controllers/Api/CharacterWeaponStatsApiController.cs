@@ -159,20 +159,12 @@ namespace watchtower.Controllers.Api {
             double range = max - min;
             double offset = range - value + min;
             //_Logger.LogDebug($"MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%");
-            double percent = 1 - (offset / range);
+            double percent = 1d - (offset / range);
 
-            // Close enough
-            if (percent <= 0.001d) {
-                return i * 5d;
-            }
-
-            //_Logger.LogDebug($"MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%, percent = {(i * 5m) + (5m / percent)}%");
+            //_Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {i * 5}% - {(i + 1) * 5}%, {percent} {5d * percent} ANS = {(i * 5d) + (5d * percent)}%");
 
             // Divide by 5d cause each chunk is 5%
-            double percentile = (i * 5d) + (5d / percent);
-            if (percentile > 100d) {
-                return 100d;
-            }
+            double percentile = (i * 5d) + (5d * percent);
 
             return percentile;
         }
