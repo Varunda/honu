@@ -42,8 +42,11 @@ namespace watchtower.Services.Census.Implementations {
                     outfit = Parse(result);
                 }
             } catch (Exception ex) {
-                _Logger.LogError(ex, "Failed to get item {outfitID}", itemID);
-                return await GetFromCensusByID(itemID, false);
+                if (retry == true) {
+                    return await GetFromCensusByID(itemID, false);
+                } else {
+                    _Logger.LogError(ex, "Failed to get item {outfitID}", itemID);
+                }
             }
 
             return outfit;

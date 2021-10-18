@@ -21,7 +21,7 @@
         computed: {
             textColor: function(): string {
                 if (this.value == null) {
-                    return "default";
+                    return "#fff";
                 }
 
                 if (this.value > 95) {
@@ -31,7 +31,7 @@
                     return "#46C646";
                 }
 
-                return "default";
+                return "#fff";
             }
         }
     });
