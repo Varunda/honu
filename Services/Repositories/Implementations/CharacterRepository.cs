@@ -82,33 +82,6 @@ namespace watchtower.Services.Repositories.Implementations {
             }
 
             return characters;
-
-            /*
-            if (_Cache.TryGetValue(key, out string charID) == false) {
-                character = await _Db.GetByName(name);
-
-                if (character == null || await HasExpired(character) == true) {
-                    PsCharacter? c = await _Census.GetByName(name);
-                    if (c != null) {
-                        character = new List<PsCharacter>() { c };
-                        await _Db.Upsert(c);
-                    }
-                }
-
-                if (character != null) {
-                    _Cache.Set(key, character.ID, new MemoryCacheEntryOptions() {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
-                    });
-
-                    string idKey = string.Format(_CacheKeyID, character.ID);
-                    _Cache.Set(idKey, character, new MemoryCacheEntryOptions() {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
-                    });
-                }
-            } else {
-                character = await GetByID(charID);
-            }
-            */
         }
 
         public async Task Upsert(PsCharacter character) {

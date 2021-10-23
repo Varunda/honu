@@ -48,8 +48,6 @@ namespace watchtower.Services.Census.Implementations {
         private PsCharacterHistoryStat _Parse(JToken token) {
             PsCharacterHistoryStat stat = new PsCharacterHistoryStat();
 
-            _Logger.LogInformation($"{token}");
-
             stat.CharacterID = token.GetString("character_id", "0");
             stat.Type = token.GetString("stat_name", "<missing>");
             stat.AllTime = token.GetInt32("all_time", 0);

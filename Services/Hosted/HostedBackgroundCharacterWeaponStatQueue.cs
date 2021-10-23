@@ -5,9 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
 
@@ -20,18 +22,23 @@ namespace watchtower.Services.Hosted {
 
         private readonly ICharacterWeaponStatCollection _WeaponCensus;
         private readonly ICharacterWeaponStatDbStore _WeaponStatDb;
+        private readonly ICharacterHistoryStatCollection _HistoryCensus;
+        private readonly ICharacterHistoryStatDbStore _HistoryDb;
 
         private static int _Count = 0;
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
-            IBackgroundCharacterWeaponStatQueue queue, ICharacterWeaponStatDbStore db,
-            ICharacterWeaponStatCollection weaponColl) {
+            IBackgroundCharacterWeaponStatQueue queue,
+            ICharacterWeaponStatDbStore db, ICharacterWeaponStatCollection weaponColl,
+            ICharacterHistoryStatDbStore hDb, ICharacterHistoryStatCollection hColl) {
 
             _Logger = logger;
 
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
             _WeaponStatDb = db ?? throw new ArgumentNullException(nameof(db));
             _WeaponCensus = weaponColl ?? throw new ArgumentNullException(nameof(weaponColl));
+            _HistoryCensus = hColl;
+            _HistoryDb = hDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -42,10 +49,15 @@ namespace watchtower.Services.Hosted {
                     string charID = await _Queue.Dequeue(stoppingToken);
 
                     List<WeaponStatEntry> entries = await _WeaponCensus.GetByCharacterID(charID);
-
                     foreach (WeaponStatEntry entry in entries) {
                         await _WeaponStatDb.Upsert(entry);
                     }
+
+                    List<PsCharacterHistoryStat> stats = await _HistoryCensus.GetByCharacterID(charID);
+                    foreach (PsCharacterHistoryStat stat in stats) {
+                        await _HistoryDb.Upsert(charID, stat.Type, stat);
+                    }
+
                     ++_Count;
 
                     if (_Count % 100 == 0) {

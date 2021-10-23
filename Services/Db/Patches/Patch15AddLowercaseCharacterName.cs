@@ -17,7 +17,7 @@ namespace watchtower.Services.Db.Patches {
             using NpgsqlConnection conn = helper.Connection();
             using NpgsqlCommand cmd = await helper.Command(conn, @"
                 ALTER TABLE wt_character
-	                ADD COLUMN name_lower varchar NOT NULL GENERATED ALWAYS AS (LOWER(name)) STORED;
+	                ADD COLUMN IF NOT EXISTS name_lower varchar NOT NULL GENERATED ALWAYS AS (LOWER(name)) STORED;
             ");
 
             await cmd.ExecuteNonQueryAsync();
