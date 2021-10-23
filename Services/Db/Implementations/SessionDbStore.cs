@@ -43,6 +43,38 @@ namespace watchtower.Services.Db.Implementations {
             return sessions;
         }
 
+        public async Task<List<Session>> GetAllByCharacterID(string charID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE character_id = @CharacterID;
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+
+            List<Session> sessions = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
+        public async Task<Session?> GetByID(long sessionID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", sessionID);
+
+            Session? session = await ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return session;
+        }
+
         public async Task Start(TrackedPlayer player) {
             if (player.Online == true) {
                 return;
@@ -121,6 +153,7 @@ namespace watchtower.Services.Db.Implementations {
         public override Session ReadEntry(NpgsqlDataReader reader) {
             Session s = new Session();
 
+            s.ID = reader.GetInt64("id");
             s.CharacterID = reader.GetString("character_id");
             s.Start = reader.GetDateTime("start");
             s.End = reader.GetNullableDateTime("finish");

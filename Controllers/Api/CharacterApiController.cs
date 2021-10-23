@@ -6,7 +6,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
+using watchtower.Models.Db;
 using watchtower.Services.CharacterViewer;
+using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
@@ -20,16 +22,18 @@ namespace watchtower.Controllers.Api {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly ICharacterHistoryStatRepository _HistoryRepository;
+        private readonly ISessionDbStore _SessionDb;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
-            ICharacterHistoryStatRepository histRepo) {
+            ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb) {
 
             _Logger = logger;
 
             _CharacterRepository = charRepo;
             _GeneratorStore = genStore ?? throw new ArgumentNullException(nameof(genStore));
             _HistoryRepository = histRepo ?? throw new ArgumentNullException(nameof(histRepo));
+            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
         }
 
         [HttpGet("character/{charID}")]
@@ -68,6 +72,18 @@ namespace watchtower.Controllers.Api {
             List<PsCharacterHistoryStat> stats = await _HistoryRepository.GetByCharacterID(charID);
 
             return Ok(stats);
+        }
+
+        [HttpGet("character/{charID}/sessions")]
+        public async Task<ActionResult<List<Session>>> GetSessions(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            if (c == null) {
+                return NotFound($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
+
+            return Ok(sessions);
         }
 
         [HttpGet("characters/name/{name}")]

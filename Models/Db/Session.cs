@@ -8,6 +8,11 @@ namespace watchtower.Models.Db {
     public class Session {
 
         /// <summary>
+        /// Unique ID of the session
+        /// </summary>
+        public long ID { get; set; }
+
+        /// <summary>
         /// ID of the character this session is for
         /// </summary>
         public string CharacterID { get; set; } = "";

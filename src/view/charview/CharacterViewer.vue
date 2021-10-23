@@ -54,7 +54,7 @@
                         Weapon stats
                     </a>
                 </li>
-                <li class="nav-item" disable="disabled">
+                <li class="nav-item" @click="selectTab('sessions')">
                     <a class="nav-link" :class="{ 'text-success': selectedTab != 'sessions' }">
                         Sessions
                     </a>
@@ -73,7 +73,6 @@
         <div v-else>
             Unchecked state of character: {{character.state}}
         </div>
-
     </div>
 </template>
 
@@ -86,6 +85,7 @@
     import CharacterHeader from "./components/CharacterHeader.vue";
     import CharacterOverview from "./components/CharacterOverview.vue";
     import CharacterWeaponStats from "./components/CharacterWeaponStats.vue";
+    import CharacterSessions from "./components/CharacterSessions.vue";
 
     export const CharacterViewer = Vue.extend({
         beforeMount: function(): void {
@@ -155,7 +155,8 @@
         components: {
             CharacterHeader,
             CharacterOverview,
-            CharacterWeaponStats
+            CharacterWeaponStats,
+            CharacterSessions,
         }
     });
     export default CharacterViewer;
