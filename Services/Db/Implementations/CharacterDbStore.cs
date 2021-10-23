@@ -45,10 +45,10 @@ namespace watchtower.Services.Db.Implementations {
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
                         LEFT JOIN wt_outfit o ON c.outfit_id = o.id
-                    WHERE c.name = @Name
+                    WHERE c.name_lower = @Name
             ");
 
-            cmd.AddParameter("Name", name);
+            cmd.AddParameter("Name", name.ToLower());
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();

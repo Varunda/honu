@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
+using watchtower.Models.CharacterViewer.CharacterStats;
+using watchtower.Services.CharacterViewer;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
@@ -16,12 +18,18 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<CharacterApiController> _Logger;
 
         private readonly ICharacterRepository _CharacterRepository;
+        private readonly ICharacterStatGeneratorStore _GeneratorStore;
+        private readonly ICharacterHistoryStatRepository _HistoryRepository;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
-            ICharacterRepository charRepo) {
+            ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
+            ICharacterHistoryStatRepository histRepo) {
 
             _Logger = logger;
+
             _CharacterRepository = charRepo;
+            _GeneratorStore = genStore ?? throw new ArgumentNullException(nameof(genStore));
+            _HistoryRepository = histRepo ?? throw new ArgumentNullException(nameof(histRepo));
         }
 
         [HttpGet("character/{charID}")]
@@ -36,6 +44,30 @@ namespace watchtower.Controllers.Api {
             }
 
             return Ok(c);
+        }
+
+        [HttpGet("character/{charID}/extra")]
+        public async Task<ActionResult<List<CharacterStatBase>>> GetExtraStats(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            if (c == null) {
+                return NotFound($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<CharacterStatBase> stats = await _GeneratorStore.GenerateAll(charID);
+
+            return Ok(stats);
+        }
+
+        [HttpGet("character/{charID}/history_stats")]
+        public async Task<ActionResult<List<PsCharacterHistoryStat>>> GetHistoryStats(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            if (c == null) {
+                return NotFound($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<PsCharacterHistoryStat> stats = await _HistoryRepository.GetByCharacterID(charID);
+
+            return Ok(stats);
         }
 
         [HttpGet("characters/name/{name}")]

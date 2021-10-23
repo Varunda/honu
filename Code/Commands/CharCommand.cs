@@ -8,7 +8,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Models.CharacterViewer.CharacterStats;
 using watchtower.Services.Census;
+using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -22,6 +24,9 @@ namespace watchtower.Commands {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IOutfitRepository _Outfitrepository;
         private readonly ISessionDbStore _SessionDb;
+        private readonly ICharacterStatGeneratorStore _GeneratorStore;
+        private readonly ICharacterHistoryStatCollection _HistoryCollection;
+        private readonly ICharacterHistoryStatRepository _HistoryStatRepository;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
@@ -29,6 +34,9 @@ namespace watchtower.Commands {
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
             _Outfitrepository = services.GetRequiredService<IOutfitRepository>();
             _SessionDb = services.GetRequiredService<ISessionDbStore>();
+            _GeneratorStore = services.GetRequiredService<ICharacterStatGeneratorStore>();
+            _HistoryCollection = services.GetRequiredService<ICharacterHistoryStatCollection>();
+            _HistoryStatRepository = services.GetRequiredService<ICharacterHistoryStatRepository>();
         }
 
         public async Task Get(string name) {
@@ -45,6 +53,32 @@ namespace watchtower.Commands {
                 }
             } else {
                 _Logger.LogInformation($"{name} => null");
+            }
+        }
+
+        public async Task Extra(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<CharacterStatBase> stats = await _GeneratorStore.GenerateAll(c.ID);
+            foreach (CharacterStatBase stat in stats) {
+                _Logger.LogInformation($"{stat.Name} => {stat.Value}");
+            }
+        }
+
+        public async Task History(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<PsCharacterHistoryStat> stats = await _HistoryStatRepository.GetByCharacterID(c.ID);
+            foreach (PsCharacterHistoryStat stat in stats) {
+                _Logger.LogInformation($"{stat.Type} => {stat.AllTime}");
             }
         }
 

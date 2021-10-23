@@ -25,6 +25,8 @@ using DaybreakGames.Census.Stream;
 using watchtower.Models;
 using watchtower.Services.Hosted.Startup;
 using watchtower.Models.Census;
+using watchtower.Services.CharacterViewer;
+using watchtower.Services.CharacterViewer.Implementations;
 
 namespace watchtower {
 
@@ -88,6 +90,7 @@ namespace watchtower {
             services.AddSingleton<IDiscordMessageQueue, DiscordMessageQueue>();
             services.AddSingleton<IBackgroundCharacterWeaponStatQueue, BackgroundCharacterWeaponStatQueue>();
             services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
+            services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
@@ -102,6 +105,7 @@ namespace watchtower {
             services.AddSingleton<IMapDbStore, MapDbStore>();
             services.AddSingleton<ICharacterWeaponStatDbStore, CharacterWeaponStatDbStore>();
             services.AddSingleton<IWeaponStatPercentileCacheDbStore, WeaponStatPercentileCacheDbStore>();
+            services.AddSingleton<ICharacterHistoryStatDbStore, CharacterHistoryStatDbStore>();
 
             // Readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -121,6 +125,7 @@ namespace watchtower {
             services.AddSingleton<IMapCollection, MapCollection>();
             services.AddSingleton<IFacilityCollection, FacilityCollection>();
             services.AddSingleton<ICharacterWeaponStatCollection, CharacterWeaponStatCollection>();
+            services.AddSingleton<ICharacterHistoryStatCollection, CharacterHistoryStatCollection>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
@@ -130,6 +135,7 @@ namespace watchtower {
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
             services.AddSingleton<IMapRepository, MapRepository>();
             services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
+            services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
@@ -140,6 +146,7 @@ namespace watchtower {
             services.AddHostedService<WorldDataBroadcastService>();
             services.AddHostedService<RealtimeResubcribeService>();
             services.AddHostedService<WorldOverviewBroadcastService>();
+            services.AddHostedService<CharacterStatGeneratorPopulator>();
 
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
