@@ -43,13 +43,13 @@ namespace watchtower.Services.Repositories.Implementations {
                     // Some stats, such as battle rank, are not updated everytime, cause why would BR need
                     //      to be updated if it's already at max rank
                     DateTime mostRecent = stats.Max(iter => iter.LastUpdated);
-                    _Logger.LogTrace($"Most recent history stat for {charID} is from {mostRecent}");
+                    //_Logger.LogTrace($"Most recent history stat for {charID} is from {mostRecent}");
 
                     getFromCensus = DateTime.UtcNow - mostRecent > TimeSpan.FromDays(1);
                 }
 
                 if (getFromCensus == true) {
-                    _Logger.LogTrace($"Getting history stats for {charID} from census");
+                    //_Logger.LogTrace($"Getting history stats for {charID} from census");
                     List<PsCharacterHistoryStat> census = await _Census.GetByCharacterID(charID);
 
                     if (census.Count > 0) {
@@ -57,7 +57,7 @@ namespace watchtower.Services.Repositories.Implementations {
                             PsCharacterHistoryStat? db = stats.FirstOrDefault(iter => iter.Type == stat.Type);
 
                             if (db == null || stat.LastUpdated > db.LastUpdated) {
-                                _Logger.LogTrace($"Stat for type {stat.Type} does not exist in DB, or is outdated ({db?.LastUpdated})");
+                                //_Logger.LogTrace($"Stat for type {stat.Type} does not exist in DB, or is outdated ({db?.LastUpdated})");
                                 await _Db.Upsert(charID, stat.Type, stat);
                             }
                         }
