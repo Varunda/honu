@@ -18,7 +18,7 @@ export class CharacterApi {
 	private static _instance: CharacterApi = new CharacterApi();
 	public static get(): CharacterApi { return this._instance; }
 
-	private static _parse(elem: any): PsCharacter {
+	public static parse(elem: any): PsCharacter {
 		return {
 			...elem
 		}
@@ -31,7 +31,7 @@ export class CharacterApi {
 			return null;
 		}
 
-		const c: PsCharacter = CharacterApi._parse(response.data);
+		const c: PsCharacter = CharacterApi.parse(response.data);
 		return c;
 	}
 
@@ -46,7 +46,7 @@ export class CharacterApi {
 			throw `Data from endpoint was not an array as expected`;
 		}
 
-		return response.data.map((iter: any) => CharacterApi._parse(iter));
+		return response.data.map((iter: any) => CharacterApi.parse(iter));
 	}
 
 }

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
@@ -25,10 +26,12 @@ namespace watchtower.Controllers {
         private readonly IOutfitRepository _OutfitRepository;
 
         private readonly IKillEventDbStore _KillDbStore;
+        private readonly ISessionDbStore _SessionDb;
 
         public KillApiController(ILogger<KillApiController> logger,
             ICharacterRepository charRepo, IKillEventDbStore killDb,
-            IItemRepository itemRepo, IOutfitRepository outfitRepo) {
+            IItemRepository itemRepo, IOutfitRepository outfitRepo,
+            ISessionDbStore sessionDb) {
 
             _Logger = logger;
 
@@ -37,6 +40,32 @@ namespace watchtower.Controllers {
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
 
             _KillDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
+            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+        }
+
+        [HttpGet("session/{sessionID}")]
+        public async Task<ActionResult<List<ExpandedKillEvent>>> GetBySessionID(long sessionID) {
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return NotFound($"{nameof(Session)} {sessionID}");
+            }
+
+            List<KillEvent> events = await _KillDbStore.GetKillsByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+
+            List<ExpandedKillEvent> expanded = new List<ExpandedKillEvent>(events.Count);
+
+            foreach (KillEvent ev in events) {
+                ExpandedKillEvent ex = new ExpandedKillEvent();
+
+                ex.Event = ev;
+                ex.Attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
+                ex.Killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
+                ex.Item = await _ItemRepository.GetByID(ev.WeaponID);
+
+                expanded.Add(ex);
+            }
+
+            return Ok(expanded);
         }
 
         [HttpGet("character/{charID}")]
@@ -47,7 +76,7 @@ namespace watchtower.Controllers {
                 return NotFound($"{nameof(PsCharacter)} {charID}");
             }
 
-            List<KillEvent> kills = await _KillDbStore.GetKillsByCharacterID(charID, 120);
+            List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, 120);
 
             Dictionary<string, CharacterWeaponKillEntry> entries = new Dictionary<string, CharacterWeaponKillEntry>();
 

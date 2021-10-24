@@ -32,5 +32,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult SessionViewer(long sessionID) {
+            return View();
+        }
+
     }
 }

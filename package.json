@@ -8,7 +8,7 @@
     "@popperjs/core": "^2.9.2",
     "@types/leaflet": "^1.7.5",
     "axios": "^0.21.1",
-    "chartjs": "^0.3.24",
+    "chart.js": "^3.6.0",
     "clean-webpack-plugin": "^1.0.1",
     "leaflet": "^1.7.1",
     "moment": "^2.29.1",

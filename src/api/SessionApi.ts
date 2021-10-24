@@ -35,4 +35,14 @@ export class SessionApi {
 		return response.data.map((iter: any) => SessionApi._parse(iter));
 	}
 
+	public static async getBySessionID(sessionID: number): Promise<Session> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/session/${sessionID}`);
+
+		if (response.status != 200) {
+			throw response.data;
+		}
+
+		return SessionApi._parse(response.data);
+	}
+
 }

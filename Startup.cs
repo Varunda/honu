@@ -117,6 +117,8 @@ namespace watchtower {
             services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
             services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
             services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
+            services.AddSingleton<IDataReader<PsItem>, ItemDbStore>();
+            services.AddSingleton<IDataReader<PsCharacter>, CharacterDbStore>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -188,6 +190,12 @@ namespace watchtower {
                     name: "charview",
                     pattern: "/c/{charID}/{*.}",
                     defaults: new { controller = "Home", action = "CharacterViewer" }
+                );
+
+                endpoints.MapControllerRoute(
+                    name: "sessionviewer",
+                    pattern: "/s/{sessionID}/{*.}",
+                    defaults: new { controller = "Home", action = "SessionViewer" }
                 );
 
                 endpoints.MapControllerRoute(

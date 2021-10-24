@@ -39,7 +39,7 @@
                     </td>
 
                     <td>
-                        <a :href="'/session/' + session.id">
+                        <a :href="'/s/' + session.id">
                             View
                         </a>
                     </td>

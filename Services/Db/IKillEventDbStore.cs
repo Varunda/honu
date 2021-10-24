@@ -35,11 +35,27 @@ namespace watchtower.Services.Db {
 
         Task<List<KillDbOutfitEntry>> GetTopOutfitKillers(KillDbOptions options);
 
-        Task<List<KillEvent>> GetKillsByCharacterID(string characterID, int interval);
+        //Task<List<KillEvent>> GetKillsByCharacterID(string characterID, int interval);
+        Task<List<KillEvent>> GetKillsByCharacterID(string characterID, DateTime start, DateTime end);
+
+        Task<List<KillEvent>> GetRecentKillsByCharacterID(string characterID, int interval);
 
         Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval);
 
         Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options);
 
     }
+
+    public static class IKillEventDbStoreExtensionMethods {
+
+        /*
+        public static Task<List<KillEvent>> GetRecentKillsByCharacterID(this IKillEventDbStore db, string characterID, int interval) {
+            DateTime start = DateTime.UtcNow - TimeSpan.FromSeconds(interval * 60);
+            return db.GetKillsByCharacterID(characterID, start, DateTime.UtcNow);
+
+        }
+        */
+
+    }
+
 }

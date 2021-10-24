@@ -32,3 +32,15 @@ export function colorGradient(fade: number, c1: RGB, c2: RGB, c3?: RGB): RGB {
 
 	return gradient;
 }
+
+export function rgbToString(rgb: RGB): string {
+	return `rgb(${rgb.red}, ${rgb.green}, ${rgb.blue}`;
+}
+
+export function randomRGB(): RGB {
+	return {
+		red: Math.floor(Math.random() * (235 - 52 + 1) + 52),
+		green: Math.floor(Math.random() * (235 - 52 + 1) + 52),
+		blue: Math.floor(Math.random() * (235 - 52 + 1) + 52)
+	};
+}
