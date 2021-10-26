@@ -23,9 +23,9 @@
                             ●
                         </span>
 
-                        <span style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;" :style="{ color: getFactionColor(entry.factionID) }">
+                        <a style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;" :style="{ color: getFactionColor(entry.factionID) }" :href="'/c/' + entry.id">
                             {{entry.name}}
-                        </span>
+                        </a>
 
                         <span style="flex-grow: 0;" title="hours:minutes">
                             {{entry.secondsOnline | duration}}
@@ -85,7 +85,7 @@
 
         methods: {
             getFactionColor: function(factionID: number): string {
-                return FactionColors.getFactionColor(factionID);
+                return FactionColors.getFactionColor(factionID) + "!important";
             },
 
             openCharacterWeaponKills: async function(event: any, charID: string): Promise<void> {
