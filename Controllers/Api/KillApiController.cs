@@ -54,13 +54,27 @@ namespace watchtower.Controllers {
 
             List<ExpandedKillEvent> expanded = new List<ExpandedKillEvent>(events.Count);
 
+            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
+            Dictionary<string, PsItem?> items = new Dictionary<string, PsItem?>();
+
             foreach (KillEvent ev in events) {
                 ExpandedKillEvent ex = new ExpandedKillEvent();
 
                 ex.Event = ev;
-                ex.Attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
-                ex.Killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
-                ex.Item = await _ItemRepository.GetByID(ev.WeaponID);
+
+                if (chars.ContainsKey(ev.AttackerCharacterID) == false) {
+                    chars.Add(ev.AttackerCharacterID, await _CharacterRepository.GetByID(ev.AttackerCharacterID));
+                }
+                if (chars.ContainsKey(ev.KilledCharacterID) == false) {
+                    chars.Add(ev.KilledCharacterID, await _CharacterRepository.GetByID(ev.KilledCharacterID));
+                }
+                if (items.ContainsKey(ev.WeaponID) == false) {
+                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(ev.WeaponID));
+                }
+
+                ex.Attacker = chars[ev.AttackerCharacterID];
+                ex.Killed = chars[ev.KilledCharacterID];
+                ex.Item = items[ev.WeaponID];
 
                 expanded.Add(ex);
             }

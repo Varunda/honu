@@ -143,8 +143,12 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
-        public override WeaponStatPercentileCache ReadEntry(NpgsqlDataReader reader) {
+        public override WeaponStatPercentileCache? ReadEntry(NpgsqlDataReader reader) {
             WeaponStatPercentileCache entry = new WeaponStatPercentileCache();
+
+            if (reader.IsDBNull("q0")) {
+                return null;
+            }
 
             entry.Loaded = true;
             entry.ItemID = reader.GetString("item_id");

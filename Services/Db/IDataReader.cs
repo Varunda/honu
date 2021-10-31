@@ -13,11 +13,14 @@ namespace watchtower.Services.Db {
     public abstract class IDataReader<T> where T : class {
 
         /// <summary>
-        /// Read a single row of data and turn it into the generic type <typeparamref name="T"/>
+        ///     Read a single row of data and turn it into the generic type <typeparamref name="T"/>
         /// </summary>
         /// <param name="reader">Reader the read is being performed on</param>
-        /// <returns>The row in <paramref name="reader"/> represents as the generic type</returns>
-        public abstract T ReadEntry(NpgsqlDataReader reader);
+        /// <returns>
+        ///     The row in <paramref name="reader"/> represents as the generic type, or <c>null</c>
+        ///     if the data within the reader could not produce a valid output
+        /// </returns>
+        public abstract T? ReadEntry(NpgsqlDataReader reader);
 
         /// <summary>
         /// Read a list of rows from a <see cref="NpgsqlCommand"/>
@@ -29,7 +32,10 @@ namespace watchtower.Services.Db {
 
             using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync() == true) {
-                entries.Add(ReadEntry(reader));
+                T? entry = ReadEntry(reader);
+                if (entry != null) {
+                    entries.Add(entry);
+                }
             }
 
             return entries;

@@ -24,28 +24,18 @@
             </h1>
         </div>
 
-        <hr class="border" />
+        <div v-if="session.state == 'loading'">
+            Loading session...
+        </div>
 
-        <div>
-            <h2>Session</h2>
-            <hr class="border" />
+        <div v-else-if="session.state == 'loaded'">
+            <div>
+                <h2 class="wt-header">Session</h2>
 
-            <div v-if="session.state == 'idle'"></div>
-            <div v-else-if="session.state == 'loading'">
-                Loading...
-            </div>
-
-            <div v-else-if="session.state == 'error'" class="text-danger">
-                Error loading session {{sessionID}}: {{session.message}}
-            </div>
-
-            <div v-else-if="session.state == 'loaded'">
-                <table class="table table-sm w-auto">
+                <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
                         <td><b>ID</b></td>
-                        <td>
-                            {{session.data.id}}
-                        </td>
+                        <td>{{session.data.id}}</td>
                     </tr>
 
                     <tr v-if="character.state == 'loaded'">
@@ -62,9 +52,7 @@
 
                     <tr>
                         <td><b>Start</b></td>
-                        <td>
-                            {{session.data.start | moment}}
-                        </td>
+                        <td>{{session.data.start | moment}}</td>
                     </tr>
 
                     <tr>
@@ -81,63 +69,72 @@
 
                     <tr>
                         <td><b>Duration</b></td>
+                        <td>{{durationInSeconds | mduration}}</td>
+                    </tr>
+                </table>
+
+                <table class="table table-sm w-auto d-inline-block">
+                    <tr>
+                        <th>Data</th>
+                        <th>State</th>
+                    </tr>
+
+                    <tr>
+                        <td>Session</td>
+                        <td>{{session.state}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Character</td>
+                        <td>{{character.state}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Kills</td>
                         <td>
-                            {{durationInSeconds | mduration}}
+                            {{kills.state}}
+                            <span v-if="kills.state == 'loaded'">
+                                ({{kills.data.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Exp</td>
+                        <td>
+                            {{exp.state}}
+                            <span v-if="exp.state == 'loaded'">
+                                ({{exp.data.length}})
+                            </span>
                         </td>
                     </tr>
                 </table>
             </div>
-        </div>
 
-        <div>
-            <h2>General</h2>
-            <hr class="border" />
+            <div>
+                <h2 class="wt-header">General</h2>
 
-            <div v-if="kills.state == 'idle'"></div>
-            <div v-else-if="kills.state == 'loading'">
-                Loading...
+                <div v-if="exp.state == 'loading' || kills.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-general v-else-if="exp.state == 'loaded' && kills.state == 'loaded'"
+                    :session="session.data" :exp="exp" :kills="kills">
+                </session-viewer-general>
             </div>
 
-            <div v-else-if="kills.state == 'error'" class="text-danger">
-                Error loading kills: {{kills.message}}
-            </div>
+            <div>
+                <h2 class="wt-header">Kills</h2>
 
-            <div v-else-if="kills.state == 'loaded'">
-                <table class="table table-sm w-auto">
-                    <tr>
-                        <td><b>Kill count</b></td>
-                        <td>
-                            {{kills.data.length | locale}}
-                        </td>
-                    </tr>
+                <div v-if="kills.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
 
-                    <tr>
-                        <td><b>HSR</b></td>
-                        <td>
-                            {{(kills.data.filter(iter => iter.event.isHeadshot == true).length / kills.data.length) * 100 | fixed | locale}}%
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td><b>KPM</b></td>
-                        <td>
-                            {{kills.data.length / durationInSeconds * 60 | fixed | locale}}
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div>
-            <h2>Kills</h2>
-            <hr class="border" />
-
-            <div v-if="kills.state == 'loading'">
-                Loading...
-            </div>
-
-            <div v-else-if="kills.state == 'loaded'">
-                <session-viewer-kills :kills="kills"></session-viewer-kills>
+                <session-viewer-kills v-else-if="kills.state == 'loaded'"
+                    :kills="kills" :session="session.data">
+                </session-viewer-kills>
             </div>
         </div>
 
@@ -155,15 +152,22 @@
     import Chart from "chart.js/auto/auto.esm";
 
     import SessionViewerKills from "./components/SessionViewerKills.vue";
+    import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";
+
+    import InfoHover from "components/InfoHover.vue";
+    import Busy from "components/Busy.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
-    import { ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { Experience, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
-    import { PsItem, ItemApi } from "api/ItemApi";
+
+    import { randomRGB, rgbToString } from "util/Color";
 
     export const SessionViewer = Vue.extend({
-        props: { },
+        props: {
+
+        },
 
         data: function() {
             return {
@@ -173,10 +177,6 @@
                 character: Loadable.idle() as Loading<PsCharacter>,
                 kills: Loadable.idle() as Loading<ExpandedKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExpEvent[]>,
-
-                charts: {
-                    kills: null as Chart | null
-                }
             }
         },
 
@@ -210,11 +210,10 @@
 
             bindSession: async function(): Promise<void> {
                 this.session = Loadable.loading();
-                try {
-                    this.session = Loadable.loaded(await SessionApi.getBySessionID(this.sessionID));
+                this.session = await Loadable.promise(SessionApi.getBySessionID(this.sessionID));
+
+                if (this.session.state == "loaded") {
                     this.bindCharacter();
-                } catch (err: any) {
-                    this.session = Loadable.error(err);
                 }
             },
 
@@ -239,22 +238,13 @@
 
             bindExp: async function(): Promise<void> {
                 this.exp = Loadable.loading();
-                try {
-                    this.exp = Loadable.loaded(await ExpStatApi.getBySessionID(this.sessionID));
-                } catch (err: any) {
-                    this.exp = Loadable.error(err);
-                }
-
+                this.exp = await Loadable.promise(ExpStatApi.getBySessionID(this.sessionID));
             },
 
             bindKills: async function(): Promise<void> {
                 this.kills = Loadable.loading();
-                try {
-                    this.kills = Loadable.loaded(await KillStatApi.getSessionKills(this.sessionID));
-                } catch (err: any) {
-                    this.kills = Loadable.error(err);
-                }
-            }
+                this.kills = await Loadable.promise(KillStatApi.getSessionKills(this.sessionID));
+            },
 
         },
 
@@ -264,11 +254,18 @@
                     return -1;
                 }
                 return ((this.session.data.end || new Date()).getTime() - this.session.data.start.getTime()) / 1000;
+            },
+
+            loadingGeneral: function(): boolean {
+                return this.exp.state == "loading" || this.kills.state == "loading";
             }
         },
 
         components: {
-            SessionViewerKills
+            SessionViewerKills,
+            SessionViewerGeneral,
+            InfoHover,
+            Busy,
         }
 
     });

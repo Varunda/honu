@@ -66,4 +66,14 @@ export class Loadable {
         return { state: "saving", data: data };
     }
 
+    public static promise<T>(data: Promise<T>): Promise<Loading<T>> {
+        return new Promise<Loading<T>>((resolve, reject) => {
+			data.then((data) => {
+				resolve(Loadable.loaded(data));
+			}).catch((err: any) => {
+                resolve(Loadable.error(err));
+			});
+        });
+    }
+
 }

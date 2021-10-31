@@ -24,6 +24,54 @@ export class ExpEvent {
     public timestamp: Date = new Date();
 }
 
+export class Experience {
+
+    public static ASSIST: number = 2;
+    public static SPAWN_ASSIST: number = 3;
+    public static PRIORITY_ASSIST: number = 371;
+    public static HIGH_PRIORITY_ASSIST: number = 372;
+
+    public static HEAL: number = 4;
+    public static MAX_REPAIR: number = 6;
+    public static REVIVE: number = 7;
+    public static RESUPPLY: number = 34;
+    public static SHIELD_REPAIR: number = 438;
+
+    public static SQUAD_HEAL: number = 51;
+    public static SQUAD_REVIVE: number = 53;
+    public static SQUAD_RESUPPLY: number = 55;
+    public static SQUAD_MAX_REPAIR: number = 142;
+    
+	public static SQUAD_SPAWN: number = 56;
+	public static GALAXY_SPAWN_BONUS: number = 201;
+	public static SUNDERER_SPAWN_BONUS: number = 233;
+	public static SQUAD_VEHICLE_SPAWN_BONUS: number = 355;
+	public static GENERIC_NPC_SPAWN: number = 1410;
+
+    public static isSpawn(expID: number): boolean {
+        return expID == this.SQUAD_SPAWN || expID == this.GALAXY_SPAWN_BONUS || expID == this.SUNDERER_SPAWN_BONUS
+            || expID == this.SQUAD_VEHICLE_SPAWN_BONUS || expID == this.GENERIC_NPC_SPAWN;
+    }
+
+	public static VKILL_FLASH: number = 24;
+	public static VKILL_GALAXY: number = 60;
+	public static VKILL_LIBERATOR: number = 61;
+	public static VKILL_LIGHTNING: number = 62;
+	public static VKILL_MAGRIDER: number = 63;
+	public static VKILL_MOSQUITO: number = 64;
+	public static VKILL_PROWLER: number = 65;
+	public static VKILL_REAVER: number = 66;
+	public static VKILL_SCYTHE: number = 67;
+	public static VKILL_VANGUARD: number = 69;
+	public static VKILL_HARASSER: number = 301;
+	public static VKILL_VALKYRIE: number = 501;
+	public static VKILL_ANT: number = 651;
+	public static VKILL_COLOSSUS: number = 1449;
+	public static VKILL_JAVELIN: number = 1480;
+	public static VKILL_CHIMERA: number = 1565;
+	public static VKILL_DERVISH: number = 1635;
+}
+
 export class ExpStatApi {
 
     private static _instance: ExpStatApi = new ExpStatApi();

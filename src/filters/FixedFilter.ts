@@ -1,8 +1,6 @@
 ﻿import Vue from "vue";
 
 Vue.filter("fixed", (value: number | string, decimals: number = 2): string => {
-	if (typeof (value) == "string") {
-		return Number(value).toFixed(decimals || 2);
-	}
-	return value.toFixed(decimals || 2);
+	const val: number = typeof (value) == "string" ? Number(value) : value;
+	return val.toFixed(decimals || 2);
 });
