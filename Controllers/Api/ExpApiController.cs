@@ -11,6 +11,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
@@ -28,10 +29,12 @@ namespace watchtower.Controllers {
         private readonly IOutfitRepository _OutfitRepository;
 
         private readonly IExpEventDbStore _ExpDbStore;
+        private readonly ISessionDbStore _SessionDb;
 
         public ExpApiController(ILogger<ExpApiController> logger,
             ICharacterRepository charRepo, IExpEventDbStore killDb,
-            IItemRepository itemRepo, IOutfitRepository outfitRepo) {
+            IItemRepository itemRepo, IOutfitRepository outfitRepo,
+            ISessionDbStore sessionDb) {
 
             _Logger = logger;
 
@@ -40,6 +43,18 @@ namespace watchtower.Controllers {
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
 
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
+            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+        }
+
+        [HttpGet("session/{sessionID}")]
+        public async Task<ActionResult<List<ExpEvent>>> GetBySessionID(long sessionID) {
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return NotFound($"{nameof(Session)} {sessionID}");
+            }
+
+            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+            return Ok(events);
         }
 
         [HttpGet("character/{charID}/{type}")]
@@ -113,7 +128,7 @@ namespace watchtower.Controllers {
         }
 
         private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID) {
-            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, 120);
+            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
 
             CharacterExpSupportEntry sundySpawns = new CharacterExpSupportEntry() { CharacterName = "Sunderers" };
             CharacterExpSupportEntry routerSpawns = new CharacterExpSupportEntry() { CharacterName = "Routers" };
@@ -140,7 +155,7 @@ namespace watchtower.Controllers {
         }
 
         private async Task<List<CharacterExpSupportEntry>> CharacterVehicleKills(string charID) {
-            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, 120);
+            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
 
             CharacterExpSupportEntry flashKills = new CharacterExpSupportEntry() { CharacterName = "Flashes" };
             CharacterExpSupportEntry galaxyKills = new CharacterExpSupportEntry() { CharacterName = "Galaxies" };
@@ -212,7 +227,7 @@ namespace watchtower.Controllers {
         }
 
         private async Task<List<CharacterExpSupportEntry>> GetByCharacterAndExpIDs(string charID, List<int> events) {
-            List<ExpEvent> exps = await _ExpDbStore.GetByCharacterID(charID, 120);
+            List<ExpEvent> exps = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
 
             Dictionary<string, CharacterExpSupportEntry> entries = new Dictionary<string, CharacterExpSupportEntry>();
 

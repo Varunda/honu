@@ -125,17 +125,18 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
-        public async Task<List<ExpEvent>> GetByCharacterID(string charID, int interval) {
+        public async Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_exp
-                    WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = @CharacterID
             ");
 
             cmd.AddParameter("CharacterID", charID);
-            cmd.AddParameter("Interval", interval);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
 
             List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
             await conn.CloseAsync();

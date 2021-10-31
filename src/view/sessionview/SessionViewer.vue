@@ -157,6 +157,7 @@
     import SessionViewerKills from "./components/SessionViewerKills.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
+    import { ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { PsItem, ItemApi } from "api/ItemApi";
@@ -171,6 +172,7 @@
                 session: Loadable.idle() as Loading<Session>,
                 character: Loadable.idle() as Loading<PsCharacter>,
                 kills: Loadable.idle() as Loading<ExpandedKillEvent[]>,
+                exp: Loadable.idle() as Loading<ExpEvent[]>,
 
                 charts: {
                     kills: null as Chart | null
@@ -203,6 +205,7 @@
                 this.bindSession();
                 // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
                 this.bindKills();
+                this.bindExp();
             },
 
             bindSession: async function(): Promise<void> {
@@ -232,6 +235,16 @@
                 } catch (err: any) {
                     this.character = Loadable.error(err);
                 }
+            },
+
+            bindExp: async function(): Promise<void> {
+                this.exp = Loadable.loading();
+                try {
+                    this.exp = Loadable.loaded(await ExpStatApi.getBySessionID(this.sessionID));
+                } catch (err: any) {
+                    this.exp = Loadable.error(err);
+                }
+
             },
 
             bindKills: async function(): Promise<void> {

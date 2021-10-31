@@ -36,9 +36,20 @@ namespace watchtower.Services.Db {
         /// </returns>
         Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options);
 
-        Task<List<ExpEvent>> GetByCharacterID(string charID, int interval);
+        Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end);
 
         Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval);
 
     }
+
+    public static class IExpEventDbStoreExtensionMethods {
+
+        public static Task<List<ExpEvent>> GetRecentByCharacterID(this IExpEventDbStore db, string characterID, int interval) {
+            DateTime start = DateTime.UtcNow - TimeSpan.FromSeconds(interval * 60);
+            return db.GetByCharacterID(characterID, start, DateTime.UtcNow);
+
+        }
+
+    }
+
 }

@@ -12,10 +12,29 @@ export class OutfitExpEntry {
     public amount: number = 0;
 }
 
+export class ExpEvent {
+    public sourceID: string = "";
+    public experienceID: number = 0;
+    public loadoutID: number = 0;
+    public teamID: number = 0;
+    public otherID: string = "";
+    public amount: number = 0;
+    public worldID: number = 0;
+    public zoneID: number = 0;
+    public timestamp: Date = new Date();
+}
+
 export class ExpStatApi {
 
     private static _instance: ExpStatApi = new ExpStatApi();
     public static get(): ExpStatApi { return ExpStatApi._instance; }
+
+    public static parseExpEvent(elem: any): ExpEvent {
+        return {
+            ...elem,
+            timestamp: new Date(elem.timestamp)
+        }
+    }
 
     private static parseCharacterExpSupportEntry(elem: any): CharacterExpSupportEntry {
         return {
@@ -31,6 +50,20 @@ export class ExpStatApi {
             characterName: elem.characterName,
             amount: elem.amount
         };
+    }
+
+    public static async getBySessionID(sessionID: number): Promise<ExpEvent[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/exp/session/${sessionID}`);
+
+        if (response.status != 200) {
+            return [];
+        }
+
+        if (Array.isArray(response.data) == false) {
+            throw ``;
+        }
+
+        return response.data.map((iter: any) => ExpStatApi.parseExpEvent(iter));
     }
 
     private static async getList<T>(url: string, reader: (elem: any) => T): Promise<T[]> {
