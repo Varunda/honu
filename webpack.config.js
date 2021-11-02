@@ -54,7 +54,7 @@ module.exports = {
             {
                 test: /\.tsx?$/, 
                 loader: "ts-loader",
-                exclude: /node_modules/,
+                //exclude: /node_modules/,
                 options: {
                     appendTsSuffixTo: [ /\.vue$/ ],
                     transpileOnly: true
@@ -88,11 +88,12 @@ module.exports = {
         "vue": "Vue",
         //"moment": "moment",
         "signalR": "signalR",
-        "file-saver": "saveAs"
+        "file-saver": "saveAs",
+        "chartjs-plugin-annotation": "chartjs-plugin-annotation"
     },
 
     resolve: {
-        extensions: [".ts", ".js", ".vue"],
+        extensions: [ ".ts", ".js", ".vue", ".d.ts" ],
         plugins: [
             new TsconfigPathsPlugin({configFile: "./tsconfig.json"})
         ],

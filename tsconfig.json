@@ -15,6 +15,7 @@
             "vuex": [ "../node_modules/vuex/types/index" ],
             "moment": [ "../node_modules/moment/moment" ],
             "chart.js/*": [ "../node_modules/chart.js/*" ],
+            "chartjs-plugin-annotation": [ "../node_modules/chartjs-plugin-annotation" ],
             "axios": [ "../node_modules/axios/index" ],
             "loglevel": [ "../node_modules/loglevel/index" ],
             "signalR": [ "../node_modules/@microsoft/signalr/src/index" ],

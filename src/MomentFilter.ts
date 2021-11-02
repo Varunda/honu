@@ -19,8 +19,8 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
         }
         return moment(input).format(format);
     } else if (input instanceof Date) {
-        //return moment(input).format(format);
-        return moment(input).add(-(vueMoment as any).tz, "minutes").format(format);
+        return moment(input).format(format);
+        //return moment(input).add(-(vueMoment as any).tz, "minutes").format(format);
     } else if (typeof input == "number") {
         return moment(new Date(input)).format(format);
     } else {

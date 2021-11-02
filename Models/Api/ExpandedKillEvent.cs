@@ -11,9 +11,8 @@ namespace watchtower.Models.Api {
 
         public KillEvent Event { get; set; } = new KillEvent();
 
-        //public PsCharacter? Other { get; set; }
-
         public PsCharacter? Attacker { get; set; }
+
         public PsCharacter? Killed { get; set; }
 
         public PsItem? Item { get; set; }

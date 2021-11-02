@@ -50,6 +50,38 @@
                         </td>
                     </tr>
 
+                    <tr v-if="character.state == 'loaded'">
+                        <td>
+                            <b>Outfit (current)</b>
+                            <info-hover text="What outfit the character is currently in"></info-hover>
+                        </td>
+                        <td>
+                            <a :href="'/o/' + character.data.outfitID">
+                                <span v-if="character.data.outfitTag != null">
+                                    [{{character.data.outfitTag}}]
+                                </span>
+                                {{character.data.outfitName}}
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            <b>Outfit (session)</b>
+                            <info-hover text="What outfit the character was in when this session was started"></info-hover>
+                        </td>
+                        <td>
+                            <span v-if="session.data.outfitID == null">
+                                &lt;No outfit&gt;
+                            </span>
+                            <span v-else>
+                                <a :href="'/o/' + session.data.outfitID">
+                                    View
+                                </a>
+                            </span>
+                        </td>
+                    </tr>
+
                     <tr>
                         <td><b>Start</b></td>
                         <td>{{session.data.start | moment}}</td>
@@ -92,9 +124,14 @@
                     <tr>
                         <td>Kills</td>
                         <td>
-                            {{kills.state}}
-                            <span v-if="kills.state == 'loaded'">
-                                ({{kills.data.length}})
+                            <span v-if="killsOrDeaths.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{killsOrDeaths.state}}
+                            </span>
+                            <span v-if="killsOrDeaths.state == 'loaded'">
+                                ({{killsOrDeaths.data.length}})
                             </span>
                         </td>
                     </tr>
@@ -102,7 +139,12 @@
                     <tr>
                         <td>Exp</td>
                         <td>
-                            {{exp.state}}
+                            <span v-if="exp.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{exp.state}}
+                            </span>
                             <span v-if="exp.state == 'loaded'">
                                 ({{exp.data.length}})
                             </span>
@@ -114,30 +156,53 @@
             <div>
                 <h2 class="wt-header">General</h2>
 
-                <div v-if="exp.state == 'loading' || kills.state == 'loading'">
+                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-viewer-general v-else-if="exp.state == 'loaded' && kills.state == 'loaded'"
-                    :session="session.data" :exp="exp" :kills="kills">
+                <session-viewer-general v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
+                    :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths">
                 </session-viewer-general>
             </div>
 
             <div>
                 <h2 class="wt-header">Kills</h2>
 
-                <div v-if="kills.state == 'loading'">
+                <div v-if="killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-viewer-kills v-else-if="kills.state == 'loaded'"
-                    :kills="kills" :session="session.data">
+                <session-viewer-kills v-else-if="killsOrDeaths.state == 'loaded'"
+                    :kills="kills" :deaths="deaths" :session="session.data">
                 </session-viewer-kills>
             </div>
-        </div>
 
+            <div>
+                <h2 class="wt-header">Experience</h2>
+
+                <div v-if="exp.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data"></session-viewer-exp>
+            </div>
+
+            <div>
+                <h2 class="wt-header">Trends</h2>
+
+                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-trends v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
+                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
+                </session-viewer-trends>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -153,12 +218,14 @@
 
     import SessionViewerKills from "./components/SessionViewerKills.vue";
     import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";
-
+    import SessionViewerExp from "./components/SessionViewerExp.vue";
+    import SessionViewerTrends from "./components/SessionViewerTrends.vue";
+    import ChartTimestamp from "./components/ChartTimestamp.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
-    import { Experience, ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
@@ -175,8 +242,9 @@
 
                 session: Loadable.idle() as Loading<Session>,
                 character: Loadable.idle() as Loading<PsCharacter>,
-                kills: Loadable.idle() as Loading<ExpandedKillEvent[]>,
-                exp: Loadable.idle() as Loading<ExpEvent[]>,
+
+                killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
+                exp: Loadable.idle() as Loading<ExpandedExpEvent[]>,
             }
         },
 
@@ -242,8 +310,8 @@
             },
 
             bindKills: async function(): Promise<void> {
-                this.kills = Loadable.loading();
-                this.kills = await Loadable.promise(KillStatApi.getSessionKills(this.sessionID));
+                this.killsOrDeaths = Loadable.loading();
+                this.killsOrDeaths = await Loadable.promise(KillStatApi.getSessionKills(this.sessionID));
             },
 
         },
@@ -256,14 +324,32 @@
                 return ((this.session.data.end || new Date()).getTime() - this.session.data.start.getTime()) / 1000;
             },
 
-            loadingGeneral: function(): boolean {
-                return this.exp.state == "loading" || this.kills.state == "loading";
+            kills: function(): ExpandedKillEvent[] {
+                if (this.killsOrDeaths.state != "loaded" || this.session.state != "loaded") {
+                    return [];
+                }
+                return this.killsOrDeaths.data.filter(iter => {
+                    return iter.event.attackerCharacterID == (this.session as any).data.characterID
+                        && iter.event.attackerTeamID != iter.event.killedTeamID;
+                });
+            },
+
+            deaths: function(): ExpandedKillEvent[] {
+                if (this.killsOrDeaths.state != "loaded" || this.session.state != "loaded") {
+                    return [];
+                }
+                return this.killsOrDeaths.data.filter(iter => {
+                    return iter.event.revivedEventID == null && iter.event.killedCharacterID == (this.session as any).data.characterID;
+                });
             }
         },
 
         components: {
             SessionViewerKills,
             SessionViewerGeneral,
+            SessionViewerExp,
+            SessionViewerTrends,
+            ChartTimestamp,
             InfoHover,
             Busy,
         }

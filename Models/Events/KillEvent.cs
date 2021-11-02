@@ -46,6 +46,8 @@ namespace watchtower.Models.Events {
 
         public bool IsHeadshot { get; set; }
 
+        public long? RevivedEventID { get; set; }
+
         public DateTime Timestamp { get; set; }
 
     }

@@ -66,3 +66,7 @@
     border-bottom: 1px solid #dee2e6 !important;
     margin-bottom: 1rem;
 }
+
+.flex-basis-0 {
+    flex-basis: 0;
+}

@@ -224,7 +224,7 @@ namespace watchtower.Services.Db.Implementations {
                 SELECT *
                     FROM wt_kills
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
-                        AND attacker_character_id = @CharacterID
+                        AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID)
             ");
 
             cmd.AddParameter("CharacterID", charID);

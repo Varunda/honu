@@ -36,6 +36,14 @@ namespace watchtower.Code.ExtensionMethods {
             return (decimal?) reader.GetFloat(field);
         }
 
+        public static long? GetNullableInt64(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return reader.GetInt64(field);
+        }
+
+
         /// <summary>
         /// Get a <see cref="uint"/> from a column
         /// </summary>

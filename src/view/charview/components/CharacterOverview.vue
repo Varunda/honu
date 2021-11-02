@@ -14,9 +14,9 @@
                     <span v-if="character.outfitID == null">
                         No outfit
                     </span>
-                    <span v-else>
+                    <a v-else :href="'/o/' + character.outfitID">
                         [{{character.outfitTag}}] {{character.outfitName}}
-                    </span>
+                    </a>
                 </td>
             </tr>
 

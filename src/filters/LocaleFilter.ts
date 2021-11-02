@@ -7,7 +7,9 @@ function locale(value: number | string): string {
 	} else {
 		val = value;
 	}
-	return val.toLocaleString();
+	return val.toLocaleString(undefined, {
+		minimumFractionDigits: (Number.isInteger(val)) ? 0 : 2
+	});
 }
 
 Vue.filter("locale", locale);

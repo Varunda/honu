@@ -27,6 +27,7 @@ namespace watchtower.Services.Db.Readers {
 
             ev.Timestamp = reader.GetDateTime("timestamp");
             ev.IsHeadshot = reader.GetBoolean("is_headshot");
+            ev.RevivedEventID = reader.GetNullableInt64("revived_event_id");
             ev.WeaponID = reader.GetString("weapon_id");
             ev.ZoneID = reader.GetUInt32("zone_id");
             ev.WorldID = reader.GetInt16("world_id");

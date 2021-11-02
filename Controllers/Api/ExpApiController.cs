@@ -54,7 +54,31 @@ namespace watchtower.Controllers {
             }
 
             List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
-            return Ok(events);
+            List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(events.Count);
+
+            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
+
+            foreach (ExpEvent ev in events) {
+                ExpandedExpEvent ex = new ExpandedExpEvent();
+                ex.Event = ev;
+
+                if (chars.ContainsKey(ev.SourceID) == false) {
+                    chars.Add(ev.SourceID, await _CharacterRepository.GetByID(ev.SourceID));
+                }
+
+                ex.Source = chars[ev.SourceID];
+
+                if (ev.OtherID.Length == 19) {
+                    if (chars.ContainsKey(ev.OtherID) == false) {
+                        chars.Add(ev.OtherID, await _CharacterRepository.GetByID(ev.OtherID));
+                    }
+                    ex.Other = chars[ev.OtherID];
+                }
+
+                expanded.Add(ex);
+            }
+
+            return Ok(expanded);
         }
 
         [HttpGet("character/{charID}/{type}")]

@@ -1,4 +1,5 @@
 import * as axios from "axios";
+import { CharacterApi, PsCharacter } from "api/CharacterApi";
 
 export class CharacterExpSupportEntry {
     public characterID: string = "";
@@ -24,6 +25,12 @@ export class ExpEvent {
     public timestamp: Date = new Date();
 }
 
+export class ExpandedExpEvent {
+    public event: ExpEvent = new ExpEvent();
+    public source: PsCharacter | null = null;
+    public other: PsCharacter | null = null;
+}
+
 export class Experience {
 
     public static ASSIST: number = 2;
@@ -41,6 +48,7 @@ export class Experience {
     public static SQUAD_REVIVE: number = 53;
     public static SQUAD_RESUPPLY: number = 55;
     public static SQUAD_MAX_REPAIR: number = 142;
+    public static SQUAD_SHIELD_REPAIR: number = 439;
     
 	public static SQUAD_SPAWN: number = 56;
 	public static GALAXY_SPAWN_BONUS: number = 201;
@@ -48,9 +56,46 @@ export class Experience {
 	public static SQUAD_VEHICLE_SPAWN_BONUS: number = 355;
 	public static GENERIC_NPC_SPAWN: number = 1410;
 
+    public static isAssist(expID: number): boolean {
+        return expID == this.ASSIST || expID == this.SPAWN_ASSIST
+            || expID == this.PRIORITY_ASSIST || expID == this.HIGH_PRIORITY_ASSIST;
+	}
+
+    public static isHeal(expID: number): boolean {
+        return expID == this.HEAL || expID == this.SQUAD_HEAL;
+    }
+
+    public static isRevive(expID: number): boolean {
+        return expID == this.REVIVE || expID == this.SQUAD_REVIVE;
+    }
+
+    public static isResupply(expID: number): boolean {
+        return expID == this.RESUPPLY || expID == this.SQUAD_RESUPPLY;
+    }
+
+    public static isMaxRepair(expID: number): boolean {
+        return expID == this.MAX_REPAIR || expID == this.SQUAD_MAX_REPAIR;
+    }
+
+    public static isShieldRepair(expID: number): boolean {
+        return expID == this.SHIELD_REPAIR || expID == this.SQUAD_SHIELD_REPAIR;
+    }
+
     public static isSpawn(expID: number): boolean {
         return expID == this.SQUAD_SPAWN || expID == this.GALAXY_SPAWN_BONUS || expID == this.SUNDERER_SPAWN_BONUS
             || expID == this.SQUAD_VEHICLE_SPAWN_BONUS || expID == this.GENERIC_NPC_SPAWN;
+    }
+
+    public static isVehicleKill(expID: number): boolean {
+        return expID == this.VKILL_FLASH || expID == this.VKILL_GALAXY
+            || expID == this.VKILL_LIBERATOR || expID == this.VKILL_LIGHTNING
+            || expID == this.VKILL_MAGRIDER || expID == this.VKILL_MOSQUITO
+            || expID == this.VKILL_PROWLER || expID == this.VKILL_REAVER
+            || expID == this.VKILL_SCYTHE || expID == this.VKILL_VANGUARD
+            || expID == this.VKILL_HARASSER || expID == this.VKILL_VALKYRIE
+            || expID == this.VKILL_ANT || expID == this.VKILL_COLOSSUS
+            || expID == this.VKILL_JAVELIN || expID == this.VKILL_CHIMERA
+            || expID == this.VKILL_DERVISH;
     }
 
 	public static VKILL_FLASH: number = 24;
@@ -100,7 +145,15 @@ export class ExpStatApi {
         };
     }
 
-    public static async getBySessionID(sessionID: number): Promise<ExpEvent[]> {
+    private static parseExpandedExpEntry(elem: any): ExpandedExpEvent {
+        return {
+            event: ExpStatApi.parseExpEvent(elem.event),
+            source: elem.source == null ? null : CharacterApi.parse(elem.source),
+            other: elem.other == null ? null : CharacterApi.parse(elem.other),
+        };
+    }
+
+    public static async getBySessionID(sessionID: number): Promise<ExpandedExpEvent[]> {
         const response: axios.AxiosResponse<any> = await axios.default.get(`/api/exp/session/${sessionID}`);
 
         if (response.status != 200) {
@@ -111,7 +164,7 @@ export class ExpStatApi {
             throw ``;
         }
 
-        return response.data.map((iter: any) => ExpStatApi.parseExpEvent(iter));
+        return response.data.map((iter: any) => ExpStatApi.parseExpandedExpEntry(iter));
     }
 
     private static async getList<T>(url: string, reader: (elem: any) => T): Promise<T[]> {

@@ -199,6 +199,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "outfitviewer",
+                    pattern: "/o/{outfitID}/{*.}",
+                    defaults: new { controller = "Home", action = "OutfitViewer" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "worlddata",
                     pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }

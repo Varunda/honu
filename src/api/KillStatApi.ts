@@ -28,6 +28,7 @@ export class KillEvent {
     public zoneID: number = 0;
     public weaponID: string = "";
     public isHeadshot: boolean = false;
+    public revivedEventID: number = 0;
     public timestamp: Date = new Date();
 }
 

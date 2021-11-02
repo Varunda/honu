@@ -36,5 +36,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult OutfitViewer(string outfitID) {
+            return View();
+        }
+
     }
 }
