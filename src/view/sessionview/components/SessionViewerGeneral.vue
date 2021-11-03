@@ -60,43 +60,43 @@
                 </td>
             </tr>
 
-            <tr v-if="classPlaytime.medic > 0">
+            <tr v-if="classPlaytime.medic.secondsAs > 0">
                 <td>Revives</td>
                 <td>
                     {{expRevives.length}}
                 </td>
                 <td>
-                    {{expRevives.length / classPlaytime.medic * 60 | fixed | locale}}
+                    {{expRevives.length / classPlaytime.medic.secondsAs * 60 | fixed | locale}}
                 </td>
             </tr>
 
-            <tr v-if="classPlaytime.medic > 0">
+            <tr v-if="classPlaytime.medic.secondsAs > 0">
                 <td>Heals</td>
                 <td>
                     {{expHeals.length}}
                 </td>
                 <td>
-                    {{expHeals.length / classPlaytime.medic * 60 | fixed | locale}}
+                    {{expHeals.length / classPlaytime.medic.secondsAs * 60 | fixed | locale}}
                 </td>
             </tr>
 
-            <tr v-if="classPlaytime.engineer > 0"> 
+            <tr v-if="classPlaytime.engineer.secondsAs > 0"> 
                 <td>Resupplies</td>
                 <td>
                     {{expResupplies.length}}
                 </td>
                 <td>
-                    {{expResupplies.length / classPlaytime.engineer * 60 | fixed | locale}}
+                    {{expResupplies.length / classPlaytime.engineer.secondsAs * 60 | fixed | locale}}
                 </td>
             </tr>
 
-            <tr v-if="classPlaytime.engineer > 0">
+            <tr v-if="classPlaytime.engineer.secondsAs > 0">
                 <td>Repairs</td>
                 <td>
                     {{expRepairs.length}}
                 </td>
                 <td>
-                    {{expRepairs.length / classPlaytime.engineer * 60 | fixed | locale}}
+                    {{expRepairs.length / classPlaytime.engineer.secondsAs * 60 | fixed | locale}}
                 </td>
             </tr>
         </table>
@@ -109,6 +109,7 @@
                 <td>Kills</td>
                 <td>Deaths</td>
                 <td>K/D</td>
+                <td>KPM</td>
             </tr>
 
             <tr>
@@ -118,6 +119,7 @@
                 <td>{{classPlaytime.infil.kills}}</td>
                 <td>{{classPlaytime.infil.deaths}}</td>
                 <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr>
@@ -127,6 +129,7 @@
                 <td>{{classPlaytime.lightAssault.kills}}</td>
                 <td>{{classPlaytime.lightAssault.deaths}}</td>
                 <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr>
@@ -136,6 +139,7 @@
                 <td>{{classPlaytime.medic.kills}}</td>
                 <td>{{classPlaytime.medic.deaths}}</td>
                 <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr>
@@ -145,6 +149,7 @@
                 <td>{{classPlaytime.engineer.kills}}</td>
                 <td>{{classPlaytime.engineer.deaths}}</td>
                 <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr>
@@ -154,6 +159,7 @@
                 <td>{{classPlaytime.heavy.kills}}</td>
                 <td>{{classPlaytime.heavy.deaths}}</td>
                 <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr>
@@ -163,11 +169,12 @@
                 <td>{{classPlaytime.max.kills}}</td>
                 <td>{{classPlaytime.max.deaths}}</td>
                 <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.deaths, 1) | fixed}}</td>
+                <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.secondsAs, 1) * 60 | fixed | locale}}</td>
             </tr>
 
             <tr class="table-secondary">
                 <td><b>Total</b></td>
-                <td colspan="5">
+                <td colspan="6">
                     {{durationInSeconds | mduration}}
                 </td>
             </tr>
