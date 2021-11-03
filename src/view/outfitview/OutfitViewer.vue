@@ -33,7 +33,7 @@
         </div>
 
         <div v-if="outfit.state == 'loaded'">
-            <table class="table table-sm">
+            <table class="table table-sm w-auto">
                 <tr>
                     <td><b>Tag</b></td>
                     <td>{{outfit.data.tag}}</td>
@@ -59,7 +59,6 @@
                     </td>
                 </tr>
             </table>
-
         </div>
 
 

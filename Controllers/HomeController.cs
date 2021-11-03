@@ -24,6 +24,10 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult MassSession() {
+            return View();
+        }
+
         public IActionResult Character() {
             return View();
         }

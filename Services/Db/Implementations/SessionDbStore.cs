@@ -75,6 +75,29 @@ namespace watchtower.Services.Db.Implementations {
             return session;
         }
 
+        public async Task<List<Session>> GetByRangeAndOutfit(string? outfitID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE outfit_id = @OutfitID
+                        AND ((start BETWEEN @PeriodStart AND @PeriodEnd)
+                            OR (start <= @PeriodStart AND finish >= @PeriodEnd)
+                            OR (start >= @PeriodStart AND finish <= @PeriodEnd)
+                            OR (start < @PeriodSTart AND finish IS NULL)
+                        )
+            ");
+
+            cmd.AddParameter("OutfitID", outfitID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<Session> sessions = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
         public async Task Start(TrackedPlayer player) {
             if (player.Online == true) {
                 return;

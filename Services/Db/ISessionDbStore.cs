@@ -39,6 +39,18 @@ namespace watchtower.Services.Db {
         Task<Session?> GetByID(long sessionID);
 
         /// <summary>
+        ///     Get all sessions between two ranges within an outfit
+        /// </summary>
+        /// <param name="outfitID">Optional ID of the outfit to provide</param>
+        /// <param name="start">Start range</param>
+        /// <param name="end">End range</param>
+        /// <returns>
+        ///     A list of all <see cref="Session"/>s that occured between <paramref name="start"/> and <paramref name="end"/>,
+        ///     with <see cref="Session.OutfitID"/> of <paramref name="outfitID"/>
+        /// </returns>
+        Task<List<Session>> GetByRangeAndOutfit(string? outfitID, DateTime start, DateTime end);
+
+        /// <summary>
         ///     Start a new session of a tracked player
         /// </summary>
         /// <param name="player">Player that will have a new session</param>
@@ -47,8 +59,21 @@ namespace watchtower.Services.Db {
         /// </returns>
         Task Start(TrackedPlayer player);
 
+        /// <summary>
+        ///     End an existing session of a tracked player
+        /// </summary>
+        /// <param name="player">Player who's session is endign</param>
+        /// <returns>
+        ///     A task for when the task is complete
+        /// </returns>
         Task End(TrackedPlayer player);
 
+        /// <summary>
+        ///     End all sessions currently opened in the DB
+        /// </summary>
+        /// <returns>
+        ///     A task for when the operation is complete
+        /// </returns>
         Task EndAll();
 
     }

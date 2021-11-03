@@ -335,22 +335,22 @@
                 }
 
                 this.classPlaytime.infil.kills = this.kills.filter(iter => Loadout.isInfiltrator(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.infil.deaths = this.deaths.filter(iter => Loadout.isInfiltrator(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.infil.deaths = this.deaths.filter(iter => Loadout.isInfiltrator(iter.event.killedLoadoutID)).length;
 
                 this.classPlaytime.lightAssault.kills = this.kills.filter(iter => Loadout.isLightAssault(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.lightAssault.deaths = this.deaths.filter(iter => Loadout.isLightAssault(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.lightAssault.deaths = this.deaths.filter(iter => Loadout.isLightAssault(iter.event.killedLoadoutID)).length;
 
                 this.classPlaytime.medic.kills = this.kills.filter(iter => Loadout.isMedic(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.medic.deaths = this.deaths.filter(iter => Loadout.isMedic(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.medic.deaths = this.deaths.filter(iter => Loadout.isMedic(iter.event.killedLoadoutID)).length;
 
                 this.classPlaytime.engineer.kills = this.kills.filter(iter => Loadout.isEngineer(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.engineer.deaths = this.deaths.filter(iter => Loadout.isEngineer(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.engineer.deaths = this.deaths.filter(iter => Loadout.isEngineer(iter.event.killedLoadoutID)).length;
 
                 this.classPlaytime.heavy.kills = this.kills.filter(iter => Loadout.isHeavy(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.heavy.deaths = this.deaths.filter(iter => Loadout.isHeavy(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.heavy.deaths = this.deaths.filter(iter => Loadout.isHeavy(iter.event.killedLoadoutID)).length;
 
                 this.classPlaytime.max.kills = this.kills.filter(iter => Loadout.isMax(iter.event.attackerLoadoutID)).length;
-                this.classPlaytime.max.deaths = this.deaths.filter(iter => Loadout.isMax(iter.event.attackerLoadoutID)).length;
+                this.classPlaytime.max.deaths = this.deaths.filter(iter => Loadout.isMax(iter.event.killedLoadoutID)).length;
 
                 if (this.chart == null) {
                     this.generateClassPlaytimeChart();
