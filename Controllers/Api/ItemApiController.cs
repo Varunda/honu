@@ -113,7 +113,7 @@ namespace watchtower.Controllers.Api {
 
                 buckets.Add(b);
 
-                _Logger.LogInformation($"Bucket {i} - {i + bucketWidth} = {count}");
+                //_Logger.LogInformation($"Bucket {i} - {i + bucketWidth} = {count}");
             }
 
             /*
