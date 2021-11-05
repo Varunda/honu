@@ -19,6 +19,16 @@ namespace watchtower.Services.Db {
         Task<List<WeaponStatEntry>> GetByCharacterID(string charID);
 
         /// <summary>
+        ///     Get all the <see cref="WeaponStatEntry"/> for a weapon
+        /// </summary>
+        /// <param name="itemID">ID of the weapon</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
+        /// <returns>
+        ///     A list of all <see cref="WeaponStatEntry"/> with <see cref="WeaponStatEntry.WeaponID"/> of <paramref name="itemID"/>
+        /// </returns>
+        Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills = null);
+
+        /// <summary>
         ///     Update or insert an entry
         /// </summary>
         /// <param name="entry">Entry to upsert</param>

@@ -43,15 +43,17 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
-        public async Task<List<WeaponStatEntry>> GetByItemID(string itemID) {
+        public async Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM weapon_stats
                     WHERE item_id = @ItemID
+                        AND kills > @MinKills
             ");
 
             cmd.AddParameter("ItemID", itemID);
+            cmd.AddParameter("MinKills", minKills ?? 0);
 
             List<WeaponStatEntry> entry = await ReadList(cmd);
             await conn.CloseAsync();

@@ -26,6 +26,7 @@ namespace watchtower.Code.Commands {
         private readonly IItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
+        private readonly ICharacterWeaponStatDbStore _StatDb;
 
         public WeaponStatsCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<WeaponStatsCommand>>();
@@ -35,6 +36,7 @@ namespace watchtower.Code.Commands {
             _ItemRepository = services.GetRequiredService<IItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
             _PercentileQueue = services.GetRequiredService<IBackgroundWeaponPercentileCacheQueue>();
+            _StatDb = services.GetRequiredService<ICharacterWeaponStatDbStore>();
         }
 
         public async Task Char(string charName) {
@@ -57,6 +59,55 @@ namespace watchtower.Code.Commands {
             }
 
             _Logger.LogInformation($"done");
+        }
+
+        class Bucket {
+            public double Start { get; set; } = 0d;
+            public double Width { get; set; } = 0d;
+            public int Count { get; set; }
+        }
+
+        public async Task edf(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
+
+            if (entries.Count < 1) {
+                _Logger.LogWarning($"Have {entries.Count} stats for {itemID}");
+                return;
+            }
+
+            List<WeaponStatEntry> sorted = entries.OrderByDescending(iter => iter.KillsPerMinute).ToList();
+
+            double maxKpm = sorted.First().KillsPerMinute;
+            double minKpm = sorted.Last().KillsPerMinute;
+
+            double bucketWidth = (maxKpm - minKpm) / 100;
+
+            List<Bucket> buckets = new List<Bucket>();
+
+            Bucket iter = new Bucket() {
+                Start = minKpm,
+                Width = bucketWidth,
+                Count = 0
+            };
+
+            for (int i = sorted.Count - 1; i >= 0; --i) {
+                WeaponStatEntry entry = sorted[i];
+
+                if (entry.KillsPerMinute > (iter.Start + iter.Width)) {
+                    buckets.Add(iter);
+                    iter = new Bucket() {
+                        Start = entry.KillsPerMinute,
+                        Width = bucketWidth,
+                        Count = 0
+                    };
+                }
+
+                ++iter.Count;
+            }
+
+            foreach (Bucket b in buckets) {
+                _Logger.LogInformation($"{b.Start} - {b.Start + b.Width} = {b.Count}");
+            }
         }
 
         public async Task Regen(string itemID) {

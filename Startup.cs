@@ -205,6 +205,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "itemstatviewer",
+                    pattern: "/i/{itemID}/{*.}",
+                    defaults: new { controller = "Home", action = "ItemStatViewer" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "worlddata",
                     pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }

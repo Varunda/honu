@@ -55,11 +55,9 @@ namespace watchtower.Services.Repositories.Implementations {
                     }
                 }
 
-                if (item != null) {
-                    _Cache.Set(key, item, new MemoryCacheEntryOptions() {
-                        SlidingExpiration = TimeSpan.FromMinutes(20)
-                    });
-                }
+                _Cache.Set(key, item, new MemoryCacheEntryOptions() {
+                    SlidingExpiration = TimeSpan.FromMinutes(20)
+                });
             }
 
             return item;

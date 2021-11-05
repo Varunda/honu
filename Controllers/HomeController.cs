@@ -32,6 +32,10 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult ItemStatViewer() {
+            return View();
+        }
+
         public IActionResult CharacterViewer(string charID) {
             return View();
         }

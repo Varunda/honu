@@ -26,7 +26,9 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.itemName}}
+                    <a :href="'/i/' + entry.itemID">
+                        {{entry.itemName}}
+                    </a>
                     <span v-if="showDebug == true">
                         / {{entry.itemID}}
                     </span>
