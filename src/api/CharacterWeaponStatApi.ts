@@ -138,7 +138,7 @@ export class CharacterWeaponStatApi {
 	}
 
 	public static async getTopHeadshotRatio(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/headshotRatio`);
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/hsr`);
 
 		if (response.status != 200) {
 			throw ``;

@@ -84,6 +84,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / Outfit / <loading...>`;
+        },
+
         beforeMount: function(): void {
             this.parseOutfitIDFromUrl();
             this.bindOutfit();
@@ -108,6 +112,13 @@
             bindOutfit: async function(): Promise<void> {
                 this.outfit = Loadable.loading();
                 this.outfit = await Loadable.promise(OutfitApi.getByID(this.outfitID));
+
+                if (this.outfit.state == "loaded") {
+                    document.title = `Honu / Outfit / ${this.outfit.data?.name}`;
+                } else {
+                    document.title = `Honu / Outfit / <not found>`;
+                }
+
             }
         }
 

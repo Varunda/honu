@@ -62,6 +62,10 @@
             data: { required: false }
         },
 
+        created: function(): void {
+            document.title = `Honu / Homepage`;
+        },
+
         data: function() {
             return {
 

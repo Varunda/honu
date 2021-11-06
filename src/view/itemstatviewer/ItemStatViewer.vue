@@ -31,94 +31,9 @@
             <item-percentile-viewer :item-id="itemID"></item-percentile-viewer>
         </div>
 
-        <div v-if="topKd.state == 'loaded'">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Character</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in topKd.data">
-                        <td>{{entry.character.name}}</td>
-                        <td>{{entry.entry.killDeathRatio}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="topKpm.state == 'loaded'">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Character</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in topKpm.data">
-                        <td>{{entry.character.name}}</td>
-                        <td>{{entry.entry.killsPerMinute}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="topAcc.state == 'loaded'">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Character</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in topAcc.data">
-                        <td>{{entry.character.name}}</td>
-                        <td>{{entry.entry.accuracy}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="topHsr.state == 'loaded'">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Character</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in topHsr.data">
-                        <td>{{entry.character.name}}</td>
-                        <td>{{entry.entry.headshotRatio}}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="topKills.state == 'loaded'">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Character</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in topKills.data">
-                        <td>{{entry.character.name}}</td>
-                        <td>{{entry.entry.kills}}</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div>
+            <h2 class="wt-header">Top</h2>
+            <item-top-viewer :item-id="itemID"></item-top-viewer>
         </div>
 
     </div>
@@ -132,6 +47,7 @@
     import { ExpandedWeaponStatEntry, CharacterWeaponStatApi } from "api/CharacterWeaponStatApi";
 
     import ItemPercentileViewer from "./components/ItemPercentileViewer.vue";
+    import ItemTopViewer from "./components/ItemTopViewer.vue";
 
     export const ItemStatViewer = Vue.extend({
         props: {
@@ -150,6 +66,10 @@
                 topHsr: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
                 topKills: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
             }
+        },
+
+        created: function(): void {
+            document.title = `Honu / Item / <loading...>`;
         },
 
         beforeMount: function(): void {
@@ -177,6 +97,12 @@
                 this.item = Loadable.loading();
                 this.item = await Loadable.promise(ItemApi.getByID(this.itemID));
 
+                if (this.item.state == "loaded" || (this.item as any).data == null) {
+                    document.title = `Honu / Item / ${(this.item as any).data.name}`;
+                } else {
+                    document.title = `Honu / Item / ${this.itemID}`;
+                }
+
                 this.topKd = Loadable.loading();
                 this.topKd = await Loadable.promise(CharacterWeaponStatApi.getTopKD(this.itemID));
                 this.topKpm = await Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.itemID));
@@ -188,7 +114,8 @@
         },
 
         components: {
-            ItemPercentileViewer
+            ItemPercentileViewer,
+            ItemTopViewer
         }
     });
     export default ItemStatViewer;

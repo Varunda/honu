@@ -22,7 +22,9 @@ import "MomentFilter";
 const vm = new Vue({
 	el: "#app",
 
-	created: function (): void {
+	created: function(): void {
+		document.title = `Honu / Realtime`;
+
 		this.socketState = "unconnected";
 
 		this.connection = new sR.HubConnectionBuilder()
@@ -126,16 +128,22 @@ const vm = new Vue({
 				const world: string = parts[2].toLowerCase();
 
 				if (world == "connery" || world == "1") {
+					document.title = `Honu / Server / Connery`;
 					this.subscribeToWorld(1);
 				} else if (world == "miller" || world == "10") {
+					document.title = `Honu / Server / Miller`;
 					this.subscribeToWorld(10);
 				} else if (world == "cobalt" || world == "13") {
+					document.title = `Honu / Server / Cobalt`;
 					this.subscribeToWorld(13);
 				} else if (world == "emerald" || world == "17") {
+					document.title = `Honu / Server / Emerald`;
 					this.subscribeToWorld(17);
 				} else if (world == "jaeger" || world == "jeager" || world == "19") { // common misspelling
+					document.title = `Honu / Server / Jaeger`;
 					this.subscribeToWorld(19);
 				} else if (world == "soltech" || world == "40") {
+					document.title = `Honu / Server / SolTech`;
 					this.subscribeToWorld(40);
 				} else {
 					console.error(`Unknown world ${world}`);

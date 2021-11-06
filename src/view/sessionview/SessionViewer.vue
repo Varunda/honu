@@ -248,6 +248,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / Session / <loading...>`;
+        },
+
         beforeMount: function(): void {
             this.getSessionIDFromUrl();
             this.bindAll();
@@ -267,6 +271,8 @@
                 } else {
                     throw `Failed to parse parts[2] '${parts[2]}' into a number, got ${sessionID}`;
                 }
+
+                document.title = `Honu / Session / ${this.sessionID}`;
             },
 
             bindAll: function(): void {

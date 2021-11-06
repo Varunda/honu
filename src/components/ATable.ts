@@ -382,7 +382,15 @@ export const ATable = Vue.extend({
                 rows
             );
         } else {
-            return createElement("table", { staticClass: "table a-table" }, rows);
+            return createElement("table",
+                {
+                    staticClass: "table a-table",
+                    class: {
+                        "table-sm": (this.RowPadding == "compact")
+					}
+                },
+                rows
+            );
         }
     },
 

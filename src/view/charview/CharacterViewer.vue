@@ -102,6 +102,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / Char / <loading...>`;
+        },
+
         methods: {
             selectTab: function(tab: string): void {
                 this.selectedTab = tab.toLowerCase();
@@ -136,8 +140,10 @@
                 CharacterApi.getByID(this.charID).then((data: PsCharacter | null) => {
                     if (data == null) {
                         this.character = Loadable.nocontent();
+                        document.title = `Honu / Char / <not found>`;
                     } else {
                         this.character = Loadable.loaded(data);
+                        document.title = `Honu / Char / ${data.name}`;
                         console.log(`Loaded character: ${this.character}`);
                     }
                 }).catch((err: any) => {

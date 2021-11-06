@@ -130,6 +130,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / Character search`;
+        },
+
         methods: {
             getByNameWrapper: function() {
                 this.lastSearch = this.charName;

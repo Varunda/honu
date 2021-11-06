@@ -67,6 +67,10 @@
 
         },
 
+        created: function(): void {
+            document.title = `Honu / PEEPERS`;
+        },
+
         data: function() {
             return {
                 worldID: 1 as number,

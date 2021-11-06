@@ -150,6 +150,7 @@
         },
 
         created: function(): void {
+            document.title = `Honu / Ledger`;
             this.bindLedgerData();
         },
 
