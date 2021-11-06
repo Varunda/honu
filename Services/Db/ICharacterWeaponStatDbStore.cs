@@ -29,6 +29,15 @@ namespace watchtower.Services.Db {
         Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills = null);
 
         /// <summary>
+        ///     Get the top performers with a weapon
+        /// </summary>
+        /// <param name="itemID"></param>
+        /// <param name="worlds"></param>
+        /// <param name="factions"></param>
+        /// <returns></returns>
+        Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> Worlds, List<short> factions);
+
+        /// <summary>
         ///     Update or insert an entry
         /// </summary>
         /// <param name="entry">Entry to upsert</param>
@@ -36,4 +45,28 @@ namespace watchtower.Services.Db {
         Task Upsert(WeaponStatEntry entry);
 
     }
+
+    public static class ICharacterWeaponStatDbStoreExtensionMethods {
+
+        public static Task<List<WeaponStatEntry>> GetTopKD(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "kd", worlds, factions);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopKPM(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "kpm", worlds, factions);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopAccuracy(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "acc", worlds, factions);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopHeadshotRatio(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "hsr", worlds, factions);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopKills(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "kills", worlds, factions);
+        }
+    }
+
 }

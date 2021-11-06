@@ -23,16 +23,18 @@ namespace watchtower.Controllers.Api {
         private readonly IItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
+        private readonly ICharacterRepository _CharacterRepository;
 
         public ItemApiController(ILogger<ItemApiController> logger,
             IItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
-            ICharacterWeaponStatDbStore statDb) {
+            ICharacterWeaponStatDbStore statDb, ICharacterRepository charRepo) {
 
             _Logger = logger;
 
             _ItemRepository = itemRepo;
             _PercentileDb = percDb ?? throw new ArgumentNullException(nameof(percDb));
             _StatDb = statDb ?? throw new ArgumentNullException(nameof(statDb));
+            _CharacterRepository = charRepo;
         }
 
         [HttpGet("{itemID}")]
@@ -58,6 +60,46 @@ namespace watchtower.Controllers.Api {
             return Ok(items);
         }
 
+        [HttpGet("{itemID}/top/kd")]
+        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
+            List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
+
+            return Ok(expanded);
+        }
+
+        [HttpGet("{itemID}/top/kpm")]
+        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKPM(itemID, new List<short>(), new List<short>());
+            List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
+
+            return Ok(expanded);
+        }
+
+        [HttpGet("{itemID}/top/accuracy")]
+        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopAccuracy(itemID, new List<short>(), new List<short>());
+            List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
+
+            return Ok(expanded);
+        }
+
+        [HttpGet("{itemID}/top/hsr")]
+        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopHeadshotRatio(itemID, new List<short>(), new List<short>());
+            List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
+
+            return Ok(expanded);
+        }
+
+        [HttpGet("{itemID}/top/kills")]
+        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKills(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKills(itemID, new List<short>(), new List<short>());
+            List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
+
+            return Ok(expanded);
+        }
+
         [HttpGet("{itemID}/percentile_stats")]
         public async Task<ActionResult<WeaponStatPercentileAll>> GetPercentileStats(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
@@ -70,6 +112,23 @@ namespace watchtower.Controllers.Api {
             all.HeadshotRatio = GetBuckets(entries.Select(iter => iter.HeadshotRatio * 100).ToList(), 100);
 
             return Ok(all);
+        }
+
+        private async Task<List<ExpandedWeaponStatEntry>> GetExpanded(List<WeaponStatEntry> entries) {
+            List<ExpandedWeaponStatEntry> expanded = new List<ExpandedWeaponStatEntry>(entries.Count);
+
+            foreach (WeaponStatEntry entry in entries) {
+                ExpandedWeaponStatEntry ex = new ExpandedWeaponStatEntry() {
+                    Entry = entry
+                };
+
+                PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID);
+                ex.Character = c;
+
+                expanded.Add(ex);
+            }
+
+            return expanded;
         }
 
         private List<Bucket> GetBuckets(List<double> values, int bucketCount) {

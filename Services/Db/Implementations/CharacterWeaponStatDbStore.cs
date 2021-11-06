@@ -43,6 +43,35 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
+        public async Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> worlds, List<short> factions) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
+                WITH top AS (
+                    SELECT *
+                        FROM weapon_stats
+                        WHERE item_id = @ItemID
+                            AND kills > 1159
+                        ORDER BY {column} DESC
+                        LIMIT 100
+                )
+                SELECT *
+                    FROM top ws
+                        INNER JOIN wt_character c ON ws.character_id = c.id
+                    WHERE item_id = @ItemID
+                        {(worlds.Count > 0 ? "AND c.world_id = ANY(@WorldID) " : "")}
+                        {(factions.Count > 0 ? "AND c.faction_id = ANY(@FactionID) " : "")}
+            ");
+
+            cmd.AddParameter("ItemID", itemID);
+            cmd.AddParameter("WorldID", worlds.Count == 0 ? null : worlds);
+            cmd.AddParameter("FactionID", factions.Count == 0 ? null : factions);
+
+            List<WeaponStatEntry> entry = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entry;
+        }
+
         public async Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

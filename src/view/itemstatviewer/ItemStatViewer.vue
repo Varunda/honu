@@ -26,9 +26,99 @@
             </h1>
         </div>
 
-        <div>
+        <div class="w-100 mw-100">
             <h2 class="wt-header">Percentile stats</h2>
             <item-percentile-viewer :item-id="itemID"></item-percentile-viewer>
+        </div>
+
+        <div v-if="topKd.state == 'loaded'">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Character</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in topKd.data">
+                        <td>{{entry.character.name}}</td>
+                        <td>{{entry.entry.killDeathRatio}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="topKpm.state == 'loaded'">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Character</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in topKpm.data">
+                        <td>{{entry.character.name}}</td>
+                        <td>{{entry.entry.killsPerMinute}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="topAcc.state == 'loaded'">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Character</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in topAcc.data">
+                        <td>{{entry.character.name}}</td>
+                        <td>{{entry.entry.accuracy}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="topHsr.state == 'loaded'">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Character</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in topHsr.data">
+                        <td>{{entry.character.name}}</td>
+                        <td>{{entry.entry.headshotRatio}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div v-if="topKills.state == 'loaded'">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Character</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in topKills.data">
+                        <td>{{entry.character.name}}</td>
+                        <td>{{entry.entry.kills}}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
     </div>
@@ -39,6 +129,7 @@
     import { Loadable, Loading } from "Loading";
 
     import { PsItem, ItemApi } from "api/ItemApi";
+    import { ExpandedWeaponStatEntry, CharacterWeaponStatApi } from "api/CharacterWeaponStatApi";
 
     import ItemPercentileViewer from "./components/ItemPercentileViewer.vue";
 
@@ -51,7 +142,13 @@
             return {
                 itemID: "" as string,
 
-                item: Loadable.idle() as Loading<PsItem | null>
+                item: Loadable.idle() as Loading<PsItem | null>,
+
+                topKd: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
+                topKpm: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
+                topAcc: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
+                topHsr: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
+                topKills: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
             }
         },
 
@@ -61,7 +158,6 @@
         },
 
         methods: {
-
             getItemIdFromUrl: function(): void {
                 const parts: string[] = location.pathname.split("/");
                 if (parts.length < 3) {
@@ -80,6 +176,13 @@
             bindItem: async function(): Promise<void> {
                 this.item = Loadable.loading();
                 this.item = await Loadable.promise(ItemApi.getByID(this.itemID));
+
+                this.topKd = Loadable.loading();
+                this.topKd = await Loadable.promise(CharacterWeaponStatApi.getTopKD(this.itemID));
+                this.topKpm = await Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.itemID));
+                this.topAcc = await Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.itemID));
+                this.topHsr = await Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.itemID));
+                this.topKills = await Loadable.promise(CharacterWeaponStatApi.getTopKills(this.itemID));
             }
 
         },

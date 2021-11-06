@@ -7,27 +7,43 @@
 
         <div v-else-if="all.state == 'loaded'">
             <h3>KD</h3>
-            <chart-item-percentile-stats :stats="all.data.kd" name="KD" v-if="all.data.kd != null"></chart-item-percentile-stats>
-            <div v-else>
-                KD data missing
+            <div class="row" v-if="all.data.kd != null">
+                <div class="col-6">
+                    <chart-item-percentile-stats :stats="all.data.kd" name="KD"></chart-item-percentile-stats>
+                </div>
+                <div class="col-6">
+                    <chart-item-total-stats :stats="all.data.kd" name="KD"></chart-item-total-stats>
+                </div>
             </div>
 
             <h3>KPM</h3>
-            <chart-item-percentile-stats :stats="all.data.kpm" name="KPM" v-if="all.data.kpm != null"></chart-item-percentile-stats>
-            <div v-else>
-                KPM data missing
+            <div class="row" v-if="all.data.kpm != null">
+                <div class="col-6">
+                    <chart-item-percentile-stats :stats="all.data.kpm" name="KPM"></chart-item-percentile-stats>
+                </div>
+                <div class="col-6">
+                    <chart-item-total-stats :stats="all.data.kpm" name="KPM"></chart-item-total-stats>
+                </div>
             </div>
 
             <h3>Accuracy</h3>
-            <chart-item-percentile-stats :stats="all.data.accuracy" name="Acc%" v-if="all.data.accuracy != null"></chart-item-percentile-stats>
-            <div v-else>
-                Accuracy data missing
+            <div class="row" v-if="all.data.accuracy != null">
+                <div class="col-6">
+                    <chart-item-percentile-stats :stats="all.data.accuracy" name="Acc%"></chart-item-percentile-stats>
+                </div>
+                <div class="col-6">
+                    <chart-item-total-stats :stats="all.data.accuracy" name="Acc%"></chart-item-total-stats>
+                </div>
             </div>
 
             <h3>Headshot Ratio</h3>
-            <chart-item-percentile-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-percentile-stats>
-            <div v-else>
-                Headshot ratio data missing
+            <div class="row" v-if="all.data.headshotRatio != null">
+                <div class="col-6">
+                    <chart-item-percentile-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-percentile-stats>
+                </div>
+                <div class="col-6">
+                    <chart-item-total-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-total-stats>
+                </div>
             </div>
         </div>
 
@@ -49,6 +65,7 @@
     import { ItemPercentileStats, ItemPercentileAll, ItemApi } from "api/ItemApi";
 
     import ChartItemPercentileStats from "./ChartItemPercentileStats.vue";
+    import ChartItemTotalStats from "./ChartItemTotalStats.vue";
 
     export const ItemPercentileViewer = Vue.extend({
         props: {
@@ -73,7 +90,8 @@
         },
 
         components: {
-            ChartItemPercentileStats
+            ChartItemPercentileStats,
+            ChartItemTotalStats
         }
     });
     export default ItemPercentileViewer;

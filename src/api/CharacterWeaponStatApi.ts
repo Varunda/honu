@@ -1,6 +1,7 @@
 ﻿import * as axios from "axios";
 
 import { PsItem } from "api/ItemApi";
+import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
 export class WeaponStatEntry {
 	public weaponID: string = "";
@@ -42,9 +43,21 @@ export class CharacterWeaponStatEntry {
 	public hsrPercent: number | null = null;
 }
 
+export class ExpandedWeaponStatEntry {
+	public entry: WeaponStatEntry = new WeaponStatEntry();
+	public character: PsCharacter | null = null;
+}
+
 export class CharacterWeaponStatApi {
 	private static _instance: CharacterWeaponStatApi = new CharacterWeaponStatApi();
 	public static get(): CharacterWeaponStatApi { return CharacterWeaponStatApi._instance; }
+
+	public static parseWeaponStat(elem: any): WeaponStatEntry {
+		return {
+			...elem,
+			timestamp: new Date(elem.timestamp)
+		};
+	}
 
 	private static _parse(elem: any): CharacterWeaponStatEntry {
 		return {
@@ -73,6 +86,13 @@ export class CharacterWeaponStatApi {
 		}
 	}
 
+	private static parseExpanded(elem: any): ExpandedWeaponStatEntry {
+		return {
+			entry: CharacterWeaponStatApi.parseWeaponStat(elem.entry),
+			character: elem.character == null ? null : CharacterApi.parse(elem.character)
+		};
+	}
+
 	public static async getByCharacterID(charID: string): Promise<CharacterWeaponStatEntry[]> {
         const response: axios.AxiosResponse<any> = await axios.default.get(`/api/character/${charID}/weapon_stats`);
 
@@ -86,5 +106,57 @@ export class CharacterWeaponStatApi {
 
 		return response.data.map((iter: any) => CharacterWeaponStatApi._parse(iter));
 	}
+
+	public static async getTopKD(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kd`);
+
+		if (response.status != 200) {
+			throw ``;
+		}
+
+		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	}
+
+	public static async getTopKPM(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kpm`);
+
+		if (response.status != 200) {
+			throw ``;
+		}
+
+		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	}
+
+	public static async getTopAccuracy(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/accuracy`);
+
+		if (response.status != 200) {
+			throw ``;
+		}
+
+		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	}
+
+	public static async getTopHeadshotRatio(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/headshotRatio`);
+
+		if (response.status != 200) {
+			throw ``;
+		}
+
+		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	}
+
+	public static async getTopKills(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kills`);
+
+		if (response.status != 200) {
+			throw ``;
+		}
+
+		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	}
+
+
 
 }

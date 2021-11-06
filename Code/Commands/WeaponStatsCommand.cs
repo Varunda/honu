@@ -110,6 +110,14 @@ namespace watchtower.Code.Commands {
             }
         }
 
+        public async Task TopKd(string itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
+
+            foreach (WeaponStatEntry e in entries) {
+                _Logger.LogInformation($"{e.CharacterID} {e.Kills} / {e.Deaths} = {e.KillDeathRatio}");
+            }
+        }
+
         public async Task Regen(string itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
 

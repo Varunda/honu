@@ -1,5 +1,5 @@
 ﻿<template>
-    <canvas :id="'chart-item-percentile-stats-' + ID" style="height: 300px; max-height: 300px;" class="mb-2"></canvas>
+    <canvas :id="'chart-item-total-stats-' + ID" style="height: 300px; max-height: 300px;" class="mb-2"></canvas>
 </template>
 
 <script lang="ts">
@@ -11,7 +11,7 @@
 
     import { randomRGB, rgbToString, randomColors } from "util/Color";
 
-    export const ChartItemPercentileStats = Vue.extend({
+    export const ChartItemTotalStats = Vue.extend({
         props: {
             stats: { type: Array as PropType<Bucket[]>, required: true },
             name: { type: String, required: true }
@@ -38,7 +38,7 @@
                     this.chart = null;
                 }
 
-                const elem = document.getElementById(`chart-item-percentile-stats-${this.ID}`);
+                const elem = document.getElementById(`chart-item-total-stats-${this.ID}`);
                 if (elem == null) {
                     throw `Failed to get canvas #chart-item-percentile-stats-${this.ID}`;
                 }
@@ -49,12 +49,14 @@
 
                 console.log(`Graphing over ${this.stats.length} buckets`);
 
+                let acc: number = 0;
+
                 this.chart = new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: this.stats.map((iter: Bucket) => `${iter.start.toFixed(4)}`),
                         datasets: [{
-                            data: this.stats.map((iter: Bucket) => iter.count / total * 100),
+                            data: this.stats.map((iter: Bucket) => (acc += iter.count) / total * 100),
                             fill: true,
                             backgroundColor: randomColors(Math.random(), 1)[0],
                             label: this.name,
@@ -109,5 +111,5 @@
 
         }
     });
-    export default ChartItemPercentileStats;
+    export default ChartItemTotalStats;
 </script>
