@@ -132,6 +132,10 @@ namespace watchtower.Controllers.Api {
         }
 
         private List<Bucket> GetBuckets(List<double> values, int bucketCount) {
+            if (values.Count == 0) {
+                return new List<Bucket>();
+            }
+
             List<double> sorted = values.OrderBy(iter => iter).ToList();
 
             int mi = MedianIndex(0, values.Count);
@@ -145,6 +149,10 @@ namespace watchtower.Controllers.Api {
             double iqr = q3 - q1;
 
             sorted = sorted.Where(iter => iter < q3 + (iqr * 8)).ToList();
+
+            if (sorted.Count == 0) {
+                return new List<Bucket>();
+            }
 
             double max = sorted.Last();
             double min = sorted.First();

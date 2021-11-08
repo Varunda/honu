@@ -201,7 +201,7 @@
         </h4>
 
         <div class="grid-vs-player-kills">
-            <player-kill-block :block="worldData.vs"></player-kill-block>
+            <player-kill-block :block="worldData.vs" link="'/c/'"></player-kill-block>
         </div>
 
         <div class="grid-vs-outfit-kills">
@@ -213,7 +213,7 @@
         </div>
 
         <div class="grid-vs-heals d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerHeals" 
+            <block-view class="mr-3" :block="worldData.vs.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
             <block-view :block="worldData.vs.outfitHeals" title="Outfits"
@@ -222,7 +222,7 @@
         </div>
 
         <div class="grid-vs-revives d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerRevives" 
+            <block-view class="mr-3" :block="worldData.vs.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
             <block-view :block="worldData.vs.outfitRevives" title="Outfits"
@@ -231,7 +231,7 @@
         </div>
 
         <div class="grid-vs-shields d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerShieldRepair"
+            <block-view class="mr-3" :block="worldData.vs.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
             <block-view :block="worldData.vs.outfitShieldRepair"
@@ -240,7 +240,7 @@
         </div>
 
         <div class="grid-vs-resupplies d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerResupplies" 
+            <block-view class="mr-3" :block="worldData.vs.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplies">
             </block-view>
             <block-view :block="worldData.vs.outfitResupplies" title="Outfits"
@@ -249,7 +249,7 @@
         </div>
 
         <div class="grid-vs-spawns d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerSpawns" 
+            <block-view class="mr-3" :block="worldData.vs.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawn">
             </block-view>
             <block-view :block="worldData.vs.outfitSpawns" title="Outfits"
@@ -258,7 +258,7 @@
         </div>
 
         <div class="grid-vs-vehicle-kills d-flex">
-            <block-view class="mr-3" :block="worldData.vs.playerVehicleKills"
+            <block-view class="mr-3" :block="worldData.vs.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
             <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit"
@@ -295,7 +295,7 @@
         </div>
 
         <div class="grid-nc-heals d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerHeals" 
+            <block-view class="mr-3" :block="worldData.nc.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
             <block-view :block="worldData.nc.outfitHeals" title="Outfits"
@@ -304,7 +304,7 @@
         </div>
 
         <div class="grid-nc-revives d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerRevives" 
+            <block-view class="mr-3" :block="worldData.nc.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
             <block-view :block="worldData.nc.outfitRevives" title="Outfits"
@@ -313,7 +313,7 @@
         </div>
 
         <div class="grid-nc-shields d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerShieldRepair"
+            <block-view class="mr-3" :block="worldData.nc.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
             <block-view :block="worldData.nc.outfitShieldRepair"
@@ -322,7 +322,7 @@
         </div>
 
         <div class="grid-nc-resupplies d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerResupplies" 
+            <block-view class="mr-3" :block="worldData.nc.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplies">
             </block-view>
             <block-view :block="worldData.nc.outfitResupplies" title="Outfits"
@@ -331,7 +331,7 @@
         </div>
 
         <div class="grid-nc-spawns d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerSpawns" 
+            <block-view class="mr-3" :block="worldData.nc.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawns">
             </block-view>
             <block-view :block="worldData.nc.outfitSpawns" title="Outfits"
@@ -340,7 +340,7 @@
         </div>
 
         <div class="grid-nc-vehicle-kills d-flex">
-            <block-view class="mr-3" :block="worldData.nc.playerVehicleKills"
+            <block-view class="mr-3" :block="worldData.nc.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
             <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit"
@@ -377,7 +377,7 @@
         </div>
 
         <div class="grid-tr-heals d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerHeals"
+            <block-view class="mr-3" :block="worldData.tr.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
             <block-view :block="worldData.tr.outfitHeals" title="Outfits"
@@ -386,7 +386,7 @@
         </div>
 
         <div class="grid-tr-revives d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerRevives"
+            <block-view class="mr-3" :block="worldData.tr.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
             <block-view :block="worldData.tr.outfitRevives" title="Outfits"
@@ -395,7 +395,7 @@
         </div>
 
         <div class="grid-tr-shields d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerShieldRepair"
+            <block-view class="mr-3" :block="worldData.tr.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
             <block-view :block="worldData.tr.outfitShieldRepair"
@@ -404,7 +404,7 @@
         </div>
 
         <div class="grid-tr-resupplies d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerResupplies"
+            <block-view class="mr-3" :block="worldData.tr.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplied">
             </block-view>
             <block-view :block="worldData.tr.outfitResupplies" title="Outfits"
@@ -413,7 +413,7 @@
         </div>
 
         <div class="grid-tr-spawns d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerSpawns"
+            <block-view class="mr-3" :block="worldData.tr.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawns">
             </block-view>
             <block-view :block="worldData.tr.outfitSpawns" title="Outfits"
@@ -422,7 +422,7 @@
         </div>
 
         <div class="grid-tr-vehicle-kills d-flex">
-            <block-view class="mr-3" :block="worldData.tr.playerVehicleKills" 
+            <block-view class="mr-3" :block="worldData.tr.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
             <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit"

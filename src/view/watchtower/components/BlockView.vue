@@ -9,7 +9,14 @@
 
         <tbody>
             <tr v-for="entry in block.entries">
-                <td :title="entry.name" :style="{ color: getFactionColor(entry.factionID) }">{{entry.name}}</td>
+                <td :title="entry.name" :style="{ color: getFactionColor(entry.factionID) }">
+                    <a v-if="link != null && entry.id != '0'" :href="link + entry.id" :style="{ color: getFactionColor(entry.factionID) }">
+                        {{entry.name}}
+                    </a>
+                    <span v-else>
+                        {{entry.name}}
+                    </span>
+                </td>
                 <td>
                     <a v-if="source" @click="clickHandler($event, entry.id)">
                         {{entry.value}} 
@@ -45,6 +52,7 @@
             title: { type: String, required: false, default: "Player" },
 
             source: { type: Function, required: false, default: null },
+            link: { type: String, required: false },
 
             sourceLimit: { type: Number, required: false, default: 6 },
             sourceWorldId: { type: Number, required: false },
@@ -60,7 +68,7 @@
 
         methods: {
             getFactionColor: function (factionID: number): string {
-                return FactionColors.getFactionColor(factionID);
+                return FactionColors.getFactionColor(factionID) + " !important";
             },
 
             clickHandler: async function(event: any, charID: string): Promise<void> {
