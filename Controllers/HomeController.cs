@@ -3,10 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using watchtower.Models.Census;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers {
 
     public class HomeController : Controller {
+
+        private readonly ICharacterRepository _CharacterRepository;
+
+        public HomeController(ICharacterRepository charRepo) {
+            _CharacterRepository = charRepo;
+        }
 
         public IActionResult Index() {
             return View();
@@ -46,6 +54,14 @@ namespace watchtower.Controllers {
 
         public IActionResult OutfitViewer(string outfitID) {
             return View();
+        }
+
+        public async Task<IActionResult> Player(string name) {
+            List<PsCharacter> chars = await _CharacterRepository.GetByName(name);
+            if (chars.Count == 1) {
+                return Redirect($"/c/{chars[0].ID}");
+            }
+            return Redirect("/character");
         }
 
     }

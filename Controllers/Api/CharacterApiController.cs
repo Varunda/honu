@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
 using watchtower.Models.Db;
@@ -23,10 +24,13 @@ namespace watchtower.Controllers.Api {
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly ICharacterHistoryStatRepository _HistoryRepository;
         private readonly ISessionDbStore _SessionDb;
+        private readonly ICharacterItemRepository _CharacterItemRepository;
+        private readonly IItemRepository _ItemRepository;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
-            ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb) {
+            ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
+            ICharacterItemRepository charItemRepo, IItemRepository itemRepo) {
 
             _Logger = logger;
 
@@ -34,6 +38,8 @@ namespace watchtower.Controllers.Api {
             _GeneratorStore = genStore ?? throw new ArgumentNullException(nameof(genStore));
             _HistoryRepository = histRepo ?? throw new ArgumentNullException(nameof(histRepo));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+            _CharacterItemRepository = charItemRepo ?? throw new ArgumentNullException(nameof(charItemRepo));
+            _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
         }
 
         [HttpGet("character/{charID}")]
@@ -84,6 +90,28 @@ namespace watchtower.Controllers.Api {
             List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
 
             return Ok(sessions);
+        }
+
+        [HttpGet("character/{charID}/items")]
+        public async Task<ActionResult<List<ExpandedCharacterItem>>> GetCharacterItems(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            if (c == null) {
+                return NotFound($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<CharacterItem> items = await _CharacterItemRepository.GetByID(charID);
+
+            List<ExpandedCharacterItem> expanded = new List<ExpandedCharacterItem>(items.Count);
+
+            foreach (CharacterItem item in items) {
+                ExpandedCharacterItem ex = new ExpandedCharacterItem();
+                ex.Entry = item;
+                ex.Item = await _ItemRepository.GetByID(item.ItemID);
+
+                expanded.Add(ex);
+            }
+
+            return Ok(expanded);
         }
 
         [HttpGet("characters/name/{name}")]

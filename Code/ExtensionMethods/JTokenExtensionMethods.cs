@@ -11,6 +11,10 @@ namespace watchtower.Code.ExtensionMethods {
     /// </summary>
     public static class JTokenExtensionMethods {
 
+        public static string GetRequiredString(this JToken token, string name) {
+            return token.Value<string?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}'");
+        }
+
         public static string GetString(this JToken token, string name, string fallback) {
             return token.Value<string?>(name) ?? fallback;
         }
@@ -33,6 +37,10 @@ namespace watchtower.Code.ExtensionMethods {
 
         public static uint GetZoneID(this JToken token) {
             return token.Value<uint?>("zone_id") ?? 0;
+        }
+
+        public static bool GetBoolean(this JToken token, string name, bool fallback) {
+            return token.Value<bool?>(name) ?? fallback;
         }
 
         public static DateTime CensusTimestamp(this JToken token, string name) {

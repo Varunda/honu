@@ -24,13 +24,19 @@ namespace watchtower.Services.Hosted {
         private readonly ICharacterWeaponStatDbStore _WeaponStatDb;
         private readonly ICharacterHistoryStatCollection _HistoryCensus;
         private readonly ICharacterHistoryStatDbStore _HistoryDb;
+        private readonly ICharacterItemCollection _ItemCensus;
+        private readonly ICharacterItemDbStore _ItemDb;
+        private readonly ICharacterStatCollection _StatCensus;
+        private readonly ICharacterStatDbStore _StatDb;
 
         private static int _Count = 0;
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
             IBackgroundCharacterWeaponStatQueue queue,
             ICharacterWeaponStatDbStore db, ICharacterWeaponStatCollection weaponColl,
-            ICharacterHistoryStatDbStore hDb, ICharacterHistoryStatCollection hColl) {
+            ICharacterHistoryStatDbStore hDb, ICharacterHistoryStatCollection hColl,
+            ICharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
+            ICharacterStatCollection statCensus, ICharacterStatDbStore statDb) {
 
             _Logger = logger;
 
@@ -39,6 +45,10 @@ namespace watchtower.Services.Hosted {
             _WeaponCensus = weaponColl ?? throw new ArgumentNullException(nameof(weaponColl));
             _HistoryCensus = hColl;
             _HistoryDb = hDb;
+            _ItemCensus = itemCensus;
+            _ItemDb = itemDb;
+            _StatCensus = statCensus;
+            _StatDb = statDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -57,6 +67,12 @@ namespace watchtower.Services.Hosted {
                     foreach (PsCharacterHistoryStat stat in stats) {
                         await _HistoryDb.Upsert(charID, stat.Type, stat);
                     }
+
+                    List<CharacterItem> items = await _ItemCensus.GetByID(charID);
+                    await _ItemDb.Set(charID, items);
+
+                    List<PsCharacterStat> cstats = await _StatCensus.GetByID(charID);
+                    await _StatDb.Set(charID, cstats);
 
                     ++_Count;
 

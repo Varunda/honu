@@ -27,6 +27,9 @@ namespace watchtower.Commands {
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly ICharacterHistoryStatCollection _HistoryCollection;
         private readonly ICharacterHistoryStatRepository _HistoryStatRepository;
+        private readonly ICharacterItemRepository _CharItemRepository;
+        private readonly ICharacterStatCollection _StatCollection;
+        private readonly ICharacterStatDbStore _StatDb;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
@@ -37,6 +40,9 @@ namespace watchtower.Commands {
             _GeneratorStore = services.GetRequiredService<ICharacterStatGeneratorStore>();
             _HistoryCollection = services.GetRequiredService<ICharacterHistoryStatCollection>();
             _HistoryStatRepository = services.GetRequiredService<ICharacterHistoryStatRepository>();
+            _CharItemRepository = services.GetRequiredService<ICharacterItemRepository>();
+            _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
+            _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
         }
 
         public async Task Get(string name) {
@@ -79,6 +85,35 @@ namespace watchtower.Commands {
             List<PsCharacterHistoryStat> stats = await _HistoryStatRepository.GetByCharacterID(c.ID);
             foreach (PsCharacterHistoryStat stat in stats) {
                 _Logger.LogInformation($"{stat.Type} => {stat.AllTime}");
+            }
+        }
+
+        public async Task Items(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<CharacterItem> items = await _CharItemRepository.GetByID(c.ID);
+
+            foreach (CharacterItem item in items) {
+                _Logger.LogInformation($"{item.ItemID} ({item.AccountLevel}):: {item.StackCount}");
+            }
+        }
+
+        public async Task Stats(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<PsCharacterStat> stats = await _StatCollection.GetByID(c.ID);
+            await _StatDb.Set(c.ID, stats);
+
+            foreach (PsCharacterStat stat in stats) {
+                _Logger.LogInformation($"{JToken.FromObject(stat)}");
             }
         }
 

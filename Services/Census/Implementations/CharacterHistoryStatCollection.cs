@@ -37,7 +37,6 @@ namespace watchtower.Services.Census.Implementations {
                     PsCharacterHistoryStat stat = _Parse(token);
                     stats.Add(stat);
                 }
-
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to get all");
             }

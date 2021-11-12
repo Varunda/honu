@@ -34,10 +34,9 @@ namespace watchtower.Services.Census.Implementations {
         private async Task<PsOutfit?> GetFromCensusByID(string outfitID, bool retry) {
             CensusQuery query = _Census.Create("outfit");
             query.Where("outfit_id").Equals(outfitID);
+            query.AddResolve("leader");
 
             //_Logger.LogDebug($"Getting outfit {outfitID} from census");
-
-            query.AddResolve("leader");
 
             PsOutfit? outfit = null;
 

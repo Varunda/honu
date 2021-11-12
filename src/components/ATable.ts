@@ -3,7 +3,7 @@
 //import DateTimePicker from "components/DateTimePicker.vue";
 import { Loading, Loadable } from "Loading";
 
-const ValidFilterTypes: string[] = ["string", "number", "date"];
+const ValidFilterTypes: string[] = [ "string", "number", "date", "boolean" ];
 
 interface ConditionSettings {
     title: string;
@@ -95,7 +95,7 @@ export const ATable = Vue.extend({
 
             sorting: {
                 field: "" as string,
-                type: "unknown" as "string" | "number" | "date" | "unknown",
+                type: "unknown" as "string" | "number" | "date" | "boolean" | "unknown",
                 order: "asc" as "asc" | "desc"
             },
 
@@ -440,10 +440,12 @@ export const ATable = Vue.extend({
                     this.sorting.type = "string";
                 } else if (type == "number") {
                     this.sorting.type = "number";
+                } else if (type == "boolean") {
+                    this.sorting.type = "boolean";
                 } else if (type == "date") {
                     this.sorting.type = "date";
                 } else {
-                    throw `Unchecked sorting type: ${type}. Expected 'string' | 'number' | 'date'`;
+                    throw `Unchecked sorting type: ${type}. Expected 'string' | 'number' | 'date' | 'boolean'`;
                 }
             } else {
                 // We don't know what type the field is, it will be found on next render
@@ -729,11 +731,27 @@ export const ATable = Vue.extend({
                 });
                 */
                 throw `Type 'date' currently broken`;
+            } else if (filter.type == "boolean") {
+                input = createElement("input", {
+                    staticClass: "form-control a-table-filter-input",
+                    domProps: {
+                        value: filter.value
+                    },
+                    attrs: {
+                        "type": "checkbox"
+                    },
+                    on: {
+                        input: function(ev: InputEvent): void {
+                            const value: boolean = (ev.target as HTMLInputElement).checked;
+                            filter.value = value;
+                        }
+                    }
+                });
             } else {
                 throw `Unknown type: '${filter.type}'`;
             }
 
-            if (filter.type == "number" || filter.type == "string") {
+            if (filter.type == "number" || filter.type == "string" || filter.type == "boolean") {
                 // .input-group that wraps the conditions a filter can use in a Bootstrap dropdown
                 return createElement("div",
                     {
@@ -1029,6 +1047,8 @@ export const ATable = Vue.extend({
                     return (iter.value != null && Number.isNaN(iter.value) == false);
                 } else if (iter.type == "date") {
                     return (iter.value != null && iter.value != "");
+                } else if (iter.type == "boolean") {
+                    return (iter.value != null && iter.value != "");
                 } else if (iter.type == "empty") {
                     return false;
                 } else if (iter.type == "reset") {
@@ -1090,6 +1110,12 @@ export const ATable = Vue.extend({
                         return ((elem: any) => elem[iter.field] != null && elem[iter.field] != undefined);
                     } else {
                         throw `Invalid condition ${iter.selectedCondition} for type 'date'`;
+                    }
+                } else if (iter.type == "boolean") {
+                    if (iter.selectedCondition == "equals") {
+                        return ((elem: any) => elem[iter.field] == iter.value);
+                    } else {
+                        throw `Invalid condition ${iter.selectedCondition} for type 'boolean'`;
                     }
                 }
                 throw `Uncheck type to create a filter function for: '${iter.type}'`;
