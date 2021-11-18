@@ -96,7 +96,6 @@
     export const CharacterViewer = Vue.extend({
         beforeMount: function(): void {
             this.loadCharacterID();
-            this.selectTab("weapons");
         },
 
         data: function() {

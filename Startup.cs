@@ -109,6 +109,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterHistoryStatDbStore, CharacterHistoryStatDbStore>();
             services.AddSingleton<ICharacterItemDbStore, CharacterItemDbStore>();
             services.AddSingleton<ICharacterStatDbStore, CharacterStatDbStore>();
+            services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -148,6 +149,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
             services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
             services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();
+            services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist

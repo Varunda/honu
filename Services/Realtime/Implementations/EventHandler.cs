@@ -27,6 +27,7 @@ namespace watchtower.Realtime {
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly ISessionDbStore _SessionDb;
         private readonly IFacilityControlDbStore _ControlDb;
+        private readonly IBattleRankDbStore _BattleRankDb;
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
@@ -42,7 +43,8 @@ namespace watchtower.Realtime {
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
             IDiscordMessageQueue msgQueue, IMapCollection mapColl,
-            IFacilityControlDbStore controlDb, IBackgroundCharacterWeaponStatQueue weaponQueue) {
+            IFacilityControlDbStore controlDb, IBackgroundCharacterWeaponStatQueue weaponQueue,
+            IBattleRankDbStore rankDb) {
 
             _Logger = logger;
 
@@ -52,6 +54,7 @@ namespace watchtower.Realtime {
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
+            _BattleRankDb = rankDb ?? throw new ArgumentNullException(nameof(rankDb));
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -104,6 +107,8 @@ namespace watchtower.Realtime {
                     _ProcessContinentUnlock(payloadToken);
                 } else if (eventName == "ContinentLock") {
                     _ProcessContinentLock(payloadToken);
+                } else if (eventName == "BattleRankUp") {
+                    await _ProcessBattleRankUp(payloadToken);
                 } else if (eventName == "MetagameEvent") {
                     _ProcessMetagameEvent(payloadToken);
                 } else {
@@ -161,6 +166,14 @@ namespace watchtower.Realtime {
                 await _ControlDb.Insert(ev);
                 //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
+        }
+
+        private async Task _ProcessBattleRankUp(JToken payload) {
+            string charID = payload.GetRequiredString("character_id");
+            int rank = payload.GetInt32("battle_rank", 0);
+            DateTime timestamp = payload.CensusTimestamp("timestamp");
+
+            await _BattleRankDb.Insert(charID, rank, timestamp);
         }
 
         private void _ProcessPlayerCapture(JToken payload) {

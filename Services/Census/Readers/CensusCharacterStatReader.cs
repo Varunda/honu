@@ -20,7 +20,7 @@ namespace watchtower.Services.Census.Readers {
             stat.ValueMonthly = token.GetInt32("value_monthly", 0);
             stat.ValueWeekly = token.GetInt32("value_weekly", 0);
             stat.ValueDaily = token.GetInt32("value_daily", 0);
-            stat.ValueMonthly = token.GetInt32("value_max_one_life", 0);
+            stat.ValueMaxOneLife = token.GetInt32("value_one_life_max", 0);
             stat.Timestamp = token.CensusTimestamp("last_save");
 
             return stat;

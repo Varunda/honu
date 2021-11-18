@@ -51,6 +51,7 @@ namespace watchtower.Realtime {
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
             _Subscription.EventNames = _Subscription.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
+                .Append("BattleRankUp")
                 .Append("FacilityControl").Append("PlayerFacilityCapture").Append("PlayerFacilityDefend")
                 .Append("ContinentLock").Append("ContinentUnlock").Append("MetagameEvent");
 

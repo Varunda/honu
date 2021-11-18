@@ -26,11 +26,13 @@ namespace watchtower.Controllers.Api {
         private readonly ISessionDbStore _SessionDb;
         private readonly ICharacterItemRepository _CharacterItemRepository;
         private readonly IItemRepository _ItemRepository;
+        private readonly ICharacterStatRepository _StatRepository;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
             ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
-            ICharacterItemRepository charItemRepo, IItemRepository itemRepo) {
+            ICharacterItemRepository charItemRepo, IItemRepository itemRepo,
+            ICharacterStatRepository statRepo) {
 
             _Logger = logger;
 
@@ -40,6 +42,7 @@ namespace watchtower.Controllers.Api {
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _CharacterItemRepository = charItemRepo ?? throw new ArgumentNullException(nameof(charItemRepo));
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
+            _StatRepository = statRepo ?? throw new ArgumentNullException(nameof(statRepo));
         }
 
         [HttpGet("character/{charID}")]
@@ -112,6 +115,17 @@ namespace watchtower.Controllers.Api {
             }
 
             return Ok(expanded);
+        }
+
+        [HttpGet("character/{charID}/stats")]
+        public async Task<ActionResult<List<PsCharacterStat>>> GetCharacterStats(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            if (c == null) {
+                return NotFound($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<PsCharacterStat> stats = await _StatRepository.GetByCharacterID(charID);
+            return Ok(stats);
         }
 
         [HttpGet("characters/name/{name}")]
