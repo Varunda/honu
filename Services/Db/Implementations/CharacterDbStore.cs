@@ -97,7 +97,7 @@ namespace watchtower.Services.Db.Implementations {
             c.WorldID = reader.GetInt16("world_id");
             c.LastUpdated = reader.GetDateTime("last_updated_on");
             c.BattleRank = reader.GetInt16("battle_rank");
-            c.Prestige = reader.GetBoolean("prestige");
+            c.Prestige = reader.GetInt32("prestige");
 
             c.OutfitID = reader.GetNullableString("outfit_id");
             c.OutfitTag = reader.GetNullableString("outfit_tag");

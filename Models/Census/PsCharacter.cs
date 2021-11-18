@@ -50,7 +50,7 @@ namespace watchtower.Models.Census {
         /// <summary>
         /// Has the character ASPed?
         /// </summary>
-        public bool Prestige { get; set; }
+        public int Prestige { get; set; }
 
         /// <summary>
         /// <c>DateTime</c> of when the last update on this character occured

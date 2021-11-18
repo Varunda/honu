@@ -91,7 +91,7 @@ namespace watchtower.Services.Census.Implementations {
             PsCharacter player = new PsCharacter {
                 ID = result.GetString("character_id", "0"),
                 FactionID = result.GetInt16("faction_id", -1),
-                Prestige = result.GetString("prestige_level", "0") != "0",
+                Prestige = result.GetInt32("prestige_level", 0),
                 WorldID = result.GetWorldID()
             };
 
