@@ -79,3 +79,7 @@ export function randomColor(hue: number, total: number, index: number): string {
 export function randomColors(hue: number, total: number): string[] {
 	return Array.from(Array(total)).map((_, index) => randomColor(hue, total, index));
 }
+
+export function randomColorSingle(): string {
+	return randomColor(Math.random(), 1, 0);
+}
