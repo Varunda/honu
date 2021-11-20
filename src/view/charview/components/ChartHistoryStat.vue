@@ -92,6 +92,7 @@
                         },
                         scales: {
                             x: {
+                                offset: true,
                                 reverse: true,
                                 ticks: {
                                     color: "#fff",
