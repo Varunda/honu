@@ -72,7 +72,7 @@
                     </td>
 
                     <td>
-                        <span v-if="c.prestige == true">1~</span>{{c.battleRank}}
+                        {{c.prestige}}~{{c.battleRank}}
                     </td>
 
                     <td>

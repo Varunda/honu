@@ -69,10 +69,14 @@ namespace watchtower.Services.Hosted {
                     }
 
                     List<CharacterItem> items = await _ItemCensus.GetByID(charID);
-                    await _ItemDb.Set(charID, items);
+                    if (items.Count > 0) {
+                        await _ItemDb.Set(charID, items);
+                    }
 
                     List<PsCharacterStat> cstats = await _StatCensus.GetByID(charID);
-                    await _StatDb.Set(charID, cstats);
+                    if (cstats.Count > 0) {
+                        await _StatDb.Set(charID, cstats);
+                    }
 
                     ++_Count;
 

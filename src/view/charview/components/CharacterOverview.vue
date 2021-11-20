@@ -28,7 +28,7 @@
                 <tr>
                     <td>Battle rank</td>
                     <td>
-                        <span v-if="character.prestige == true" title="A.S.P">1~</span>{{character.battleRank}}
+                        {{character.prestige}}~{{character.battleRank}}
                     </td>
                 </tr>
             </table>
@@ -126,25 +126,7 @@
 
         <h2 class="wt-header">History stats</h2>
 
-        <chart-history-stat v-if="historyKills != null"
-            :data="historyKills.days" period="days" title="Kills" :timestamp="historyKills.lastUpdated">
-        </chart-history-stat>
-
-        <chart-history-stat v-if="historyKills != null"
-            :data="perDayKD" period="days" title="KD" :timestamp="historyKills.lastUpdated">
-        </chart-history-stat>
-
-        <chart-history-stat v-if="historyKills != null"
-            :data="perDayKPM" period="days" title="KPM" :timestamp="historyKills.lastUpdated">
-        </chart-history-stat>
-
-        <chart-history-stat v-if="historyTime != null"
-            :data="historyTime.days" period="days" title="Time played" :timestamp="historyTime.lastUpdated">
-        </chart-history-stat>
-
-        <chart-history-stat v-if="historyScore != null"
-            :data="historyScore.days" period="days" title="Score" :timestamp="historyScore.lastUpdated">
-        </chart-history-stat>
+        <character-history-stats v-if="history.state == 'loaded'" :stats="history.data"></character-history-stats>
 
         <hr class="border" />
 
@@ -191,8 +173,8 @@
     import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
     import { CharacterStat, CharacterStatApi } from "api/CharacterStatApi";
 
-    import ChartHistoryStat from "./ChartHistoryStat.vue";
     import CharacterClassStats from "./CharacterClassStats.vue";
+    import CharacterHistoryStats from "./CharacterHistoryStats.vue";
 
     export const CharacterOverview = Vue.extend({
         props: {
@@ -250,50 +232,6 @@
                 return new Date().getMonth(); // 0 indexed
             },
 
-            perDayKD: function(): number[] {
-                const kills: CharacterHistoryStat | null = this.historyKills;
-                const deaths: CharacterHistoryStat | null = this.historyDeaths;
-
-                if (kills == null || deaths == null) {
-                    return [];
-                }
-
-                const k: number[] = kills.days;
-                const d: number[] = deaths.days;
-
-                const len: number = Math.min(k.length, d.length);
-
-                const kd: number[] = [];
-
-                for (let i = 0; i < len; ++i) {
-                    kd.push(k[i] / Math.max(1, d[i]));
-                }
-
-                return kd;
-            },
-
-            perDayKPM: function(): number[] {
-                const kills: CharacterHistoryStat | null = this.historyKills;
-                const time: CharacterHistoryStat | null = this.historyTime;
-
-                if (kills == null || time == null) {
-                    return [];
-                }
-
-                const k: number[] = kills.days;
-                const t: number[] = time.days;
-
-                const len: number = Math.min(k.length, t.length);
-
-                const kpm: number[] = [];
-
-                for (let i = 0; i < len; ++i) {
-                    kpm.push(k[i] / Math.max(1, t[i]) * 60);
-                }
-
-                return kpm;
-            },
-
             historyKills: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "kills") || null; },
             historyDeaths: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "deaths") || null; },
             historyScore: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "score") || null; },
@@ -301,8 +239,8 @@
         },
 
         components: {
-            ChartHistoryStat,
             CharacterClassStats,
+            CharacterHistoryStats,
         }
 
     });

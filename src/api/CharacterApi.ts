@@ -11,7 +11,7 @@ export class PsCharacter {
 
 	public factionID: number = 0;
 	public battleRank: number = 0;
-	public prestige: boolean = false;
+	public prestige: number = 0;
 }
 
 export class CharacterApi {

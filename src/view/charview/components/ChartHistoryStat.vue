@@ -1,11 +1,12 @@
 ﻿<template>
-    <canvas :id="'chart-history-stat-' + ID" class="w-100 d-inline-block" style="max-height: 300px;"></canvas>
+    <canvas :id="'chart-history-stat-' + ID" class="w-100 d-inline-block" style="max-height: 240px;"></canvas>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
 
     import Chart from "chart.js/auto/auto.esm";
+    import * as helpers from "chart.js/helpers/helpers.esm";
     import * as moment from "moment";
 
     export const ChartHistoryStat = Vue.extend({
@@ -13,7 +14,8 @@
             data: { type: Array as PropType<number[]>, required: true },
             period: { type: String, required: true },
             title: { type: String, required: true },
-            timestamp: { type: Date, required: true }
+            timestamp: { type: Date, required: true },
+            IsTime: { type: Boolean, required: false, default: false },
         },
 
         data: function() {
@@ -41,27 +43,71 @@
                     return console.error(`Failed to find #chart-history-stat-${this.ID}`);
                 }
 
-                const ctx = (canvas as any).getContext("2d");
+                const max: number = Math.max(...this.data);
 
-                this.chart = new Chart(ctx, {
+                let format = "yyyy-MM-DD";
+                if (this.period == "months") {
+                    format = "yyyy-MM";
+                }
+
+                this.chart = new Chart((canvas as any).getContext("2d"), {
                     type: "line",
                     data: {
-                        labels: this.data.map((_, index) => moment(this.timestamp).add(-index, (this.period as any)).format("yyyy-MM-DD")),
+                        labels: this.data.map((_, index) => moment(this.timestamp).add(-index, (this.period as any)).format(format)),
                         datasets: [{
                             data: this.data,
                             label: this.title,
-                            backgroundColor: "#fff",
-                            borderColor: "#fff"
+                            backgroundColor: "#444",
+                            borderColor: "#444",
+                            fill: true
                         }]
                     },
                     options: {
+                        animation: {
+                            onComplete: function() {
+                                const chart = this.ctx;
+                                chart.textAlign = "center";
+                                chart.textBaseline = "bottom";
+                                chart.font = `16px ${(Chart.defaults.font as any).family}`;
+
+                                this.data.datasets.forEach((dataset, i) => {
+                                    const meta = this.getDatasetMeta(i);
+
+                                    meta.data.forEach((bar, index) => {
+                                        const data = dataset.data[index];
+
+                                        let display: string = data?.toString() ?? ``;
+                                        if (typeof (data) == "number") {
+                                            display = data.toFixed(2);
+                                        }
+
+                                        chart.fillStyle = "#fff";
+                                        chart.fillText(display, bar.x, bar.y - 2);
+                                    });
+                                });
+                            }
+                        },
                         scales: {
                             x: {
                                 reverse: true,
                                 ticks: {
                                     color: "#fff",
+                                },
+                                grid: {
+                                    color: "#999",
+                                    display: false,
                                 }
-                            }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: Math.round(max * 1.5),
+                                ticks: {
+                                    count: 5
+                                },
+                                grid: {
+                                    color: "#999"
+                                }
+                            },
                         },
                         responsive: true,
                         maintainAspectRatio: false,
@@ -72,11 +118,20 @@
                                 }
                             }
                         }
-                    }
+                    },
+                    //plugins: [ ChartDataLabels ]
                 });
 
             }
         },
+
+        watch: {
+            data: function(): void {
+                this.$nextTick(() => {
+                    this.makeChart();
+                });
+            }
+        }
 
     });
     export default ChartHistoryStat;

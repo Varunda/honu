@@ -41,6 +41,8 @@ namespace watchtower.Services.Repositories.Implementations {
                 if (items.Count == 0) {
                     items = await _Census.GetByID(charID);
 
+                    _Logger.LogDebug($"Loaded {items.Count} items from census for character {charID}");
+
                     if (items.Count > 0) {
                         await _Db.Set(charID, items);
                     }
