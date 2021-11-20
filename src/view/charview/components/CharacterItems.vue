@@ -22,6 +22,16 @@
 
             <a-col>
                 <a-header>
+                    <b>Item ID</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.itemID}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
                     <b>Account unlock</b>
                 </a-header>
 
