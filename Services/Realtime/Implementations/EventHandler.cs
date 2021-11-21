@@ -136,6 +136,7 @@ namespace watchtower.Realtime {
             // Exclude flips that aren't interesting
             if (ev.OldFactionID == 0 || ev.NewFactionID == 0 // Came from a cont unlock
                 || defID == 95 // A tutorial area
+                || defID == 365 // Another tutorial area
                 ) {
 
                 return;
