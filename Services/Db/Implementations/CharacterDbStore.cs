@@ -60,9 +60,9 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_character (
-                    id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on
+                    id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on, time_create, time_last_login, time_last_save
                 ) VALUES (
-                    @ID, @Name, @WorldID, @FactionID, @outfitID, @BattleRank, @Prestige, @LastUpdatedOn
+                    @ID, @Name, @WorldID, @FactionID, @outfitID, @BattleRank, @Prestige, @LastUpdatedOn, @DateCreated, @DateLastLogin, @DateLastSave
                 ) ON CONFLICT (id) DO
                     UPDATE SET name = @Name,
                         world_id = @WorldID,
@@ -70,7 +70,10 @@ namespace watchtower.Services.Db.Implementations {
                         outfit_id = @OutfitID,
                         battle_rank = @BattleRank,
                         prestige = @Prestige,
-                        last_updated_on = @LastUpdatedOn
+                        last_updated_on = @LastUpdatedOn,
+                        time_create = @DateCreated,
+                        time_last_login = @DateLastLogin,
+                        time_last_save = @DateLastSave
             ");
 
             cmd.AddParameter("ID", character.ID);
@@ -81,6 +84,9 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("BattleRank", character.BattleRank);
             cmd.AddParameter("Prestige", character.Prestige);
             cmd.AddParameter("LastUpdatedOn", DateTime.UtcNow);
+            cmd.AddParameter("DateCreated", character.DateCreated);
+            cmd.AddParameter("DateLastLogin", character.DateLastLogin);
+            cmd.AddParameter("DateLastSave", character.DateLastSave);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -102,6 +108,10 @@ namespace watchtower.Services.Db.Implementations {
             c.OutfitID = reader.GetNullableString("outfit_id");
             c.OutfitTag = reader.GetNullableString("outfit_tag");
             c.OutfitName = reader.GetNullableString("outfit_name");
+
+            c.DateCreated = reader.GetNullableDateTime("time_create") ?? DateTime.MinValue;
+            c.DateLastLogin = reader.GetNullableDateTime("time_last_login") ?? DateTime.MinValue;
+            c.DateLastSave = reader.GetNullableDateTime("time_last_save") ?? DateTime.MinValue;
 
             return c;
         }

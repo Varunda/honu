@@ -77,7 +77,7 @@ export const ATable = Vue.extend({
         RowPadding: { type: String, required: false, default: "normal" }, // "compact" | "normal" | "expanded"
 
         // Will the <a-table> be displayed as a <div>.list-group or a <table>
-        DisplayType: { type: String, required: false, default: "list" }, // "list" | "table",
+        //DisplayType: { type: String, required: false, default: "list" }, // "list" | "table",
 
         // Field to sort on by default, if undefined goes to first <a-col> with a sort-field
         DefaultSortField: { type: String, required: false, default: undefined },
@@ -238,39 +238,6 @@ export const ATable = Vue.extend({
                         if (typeof (sourceRet.ok) != "function") {
                             throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
                         }
-
-                        /*
-                        const response: ApiResponse<object[]> = sourceRet as ApiResponse<object[]>;
-
-                        response.ok((data: any[]) => {
-                            if (data.length == 0) {
-                                console.warn(`<a-table>: No objects returned from ApiResponse`);
-                            } else {
-                                const obj: object = data[0];
-
-                                // Force is safe, checked above
-                                if (obj.hasOwnProperty(filter.sourceKey!) == false) {
-                                    throw `Bad source-key: ${filter.sourceKey} is not a property of data: ${JSON.stringify(obj)}`;
-                                }
-                                if (obj.hasOwnProperty(filter.sourceValue!) == false) {
-                                    throw `Bad source-value: ${filter.sourceValue} is not a property of data: ${JSON.stringify(obj)}`;
-                                }
-
-                                filter.source = [];
-                                for (const iter of data) {
-                                    filter.source.push({
-                                        key: iter[filter.sourceKey!],
-                                        value: iter[filter.sourceValue!]
-                                    });
-                                }
-
-                                filter.source.unshift({
-                                    key: "All",
-                                    value: null
-                                });
-                            }
-                        });
-                        */
                     } else if (filter.source != undefined && Array.isArray(filter.source) == false) {
                         throw `<a-filter> source was given but was not an array`;
                     }
@@ -324,13 +291,9 @@ export const ATable = Vue.extend({
         if (this.entries.state == "idle") {
 
         } else if (this.entries.state == "loading") {
-            if (this.DisplayType == "table") {
-                rows.push(createElement("tr", [
-                    createElement("td", { attrs: { "colspan": `${this.nodes.columns.length}` } }, ["Loading..."])
-                ]));
-            } else {
-                rows.push(createElement("div", { staticClass: "list-group-item" }, ["Loading..."]));
-            }
+			rows.push(createElement("tr", [
+				createElement("td", { attrs: { "colspan": `${this.nodes.columns.length}` } }, ["Loading..."])
+			]));
 
             this.$emit("rerender", Loadable.loading());
         } else if (this.entries.state == "loaded") {
@@ -340,11 +303,6 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loaded(this.displayedEntries));
         } else if (this.entries.state == "error") {
-            if (this.DisplayType == "table") {
-
-            } else {
-
-            }
             rows.push(createElement("div",
                 {
                     staticClass: "list-group-item list-group-item-danger"
@@ -354,11 +312,6 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.error(this.entries.message));
         } else {
-            if (this.DisplayType == "table") {
-
-            } else {
-
-            }
             rows.push(createElement("div",
                 {
                     staticClass: "list-group-item list-group-item-danger"
@@ -371,27 +324,15 @@ export const ATable = Vue.extend({
             rows.push(this.renderPages(createElement));
         }
 
-        if (this.DisplayType == "list") {
-            return createElement("div",
-                {
-                    staticClass: "list-group a-table",
-                    class: {
-                        "list-group-small": (this.RowPadding == "compact")
-                    }
-                },
-                rows
-            );
-        } else {
-            return createElement("table",
-                {
-                    staticClass: "table a-table",
-                    class: {
-                        "table-sm": (this.RowPadding == "compact")
-					}
-                },
-                rows
-            );
-        }
+		return createElement("table",
+			{
+				staticClass: "table a-table",
+				class: {
+					"table-sm": (this.RowPadding == "compact")
+				}
+			},
+			rows
+		);
     },
 
     methods: {
@@ -424,15 +365,26 @@ export const ATable = Vue.extend({
 
             // Can we check the type to update the sorting function?
             if (this.entries.state == "loaded" && this.entries.data.length > 0) {
-                const first: any = this.entries.data[0];
+                let first: any = this.entries.data[0];
                 if (!first.hasOwnProperty(field)) {
                     throw `Cannot sort on field '${field}', not a property of ${JSON.stringify(first)}`;
                 }
 
-                let type: string = typeof first[field];
+                // In the case where some of the data is null, find one row that doesn't have that row null to get the data
+                let type: string = "object";
+                for (const iter of this.entries.data) {
+                    if (iter[field] != null && iter[field] != undefined) {
+                        first = iter;
+                        type = typeof iter[field];
+                    }
+                }
+
                 if (type == "object") {
                     if (first[field] instanceof Date) {
                         type = "date";
+                    }
+                    if (first[field] == null) {
+                        throw `Got a null value when sorting on ${type}. Need a non-null value to sort`;
                     }
                 }
 
@@ -445,7 +397,7 @@ export const ATable = Vue.extend({
                 } else if (type == "date") {
                     this.sorting.type = "date";
                 } else {
-                    throw `Unchecked sorting type: ${type}. Expected 'string' | 'number' | 'date' | 'boolean'`;
+                    throw `Unchecked sorting type: ${type}. Expected 'string' | 'number' | 'date' | 'boolean'. From value ${first[field]}`;
                 }
             } else {
                 // We don't know what type the field is, it will be found on next render
@@ -471,55 +423,38 @@ export const ATable = Vue.extend({
                 }
 
                 if (header.empty == false) {
-                    const tagType: string = (this.DisplayType == "table") ? "td" : "div";
-                    if (this.DisplayType == "table") {
-                        options.staticClass = "";
-                    }
+					options.staticClass = "table-secondary";
 
-                    headers.push(createElement(tagType, options, [
+                    headers.push(createElement("td", options, [
                         header.children,
                         (header.field != undefined) ? this.createSortable(createElement, header.field) : []
                     ]));
                 } else {
                     // No <a-header> exists, input an empty col so the table stays lined up
-                    if (this.DisplayType == "table") {
-                        headers.push(createElement("td", options));
-                    } else {
-                        headers.push(createElement("div", options));
-                    }
+					headers.push(createElement("td", options));
                 }
             }
 
             // Return the .list-group-item for the header along with all of the headers set
-            return createElement(
-                (this.DisplayType == "table") ? "tr" : "div",
+            return createElement("tr",
                 {
-                    staticClass: `a-table-header-row ${this.DisplayType == "table" ? "" : "row"}`
+                    staticClass: `a-table-header-row`
                 },
                 headers
             );
         },
 
         renderPages(createElement: CreateElement): VNode {
-            if (this.DisplayType == "table") {
-                return createElement("tr", [
-                    createElement("td",
-                        {
-                            attrs: {
-                                "colspan": `${this.nodes.columns.length}`
-                            }
-                        },
-                        this.createPageButtons(createElement)
-                    )
-                ]);
-            } else {
-                return createElement("div",
-                    {
-                        staticClass: "list-group-item list-group-item-secondary"
-                    },
-                    this.createPageButtons(createElement)
-                );
-            }
+			return createElement("tr", [
+				createElement("td",
+					{
+						attrs: {
+							"colspan": `${this.nodes.columns.length}`
+						}
+					},
+					this.createPageButtons(createElement)
+				)
+			]);
         },
 
         renderDataRow(createElement: CreateElement, data: object): VNode {
@@ -572,25 +507,12 @@ export const ATable = Vue.extend({
                         options.on = { ...bodyNode.componentOptions.listeners };
                     }
 
-                    if (this.DisplayType == "table") {
-                        options.staticClass = "";
-                        cols.push(createElement("td", options, [slot(data)]));
-                    } else {
-                        cols.push(createElement("div", options, [slot(data)]));
-                    }
+					options.staticClass = "";
+					cols.push(createElement("td", options, [slot(data)]));
                 }
             }
 
-            if (this.DisplayType == "table") {
-                return createElement("tr", cols);
-            }
-
-            return createElement("div",
-                { staticClass: "list-group-item" },
-                [
-                    createElement("div", { staticClass: "row align-items-center" }, cols)
-                ]
-            );
+			return createElement("tr", cols);
         },
 
         renderFilter(createElement: CreateElement): VNode {
@@ -630,30 +552,14 @@ export const ATable = Vue.extend({
                 }
 
                 // Filter column wrapped in the .input-group
-                if (this.DisplayType == "table") {
-                    filters.push(createElement("td",
-                        { staticStyle: { "max-width": filter.width ?? "auto" } },
-                        [inputNode]));
-                } else {
-                    filters.push(createElement("div",
-                        { staticClass: filter.colClass },
-                        [inputNode]
-                    ));
-                }
+				filters.push(createElement("td",
+					{ staticStyle: { "max-width": filter.width ?? "auto" } },
+                    [inputNode]
+                ));
             }
 
-            if (this.DisplayType == "table") {
-                // <tr> containing all the filter columns
-                return createElement("tr", filters);
-            } else {
-                // .list-group-item containing all the filter columns
-                return createElement("div",
-                    { staticClass: "list-group-item list-group-item-secondary" },
-                    [
-                        createElement("div", { staticClass: "row align-items-center" }, filters)
-                    ]
-                );
-            }
+			// <tr> containing all the filter columns
+			return createElement("tr", filters);
         },
 
         createInputFilter(createElement: CreateElement, filter: Filter): VNode {
@@ -1187,8 +1093,7 @@ export const ATable = Vue.extend({
 
                         return av - bv;
                     }
-                }
-                else {
+                } else {
                     throw `Unchecked sorting type: '${this.sorting.type}'. Expected 'string' | 'number' | 'date'`;
                 }
             }

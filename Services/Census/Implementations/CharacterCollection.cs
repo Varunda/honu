@@ -102,6 +102,13 @@ namespace watchtower.Services.Census.Implementations {
                 player.Name = nameToken.Value<string?>("first") ?? "BAD NAME";
             }
 
+            JToken? times = result.SelectToken("times");
+            if (times != null) {
+                player.DateCreated = times.CensusTimestamp("creation");
+                player.DateLastLogin = times.CensusTimestamp("last_login");
+                player.DateLastSave = times.CensusTimestamp("last_save");
+            }
+
             player.OutfitID = result.SelectToken("outfit")?.Value<string?>("outfit_id");
             player.OutfitName = result.SelectToken("outfit")?.Value<string?>("name");
             player.OutfitTag = result.SelectToken("outfit")?.Value<string?>("alias");

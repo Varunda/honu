@@ -74,7 +74,7 @@ export class CharacterHistoryStatApi {
 	private static _instance: CharacterHistoryStatApi = new CharacterHistoryStatApi();
 	public static get(): CharacterHistoryStatApi { return CharacterHistoryStatApi._instance; }
 
-	private static _parse(elem: any): CharacterHistoryStat {
+	public static parse(elem: any): CharacterHistoryStat {
 		return {
 			...elem,
 			lastUpdated: new Date(elem.lastUpdated)
@@ -91,7 +91,7 @@ export class CharacterHistoryStatApi {
 			throw `response.data is not an array`;
 		}
 
-		return response.data.map((iter: any) => CharacterHistoryStatApi._parse(iter));
+		return response.data.map((iter: any) => CharacterHistoryStatApi.parse(iter));
 	}
 
 }

@@ -28,6 +28,10 @@ namespace watchtower.Services.Implementations {
             _Items.Enqueue(message);
             _Signal.Release();
         }
-    }
 
+        public int Count() {
+            return _Items.Count;
+        }
+
+    }
 }

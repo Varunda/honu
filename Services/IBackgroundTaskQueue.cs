@@ -13,5 +13,7 @@ namespace watchtower.Services {
 
         Task<JToken> DequeueAsync(CancellationToken cancel);
 
+        int Count();
+
     }
 }

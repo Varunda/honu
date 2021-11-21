@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -160,7 +161,13 @@ namespace watchtower.Realtime {
                     return;
                 }
 
+                Stopwatch timer = Stopwatch.StartNew();
                 UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
+                if (timer.ElapsedMilliseconds > 1000) {
+                    _Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
+                }
+                timer.Stop();
+
                 ev.UnstableState = state;
 
                 await _ControlDb.Insert(ev);

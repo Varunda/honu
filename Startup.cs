@@ -138,6 +138,7 @@ namespace watchtower {
             // Census reader
             services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
             services.AddSingleton<ICensusReader<PsCharacterStat>, CensusCharacterStatReader>();
+            services.AddSingleton<ICensusReader<OutfitMember>, CensusOutfitMemberReader>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();

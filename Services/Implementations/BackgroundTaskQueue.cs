@@ -30,5 +30,9 @@ namespace watchtower.Services {
             return token!;
         }
 
+        public int Count() {
+            return _Items.Count;
+        }
+
     }
 }

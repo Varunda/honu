@@ -19,5 +19,7 @@ namespace watchtower.Services {
 
         Task<string> Dequeue(CancellationToken cancel);
 
+        int Count();
+
     }
 }

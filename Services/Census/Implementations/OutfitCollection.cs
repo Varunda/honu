@@ -16,11 +16,15 @@ namespace watchtower.Services.Census.Implementations {
         private readonly ILogger<OutfitCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
 
+        private readonly ICensusReader<OutfitMember> _MemberReader;
+
         public OutfitCollection(ILogger<OutfitCollection> logger,
-            ICensusQueryFactory census) {
+            ICensusQueryFactory census, ICensusReader<OutfitMember> memberReader) {
 
             _Logger = logger;
             _Census = census;
+
+            _MemberReader = memberReader ?? throw new ArgumentNullException(nameof(memberReader));
         }
 
         public Task<PsOutfit?> GetByID(string outfitID) {
@@ -29,6 +33,20 @@ namespace watchtower.Services.Census.Implementations {
 
         public Task<PsOutfit?> GetByTag(string tag) {
             return GetFromCensusByTag(tag, true);
+        }
+
+        public Task<List<OutfitMember>> GetMembers(string outfitID) {
+            CensusQuery query = _Census.Create("outfit_member");
+            query.Where("outfit_id").Equals(outfitID);
+            query.SetLimit(1_000_000); // Surely no outfit will ever have more than a million members
+
+            // c:join=characters_world^to:character_id^on:character_id^inject_at:world_id
+            CensusJoin join = query.JoinService("characters_world");
+            join.ToField("character_id");
+            join.OnField("character_id");
+            join.WithInjectAt("world_id");
+
+            return _MemberReader.ReadList(query);
         }
 
         private async Task<PsOutfit?> GetFromCensusByID(string outfitID, bool retry) {
@@ -83,7 +101,10 @@ namespace watchtower.Services.Census.Implementations {
             PsOutfit outfit = new PsOutfit() {
                 ID = result.GetString("outfit_id", "0"),
                 Name = result.GetString("name", "<MISSING NAME>"),
-                Tag = result.NullableString("alias")
+                Tag = result.NullableString("alias"),
+                MemberCount = result.GetInt32("member_count", 0),
+                LeaderID = result.GetString("leader_character_id", ""),
+                DateCreated = result.CensusTimestamp("time_created")
             };
 
             JToken? leaderToken = result.SelectToken("leader");

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace watchtower.Models.Census {
+namespace watchtower.Models.Api {
 
-    public class PsCharacter {
+    /// <summary>
+    /// Slimmed down version of a character, saving like megabytes and shit
+    /// </summary>
+    public class SlimCharacter {
 
         /// <summary>
         /// ID of the character
@@ -52,34 +55,5 @@ namespace watchtower.Models.Census {
         /// </summary>
         public int Prestige { get; set; }
 
-        /// <summary>
-        /// <c>DateTime</c> of when the last update on this character occured
-        /// </summary>
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-
-        /// <summary>
-        /// When the character was created
-        /// </summary>
-        public DateTime DateCreated { get; set; }
-
-        /// <summary>
-        /// When the character last logged in
-        /// </summary>
-        public DateTime DateLastLogin { get; set; }
-
-        /// <summary>
-        /// When the charactere was last saved into Census
-        /// </summary>
-        public DateTime DateLastSave { get; set; }
-
     }
-
-    public static class PsCharacterExtensionMethods {
-
-        public static string GetDisplayName(this PsCharacter c) {
-            return $"{(c.OutfitID != null ? $"[{c.OutfitTag}] " : "")}{c.Name}";
-        }
-
-    }
-
 }

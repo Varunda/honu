@@ -12,6 +12,11 @@ export class PsCharacter {
 	public factionID: number = 0;
 	public battleRank: number = 0;
 	public prestige: number = 0;
+
+	public dateCreated: Date = new Date();
+	public dateLastLogin: Date = new Date();
+	public dateLastSave: Date = new Date();
+
 }
 
 export class CharacterApi {
@@ -20,7 +25,10 @@ export class CharacterApi {
 
 	public static parse(elem: any): PsCharacter {
 		return {
-			...elem
+			...elem,
+			dateCreated: new Date(elem.dateCreated),
+			dateLastLogin: new Date(elem.dateLastLogin),
+			dateLastSave: new Date(elem.dateLastSave)
 		}
 	}
 

@@ -31,5 +31,9 @@ namespace watchtower.Services {
             return player!;
         }
 
+        public int Count() {
+            return _Items.Count;
+        }
+
     }
 }

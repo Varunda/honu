@@ -38,7 +38,8 @@ namespace watchtower.Services.Repositories.Implementations {
                 character = await _Db.GetByID(charID);
 
                 // Only update the character if it's expired
-                if (character == null || await HasExpired(character) == true) {
+                // If the DateLastLogin is the MinValue, it means the column was null from the DB, and it needs to be pulled from census
+                if (character == null || await HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue) {
                     // If we have the character in DB, but not in Census, return it from DB
                     //      Useful if census is down, or a character has been deleted
                     PsCharacter? censusChar = await _Census.GetByID(charID);

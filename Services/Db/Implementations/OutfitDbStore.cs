@@ -46,14 +46,17 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_outfit (
-                    id, name, tag, faction_id, last_updated_on
+                    id, name, tag, faction_id, last_updated_on, time_create, leader_id, member_count
                 ) VALUES (
-                    @ID, @Name, @Tag, @FactionID, @LastUpdatedOn
+                    @ID, @Name, @Tag, @FactionID, @LastUpdatedOn, @DateCreated, @LeaderID, @MemberCount
                 ) ON CONFLICT (id) DO
                     UPDATE SET name = @Name,
                         tag = @Tag,
                         faction_id = @FactionID,   
-                        last_updated_on = @LastUpdatedOn
+                        last_updated_on = @LastUpdatedOn,
+                        time_create = @DateCreated,
+                        leader_id = @LeaderID,
+                        member_count = @MemberCount
             ");
 
             cmd.AddParameter("ID", outfit.ID);
@@ -61,6 +64,9 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Tag", outfit.Tag);
             cmd.AddParameter("FactionID", outfit.FactionID);
             cmd.AddParameter("LastUpdatedOn", DateTime.UtcNow);
+            cmd.AddParameter("DateCreated", outfit.DateCreated);
+            cmd.AddParameter("LeaderID", outfit.LeaderID);
+            cmd.AddParameter("MemberCount", outfit.MemberCount);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -101,12 +107,10 @@ namespace watchtower.Services.Db.Implementations {
             outfit.Name = reader.GetString("name");
             outfit.FactionID = reader.GetInt16("faction_id");
             outfit.LastUpdated = reader.GetDateTime("last_updated_on");
-
-            if (reader.IsDBNull("tag") == true) {
-                outfit.Tag = null;
-            } else {
-                outfit.Tag = reader.GetString("tag");
-            }
+            outfit.LeaderID = reader.GetString("leader_id");
+            outfit.MemberCount = reader.GetInt32("member_count");
+            outfit.LastUpdated = reader.GetNullableDateTime("time_create") ?? DateTime.MinValue;
+            outfit.Tag = reader.GetNullableString("tag");
 
             return outfit;
         }

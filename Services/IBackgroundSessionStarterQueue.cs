@@ -13,5 +13,7 @@ namespace watchtower.Services {
 
         Task<TrackedPlayer> DequeueAsync(CancellationToken cancel);
 
+        int Count();
+
     }
 }

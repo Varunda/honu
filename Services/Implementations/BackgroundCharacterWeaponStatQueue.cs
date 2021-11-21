@@ -25,5 +25,9 @@ namespace watchtower.Services.Implementations {
             return charID!;
         }
 
+        public int Count() {
+            return _Items.Count();
+        }
+
     }
 }
