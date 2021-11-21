@@ -21,7 +21,7 @@ namespace watchtower.Models.Census {
 
         public int RankOrder { get; set; }
 
-        public short WorldID { get; set; }
+        public short? WorldID { get; set; }
 
     }
 }

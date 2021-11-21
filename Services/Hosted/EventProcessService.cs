@@ -34,7 +34,7 @@ namespace watchtower.Services {
                     timer.Restart();
                     await _Handler.Process(token);
                     if (timer.ElapsedMilliseconds > 100) {
-                        _Logger.LogWarning($"Took {timer.ElapsedMilliseconds}ms to process {token}");
+                        //_Logger.LogWarning($"Took {timer.ElapsedMilliseconds}ms to process {token}");
                     }
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Failed to process {token}", token);

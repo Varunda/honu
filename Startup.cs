@@ -28,6 +28,7 @@ using watchtower.Models.Census;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.CharacterViewer.Implementations;
 using watchtower.Services.Census.Readers;
+using watchtower.Code.Converters;
 
 namespace watchtower {
 
@@ -68,6 +69,9 @@ namespace watchtower {
             });
 
             services.AddMvc(options => {
+
+            }).AddJsonOptions(config => {
+                config.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
 
             }).AddRazorRuntimeCompilation();
 

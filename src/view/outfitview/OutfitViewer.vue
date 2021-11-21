@@ -58,6 +58,15 @@
                 </tr>
 
                 <tr>
+                    <td>
+                        {{new Date() | moment}}
+                    </td>
+                    <td>
+                        {{new Date() | moment}}
+                    </td>
+                </tr>
+
+                <tr>
                     <td><b>Census</b></td>
                     <td>
                         <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/outfit?outfit_id=' + outfit.data.id" target="_blank">
@@ -134,6 +143,16 @@
                     </a-body>
                 </a-col>
 
+                <a-col sort-field="worldID">
+                    <a-header>
+                        <b>Server</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.worldID | world}}
+                    </a-body>
+                </a-col>
+
                 <a-col sort-field="recentKD">
                     <a-header>
                         <b>Recent KD</b>
@@ -181,6 +200,7 @@
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
     import "filters/TimeAgoFilter";
+    import "filters/WorldNameFilter";
 
     import { PsOutfit, OutfitApi, FlatExpandedOutfitMember } from "api/OutfitApi";
 

@@ -3,7 +3,7 @@ import * as moment from "moment";
 
 Vue.filter("timeAgo", (date: Date): string => {
 	const m = moment(date);
-	const now = moment(Date.now());
+	const now = moment(Date.now()).utc();
 
 	const years = now.diff(m, "years");
 	const months = now.diff(m, "months") % 12;

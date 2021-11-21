@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -35,10 +36,10 @@ namespace watchtower.Services.Census.Implementations {
             return GetFromCensusByTag(tag, true);
         }
 
-        public Task<List<OutfitMember>> GetMembers(string outfitID) {
+        public async Task<List<OutfitMember>> GetMembers(string outfitID) {
             CensusQuery query = _Census.Create("outfit_member");
             query.Where("outfit_id").Equals(outfitID);
-            query.SetLimit(1_000_000); // Surely no outfit will ever have more than a million members
+            query.SetLimit(5000);
 
             // c:join=characters_world^to:character_id^on:character_id^inject_at:world_id
             CensusJoin join = query.JoinService("characters_world");
@@ -46,7 +47,32 @@ namespace watchtower.Services.Census.Implementations {
             join.OnField("character_id");
             join.WithInjectAt("world_id");
 
-            return _MemberReader.ReadList(query);
+            Stopwatch timer = Stopwatch.StartNew();
+
+            List<OutfitMember> members = new List<OutfitMember>();
+
+            int iter = 0;
+
+            while (iter < 10) {
+                query.SetStart(iter * 5000);
+
+                List<OutfitMember> page = await _MemberReader.ReadList(query);
+
+                members.AddRange(page);
+                ++iter;
+
+                if (iter >= 10) {
+                    _Logger.LogError($"Failed to get all members for outfit ID {outfitID} in 10 iterations. Currently have {members.Count} found, and got {page.Count} in current iteration");
+                }
+
+                if (page.Count < 5000) {
+                    break;
+                }
+            }
+
+            _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms and {iter} iterations to load members for {outfitID}");
+
+            return members;
         }
 
         private async Task<PsOutfit?> GetFromCensusByID(string outfitID, bool retry) {

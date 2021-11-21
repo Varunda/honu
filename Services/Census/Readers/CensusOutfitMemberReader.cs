@@ -18,8 +18,7 @@ namespace watchtower.Services.Census.Readers {
             member.MemberSince = token.CensusTimestamp("member_since");
             member.RankOrder = token.GetInt32("rank_ordinal", 0);
             member.Rank = token.GetString("rank", "");
-
-            member.WorldID = token.SelectToken("world_id")?.GetWorldID() ?? throw new ArgumentNullException($"Failed to get world_id from token: '{token}'");
+            member.WorldID = token.SelectToken("world_id")?.GetWorldID();
 
             return member;
         }

@@ -56,6 +56,23 @@ namespace watchtower.Services.Db.Implementations {
             return c;
         }
 
+        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
+                    FROM wt_character c
+                        LEFT JOIN wt_outfit o ON c.outfit_id = o.id
+                    WHERE c.id = ANY(@IDs)
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+
+            List<PsCharacter> c = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return c;
+        }
+
         public async Task Upsert(PsCharacter character) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

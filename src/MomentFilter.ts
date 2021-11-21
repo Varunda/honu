@@ -19,6 +19,12 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
         }
         return moment(input).format(format);
     } else if (input instanceof Date) {
+        if (moment(input).isUTC() == true) {
+            console.log(`${input} UTC`);
+        } else {
+            console.log(`${input} NOT UTC`);
+        }
+
         return moment(input).format(format);
         //return moment(input).add(-(vueMoment as any).tz, "minutes").format(format);
     } else if (typeof input == "number") {

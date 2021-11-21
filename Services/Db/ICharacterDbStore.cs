@@ -19,6 +19,15 @@ namespace watchtower.Services.Db {
         Task<PsCharacter?> GetByID(string charID);
 
         /// <summary>
+        ///     Get a block of characters
+        /// </summary>
+        /// <param name="IDs">List of IDs to get</param>
+        /// <returns>
+        ///     A list of all <see cref="PsCharacter"/>s that have an ID as an element of <paramref name="IDs"/>
+        /// </returns>
+        Task<List<PsCharacter>> GetByIDs(List<string> IDs);
+
+        /// <summary>
         ///     Get a character from the backing database by name
         /// </summary>
         /// <param name="name">Name of the <see cref="PsCharacter"/> to get</param>
@@ -41,6 +50,15 @@ namespace watchtower.Services.Db {
 
     public static class ICharacterDbStoreExtensionMethods {
 
+        /// <summary>
+        ///     Get the first character that has the name of <paramref name="name"/>. Case-insensitive
+        /// </summary>
+        /// <param name="repo">Extension instance</param>
+        /// <param name="name">Name of the character to get</param>
+        /// <returns>
+        ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.Name"/> of <paramref name="name"/>. If multiple exist,
+        ///     the first one loaded (by ID) is returned
+        /// </returns>
         public static async Task<PsCharacter?> GetFirstByName(this ICharacterDbStore repo, string name) {
             List<PsCharacter> chars = await repo.GetByName(name);
 

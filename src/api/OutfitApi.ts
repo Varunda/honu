@@ -20,6 +20,7 @@ export class OutfitMember {
 	public memberSince: Date = new Date();
 	public rank: string = "";
 	public rankOrder: number = 0;
+	public worldID: number | null = null;
 }
 
 export class ExpandedOutfitMember {
@@ -34,6 +35,7 @@ export class FlatExpandedOutfitMember {
 	public memberSince: Date = new Date();
 	public rank: string = "";
 	public rankOrder: number = 0;
+	public worldID: number | null = null;
 
 	public outfitTag: string | null = null;
 	public outfitName: string | null = null;
@@ -71,7 +73,7 @@ export class OutfitApi {
 		return {
 			member: OutfitApi.parseOutfitMember(elem.member),
 			character: elem.character == null ? null : CharacterApi.parse(elem.character),
-			stats: elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter))
+			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter))
 		};
 	}
 
@@ -83,6 +85,7 @@ export class OutfitApi {
 		flat.memberSince = entry.member.memberSince;
 		flat.rank = entry.member.rank;
 		flat.rankOrder = entry.member.rankOrder;
+		flat.worldID = entry.member.worldID;
 
 		if (entry.character != null) {
 			flat.outfitTag = entry.character.outfitTag;
@@ -94,7 +97,7 @@ export class OutfitApi {
 			flat.lastLogin = entry.character.dateLastLogin;
 		}
 
-		if (entry.stats.length > 0) {
+		if (entry.stats != null && entry.stats.length > 0) {
 			const kills: CharacterHistoryStat | null = entry.stats.find(iter => iter.type == "kills") || null;
 			const deaths: CharacterHistoryStat | null = entry.stats.find(iter => iter.type == "deaths") || null;
 			const score: CharacterHistoryStat | null = entry.stats.find(iter => iter.type == "score") || null;

@@ -19,6 +19,13 @@ namespace watchtower.Services.Db {
         Task<List<PsCharacterHistoryStat>> GetByCharacterID(string charID);
 
         /// <summary>
+        ///     GEt all <see cref="PsCharacterHistoryStat"/>s for all characters with ID passed in <paramref name="IDs"/>
+        /// </summary>
+        /// <param name="IDs"></param>
+        /// <returns></returns>
+        Task<List<PsCharacterHistoryStat>> GetByCharacterIDs(List<string> IDs);
+
+        /// <summary>
         ///     Update/Insert (upsert) a <see cref="PsCharacterHistoryStat"/> entry
         /// </summary>
         /// <param name="charID">ID of the character</param>

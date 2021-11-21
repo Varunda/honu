@@ -38,6 +38,22 @@ namespace watchtower.Services.Db.Implementations {
             return stats;
         }
 
+        public async Task<List<PsCharacterHistoryStat>> GetByCharacterIDs(List<string> IDs) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM character_history_stat
+                    WHERE character_id = ANY(@IDs)
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+
+            List<PsCharacterHistoryStat> stats = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return stats;
+        }
+
         public async Task Upsert(string charID, string type, PsCharacterHistoryStat stat) {
             // grrrr.....
             using NpgsqlConnection conn = _DbHelper.Connection();
