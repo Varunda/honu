@@ -3,7 +3,7 @@
 function locale(value: number | string): string {
 	let val: number = 0;
 	if (typeof (value) == "string") {
-		val = Number.parseInt(value);
+		val = Number.parseFloat(value);
 	} else {
 		val = value;
 	}
