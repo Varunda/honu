@@ -60,6 +60,14 @@ namespace watchtower.Services.Repositories.Implementations {
             return outfit;
         }
 
+        public async Task<List<PsOutfit>> GetByTag(string tag) {
+            if (tag == "") {
+                return new List<PsOutfit>();
+            }
+
+            return await _Db.GetByTag(tag);
+        }
+
         public Task Upsert(PsOutfit outfit) {
             throw new NotImplementedException();
         }

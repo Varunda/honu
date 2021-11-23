@@ -79,6 +79,10 @@ namespace watchtower.Constants {
             return expId == SHIELD_REPAIR || expId == SQUAD_SHIELD_REPAIR;
         }
 
+        public static bool OtherIDIsCharacterID(int expID) {
+            return IsHeal(expID) || IsRevive(expID) || IsResupply(expID) || IsShieldRepair(expID);
+        }
+
         public static bool IsSpawn(int expId) {
             return expId == SQUAD_SPAWN || expId == SQUAD_VEHICLE_SPAWN_BONUS
                 || expId == GALAXY_SPAWN_BONUS || expId == GENERIC_NPC_SPAWN

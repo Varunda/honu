@@ -131,6 +131,16 @@ export class OutfitApi {
 		return OutfitApi.parse(response.data);
 	}
 
+	public static async getByTag(tag: string): Promise<PsOutfit[]> {
+        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/outfit/tag/${tag}`);
+
+		if (response.status != 200) {
+			throw response.data;
+		}
+
+		return response.data.map((iter: any) => OutfitApi.parse(iter));
+	}
+
 	public static async getMembers(outfitID: string): Promise<ExpandedOutfitMember[]> {
 		const response: axios.AxiosResponse = await axios.default.get(`/api/outfit/${outfitID}/members`);
 

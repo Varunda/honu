@@ -51,6 +51,12 @@ namespace watchtower.Controllers.Api {
             return Ok(outfit);
         }
 
+        [HttpGet("tag/{outfitTag}")]
+        public async Task<ActionResult<PsOutfit>> GetByTag(string outfitTag) {
+            List<PsOutfit> outfits = await _OutfitRepository.GetByTag(outfitTag);
+            return Ok(outfits);
+        }
+
         [HttpGet("{outfitID}/members")]
         public async Task<ActionResult<List<ExpandedOutfitMember>>> GetMembers(string outfitID) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);

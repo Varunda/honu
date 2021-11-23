@@ -8,7 +8,7 @@ namespace watchtower.Services.Db {
 
     public interface IReportDbStore {
 
-        Task Insert(OutfitReport report);
+        Task<long> Insert(OutfitReport report);
 
     }
 }

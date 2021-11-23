@@ -21,22 +21,28 @@ namespace watchtower.Services.Db.Implementations {
             _DbHelper = dbHelper;
         }
 
-        public async Task Insert(OutfitReport report) {
+        public async Task<long> Insert(OutfitReport report) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO outfit_report (
                     generator, timestamp, period_start, period_end 
                 ) VALUES (
                     @Generator, NOW() at time zone 'utc', @PeriodStart, @PeriodEnd
-                );
+                ) RETURNING id;
             ");
 
             cmd.AddParameter("Generator", report.Generator);
             cmd.AddParameter("PeriodStart", report.PeriodStart);
             cmd.AddParameter("PeriodEnd", report.PeriodEnd);
 
-            await cmd.ExecuteNonQueryAsync();
+            object? objID = await cmd.ExecuteScalarAsync();
             await conn.CloseAsync();
+
+            if (objID != null && long.TryParse(objID.ToString(), out long ID) == true) {
+                return ID;
+            } else {
+                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
+            }
         }
 
     }

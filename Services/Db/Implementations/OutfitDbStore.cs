@@ -42,6 +42,22 @@ namespace watchtower.Services.Db.Implementations {
             return outfit;
         }
 
+        public async Task<List<PsOutfit>> GetByTag(string tag) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_outfit
+                    WHERE tag = @Tag;
+            ");
+
+            cmd.AddParameter("Tag", tag);
+
+            List<PsOutfit> outfits = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return outfits;
+        }
+
         public async Task Upsert(PsOutfit outfit) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

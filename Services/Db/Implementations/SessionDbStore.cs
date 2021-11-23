@@ -76,21 +76,28 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         public async Task<List<Session>> GetByRangeAndOutfit(string? outfitID, DateTime start, DateTime end) {
+            if (start > end) {
+                _Logger.LogWarning($"Warning, start comes after end, {start} > {end}");
+            }
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
                     WHERE outfit_id = @OutfitID
                         AND ((start BETWEEN @PeriodStart AND @PeriodEnd)
+                            OR (finish BETWEEN @PeriodStart AND @PeriodEnd)
                             OR (start <= @PeriodStart AND finish >= @PeriodEnd)
                             OR (start >= @PeriodStart AND finish <= @PeriodEnd)
-                            OR (start < @PeriodSTart AND finish IS NULL)
+                            OR (start < @PeriodStart AND finish IS NULL)
                         )
             ");
 
             cmd.AddParameter("OutfitID", outfitID);
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
+
+            //_Logger.LogTrace($"{cmd.Print()}");
 
             List<Session> sessions = await ReadList(cmd);
             await conn.CloseAsync();

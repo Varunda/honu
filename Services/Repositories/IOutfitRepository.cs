@@ -10,6 +10,8 @@ namespace watchtower.Services.Repositories {
 
         Task<PsOutfit?> GetByID(string outfitID);
 
+        Task<List<PsOutfit>> GetByTag(string tag);
+
         Task Upsert(PsOutfit outfit);
 
     }

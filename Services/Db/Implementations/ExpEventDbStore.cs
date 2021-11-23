@@ -144,6 +144,25 @@ namespace watchtower.Services.Db.Implementations {
             return events;
         }
 
+        public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_exp
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                        AND source_character_id = ANY(@IDs)
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return events;
+        }
+
         public async Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

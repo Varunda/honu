@@ -11,6 +11,8 @@ namespace watchtower.Services.Db {
 
         Task<PsOutfit?> GetByID(string outfitID);
 
+        Task<List<PsOutfit>> GetByTag(string tag);
+
         Task Upsert(PsOutfit outfit);
 
         Task<List<OutfitPopulation>> GetPopulation(DateTime time, short worldID);

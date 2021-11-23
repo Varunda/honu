@@ -1,0 +1,191 @@
+﻿<template>
+    <div>
+        <h2 class="wt-header">
+            Class stats
+        </h2>
+
+        <table class="table table-sm">
+            <tr class="table-secondary">
+                <td>Class</td>
+                <td>Kills</td>
+                <td>Time</td>
+                <td>KPM</td>
+                <td>Deaths</td>
+                <td>KD</td>
+                <td>Players</td>
+            </tr>
+
+            <tr>
+                <td>Infiltrator</td>
+                <td>{{infil.kills}}</td>
+                <td>{{infil.timeAs | mduration}}</td>
+                <td>{{infil.kills / infil.timeAs * 60 | locale}}</td>
+                <td>{{infil.deaths}}</td>
+                <td>{{infil.kills / Math.max(1, infil.deaths) | locale}}</td>
+                <td>{{infil.count}}</td>
+            </tr>
+
+            <tr>
+                <td>Light Assault</td>
+                <td>{{lightAssault.kills}}</td>
+                <td>{{lightAssault.timeAs | mduration}}</td>
+                <td>{{lightAssault.kills / lightAssault.timeAs * 60 | locale}}</td>
+                <td>{{lightAssault.deaths}}</td>
+                <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale}}</td>
+                <td>{{lightAssault.count}}</td>
+            </tr>
+
+            <tr>
+                <td>Medic</td>
+                <td>{{medic.kills}}</td>
+                <td>{{medic.timeAs | mduration}}</td>
+                <td>{{medic.kills / medic.timeAs * 60 | locale}}</td>
+                <td>{{medic.deaths}}</td>
+                <td>{{medic.kills / Math.max(1, medic.deaths) | locale}}</td>
+                <td>{{medic.count}}</td>
+            </tr>
+
+            <tr>
+                <td>Engineer</td>
+                <td>{{engineer.kills}}</td>
+                <td>{{engineer.timeAs | mduration}}</td>
+                <td>{{engineer.kills / engineer.timeAs * 60 | locale}}</td>
+                <td>{{engineer.deaths}}</td>
+                <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale}}</td>
+                <td>{{engineer.count}}</td>
+            </tr>
+
+            <tr>
+                <td>Heavy</td>
+                <td>{{heavy.kills}}</td>
+                <td>{{heavy.timeAs | mduration}}</td>
+                <td>{{heavy.kills / heavy.timeAs * 60 | locale}}</td>
+                <td>{{heavy.deaths}}</td>
+                <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale}}</td>
+                <td>{{heavy.count}}</td>
+            </tr>
+
+            <tr>
+                <td>MAX</td>
+                <td>{{max.kills}}</td>
+                <td>{{max.timeAs | mduration}}</td>
+                <td>{{max.kills / max.timeAs * 60 | locale}}</td>
+                <td>{{max.deaths}}</td>
+                <td>{{max.kills / Math.max(1, max.deaths) | locale}}</td>
+                <td>{{max.count}}</td>
+            </tr>
+
+        </table>
+    </div>
+</template>
+
+<script lang="ts">
+    import Vue, { PropType } from "vue";
+    import Report from "../Report";
+
+    import Loadout from "util/Loadout";
+
+    import "filters/LocaleFilter";
+    import "MomentFilter";
+
+    class ClassStats {
+        public kills: number = 0;
+        public deaths: number = 0;
+        public count: number = 0;
+        public timeAs: number = 0;
+    }
+
+    export const ReportClassBreakdown = Vue.extend({
+        props: {
+            report: { type: Object as PropType<Report>, required: true }
+        },
+
+        data: function() {
+            return {
+                infil: new ClassStats() as ClassStats,
+                lightAssault: new ClassStats() as ClassStats,
+                medic: new ClassStats() as ClassStats,
+                engineer: new ClassStats() as ClassStats,
+                heavy: new ClassStats() as ClassStats,
+                max: new ClassStats() as ClassStats
+            }
+        },
+
+        mounted: function(): void {
+            this.make();
+        },
+
+        methods: {
+            make: function(): void {
+                this.setKills();
+                this.setDeaths();
+
+
+                for (const metadata of Array.from(this.report.playerMetadata.values())) {
+                    if (metadata.classes.mostPlayed == metadata.classes.infil) {
+                        ++this.infil.count;
+                    } else if (metadata.classes.mostPlayed == metadata.classes.lightAssault) {
+                        ++this.lightAssault.count;
+                    } else if (metadata.classes.mostPlayed == metadata.classes.medic) {
+                        ++this.medic.count;
+                    } else if (metadata.classes.mostPlayed == metadata.classes.engineer) {
+                        ++this.engineer.count;
+                    } else if (metadata.classes.mostPlayed == metadata.classes.heavy) {
+                        ++this.heavy.count;
+                    } else if (metadata.classes.mostPlayed == metadata.classes.max) {
+                        ++this.max.count;
+                    }
+
+                    this.infil.timeAs += metadata.classes.infil.timeAs;
+                    this.lightAssault.timeAs += metadata.classes.lightAssault.timeAs;
+                    this.medic.timeAs += metadata.classes.medic.timeAs;
+                    this.engineer.timeAs += metadata.classes.engineer.timeAs;
+                    this.heavy.timeAs += metadata.classes.heavy.timeAs;
+                    this.max.timeAs += metadata.classes.max.timeAs;
+                }
+            },
+
+            setKills: function(): void {
+                for (const kill of this.report.kills) {
+                    const id: number = kill.attackerLoadoutID;
+
+                    if (Loadout.isInfiltrator(id)) {
+                        ++this.infil.kills;
+                    } else if (Loadout.isLightAssault(id)) {
+                        ++this.lightAssault.kills;
+                    } else if (Loadout.isMedic(id)) {
+                        ++this.medic.kills;
+                    } else if (Loadout.isEngineer(id)) {
+                        ++this.engineer.kills;
+                    } else if (Loadout.isHeavy(id)) {
+                        ++this.heavy.kills;
+                    } else if (Loadout.isMax(id)) {
+                        ++this.max.kills;
+                    }
+                }
+            },
+
+            setDeaths: function(): void {
+                for (const death of this.report.deaths) {
+                    const id: number = death.killedLoadoutID;
+
+                    if (Loadout.isInfiltrator(id)) {
+                        ++this.infil.deaths;
+                    } else if (Loadout.isLightAssault(id)) {
+                        ++this.lightAssault.deaths;
+                    } else if (Loadout.isMedic(id)) {
+                        ++this.medic.deaths;
+                    } else if (Loadout.isEngineer(id)) {
+                        ++this.engineer.deaths;
+                    } else if (Loadout.isHeavy(id)) {
+                        ++this.heavy.deaths;
+                    } else if (Loadout.isMax(id)) {
+                        ++this.max.deaths;
+                    }
+                }
+            }
+        }
+    });
+
+    export default ReportClassBreakdown;
+</script>
