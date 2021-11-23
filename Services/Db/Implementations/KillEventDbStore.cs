@@ -237,6 +237,25 @@ namespace watchtower.Services.Db.Implementations {
             return evs;
         }
 
+        public async Task<List<KillEvent>> GetKillsByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_kills
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                        AND (attacker_character_id = ANY(@IDs) OR killed_character_id = ANY(@IDs))
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
         public async Task<List<KillEvent>> GetRecentKillsByCharacterID(string charID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

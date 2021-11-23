@@ -64,5 +64,9 @@ namespace watchtower.Controllers {
             return Redirect("/character");
         }
 
+        public IActionResult Report() {
+            return View();
+        }
+
     }
 }

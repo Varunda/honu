@@ -114,6 +114,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterItemDbStore, CharacterItemDbStore>();
             services.AddSingleton<ICharacterStatDbStore, CharacterStatDbStore>();
             services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
+            services.AddSingleton<IReportDbStore, ReportDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -234,6 +235,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "outfitreport",
+                    pattern: "/report/{*.}",
+                    defaults: new { controller = "Home", action = "Report" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "worlddata",
                     pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }
@@ -246,6 +253,7 @@ namespace watchtower {
 
                 endpoints.MapHub<WorldDataHub>("/ws/data");
                 endpoints.MapHub<WorldOverviewHub>("/ws/overview");
+                endpoints.MapHub<ReportHub>("/ws/report");
             });
         }
 
