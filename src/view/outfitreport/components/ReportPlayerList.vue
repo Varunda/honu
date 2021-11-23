@@ -4,7 +4,7 @@
             Player list
         </h2>
 
-        <table class="table table-sm">
+        <table class="table table-sm table-striped">
             <tr class="table-secondary">
                 <td>Character</td>
                 <td>Most played class</td>

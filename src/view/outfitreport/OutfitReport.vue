@@ -24,6 +24,10 @@
             <button @click="isNew = !isNew" type="button" class="btn btn-secondary">
                 Is new
             </button>
+
+            <a href="/report" class="btn btn-secondary">
+                Reset
+            </a>
         </div>
 
         <div v-if="showLogs == true" style="height: 300px; overflow-y: scroll;" class="container-fluid">
@@ -128,6 +132,8 @@
             <report-class-breakdown :report="report"></report-class-breakdown>
 
             <report-player-list :report="report"></report-player-list>
+
+            <report-outfit-versus :report="report"></report-outfit-versus>
         </div>
 
     </div>
@@ -150,6 +156,7 @@
 
     import ReportClassBreakdown from "./components/ReportClassBreakdown.vue";
     import ReportPlayerList from "./components/ReportPlayerList.vue";
+    import ReportOutfitVersus from "./components/ReportOutfitVersus.vue";
 
     import DateTimePicker from "components/DateTimePicker.vue";
     import InfoHover from "components/InfoHover.vue";
@@ -205,6 +212,9 @@
             this.createConnection();
 
             this.parseUrl();
+
+            this.periodStartInput = this.periodStart.toISOString().slice(0, -1);
+            this.periodEndInput = this.periodEnd.toISOString().slice(0, -1);
         },
 
         methods: {
@@ -416,6 +426,7 @@
             InfoHover,
             ReportClassBreakdown,
             ReportPlayerList,
+            ReportOutfitVersus
         }
 
     });

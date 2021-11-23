@@ -120,7 +120,6 @@
                 this.setKills();
                 this.setDeaths();
 
-
                 for (const metadata of Array.from(this.report.playerMetadata.values())) {
                     if (metadata.classes.mostPlayed == metadata.classes.infil) {
                         ++this.infil.count;
