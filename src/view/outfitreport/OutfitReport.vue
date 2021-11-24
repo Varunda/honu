@@ -10,6 +10,25 @@
 
                 <a href="#">Report</a>
             </h1>
+
+            <div v-if="isDone == true">
+                <table class="table table-sm">
+                    <tr>
+                        <td><b>Start</b></td>
+                        <td>{{report.periodStart | moment}}</td>
+                    </tr>
+
+                    <tr>
+                        <td><b>End</b></td>
+                        <td>{{report.periodEnd | moment}}</td>
+                    </tr>
+
+                    <tr>
+                        <td><b>Duration</b></td>
+                        <td>{{(report.periodEnd.getTime() - report.periodStart.getTime()) / 1000 | mduration}}</td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
         <h3 class="text-warning text-center">
@@ -67,6 +86,8 @@
                 </span>
 
                 <input v-model="search.outfitTag" type="text" class="form-control" @keyup.enter="searchTag" />
+                
+                <button @click="searchTag" class="btn btn-primary input-group-append">Add</button>
             </div>
 
             <input v-model="generator" type="text" class="form-control" @keyup.enter="start" />
@@ -78,62 +99,89 @@
             <button @click="start" type="button" class="btn btn-primary" :disabled="connected == true">
                 Generate
             </button>
+
+            <hr />
+
+            <div>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <td colspan="2">Outfits</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="outfit in outfits">
+                            <td>
+                                [{{outfit.tag}}]
+                                {{outfit.name}}
+                            </td>
+                            <td>
+                                <a @click="removeOutfit(outfit.id)">
+                                    &times;
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <table v-if="isMaking == true" class="table table-sm">
-            <tr class="table-secondary">
-                <td>Step</td>
-                <td>Done?</td>
-            </tr>
+        <div id="generation-progress" class="collapse">
+            <table v-if="isMaking == true" class="table table-sm">
+                <tr class="table-secondary">
+                    <td>Step</td>
+                    <td>Done?</td>
+                </tr>
 
-            <tr :class="[ !steps.report ? 'table-warning' : 'table-success' ]">
-                <td>Submitting request</td>
-                <td>{{steps.report}}</td>
-            </tr>
+                <tr :class="[ !steps.report ? 'table-warning' : 'table-success' ]">
+                    <td>Submitting request</td>
+                    <td>{{steps.report}}</td>
+                </tr>
 
-            <tr :class="[ !steps.kills ? 'table-warning' : 'table-success' ]">
-                <td>Getting kills</td>
-                <td>{{steps.kills}}</td>
-            </tr>
+                <tr :class="[ !steps.kills ? 'table-warning' : 'table-success' ]">
+                    <td>Getting kills</td>
+                    <td>{{steps.kills}}</td>
+                </tr>
 
-            <tr :class="[ !steps.deaths ? 'table-warning' : 'table-success' ]">
-                <td>Getting deaths</td>
-                <td>{{steps.deaths}}</td>
-            </tr>
+                <tr :class="[ !steps.deaths ? 'table-warning' : 'table-success' ]">
+                    <td>Getting deaths</td>
+                    <td>{{steps.deaths}}</td>
+                </tr>
 
-            <tr :class="[ !steps.exp ? 'table-warning' : 'table-success' ]">
-                <td>Getting exp events</td>
-                <td>{{steps.exp}}</td>
-            </tr>
+                <tr :class="[ !steps.exp ? 'table-warning' : 'table-success' ]">
+                    <td>Getting exp events</td>
+                    <td>{{steps.exp}}</td>
+                </tr>
 
-            <tr :class="[ !steps.chars ? 'table-warning' : 'table-success' ]">
-                <td>Getting characters</td>
-                <td>{{steps.chars}}</td>
-            </tr>
+                <tr :class="[ !steps.chars ? 'table-warning' : 'table-success' ]">
+                    <td>Getting characters</td>
+                    <td>{{steps.chars}}</td>
+                </tr>
 
-            <tr :class="[ !steps.outfits ? 'table-warning' : 'table-success' ]">
-                <td>Getting outfits</td>
-                <td>{{steps.outfits}}</td>
-            </tr>
+                <tr :class="[ !steps.outfits ? 'table-warning' : 'table-success' ]">
+                    <td>Getting outfits</td>
+                    <td>{{steps.outfits}}</td>
+                </tr>
 
-            <tr :class="[ !steps.items ? 'table-warning' : 'table-success' ]">
-                <td>Getting items</td>
-                <td>{{steps.items}}</td>
-            </tr>
+                <tr :class="[ !steps.items ? 'table-warning' : 'table-success' ]">
+                    <td>Getting items</td>
+                    <td>{{steps.items}}</td>
+                </tr>
 
-            <tr v-if="isDone == true" class="table-success">
-                <td colspan="2">
-                    All done!
-                </td>
-            </tr>
-        </table>
+                <tr v-if="isDone == true" class="table-success">
+                    <td colspan="2">
+                        All done!
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <div v-if="isDone == true">
             <report-class-breakdown :report="report"></report-class-breakdown>
 
-            <report-player-list :report="report"></report-player-list>
-
             <report-outfit-versus :report="report"></report-outfit-versus>
+
+            <report-player-list :report="report"></report-player-list>
         </div>
 
     </div>
@@ -170,7 +218,7 @@
         data: function() {
             return {
                 logs: [] as Message[],
-                showLogs: true as boolean,
+                showLogs: false as boolean,
 
                 isNew: true as boolean,
                 isDone: false as boolean,
@@ -201,20 +249,23 @@
 
                 report: new Report() as Report,
 
-                outfits: [] as string[],
+                outfits: [] as PsOutfit[],
 
                 generator: "" as string,
                 genB64: "" as string
             }
         },
 
-        created: function(): void {
-            this.createConnection();
+        mounted: function(): void {
+            this.$nextTick(() => {
+                $("#generation-progress").collapse();
+                this.createConnection();
 
-            this.parseUrl();
+                this.parseUrl();
 
-            this.periodStartInput = this.periodStart.toISOString().slice(0, -1);
-            this.periodEndInput = this.periodEnd.toISOString().slice(0, -1);
+                this.periodStartInput = this.periodStart.toISOString().slice(0, -1);
+                this.periodEndInput = this.periodEnd.toISOString().slice(0, -1);
+            });
         },
 
         methods: {
@@ -237,6 +288,7 @@
                     const gen: string = parts[1];
                     console.log(`Loaded generator '${gen}' from URL`);
 
+                    this.isNew = false;
                     this.generator = atob(gen);
                 }
             },
@@ -245,10 +297,14 @@
                 const outfits: PsOutfit[] = await OutfitApi.getByTag(this.search.outfitTag);
 
                 if (outfits.length == 1) {
-                    this.outfits.push(outfits[0].id);
+                    this.outfits.push(outfits[0]);
                     this.updateGenerator();
                     this.search.outfitTag = "";
                 }
+            },
+
+            removeOutfit: function(outfitID: string): void {
+                this.outfits = this.outfits.filter(iter => iter.id != outfitID);
             },
 
             createConnection: function(): void {
@@ -312,6 +368,7 @@
 
                 this.log(`Sending generator string: '${this.generator}'`);
                 this.genB64 = btoa(this.generator);
+                this.report.generator = this.generator;
                 history.pushState({}, "", `/report/${this.genB64}`);
 
                 this.isMaking = true;
@@ -329,7 +386,7 @@
                     setTimeout(() => {
                         this.showLogs = false;
                         this.isMaking = false;
-                    }, 3000);
+                    }, 2000);
                 }).catch((err: any) => {
                     console.error(err);
                 });
@@ -347,21 +404,21 @@
                 const start: number = Math.floor(this.periodStart.getTime() / 1000);
                 const end: number = Math.floor(this.periodEnd.getTime() / 1000);
 
-                const gen: string = `${start},${end};${this.outfits.map(iter => `o${iter};`)}`;
+                const gen: string = `${start},${end};${this.outfits.map(iter => `o${iter.id};`)}`;
                 this.generator = gen;
                 console.log(gen);
             },
 
             onSendReport: function(report: Report): void {
                 this.report.ID = report.ID;
-                this.report.periodEnd = report.periodEnd;
-                this.report.periodStart = report.periodStart;
-                this.report.timestamp = report.timestamp;
+                this.report.periodEnd = new Date(report.periodEnd);
+                this.report.periodStart = new Date(report.periodStart);
+                this.report.timestamp = new Date(report.timestamp);
                 this.report.teamID = report.teamID;
 
-                this.periodStart = this.report.periodStart;
+                this.periodStart = new Date(this.report.periodStart);
                 this.periodStartInput = this.periodStart.toString();
-                this.periodEnd = this.report.periodEnd;
+                this.periodEnd = new Date(this.report.periodEnd);
                 this.periodEndInput = this.periodEnd.toString();
 
                 this.log(`Got report: ${JSON.stringify(report)}`);

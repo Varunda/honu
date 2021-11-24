@@ -2,41 +2,66 @@
     <div>
         <h2 class="wt-header">
             Outfit versus
+            <info-hover text="An outfit is only included if it is at least 1% of all kills & deaths"></info-hover>
         </h2>
 
-        <table class="table table-sm table-striped">
-            <tr class="table-secondary">
-                <td>Outfit</td>
-                <td>Kills</td>
-                <td>Deaths</td>
-                <td>KD</td>
-            </tr>
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr class="table-secondary">
+                    <td>Outfit</td>
+                    <td>
+                        Report link
+                        <info-hover text="Get a report for this outfit, at the same time"></info-hover>
+                    </td>
+                    <td>Kills</td>
+                    <td>Deaths</td>
+                    <td>KD</td>
+                </tr>
+            </thead>
 
-            <tr v-for="outfit in versus">
-                <td>
-                    <span v-if="outfit.id">
-                        <a :href="'/o/' + outfit.id">
-                            [{{outfit.tag}}]
+            <tbody>
+                <tr v-for="outfit in versus">
+                    <td>
+                        <span v-if="outfit.id">
+                            <a :href="'/o/' + outfit.id">
+                                [{{outfit.tag}}]
+                                {{outfit.name}}
+                            </a>
+                        </span>
+                        <span v-else>
                             {{outfit.name}}
-                        </a>
-                    </span>
-                    <span v-else>
-                        {{outfit.name}}
-                    </span>
-                </td>
-                <td>{{outfit.kills}}</td>
-                <td>{{outfit.deaths}}</td>
-                <td>{{outfit.kills / Math.max(1, outfit.deaths) | locale}}</td>
-            </tr>
+                        </span>
+                    </td>
+                    <td>
+                        <span v-if="outfit.id">
+                            <a :href="'/report/' + outfit.generator">
+                                View report
+                            </a>
+                        </span>
+                        <span v-else>
+                            --
+                        </span>
+                    </td>
+                    <td>
+                        {{outfit.kills}}
+                        ({{outfit.kills / kills * 100 | locale}}%)
+                    </td>
+                    <td>
+                        {{outfit.deaths}}
+                        ({{outfit.deaths / deaths * 100 | locale}}%)
+                    </td>
+                    <td>{{outfit.kills / Math.max(1, outfit.deaths) | locale}}</td>
+                </tr>
+            </tbody>
         </table>
-
-        template
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import Report from "../Report";
+
+    import InfoHover from "components/InfoHover.vue";
 
     import "filters/LocaleFilter";
 
@@ -47,6 +72,8 @@
         public id: string = "";
         public name: string = "";
         public tag: string | null = null;
+
+        public generator: string = "";
 
         public kills: number = 0;
         public deaths: number = 0;
@@ -77,6 +104,9 @@
             return {
                 versus: [] as OutfitVersus[],
                 map: new Map() as Map<string, OutfitVersus>,
+
+                kills: 0 as number,
+                deaths: 0 as number
             }
         },
 
@@ -96,8 +126,11 @@
                     }
                 }
 
+                this.kills = this.report.kills.length;
+                this.deaths = this.report.deaths.length;
+
                 this.versus = [noOutfitVS, noOutfitNC, noOutfitTR, noOutfitNS, ...Array.from(this.map.values())]
-                    .filter(iter => iter.kills + iter.deaths > 10)
+                    .filter(iter => ((iter.kills + iter.deaths) / (this.kills + this.deaths))  > 0.01)
                     .sort((a, b) => (b.kills + a.deaths) - (a.kills + a.deaths));
             },
 
@@ -124,6 +157,9 @@
                         n.name = character.outfitName!;
                         n.tag = character.outfitTag;
 
+                        const gen: string = btoa(`${this.report.generator.split(';')[0]};o${n.id};`);
+                        n.generator = gen;
+
                         this.map.set(character.outfitID, n);
                     }
 
@@ -132,6 +168,10 @@
 
                 return null;
             }
+        },
+
+        components: {
+            InfoHover
         }
     });
 

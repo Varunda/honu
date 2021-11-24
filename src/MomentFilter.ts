@@ -92,10 +92,10 @@ Vue.filter("mduration", (input: string | number): string => {
     const dur: moment.Duration = moment.duration(val * 1000);
 
     if (dur.days() > 0) {
-        return `${Math.floor(dur.asDays())}d ${dur.hours()}h`;
+        return `${Math.floor(dur.asDays())}d ${dur.hours().toString().padStart(2, "0")}h`;
     }
 
-    return `${dur.hours()}h ${dur.minutes()}m`;
+    return `${dur.hours()}h ${dur.minutes().toString().padStart(2, "0")}m`;
 });
 
 Vue.filter("til", (time: Date) => {
