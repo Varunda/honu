@@ -63,6 +63,9 @@ namespace watchtower.Controllers.Api {
         [HttpGet("{itemID}/top/kd")]
         public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
+            if (entries.Count < 50) {
+                entries = await _StatDb.GetTopKD(itemID, new(), new(), 50);
+            }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
             return Ok(expanded);
@@ -71,6 +74,9 @@ namespace watchtower.Controllers.Api {
         [HttpGet("{itemID}/top/kpm")]
         public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopKPM(itemID, new List<short>(), new List<short>());
+            if (entries.Count < 50) {
+                entries = await _StatDb.GetTopKPM(itemID, new(), new(), 50);
+            }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
             return Ok(expanded);
@@ -79,6 +85,9 @@ namespace watchtower.Controllers.Api {
         [HttpGet("{itemID}/top/accuracy")]
         public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopAccuracy(itemID, new List<short>(), new List<short>());
+            if (entries.Count < 50) {
+                entries = await _StatDb.GetTopAccuracy(itemID, new(), new(), 50);
+            }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
             return Ok(expanded);
@@ -87,6 +96,9 @@ namespace watchtower.Controllers.Api {
         [HttpGet("{itemID}/top/hsr")]
         public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopHeadshotRatio(itemID, new List<short>(), new List<short>());
+            if (entries.Count < 50) {
+                entries = await _StatDb.GetTopHeadshotRatio(itemID, new(), new(), 50);
+            }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
             return Ok(expanded);
@@ -103,6 +115,9 @@ namespace watchtower.Controllers.Api {
         [HttpGet("{itemID}/percentile_stats")]
         public async Task<ActionResult<WeaponStatPercentileAll>> GetPercentileStats(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
+            if (entries.Count < 50) {
+                entries = await _StatDb.GetByItemID(itemID, 50);
+            }
 
             WeaponStatPercentileAll all = new WeaponStatPercentileAll();
             all.ItemID = itemID;

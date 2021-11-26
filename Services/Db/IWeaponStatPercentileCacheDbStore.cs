@@ -38,7 +38,7 @@ namespace watchtower.Services.Db {
         /// <returns>
         ///     A task for when the operation is complete
         /// </returns>
-        Task<WeaponStatPercentileCache?> Generate(string itemID, string columnName);
+        Task<WeaponStatPercentileCache?> Generate(string itemID, string columnName, int minKills = 1159);
 
     }
 
@@ -53,8 +53,8 @@ namespace watchtower.Services.Db {
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
         /// </returns>
-        public static async Task<WeaponStatPercentileCache?> GenerateKpm(this IWeaponStatPercentileCacheDbStore db, string itemID) {
-            WeaponStatPercentileCache? entry = await db.Generate(itemID, "kpm");
+        public static async Task<WeaponStatPercentileCache?> GenerateKpm(this IWeaponStatPercentileCacheDbStore db, string itemID, int minKills = 1159) {
+            WeaponStatPercentileCache? entry = await db.Generate(itemID, "kpm", minKills);
             if (entry == null) {
                 return null;
             }
@@ -72,8 +72,8 @@ namespace watchtower.Services.Db {
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
         /// </returns>
-        public static async Task<WeaponStatPercentileCache?> GenerateKd(this IWeaponStatPercentileCacheDbStore db, string itemID) {
-            WeaponStatPercentileCache? entry = await db.Generate(itemID, "kd");
+        public static async Task<WeaponStatPercentileCache?> GenerateKd(this IWeaponStatPercentileCacheDbStore db, string itemID, int minKills = 1159) {
+            WeaponStatPercentileCache? entry = await db.Generate(itemID, "kd", minKills);
             if (entry == null) {
                 return null;
             }
@@ -91,8 +91,8 @@ namespace watchtower.Services.Db {
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
         /// </returns>
-        public static async Task<WeaponStatPercentileCache?> GenerateAcc(this IWeaponStatPercentileCacheDbStore db, string itemID) {
-            WeaponStatPercentileCache? entry = await db.Generate(itemID, "acc");
+        public static async Task<WeaponStatPercentileCache?> GenerateAcc(this IWeaponStatPercentileCacheDbStore db, string itemID, int minKills = 1159) {
+            WeaponStatPercentileCache? entry = await db.Generate(itemID, "acc", minKills);
             if (entry == null) {
                 return null;
             }
@@ -110,8 +110,8 @@ namespace watchtower.Services.Db {
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
         /// </returns>
-        public static async Task<WeaponStatPercentileCache?> GenerateHsr(this IWeaponStatPercentileCacheDbStore db, string itemID) {
-            WeaponStatPercentileCache? entry = await db.Generate(itemID, "hsr");
+        public static async Task<WeaponStatPercentileCache?> GenerateHsr(this IWeaponStatPercentileCacheDbStore db, string itemID, int minKills = 1159) {
+            WeaponStatPercentileCache? entry = await db.Generate(itemID, "hsr", minKills);
             if (entry == null) {
                 return null;
             }

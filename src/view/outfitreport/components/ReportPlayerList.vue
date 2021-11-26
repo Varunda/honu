@@ -24,6 +24,7 @@
                 <tr v-for="meta in metadata">
                     <td>
                         <a :href="'/c/' + meta.ID">
+                            [{{meta.outfitTag}}]
                             {{meta.name}}
                         </a>
                     </td>

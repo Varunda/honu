@@ -87,6 +87,18 @@
         <hr class="border" />
 
         <div>
+            <a href="/report">
+                Outfit report
+            </a>
+        </div>
+
+        <div>
+            <a href="/outfitpop">
+                Outfit pop
+            </a>
+        </div>
+
+        <div>
             <h4>Contact</h4>
             
             <div>

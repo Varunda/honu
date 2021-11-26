@@ -99,7 +99,7 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
-        public async Task<WeaponStatPercentileCache?> Generate(string itemID, string columnName) {
+        public async Task<WeaponStatPercentileCache?> Generate(string itemID, string columnName, int minKills = 1159) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
                 SELECT

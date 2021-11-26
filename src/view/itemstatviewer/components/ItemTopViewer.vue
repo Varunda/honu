@@ -194,59 +194,64 @@
         },
 
         methods: {
-            loadKd: async function(): Promise<void> {
+            loadKd: function(): void {
                 this.column = "kd";
 
                 if (this.kd.state == "idle") {
                     this.kd = Loadable.loading();
-                    this.kd = await Loadable.promise(CharacterWeaponStatApi.getTopKD(this.ItemId));
+                    Loadable.promise(CharacterWeaponStatApi.getTopKD(this.ItemId))
+                        .then(iter => { this.kd = iter; this.entries = this.kd; });
+                } else {
+                    this.entries = this.kd;
                 }
-
-                this.entries = this.kd;
             },
 
-            loadKpm: async function(): Promise<void> {
+            loadKpm: function(): void {
                 this.column = "kpm";
 
                 if (this.kpm.state == "idle") {
                     this.kpm = Loadable.loading();
-                    this.kpm = await Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.ItemId));
+                    Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.ItemId))
+                        .then(iter => { this.kpm = iter; this.entries = this.kpm; });
+                } else {
+                    this.entries = this.kpm;
                 }
-
-                this.entries = this.kpm;
             },
 
-            loadAcc: async function(): Promise<void> {
+            loadAcc: function(): void {
                 this.column = "acc";
 
                 if (this.acc.state == "idle") {
                     this.acc = Loadable.loading();
-                    this.acc = await Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.ItemId));
+                    Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.ItemId))
+                        .then(iter => { this.acc = iter; this.entries = this.acc; });
+                } else {
+                    this.entries = this.acc;
                 }
-
-                this.entries = this.acc;
             },
 
-            loadHsr: async function(): Promise<void> {
+            loadHsr: function(): void {
                 this.column = "hsr";
 
                 if (this.hsr.state == "idle") {
                     this.hsr = Loadable.loading();
-                    this.hsr = await Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId));
+                    Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId))
+                        .then(iter => { this.hsr = iter; this.entries = this.hsr; });
+                } else {
+                    this.entries = this.hsr;
                 }
-
-                this.entries = this.hsr;
             },
 
-            loadKills: async function(): Promise<void> {
+            loadKills: function(): void {
                 this.column = "kills";
 
                 if (this.kills.state == "idle") {
                     this.kills = Loadable.loading();
-                    this.kills = await Loadable.promise(CharacterWeaponStatApi.getTopKills(this.ItemId));
+                    Loadable.promise(CharacterWeaponStatApi.getTopKills(this.ItemId))
+                        .then(iter => { this.kills = iter; this.entries = this.kills; });
+                } else {
+                    this.entries = this.kills;
                 }
-
-                this.entries = this.kills;
             },
 
             columnStyle: function(col: string): object {

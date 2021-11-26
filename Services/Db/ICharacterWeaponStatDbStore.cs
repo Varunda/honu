@@ -35,7 +35,7 @@ namespace watchtower.Services.Db {
         /// <param name="worlds"></param>
         /// <param name="factions"></param>
         /// <returns></returns>
-        Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> Worlds, List<short> factions);
+        Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> Worlds, List<short> factions, int minKills = 1159);
 
         /// <summary>
         ///     Update or insert an entry
@@ -48,24 +48,24 @@ namespace watchtower.Services.Db {
 
     public static class ICharacterWeaponStatDbStoreExtensionMethods {
 
-        public static Task<List<WeaponStatEntry>> GetTopKD(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "kd", worlds, factions);
+        public static Task<List<WeaponStatEntry>> GetTopKD(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "kd", worlds, factions, minKills);
         }
 
-        public static Task<List<WeaponStatEntry>> GetTopKPM(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "kpm", worlds, factions);
+        public static Task<List<WeaponStatEntry>> GetTopKPM(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "kpm", worlds, factions, minKills);
         }
 
-        public static Task<List<WeaponStatEntry>> GetTopAccuracy(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "acc", worlds, factions);
+        public static Task<List<WeaponStatEntry>> GetTopAccuracy(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "acc", worlds, factions, minKills);
         }
 
-        public static Task<List<WeaponStatEntry>> GetTopHeadshotRatio(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "hsr", worlds, factions);
+        public static Task<List<WeaponStatEntry>> GetTopHeadshotRatio(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "hsr", worlds, factions, minKills);
         }
 
         public static Task<List<WeaponStatEntry>> GetTopKills(this ICharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "kills", worlds, factions);
+            return repo.GetTopEntries(itemID, "kills", worlds, factions, 0);
         }
     }
 

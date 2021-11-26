@@ -77,6 +77,7 @@ export class PlayerMetadataGenerator {
 				const metadata: PlayerMetadata = new PlayerMetadata();
 				metadata.ID = charID;
 				metadata.name = char?.name ?? `<missing ${charID}>`;
+				metadata.outfitTag = char?.outfitTag || null;
 
 				map.set(charID, metadata);
 			}
