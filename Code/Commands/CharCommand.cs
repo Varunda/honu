@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
+using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
@@ -30,6 +31,7 @@ namespace watchtower.Commands {
         private readonly ICharacterItemRepository _CharItemRepository;
         private readonly ICharacterStatCollection _StatCollection;
         private readonly ICharacterStatDbStore _StatDb;
+        private readonly IBackgroundCharacterWeaponStatQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
@@ -43,6 +45,17 @@ namespace watchtower.Commands {
             _CharItemRepository = services.GetRequiredService<ICharacterItemRepository>();
             _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
+            _Queue = services.GetRequiredService<IBackgroundCharacterWeaponStatQueue>();
+        }
+
+        public async Task Refresh(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Failed to get character by name {name}");
+                return;
+            }
+
+            _Queue.Queue(c.ID);
         }
 
         public async Task Get(string name) {
@@ -110,7 +123,9 @@ namespace watchtower.Commands {
             }
 
             List<PsCharacterStat> stats = await _StatCollection.GetByID(c.ID);
-            await _StatDb.Set(c.ID, stats);
+            if (stats.Count > 0) {
+                await _StatDb.Set(c.ID, stats);
+            }
 
             foreach (PsCharacterStat stat in stats) {
                 _Logger.LogInformation($"{JToken.FromObject(stat)}");

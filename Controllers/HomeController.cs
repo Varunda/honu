@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using watchtower.Models.Census;
+using watchtower.Services;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers {
@@ -11,9 +12,13 @@ namespace watchtower.Controllers {
     public class HomeController : Controller {
 
         private readonly ICharacterRepository _CharacterRepository;
+        private readonly IBackgroundCharacterWeaponStatQueue _Queue;
 
-        public HomeController(ICharacterRepository charRepo) {
+        public HomeController(ICharacterRepository charRepo,
+            IBackgroundCharacterWeaponStatQueue queue) {
+
             _CharacterRepository = charRepo;
+            _Queue = queue;
         }
 
         public IActionResult Index() {
@@ -45,6 +50,7 @@ namespace watchtower.Controllers {
         }
 
         public IActionResult CharacterViewer(string charID) {
+            _Queue.Queue(charID);
             return View();
         }
 

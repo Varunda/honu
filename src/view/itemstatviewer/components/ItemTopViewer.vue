@@ -47,6 +47,16 @@
 
                 <a-col>
                     <a-header>
+                        <b>Faction</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.character.factionID | faction}}
+                    </a-body>
+                </a-col>
+
+                <a-col>
+                    <a-header>
                         <b>Server</b>
                     </a-header>
 
@@ -165,6 +175,7 @@
     import "MomentFilter";
     import "filters/LocaleFilter";
     import "filters/WorldNameFilter";
+    import "filters/FactionNameFilter";
 
     import { ATable, AFilter, AHeader, ABody, ACol } from "components/ATable";
 
@@ -201,9 +212,8 @@
                     this.kd = Loadable.loading();
                     Loadable.promise(CharacterWeaponStatApi.getTopKD(this.ItemId))
                         .then(iter => { this.kd = iter; this.entries = this.kd; });
-                } else {
-                    this.entries = this.kd;
                 }
+                this.entries = this.kd;
             },
 
             loadKpm: function(): void {
@@ -213,9 +223,9 @@
                     this.kpm = Loadable.loading();
                     Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.ItemId))
                         .then(iter => { this.kpm = iter; this.entries = this.kpm; });
-                } else {
-                    this.entries = this.kpm;
                 }
+
+                this.entries = this.kpm;
             },
 
             loadAcc: function(): void {
@@ -225,9 +235,9 @@
                     this.acc = Loadable.loading();
                     Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.ItemId))
                         .then(iter => { this.acc = iter; this.entries = this.acc; });
-                } else {
-                    this.entries = this.acc;
                 }
+
+                this.entries = this.acc;
             },
 
             loadHsr: function(): void {
@@ -237,9 +247,9 @@
                     this.hsr = Loadable.loading();
                     Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId))
                         .then(iter => { this.hsr = iter; this.entries = this.hsr; });
-                } else {
-                    this.entries = this.hsr;
                 }
+
+                this.entries = this.hsr;
             },
 
             loadKills: function(): void {
@@ -249,9 +259,9 @@
                     this.kills = Loadable.loading();
                     Loadable.promise(CharacterWeaponStatApi.getTopKills(this.ItemId))
                         .then(iter => { this.kills = iter; this.entries = this.kills; });
-                } else {
-                    this.entries = this.kills;
                 }
+
+                this.entries = this.kills;
             },
 
             columnStyle: function(col: string): object {

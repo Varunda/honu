@@ -1,5 +1,5 @@
 ﻿<template>
-    <canvas :id="'chart-item-percentile-stats-' + ID" style="height: 300px; max-height: 300px;" class="mb-2"></canvas>
+    <canvas :id="'chart-item-percentile-stats-' + ID" style="height: 240px; max-height: 300px;" class="mb-2"></canvas>
 </template>
 
 <script lang="ts">

@@ -97,10 +97,10 @@
                 this.item = Loadable.loading();
                 this.item = await Loadable.promise(ItemApi.getByID(this.itemID));
 
-                if (this.item.state == "loaded" || (this.item as any).data == null) {
+                if (this.item.state == "loaded" || (this.item as any).data != null) {
                     document.title = `Honu / Item / ${(this.item as any).data.name}`;
                 } else {
-                    document.title = `Honu / Item / ${this.itemID}`;
+                    document.title = `Honu / Item / <${this.itemID}>`;
                 }
 
                 this.topKd = Loadable.loading();
