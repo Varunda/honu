@@ -9,32 +9,7 @@
             <h3>KD</h3>
             <div class="row" v-if="all.data.kd != null">
                 <div class="col-2">
-                    <table v-if="kd != null" class="table table-sm">
-                        <tr>
-                            <td><b>Max</b></td>
-                            <td>{{kd.max | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>75%</b></td>
-                            <td>{{kd.q3 | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Avg</b></td>
-                            <td>{{kd.median | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>25%</b></td>
-                            <td>{{kd.q1 | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Min</b></td>
-                            <td>{{kd.min | locale}}</td>
-                        </tr>
-                    </table>
+                    <chart-quartile-stats :data="all.data.kd"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.kd" name="KD"></chart-item-percentile-stats>
@@ -47,32 +22,7 @@
             <h3>KPM</h3>
             <div class="row" v-if="all.data.kpm != null">
                 <div class="col-2">
-                    <table v-if="kpm != null" class="table table-sm">
-                        <tr>
-                            <td><b>Max</b></td>
-                            <td>{{kpm.max | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>75%</b></td>
-                            <td>{{kpm.q3 | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Avg</b></td>
-                            <td>{{kpm.median | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>25%</b></td>
-                            <td>{{kpm.q1 | locale}}</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Min</b></td>
-                            <td>{{kpm.min | locale}}</td>
-                        </tr>
-                    </table>
+                    <chart-quartile-stats :data="all.data.kpm"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.kpm" name="KPM"></chart-item-percentile-stats>
@@ -85,32 +35,7 @@
             <h3>Accuracy</h3>
             <div class="row" v-if="all.data.accuracy != null">
                 <div class="col-2">
-                    <table v-if="acc != null" class="table table-sm">
-                        <tr>
-                            <td><b>Max</b></td>
-                            <td>{{acc.max | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>75%</b></td>
-                            <td>{{acc.q3 | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Avg</b></td>
-                            <td>{{acc.median | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>25%</b></td>
-                            <td>{{acc.q1 | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Min</b></td>
-                            <td>{{acc.min | locale}}%</td>
-                        </tr>
-                    </table>
+                    <chart-quartile-stats :data="all.data.accuracy" :show-percent="true"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.accuracy" name="Acc%"></chart-item-percentile-stats>
@@ -123,32 +48,7 @@
             <h3>Headshot Ratio</h3>
             <div class="row" v-if="all.data.headshotRatio != null">
                 <div class="col-2">
-                    <table v-if="hsr != null" class="table table-sm">
-                        <tr>
-                            <td><b>Max</b></td>
-                            <td>{{hsr.max | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>75%</b></td>
-                            <td>{{hsr.q3 | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Avg</b></td>
-                            <td>{{hsr.median | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>25%</b></td>
-                            <td>{{hsr.q1 | locale}}%</td>
-                        </tr>
-
-                        <tr>
-                            <td><b>Min</b></td>
-                            <td>{{hsr.min | locale}}%</td>
-                        </tr>
-                    </table>
+                    <chart-quartile-stats :data="all.data.headshotRatio" :show-percent="true"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-percentile-stats>
@@ -180,6 +80,7 @@
 
     import ChartItemPercentileStats from "./ChartItemPercentileStats.vue";
     import ChartItemTotalStats from "./ChartItemTotalStats.vue";
+    import ChartQuartileStats from "./ChartQuartileStats.vue";
 
     export const ItemPercentileViewer = Vue.extend({
         props: {
@@ -226,7 +127,8 @@
 
         components: {
             ChartItemPercentileStats,
-            ChartItemTotalStats
+            ChartItemTotalStats,
+            ChartQuartileStats
         }
     });
     export default ItemPercentileViewer;
