@@ -92,7 +92,10 @@ namespace watchtower.Services.Census.Implementations {
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to get outfit {outfitID}", outfitID);
-                return await GetFromCensusByID(outfitID, false);
+                if (retry == true) {
+                    return await GetFromCensusByID(outfitID, false);
+                }
+                throw;
             }
 
             return outfit;
