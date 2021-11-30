@@ -32,7 +32,7 @@ namespace watchtower.Services.Db.Implementations {
 	                WHERE weapon_stats.character_id = @CharID
 		                AND (i.type_id IS NULL OR i.type_id = 26)
 		                AND (i.category_id IS NULL OR (i.category_id != 139 AND i.category_id != 104))
-		                AND weapon_stats.kills > 0 AND weapon_stats.seconds_with > 299
+		                AND (weapon_stats.kills > 0 OR weapon_stats.seconds_with > 299)
             ");
 
             cmd.AddParameter("CharID", charID);
