@@ -9,7 +9,7 @@
             <h3>KD</h3>
             <div class="row" v-if="all.data.kd != null">
                 <div class="col-2">
-                    <chart-quartile-stats :data="all.data.kd"></chart-quartile-stats>
+                    <chart-quartile-stats :data="all.data.kd" :interval="0.5"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.kd" name="KD"></chart-item-percentile-stats>
@@ -22,7 +22,7 @@
             <h3>KPM</h3>
             <div class="row" v-if="all.data.kpm != null">
                 <div class="col-2">
-                    <chart-quartile-stats :data="all.data.kpm"></chart-quartile-stats>
+                    <chart-quartile-stats :data="all.data.kpm" :interval="0.5"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.kpm" name="KPM"></chart-item-percentile-stats>
@@ -35,7 +35,7 @@
             <h3>Accuracy</h3>
             <div class="row" v-if="all.data.accuracy != null">
                 <div class="col-2">
-                    <chart-quartile-stats :data="all.data.accuracy" :show-percent="true"></chart-quartile-stats>
+                    <chart-quartile-stats :data="all.data.accuracy" :show-percent="true" :interval="5"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.accuracy" name="Acc%"></chart-item-percentile-stats>
@@ -48,7 +48,7 @@
             <h3>Headshot Ratio</h3>
             <div class="row" v-if="all.data.headshotRatio != null">
                 <div class="col-2">
-                    <chart-quartile-stats :data="all.data.headshotRatio" :show-percent="true"></chart-quartile-stats>
+                    <chart-quartile-stats :data="all.data.headshotRatio" :show-percent="true" :interval="5"></chart-quartile-stats>
                 </div>
                 <div class="col-5">
                     <chart-item-percentile-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-percentile-stats>
@@ -74,7 +74,11 @@
     import Vue, { PropType } from "vue";
     import { Loadable, Loading } from "Loading";
 
+    import InfoHover from "components/InfoHover.vue";
+
     import { Quartile } from "util/Quartile";
+    import Percentile from "util/Percentile";
+    (window as any).Percentile = Percentile;
 
     import { ItemPercentileStats, ItemPercentileAll, ItemApi } from "api/ItemApi";
 
@@ -126,6 +130,7 @@
         },
 
         components: {
+            InfoHover,
             ChartItemPercentileStats,
             ChartItemTotalStats,
             ChartQuartileStats
