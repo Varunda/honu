@@ -53,6 +53,8 @@ namespace watchtower.Services {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (!stoppingToken.IsCancellationRequested) {
                 try {
                     Stopwatch timer = Stopwatch.StartNew();
@@ -107,7 +109,7 @@ namespace watchtower.Services {
                     if (timeToHold > 5) {
                         await Task.Delay((int)timeToHold, stoppingToken);
                     }
-                } catch (Exception) when (stoppingToken.IsCancellationRequested) {
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopped data builder service");
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "Exception in DataBuilderService");

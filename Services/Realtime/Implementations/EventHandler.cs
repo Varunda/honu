@@ -165,7 +165,7 @@ namespace watchtower.Realtime {
                 Stopwatch timer = Stopwatch.StartNew();
                 UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
                 if (timer.ElapsedMilliseconds > 1000) {
-                    _Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
+                    //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
                 }
                 timer.Stop();
 
@@ -269,7 +269,7 @@ namespace watchtower.Realtime {
             string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
             int metagameEventID = payload.GetInt32("metagame_event_id", 0);
 
-            _Logger.LogDebug($"{payload}");
+            //_Logger.LogDebug($"metagame event payload: {payload}");
 
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);

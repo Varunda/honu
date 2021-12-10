@@ -36,8 +36,10 @@ namespace watchtower.Services {
                     if (timer.ElapsedMilliseconds > 100) {
                         //_Logger.LogWarning($"Took {timer.ElapsedMilliseconds}ms to process {token}");
                     }
-                } catch (Exception ex) {
+                } catch (Exception ex) when (cancel.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Failed to process {token}", token);
+                } catch (Exception) when (cancel.IsCancellationRequested == true) {
+                    _Logger.LogInformation($"Stopping event_process with {_Queue.Count()} left");
                 }
             }
         }

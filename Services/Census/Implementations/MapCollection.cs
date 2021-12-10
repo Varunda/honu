@@ -46,6 +46,8 @@ namespace watchtower.Services.Census.Implementations {
                         }
                     }
                 }
+            } catch (TaskCanceledException) {
+                _Logger.LogInformation($"Cancelled task for getting regions for {worldID} {zoneID}");
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to get regions for {worldID} {zoneID}", worldID, zoneID);
             }
@@ -66,6 +68,8 @@ namespace watchtower.Services.Census.Implementations {
                     PsMapHex hex = _ParseHex(token);
                     hexes.Add(hex);
                 }
+            } catch (TaskCanceledException) {
+
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"Failed to get all map hexes");
             }

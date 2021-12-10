@@ -43,9 +43,10 @@ namespace watchtower.Services.Hosted {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-
                     Stopwatch time = Stopwatch.StartNew();
 
                     ServiceHealthEntry? healthEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
@@ -80,7 +81,7 @@ namespace watchtower.Services.Hosted {
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Failed to update connected clients");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"{nameof(WorldDataBroadcastService)} stopped");
+                    _Logger.LogInformation($"Stopped {SERVICE_NAME}");
                 }
             }
         }

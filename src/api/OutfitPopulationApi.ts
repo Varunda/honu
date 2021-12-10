@@ -13,7 +13,7 @@ export class OutfitPopulationApi {
 	public static get(): OutfitPopulationApi { return OutfitPopulationApi._instance; }
 
 	public static async getPopulation(worldID: number, time: Date): Promise<OutfitPopulation[]> {
-		const response: axios.AxiosResponse<any> = await axios.default.get(`/api/population/${worldID}?time=${time.toISOString()}`);
+		const response: axios.AxiosResponse<any> = await axios.default.get(`/api/population/${worldID}/outfits?time=${time.toISOString()}`);
 
 		if (response.status != 200) {
 			return [];

@@ -35,6 +35,8 @@ namespace watchtower.Services.Hosted {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     ServiceHealthEntry? healthEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
@@ -48,7 +50,7 @@ namespace watchtower.Services.Hosted {
 
                     Stopwatch timer = Stopwatch.StartNew();
 
-                    _Logger.LogInformation($"{SERVICE_NAME}> Resubscribing");
+                    _Logger.LogInformation($"{SERVICE_NAME}> Resubscribing census subscriptions");
 
                     await _RealtimeMonitor.Resubscribe();
 
@@ -58,6 +60,8 @@ namespace watchtower.Services.Hosted {
                     await Task.Delay(1000 * 60 * 10, stoppingToken);
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"Error in {SERVICE_NAME}");
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
+                    _Logger.LogInformation($"Stopping {SERVICE_NAME}");
                 }
             }
 

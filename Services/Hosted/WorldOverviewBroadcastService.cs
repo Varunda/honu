@@ -35,6 +35,8 @@ namespace watchtower.Services.Hosted {
         }
 
         protected async override Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     Stopwatch time = Stopwatch.StartNew();
@@ -105,7 +107,7 @@ namespace watchtower.Services.Hosted {
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Failed to update connected clients");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"{nameof(WorldOverviewBroadcastService)} '{SERVICE_NAME}' stopped");
+                    _Logger.LogInformation($"Stopped {SERVICE_NAME}");
                 }
             }
         }

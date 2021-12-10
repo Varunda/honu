@@ -53,6 +53,7 @@ namespace watchtower.Services.Hosted {
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             int errorCount = 0;
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
@@ -80,20 +81,20 @@ namespace watchtower.Services.Hosted {
 
                     ++_Count;
 
-                    if (_Count % 100 == 0) {
+                    if (_Count % 500 == 0) {
                         _Logger.LogDebug($"Cached {_Count} characters");
                     }
 
                     errorCount = 0;
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
-                    _Logger.LogError(ex, $"Failed");
+                    _Logger.LogError(ex, $"Failed in {nameof(HostedBackgroundCharacterWeaponStatQueue)}");
                     ++errorCount;
 
                     if (errorCount > 2) {
                         await Task.Delay(1000 * Math.Min(5, errorCount), stoppingToken);
                     }
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"{SERVICE_NAME} stopped by stopping token");
+                    _Logger.LogInformation($"Stopped {SERVICE_NAME} with {_Queue.Count()} left");
                 }
             }
         }

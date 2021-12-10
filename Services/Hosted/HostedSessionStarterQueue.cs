@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,6 +34,8 @@ namespace watchtower.Services.Hosted {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     TrackedPlayer player = await _Queue.DequeueAsync(stoppingToken);
@@ -42,14 +45,17 @@ namespace watchtower.Services.Hosted {
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error starting session in the background");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"Stopping {SERVICE_NAME}");
+                    _Logger.LogInformation($"Stopping {SERVICE_NAME} with {_Queue.Count()} left");
                 }
             }
         }
 
         public override async Task StopAsync(CancellationToken stoppingToken) {
             _Logger.LogInformation($"Ending all current sessions");
+            Stopwatch timer = Stopwatch.StartNew();
             await _SessionDb.EndAll();
+
+            _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to close all sessions");
         }
 
     }

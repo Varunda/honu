@@ -7,7 +7,7 @@
     "@microsoft/signalr": "^5.0.2",
     "@popperjs/core": "^2.9.2",
     "@types/leaflet": "^1.7.5",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "chart.js": "^3.6.0",
     "chartjs-plugin-annotation": "^1.0.2",
     "chartjs-plugin-datalabels": "^2.0.0",

@@ -156,6 +156,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
             services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();
             services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
+            services.AddSingleton<WorldPopulationRepository, WorldPopulationRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist

@@ -38,6 +38,8 @@ namespace watchtower.Services {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             await Task.Delay(5000, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested) {

@@ -58,6 +58,8 @@ namespace watchtower.Services.Hosted {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogInformation($"Started {SERVICE_NAME}");
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     if (_IsConnected == false) {
@@ -74,7 +76,7 @@ namespace watchtower.Services.Hosted {
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error while caching character");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"Stopping {SERVICE_NAME}");
+                    _Logger.LogInformation($"Stopping {SERVICE_NAME} with {_MessageQueue.Count()} left");
                 }
             }
         }
