@@ -34,6 +34,7 @@ namespace watchtower.Services.Repositories {
                 pop = new WorldPopulation();
                 pop.Timestamp = DateTime.UtcNow;
                 pop.CachedUntil = pop.Timestamp.AddSeconds(CACHE_DURATION);
+                pop.WorldID = worldID;
 
                 lock (CharacterStore.Get().Players) {
                     int Count(Func<KeyValuePair<string, TrackedPlayer>, bool> predicate) {
