@@ -10,9 +10,12 @@ using watchtower.Services;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoints about services hosted in Honu
+    /// </summary>
     [ApiController]
     [Route("/api/services")]
-    public class ServiceApiController : ControllerBase {
+    public class ServiceApiController : ApiControllerBase {
 
         private readonly ILogger<ServiceApiController> _Logger;
 
@@ -43,8 +46,15 @@ namespace watchtower.Controllers.Api {
             _DiscordQueue = discord;
         }
 
+        /// <summary>
+        ///     Get the queue length for the background queues hosted in Honu
+        /// </summary>
+        /// <remarks>
+        ///     Honu has several background queues that perform DB updates in the background. This endpoint will get
+        ///     how many things are queued in each of these background queues
+        /// </remarks>
         [HttpGet("queue_count")]
-        public ActionResult<List<ServiceQueueCount>> GetQueueCounts() {
+        public ApiResponse<List<ServiceQueueCount>> GetQueueCounts() {
             ServiceQueueCount c = new() { QueueName = "character_cache_queue", Count = _CharacterCache.Count() };
             ServiceQueueCount session = new() { QueueName = "session_start_queue", Count = _SessionQueue.Count() };
             ServiceQueueCount weapon = new() { QueueName = "character_weapon_stat_queue", Count = _WeaponQueue.Count() };
@@ -57,11 +67,14 @@ namespace watchtower.Controllers.Api {
                 task, percentile, discord
             };
 
-            return Ok(counts);
+            return ApiOk(counts);
         }
 
+        /// <summary>
+        ///     Get a summary of the services hosted in Honu
+        /// </summary>
         [HttpGet]
-        public ActionResult GetServices() {
+        public ApiResponse<List<ServiceHealthEntry>> GetServices() {
             List<string> services = _ServiceHealthMonitor.GetServices();
 
             List<ServiceHealthEntry> entries = new List<ServiceHealthEntry>(services.Count);
@@ -73,7 +86,7 @@ namespace watchtower.Controllers.Api {
                 }
             }
 
-            return Ok(entries);
+            return ApiOk(entries);
         }
 
     }

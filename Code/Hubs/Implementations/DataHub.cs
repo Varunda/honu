@@ -14,8 +14,6 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly ILogger<WorldDataHub> _Logger;
 
-        private static int _ConnectionCount;
-
         private readonly IWorldDataRepository _WorldDataRepository;
 
         public WorldDataHub(ILogger<WorldDataHub> logger,

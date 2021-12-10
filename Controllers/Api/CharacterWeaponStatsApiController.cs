@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
@@ -15,9 +16,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoints for getting the weapon stats of a character
+    /// </summary>
     [ApiController]
     [Route("/api/character")]
-    public class CharacterWeaponStatsApiController : ControllerBase {
+    public class CharacterWeaponStatsApiController : ApiControllerBase {
 
         private readonly ILogger<CharacterWeaponStatsApiController> _Logger;
 
@@ -46,11 +50,26 @@ namespace watchtower.Controllers.Api {
             _PercentileQueue = percentQueue ?? throw new ArgumentNullException(nameof(percentQueue));
         }
 
+        /// <summary>
+        ///     Get the weapon stats of a character
+        /// </summary>
+        /// <remarks>
+        ///     If a character has more than 100 kills with an item, and the item isn't ID 0, 
+        ///     the <see cref="CharacterWeaponStatEntry.Stat"/> field is filled in
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <response code="200">
+        ///     The response will contain all the weapon stats for the <see cref="PsCharacter"/>
+        ///     with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
+        /// </response>
         [HttpGet("{charID}/weapon_stats")]
-        public async Task<ActionResult<List<CharacterWeaponStatEntry>>> GetWeaponStats(string charID) {
+        public async Task<ApiResponse<List<CharacterWeaponStatEntry>>> GetWeaponStats(string charID) {
             PsCharacter? character = await _CharacterRepository.GetByID(charID);
             if (character == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
+                return ApiNotFound<List<CharacterWeaponStatEntry>>($"{nameof(PsCharacter)} {charID}");
             }
 
             List<WeaponStatEntry> statEntries = await _CharacterWeaponStatRepository.GetByCharacterID(charID);
@@ -71,7 +90,7 @@ namespace watchtower.Controllers.Api {
                 entries.Add(stat);
             }
 
-            return Ok(entries);
+            return ApiOk(entries);
         }
 
         private async Task<CharacterWeaponStatEntry> _GetPercentileData(CharacterWeaponStatEntry entry) {

@@ -16,6 +16,7 @@ node_modules/
 PreviousEvents.json
 build/
 wwwroot/dist/
+watchtower.xml
 
 .vscode/
 /extra-stats

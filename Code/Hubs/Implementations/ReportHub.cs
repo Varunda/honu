@@ -80,10 +80,12 @@ namespace watchtower.Code.Hubs.Implementations {
             try {
                 await ParseGenerator(generator, report);
             } catch (Exception ex) {
+                await Clients.Caller.SendError(ex.Message);
                 return;
             }
 
             if (report.TeamID <= 0) {
+                await Clients.Caller.SendError($"The TeamID of the report is currently {report.TeamID}, it must be above 0. Try setting the faction");
                 return;
             }
 
@@ -184,6 +186,12 @@ namespace watchtower.Code.Hubs.Implementations {
             return chars;
         }
 
+        /// <summary>
+        ///     Report generator string parsing
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="report"></param>
+        /// <returns></returns>
         private async Task ParseGenerator(string input, OutfitReport report) {
             List<string> ignored = new List<string>();
 

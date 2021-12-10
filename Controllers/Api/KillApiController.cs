@@ -15,9 +15,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers {
 
+    /// <summary>
+    ///     Endpoints for kill events
+    /// </summary>
     [ApiController]
     [Route("/api/kills")]
-    public class KillApiController : ControllerBase {
+    public class KillApiController : ApiControllerBase {
 
         private readonly ILogger<KillApiController> _Logger;
 
@@ -43,11 +46,33 @@ namespace watchtower.Controllers {
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
         }
 
+        /// <summary>
+        ///     Get the kills and deaths that occured in a session
+        /// </summary>
+        /// <remarks>
+        ///     The character ID used to find the kills and deaths is based on the <see cref="Session.CharacterID"/>
+        ///     of the <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/>.
+        ///     This is the session owner
+        ///     <br/><br/>
+        ///     The response will contain a list of all <see cref="ExpandedKillEvent"/>s that have the session owner (see above)
+        ///     as the character killed, or the character attacker. To get the amount of kills or deaths, you must check
+        ///     <see cref="ExpandedKillEvent.Event"/> and see what the value of <see cref="KillEvent.AttackerCharacterID"/>
+        ///     and <see cref="KillEvent.KilledCharacterID"/> is
+        /// </remarks>
+        /// <param name="sessionID">ID of the session</param>
+        /// <response code="200">
+        ///     The response will contain all <see cref="ExpandedKillEvent"/>s that occured in the <see cref="Session"/>
+        ///     with <see cref="Session.ID"/> of <paramref name="sessionID"/>, and had the killed character or attacking character
+        ///     as the character who the session is for (based on <see cref="Session.CharacterID"/>)
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("session/{sessionID}")]
-        public async Task<ActionResult<List<ExpandedKillEvent>>> GetBySessionID(long sessionID) {
+        public async Task<ApiResponse<List<ExpandedKillEvent>>> GetBySessionID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {
-                return NotFound($"{nameof(Session)} {sessionID}");
+                return ApiNotFound<List<ExpandedKillEvent>>($"{nameof(Session)} {sessionID}");
             }
 
             List<KillEvent> events = await _KillDbStore.GetKillsByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
@@ -79,15 +104,31 @@ namespace watchtower.Controllers {
                 expanded.Add(ex);
             }
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the weapons a character has used in the last 2 hours
+        /// </summary>
+        /// <remarks>
+        ///     Used for the realtime server view, when you click on the character in the top killers list
+        ///     <br/><br/>
+        ///     Get the weapons a character used to get kills in the last 2 hours. This excludes TKs
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="CharacterWeaponKillEntry"/>s for the character
+        ///     passed in <paramref name="charID"/> and within the last 2 hours
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
+        /// </response>
         [HttpGet("character/{charID}")]
-        public async Task<ActionResult<List<CharacterWeaponKillEntry>>> CharacterKills(string charID) {
+        public async Task<ApiResponse<List<CharacterWeaponKillEntry>>> CharacterKills(string charID) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID);
 
             if (c == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
+                return ApiNotFound<List<CharacterWeaponKillEntry>>($"{nameof(PsCharacter)} {charID}");
             }
 
             List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, 120);
@@ -122,9 +163,25 @@ namespace watchtower.Controllers {
                 .ThenByDescending(iter => iter.HeadshotKills)
                 .ToList();
 
-            return Ok(list);
+            return ApiOk(list);
         }
 
+        /// <summary>
+        ///     Get the characters who have gotten the most kills in an outfit in the last 2 hours
+        /// </summary>
+        /// <remarks>
+        ///      Used for the realtime server view, when you click on the amount of kills an outfit has gotten
+        ///      <br/><br/>
+        ///      Get the top killers in an outfit in the last 2 hours
+        /// </remarks>
+        /// <param name="outfitID"></param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="OutfitKillerEntry"/>s for the
+        ///     <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
+        /// </response>
         [HttpGet("outfit/{outfitID}")]
         public async Task<ActionResult<List<OutfitKillerEntry>>> OutfitKills(string outfitID) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);

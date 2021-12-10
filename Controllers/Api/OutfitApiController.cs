@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Services;
@@ -13,9 +14,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoints for outfits
+    /// </summary>
     [ApiController]
     [Route("/api/outfit/")]
-    public class OutfitApiController : ControllerBase {
+    public class OutfitApiController : ApiControllerBase {
 
         private readonly ILogger<OutfitApiController> _Logger;
 
@@ -41,27 +45,67 @@ namespace watchtower.Controllers.Api {
             _CacheQueue = cacheQueue;
         }
 
+        /// <summary>
+        ///     Get an outfit by its ID
+        /// </summary>
+        /// <remarks>
+        ///     Basically a wrapper around the outfit collection, but also gets data from the local DB
+        ///     first, allowing for quicker data, and getting deleted outfits
+        /// </remarks>
+        /// <param name="outfitID">ID of the outfit to get</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="PsOutfit"/>
+        ///     with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>
+        /// </response>
         [HttpGet("{outfitID}")]
-        public async Task<ActionResult<PsOutfit>> GetByID(string outfitID) {
+        public async Task<ApiResponse<PsOutfit>> GetByID(string outfitID) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
             if (outfit == null) {
-                return NoContent();
+                return ApiNoContent<PsOutfit>();
             }
 
-            return Ok(outfit);
+            return ApiOk(outfit);
         }
 
+        /// <summary>
+        ///     Get all outfits that use the given tag (case insensitive)
+        /// </summary>
+        /// <remarks>
+        ///     Since outfits can change their tag whenever, tags may not always be unique if an outfit is deleted
+        /// </remarks>
+        /// <param name="outfitTag">Tag of the outfits to get</param>
+        /// <response code="200">
+        ///     The response will contain a list of all <see cref="PsOutfit"/>
+        ///     with <see cref="PsOutfit.Tag"/> of <paramref name="outfitTag"/>
+        /// </response>
         [HttpGet("tag/{outfitTag}")]
-        public async Task<ActionResult<PsOutfit>> GetByTag(string outfitTag) {
+        public async Task<ApiResponse<List<PsOutfit>>> GetByTag(string outfitTag) {
             List<PsOutfit> outfits = await _OutfitRepository.GetByTag(outfitTag);
-            return Ok(outfits);
+            return ApiOk(outfits);
         }
 
+        /// <summary>
+        ///     Get the members of an outfit
+        /// </summary>
+        /// <remarks>
+        ///     The character data includes the characters stats, if present in the DB. If the stats are not present
+        ///     in the local DB, the character is put into a queue of characters to cache
+        ///     <br/><br/>
+        ///     This acts as a wrapper around the /outfit_member collection, and will not show historical data,
+        ///     and will not include deleted characters. If an outfit is deleted, this will return an empty list
+        /// </remarks>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <response code="200">
+        ///     The response will contain a list of outfit members that 
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
+        /// </response>
         [HttpGet("{outfitID}/members")]
-        public async Task<ActionResult<List<ExpandedOutfitMember>>> GetMembers(string outfitID) {
+        public async Task<ApiResponse<List<ExpandedOutfitMember>>> GetMembers(string outfitID) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
             if (outfit == null) {
-                return NotFound($"{nameof(PsOutfit)} {outfitID}");
+                return ApiNotFound<List<ExpandedOutfitMember>>($"{nameof(PsOutfit)} {outfitID}");
             }
 
             List<OutfitMember> members = await _OutfitCollection.GetMembers(outfitID);
@@ -105,6 +149,7 @@ namespace watchtower.Controllers.Api {
                 _ = charMap.TryGetValue(ex.Member.CharacterID, out PsCharacter? c);
                 ex.Character = c;
 
+                // Character was not in the local DB, add to the queue to be cached
                 if (ex.Character == null) {
                     _CacheQueue.Queue(member.CharacterID);
                     hasCached = true;
@@ -124,7 +169,7 @@ namespace watchtower.Controllers.Api {
                 expanded.Add(ex);
             }
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
     }

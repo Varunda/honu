@@ -58,15 +58,6 @@
                 </tr>
 
                 <tr>
-                    <td>
-                        {{new Date() | moment}}
-                    </td>
-                    <td>
-                        {{new Date() | moment}}
-                    </td>
-                </tr>
-
-                <tr>
                     <td><b>Census</b></td>
                     <td>
                         <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/outfit?outfit_id=' + outfit.data.id" target="_blank">

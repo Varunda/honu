@@ -29,19 +29,20 @@ namespace watchtower.Services.Db {
         Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills = null);
 
         /// <summary>
-        ///     Get the top performers with a weapon
+        ///     Get the top performers with a weapon. This is meant to be used internally and isn't commented :)
         /// </summary>
         /// <param name="itemID"></param>
+        /// <param name="column"></param>
         /// <param name="worlds"></param>
         /// <param name="factions"></param>
+        /// <param name="minKills"></param>
         /// <returns></returns>
-        Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> Worlds, List<short> factions, int minKills = 1159);
+        Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> worlds, List<short> factions, int minKills = 1159);
 
         /// <summary>
         ///     Update or insert an entry
         /// </summary>
         /// <param name="entry">Entry to upsert</param>
-        /// <returns>A task when the operation is complete</returns>
         Task Upsert(WeaponStatEntry entry);
 
     }

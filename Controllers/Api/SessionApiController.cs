@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -12,9 +13,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoints about sessions
+    /// </summary>
     [ApiController]
     [Route("/api/session")]
-    public class SessionApiController : ControllerBase {
+    public class SessionApiController : ApiControllerBase {
 
         private readonly ILogger<SessionApiController> _Logger;
 
@@ -33,43 +37,24 @@ namespace watchtower.Controllers.Api {
             _OutfitRepository = outfitRepo;
         }
 
+        /// <summary>
+        ///     Get a specific session
+        /// </summary>
+        /// <param name="sessionID">ID of the session</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/>
+        /// </response>
+        /// <response code="204">
+        ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("{sessionID}")]
-        public async Task<ActionResult<Session>> GetByID(long sessionID) {
+        public async Task<ApiResponse<Session>> GetByID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {
-                return NoContent();
+                return ApiNoContent<Session>();
             }
 
-            return Ok(session);
-        }
-
-        [HttpGet("mass")]
-        public async Task<ActionResult<List<ExpandedSession>>> GetByOutfitIDAndTime([FromQuery] List<string> outfitID, [FromQuery] DateTime start, [FromQuery] DateTime end) {
-            List<ExpandedSession> all = new List<ExpandedSession>();
-
-            _Logger.LogDebug($"RANGE: {start} - {end}");
-
-            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
-
-            foreach (string id in outfitID) {
-                PsOutfit? outfit = await _OutfitRepository.GetByID(id);
-
-                List<Session> sessions = await _SessionDb.GetByRangeAndOutfit(id, start, end);
-
-                foreach (Session s in sessions) {
-                    if (chars.ContainsKey(s.CharacterID) == false) {
-                        chars.Add(s.CharacterID, await _CharacterRepository.GetByID(s.CharacterID));
-                    }
-
-                    all.Add(new ExpandedSession() {
-                        Session = s,
-                        Outfit = outfit,
-                        Character = chars[s.CharacterID]
-                    });
-                }
-            }
-
-            return Ok(all);
+            return ApiOk(session);
         }
 
     }

@@ -6,32 +6,32 @@ using System.Threading.Tasks;
 namespace watchtower.Models.Census {
 
     /// <summary>
-    /// Represents data from the /characters_stat_history collection
+    ///     Represents data from the /characters_stat_history collection
     /// </summary>
     public class PsCharacterHistoryStat {
 
         /// <summary>
-        /// ID of the character
+        ///     ID of the character
         /// </summary>
         public string CharacterID { get; set; } = "";
 
         /// <summary>
-        /// What type this entry is for
+        ///     What type this entry is for
         /// </summary>
         public string Type { get; set; } = "";
 
         /// <summary>
-        /// When in UTC this was last updated
+        ///     When in UTC this was last updated
         /// </summary>
         public DateTime LastUpdated { get; set; }
 
         /// <summary>
-        /// How many in total has this character gotten
+        ///     How many in total has this character gotten
         /// </summary>
         public int AllTime { get; set; }
 
         /// <summary>
-        /// Max gotten in a single life
+        ///     Max gotten in a single life
         /// </summary>
         public int OneLifeMax { get; set; }
 

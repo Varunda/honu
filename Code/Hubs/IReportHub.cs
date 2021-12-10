@@ -24,24 +24,50 @@ namespace watchtower.Code.Hubs {
         /// <summary>
         ///     Sent when all characters have been populated
         /// </summary>
-        /// <param name="report"></param>
-        /// <returns></returns>
+        /// <param name="chars">List of characters to be included in a report</param>
         Task UpdateCharacters(List<PsCharacter> chars);
 
         /// <summary>
-        ///     Sent when all kill/deaths have been populated
+        ///     Sent when all kill have been populated
         /// </summary>
+        /// <param name="events">List of kill events to include in the report</param>
         Task UpdateKills(List<KillEvent> events);
 
+        /// <summary>
+        ///     Send when the kills have been populated
+        /// </summary>
+        /// <param name="events">List of death events to be included in the report</param>
         Task UpdateDeaths(List<KillEvent> events);
 
+        /// <summary>
+        ///     Sent when exp events have been populated
+        /// </summary>
+        /// <param name="events">List of exp events to be included in the report</param>
         Task UpdateExp(List<ExpEvent> events);
 
+        /// <summary>
+        ///     Sent when the items have been populated
+        /// </summary>
+        /// <param name="items">List of items to be included in the report</param>
         Task UpdateItems(List<PsItem> items);
 
+        /// <summary>
+        ///     Sent when outfits have been populated
+        /// </summary>
+        /// <param name="outfits">Outfits to be included in the report</param>
         Task UpdateOutfits(List<PsOutfit> outfits);
 
+        /// <summary>
+        ///     Sent when sessions have been populated
+        /// </summary>
+        /// <param name="sessions">Sessions to be included in the report</param>
         Task UpdateSessions(List<Session> sessions);
+
+        /// <summary>
+        ///     Sent when an error occurs while generating the report. It is expected the client closes the connection after
+        /// </summary>
+        /// <param name="err">Error to be sent</param>
+        Task SendError(string err);
 
     }
 }

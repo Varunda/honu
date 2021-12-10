@@ -35,6 +35,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="itemID">Item ID</param>
         /// <param name="columnName">Name of the column in the table. I know this opens this for SQL injection, but this isn't called from an API</param>
+        /// <param name="minKills">How many kills a character must have to be included</param>
         /// <returns>
         ///     A task for when the operation is complete
         /// </returns>

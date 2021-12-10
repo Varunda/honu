@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -13,9 +14,12 @@ using watchtower.Services.Db;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoints for ledger
+    /// </summary>
     [ApiController]
     [Route("/api/ledger")]
-    public class LedgerApiController : ControllerBase {
+    public class LedgerApiController : ApiControllerBase {
 
         private readonly ILogger<LedgerApiController> _Logger;
 
@@ -34,8 +38,28 @@ namespace watchtower.Controllers.Api {
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
         }
 
+        /// <summary>
+        ///     Get the facility info 
+        /// </summary>
+        /// <remarks>
+        ///     Used in the Ledger map view
+        ///     <br/><br/>
+        ///     See <see cref="FacilityControlEntry"/> for more about what this info is
+        /// </remarks>
+        /// <param name="zoneID">Zone/Continent ID</param>
+        /// <param name="worldID">World to limit the data to. Can be left null for all worlds</param>
+        /// <param name="playerThreshold">How many players must get capture/defense credit to count for the data. Defaults to 12</param>
+        /// <param name="periodStart">When (in seconds unix epoch), to limit the data range from. Defaults to all data</param>
+        /// <param name="periodEnd">When (in seconds unix epoch), to limit the data range to. Defaults to all data</param>
+        /// <param name="unstableState">Will data from unstable zones count? Defaults to only fully-opened continents</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="FacilityControlEntry"/>s for the parameters passed
+        /// </response>
+        /// <response code="400">
+        ///     <paramref name="unstableState"/> was an invalid value
+        /// </response>
         [HttpGet]
-        public async Task<ActionResult<List<FacilityControlEntry>>> GetAll(
+        public async Task<ApiResponse<List<FacilityControlEntry>>> GetAll(
                 [FromQuery] uint? zoneID = null,
                 [FromQuery] List<short>? worldID = null,
                 [FromQuery] int? playerThreshold = null,
@@ -57,7 +81,7 @@ namespace watchtower.Controllers.Api {
 
             if (unstableState != null) {
                 if (Enum.IsDefined(typeof(UnstableState), unstableState.Value) == false) {
-                    return BadRequest($"{nameof(unstableState)} is an invalid value");
+                    return ApiBadRequest<List<FacilityControlEntry>>($"{nameof(unstableState)} is an invalid value");
                 }
 
                 parameters.UnstableState = (UnstableState)unstableState.Value;
@@ -94,7 +118,7 @@ namespace watchtower.Controllers.Api {
                 ret.Add(elem);
             }
 
-            return Ok(ret);
+            return ApiOk(ret);
         }
 
     }

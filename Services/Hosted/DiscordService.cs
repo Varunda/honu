@@ -33,8 +33,6 @@ namespace watchtower.Services.Hosted {
 
             _DiscordOptions = discordOptions;
 
-            _Logger.LogInformation($"Key: {_DiscordOptions.Value.Key}");
-
             try {
                 _Discord = new DiscordClient(new DiscordConfiguration() {
                     Token = _DiscordOptions.Value.Key,

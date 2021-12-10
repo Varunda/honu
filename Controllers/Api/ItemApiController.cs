@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
@@ -14,9 +15,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
 
+    /// <summary>
+    ///     Endpoint for getting items and weapon stats
+    /// </summary>
     [ApiController]
     [Route("/api/item")]
-    public class ItemApiController : ControllerBase {
+    public class ItemApiController : ApiControllerBase {
 
         private readonly ILogger<ItemApiController> _Logger;
 
@@ -37,83 +41,175 @@ namespace watchtower.Controllers.Api {
             _CharacterRepository = charRepo;
         }
 
+        /// <summary>
+        ///     Get a specific item
+        /// </summary>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="PsItem"/> with <see cref="PsItem.ID"/> of <paramref name="itemID"/>
+        /// </response>
+        /// <response code="204">
+        ///     No <see cref="PsItem"/> with <see cref="PsItem.ID"/> of <paramref name="itemID"/> exists
+        /// </response>
         [HttpGet("{itemID}")]
-        public async Task<ActionResult<PsItem>> GetByID(string itemID) {
+        public async Task<ApiResponse<PsItem>> GetByID(string itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
             if (item == null) {
-                return NoContent();
+                return ApiNoContent<PsItem>();
             }
-            return Ok(item);
+            return ApiOk(item);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<PsItem>>> GetMultiple([FromQuery] List<string> IDs) {
-            List<PsItem> items = new List<PsItem>();
-
-            foreach (string ID in IDs) {
-                PsItem? item = await _ItemRepository.GetByID(ID);
-                if (item != null) {
-                    items.Add(item);
-                }
-            }
-
-            return Ok(items);
-        }
-
+        /// <summary>
+        ///     Get the characters (and their weapon stats) with the top KD of an item
+        /// </summary>
+        /// <remarks>
+        ///     In order for a character to count, they must have auraxed (gotten at least 1160 kills) the weapon.
+        ///     If there are less than 50 characters that have auraxed a weapon, the kill limit is lowered
+        ///     instead to 50. This is useful when a weapon is just released, and people are racing to aurax
+        ///     <br/><br/>
+        ///     There is no check to ensure the item actually exists. Because Census doesn't have all the items
+        ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
+        ///     with the top KD of the item passed
+        /// </response>
         [HttpGet("{itemID}/top/kd")]
-        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
                 entries = await _StatDb.GetTopKD(itemID, new(), new(), 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the characters (and their weapon stats) with the top KPM of an item
+        /// </summary>
+        /// <remarks>
+        ///     In order for a character to count, they must have auraxed (gotten at least 1160 kills) the weapon.
+        ///     If there are less than 50 characters that have auraxed a weapon, the kill limit is lowered
+        ///     instead to 50. This is useful when a weapon is just released, and people are racing to aurax
+        ///     <br/><br/>
+        ///     There is no check to ensure the item actually exists. Because Census doesn't have all the items
+        ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
+        ///     with the top KPM of the item passed
+        /// </response>
         [HttpGet("{itemID}/top/kpm")]
-        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopKPM(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
                 entries = await _StatDb.GetTopKPM(itemID, new(), new(), 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the characters (and their weapon stats) with the top accuracy of an item
+        /// </summary>
+        /// <remarks>
+        ///     In order for a character to count, they must have auraxed (gotten at least 1160 kills) the weapon.
+        ///     If there are less than 50 characters that have auraxed a weapon, the kill limit is lowered
+        ///     instead to 50. This is useful when a weapon is just released, and people are racing to aurax
+        ///     <br/><br/>
+        ///     There is no check to ensure the item actually exists. Because Census doesn't have all the items
+        ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
+        ///     with the top accuracy of the item passed
+        /// </response>
         [HttpGet("{itemID}/top/accuracy")]
-        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopAccuracy(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
                 entries = await _StatDb.GetTopAccuracy(itemID, new(), new(), 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the characters (and their weapon stats) with the top headshot ratio of an item
+        /// </summary>
+        /// <remarks>
+        ///     In order for a character to count, they must have auraxed (gotten at least 1160 kills) the weapon.
+        ///     If there are less than 50 characters that have auraxed a weapon, the kill limit is lowered
+        ///     instead to 50. This is useful when a weapon is just released, and people are racing to aurax
+        ///     <br/><br/>
+        ///     There is no check to ensure the item actually exists. Because Census doesn't have all the items
+        ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
+        ///     with the top headshot ratio of the item passed
+        /// </response>
         [HttpGet("{itemID}/top/hsr")]
-        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopHeadshotRatio(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
                 entries = await _StatDb.GetTopHeadshotRatio(itemID, new(), new(), 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the characters (and their weapon stats) with the most amount of kills
+        /// </summary>
+        /// <remarks>
+        ///     There is no check to ensure the item actually exists. Because Census doesn't have all the items
+        ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
+        ///     with the most amount of kills with the item
+        /// </response>
         [HttpGet("{itemID}/top/kills")]
-        public async Task<ActionResult<List<ExpandedWeaponStatEntry>>> GetTopKills(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKills(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopKills(itemID, new List<short>(), new List<short>());
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the percentile stats for an item
+        /// </summary>
+        /// <remarks>
+        ///     The percentile included in the response are:
+        ///     <ul>
+        ///         <li>KPM</li>
+        ///         <li>KD</li>
+        ///         <li>Accuracy</li>
+        ///         <li>Headshot ratio</li>
+        ///     </ul>
+        ///     <br/><br/>
+        ///     No check is done to ensure the item actually exists, as Census does not have all items
+        ///     in the game in the API. It is possible for weapons stats for an item that doesn't exist,
+        ///     to exist
+        /// </remarks>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="WeaponStatPercentileAll"/> for the item
+        /// </response>
         [HttpGet("{itemID}/percentile_stats")]
-        public async Task<ActionResult<WeaponStatPercentileAll>> GetPercentileStats(string itemID) {
+        public async Task<ApiResponse<WeaponStatPercentileAll>> GetPercentileStats(string itemID) {
             List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
             if (entries.Count < 50) {
                 entries = await _StatDb.GetByItemID(itemID, 50);
@@ -126,7 +222,7 @@ namespace watchtower.Controllers.Api {
             all.Accuracy = GetBuckets(entries.Select(iter => iter.Accuracy * 100).ToList(), 100);
             all.HeadshotRatio = GetBuckets(entries.Select(iter => iter.HeadshotRatio * 100).ToList(), 100);
 
-            return Ok(all);
+            return ApiOk(all);
         }
 
         private async Task<List<ExpandedWeaponStatEntry>> GetExpanded(List<WeaponStatEntry> entries) {
@@ -163,6 +259,7 @@ namespace watchtower.Controllers.Api {
 
             double iqr = q3 - q1;
 
+            // Exclude data outside 8 times the inter-quartile range (iqr)
             sorted = sorted.Where(iter => iter < q3 + (iqr * 8)).ToList();
 
             if (sorted.Count == 0) {

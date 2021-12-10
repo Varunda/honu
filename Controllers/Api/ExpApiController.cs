@@ -18,9 +18,12 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers {
 
+    /// <summary>
+    ///     Endpoint for getting information about exp events a character has done
+    /// </summary>
     [ApiController]
     [Route("/api/exp")]
-    public class ExpApiController : ControllerBase {
+    public class ExpApiController : ApiControllerBase {
 
         private readonly ILogger<ExpApiController> _Logger;
 
@@ -46,11 +49,28 @@ namespace watchtower.Controllers {
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
         }
 
+        /// <summary>
+        ///     Get the exp events done in a session
+        /// </summary>
+        /// <remarks>
+        ///     These exp events are expanded, meaning they contain additional information about the exp event.
+        ///     For example, if the exp event is a revive event, the <see cref="ExpandedExpEvent.Other"/>
+        ///     will contain the <see cref="PsCharacter"/> that was revived
+        /// </remarks>
+        /// <param name="sessionID">ID of the session to get the exp events of</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpEvent"/> for the character 
+        ///     the <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/>
+        ///     is for, in the time range the same session is for
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("session/{sessionID}")]
-        public async Task<ActionResult<List<ExpEvent>>> GetBySessionID(long sessionID) {
+        public async Task<ApiResponse<List<ExpandedExpEvent>>> GetBySessionID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {
-                return NotFound($"{nameof(Session)} {sessionID}");
+                return ApiNotFound<List<ExpandedExpEvent>>($"{nameof(Session)} {sessionID}");
             }
 
             List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
@@ -78,24 +98,67 @@ namespace watchtower.Controllers {
                 expanded.Add(ex);
             }
 
-            return Ok(expanded);
+            return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Get the entities another character is supporting in the last 2 hours
+        /// </summary>
+        /// <remarks>
+        ///     A support event is a specific type of exp event, where the other_id is another character that benefitted
+        ///     from the action taken. For example, a revive is a support event. This will get the characters that a
+        ///     character has supported, such as how many times a character has been revived by the character
+        ///     passed in <paramref name="charID"/>
+        ///     <br/><br/>
+        ///     If <paramref name="type"/> is heals, revives, resupplies or shield_repairs, the resulting <see cref="CharacterExpSupportEntry"/>s
+        ///     contain the characters that received the benefit of the action
+        ///     <br/><br/>
+        ///     In addition to support events, two other exp event types are supported, spawns and vehicle kills.
+        ///     <br/><br/>
+        ///     In the case spawns, the <see cref="CharacterExpSupportEntry.CharacterName"/> will instead be the source of the spawn,
+        ///     such as beacon, sunderer or router
+        ///     <br/><br/>
+        ///     In the case of vehicle kills, the <see cref="CharacterExpSupportEntry.CharacterName"/> will instead be the name of 
+        ///     the vehicle that was killed, such as harasser, reaver or magrider. Sunderers are not counted as vehicle kills
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="type">
+        ///     What type of exp event the supported entries will be for. Expected values are:
+        ///     <ul>
+        ///         <li>spawns</li>
+        ///         <li>vehicleKills</li>
+        ///         <li>heals</li>
+        ///         <li>revives</li>
+        ///         <li>resupplies</li>
+        ///         <li>shield_repair</li>
+        ///     </ul>
+        ///     All other values will produced a 404 Bad Request response
+        /// </param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="CharacterExpSupportEntry"/>s the character has produced
+        ///     in the last 2 hours. See remarks for more info
+        /// </response>
+        /// <response code="400">
+        ///     <paramref name="type"/> was an invalid value. See the parameter documentation on what is a valid value
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
+        /// </response>
         [HttpGet("character/{charID}/{type}")]
-        public async Task<ActionResult<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type) {
+        public async Task<ApiResponse<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID);
             if (c == null) {
-                return NotFound($"{nameof(PsCharacter)} {charID}");
+                return ApiNotFound<List<CharacterExpSupportEntry>>($"{nameof(PsCharacter)} {charID}");
             }
 
             if (type == "spawns") {
                 List<CharacterExpSupportEntry> spawns = await CharacterSpawns(charID);
-                return spawns;
+                return ApiOk(spawns);
             }
 
             if (type == "vehicleKills") {
                 List<CharacterExpSupportEntry> kills = await CharacterVehicleKills(charID);
-                return kills;
+                return ApiOk(kills);
             }
 
             List<int> expTypes = new List<int>();
@@ -109,19 +172,52 @@ namespace watchtower.Controllers {
             } else if (type == "shield_repair") {
                 expTypes = new List<int> { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
             } else {
-                return BadRequest($"Unknown type '{type}'");
+                return ApiBadRequest<List<CharacterExpSupportEntry>>($"Unknown type '{type}'");
             }
 
             List<CharacterExpSupportEntry> list = await GetByCharacterAndExpIDs(charID, expTypes);
 
-            return Ok(list);
+            return ApiOk(list);
         }
 
+        /// <summary>
+        ///     Get the characters in an outfit that have performed the exp event in <paramref name="type"/>
+        /// </summary>
+        /// <remarks>
+        ///     Get a list of characters in an outfit that have performed the exp event passed in <paramref name="type"/>.
+        ///     For example, getting the top healers of an outfit in the last 2 hours. See <see cref="CharacterEntries(string, string)"/>
+        ///     for more remarks on what a "support event" is
+        /// </remarks>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <param name="type">
+        ///     What type of exp event the supported entries will be for. Expected values are:
+        ///     <ul>
+        ///         <li>spawns</li>
+        ///         <li>vehicleKills</li>
+        ///         <li>heals</li>
+        ///         <li>revives</li>
+        ///         <li>resupplies</li>
+        ///         <li>shield_repair</li>
+        ///     </ul>
+        ///     All other values will produced a 404 Bad Request response
+        /// </param>
+        /// <param name="worldID">ID of the world to restrict the data to. Needed as outfit members may be on multiple servers</param>
+        /// <param name="teamID">Team ID to restrict the data to. Needed for NSO characters currently on different teams, but are in the outfit</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="OutfitExpEntry"/>s for the parameters given in the last 2 hours.
+        ///     See remarks for more info
+        /// </response>
+        /// <response code="400">
+        ///     <paramref name="type"/> was an invalid value. See the parameter documentation on what is a valid value
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
+        /// </response>
         [HttpGet("outfit/{outfitID}/{type}/{worldID}/{teamID}")]
-        public async Task<ActionResult<List<OutfitExpEntry>>> OutfitEntries(string outfitID, string type, short worldID, short teamID) {
+        public async Task<ApiResponse<List<OutfitExpEntry>>> OutfitEntries(string outfitID, string type, short worldID, short teamID) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
             if (outfitID != "0" && outfit == null) {
-                return NotFound($"{nameof(PsOutfit)} {outfitID}");
+                return ApiNotFound<List<OutfitExpEntry>>($"{nameof(PsOutfit)} {outfitID}");
             }
 
             List<int> expTypes = new List<int>();
@@ -143,12 +239,12 @@ namespace watchtower.Controllers {
             } else if (type == "vehicleKills") {
                 expTypes = Experience.VehicleKillEvents;
             } else {
-                return BadRequest($"Unknown type '{type}'");
+                return ApiBadRequest<List<OutfitExpEntry>>($"Unknown type '{type}'");
             }
 
             List<OutfitExpEntry> list = await GetByOutfitAndExpIDs(outfitID, expTypes, worldID, teamID);
 
-            return Ok(list);
+            return ApiOk(list);
         }
 
         private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID) {

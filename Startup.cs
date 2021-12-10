@@ -29,6 +29,10 @@ using watchtower.Services.CharacterViewer;
 using watchtower.Services.CharacterViewer.Implementations;
 using watchtower.Services.Census.Readers;
 using watchtower.Code.Converters;
+using Microsoft.OpenApi.Models;
+using System;
+using System.IO;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 
 namespace watchtower {
 
@@ -72,8 +76,18 @@ namespace watchtower {
 
             }).AddJsonOptions(config => {
                 config.JsonSerializerOptions.Converters.Add(new DateTimeJsonConverter());
-
             }).AddRazorRuntimeCompilation();
+
+            services.AddSwaggerGen(doc => {
+                doc.SwaggerDoc("api", new OpenApiInfo() { Title = "API", Version = "v0.1" });
+
+                Console.Write("Including XML documentation in: ");
+                foreach (string file in Directory.GetFiles(AppContext.BaseDirectory, "*.xml")) {
+                    Console.Write($"{Path.GetFileName(file)} ");
+                    doc.IncludeXmlComments(file);
+                }
+                Console.WriteLine("");
+            });
 
             services.AddRazorPages();
             services.AddMemoryCache();
@@ -81,11 +95,12 @@ namespace watchtower {
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
 
+            services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();
             services.AddSingleton<IDbCreator, DefaultDbCreator>();
 
             services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
-            services.AddSingleton<IEventHandler, EventHandler>();
+            services.AddSingleton<IEventHandler, Realtime.EventHandler>();
 
             services.AddSingleton<ICommandBus, CommandBus>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
@@ -198,6 +213,14 @@ namespace watchtower {
 
             app.UseStaticFiles();
             app.UseRouting();
+
+            app.UseSwagger(doc => { });
+            app.UseSwaggerUI(doc => {
+                doc.SwaggerEndpoint("/swagger/api/swagger.json", "api");
+                doc.RoutePrefix = "api-doc";
+                doc.DocumentTitle = "Honu API documentation";
+            });
+
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(
                     name: "selectworld",
@@ -255,6 +278,8 @@ namespace watchtower {
                 endpoints.MapHub<WorldDataHub>("/ws/data");
                 endpoints.MapHub<WorldOverviewHub>("/ws/overview");
                 endpoints.MapHub<ReportHub>("/ws/report");
+
+                endpoints.MapSwagger();
             });
         }
 

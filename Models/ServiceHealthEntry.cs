@@ -6,27 +6,27 @@ using System.Threading.Tasks;
 namespace watchtower.Models {
 
     /// <summary>
-    /// Represents meta information about a long running service 
-    /// <summary>
+    ///     Represents meta information about a long running service 
+    /// </summary>
     public class ServiceHealthEntry {
 
         /// <summary>
-        /// Name of the service this entry is for
+        ///     Name of the service this entry is for
         /// </summary>
         public string Name { get; set; } = "";
 
         /// <summary>
-        /// When this service was last ran
+        ///     When this service was last ran
         /// </summary>
         public DateTime LastRan { get; set; } = DateTime.UtcNow;
 
         /// <summary>
-        /// How many milliseconds it took for the service to be ran last time
+        ///     How many milliseconds it took for the service to be ran last time
         /// </summary>
         public long RunDuration { get; set; }
 
         /// <summary>
-        /// Is this service currently enabled and running? Only certain hosted services respect this
+        ///     Is this service currently enabled and running? Only certain hosted services respect this
         /// </summary>
         public bool Enabled { get; set; } = true;
 

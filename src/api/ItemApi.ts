@@ -102,6 +102,7 @@ export class ItemApi {
 		return ItemApi.parsePercentileAll(response.data);
 	}
 
+	/*
 	public static async getMultiple(IDs: string[]): Promise<PsItem[]> {
 		let params: URLSearchParams = new URLSearchParams();
 		IDs.map(iter => params.append("IDs", iter));
@@ -118,5 +119,6 @@ export class ItemApi {
 
 		return response.data.map((iter: any) => ItemApi.parse(iter));
 	}
+	*/
 
 }
