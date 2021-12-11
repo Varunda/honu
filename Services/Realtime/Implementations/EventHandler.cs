@@ -13,9 +13,11 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Realtime {
@@ -32,8 +34,10 @@ namespace watchtower.Realtime {
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
-        private readonly IBackgroundCharacterWeaponStatQueue _WeaponQueue;
+        private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
         private readonly IDiscordMessageQueue _MessageQueue;
+        private readonly BackgroundLogoutBufferQueue _LogoutQueue;
+
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IMapCollection _MapCensus;
 
@@ -44,8 +48,8 @@ namespace watchtower.Realtime {
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
             IDiscordMessageQueue msgQueue, IMapCollection mapColl,
-            IFacilityControlDbStore controlDb, IBackgroundCharacterWeaponStatQueue weaponQueue,
-            IBattleRankDbStore rankDb) {
+            IFacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
+            IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue) {
 
             _Logger = logger;
 
@@ -61,6 +65,7 @@ namespace watchtower.Realtime {
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
             _WeaponQueue = weaponQueue ?? throw new ArgumentNullException(nameof(weaponQueue));
+            _LogoutQueue = logoutQueue ?? throw new ArgumentNullException(nameof(logoutQueue));
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
@@ -233,6 +238,8 @@ namespace watchtower.Realtime {
                         TeamID = Faction.UNKNOWN,
                         Online = false
                     });
+
+                    p.LastLogin = DateTime.UtcNow;
                 }
 
                 await _SessionDb.Start(p);
@@ -245,7 +252,7 @@ namespace watchtower.Realtime {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
-                _WeaponQueue.Queue(charID);
+                //_WeaponQueue.Queue(charID);
 
                 TrackedPlayer? p;
                 lock (CharacterStore.Get().Players) {
@@ -253,6 +260,16 @@ namespace watchtower.Realtime {
                 }
 
                 if (p != null) {
+                    // Null if Honu was started when the character was online
+                    if (p.LastLogin != null) {
+                        _LogoutQueue.Queue(new LogoutBufferEntry() {
+                            CharacterID = charID,
+                            LoginTime = p.LastLogin.Value
+                        });
+                    } else {
+                        _WeaponQueue.Queue(charID);
+                    }
+
                     await _SessionDb.End(p);
 
                     // Reset team of the NSO player as they're now offline

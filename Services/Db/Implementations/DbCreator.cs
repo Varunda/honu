@@ -27,6 +27,12 @@ namespace watchtower.Services.Db.Implementations {
                 return;
             }
 
+            // Ensure the extension is loaded, as some of the patches may use the things the extension provides
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                CREATE EXTENSION IF NOT EXISTS pg_trgm;
+            ");
+
             try {
                 _Logger.LogTrace($"Getting current DB version");
                 int version = await GetVersion();
@@ -49,7 +55,7 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         /// <summary>
-        /// Get all the patches loaded in the currently assembly
+        ///     Get all the patches loaded in the currently assembly
         /// </summary>
         private List<IDbPatch> GetPatches() {
             List<IDbPatch> patches = new List<IDbPatch>();
@@ -72,7 +78,7 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         /// <summary>
-        /// Update the DB version
+        ///     Update the DB version
         /// </summary>
         private async Task UpdateVersion(int version) {
             _Logger.LogTrace($"Updating version to {version}");
@@ -91,7 +97,7 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         /// <summary>
-        /// Get the current DB version, or -1 if no tables have been created, or an error occurs
+        ///     Get the current DB version, or -1 if no tables have been created, or an error occurs
         /// </summary>
         private async Task<int> GetVersion() {
             if (await DoesMetadataTableExist() == false) {
@@ -113,7 +119,7 @@ namespace watchtower.Services.Db.Implementations {
                 return -1;
             }
 
-            if (Int32.TryParse(value.ToString(), out int version) == true) {
+            if (int.TryParse(value.ToString(), out int version) == true) {
                 return version;
             }
 
@@ -122,6 +128,9 @@ namespace watchtower.Services.Db.Implementations {
             return -1;
         }
 
+        /// <summary>
+        ///     Check if the metadata table exists
+        /// </summary>
         private async Task<bool> DoesMetadataTableExist() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

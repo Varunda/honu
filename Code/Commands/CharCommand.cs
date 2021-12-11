@@ -13,6 +13,7 @@ using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Commands {
@@ -31,7 +32,7 @@ namespace watchtower.Commands {
         private readonly ICharacterItemRepository _CharItemRepository;
         private readonly ICharacterStatCollection _StatCollection;
         private readonly ICharacterStatDbStore _StatDb;
-        private readonly IBackgroundCharacterWeaponStatQueue _Queue;
+        private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
@@ -45,17 +46,31 @@ namespace watchtower.Commands {
             _CharItemRepository = services.GetRequiredService<ICharacterItemRepository>();
             _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
-            _Queue = services.GetRequiredService<IBackgroundCharacterWeaponStatQueue>();
+            _Queue = services.GetRequiredService<BackgroundCharacterWeaponStatQueue>();
         }
 
-        public async Task Refresh(string name) {
-            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
-            if (c == null) {
-                _Logger.LogWarning($"Failed to get character by name {name}");
-                return;
+        public async Task Refresh(string nameOrId) {
+            if (nameOrId.Length != 19) {
+                PsCharacter? c = await _CharacterRepository.GetFirstByName(nameOrId);
+                if (c == null) {
+                    _Logger.LogWarning($"Failed to get character by name {nameOrId}");
+                    return;
+                }
+                nameOrId = c.ID;
             }
 
-            _Queue.Queue(c.ID);
+            _Queue.Queue(nameOrId);
+        }
+
+        public async Task Search(string name) {
+            List<PsCharacter> all = await _CharacterRepository.SearchByName(name);
+
+            string s = $"Search results: '{name}' =>\n";
+            foreach (PsCharacter c in all) {
+                s += $"{c.GetDisplayName()} / {c.Prestige}~{c.BattleRank} / {c.DateLastLogin:u}\n";
+            }
+
+            _Logger.LogInformation(s);
         }
 
         public async Task Get(string name) {

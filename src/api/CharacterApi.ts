@@ -13,6 +13,8 @@ export class PsCharacter {
 	public battleRank: number = 0;
 	public prestige: number = 0;
 
+	public lastUpdated: Date = new Date();
+
 	public dateCreated: Date = new Date();
 	public dateLastLogin: Date = new Date();
 	public dateLastSave: Date = new Date();
@@ -23,9 +25,15 @@ export class CharacterApi {
 	private static _instance: CharacterApi = new CharacterApi();
 	public static get(): CharacterApi { return this._instance; }
 
+	/**
+	 * The default time when Honu has a date it doesn't know yet
+	 */
+	public static readonly defaultTime: number = 978307200000;
+
 	public static parse(elem: any): PsCharacter {
 		return {
 			...elem,
+			lastUpdated: new Date(elem.lastUpdated),
 			dateCreated: new Date(elem.dateCreated),
 			dateLastLogin: new Date(elem.dateLastLogin),
 			dateLastSave: new Date(elem.dateLastSave)

@@ -109,7 +109,7 @@ namespace watchtower.Models {
                 _Logger.LogError("Response to {ConnectionID} at {URL} has already started. From {IPv4}",
                     context.HttpContext.Connection.Id,
                     $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path.Value}",
-                    context.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString());
+                    context.HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "<no remote ip>");
             }
 
             context.HttpContext.Response.StatusCode = result.Status;

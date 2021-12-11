@@ -33,6 +33,8 @@ using Microsoft.OpenApi.Models;
 using System;
 using System.IO;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using watchtower.Services.Queues;
+using watchtower.Models.Queues;
 
 namespace watchtower {
 
@@ -101,16 +103,18 @@ namespace watchtower {
 
             services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
             services.AddSingleton<IEventHandler, Realtime.EventHandler>();
-
             services.AddSingleton<ICommandBus, CommandBus>();
+            services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
+
+            // Queues
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
             services.AddSingleton<IBackgroundSessionStarterQueue, BackgroundSessionStarterQueue>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
             services.AddSingleton<IDiscordMessageQueue, DiscordMessageQueue>();
-            services.AddSingleton<IBackgroundCharacterWeaponStatQueue, BackgroundCharacterWeaponStatQueue>();
+            services.AddSingleton<BackgroundCharacterWeaponStatQueue>();
             services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
-            services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
+            services.AddSingleton<BackgroundLogoutBufferQueue>();
 
             // Db services
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
@@ -130,6 +134,8 @@ namespace watchtower {
             services.AddSingleton<ICharacterStatDbStore, CharacterStatDbStore>();
             services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
             services.AddSingleton<IReportDbStore, ReportDbStore>();
+            services.AddSingleton<CharacterMetadataDbStore>();
+            services.AddSingleton<LogoutBufferDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -143,6 +149,8 @@ namespace watchtower {
             services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
             services.AddSingleton<IDataReader<PsItem>, ItemDbStore>();
             services.AddSingleton<IDataReader<PsCharacter>, CharacterDbStore>();
+            services.AddSingleton<IDataReader<CharacterMetadata>, CharacterMetadataReader>();
+            services.AddSingleton<IDataReader<LogoutBufferEntry>, LogoutBufferEntryReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -183,14 +191,16 @@ namespace watchtower {
             services.AddHostedService<RealtimeResubcribeService>();
             services.AddHostedService<WorldOverviewBroadcastService>();
             services.AddHostedService<CharacterStatGeneratorPopulator>();
+            services.AddHostedService<ZoneStateStartupService>();
 
+            // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
             services.AddHostedService<FacilityPopulatorStartupService>();
-            services.AddHostedService<ZoneStateStartupService>();
             services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
             services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
+            services.AddHostedService<HostedBackgroundLogoutBufferQueue>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

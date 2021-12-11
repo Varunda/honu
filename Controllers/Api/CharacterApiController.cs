@@ -240,5 +240,31 @@ namespace watchtower.Controllers.Api {
             return ApiOk(chars);
         }
 
+        /// <summary>
+        ///     Search for a character by it's name (case-insensitive)
+        /// </summary>
+        /// <remarks>
+        ///     A minimum of 3 characters must be passed for a search to take place. 
+        ///     <br/><br/>
+        ///     The search that takes place is case-insensitive
+        /// </remarks>
+        /// <param name="name">Name of the character to search</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="PsCharacter"/> that contain the string <paramref name="name"/>
+        ///     within <see cref="PsCharacter.Name"/>
+        /// </response>
+        /// <response code="400">
+        ///     The parameter <paramref name="name"/> was less than 3 characters long
+        /// </response>
+        [HttpGet("characters/search/{name}")]
+        public async Task<ApiResponse<List<PsCharacter>>> SearchByName(string name) {
+            if (name.Length < 3) {
+                return ApiBadRequest<List<PsCharacter>>($"The parameter {nameof(name)} cannot have a length less than 3 (was {name.Length})");
+            }
+
+            List<PsCharacter> chars = await _CharacterRepository.SearchByName(name);
+            return ApiOk(chars);
+        }
+
     }
 }

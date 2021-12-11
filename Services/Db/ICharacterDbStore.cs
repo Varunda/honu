@@ -46,6 +46,13 @@ namespace watchtower.Services.Db {
         /// </returns>
         Task Upsert(PsCharacter character);
 
+        /// <summary>
+        ///     Get for characters by name (case insensitive)
+        /// </summary>
+        /// <param name="name">Name to search</param>
+        /// <returns></returns>
+        Task<List<PsCharacter>> SearchByName(string name);
+
     }
 
     public static class ICharacterDbStoreExtensionMethods {

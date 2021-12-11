@@ -109,6 +109,23 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        public async Task<List<PsCharacter>> SearchByName(string name) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
+                    FROM wt_character c
+                        LEFT JOIN wt_outfit o ON c.outfit_id = o.id
+                    WHERE c.name_lower LIKE @Name
+            ");
+
+            cmd.AddParameter("Name", $"%{name.ToLower()}%");
+
+            List<PsCharacter> c = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return c;
+        }
+
         public override PsCharacter ReadEntry(NpgsqlDataReader reader) {
             PsCharacter c = new PsCharacter();
 

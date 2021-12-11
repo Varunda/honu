@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Services;
+using watchtower.Services.Queues;
 
 namespace watchtower.Controllers.Api {
 
@@ -23,16 +24,18 @@ namespace watchtower.Controllers.Api {
 
         private readonly IBackgroundCharacterCacheQueue _CharacterCache;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
-        private readonly IBackgroundCharacterWeaponStatQueue _WeaponQueue;
+        private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
         private readonly IBackgroundTaskQueue _TaskQueue;
         private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
         private readonly IDiscordMessageQueue _DiscordQueue;
+        private readonly BackgroundLogoutBufferQueue _LogoutQueue;
 
         public ServiceApiController(ILogger<ServiceApiController> logger,
             IServiceHealthMonitor mon,
             IBackgroundCharacterCacheQueue charQueue, IBackgroundSessionStarterQueue session,
-            IBackgroundCharacterWeaponStatQueue weapon, IBackgroundTaskQueue task,
-            IBackgroundWeaponPercentileCacheQueue percentile, IDiscordMessageQueue discord) {
+            BackgroundCharacterWeaponStatQueue weapon, IBackgroundTaskQueue task,
+            IBackgroundWeaponPercentileCacheQueue percentile, IDiscordMessageQueue discord,
+            BackgroundLogoutBufferQueue logoutQueue) {
 
             _Logger = logger;
 
@@ -44,6 +47,7 @@ namespace watchtower.Controllers.Api {
             _TaskQueue = task;
             _PercentileQueue = percentile;
             _DiscordQueue = discord;
+            _LogoutQueue = logoutQueue;
         }
 
         /// <summary>
@@ -61,6 +65,7 @@ namespace watchtower.Controllers.Api {
             ServiceQueueCount task = new() { QueueName = "task_queue", Count = _TaskQueue.Count() };
             ServiceQueueCount percentile = new() { QueueName = "weapon_percentile_cache_queue", Count = _PercentileQueue.Count() };
             ServiceQueueCount discord = new() { QueueName = "discord_message_queue", Count = _DiscordQueue.Count() };
+            //ServiceQueueCount logout = new() { QueueName = "logout_buffer_queue", Count = 0 };
 
             List<ServiceQueueCount> counts = new() {
                 c, session, weapon,

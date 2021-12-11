@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using watchtower.Models.Census;
 using watchtower.Services;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers {
@@ -12,10 +13,10 @@ namespace watchtower.Controllers {
     public class HomeController : Controller {
 
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IBackgroundCharacterWeaponStatQueue _Queue;
+        private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
         public HomeController(ICharacterRepository charRepo,
-            IBackgroundCharacterWeaponStatQueue queue) {
+            BackgroundCharacterWeaponStatQueue queue) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;

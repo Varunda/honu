@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 
@@ -28,7 +29,18 @@ namespace watchtower.Services.Repositories {
         /// </returns>
         Task<List<PsCharacter>> GetByName(string name);
 
+        /// <summary>
+        ///     Update/Insert a character
+        /// </summary>
+        /// <param name="character"></param>
         Task Upsert(PsCharacter character);
+
+        /// <summary>
+        ///     Search for a character by wildcard
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        Task<List<PsCharacter>> SearchByName(string name);
 
     }
 

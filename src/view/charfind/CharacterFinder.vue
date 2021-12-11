@@ -34,6 +34,8 @@
                     <td>Character</td>
                     <td>Battle rank</td>
                     <td>Outfit</td>
+                    <td>Server</td>
+                    <td>Last login</td>
                     <td>
                         Permalink
                         <info-hover text="This link will always function"></info-hover>
@@ -48,7 +50,7 @@
 
             <tbody v-else-if="characters.state == 'loading'">
                 <tr>
-                    <td colspan="5">
+                    <td colspan="7">
                         Loading...
                     </td>
                 </tr>
@@ -56,7 +58,7 @@
 
             <tbody v-else-if="characters.state == 'loaded' && characters.data.length <= 0">
                 <tr class="table-warning">
-                    <td colspan="5">
+                    <td colspan="7">
                         No characters by the name of '{{lastSearch}}' found
                     </td>
                 </tr>
@@ -82,6 +84,19 @@
 
                         <span v-else>
                             [{{c.outfitTag}}] {{c.outfitName}}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{c.worldID | world}}
+                    </td>
+
+                    <td>
+                        <span v-if="c.dateLastLogin.getTime() == defaultTime || c.dateLastLogin.getTime() == 0">
+                            {{c.lastUpdated | moment}}
+                        </span>
+                        <span v-else>
+                            {{c.dateLastLogin | moment}}
                         </span>
                     </td>
 
@@ -114,6 +129,9 @@
 
     import InfoHover from "components/InfoHover.vue";
 
+    import "MomentFilter";
+    import "filters/WorldNameFilter";
+
     import { Loading, Loadable } from "Loading";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
@@ -126,7 +144,9 @@
             return {
                 characters: Loadable.idle() as Loading<PsCharacter[]>,
                 charName: "" as string,
-                lastSearch: "" as string
+                lastSearch: "" as string,
+
+                defaultTime: 978307200000 as number
             }
         },
 
@@ -142,10 +162,16 @@
 
             getByName: async function(name: string): Promise<void> {
                 this.characters = Loadable.loading();
-                try {
-                    this.characters = Loadable.loaded(await CharacterApi.getByName(name));
-                } catch (err: any) {
-                    this.characters = Loadable.error(err);
+                this.characters = await Loadable.promise(CharacterApi.getByName(name));
+
+                if (this.characters.state == "loaded") {
+                    // Sort with most recent login on top, using the last time the character was updated
+                    //      if the last login date is the minimum c# DateTime value
+                    this.characters.data = this.characters.data.sort((a: PsCharacter, b: PsCharacter) => {
+                        const valA: number = (a.dateLastLogin.getTime() == this.defaultTime ? a.lastUpdated : a.dateLastLogin).getTime();
+                        const valB: number = (b.dateLastLogin.getTime() == this.defaultTime ? b.lastUpdated : b.dateLastLogin).getTime();
+                        return valA - valB;
+                    });
                 }
             },
 

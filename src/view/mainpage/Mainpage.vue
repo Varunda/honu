@@ -76,9 +76,6 @@
                     Character Viewer
                 </a>
             </h1>
-            <h3 class="d-inline-block">
-                <small class="text-muted">Heavy heavy in progress</small>
-            </h3>
             <div>
                 <a href="/character">View</a>
             </div>
@@ -98,6 +95,8 @@
             </a>
         </div>
 
+        <hr class="border" />
+
         <div>
             <h4>Contact</h4>
             
@@ -114,6 +113,7 @@
     import * as sR from "signalR";
 
     import WorldOverview from "./components/WorldOverview.vue";
+    import InfoHover from "components/InfoHover.vue";
 
     export const Mainpage = Vue.extend({
         props: {
@@ -189,7 +189,8 @@
         },
 
         components: {
-            WorldOverview
+            WorldOverview,
+            InfoHover
         }
     });
     export default Mainpage;

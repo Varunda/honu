@@ -50,6 +50,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="db">Extension instance</param>
         /// <param name="itemID">Item ID to generate the percentiles of</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
         /// <returns>
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
@@ -69,6 +70,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="db">Extension instance</param>
         /// <param name="itemID">Item ID to generate the percentiles of</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
         /// <returns>
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
@@ -88,6 +90,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="db">Extension instance</param>
         /// <param name="itemID">Item ID to generate the percentiles of</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
         /// <returns>
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
@@ -107,6 +110,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="db">Extension instance</param>
         /// <param name="itemID">Item ID to generate the percentiles of</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
         /// <returns>
         ///     A newly genereated <see cref="WeaponStatPercentileCache"/> of the item,
         ///     or <c>null</c> if the item does not exist
