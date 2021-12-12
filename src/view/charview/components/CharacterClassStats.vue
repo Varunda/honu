@@ -174,7 +174,7 @@
                     } else if (type == "weekly") {
                         value = stat.valueWeekly;
                     } else if (type == "monthly") {
-                        console.log(`${stat.timestamp.getFullYear()} ${stat.timestamp.getMonth()} ${now.getFullYear()} ${now.getMonth()}`);
+                        //console.log(`${stat.timestamp.getFullYear()} ${stat.timestamp.getMonth()} ${now.getFullYear()} ${now.getMonth()}`);
                         // Value is too old to be useful here
                         if (stat.timestamp.getFullYear() != now.getFullYear() || stat.timestamp.getMonth() != now.getMonth()) {
                             return;
@@ -183,7 +183,7 @@
                     } else if (type == "forever") {
                         value = stat.valueForever;
                     } else {
-                        throw ``;
+                        throw `Unchecked type passed: '${type}'`;
                     }
 
                     if (stat.profileID == 0) { // all

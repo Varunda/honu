@@ -39,8 +39,6 @@
                     this.chart = null;
                 }
 
-                console.log(`1`);
-
                 const canvas = document.getElementById(`chart-history-stat-${this.ID}`);
                 if (canvas == null) {
                     return console.error(`Failed to find #chart-history-stat-${this.ID}`);
@@ -52,7 +50,6 @@
                 if (this.period == "months") {
                     format = "yyyy-MM";
                 }
-                console.log(`2`);
 
                 const color: string = randomColorSingle();
 
@@ -107,7 +104,7 @@
                             },
                             y: {
                                 beginAtZero: true,
-                                max: Math.round(max * 1.5),
+                                max: Math.max(1, Math.round(max * 1.5)), // There's a ChartJS bug where if the max is 0 and beginAtZero is set, it fails. Ensure that it's above 0
                                 ticks: {
                                     count: 5
                                 },
