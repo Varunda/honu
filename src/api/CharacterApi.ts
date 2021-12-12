@@ -42,11 +42,11 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	}
 
 	public static async getByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/character/name/${name}`);
+		return CharacterApi.get().readList(`/api/characters/name/${name}`);
 	}
 
 	public static async searchByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/character/search/${name}`);
+		return CharacterApi.get().readList(`/api/characters/search/${name}`);
 	}
 
 }

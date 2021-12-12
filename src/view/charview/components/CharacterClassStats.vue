@@ -232,7 +232,7 @@
         computed: {
             totalTime: function(): number {
                 return this.timeAs.infil + this.timeAs.lightAssault + this.timeAs.medic
-                    + this.timeAs.engineer + this.timeAs.heavy + this.timeAs.max;
+                    + this.timeAs.engineer + this.timeAs.heavy + this.timeAs.max + 1;
             }
 
         },

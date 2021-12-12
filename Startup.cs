@@ -36,6 +36,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using watchtower.Services.Queues;
 using watchtower.Models.Queues;
 using honu_census;
+using Microsoft.Extensions.Logging;
 
 namespace watchtower {
 
@@ -216,11 +217,13 @@ namespace watchtower {
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
-            IHostApplicationLifetime lifetime) {
+            IHostApplicationLifetime lifetime, ILogger<Startup> logger) {
 
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
+
+            logger.LogInformation($"Environment: {env.EnvironmentName}");
 
             //app.UseHttpsRedirection();
 
