@@ -89,7 +89,7 @@ export class CharacterWeaponStatApi {
 	private static parseExpanded(elem: any): ExpandedWeaponStatEntry {
 		return {
 			entry: CharacterWeaponStatApi.parseWeaponStat(elem.entry),
-			character: elem.character == null ? null : CharacterApi.parse(elem.character)
+			character: elem.character == null ? null : CharacterApi.get().parse(elem.character)
 		};
 	}
 
