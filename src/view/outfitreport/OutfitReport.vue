@@ -71,6 +71,11 @@
                     Start time
                 </span>
                 <input v-model="periodStartInput" type="datetime-local" class="form-control" />
+                <div class="input-group-append">
+                    <button @click="setRelativeStart(2, 0)" type="button" class="btn btn-primary input-group-addon">
+                        -2 hours
+                    </button>
+                </div>
             </div>
 
             <div class="input-group">
@@ -78,16 +83,31 @@
                     End time
                 </span>
                 <input v-model="periodEndInput" type="datetime-local" class="form-control" />
+                <div class="input-group-append">
+                    <button @click="zeroHourEnd" type="button" class="btn btn-primary input-group-addon">
+                        Set to current hour
+                    </button>
+                </div>
             </div>
 
             <div class="input-group">
                 <span class="input-group-prepend input-group-text">
-                    Tag
+                    Outfit tag
                 </span>
 
                 <input v-model="search.outfitTag" type="text" class="form-control" @keyup.enter="searchTag" />
                 
                 <button @click="searchTag" class="btn btn-primary input-group-append">Add</button>
+            </div>
+
+            <div class="input-group">
+                <span class="input-group-prepend input-group-text">
+                    Character
+                </span>
+
+                <input v-model="search.characterName" type="text" class="form-control" @keyup.enter="searchCharacter" />
+
+                <button @click="searchCharacter" class="btn btn-primary input-group-append">Add</button>
             </div>
 
             <input v-model="generator" type="text" class="form-control" @keyup.enter="start" />
@@ -104,24 +124,41 @@
 
             <div>
                 <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <td colspan="2">Outfits</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="outfit in outfits">
-                            <td>
-                                [{{outfit.tag}}]
-                                {{outfit.name}}
-                            </td>
-                            <td>
-                                <a @click="removeOutfit(outfit.id)">
-                                    &times;
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tr class="table-secondary">
+                        <td colspan="2">Outfits</td>
+                    </tr>
+
+                    <tr v-for="outfit in outfits">
+                        <td>
+                            [{{outfit.tag}}]
+                            {{outfit.name}}
+                        </td>
+                        <td>
+                            <a @click="removeOutfit(outfit.id)">
+                                &times;
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <table class="table table-sm">
+                    <tr class="table-secondary">
+                        <td colspan="2">Characters</td>
+                    </tr>
+
+                    <tr v-for="char in characters">
+                        <td>
+                            <span v-if="char.outfitID != null">
+                                [{{char.outfitTag}}]
+                            </span>
+                            {{char.name}}
+                        </td>
+                        <td>
+                            <a @click="removeCharacter(char.id)">
+                                &times;
+                            </a>
+                        </td>
+                    </tr>
                 </table>
             </div>
         </div>
@@ -179,6 +216,8 @@
         <div v-if="isDone == true">
             <report-class-breakdown :report="report"></report-class-breakdown>
 
+            <report-weapon-breakdown :report="report"></report-weapon-breakdown>
+
             <report-outfit-versus :report="report"></report-outfit-versus>
 
             <report-player-list :report="report"></report-player-list>
@@ -190,21 +229,24 @@
 <script lang="ts">
     import Vue from "vue";
     import * as sR from "signalR";
+    import { Loading, Loadable } from "Loading";
 
     import { KillEvent, KillStatApi } from "api/KillStatApi";
     import { ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { PsItem } from "api/ItemApi";
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
-    import { PsCharacter } from "api/CharacterApi";
+    import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { Session } from "api/SessionApi";
 
     import Report, { PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
     import "MomentFilter";
+    import DateUtil from "util/Date";
 
     import ReportClassBreakdown from "./components/ReportClassBreakdown.vue";
     import ReportPlayerList from "./components/ReportPlayerList.vue";
     import ReportOutfitVersus from "./components/ReportOutfitVersus.vue";
+    import ReportWeaponBreakdown from "./components/ReportWeaponBreakdown.vue";
 
     import DateTimePicker from "components/DateTimePicker.vue";
     import InfoHover from "components/InfoHover.vue";
@@ -230,7 +272,8 @@
                 periodEnd: new Date() as Date,
 
                 search: {
-                    outfitTag: "" as string
+                    outfitTag: "" as string,
+                    characterName: "" as string
                 },
 
                 steps: {
@@ -250,6 +293,7 @@
                 report: new Report() as Report,
 
                 outfits: [] as PsOutfit[],
+                characters: [] as PsCharacter[],
 
                 generator: "" as string,
                 genB64: "" as string
@@ -263,8 +307,16 @@
 
                 this.parseUrl();
 
-                this.periodStartInput = this.periodStart.toISOString().slice(0, -1);
-                this.periodEndInput = this.periodEnd.toISOString().slice(0, -1);
+                this.periodStart.setMilliseconds(0);
+                this.periodStart.setSeconds(0);
+                this.periodStart.setMinutes(0);
+
+                this.periodEnd.setMilliseconds(0);
+                this.periodEnd.setSeconds(0);
+                this.periodEnd.setMinutes(0);
+
+                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
+                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
             });
         },
 
@@ -278,6 +330,23 @@
                 if (this.logs.length > 100) {
                     this.logs = this.logs.slice(0, 100);
                 }
+            },
+
+            zeroHourEnd: function(): void {
+                this.periodEnd.setMilliseconds(0);
+                this.periodEnd.setSeconds(0);
+                this.periodEnd.setMinutes(0);
+                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
+                this.updateGenerator();
+            },
+
+            setRelativeStart: function(hours: number, minutes: number): void {
+                this.periodStart.setMilliseconds(this.periodEnd.getMilliseconds());
+                this.periodStart.setSeconds(this.periodEnd.getSeconds());
+                this.periodStart.setMinutes(this.periodEnd.getMinutes() - minutes);
+                this.periodStart.setHours(this.periodEnd.getHours() - hours);
+                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
+                this.updateGenerator();
             },
 
             parseUrl: function(): void {
@@ -296,15 +365,42 @@
             searchTag: async function(): Promise<void> {
                 const outfits: PsOutfit[] = await OutfitApi.getByTag(this.search.outfitTag);
 
-                if (outfits.length == 1) {
-                    this.outfits.push(outfits[0]);
-                    this.updateGenerator();
-                    this.search.outfitTag = "";
+                if (outfits.length == 0) {
+                    this.log(`Found 0 outfits with the tag ${this.search.outfitTag}`);
+                    return;
                 }
+
+                outfits.sort((a, b) => b.id.localeCompare(a.id));
+                this.outfits.push(outfits[0]);
+                this.search.outfitTag = "";
+                this.updateGenerator();
+            },
+
+            searchCharacter: async function(): Promise<void> {
+                const characters: Loading<PsCharacter[]> = await CharacterApi.getByName(this.search.characterName);
+                if (characters.state != "loaded") {
+                    this.log(`Failed to search for ${this.search.characterName}, got state ${characters.state} from Honu API`);
+                    return;
+                }
+
+                if (characters.data.length == 0) {
+                    this.log(`Found 0 characters with name ${this.search.characterName}`);
+                    return;
+                }
+
+                characters.data.sort((a, b) => b.id.localeCompare(a.id));
+
+                this.characters.push(characters.data[0]);
+                this.search.characterName = "";
+                this.updateGenerator();
             },
 
             removeOutfit: function(outfitID: string): void {
                 this.outfits = this.outfits.filter(iter => iter.id != outfitID);
+            },
+
+            removeCharacter: function(charID: string): void {
+                this.characters = this.characters.filter(iter => iter.id != charID);
             },
 
             createConnection: function(): void {
@@ -320,6 +416,7 @@
                 this.log(`Connecting...`);
 
                 this.connection.on("SendReport", this.onSendReport);
+                this.connection.on("SendError", this.onSendError);
                 this.connection.on("UpdateCharacterIDs", this.onUpdateCharacterIDs);
                 this.connection.on("UpdateKills", this.onUpdateKills);
                 this.connection.on("UpdateDeaths", this.onUpdateDeaths);
@@ -393,8 +490,8 @@
             },
 
             updateGenerator: function(): void {
-                console.log(`Start: ${this.periodStart}`);
-                console.log(`End: ${this.periodEnd}`);
+                console.log(`Start: ${this.periodStart} = ${this.periodStart.toISOString()}`);
+                console.log(`End: ${this.periodEnd} = ${this.periodStart.toISOString()}`);
 
                 console.log(`Outfits: [${this.outfits.join(", ")}]`);
 
@@ -404,24 +501,33 @@
                 const start: number = Math.floor(this.periodStart.getTime() / 1000);
                 const end: number = Math.floor(this.periodEnd.getTime() / 1000);
 
-                const gen: string = `${start},${end};${this.outfits.map(iter => `o${iter.id};`)}`;
+                const outfits: string = this.outfits.map(iter => `o${iter.id};`).join("");
+                const chars: string = this.characters.map(iter => `+${iter.id};`).join("");
+
+                const gen: string = `${start},${end};${outfits}${chars}`;
                 this.generator = gen;
                 console.log(gen);
             },
 
+            onSendError: function(err: string): void {
+                this.log(err);
+            },
+
             onSendReport: function(report: Report): void {
                 this.report.ID = report.ID;
-                this.report.periodEnd = new Date(report.periodEnd);
-                this.report.periodStart = new Date(report.periodStart);
+                // No idea why, but these dates don't include the Z, while the timestamp does
+                this.report.periodEnd = new Date(report.periodEnd + "Z");
+                this.report.periodStart = new Date(report.periodStart + "Z");
                 this.report.timestamp = new Date(report.timestamp);
                 this.report.teamID = report.teamID;
 
                 this.periodStart = new Date(this.report.periodStart);
-                this.periodStartInput = this.periodStart.toString();
+                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
                 this.periodEnd = new Date(this.report.periodEnd);
-                this.periodEndInput = this.periodEnd.toString();
+                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
 
-                this.log(`Got report: ${JSON.stringify(report)}`);
+                console.log(this.report);
+                this.log(`Got report: ${JSON.stringify(this.report)}`);
                 this.steps.report = true;
             },
 
@@ -478,12 +584,23 @@
             }
         },
 
+        watch: {
+            periodStartInput: function(): void {
+                this.periodStart = new Date(this.periodStartInput);
+            },
+
+            periodEndInput: function(): void {
+                this.periodEnd = new Date(this.periodEndInput);
+            }
+        },
+
         components: {
             DateTimePicker,
             InfoHover,
             ReportClassBreakdown,
             ReportPlayerList,
-            ReportOutfitVersus
+            ReportOutfitVersus,
+            ReportWeaponBreakdown
         }
 
     });

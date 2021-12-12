@@ -16,6 +16,16 @@
             </tr>
 
             <tr>
+                <td>Total</td>
+                <td>{{all.kills}}</td>
+                <td>{{all.timeAs | mduration}}</td>
+                <td>{{all.kills / all.timeAs * 60 | locale}}</td>
+                <td>{{all.deaths}}</td>
+                <td>{{all.kills / Math.max(1, all.deaths) | locale}}</td>
+                <td>{{all.count}}</td>
+            </tr>
+
+            <tr>
                 <td>Infiltrator</td>
                 <td>{{infil.kills}}</td>
                 <td>{{infil.timeAs | mduration}}</td>
@@ -102,6 +112,7 @@
 
         data: function() {
             return {
+                all: new ClassStats() as ClassStats,
                 infil: new ClassStats() as ClassStats,
                 lightAssault: new ClassStats() as ClassStats,
                 medic: new ClassStats() as ClassStats,
@@ -135,6 +146,7 @@
                         ++this.max.count;
                     }
 
+                    this.all.timeAs += metadata.timeAs;
                     this.infil.timeAs += metadata.classes.infil.timeAs;
                     this.lightAssault.timeAs += metadata.classes.lightAssault.timeAs;
                     this.medic.timeAs += metadata.classes.medic.timeAs;
@@ -142,11 +154,15 @@
                     this.heavy.timeAs += metadata.classes.heavy.timeAs;
                     this.max.timeAs += metadata.classes.max.timeAs;
                 }
+
+                this.all.count = this.report.playerMetadata.size;
             },
 
             setKills: function(): void {
                 for (const kill of this.report.kills) {
                     const id: number = kill.attackerLoadoutID;
+
+                    ++this.all.kills;
 
                     if (Loadout.isInfiltrator(id)) {
                         ++this.infil.kills;
@@ -167,6 +183,8 @@
             setDeaths: function(): void {
                 for (const death of this.report.deaths) {
                     const id: number = death.killedLoadoutID;
+
+                    ++this.all.deaths;
 
                     if (Loadout.isInfiltrator(id)) {
                         ++this.infil.deaths;

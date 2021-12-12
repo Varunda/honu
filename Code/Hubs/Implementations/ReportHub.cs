@@ -71,93 +71,107 @@ namespace watchtower.Code.Hubs.Implementations {
                 return;
             }
 
-            report = new OutfitReport();
-            report.Generator = generator;
-            report.Timestamp = DateTime.UtcNow;
-
-            await Clients.Caller.SendReport(report);
-
             try {
-                await ParseGenerator(generator, report);
+                report = new OutfitReport();
+                report.Generator = generator;
+                report.Timestamp = DateTime.UtcNow;
+
+                await Clients.Caller.SendReport(report);
+
+                try {
+                    await ParseGenerator(generator, report);
+                } catch (Exception ex) {
+                    await Clients.Caller.SendError(ex.Message);
+                    return;
+                }
+
+                if (report.PeriodStart <= report.PeriodEnd) {
+                    await Clients.Caller.SendError($"The start period at {report.PeriodStart:u} is after the end {report.PeriodEnd:u}");
+                    return;
+                }
+
+                if (report.PeriodEnd - report.PeriodStart >= TimeSpan.FromHours(8)) {
+                    await Clients.Caller.SendError($"A report cannot span more than 8 hours");
+                    return;
+                }
+
+                if (report.TeamID <= 0) {
+                    await Clients.Caller.SendError($"The TeamID of the report is currently {report.TeamID}, it must be above 0. Try setting the faction");
+                    return;
+                }
+
+                report.ID = await _ReportDb.Insert(report);
+
+                await Clients.Caller.SendReport(report);
+                await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
+                await Clients.Caller.UpdateSessions(report.Sessions);
+
+                HashSet<string> outfits = new();
+                HashSet<string> chars = new();
+                HashSet<string> items = new();
+
+                foreach (string id in report.CharacterIDs) {
+                    chars.Add(id);
+                }
+
+                List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
+                foreach (KillEvent ev in killDeaths) {
+                    chars.Add(ev.KilledCharacterID);
+                    chars.Add(ev.AttackerCharacterID);
+                    items.Add(ev.WeaponID);
+                }
+
+                report.Kills = killDeaths.Where(iter => iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
+                await Clients.Caller.UpdateKills(report.Kills);
+
+                report.Deaths = killDeaths.Where(iter => iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.RevivedEventID == null).ToList();
+                await Clients.Caller.UpdateDeaths(report.Deaths);
+
+                List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
+                foreach (ExpEvent ev in expEvents) {
+                    chars.Add(ev.SourceID);
+
+                    if (Experience.OtherIDIsCharacterID(ev.ExperienceID)) {
+                        chars.Add(ev.OtherID);
+                    }
+                }
+
+                report.Experience = expEvents.Where(iter => iter.TeamID == report.TeamID).ToList();
+                await Clients.Caller.UpdateExp(report.Experience);
+
+                foreach (string itemID in items) {
+                    PsItem? item = await _ItemRepository.GetByID(itemID);
+                    if (item != null) {
+                        report.Items.Add(item);
+                    }
+                }
+
+                await Clients.Caller.UpdateItems(report.Items);
+
+                report.Characters = await GetCharacters(chars.ToList());
+                await Clients.Caller.UpdateCharacters(report.Characters);
+
+                foreach (PsCharacter c in report.Characters) {
+                    if (c.OutfitID != null) {
+                        outfits.Add(c.OutfitID);
+                    }
+                }
+
+                foreach (string outfitID in outfits) {
+                    PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
+                    if (outfit != null) {
+                        report.Outfits.Add(outfit);
+                    }
+                }
+
+                await Clients.Caller.UpdateOutfits(report.Outfits);
+
+                _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
+                    SlidingExpiration = TimeSpan.FromMinutes(30)
+                });
             } catch (Exception ex) {
                 await Clients.Caller.SendError(ex.Message);
-                return;
             }
-
-            if (report.TeamID <= 0) {
-                await Clients.Caller.SendError($"The TeamID of the report is currently {report.TeamID}, it must be above 0. Try setting the faction");
-                return;
-            }
-
-            report.ID = await _ReportDb.Insert(report);
-
-            await Clients.Caller.SendReport(report);
-            await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
-            await Clients.Caller.UpdateSessions(report.Sessions);
-
-            HashSet<string> outfits = new();
-            HashSet<string> chars = new();
-            HashSet<string> items = new();
-
-            foreach (string id in report.CharacterIDs) {
-                chars.Add(id);
-            }
-
-            List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
-            foreach (KillEvent ev in killDeaths) {
-                chars.Add(ev.KilledCharacterID);
-                chars.Add(ev.AttackerCharacterID);
-                items.Add(ev.WeaponID);
-            }
-
-            report.Kills = killDeaths.Where(iter => iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
-            await Clients.Caller.UpdateKills(report.Kills);
-
-            report.Deaths = killDeaths.Where(iter => iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.RevivedEventID == null).ToList();
-            await Clients.Caller.UpdateDeaths(report.Deaths);
-
-            List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
-            foreach (ExpEvent ev in expEvents) {
-                chars.Add(ev.SourceID);
-
-                if (Experience.OtherIDIsCharacterID(ev.ExperienceID)) {
-                    chars.Add(ev.OtherID);
-                }
-            }
-
-            report.Experience = expEvents.Where(iter => iter.TeamID == report.TeamID).ToList();
-            await Clients.Caller.UpdateExp(report.Experience);
-
-            foreach (string itemID in items) {
-                PsItem? item = await _ItemRepository.GetByID(itemID);
-                if (item != null) {
-                    report.Items.Add(item);
-                }
-            }
-
-            await Clients.Caller.UpdateItems(report.Items);
-
-            report.Characters = await GetCharacters(chars.ToList());
-            await Clients.Caller.UpdateCharacters(report.Characters);
-
-            foreach (PsCharacter c in report.Characters) {
-                if (c.OutfitID != null) {
-                    outfits.Add(c.OutfitID);
-                }
-            }
-
-            foreach (string outfitID in outfits) {
-                PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
-                if (outfit != null) {
-                    report.Outfits.Add(outfit);
-                }
-            }
-
-            await Clients.Caller.UpdateOutfits(report.Outfits);
-
-            _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
-                SlidingExpiration = TimeSpan.FromMinutes(30)
-            });
         }
 
         private async Task<List<PsCharacter>> GetCharacters(List<string> IDs) {
