@@ -85,7 +85,7 @@ namespace watchtower.Code.Hubs.Implementations {
                     return;
                 }
 
-                if (report.PeriodStart <= report.PeriodEnd) {
+                if (report.PeriodStart >= report.PeriodEnd) {
                     await Clients.Caller.SendError($"The start period at {report.PeriodStart:u} is after the end {report.PeriodEnd:u}");
                     return;
                 }
