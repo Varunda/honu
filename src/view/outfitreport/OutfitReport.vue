@@ -218,6 +218,10 @@
 
             <report-weapon-breakdown :report="report"></report-weapon-breakdown>
 
+            <report-support-breakdown :report="report"></report-support-breakdown>
+
+            <report-winter :report="report"></report-winter>
+
             <report-outfit-versus :report="report"></report-outfit-versus>
 
             <report-player-list :report="report"></report-player-list>
@@ -247,6 +251,8 @@
     import ReportPlayerList from "./components/ReportPlayerList.vue";
     import ReportOutfitVersus from "./components/ReportOutfitVersus.vue";
     import ReportWeaponBreakdown from "./components/ReportWeaponBreakdown.vue";
+    import ReportSupportBreakdown from "./components/ReportSupportBreakdown.vue";
+    import ReportWinter from "./components/ReportWinter.vue";
 
     import DateTimePicker from "components/DateTimePicker.vue";
     import InfoHover from "components/InfoHover.vue";
@@ -510,7 +516,7 @@
             },
 
             onSendError: function(err: string): void {
-                this.log(err);
+                this.log("ERROR: " + err);
             },
 
             onSendReport: function(report: Report): void {
@@ -533,6 +539,7 @@
 
             onUpdateCharacterIDs: function(ids: string[]): void {
                 this.log(`Including data from ${ids.length} characters`);
+                this.report.players = ids.filter((iter, index, arr) => arr.indexOf(iter) == index);
             },
 
             onUpdateKills: function(ev: KillEvent[]): void {
@@ -600,7 +607,9 @@
             ReportClassBreakdown,
             ReportPlayerList,
             ReportOutfitVersus,
-            ReportWeaponBreakdown
+            ReportWeaponBreakdown,
+            ReportSupportBreakdown,
+            ReportWinter
         }
 
     });

@@ -7,4 +7,5 @@ export class Block {
 export class BlockEntry {
 	public name: string = "";
 	public count: number = 0;
+	public link?: string;
 }

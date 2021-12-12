@@ -19,7 +19,7 @@
                 <td>Total</td>
                 <td>{{all.kills}}</td>
                 <td>{{all.timeAs | mduration}}</td>
-                <td>{{all.kills / all.timeAs * 60 | locale}}</td>
+                <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale}}</td>
                 <td>{{all.deaths}}</td>
                 <td>{{all.kills / Math.max(1, all.deaths) | locale}}</td>
                 <td>{{all.count}}</td>
@@ -29,7 +29,7 @@
                 <td>Infiltrator</td>
                 <td>{{infil.kills}}</td>
                 <td>{{infil.timeAs | mduration}}</td>
-                <td>{{infil.kills / infil.timeAs * 60 | locale}}</td>
+                <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale}}</td>
                 <td>{{infil.deaths}}</td>
                 <td>{{infil.kills / Math.max(1, infil.deaths) | locale}}</td>
                 <td>{{infil.count}}</td>
@@ -39,7 +39,7 @@
                 <td>Light Assault</td>
                 <td>{{lightAssault.kills}}</td>
                 <td>{{lightAssault.timeAs | mduration}}</td>
-                <td>{{lightAssault.kills / lightAssault.timeAs * 60 | locale}}</td>
+                <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale}}</td>
                 <td>{{lightAssault.deaths}}</td>
                 <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale}}</td>
                 <td>{{lightAssault.count}}</td>
@@ -49,7 +49,7 @@
                 <td>Medic</td>
                 <td>{{medic.kills}}</td>
                 <td>{{medic.timeAs | mduration}}</td>
-                <td>{{medic.kills / medic.timeAs * 60 | locale}}</td>
+                <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale}}</td>
                 <td>{{medic.deaths}}</td>
                 <td>{{medic.kills / Math.max(1, medic.deaths) | locale}}</td>
                 <td>{{medic.count}}</td>
@@ -59,7 +59,7 @@
                 <td>Engineer</td>
                 <td>{{engineer.kills}}</td>
                 <td>{{engineer.timeAs | mduration}}</td>
-                <td>{{engineer.kills / engineer.timeAs * 60 | locale}}</td>
+                <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale}}</td>
                 <td>{{engineer.deaths}}</td>
                 <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale}}</td>
                 <td>{{engineer.count}}</td>
@@ -69,7 +69,7 @@
                 <td>Heavy</td>
                 <td>{{heavy.kills}}</td>
                 <td>{{heavy.timeAs | mduration}}</td>
-                <td>{{heavy.kills / heavy.timeAs * 60 | locale}}</td>
+                <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale}}</td>
                 <td>{{heavy.deaths}}</td>
                 <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale}}</td>
                 <td>{{heavy.count}}</td>
@@ -79,7 +79,7 @@
                 <td>MAX</td>
                 <td>{{max.kills}}</td>
                 <td>{{max.timeAs | mduration}}</td>
-                <td>{{max.kills / max.timeAs * 60 | locale}}</td>
+                <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale}}</td>
                 <td>{{max.deaths}}</td>
                 <td>{{max.kills / Math.max(1, max.deaths) | locale}}</td>
                 <td>{{max.count}}</td>

@@ -15,6 +15,11 @@ export default class Report {
 	public periodEnd: Date = new Date();
 	public teamID: number = 0;
 
+	/**
+	 * IDs of the characters that were used to generate the report
+	 */
+	public players: string[] = [];
+
 	public kills: KillEvent[] = [];
 	public deaths: KillEvent[] = [];
 	public experience: ExpEvent[] = [];

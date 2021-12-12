@@ -19,6 +19,8 @@ namespace watchtower.Models.Report {
         /// </summary>
         public short TeamID { get; set; } = -1;
 
+        public List<string> Players { get; set; } = new List<string>();
+
         public DateTime Timestamp { get; set; }
 
         public DateTime PeriodStart { get; set; }

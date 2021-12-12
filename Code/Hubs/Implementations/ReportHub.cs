@@ -101,6 +101,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
 
                 report.ID = await _ReportDb.Insert(report);
+                report.Players = report.CharacterIDs;
 
                 await Clients.Caller.SendReport(report);
                 await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
