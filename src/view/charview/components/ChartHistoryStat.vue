@@ -39,6 +39,8 @@
                     this.chart = null;
                 }
 
+                console.log(`1`);
+
                 const canvas = document.getElementById(`chart-history-stat-${this.ID}`);
                 if (canvas == null) {
                     return console.error(`Failed to find #chart-history-stat-${this.ID}`);
@@ -50,6 +52,7 @@
                 if (this.period == "months") {
                     format = "yyyy-MM";
                 }
+                console.log(`2`);
 
                 const color: string = randomColorSingle();
 
@@ -125,7 +128,6 @@
                     },
                     //plugins: [ ChartDataLabels ]
                 });
-
             }
         },
 

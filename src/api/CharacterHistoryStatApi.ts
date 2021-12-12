@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading, Loadable } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class CharacterHistoryStat {
 	public characterID: string = "";
@@ -70,28 +72,19 @@ export class CharacterHistoryStat {
 	public months: number[] = [];
 }
 
-export class CharacterHistoryStatApi {
+export class CharacterHistoryStatApi extends ApiWrapper<CharacterHistoryStat> {
 	private static _instance: CharacterHistoryStatApi = new CharacterHistoryStatApi();
 	public static get(): CharacterHistoryStatApi { return CharacterHistoryStatApi._instance; }
 
-	public static parse(elem: any): CharacterHistoryStat {
+	public parse(elem: any): CharacterHistoryStat {
 		return {
 			...elem,
 			lastUpdated: new Date(elem.lastUpdated)
 		};
 	}
 
-	public static async getByCharacterID(charID: string): Promise<CharacterHistoryStat[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/character/${charID}/history_stats`);
-		if (response.status != 200) {
-			return [];
-		}
-
-		if (Array.isArray(response.data) == false) {
-			throw `response.data is not an array`;
-		}
-
-		return response.data.map((iter: any) => CharacterHistoryStatApi.parse(iter));
+	public static async getByCharacterID(charID: string): Promise<Loading<CharacterHistoryStat[]>> {
+		return CharacterHistoryStatApi.get().readList(`/api/character/${charID}/history_stats`);
 	}
 
 }

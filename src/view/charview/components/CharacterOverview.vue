@@ -1,10 +1,5 @@
 ﻿<template>
     <div>
-
-        <h3 class="text-warning text-center">
-            work in progress
-        </h3>
-
         <hr class="border" />
 
         <div class="d-flex">
@@ -17,7 +12,7 @@
                     <td>Outfit</td>
                     <td>
                         <span v-if="character.outfitID == null">
-                            No outfit
+                            &lt;no outfit&gt;
                         </span>
                         <a v-else :href="'/o/' + character.outfitID">
                             [{{character.outfitTag}}] {{character.outfitName}}
@@ -26,107 +21,197 @@
                 </tr>
 
                 <tr>
+                    <td>Faction</td>
+                    <td>{{character.factionID | faction}}</td>
+                </tr>
+
+                <tr>
+                    <td>Server</td>
+                    <td>{{character.worldID | world}}</td>
+                </tr>
+
+                <tr>
                     <td>Battle rank</td>
                     <td>
                         {{character.prestige}}~{{character.battleRank}}
                     </td>
                 </tr>
-            </table>
 
-            <table class="table table-sm w-auto d-inline-block mr-2" v-if="history.state == 'loaded'">
-                <tr class="table-secondary">
-                    <td colspan="2"><b>Lifetime stats</b></td>
+                <tr>
+                    <td>Created</td>
+                    <td>
+                        {{character.dateCreated | moment}}
+                        ({{character.dateCreated | timeAgo}})
+                    </td>
                 </tr>
 
                 <tr>
-                    <td>Kills</td>
-                    <td>{{historyKills.allTime | locale}}</td>
+                    <td>Last login</td>
+                    <td>
+                        <span v-if="character.dateLastLogin.getTime() > 0">
+                            {{character.dateLastLogin | moment}}
+                            ({{character.dateLastLogin | timeAgo}})
+                        </span>
+                        <span v-else>
+                            &lt;never&gt;
+                        </span>
+                    </td>
                 </tr>
 
                 <tr>
-                    <td>Deaths</td>
-                    <td>{{historyDeaths.allTime | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>Play time</td>
-                    <td>{{historyTime.allTime | mduration}}</td>
-                </tr>
-
-                <tr>
-                    <td>KPM</td>
-                    <td>{{historyKills.allTime / historyTime.allTime * 60 | fixed | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>K/D</td>
-                    <td>{{historyKills.allTime / (historyDeaths.allTime || 1) | fixed | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>Score</td>
-                    <td>{{historyScore.allTime | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>SPM</td>
-                    <td>{{historyScore.allTime / historyTime.allTime * 60 | fixed | locale}}</td>
+                    <td>
+                        Honu update
+                        <info-hover text="When Honu last performed a character update"></info-hover>
+                    </td>
+                    <td>
+                        {{character.lastUpdated | moment}}
+                        ({{character.lastUpdated | timeAgo}})
+                    </td>
                 </tr>
             </table>
 
-            <character-class-stats v-if="stats.state == 'loaded'" class="mr-5"
+            <table class="table table-sm w-auto d-inline-block mr-4" v-if="history.state == 'loaded'">
+                <thead>
+                    <tr class="table-secondary">
+                        <td colspan="2"><b>Lifetime stats</b></td>
+                    </tr>
+                </thead>
+
+                <tr v-if="history.state == 'idle'"></tr>
+                <tr v-else-if="history.state == 'loading'">
+                    <td colspan="2">
+                        <busy style="max-width: 2rem;"></busy>
+                    </td>
+                </tr>
+
+                <tbody v-else-if="history.state == 'loaded' && history.data.length > 0">
+                    <tr>
+                        <td>Kills</td>
+                        <td>{{historyKills.allTime | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Deaths</td>
+                        <td>{{historyDeaths.allTime | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Play time</td>
+                        <td>{{historyTime.allTime | mduration}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>KPM</td>
+                        <td>{{historyKills.allTime / historyTime.allTime * 60 | fixed | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>K/D</td>
+                        <td>{{historyKills.allTime / (historyDeaths.allTime || 1) | fixed | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Score</td>
+                        <td>{{historyScore.allTime | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>SPM</td>
+                        <td>{{historyScore.allTime / historyTime.allTime * 60 | fixed | locale}}</td>
+                    </tr>
+                </tbody>
+
+                <tr v-else-if="history.state == 'loaded' && history.data.length == 0" class="table-warning">
+                    <td colspan="2">
+                        Missing history data
+                    </td>
+                </tr>
+
+            </table>
+
+            <table class="table table-sm w-auto d-inline-block mr-4">
+                <thead>
+                    <tr class="table-secondary">
+                        <td colspan="2"><b>30 day stats</b></td>
+                    </tr>
+                </thead>
+
+                <tr v-if="history.state == 'idle'"></tr>
+                <tr v-else-if="history.state == 'loading'">
+                    <td colspan="2">
+                        Loading...
+                        <busy style="max-width: 2rem;"></busy>
+                    </td>
+                </tr>
+
+                <tr v-else-if="history.state == 'nocontent'">
+                    <td colspan="2">
+                        No history stats
+                    </td>
+                </tr>
+                
+                <tbody v-else-if="history.state == 'loaded' && history.data.length > 0">
+                    <tr>
+                        <td>Kills</td>
+                        <td>{{recentKills | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Deaths</td>
+                        <td>{{recentDeaths | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Play time</td>
+                        <td>{{recentTime | mduration}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>KPM</td>
+                        <td>{{recentKills / recentTime * 60 | fixed | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>K/D</td>
+                        <td>{{recentKills / (recentDeaths || 1) | fixed | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Score</td>
+                        <td>{{recentScore | locale}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>SPM</td>
+                        <td>{{recentScore / recentTime * 60 | fixed | locale}}</td>
+                    </tr>
+                </tbody>
+
+                <tr v-else-if="history.state == 'loaded' && history.data.length == 0" class="table-warning">
+                    <td colspan="2">
+                        Historical stats do not exist
+                    </td>
+                </tr>
+            </table>
+
+            <character-class-stats v-if="stats.state == 'loaded'" class="mr-4"
                 :data="stats.data" type="forever" title="All time" :include-metadata="true">
             </character-class-stats>
 
-            <table v-if="history.state == 'loaded'" class="table table-sm w-auto d-inline-block mr-2">
-                <tr class="table-secondary">
-                    <td colspan="2"><b>30 day stats</b></td>
-                </tr>
-
-                <tr>
-                    <td>Kills</td>
-                    <td>{{recentKills | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>Deaths</td>
-                    <td>{{recentDeaths | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>Play time</td>
-                    <td>{{recentTime | mduration}}</td>
-                </tr>
-
-                <tr>
-                    <td>KPM</td>
-                    <td>{{recentKills / recentTime * 60 | fixed | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>K/D</td>
-                    <td>{{recentKills / (recentDeaths || 1) | fixed | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>Score</td>
-                    <td>{{recentScore | locale}}</td>
-                </tr>
-
-                <tr>
-                    <td>SPM</td>
-                    <td>{{recentScore / recentTime * 60 | fixed | locale}}</td>
-                </tr>
-            </table>
-
-            <character-class-stats v-if="stats.state == 'loaded'"
+            <character-class-stats v-if="stats.state == 'loaded'" class="mr-4"
                 :data="stats.data" type="monthly" title="This month" :include-metadata="false">
             </character-class-stats>
         </div>
 
         <h2 class="wt-header">History stats</h2>
 
-        <character-history-stats v-if="history.state == 'loaded'" :stats="history.data"></character-history-stats>
+        <character-history-stats v-if="history.state == 'loaded' && history.data.length > 0" :stats="history.data"></character-history-stats>
+        <div v-else-if="history.state == 'loaded' && history.data.length == 0">
+            Historical stats do not exist
+        </div>
+        <div v-else-if="history.state == 'loading'">
+            <busy style="max-width: 5rem;"></busy>
+        </div>
 
         <hr class="border" />
 
@@ -167,14 +252,20 @@
 
     import "filters/LocaleFilter";
     import "filters/FixedFilter";
+    import "filters/FactionNameFilter";
+    import "filters/WorldNameFilter";
+    import "filters/TimeAgoFilter";
     import "MomentFilter";
+    import InfoHover from "components/InfoHover.vue";
 
     import { PsCharacter } from "api/CharacterApi";
     import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
     import { CharacterStat, CharacterStatApi } from "api/CharacterStatApi";
+    import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
 
     import CharacterClassStats from "./CharacterClassStats.vue";
     import CharacterHistoryStats from "./CharacterHistoryStats.vue";
+    import Busy from "components/Busy.vue";
 
     export const CharacterOverview = Vue.extend({
         props: {
@@ -198,17 +289,13 @@
         methods: {
             loadHistory: async function(): Promise<void> {
                 this.history = Loadable.loading();
-                try {
-                    this.history = Loadable.loaded(await CharacterHistoryStatApi.getByCharacterID(this.character.id));
-                } catch (err: any) {
-                    this.history = Loadable.error(err);
-                }
+                this.history = await CharacterHistoryStatApi.getByCharacterID(this.character.id);
             },
 
             loadStats: async function(): Promise<void> {
                 this.stats = Loadable.loading();
-                this.stats = await Loadable.promise(CharacterStatApi.getByCharacterID(this.character.id));
-            },
+                this.stats = await CharacterStatApi.getByCharacterID(this.character.id);
+            }
         },
 
         computed: {
@@ -241,6 +328,8 @@
         components: {
             CharacterClassStats,
             CharacterHistoryStats,
+            Busy,
+            InfoHover
         }
 
     });

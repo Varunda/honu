@@ -298,16 +298,7 @@
                 }
 
                 this.character = Loadable.loading();
-                try {
-                    const c: PsCharacter | null = await CharacterApi.getByID(this.session.data.characterID);
-                    if (c != null) {
-                        this.character = Loadable.loaded(c);
-                    } else {
-                        this.character = Loadable.nocontent();
-                    }
-                } catch (err: any) {
-                    this.character = Loadable.error(err);
-                }
+                this.character = await CharacterApi.getByID(this.session.data.characterID);
             },
 
             bindExp: async function(): Promise<void> {

@@ -25,6 +25,9 @@ using watchtower.Code;
 
 namespace watchtower.Services {
 
+    /// <summary>
+    ///     Background service that updates the world data for the realtime view, but only for worlds that currently have people listening
+    /// </summary>
     public class DataBuilderService : BackgroundService {
 
         private const int _RunDelay = 5; // seconds
@@ -72,15 +75,20 @@ namespace watchtower.Services {
                         continue;
                     }
 
+                    string msg = "";
+
                     foreach (short worldID in _WorldIDs) {
                         lock (ConnectionStore.Get().Connections) {
                             int count = ConnectionStore.Get().Connections.Where(iter => iter.Value.WorldID == worldID).Count();
                             if (count == 0) {
+                                msg += $"{worldID} skipped; ";
                                 continue;
                             }
                         }
 
+                        Stopwatch worldTime = Stopwatch.StartNew();
                         WorldData data = await _DataBuilder.Build(worldID, stoppingToken);
+                        msg += $"{worldID} {worldTime.ElapsedMilliseconds}ms; ";
                         _WorldDataRepository.Set(worldID, data);
 
                         if (stoppingToken.IsCancellationRequested) {
@@ -101,6 +109,7 @@ namespace watchtower.Services {
 
                     entry.RunDuration = elapsedTime;
                     entry.LastRan = DateTime.UtcNow;
+                    entry.Message = msg;
                     _ServiceHealthMonitor.Set(SERVICE_NAME, entry);
 
                     long timeToHold = (_RunDelay * 1000) - elapsedTime;

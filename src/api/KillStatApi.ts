@@ -71,8 +71,8 @@ export class KillStatApi {
     public static parseExpandedKillEvent(elem: any): ExpandedKillEvent {
         return {
             event: KillStatApi.parseKillEvent(elem.event),
-            attacker: elem.attacker == null ? null : CharacterApi.parse(elem.attacker),
-            killed: elem.killed == null ? null : CharacterApi.parse(elem.killed),
+            attacker: elem.attacker == null ? null : CharacterApi.get().parse(elem.attacker),
+            killed: elem.killed == null ? null : CharacterApi.get().parse(elem.killed),
             item: elem.item == null ? null : ItemApi.parse(elem.item)
         }
     }

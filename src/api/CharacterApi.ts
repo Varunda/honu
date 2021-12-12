@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class PsCharacter {
 	public id: string = "";
@@ -21,16 +23,11 @@ export class PsCharacter {
 
 }
 
-export class CharacterApi {
+export class CharacterApi extends ApiWrapper<PsCharacter> {
 	private static _instance: CharacterApi = new CharacterApi();
 	public static get(): CharacterApi { return this._instance; }
 
-	/**
-	 * The default time when Honu has a date it doesn't know yet
-	 */
-	public static readonly defaultTime: number = 978307200000;
-
-	public static parse(elem: any): PsCharacter {
+	public parse(elem: any): PsCharacter {
 		return {
 			...elem,
 			lastUpdated: new Date(elem.lastUpdated),
@@ -40,29 +37,16 @@ export class CharacterApi {
 		}
 	}
 
-	public static async getByID(charID: string): Promise<PsCharacter | null> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/character/${charID}`);
-
-		if (response.status != 200) {
-			return null;
-		}
-
-		const c: PsCharacter = CharacterApi.parse(response.data);
-		return c;
+	public static async getByID(charID: string): Promise<Loading<PsCharacter>> {
+		return CharacterApi.get().readSingle(`/api/character/${charID}`);
 	}
 
-	public static async getByName(name: string): Promise<PsCharacter[]> {
-		const response: axios.AxiosResponse<any> = await axios.default.get(`/api/characters/name/${name}`);
+	public static async getByName(name: string): Promise<Loading<PsCharacter[]>> {
+		return CharacterApi.get().readList(`/api/character/name/${name}`);
+	}
 
-		if (response.status != 200) {
-			return [];
-		}
-
-		if (Array.isArray(response.data) == false) {
-			throw `Data from endpoint was not an array as expected`;
-		}
-
-		return response.data.map((iter: any) => CharacterApi.parse(iter));
+	public static async searchByName(name: string): Promise<Loading<PsCharacter[]>> {
+		return CharacterApi.get().readList(`/api/character/search/${name}`);
 	}
 
 }

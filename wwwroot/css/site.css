@@ -70,3 +70,18 @@
 .flex-basis-0 {
     flex-basis: 0;
 }
+
+.honu-busy-sm {
+    max-height: 1rem;
+    vertical-align: middle;
+}
+
+.honu-busy {
+    max-height: 2rem;
+    vertical-align: middle;
+}
+
+.honu-busy-lg {
+    max-height: 5rem;
+    vertical-align: middle;
+}

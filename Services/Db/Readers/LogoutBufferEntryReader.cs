@@ -16,6 +16,7 @@ namespace watchtower.Services.Db.Readers {
             entry.CharacterID = reader.GetString("character_id");
             entry.LoginTime = reader.GetDateTime("login_time");
             entry.Timestamp = reader.GetDateTime("timestamp");
+            entry.NotFoundCount = reader.GetInt32("not_found_count");
 
             return entry;
         }

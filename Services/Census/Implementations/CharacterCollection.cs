@@ -1,6 +1,7 @@
 ﻿using DaybreakGames.Census;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
+using honu_census;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -18,17 +19,29 @@ namespace watchtower.Services.Census.Implementations {
         private readonly ILogger<CharacterCollection> _Logger;
 
         private readonly ICensusQueryFactory _Census;
+        private readonly HonuCensus _HCensus;
 
         private const int BATCH_SIZE = 50;
 
         public CharacterCollection(ILogger<CharacterCollection> logger,
-                ICensusQueryFactory factory) {
+                ICensusQueryFactory factory, HonuCensus hc) {
 
             _Logger = logger;
             _Census = factory;
+            _HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
         }
 
         public async Task<PsCharacter?> GetByName(string name) {
+            _HCensus.AddServiceId("asdf");
+            honu_census.Models.CensusQuery q = _HCensus.New("character");
+            q.WhereEquals("name.first_lower", name.ToLower());
+
+            JToken? ttt = await _HCensus.GetSingle(q, CancellationToken.None);
+            if (ttt != null) {
+                PsCharacter? cc = _ParseCharacter(ttt);
+                return cc;
+            }
+
             PsCharacter? c = await _GetCharacterFromCensusByName(name, true);
 
             return c;
@@ -71,6 +84,7 @@ namespace watchtower.Services.Census.Implementations {
                         }
                     }
                 } catch (CensusConnectionException) {
+                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
                     continue;
                 }
             }

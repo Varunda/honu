@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -31,7 +32,7 @@ namespace watchtower.Commands {
             List<string> services = _ServiceHealthMonitor.GetServices();
 
             string s = $"Services running: {services.Count}\n";
-            s += $"{"service",-20} | {"last ran",30} | {"time ago",10} | {"run time",12}\n";
+            s += $"{"service",-24} | {"last ran",30} | {"time ago",10} | {"run time",12} | {"message",160}\n";
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
 
@@ -42,7 +43,7 @@ namespace watchtower.Commands {
                     TimeSpan timeAgo = now - entry.LastRan;
                     string ago = $"{timeAgo.Minutes:D2}:{timeAgo.Seconds:D2}";
 
-                    s += $"{entry.Name,-20} | {entry.LastRan,30} | {ago,10} | {entry.RunDuration,10}ms\n";
+                    s += $"{entry.Name,-24} | {entry.LastRan,30} | {ago,10} | {entry.RunDuration,10}ms | {entry.Message?.Truncate(160)}\n";
                 }
             }
 

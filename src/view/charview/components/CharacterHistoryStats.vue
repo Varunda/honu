@@ -120,7 +120,7 @@
                     cpm: true as boolean,
                 },
 
-                scale: "days" as "days" | "weeks" | "months",
+                scale: "weeks" as "days" | "weeks" | "months",
 
                 data: {
                     kills: [] as number[],

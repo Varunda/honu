@@ -47,5 +47,9 @@
     <None Include="Views\Home\OutfitPop.cshtml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HonuCensus\HonuCensus.csproj" />
+  </ItemGroup>
+
 
 </Project>

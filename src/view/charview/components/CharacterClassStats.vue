@@ -2,7 +2,7 @@
     <table class="table table-sm w-auto d-inline-block">
         <tr class="table-secondary">
             <td><b>{{title}}</b></td>
-            <td><b>Seconds as</b></td>
+            <td><b>Time as</b></td>
             <td><b>Score</b></td>
             <td><b>SPM</b></td>
             <td v-if="IncludeMetadata == true">
@@ -16,6 +16,7 @@
             <td><b>Infil</b></td>
             <td>
                 {{timeAs.infil | mduration}}
+                ({{timeAs.infil / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.infil | locale}}
@@ -32,6 +33,7 @@
             <td><b>Light Assault</b></td>
             <td>
                 {{timeAs.lightAssault | mduration}}
+                ({{timeAs.lightAssault / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.lightAssault | locale}}
@@ -48,6 +50,7 @@
             <td><b>Medic</b></td>
             <td>
                 {{timeAs.medic | mduration}}
+                ({{timeAs.medic / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.medic | locale}}
@@ -64,6 +67,7 @@
             <td><b>Engineer</b></td>
             <td>
                 {{timeAs.engineer | mduration}}
+                ({{timeAs.engineer / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.engineer | locale}}
@@ -80,6 +84,7 @@
             <td><b>Heavy Assault</b></td>
             <td>
                 {{timeAs.heavy | mduration}}
+                ({{timeAs.heavy / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.heavy | locale}}
@@ -96,6 +101,7 @@
             <td><b>MAX</b></td>
             <td>
                 {{timeAs.max | mduration}}
+                ({{timeAs.max / totalTime * 100 | locale}}%)
             </td>
             <td>
                 {{score.max | locale}}
@@ -154,7 +160,6 @@
         },
 
         methods: {
-
             setData: function(): void {
                 if (this.type != "daily" && this.type != "weekly" && this.type != "monthly" && this.type != "forever") {
                     throw `Invalid type '${this.type}' passed, expected daily | weekly | monthly | forever`;
@@ -222,6 +227,14 @@
                     }
                 }
             }
+        },
+
+        computed: {
+            totalTime: function(): number {
+                return this.timeAs.infil + this.timeAs.lightAssault + this.timeAs.medic
+                    + this.timeAs.engineer + this.timeAs.heavy + this.timeAs.max;
+            }
+
         },
 
         components: {

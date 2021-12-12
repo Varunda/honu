@@ -24,12 +24,20 @@
 
         <hr class="border" />
 
-        <div v-if="character.state == 'idle'">
-
+        <div v-if="metadata.state == 'loaded' && metadata.data.notFoundCount > 2">
+            <h4 class="text-warning text-center">
+                This character has likely been deleted
+            </h4>
+            <small class="text-muted text-center d-block" :title="'Have found in DB ' + metadata.data.notFoundCount + ' times, but not in Census'">
+                This character exists in Honu's database, but not in the Planetside 2 API. Missed {{metadata.data.notFoundCount > 50 ? `50+` : `${metadata.data.notFoundCount}`}} times
+            </small>
         </div>
+
+        <div v-if="character.state == 'idle'"></div>
 
         <div v-else-if="character.state == 'loading'">
             Loading...
+            <busy class="honu-busy-lg"></busy>
         </div>
 
         <div v-else-if="character.state == 'nocontent'">
@@ -39,8 +47,6 @@
         </div>
 
         <div v-else-if="character.state == 'loaded'">
-            <hr />
-
             <character-header :character="character.data"></character-header>
 
             <ul class="nav nav-tabs mb-2">
@@ -85,8 +91,10 @@
     import Vue from "vue";
 
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
+    import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
     import { Loadable, Loading } from "Loading";
 
+    import Busy from "components/Busy.vue";
     import CharacterHeader from "./components/CharacterHeader.vue";
     import CharacterOverview from "./components/CharacterOverview.vue";
     import CharacterWeaponStats from "./components/CharacterWeaponStats.vue";
@@ -102,6 +110,7 @@
             return {
                 charID: "" as string,
                 character: Loadable.idle() as Loading<PsCharacter>,
+                metadata: Loadable.idle() as Loading<CharacterMetadata>,
 
                 selectedTab: "weapons" as string,
                 selectedComponent: "CharacterWeaponStats" as string
@@ -133,7 +142,7 @@
                 history.pushState({}, "", `/c/${this.charID}/${lower}`);
             },
 
-            loadCharacterID: function(): void {
+            loadCharacterID: async function(): Promise<void> {
                 const parts: string[] = location.pathname.split("/");
                 if (parts.length < 3) {
                     throw `Invalid URL passed '${location.pathname}': Expected at least 3 parts after split on '/'`;
@@ -145,20 +154,20 @@
 
                 this.charID = parts[2];
 
-                this.character = Loadable.loading();
-
-                CharacterApi.getByID(this.charID).then((data: PsCharacter | null) => {
-                    if (data == null) {
-                        this.character = Loadable.nocontent();
-                        document.title = `Honu / Char / <not found>`;
-                    } else {
-                        this.character = Loadable.loaded(data);
-                        document.title = `Honu / Char / ${data.name}`;
-                        console.log(`Loaded character: ${this.character}`);
-                    }
-                }).catch((err: any) => {
-                    this.character = Loadable.error(err);
+                // Run in background so it doesn't hang up character loading
+                this.metadata = Loadable.loading();
+                CharacterMetadataApi.getByID(this.charID).then((data: Loading<CharacterMetadata>) => {
+                    this.metadata = data;
                 });
+
+                this.character = Loadable.loading();
+                this.character = await CharacterApi.getByID(this.charID);
+
+                if (this.character.state == "nocontent") {
+                    document.title = `Honu / Char / <not found>`;
+                } else if (this.character.state == "loaded") {
+                    document.title = `Honu / Char / ${this.character.data.name}`;
+                }
 
                 if (parts.length >= 4) {
                     console.log(`viewing tab: '${parts[3]}'`);
@@ -169,6 +178,7 @@
         },
 
         components: {
+            Busy,
             CharacterHeader,
             CharacterOverview,
             CharacterWeaponStats,

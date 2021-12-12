@@ -6,6 +6,7 @@ export type Loading<T> =
     | { state: "loaded", data: T }
     | { state: "error", message: string }
     | { state: "nocontent", data: null }
+    | { state: "notfound", message: string }
     | { state: "idle", data: null }
     | { state: "saving", data: T }
     ;
@@ -52,6 +53,10 @@ export class Loadable {
      */
     public static nocontent<T>(): Loading<T> {
         return { state: "nocontent", data: null };
+    }
+
+    public static notFound<T>(err: string): Loading<T> {
+        return { state: "notfound", message: err };
     }
 
     /**

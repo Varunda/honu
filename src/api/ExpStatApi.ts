@@ -148,8 +148,8 @@ export class ExpStatApi {
     private static parseExpandedExpEntry(elem: any): ExpandedExpEvent {
         return {
             event: ExpStatApi.parseExpEvent(elem.event),
-            source: elem.source == null ? null : CharacterApi.parse(elem.source),
-            other: elem.other == null ? null : CharacterApi.parse(elem.other),
+            source: elem.source == null ? null : CharacterApi.get().parse(elem.source),
+            other: elem.other == null ? null : CharacterApi.get().parse(elem.other),
         };
     }
 

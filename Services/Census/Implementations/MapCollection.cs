@@ -1,5 +1,6 @@
 ﻿using DaybreakGames.Census;
 using DaybreakGames.Census.Operators;
+using honu_census;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -15,12 +16,15 @@ namespace watchtower.Services.Census.Implementations {
 
         private readonly ILogger<MapCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
+        private readonly HonuCensus _HCensus;
 
         public MapCollection(ILogger<MapCollection> logger,
-            ICensusQueryFactory census) {
+            ICensusQueryFactory census, HonuCensus hc) {
 
             _Logger = logger;
             _Census = census;
+
+            _HCensus = hc;
         }
 
         public async Task<List<PsMap>> GetZoneMap(short worldID, uint zoneID) {

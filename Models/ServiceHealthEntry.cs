@@ -30,6 +30,11 @@ namespace watchtower.Models {
         /// </summary>
         public bool Enabled { get; set; } = true;
 
+        /// <summary>
+        ///     A brief message about how the last service run went
+        /// </summary>
+        public string? Message { get; set; }
+
     }
 
 }

@@ -146,6 +146,8 @@
                 charName: "" as string,
                 lastSearch: "" as string,
 
+                search: Loadable.idle() as Loading<PsCharacter[]>,
+
                 defaultTime: 978307200000 as number
             }
         },
@@ -162,7 +164,7 @@
 
             getByName: async function(name: string): Promise<void> {
                 this.characters = Loadable.loading();
-                this.characters = await Loadable.promise(CharacterApi.getByName(name));
+                this.characters = await CharacterApi.getByName(name);
 
                 if (this.characters.state == "loaded") {
                     // Sort with most recent login on top, using the last time the character was updated

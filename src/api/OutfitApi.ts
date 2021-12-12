@@ -72,8 +72,8 @@ export class OutfitApi {
 	public static parseExpandedOutfitMember(elem: any): ExpandedOutfitMember {
 		return {
 			member: OutfitApi.parseOutfitMember(elem.member),
-			character: elem.character == null ? null : CharacterApi.parse(elem.character),
-			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter))
+			character: elem.character == null ? null : CharacterApi.get().parse(elem.character),
+			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.get().parse(iter))
 		};
 	}
 

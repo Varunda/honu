@@ -31,12 +31,13 @@ namespace watchtower.Controllers.Api {
         private readonly ICharacterItemRepository _CharacterItemRepository;
         private readonly IItemRepository _ItemRepository;
         private readonly ICharacterStatRepository _StatRepository;
+        private readonly CharacterMetadataDbStore _MetadataDb;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
             ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
             ICharacterItemRepository charItemRepo, IItemRepository itemRepo,
-            ICharacterStatRepository statRepo) {
+            ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb) {
 
             _Logger = logger;
 
@@ -47,6 +48,7 @@ namespace watchtower.Controllers.Api {
             _CharacterItemRepository = charItemRepo ?? throw new ArgumentNullException(nameof(charItemRepo));
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
             _StatRepository = statRepo ?? throw new ArgumentNullException(nameof(statRepo));
+            _MetadataDb = metadataDb ?? throw new ArgumentNullException(nameof(metadataDb));
         }
 
         /// <summary>
@@ -238,6 +240,26 @@ namespace watchtower.Controllers.Api {
             List<PsCharacter> chars = await _CharacterRepository.GetByName(name);
 
             return ApiOk(chars);
+        }
+
+        /// <summary>
+        ///     Get the metadata of a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="CharacterMetadata"/> with <see cref="CharacterMetadata.ID"/> of <paramref name="charID"/>
+        /// </response>
+        /// <response code="204">
+        ///     No <see cref="CharacterMetadata"/> with <see cref="CharacterMetadata.ID"/> of <paramref name="charID"/> exists
+        /// </response>
+        [HttpGet("character/{charID}/metadata")]
+        public async Task<ApiResponse<CharacterMetadata>> GetMetadata(string charID) {
+            CharacterMetadata? md = await _MetadataDb.GetByCharacterID(charID);
+            if (md == null) {
+                return ApiNoContent<CharacterMetadata>();
+            }
+
+            return ApiOk(md);
         }
 
         /// <summary>

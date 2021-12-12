@@ -35,6 +35,7 @@ using System.IO;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using watchtower.Services.Queues;
 using watchtower.Models.Queues;
+using honu_census;
 
 namespace watchtower {
 
@@ -67,6 +68,8 @@ namespace watchtower {
                 services.AddSingleton<ICensusClient, OfflineCensusClient>();
                 services.AddSingleton<ICensusStreamClient, OfflineCensusStreamClient>();
             }
+
+            services.AddSingleton<HonuCensus>();
 
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
@@ -200,7 +203,7 @@ namespace watchtower {
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
             services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
-            services.AddHostedService<HostedBackgroundLogoutBufferQueue>();
+            services.AddHostedService<HostedBackgroundLogoutBuffer>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

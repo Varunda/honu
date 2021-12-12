@@ -297,8 +297,14 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loading());
         } else if (this.entries.state == "loaded") {
-            for (const elem of this.displayedEntries) {
-                rows.push(this.renderDataRow(createElement, elem));
+
+            if (this.entries.data.length == 0) {
+                console.log(`0 entries, showing no data row`);
+                rows.push(this.renderNoDataRow(createElement));
+            } else {
+                for (const elem of this.displayedEntries) {
+                    rows.push(this.renderDataRow(createElement, elem));
+                }
             }
 
             this.$emit("rerender", Loadable.loaded(this.displayedEntries));
@@ -513,6 +519,16 @@ export const ATable = Vue.extend({
             }
 
 			return createElement("tr", cols);
+        },
+
+        renderNoDataRow(createElement: CreateElement): VNode {
+            return createElement("tr", {}, [
+                createElement("td", {
+                    domProps: {
+                        "col-span": this.nodes.columns.length
+                    }
+                }, ["No data in table"])
+            ]);
         },
 
         renderFilter(createElement: CreateElement): VNode {
@@ -939,7 +955,7 @@ export const ATable = Vue.extend({
 
     computed: {
         filteredEntries: function(): object[] {
-            if (this.entries.state != "loaded") {
+            if (this.entries.state != "loaded" || this.entries.data.length == 0) {
                 return [];
             }
 
@@ -1038,7 +1054,7 @@ export const ATable = Vue.extend({
         },
 
         displayedEntries: function(): object[] {
-            if (this.entries.state != "loaded") {
+            if (this.entries.state != "loaded" || this.entries.data.length == 0) {
                 return [];
             }
 

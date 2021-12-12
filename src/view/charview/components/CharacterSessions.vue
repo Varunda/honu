@@ -1,13 +1,7 @@
 ﻿<template>
     <div>
-        <h3 class="text-warning text-center">
-            work in progress
-        </h3>
-
-        <hr class="border" />
-
         <table class="table table-sm">
-            <thead>
+            <thead class="table-secondary">
                 <tr>
                     <th>Start</th>
                     <th>Finish</th>
@@ -24,7 +18,7 @@
                 </tr>
             </tbody>
 
-            <tbody v-else-if="sessions.state == 'loaded'">
+            <tbody v-else-if="sessions.state == 'loaded' && sessions.data.length > 0">
                 <tr v-for="session in sessions.data" :key="session.id">
                     <td>{{session.start | moment}}</td>
                     <td>{{session.end | moment}}</td>
@@ -45,6 +39,12 @@
                     </td>
                 </tr>
             </tbody>
+
+            <tr v-else-if="sessions.state == 'loaded' && sessions.data.length == 0">
+                <td colspan="4">
+                    No sessions recorded
+                </td>
+            </tr>
         </table>
 
     </div>

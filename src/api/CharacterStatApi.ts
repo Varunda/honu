@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class CharacterStat {
 	public characterID: string = "";
@@ -12,23 +14,20 @@ export class CharacterStat {
 	public timestamp: Date = new Date();
 }
 
-export class CharacterStatApi {
+export class CharacterStatApi extends ApiWrapper<CharacterStat> {
 
-	public static parse(elem: any): CharacterStat {
+	private static _instance: CharacterStatApi = new CharacterStatApi();
+	public static get(): CharacterStatApi { return CharacterStatApi._instance; }
+
+	public parse(elem: any): CharacterStat {
 		return {
 			...elem,
 			timestamp: new Date(elem.timestamp)
 		};
 	};
 
-	public static async getByCharacterID(charID: string): Promise<CharacterStat[]> {
-		const response: axios.AxiosResponse = await axios.default.get(`/api/character/${charID}/stats`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return response.data.map((iter: any) => CharacterStatApi.parse(iter));
+	public static async getByCharacterID(charID: string): Promise<Loading<CharacterStat[]>> {
+		return CharacterStatApi.get().readList(`/api/character/${charID}/stats`);
 	}
 
 }
