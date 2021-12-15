@@ -12,7 +12,7 @@ namespace watchtower.Code.ExtensionMethods {
     public static class JTokenExtensionMethods {
 
         public static string GetRequiredString(this JToken token, string name) {
-            return token.Value<string?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}'");
+            return token.Value<string?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}', from {token}");
         }
 
         public static string GetString(this JToken token, string name, string fallback) {

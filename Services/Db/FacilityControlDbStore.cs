@@ -10,9 +10,12 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class FacilityControlDbStore : IFacilityControlDbStore {
+    /// <summary>
+    ///     Service to interact with the wt_ledger table
+    /// </summary>
+    public class FacilityControlDbStore {
 
         private readonly ILogger<FacilityControlDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -26,6 +29,10 @@ namespace watchtower.Services.Db.Implementations {
             _ControlReader = reader ?? throw new ArgumentNullException(nameof(reader));
         }
 
+        /// <summary>
+        ///     Get the ledger data stuff
+        /// </summary>
+        /// <param name="parameters">Parameters for getting the data</param>
         public async Task<List<FacilityControlDbEntry>> Get(FacilityControlOptions parameters) {
             string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp <= @PeriodStart ";
             string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp >= @PeriodEnd ";
@@ -68,14 +75,21 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
-        public async Task Insert(FacilityControlEvent ev) {
+        /// <summary>
+        ///     Insert a new <see cref="FacilityControlEvent"/> into the DB
+        /// </summary>
+        /// <param name="ev">Parameters used to insert</param>
+        /// <returns>
+        ///     The <see cref="FacilityControlEvent.ID"/> of the event that was just inserted
+        /// </returns>
+        public async Task<long> Insert(FacilityControlEvent ev) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_ledger (
                     facility_id, old_faction_id, new_faction_id, outfit_id, world_id, zone_id, players, duration_held, timestamp, zone_state
                 ) VALUES (
                     @FacilityID, @OldFactionID, @NewFactionID, @OutfitID, @WorldID, @ZoneID, @Players, @DurationHeld, @Timestamp, @ZoneState
-                );
+                ) RETURNING id;
             ");
 
             if (ev.Players == 0) {
@@ -93,8 +107,17 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("Timestamp", ev.Timestamp);
             cmd.AddParameter("ZoneState", (int?)ev.UnstableState);
 
-            await cmd.ExecuteNonQueryAsync();
+            object? idObj = await cmd.ExecuteScalarAsync();
             await conn.CloseAsync();
+            if (idObj == null) {
+                throw new SystemException($"Did not get ID from DB query");
+            }
+
+            if (idObj is long id) {
+                return id;
+            }
+
+            throw new InvalidCastException($"Failed to cast {idObj} to a long");
         }
 
     }

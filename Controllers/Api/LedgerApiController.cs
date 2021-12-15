@@ -25,10 +25,10 @@ namespace watchtower.Controllers.Api {
 
         private readonly IFacilityCollection _FacilityCollection;
         private readonly IFacilityDbStore _FacilityDb;
-        private readonly IFacilityControlDbStore _ControlDb;
+        private readonly FacilityControlDbStore _ControlDb;
 
         public LedgerApiController(ILogger<LedgerApiController> logger,
-            IFacilityCollection facilityCollection, IFacilityControlDbStore controlDb,
+            IFacilityCollection facilityCollection, FacilityControlDbStore controlDb,
             IFacilityDbStore facDb) {
 
             _Logger = logger;

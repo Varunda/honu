@@ -128,7 +128,7 @@ namespace watchtower {
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<IItemDbStore, ItemDbStore>();
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
-            services.AddSingleton<IFacilityControlDbStore, FacilityControlDbStore>();
+            services.AddSingleton<FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
             services.AddSingleton<IMapDbStore, MapDbStore>();
             services.AddSingleton<ICharacterWeaponStatDbStore, CharacterWeaponStatDbStore>();
@@ -140,6 +140,7 @@ namespace watchtower {
             services.AddSingleton<IReportDbStore, ReportDbStore>();
             services.AddSingleton<CharacterMetadataDbStore>();
             services.AddSingleton<LogoutBufferDbStore>();
+            services.AddSingleton<FacilityPlayerControlDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -155,6 +156,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<PsCharacter>, CharacterDbStore>();
             services.AddSingleton<IDataReader<CharacterMetadata>, CharacterMetadataReader>();
             services.AddSingleton<IDataReader<LogoutBufferEntry>, LogoutBufferEntryReader>();
+            services.AddSingleton<IDataReader<PlayerControlEvent>, PlayerControlEventReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();

@@ -29,8 +29,9 @@ namespace watchtower.Realtime {
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly ISessionDbStore _SessionDb;
-        private readonly IFacilityControlDbStore _ControlDb;
+        private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
+        private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
@@ -48,8 +49,9 @@ namespace watchtower.Realtime {
             IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
             IDiscordMessageQueue msgQueue, IMapCollection mapColl,
-            IFacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
-            IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue) {
+            FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
+            IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
+            FacilityPlayerControlDbStore fpDb) {
 
             _Logger = logger;
 
@@ -60,6 +62,7 @@ namespace watchtower.Realtime {
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
             _BattleRankDb = rankDb ?? throw new ArgumentNullException(nameof(rankDb));
+            _FacilityPlayerDb = fpDb ?? throw new ArgumentNullException(nameof(fpDb));
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -151,9 +154,11 @@ namespace watchtower.Realtime {
                 // Wait a second for all the PlayerCapture and PlayerDefend events to come in
                 await Task.Delay(1000);
 
+                List<PlayerControlEvent> events;
+
                 lock (PlayerFacilityControlStore.Get().Events) {
                     // Clean up is handled in a period hosted service
-                    List<PlayerControlEvent> events = PlayerFacilityControlStore.Get().Events.Where(iter => {
+                    events = PlayerFacilityControlStore.Get().Events.Where(iter => {
                         return iter.FacilityID == ev.FacilityID
                             && iter.WorldID == ev.WorldID
                             && iter.ZoneID == ev.ZoneID
@@ -176,7 +181,16 @@ namespace watchtower.Realtime {
 
                 ev.UnstableState = state;
 
-                await _ControlDb.Insert(ev);
+                long ID = await _ControlDb.Insert(ev);
+
+                timer.Restart();
+                await _FacilityPlayerDb.InsertMany(ID, events);
+                /*
+                foreach (PlayerControlEvent playerEvent in events) {
+                    await _FacilityPlayerDb.Insert(ID, playerEvent);
+                }
+                */
+                _Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
                 //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
         }
@@ -192,6 +206,7 @@ namespace watchtower.Realtime {
         private void _ProcessPlayerCapture(JToken payload) {
             PlayerControlEvent ev = new() {
                 IsCapture = true,
+                CharacterID = payload.GetRequiredString("character_id"),
                 FacilityID = payload.GetInt32("facility_id", 0),
                 OutfitID = payload.NullableString("outfit_id"),
                 WorldID = payload.GetWorldID(),
@@ -199,6 +214,7 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
+            // Inserted into the DB after the facility control event is generated, and the ID is known
             lock (PlayerFacilityControlStore.Get().Events) {
                 PlayerFacilityControlStore.Get().Events.Add(ev);
             }
@@ -207,6 +223,7 @@ namespace watchtower.Realtime {
         private void _ProcessPlayerDefend(JToken payload) {
             PlayerControlEvent ev = new() {
                 IsCapture = false,
+                CharacterID = payload.GetRequiredString("character_id"),
                 FacilityID = payload.GetInt32("facility_id", 0),
                 OutfitID = payload.NullableString("outfit_id"),
                 WorldID = payload.GetWorldID(),
@@ -214,6 +231,7 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
+            // Inserted into the DB after the facility control event is generated, and the ID is known
             lock (PlayerFacilityControlStore.Get().Events) {
                 PlayerFacilityControlStore.Get().Events.Add(ev);
             }
