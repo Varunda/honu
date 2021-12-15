@@ -193,11 +193,7 @@
         methods: {
             loadEntries: async function(): Promise<void> {
                 this.entries = Loadable.loading();
-                try {
-                    this.entries = Loadable.loaded(await CharacterWeaponStatApi.getByCharacterID(this.character.id));
-                } catch (err: any) {
-                    this.entries = Loadable.error(err);
-                }
+                this.entries = await CharacterWeaponStatApi.getByCharacterID(this.character.id);
             }
         },
 

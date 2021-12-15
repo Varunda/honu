@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 import { PsItem } from "api/ItemApi";
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -48,7 +50,7 @@ export class ExpandedWeaponStatEntry {
 	public character: PsCharacter | null = null;
 }
 
-export class CharacterWeaponStatApi {
+export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry> {
 	private static _instance: CharacterWeaponStatApi = new CharacterWeaponStatApi();
 	public static get(): CharacterWeaponStatApi { return CharacterWeaponStatApi._instance; }
 
@@ -59,7 +61,7 @@ export class CharacterWeaponStatApi {
 		};
 	}
 
-	private static _parse(elem: any): CharacterWeaponStatEntry {
+	public static parse(elem: any): CharacterWeaponStatEntry {
 		return {
 			characterID: elem.characterID,
 			itemID: elem.itemID,
@@ -86,75 +88,35 @@ export class CharacterWeaponStatApi {
 		}
 	}
 
-	private static parseExpanded(elem: any): ExpandedWeaponStatEntry {
+	public static parseExpanded(elem: any): ExpandedWeaponStatEntry {
 		return {
 			entry: CharacterWeaponStatApi.parseWeaponStat(elem.entry),
-			character: elem.character == null ? null : CharacterApi.get().parse(elem.character)
+			character: elem.character == null ? null : CharacterApi.parse(elem.character)
 		};
 	}
 
-	public static async getByCharacterID(charID: string): Promise<CharacterWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/character/${charID}/weapon_stats`);
-
-		if (response.status != 200) {
-			return [];
-		}
-
-		if (Array.isArray(response.data) == false) {
-			throw `response.data is not an array`;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi._parse(iter));
+	public static async getByCharacterID(charID: string): Promise<Loading<CharacterWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/character/${charID}/weapon_stats`, CharacterWeaponStatApi.parse);
 	}
 
-	public static async getTopKD(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kd`);
-
-		if (response.status != 200) {
-			throw ``;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	public static async getTopKD(itemID: string): Promise<Loading<ExpandedWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/item/${itemID}/top/kd`, CharacterWeaponStatApi.parseExpanded);
 	}
 
-	public static async getTopKPM(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kpm`);
-
-		if (response.status != 200) {
-			throw ``;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	public static async getTopKPM(itemID: string): Promise<Loading<ExpandedWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/item/${itemID}/top/kpm`, CharacterWeaponStatApi.parseExpanded);
 	}
 
-	public static async getTopAccuracy(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/accuracy`);
-
-		if (response.status != 200) {
-			throw ``;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	public static async getTopAccuracy(itemID: string): Promise<Loading<ExpandedWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/item/${itemID}/top/accuracy`, CharacterWeaponStatApi.parseExpanded);
 	}
 
-	public static async getTopHeadshotRatio(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/hsr`);
-
-		if (response.status != 200) {
-			throw ``;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	public static async getTopHeadshotRatio(itemID: string): Promise<Loading<ExpandedWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/item/${itemID}/top/hsr`, CharacterWeaponStatApi.parseExpanded);
 	}
 
-	public static async getTopKills(itemID: string): Promise<ExpandedWeaponStatEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/item/${itemID}/top/kills`);
-
-		if (response.status != 200) {
-			throw ``;
-		}
-
-		return response.data.map((iter: any) => CharacterWeaponStatApi.parseExpanded(iter));
+	public static async getTopKills(itemID: string): Promise<Loading<ExpandedWeaponStatEntry[]>> {
+		return CharacterWeaponStatApi.get().readList(`/api/item/${itemID}/top/kills`, CharacterWeaponStatApi.parseExpanded);
 	}
 
 

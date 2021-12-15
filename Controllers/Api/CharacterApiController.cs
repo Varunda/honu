@@ -225,6 +225,30 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get the online status of a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <response code="200">
+        ///     The response will contain a boolean value indicating if the <see cref="TrackedPlayer"/>
+        ///     with <see cref="TrackedPlayer.ID"/> of <paramref name="charID"/> is online or not.
+        ///     If the player is not found, it is assumed they are offline as well
+        /// </response>
+        [HttpGet("character/{charID}/online")]
+        public ApiResponse<bool> GetCurrentSession(string charID) {
+            TrackedPlayer? player = null;
+
+            lock (CharacterStore.Get().Players) {
+                CharacterStore.Get().Players.TryGetValue(charID, out player);
+            }
+
+            if (player == null) {
+                return ApiOk(false);
+            }
+
+            return ApiOk(player.Online);
+        }
+
+        /// <summary>
         ///     Get the characters that match the name (case insensitive)
         /// </summary>
         /// <remarks>

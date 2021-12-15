@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading, Loadable } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
@@ -50,7 +52,7 @@ export class FlatExpandedOutfitMember {
 	public recentSPM: number | null = null;
 }
 
-export class OutfitApi {
+export class OutfitApi extends ApiWrapper<PsOutfit> {
 	private static _instance: OutfitApi = new OutfitApi();
 	public static get(): OutfitApi { return OutfitApi._instance; }
 
@@ -72,8 +74,8 @@ export class OutfitApi {
 	public static parseExpandedOutfitMember(elem: any): ExpandedOutfitMember {
 		return {
 			member: OutfitApi.parseOutfitMember(elem.member),
-			character: elem.character == null ? null : CharacterApi.get().parse(elem.character),
-			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.get().parse(iter))
+			character: elem.character == null ? null : CharacterApi.parse(elem.character),
+			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter))
 		};
 	}
 
@@ -121,38 +123,25 @@ export class OutfitApi {
 		return flat;
 	}
 
-	public static async getByID(outfitID: string): Promise<PsOutfit | null> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/outfit/${outfitID}`);
-
-		if (response.status != 200) {
-			return null;
-		}
-
-		return OutfitApi.parse(response.data);
+	public static async getByID(outfitID: string): Promise<Loading<PsOutfit>> {
+		return OutfitApi.get().readSingle(`/api/outfit/${outfitID}`, OutfitApi.parse);
 	}
 
-	public static async getByTag(tag: string): Promise<PsOutfit[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/outfit/tag/${tag}`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return response.data.map((iter: any) => OutfitApi.parse(iter));
+	public static async getByTag(tag: string): Promise<Loading<PsOutfit[]>> {
+		return OutfitApi.get().readList(`/api/outfit/tag/${tag}`, OutfitApi.parse);
 	}
 
-	public static async getMembers(outfitID: string): Promise<ExpandedOutfitMember[]> {
-		const response: axios.AxiosResponse = await axios.default.get(`/api/outfit/${outfitID}/members`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return response.data.map((iter: any) => OutfitApi.parseExpandedOutfitMember(iter));
+	public static async getMembers(outfitID: string): Promise<Loading<ExpandedOutfitMember[]>> {
+		return OutfitApi.get().readList(`/api/outfit/${outfitID}/members`, OutfitApi.parseExpandedOutfitMember);
 	}
 
-	public static async getMembersFlat(outfitID: string): Promise<FlatExpandedOutfitMember[]> {
-		return (await OutfitApi.getMembers(outfitID)).map(iter => OutfitApi.flattenExpandedOutfitMember(iter));
+	public static async getMembersFlat(outfitID: string): Promise<Loading<FlatExpandedOutfitMember[]>> {
+		const members: Loading<ExpandedOutfitMember[]> = await OutfitApi.getMembers(outfitID);
+		if (members.state != "loaded") {
+			return Loadable.rewrap(members);
+		}
+
+		return Loadable.loaded(members.data.map(iter => OutfitApi.flattenExpandedOutfitMember(iter)));
 	}
 
 }

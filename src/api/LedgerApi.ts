@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class FacilityControlEntry {
 	public facilityID: number = 0;
@@ -22,11 +24,11 @@ export class LedgerOptions {
 	public playerThreshold: number | null = null;
 }
 
-export class LedgerApi {
+export class LedgerApi extends ApiWrapper<FacilityControlEntry> {
 	private static _instance: LedgerApi = new LedgerApi();
 	public static get(): LedgerApi { return LedgerApi._instance; }
 
-	private static parseControlEntry(elem: any): FacilityControlEntry {
+	public static parseControlEntry(elem: any): FacilityControlEntry {
 		return {
 			...elem,
 			ratio: (elem.defended || 1) / (elem.captured || 1),
@@ -34,7 +36,7 @@ export class LedgerApi {
 		};
 	}
 
-	public static async getLedger(options?: LedgerOptions): Promise<FacilityControlEntry[]> {
+	public static async getLedger(options?: LedgerOptions): Promise<Loading<FacilityControlEntry[]>> {
 		const param: URLSearchParams = new URLSearchParams();
 
 		if (options) {
@@ -49,23 +51,6 @@ export class LedgerApi {
 			}
 		}
 
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/ledger/?${param.toString()}`);
-
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            console.warn(`response data is not an array: ${response.data}`);
-            return [];
-        }
-
-		const ret: FacilityControlEntry[] = [];
-		for (const datum of response.data) {
-			const elem: FacilityControlEntry = LedgerApi.parseControlEntry(datum);
-            ret.push(elem);
-        }
-
-        return ret;
+		return LedgerApi.get().readList(`/api/ledger/?${param.toString()}`, LedgerApi.parseControlEntry);
 	}
 }

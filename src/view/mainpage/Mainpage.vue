@@ -40,14 +40,27 @@
             <div class="mainpage-grid">
                 <world-overview name="cobalt" display-name="Cobalt" :data="cobalt"></world-overview>
                 <div class="mp-grid-line"></div>
+
                 <world-overview name="connery" display-name="Connery" :data="connery"></world-overview>
                 <div class="mp-grid-line"></div>
+
+                <div class="text-warning" style="grid-column: 1 / span 4;">
+                    Emerald is not sending events to the Planetside 2 API, no ETA
+                    <a href="https://redd.it/rgkocn">- Source</a>
+                </div>
                 <world-overview name="emerald" display-name="Emerald" :data="emerald"></world-overview>
                 <div class="mp-grid-line"></div>
+
+                <div class="text-warning" style="grid-column: 1 / span 4;">
+                    Jaeger is not sending events to the Planetside 2 API, no ETA
+                    <a href="https://redd.it/rgkocn">- Source</a>
+                </div>
                 <world-overview name="jaeger" display-name="Jaeger" :data="jaeger"></world-overview>
                 <div class="mp-grid-line"></div>
+
                 <world-overview name="miller" display-name="Miller" :data="miller"></world-overview>
                 <div class="mp-grid-line"></div>
+
                 <world-overview name="soltech" display-name="SolTech" :data="soltech"></world-overview>
             </div>
         </div>

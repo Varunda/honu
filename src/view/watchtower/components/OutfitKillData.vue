@@ -34,6 +34,7 @@
 
 <script lang="ts">
     import Vue from "vue";
+    import { Loading } from "Loading";
 
     import EventBus from "EventBus";
 
@@ -63,7 +64,12 @@
 
                 EventBus.$emit("set-modal-data", modalData);
 
-                let kills: OutfitKillerEntry[] = await KillStatApi.getOutfitKillers(outfitID);
+                let api: Loading<OutfitKillerEntry[]> = await KillStatApi.getOutfitKillers(outfitID);
+                if (api.state != "loaded") {
+                    console.warn(`Got ${api.state} not 'loaded'`);
+                    return;
+                }
+                let kills: OutfitKillerEntry[] = api.data;
                 const totalKills: number = kills.reduce((acc, iter) => acc + iter.kills, 0);
 
                 // Trim to only show the top 6 killers

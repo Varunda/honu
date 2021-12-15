@@ -1,4 +1,5 @@
-﻿import * as axios from "axios";
+﻿import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class Session {
 	public id: number = 0;
@@ -9,11 +10,11 @@ export class Session {
 	public teamID: number = 0;
 }
 
-export class SessionApi {
+export class SessionApi extends ApiWrapper<Session> {
 	private static _instance: SessionApi = new SessionApi();
 	public static get(): SessionApi { return SessionApi._instance; }
 
-	private static _parse(elem: any): Session {
+	public static parse(elem: any): Session {
 		return {
 			...elem,
 			start: new Date(elem.start),
@@ -21,28 +22,12 @@ export class SessionApi {
 		};
 	}
 
-	public static async getByCharacterID(charID: string): Promise<Session[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/character/${charID}/sessions`);
-
-		if (response.status != 200) {
-			return [];
-		}
-
-		if (Array.isArray(response.data) == false) {
-			throw `response.data is not an array`;
-		}
-
-		return response.data.map((iter: any) => SessionApi._parse(iter));
+	public static async getByCharacterID(charID: string): Promise<Loading<Session[]>> {
+		return SessionApi.get().readList(`/api/character/${charID}/sessions`, SessionApi.parse);
 	}
 
-	public static async getBySessionID(sessionID: number): Promise<Session> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/session/${sessionID}`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return SessionApi._parse(response.data);
+	public static async getBySessionID(sessionID: number): Promise<Loading<Session>> {
+		return SessionApi.get().readSingle(`/api/session/${sessionID}`, SessionApi.parse);
 	}
 
 }

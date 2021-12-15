@@ -71,6 +71,27 @@ export class Loadable {
         return { state: "saving", data: data };
     }
 
+    public static rewrap<T, U>(wrap: Loading<T>): Loading<U> {
+        if (wrap.state == "idle") {
+            return Loadable.idle();
+        } else if (wrap.state == "loading") {
+            return Loadable.loading();
+        } else if (wrap.state == "nocontent") {
+            return Loadable.nocontent();
+        } else if (wrap.state == "notfound") {
+            return Loadable.notFound(wrap.message);
+        } else if (wrap.state == "error") {
+            return Loadable.error(wrap.message);
+        }
+
+        if (wrap.state == "loaded") {
+            throw `cannot wrap a loaded Loading, as no conversion between the two exists`;
+
+        }
+
+        throw `failed to wrap, unchecked state: '${wrap.state}'`;
+    }
+
     public static promise<T>(data: Promise<T>): Promise<Loading<T>> {
         return new Promise<Loading<T>>((resolve, reject) => {
 			data.then((data) => {

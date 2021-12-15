@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 import { ItemApi, PsItem } from "api/ItemApi";
 
@@ -18,7 +20,7 @@ export class ExpandedCharacterItem {
 	public accountLevel: boolean = false;
 }
 
-export class CharacterItemApi {
+export class CharacterItemApi extends ApiWrapper<CharacterItem> {
 	private static _instance: CharacterItemApi = new CharacterItemApi();
 	public static get(): CharacterItemApi { return CharacterItemApi._instance; }
 
@@ -38,14 +40,8 @@ export class CharacterItemApi {
 		};
 	}
 
-	public static async getByID(charID: string): Promise<ExpandedCharacterItem[]> {
-		const response: axios.AxiosResponse = await axios.default.get(`/api/character/${charID}/items`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return response.data.map((iter: any) => CharacterItemApi.parseExpandedCharacterItem(iter));
+	public static async getByID(charID: string): Promise<Loading<ExpandedCharacterItem[]>> {
+		return CharacterItemApi.get().readList(`/api/character/${charID}/items`, CharacterItemApi.parseExpandedCharacterItem);
 	}
 
 }

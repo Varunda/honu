@@ -250,11 +250,17 @@
                 this.ledgerEntries = Loadable.loading();
                 this.ledgerData = Loadable.loading();
 
-                const ledgerData: FacilityControlEntry[] = (await LedgerApi.getLedger()).filter(iter => iter.zoneID == zoneID);
-                this.ledgerData = Loadable.loaded(ledgerData);
+                const ledgerData: Loading<FacilityControlEntry[]> = await LedgerApi.getLedger();
+                if (ledgerData.state == "loaded") {
+                    ledgerData.data = ledgerData.data.filter(iter => iter.zoneID == zoneID);
+                } else {
+                    console.warn(`Got ${ledgerData.state} instead of 'loaded'`);
+                    return;
+                }
+                this.ledgerData = ledgerData;
 
                 const arr: LedgerEntry[] = [];
-                for (const datum of ledgerData) {
+                for (const datum of ledgerData.data) {
                     let value: number = 0;
                     if (this.orderBy == "ratio") {
                         value = datum.ratio;
@@ -295,13 +301,13 @@
 
                 await this.loadLedgerData(zoneID);
 
-                const zoneData: ZoneMap | null = await MapApi.getZone(zoneID);
-                if (zoneData == null) {
+                const zoneData: Loading<ZoneMap> = await MapApi.getZone(zoneID);
+                if (zoneData.state != "loaded") {
                     throw `Failed to get zone data for ${zoneID}`;
                 }
-                this.zoneData = zoneData;
+                this.zoneData = zoneData.data;
 
-                const regions: ZoneRegion[] = ZoneRegion.setupMapRegions(zoneData.hexes);
+                const regions: ZoneRegion[] = ZoneRegion.setupMapRegions(zoneData.data.hexes);
 
                 // If there is currently a map, the view will be copied to the new map
                 let center: L.LatLng = L.latLng(0.00, 0.00);
@@ -334,7 +340,7 @@
                 if (this.ledgerEntries.state != "loaded") { throw `ughhh`; }
 
                 for (const region of regions) {
-                    const fac: PsFacility | null = zoneData.facilities.find(iter => iter.regionID == region.regionID) || null;
+                    const fac: PsFacility | null = zoneData.data.facilities.find(iter => iter.regionID == region.regionID) || null;
                     region.facility = fac;
 
                     let name: string = "";
@@ -381,7 +387,7 @@
                         continue;
                     }
 
-                    for (const link of zoneData.links) {
+                    for (const link of zoneData.data.links) {
                         if (link.facilityA == region.facility.facilityID) {
                             const regionB: ZoneRegion | null = regions.find(iter => iter.facility != null && iter.facility.facilityID == link.facilityB) || null;
                             if (regionB != null) {

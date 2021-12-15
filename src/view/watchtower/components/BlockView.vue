@@ -41,6 +41,7 @@
 <script lang="ts">
     import Vue from "vue";
     import EventBus from "EventBus";
+    import { Loading, Loadable } from "Loading";
 
     import FactionColors from "FactionColors";
     import { StatModalData } from "../StatModalData";
@@ -82,7 +83,12 @@
 
                     EventBus.$emit("set-modal-data", modalData);
 
-                    let data: CharacterExpSupportEntry[] = await this.source(charID, this.sourceWorldId, this.sourceTeamId);
+                    const api: Loading<CharacterExpSupportEntry[]> = await this.source(charID, this.sourceWorldId, this.sourceTeamId);
+                    if (api.state != "loaded") {
+                        console.warn(`Got ${api.state} not 'loaded'`);
+                        return;
+                    }
+                    let data: CharacterExpSupportEntry[] = api.data;
                     const total: number = data.reduce((acc, iter) => acc + iter.amount, 0);
 
                     // Trim to only show the top 6 killers

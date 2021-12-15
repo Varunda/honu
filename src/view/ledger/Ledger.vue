@@ -161,7 +161,7 @@
                 options.worldID = this.filter.worldID;
 
                 this.entries = Loadable.loading();
-                this.entries = Loadable.loaded(await LedgerApi.getLedger(options));
+                this.entries = await LedgerApi.getLedger(options);
             }
         },
 

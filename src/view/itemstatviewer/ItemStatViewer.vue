@@ -58,7 +58,7 @@
             return {
                 itemID: "" as string,
 
-                item: Loadable.idle() as Loading<PsItem | null>,
+                item: Loadable.idle() as Loading<PsItem>,
 
                 topKd: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
                 topKpm: Loadable.idle() as Loading<ExpandedWeaponStatEntry[] | null>,
@@ -95,20 +95,20 @@
 
             bindItem: async function(): Promise<void> {
                 this.item = Loadable.loading();
-                this.item = await Loadable.promise(ItemApi.getByID(this.itemID));
+                this.item = await ItemApi.getByID(this.itemID);
 
-                if (this.item.state == "loaded" || (this.item as any).data != null) {
+                if (this.item.state == "loaded") {
                     document.title = `Honu / Item / ${(this.item as any).data.name}`;
                 } else {
                     document.title = `Honu / Item / <${this.itemID}>`;
                 }
 
                 this.topKd = Loadable.loading();
-                this.topKd = await Loadable.promise(CharacterWeaponStatApi.getTopKD(this.itemID));
-                this.topKpm = await Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.itemID));
-                this.topAcc = await Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.itemID));
-                this.topHsr = await Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.itemID));
-                this.topKills = await Loadable.promise(CharacterWeaponStatApi.getTopKills(this.itemID));
+                this.topKd = await CharacterWeaponStatApi.getTopKD(this.itemID);
+                this.topKpm = await CharacterWeaponStatApi.getTopKPM(this.itemID);
+                this.topAcc = await CharacterWeaponStatApi.getTopAccuracy(this.itemID);
+                this.topHsr = await CharacterWeaponStatApi.getTopHeadshotRatio(this.itemID);
+                this.topKills = await CharacterWeaponStatApi.getTopKills(this.itemID);
             }
 
         },

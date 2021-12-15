@@ -19,7 +19,7 @@ export class CharacterStatApi extends ApiWrapper<CharacterStat> {
 	private static _instance: CharacterStatApi = new CharacterStatApi();
 	public static get(): CharacterStatApi { return CharacterStatApi._instance; }
 
-	public parse(elem: any): CharacterStat {
+	public static parse(elem: any): CharacterStat {
 		return {
 			...elem,
 			timestamp: new Date(elem.timestamp)
@@ -27,7 +27,7 @@ export class CharacterStatApi extends ApiWrapper<CharacterStat> {
 	};
 
 	public static async getByCharacterID(charID: string): Promise<Loading<CharacterStat[]>> {
-		return CharacterStatApi.get().readList(`/api/character/${charID}/stats`);
+		return CharacterStatApi.get().readList(`/api/character/${charID}/stats`, CharacterStatApi.parse);
 	}
 
 }

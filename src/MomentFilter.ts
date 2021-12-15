@@ -91,7 +91,7 @@ Vue.filter("mduration", (input: string | number): string => {
 
     const dur: moment.Duration = moment.duration(val * 1000);
 
-    if (dur.days() > 0) {
+    if (dur.asDays() > 0) {
         return `${Math.floor(dur.asDays())}d ${dur.hours().toString().padStart(2, "0")}h`;
     }
 

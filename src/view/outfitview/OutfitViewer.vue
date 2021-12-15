@@ -257,7 +257,7 @@
 
             bindOutfit: async function(): Promise<void> {
                 this.outfit = Loadable.loading();
-                this.outfit = await Loadable.promise(OutfitApi.getByID(this.outfitID));
+                this.outfit = await OutfitApi.getByID(this.outfitID);
 
                 if (this.outfit.state == "loaded") {
                     document.title = `Honu / Outfit / ${this.outfit.data?.name}`;
@@ -268,7 +268,7 @@
 
             bindMembers: async function(): Promise<void> {
                 this.members = Loadable.loading();
-                this.members = await Loadable.promise(OutfitApi.getMembersFlat(this.outfitID));
+                this.members = await OutfitApi.getMembersFlat(this.outfitID);
             }
 
         },

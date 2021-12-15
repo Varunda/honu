@@ -21,6 +21,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import { Loading, Loadable } from "Loading";
 
     import { PsCharacter } from "api/CharacterApi";
 
@@ -34,7 +35,7 @@
 
         data: function() {
             return {
-
+                isOnline: Loadable.idle() as Loading<boolean>
             }
         },
 

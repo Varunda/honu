@@ -86,7 +86,7 @@
 
                 this.time = new Date(this.time);
 
-                this.data = Loadable.loaded(await OutfitPopulationApi.getPopulation(this.worldID, this.time));
+                this.data = await OutfitPopulationApi.getPopulation(this.worldID, this.time);
             }
 
         },

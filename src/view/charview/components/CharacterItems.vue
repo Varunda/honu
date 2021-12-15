@@ -104,7 +104,7 @@
         methods: {
             bindData: async function(): Promise<void> {
                 this.items = Loadable.loading();
-                this.items = await Loadable.promise(CharacterItemApi.getByID(this.character.id));
+                this.items = await CharacterItemApi.getByID(this.character.id);
             }
         },
 

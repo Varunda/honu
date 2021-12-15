@@ -66,6 +66,7 @@
 <script lang="ts">
     import Vue from "vue";
     import EventBus from "EventBus";
+    import { Loading } from "Loading";
 
     import FactionColors from "FactionColors";
     import { StatModalData } from "../StatModalData";
@@ -98,7 +99,12 @@
 
                 EventBus.$emit("set-modal-data", modalData);
 
-                const kills: CharacterWeaponKillEntry[] = await KillStatApi.getWeaponEntries(charID);
+                const api: Loading<CharacterWeaponKillEntry[]> = await KillStatApi.getWeaponEntries(charID);
+                if (api.state != "loaded") {
+                    console.warn(`Got ${api.state} not 'loaded'`);
+                    return;
+                }
+                let kills = api.data;
                 const totalKills: number = kills.reduce((acc, iter) => acc + iter.kills, 0);
 
                 modalData.data = kills.map((iter: CharacterWeaponKillEntry) => {

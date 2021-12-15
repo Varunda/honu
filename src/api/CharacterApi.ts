@@ -1,5 +1,4 @@
-﻿import * as axios from "axios";
-import { Loading } from "Loading";
+﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
 export class PsCharacter {
@@ -27,7 +26,7 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	private static _instance: CharacterApi = new CharacterApi();
 	public static get(): CharacterApi { return this._instance; }
 
-	public parse(elem: any): PsCharacter {
+	public static parse(elem: any): PsCharacter {
 		return {
 			...elem,
 			lastUpdated: new Date(elem.lastUpdated),
@@ -38,15 +37,15 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	}
 
 	public static async getByID(charID: string): Promise<Loading<PsCharacter>> {
-		return CharacterApi.get().readSingle(`/api/character/${charID}`);
+		return CharacterApi.get().readSingle(`/api/character/${charID}`, CharacterApi.parse);
 	}
 
 	public static async getByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/characters/name/${name}`);
+		return CharacterApi.get().readList(`/api/characters/name/${name}`, CharacterApi.parse);
 	}
 
 	public static async searchByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/characters/search/${name}`);
+		return CharacterApi.get().readList(`/api/characters/search/${name}`, CharacterApi.parse);
 	}
 
 }

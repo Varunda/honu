@@ -1,5 +1,7 @@
 import * as axios from "axios";
 import { CharacterApi, PsCharacter } from "api/CharacterApi";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class CharacterExpSupportEntry {
     public characterID: string = "";
@@ -56,6 +58,24 @@ export class Experience {
 	public static SQUAD_VEHICLE_SPAWN_BONUS: number = 355;
 	public static GENERIC_NPC_SPAWN: number = 1410;
 
+	public static VKILL_FLASH: number = 24;
+	public static VKILL_GALAXY: number = 60;
+	public static VKILL_LIBERATOR: number = 61;
+	public static VKILL_LIGHTNING: number = 62;
+	public static VKILL_MAGRIDER: number = 63;
+	public static VKILL_MOSQUITO: number = 64;
+	public static VKILL_PROWLER: number = 65;
+	public static VKILL_REAVER: number = 66;
+	public static VKILL_SCYTHE: number = 67;
+	public static VKILL_VANGUARD: number = 69;
+	public static VKILL_HARASSER: number = 301;
+	public static VKILL_VALKYRIE: number = 501;
+	public static VKILL_ANT: number = 651;
+	public static VKILL_COLOSSUS: number = 1449;
+	public static VKILL_JAVELIN: number = 1480;
+	public static VKILL_CHIMERA: number = 1565;
+	public static VKILL_DERVISH: number = 1635;
+
     public static isAssist(expID: number): boolean {
         return expID == this.ASSIST || expID == this.SPAWN_ASSIST
             || expID == this.PRIORITY_ASSIST || expID == this.HIGH_PRIORITY_ASSIST;
@@ -97,27 +117,9 @@ export class Experience {
             || expID == this.VKILL_JAVELIN || expID == this.VKILL_CHIMERA
             || expID == this.VKILL_DERVISH;
     }
-
-	public static VKILL_FLASH: number = 24;
-	public static VKILL_GALAXY: number = 60;
-	public static VKILL_LIBERATOR: number = 61;
-	public static VKILL_LIGHTNING: number = 62;
-	public static VKILL_MAGRIDER: number = 63;
-	public static VKILL_MOSQUITO: number = 64;
-	public static VKILL_PROWLER: number = 65;
-	public static VKILL_REAVER: number = 66;
-	public static VKILL_SCYTHE: number = 67;
-	public static VKILL_VANGUARD: number = 69;
-	public static VKILL_HARASSER: number = 301;
-	public static VKILL_VALKYRIE: number = 501;
-	public static VKILL_ANT: number = 651;
-	public static VKILL_COLOSSUS: number = 1449;
-	public static VKILL_JAVELIN: number = 1480;
-	public static VKILL_CHIMERA: number = 1565;
-	public static VKILL_DERVISH: number = 1635;
 }
 
-export class ExpStatApi {
+export class ExpStatApi extends ApiWrapper<ExpEvent> {
 
     private static _instance: ExpStatApi = new ExpStatApi();
     public static get(): ExpStatApi { return ExpStatApi._instance; }
@@ -129,7 +131,7 @@ export class ExpStatApi {
         }
     }
 
-    private static parseCharacterExpSupportEntry(elem: any): CharacterExpSupportEntry {
+    public static parseCharacterExpSupportEntry(elem: any): CharacterExpSupportEntry {
         return {
             characterID: elem.characterID,
             characterName: elem.characterName,
@@ -137,7 +139,7 @@ export class ExpStatApi {
         };
     }
 
-    private static parseOutfitExpSupportEntry(elem: any): OutfitExpEntry {
+    public static parseOutfitExpSupportEntry(elem: any): OutfitExpEntry {
         return {
             characterID: elem.characterID,
             characterName: elem.characterName,
@@ -145,26 +147,16 @@ export class ExpStatApi {
         };
     }
 
-    private static parseExpandedExpEntry(elem: any): ExpandedExpEvent {
+    public static parseExpandedExpEntry(elem: any): ExpandedExpEvent {
         return {
             event: ExpStatApi.parseExpEvent(elem.event),
-            source: elem.source == null ? null : CharacterApi.get().parse(elem.source),
-            other: elem.other == null ? null : CharacterApi.get().parse(elem.other),
+            source: elem.source == null ? null : CharacterApi.parse(elem.source),
+            other: elem.other == null ? null : CharacterApi.parse(elem.other),
         };
     }
 
-    public static async getBySessionID(sessionID: number): Promise<ExpandedExpEvent[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/exp/session/${sessionID}`);
-
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            throw ``;
-        }
-
-        return response.data.map((iter: any) => ExpStatApi.parseExpandedExpEntry(iter));
+    public static async getBySessionID(sessionID: number): Promise<Loading<ExpandedExpEvent[]>> {
+        return ExpStatApi.get().readList(`/api/exp/session/${sessionID}`, ExpStatApi.parseExpandedExpEntry);
     }
 
     private static async getList<T>(url: string, reader: (elem: any) => T): Promise<T[]> {
@@ -188,52 +180,52 @@ export class ExpStatApi {
         return ret;
     }
 
-    public static async getCharacterHealEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/heals`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterHealEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/heals`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitHealEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitHealEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/heals/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getCharacterShieldEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/shield_repair`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterShieldEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/shield_repair`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitShieldEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/shield_repair/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitShieldEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/shield_repair/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getCharacterReviveEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/revives`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterReviveEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/revives`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitReviveEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/revives/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitReviveEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/revives/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getCharacterResupplyEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/resupplies`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterResupplyEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/resupplies`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitResupplyEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/resupplies/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitResupplyEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/resupplies/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getCharacterSpawnEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/spawns`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterSpawnEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/spawns`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitSpawnEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/spawns/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitSpawnEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/spawns/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getCharacterVehicleKillEntries(charID: string): Promise<CharacterExpSupportEntry[]> {
-        return ExpStatApi.getList(`/api/exp/character/${charID}/vehicleKills`, ExpStatApi.parseCharacterExpSupportEntry);
+    public static async getCharacterVehicleKillEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/character/${charID}/vehicleKills`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
-    public static async getOutfitVehicleKillEntries(outfitID: string, worldID: number, teamID: number): Promise<OutfitExpEntry[]> {
-        return ExpStatApi.getList(`/api/exp/outfit/${outfitID}/vehicleKills/${worldID}/${teamID}`, ExpStatApi.parseOutfitExpSupportEntry);
+    public static async getOutfitVehicleKillEntries(outfitID: string, worldID: number, teamID: number): Promise<Loading<OutfitExpEntry[]>> {
+        return ExpStatApi.get().readList(`/api/exp/outfit/${outfitID}/vehicleKills/${worldID}/${teamID}`, ExpStatApi.parseCharacterExpSupportEntry);
     }
 
 }

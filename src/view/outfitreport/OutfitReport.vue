@@ -369,15 +369,19 @@
             },
 
             searchTag: async function(): Promise<void> {
-                const outfits: PsOutfit[] = await OutfitApi.getByTag(this.search.outfitTag);
+                const outfits: Loading<PsOutfit[]> = await OutfitApi.getByTag(this.search.outfitTag);
+                if (outfits.state != "loaded") {
+                    this.log(``);
+                    return;
+                }
 
-                if (outfits.length == 0) {
+                if (outfits.data.length == 0) {
                     this.log(`Found 0 outfits with the tag ${this.search.outfitTag}`);
                     return;
                 }
 
-                outfits.sort((a, b) => b.id.localeCompare(a.id));
-                this.outfits.push(outfits[0]);
+                outfits.data.sort((a, b) => b.id.localeCompare(a.id));
+                this.outfits.push(outfits.data[0]);
                 this.search.outfitTag = "";
                 this.updateGenerator();
             },

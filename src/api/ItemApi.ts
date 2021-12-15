@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class PsItem {
 	public id: string = "";
@@ -49,7 +51,7 @@ export class Bucket {
 	public count: number = 0;
 }
 
-export class ItemApi {
+export class ItemApi extends ApiWrapper<PsItem> {
 	private static _instance: ItemApi = new ItemApi();
 	public static get(): ItemApi { return ItemApi._instance; }
 
@@ -82,43 +84,12 @@ export class ItemApi {
 		}
 	}
 
-	public static async getByID(itemID: string): Promise<PsItem | null> {
-		const response: axios.AxiosResponse = await axios.default.get(`/api/item/${itemID}`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return ItemApi.parse(response.data);
+	public static async getByID(itemID: string): Promise<Loading<PsItem>> {
+		return ItemApi.get().readSingle(`/api/item/${itemID}`, ItemApi.parse)
 	}
 
-	public static async getStatsByID(itemID: string): Promise<ItemPercentileAll | null> {
-		const response: axios.AxiosResponse = await axios.default.get(`/api/item/${itemID}/percentile_stats`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		return ItemApi.parsePercentileAll(response.data);
+	public static async getStatsByID(itemID: string): Promise<Loading<ItemPercentileAll>> {
+		return ItemApi.get().readSingle(`/api/item/${itemID}/percentile_stats`, ItemApi.parsePercentileAll)
 	}
-
-	/*
-	public static async getMultiple(IDs: string[]): Promise<PsItem[]> {
-		let params: URLSearchParams = new URLSearchParams();
-		IDs.map(iter => params.append("IDs", iter));
-
-		const response: axios.AxiosResponse = await axios.default.get(`/api/item?${params.toString()}`);
-
-		if (response.status != 200) {
-			throw response.data;
-		}
-
-		if (Array.isArray(response.data) == false) {
-			throw `response.data is supposed to be an array`;
-		}
-
-		return response.data.map((iter: any) => ItemApi.parse(iter));
-	}
-	*/
 
 }

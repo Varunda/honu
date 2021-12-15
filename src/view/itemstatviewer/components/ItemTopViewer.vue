@@ -210,8 +210,7 @@
 
                 if (this.kd.state == "idle") {
                     this.kd = Loadable.loading();
-                    Loadable.promise(CharacterWeaponStatApi.getTopKD(this.ItemId))
-                        .then(iter => { this.kd = iter; this.entries = this.kd; });
+                    CharacterWeaponStatApi.getTopKD(this.ItemId).then(iter => { this.kd = iter; this.entries = this.kd; });
                 }
                 this.entries = this.kd;
             },
@@ -221,8 +220,7 @@
 
                 if (this.kpm.state == "idle") {
                     this.kpm = Loadable.loading();
-                    Loadable.promise(CharacterWeaponStatApi.getTopKPM(this.ItemId))
-                        .then(iter => { this.kpm = iter; this.entries = this.kpm; });
+                    CharacterWeaponStatApi.getTopKPM(this.ItemId).then(iter => { this.kpm = iter; this.entries = this.kpm; });
                 }
 
                 this.entries = this.kpm;
@@ -233,8 +231,7 @@
 
                 if (this.acc.state == "idle") {
                     this.acc = Loadable.loading();
-                    Loadable.promise(CharacterWeaponStatApi.getTopAccuracy(this.ItemId))
-                        .then(iter => { this.acc = iter; this.entries = this.acc; });
+                    CharacterWeaponStatApi.getTopAccuracy(this.ItemId).then(iter => { this.acc = iter; this.entries = this.acc; });
                 }
 
                 this.entries = this.acc;
@@ -245,8 +242,7 @@
 
                 if (this.hsr.state == "idle") {
                     this.hsr = Loadable.loading();
-                    Loadable.promise(CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId))
-                        .then(iter => { this.hsr = iter; this.entries = this.hsr; });
+                    CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId).then(iter => { this.hsr = iter; this.entries = this.hsr; });
                 }
 
                 this.entries = this.hsr;
@@ -257,8 +253,7 @@
 
                 if (this.kills.state == "idle") {
                     this.kills = Loadable.loading();
-                    Loadable.promise(CharacterWeaponStatApi.getTopKills(this.ItemId))
-                        .then(iter => { this.kills = iter; this.entries = this.kills; });
+                    CharacterWeaponStatApi.getTopKills(this.ItemId).then(iter => { this.kills = iter; this.entries = this.kills; });
                 }
 
                 this.entries = this.kills;

@@ -1,11 +1,18 @@
 ﻿import * as axios from "axios";
 import { Loadable, Loading } from "Loading";
 
-export default abstract class ApiWrapper<T> {
+/**
+ * Base api wrapper used for all other api classes
+ */
+export default class ApiWrapper<T> {
 
-	public abstract parse(elem: any): T;
-
-	public async readList(url: string): Promise<Loading<T[]>> {
+	/**
+	 * Read a list of paramtype T from a URL
+	 * 
+	 * @param url		URL to perform the GET request on
+	 * @param reader	Reader to transform the entires into the type
+	 */
+	public async readList<U>(url: string, reader: ApiReader<U>): Promise<Loading<U[]>> {
 		const data: Loading<any> = await this.getData(url);
 		if (data.state != "loaded") {
 			return data;
@@ -15,14 +22,20 @@ export default abstract class ApiWrapper<T> {
 			return Loadable.error(`expected array for readList. Did you mean to use readSingle instead? URL: '${url}'`);
 		}
 
-		const arr: T[] = data.data.map((iter: any) => {
-			return this.parse(iter);
+		const arr: U[] = data.data.map((iter: any) => {
+			return reader(iter);
 		});
 
 		return Loadable.loaded(arr);
 	}
 
-	public async readSingle(url: string): Promise<Loading<T>> {
+	/**
+	 * Read a single paramtype T from a URL
+	 * 
+	 * @param url		URL to perform the GET request on
+	 * @param reader	Reader to transform the entires into the type
+	 */
+	public async readSingle<U>(url: string, reader: ApiReader<U>): Promise<Loading<U>> {
 		const data: Loading<any> = await this.getData(url);
 		if (data.state != "loaded") {
 			return data;
@@ -32,10 +45,13 @@ export default abstract class ApiWrapper<T> {
 			return Loadable.error(`unexpected array for readSingle. Did you mean to use readList instead? URL: '${url}'`);
 		}
 
-		const datum: T = this.parse(data.data);
+		const datum: U = reader(data.data);
 		return Loadable.loaded(datum);
 	}
 
+	/**
+	 * Common 
+	 */
 	private async getData(url: string): Promise<Loading<any>> {
 		const response: axios.AxiosResponse<any> = await axios.default.get(url, { validateStatus: () => true });
 
@@ -56,5 +72,6 @@ export default abstract class ApiWrapper<T> {
 		return Loadable.loaded(response.data);
 	}
 
-
 }
+
+export type ApiReader<T> = (elem: any) => T;

@@ -1,4 +1,6 @@
 import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsItem, ItemApi } from "api/ItemApi";
@@ -39,12 +41,12 @@ export class ExpandedKillEvent {
     public item: PsItem | null = null;
 }
 
-export class KillStatApi {
+export class KillStatApi extends ApiWrapper<KillEvent> {
 
     private static _instance: KillStatApi = new KillStatApi();
     public static get(): KillStatApi { return KillStatApi._instance; }
 
-    private static parseCharacterWeaponKillEntry(elem: any): CharacterWeaponKillEntry {
+    public static parseCharacterWeaponKillEntry(elem: any): CharacterWeaponKillEntry {
         return {
             weaponID: elem.weaponID,
             weaponName: elem.weaponName,
@@ -53,7 +55,7 @@ export class KillStatApi {
         };
     }
 
-    private static parseOutfitKillerEntry(elem: any): OutfitKillerEntry {
+    public static parseOutfitKillerEntry(elem: any): OutfitKillerEntry {
         return {
             characterID: elem.characterID,
             characterName: elem.characterName,
@@ -71,54 +73,22 @@ export class KillStatApi {
     public static parseExpandedKillEvent(elem: any): ExpandedKillEvent {
         return {
             event: KillStatApi.parseKillEvent(elem.event),
-            attacker: elem.attacker == null ? null : CharacterApi.get().parse(elem.attacker),
-            killed: elem.killed == null ? null : CharacterApi.get().parse(elem.killed),
+            attacker: elem.attacker == null ? null : CharacterApi.parse(elem.attacker),
+            killed: elem.killed == null ? null : CharacterApi.parse(elem.killed),
             item: elem.item == null ? null : ItemApi.parse(elem.item)
         }
     }
 
-    public static async getWeaponEntries(charID: string): Promise<CharacterWeaponKillEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/kills/character/${charID}`);
-
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            console.warn(`response data is not an array: ${response.data}`);
-            return [];
-        }
-
-        return response.data.map((iter: any) => KillStatApi.parseCharacterWeaponKillEntry(iter));
+    public static async getWeaponEntries(charID: string): Promise<Loading<CharacterWeaponKillEntry[]>> {
+        return KillStatApi.get().readList(`/api/kills/character/${charID}`, KillStatApi.parseCharacterWeaponKillEntry);
     }
 
-    public static async getOutfitKillers(outfitID: string): Promise<OutfitKillerEntry[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/kills/outfit/${outfitID}`);
-
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            console.warn(`response data is not an array: ${response.data}`);
-            return [];
-        }
-
-        return response.data.map((iter: any) => KillStatApi.parseOutfitKillerEntry(iter));
+    public static async getOutfitKillers(outfitID: string): Promise<Loading<OutfitKillerEntry[]>> {
+        return KillStatApi.get().readList(`/api/kills/outfit/${outfitID}`, KillStatApi.parseOutfitKillerEntry);
     }
 
-    public static async getSessionKills(sessionID: number): Promise<ExpandedKillEvent[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/kills/session/${sessionID}`);
-
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            throw `response.data is not an array`;
-        }
-
-        return response.data.map((iter: any) => KillStatApi.parseExpandedKillEvent(iter));
+    public static async getSessionKills(sessionID: number): Promise<Loading<ExpandedKillEvent[]>> {
+        return KillStatApi.get().readList(`/api/kills/session/${sessionID}`, KillStatApi.parseExpandedKillEvent);
     }
 
 }

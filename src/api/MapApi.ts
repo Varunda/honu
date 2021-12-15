@@ -1,4 +1,6 @@
 ﻿import * as axios from "axios";
+import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class PsMapHex {
 	public regionID: number = 0;
@@ -33,18 +35,18 @@ export class ZoneMap {
 	public links: PsFacilityLink[] = [];
 }
 
-export class MapApi {
+export class MapApi extends ApiWrapper<ZoneMap> {
 	private static _instance: MapApi = new MapApi();
 	public static get(): MapApi { return MapApi._instance; }
 
-	public static async getZone(zoneID: number): Promise<ZoneMap | null> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(`/api/map/${zoneID}`);
+	public static parse(elem: any): ZoneMap {
+		return {
+			...elem
+		};
+	}
 
-        if (response.status != 200) {
-            return null;
-        }
-
-		return response.data as ZoneMap;
+	public static async getZone(zoneID: number): Promise<Loading<ZoneMap>> {
+		return MapApi.get().readSingle(`/api/map/${zoneID}`, MapApi.parse);
 	}
 
 }

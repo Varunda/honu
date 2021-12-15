@@ -76,7 +76,7 @@ export class CharacterHistoryStatApi extends ApiWrapper<CharacterHistoryStat> {
 	private static _instance: CharacterHistoryStatApi = new CharacterHistoryStatApi();
 	public static get(): CharacterHistoryStatApi { return CharacterHistoryStatApi._instance; }
 
-	public parse(elem: any): CharacterHistoryStat {
+	public static parse(elem: any): CharacterHistoryStat {
 		return {
 			...elem,
 			lastUpdated: new Date(elem.lastUpdated)
@@ -84,7 +84,7 @@ export class CharacterHistoryStatApi extends ApiWrapper<CharacterHistoryStat> {
 	}
 
 	public static async getByCharacterID(charID: string): Promise<Loading<CharacterHistoryStat[]>> {
-		return CharacterHistoryStatApi.get().readList(`/api/character/${charID}/history_stats`);
+		return CharacterHistoryStatApi.get().readList(`/api/character/${charID}/history_stats`, CharacterHistoryStatApi.parse);
 	}
 
 }

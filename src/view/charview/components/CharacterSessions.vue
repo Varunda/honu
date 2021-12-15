@@ -78,10 +78,9 @@
         methods: {
             loadSessions: async function(): Promise<void> {
                 this.sessions = Loadable.loading();
-                try {
-                    this.sessions = Loadable.loaded((await SessionApi.getByCharacterID(this.character.id)).sort((a, b) => b.id - a.id));
-                } catch (err: any) {
-                    this.sessions = Loadable.error(err);
+                this.sessions = await SessionApi.getByCharacterID(this.character.id);
+                if (this.sessions.state == "loaded") {
+                    this.sessions.data = this.sessions.data.sort((a, b) => b.id - a.id);
                 }
             }
         },
@@ -92,6 +91,4 @@
 
     });
     export default CharacterSessions;
-
-    (window as any).SessionApi = SessionApi;
 </script>

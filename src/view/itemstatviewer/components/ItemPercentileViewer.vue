@@ -93,7 +93,7 @@
 
         data: function() {
             return {
-                all: Loadable.idle() as Loading<ItemPercentileAll | null>,
+                all: Loadable.idle() as Loading<ItemPercentileAll>,
 
                 kpm: null as Quartile | null,
                 kd: null as Quartile | null,
@@ -109,9 +109,9 @@
         methods: {
             bindAll: async function(): Promise<void> {
                 this.all = Loadable.loading();
-                this.all = await Loadable.promise(ItemApi.getStatsByID(this.ItemId));
+                this.all = await ItemApi.getStatsByID(this.ItemId);
 
-                if (this.all.state == "loaded" && this.all.data != null) {
+                if (this.all.state == "loaded") {
                     if (this.all.data.kpm != null) {
                         this.kpm = Quartile.get(this.all.data.kpm.map(iter => iter.start));
                     }
@@ -125,7 +125,6 @@
                         this.hsr = Quartile.get(this.all.data.headshotRatio.map(iter => iter.start));
                     }
                 }
-
             }
         },
 

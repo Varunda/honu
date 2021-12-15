@@ -214,7 +214,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
             string word = "";
             foreach (char i in input) {
-                _Logger.LogTrace($"STATE {Enum.GetName(state)} >>> {i} >>> {word}");
+                //_Logger.LogTrace($"STATE {Enum.GetName(state)} >>> {i} >>> {word}");
 
                 if (state == GenState.GET_START) {
                     if (i == ',') {
@@ -225,7 +225,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         report.PeriodStart = DateTimeOffset.FromUnixTimeSeconds(startEpoch).DateTime;
                         state = GenState.GET_END;
                         word = "";
-                        _Logger.LogTrace($"PeriodStart = {report.PeriodStart}");
+                        //_Logger.LogTrace($"PeriodStart = {report.PeriodStart}");
                     } else {
                         if (char.IsDigit(i) == false) {
                             throw new FormatException($"In state GET_START, expected {i} to be a digit. Current word: {word}");
@@ -241,7 +241,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                         report.PeriodEnd = DateTimeOffset.FromUnixTimeSeconds(endEpoch).DateTime;
                         word = "";
-                        _Logger.LogTrace($"PeriodEnd = {report.PeriodEnd}");
+                        //_Logger.LogTrace($"PeriodEnd = {report.PeriodEnd}");
 
                         if (i == ';') {
                             state = GenState.READ_NEXT;
@@ -282,7 +282,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         PsOutfit? outfit = await _OutfitCensus.GetByTag(word);
                         if (outfit != null) {
                             List<OutfitMember> members = await _OutfitCensus.GetMembers(outfit.ID);
-                            _Logger.LogTrace($"outfit tag {word} has {members.Count} members");
+                            //_Logger.LogTrace($"outfit tag {word} has {members.Count} members");
                             foreach (OutfitMember member in members) {
                                 if (ignored.Contains(member.CharacterID)) {
                                     continue;
@@ -313,7 +313,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         PsOutfit? outfit = await _OutfitRepository.GetByID(word);
                         if (outfit != null) {
                             List<Session> sessions = await _SessionDb.GetByRangeAndOutfit(outfit.ID, report.PeriodStart, report.PeriodEnd);
-                            _Logger.LogTrace($"outfit ID {word} has {sessions.Count} sessions");
+                            //_Logger.LogTrace($"outfit ID {word} has {sessions.Count} sessions");
                             foreach (Session s in sessions) {
                                 if (ignored.Contains(s.CharacterID)) {
                                     continue;

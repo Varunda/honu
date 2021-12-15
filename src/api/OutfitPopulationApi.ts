@@ -1,4 +1,5 @@
-﻿import * as axios from "axios";
+﻿import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
 
 export class OutfitPopulation {
 	public outfitID: string = "";
@@ -8,17 +9,15 @@ export class OutfitPopulation {
 	public count: number = 0;
 }
 
-export class OutfitPopulationApi {
+export class OutfitPopulationApi extends ApiWrapper<OutfitPopulation> {
 	private static _instance: OutfitPopulationApi = new OutfitPopulationApi();
 	public static get(): OutfitPopulationApi { return OutfitPopulationApi._instance; }
 
-	public static async getPopulation(worldID: number, time: Date): Promise<OutfitPopulation[]> {
-		const response: axios.AxiosResponse<any> = await axios.default.get(`/api/population/${worldID}/outfits?time=${time.toISOString()}`);
+	public static parse(elem: any): OutfitPopulation {
+		return { ...elem };
+	}
 
-		if (response.status != 200) {
-			return [];
-		}
-
-		return response.data;
+	public static async getPopulation(worldID: number, time: Date): Promise<Loading<OutfitPopulation[]>> {
+		return OutfitPopulationApi.get().readList(`/api/population/${worldID}/outfits?time=${time.toISOString()}`, OutfitPopulationApi.parse);
 	}
 }

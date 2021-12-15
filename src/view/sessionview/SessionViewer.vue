@@ -284,7 +284,7 @@
 
             bindSession: async function(): Promise<void> {
                 this.session = Loadable.loading();
-                this.session = await Loadable.promise(SessionApi.getBySessionID(this.sessionID));
+                this.session = await SessionApi.getBySessionID(this.sessionID);
 
                 if (this.session.state == "loaded") {
                     this.bindCharacter();
@@ -303,12 +303,12 @@
 
             bindExp: async function(): Promise<void> {
                 this.exp = Loadable.loading();
-                this.exp = await Loadable.promise(ExpStatApi.getBySessionID(this.sessionID));
+                this.exp = await ExpStatApi.getBySessionID(this.sessionID);
             },
 
             bindKills: async function(): Promise<void> {
                 this.killsOrDeaths = Loadable.loading();
-                this.killsOrDeaths = await Loadable.promise(KillStatApi.getSessionKills(this.sessionID));
+                this.killsOrDeaths = await KillStatApi.getSessionKills(this.sessionID);
             },
 
         },
