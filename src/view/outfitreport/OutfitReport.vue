@@ -205,6 +205,21 @@
                     <td>{{steps.items}}</td>
                 </tr>
 
+                <tr :class="[ !steps.control ? 'table-warning' : 'table-success' ]">
+                    <td>Getting captures/defenses</td>
+                    <td>{{steps.control}}</td>
+                </tr>
+
+                <tr :class="[ !steps.playerControl ? 'table-warning' : 'table-success' ]">
+                    <td>Getting player captures/defenses</td>
+                    <td>{{steps.playerControl}}</td>
+                </tr>
+
+                <tr :class="[ !steps.facility ? 'table-warning' : 'table-success' ]">
+                    <td>Getting facilities</td>
+                    <td>{{steps.facility}}</td>
+                </tr>
+
                 <tr v-if="isDone == true" class="table-success">
                     <td colspan="2">
                         All done!
@@ -216,13 +231,15 @@
         <div v-if="isDone == true">
             <report-class-breakdown :report="report"></report-class-breakdown>
 
-            <report-weapon-breakdown :report="report"></report-weapon-breakdown>
+            <report-control-breakdown :report="report"></report-control-breakdown>
 
             <report-support-breakdown :report="report"></report-support-breakdown>
 
             <report-winter :report="report"></report-winter>
 
             <report-outfit-versus :report="report"></report-outfit-versus>
+
+            <report-weapon-breakdown :report="report"></report-weapon-breakdown>
 
             <report-player-list :report="report"></report-player-list>
         </div>
@@ -241,6 +258,9 @@
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { Session } from "api/SessionApi";
+    import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
+    import { PlayerControlEvent, PlayerControlEventApi } from "api/PlayerControlEventApi";
+    import { PsFacility, MapApi } from "api/MapApi";
 
     import Report, { PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
@@ -253,6 +273,7 @@
     import ReportWeaponBreakdown from "./components/ReportWeaponBreakdown.vue";
     import ReportSupportBreakdown from "./components/ReportSupportBreakdown.vue";
     import ReportWinter from "./components/ReportWinter.vue";
+    import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
 
     import DateTimePicker from "components/DateTimePicker.vue";
     import InfoHover from "components/InfoHover.vue";
@@ -291,6 +312,9 @@
                     outfits: false as boolean,
                     items: false as boolean,
                     sessions: false as boolean,
+                    control: false as boolean,
+                    playerControl: false as boolean,
+                    facility: false as boolean,
                 },
 
                 connection: null as sR.HubConnection | null,
@@ -435,6 +459,9 @@
                 this.connection.on("UpdateOutfits", this.onUpdateOutfits);
                 this.connection.on("UpdateCharacters", this.onUpdateCharacters);
                 this.connection.on("UpdateSessions", this.onUpdateSessions);
+                this.connection.on("UpdateControls", this.onUpdateControls);
+                this.connection.on("UpdatePlayerControls", this.onUpdatePlayerControls);
+                this.connection.on("UpdateFacilities", this.onUpdateFacilities);
 
                 this.connection.start().then(() => {
                     if (this.generator != "") {
@@ -564,6 +591,24 @@
                 this.steps.exp = true;
             },
 
+            onUpdatePlayerControls: function(ev: PlayerControlEvent[]): void {
+                this.report.playerControl = ev.map(iter => PlayerControlEventApi.parse(iter));
+                this.steps.playerControl = true;
+            },
+
+            onUpdateControls: function(ev: FacilityControlEvent[]): void {
+                this.report.control = ev.map(iter => FacilityControlEventApi.parse(iter));
+                this.steps.control = true;
+            },
+
+            onUpdateFacilities: function(ev: PsFacility[]): void {
+                for (const fac of ev) {
+                    this.report.facilities.set(fac.facilityID, fac);
+                }
+                this.log(`Loaded ${this.report.facilities.size} facilities`);
+                this.steps.facility = true;
+            },
+
             onUpdateItems: function(items: PsItem[]): void {
                 for (const item of items) {
                     this.report.items.set(item.id, item);
@@ -613,7 +658,8 @@
             ReportOutfitVersus,
             ReportWeaponBreakdown,
             ReportSupportBreakdown,
-            ReportWinter
+            ReportWinter,
+            ReportControlBreakdown
         }
 
     });

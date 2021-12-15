@@ -4,6 +4,9 @@ import { PsItem } from "api/ItemApi";
 import { PsOutfit } from "api/OutfitApi";
 import { PsCharacter } from "api/CharacterApi";
 import { Session } from "api/SessionApi";
+import { FacilityControlEvent } from "api/FacilityControlEventApi";
+import { PlayerControlEvent } from "api/PlayerControlEventApi";
+import { PsFacility } from "api/MapApi";
 
 import Loadout from "util/Loadout";
 
@@ -28,6 +31,9 @@ export default class Report {
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public sessions: Session[] = [];
+	public control: FacilityControlEvent[] = [];
+	public playerControl: PlayerControlEvent[] = [];
+	public facilities: Map<number, PsFacility> = new Map();
 
 	public playerMetadata: Map<string, PlayerMetadata> = new Map();
 }

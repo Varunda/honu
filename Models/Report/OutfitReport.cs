@@ -35,6 +35,12 @@ namespace watchtower.Models.Report {
 
         public List<ExpEvent> Experience { get; set; } = new List<ExpEvent>();
 
+        public List<FacilityControlEvent> Control { get; set; } = new List<FacilityControlEvent>();
+
+        public List<PlayerControlEvent> PlayerControl { get; set; } = new List<PlayerControlEvent>();
+
+        public List<PsFacility> Facilities { get; set; } = new List<PsFacility>();
+
         public List<PsItem> Items { get; set; } = new List<PsItem>();
 
         public List<PsCharacter> Characters { get; set; } = new List<PsCharacter>();

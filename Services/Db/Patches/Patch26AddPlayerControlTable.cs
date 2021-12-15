@@ -26,6 +26,8 @@ namespace watchtower.Services.Db.Patches {
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_wt_ledger_player_control_id ON wt_ledger_player (control_id);
+
+                CREATE INDEX IF NOT EXISTS idx_wt_ledger_player_character_id ON wt_ledger_player (character_id);
             ");
 
             await cmd.ExecuteNonQueryAsync();

@@ -63,6 +63,12 @@ namespace watchtower.Code.Hubs {
         /// <param name="sessions">Sessions to be included in the report</param>
         Task UpdateSessions(List<Session> sessions);
 
+        Task UpdateControls(List<FacilityControlEvent> events);
+
+        Task UpdatePlayerControls(List<PlayerControlEvent> events);
+
+        Task UpdateFacilities(List<PsFacility> facilities);
+
         /// <summary>
         ///     Sent when an error occurs while generating the report. It is expected the client closes the connection after
         /// </summary>

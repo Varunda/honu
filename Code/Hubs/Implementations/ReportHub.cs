@@ -32,13 +32,17 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly IExpEventDbStore _ExpDb;
         private readonly ISessionDbStore _SessionDb;
         private readonly IReportDbStore _ReportDb;
+        private readonly FacilityControlDbStore _ControlDb;
+        private readonly FacilityPlayerControlDbStore _PlayerControlDb;
+        private readonly IFacilityDbStore _FacilityDb;
 
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
             ICharacterRepository charRepo, IOutfitRepository outfitRepo,
             IOutfitCollection outfitCensus, ISessionDbStore sessionDb,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             IItemRepository itemRepo, ICharacterDbStore charDb,
-            IReportDbStore reportDb) {
+            IReportDbStore reportDb, FacilityControlDbStore controlDb,
+            FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb) {
 
             _Logger = logger;
             _Cache = cache;
@@ -52,6 +56,9 @@ namespace watchtower.Code.Hubs.Implementations {
             _ExpDb = expDb;
             _SessionDb = sessionDb;
             _ReportDb = reportDb;
+            _ControlDb = controlDb;
+            _PlayerControlDb = playerControlDb;
+            _FacilityDb = facDb;
         }
 
         public async Task GenerateReport(string generator) {
@@ -67,6 +74,9 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateItems(report.Items);
                 await Clients.Caller.UpdateCharacters(report.Characters);
                 await Clients.Caller.UpdateOutfits(report.Outfits);
+                await Clients.Caller.UpdateControls(report.Control);
+                await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
+                await Clients.Caller.UpdateFacilities(report.Facilities);
 
                 return;
             }
@@ -110,6 +120,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 HashSet<string> outfits = new();
                 HashSet<string> chars = new();
                 HashSet<string> items = new();
+                HashSet<int> facilities = new();
 
                 foreach (string id in report.CharacterIDs) {
                     chars.Add(id);
@@ -127,6 +138,37 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 report.Deaths = killDeaths.Where(iter => iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.RevivedEventID == null).ToList();
                 await Clients.Caller.UpdateDeaths(report.Deaths);
+
+                // Get all the control events the players participated in
+                List<PlayerControlEvent> particpatedCaptures = await _PlayerControlDb.GetByCharacterIDsPeriod(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
+
+                // Then get the control event for each one, and all the players that participated in that control
+                List<FacilityControlEvent> control = new List<FacilityControlEvent>();
+                foreach (PlayerControlEvent ev in particpatedCaptures) {
+                    if (control.FirstOrDefault(iter => iter.ID == ev.ControlID) != null) {
+                        continue;
+                    }
+
+                    facilities.Add(ev.FacilityID);
+
+                    FacilityControlEvent? controlEvent = await _ControlDb.GetByID(ev.ControlID);
+                    if (controlEvent != null) {
+                        if (controlEvent.OutfitID != null && controlEvent.OutfitID != "0") {
+                            outfits.Add(controlEvent.OutfitID);
+                        }
+                        control.Add(controlEvent);
+                    }
+
+                    List<PlayerControlEvent> playerEvents = await _PlayerControlDb.GetByEventID(ev.ControlID);
+                    report.PlayerControl.AddRange(playerEvents);
+                    foreach (PlayerControlEvent pev in playerEvents) {
+                        chars.Add(pev.CharacterID);
+                    }
+                }
+                report.Control = control;
+                await Clients.Caller.UpdateControls(report.Control);
+
+                await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
 
                 List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
                 foreach (ExpEvent ev in expEvents) {
@@ -164,8 +206,15 @@ namespace watchtower.Code.Hubs.Implementations {
                         report.Outfits.Add(outfit);
                     }
                 }
-
                 await Clients.Caller.UpdateOutfits(report.Outfits);
+
+                foreach (int facID in facilities) {
+                    PsFacility? fac = await _FacilityDb.GetByFacilityID(facID);
+                    if (fac != null) {
+                        report.Facilities.Add(fac);
+                    }
+                }
+                await Clients.Caller.UpdateFacilities(report.Facilities);
 
                 _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
                     SlidingExpiration = TimeSpan.FromMinutes(30)

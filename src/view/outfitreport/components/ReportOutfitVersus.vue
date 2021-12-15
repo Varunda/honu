@@ -60,15 +60,15 @@
 
                     <td>
                         {{outfit.kills}}
-                        ({{outfit.kills / kills * 100 | locale(2)}}%)
+                        ({{outfit.kills / Math.max(1, kills) * 100 | locale(2)}}%)
                     </td>
                     <td>
                         {{outfit.deaths}}
-                        ({{outfit.deaths / deaths * 100 | locale(2)}}%)
+                        ({{outfit.deaths / Math.max(1, deaths) * 100 | locale(2)}}%)
                     </td>
                     <td>
                         {{outfit.assists}}
-                        ({{outfit.assists / assists * 100 | locale(2)}}%)
+                        ({{outfit.assists / Math.max(1, assists) * 100 | locale(2)}}%)
                     </td>
 
                     <td>
@@ -84,7 +84,7 @@
                     </td>
 
                     <td>
-                        {{outfit.headshotDeaths / outfit.deaths * 100 | locale(2)}}%
+                        {{outfit.headshotDeaths / Math.max(1, outfit.deaths) * 100 | locale(2)}}%
                     </td>
 
                     <td>

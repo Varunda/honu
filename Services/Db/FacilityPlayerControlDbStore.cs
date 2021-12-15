@@ -42,6 +42,46 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
         }
 
+        public async Task<List<PlayerControlEvent>> GetByCharacterIDPeriod(string charID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT p.*, l.old_faction_id, l.new_faction_id, l.world_id, l.zone_id
+                    FROM wt_ledger_player p
+                        INNER JOIN wt_ledger l ON l.id = p.control_id
+                    WHERE p.character_id = @CharacterID
+                        AND l.timestamp BETWEEN @PeriodStart AND @PeriodEnd
+            ");
+
+            cmd.AddParameter("CharaterID", charID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<PlayerControlEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
+        public async Task<List<PlayerControlEvent>> GetByCharacterIDsPeriod(List<string> IDs, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT p.*, l.old_faction_id, l.new_faction_id, l.world_id, l.zone_id
+                    FROM wt_ledger_player p
+                        INNER JOIN wt_ledger l ON l.id = p.control_id
+                    WHERE p.character_id = ANY(@IDs)
+                        AND l.timestamp BETWEEN @PeriodStart AND @PeriodEnd
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<PlayerControlEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
         public async Task InsertMany(long controlID, List<PlayerControlEvent> ev) {
             if (ev.Count == 0) {
                 return;

@@ -19,14 +19,18 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<FacilityControlDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
-        private readonly IDataReader<FacilityControlDbEntry> _ControlReader;
+        private readonly IDataReader<FacilityControlDbEntry> _ControlDbReader;
+        private readonly IDataReader<FacilityControlEvent> _ControlReader;
 
         public FacilityControlDbStore(ILogger<FacilityControlDbStore> logger,
-            IDbHelper helper, IDataReader<FacilityControlDbEntry> reader) {
+            IDbHelper helper, IDataReader<FacilityControlDbEntry> reader,
+            IDataReader<FacilityControlEvent> controlReader) {
 
             _Logger = logger;
             _DbHelper = helper;
-            _ControlReader = reader ?? throw new ArgumentNullException(nameof(reader));
+
+            _ControlDbReader = reader ?? throw new ArgumentNullException(nameof(reader));
+            _ControlReader = controlReader ?? throw new ArgumentNullException(nameof(controlReader));
         }
 
         /// <summary>
@@ -69,10 +73,26 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("Worlds", worldIDs);
             cmd.AddParameter("ZoneState", (int?)parameters.UnstableState);
 
-            List<FacilityControlDbEntry> entries = await _ControlReader.ReadList(cmd);
+            List<FacilityControlDbEntry> entries = await _ControlDbReader.ReadList(cmd);
             await conn.CloseAsync();
 
             return entries;
+        }
+
+        public async Task<FacilityControlEvent?> GetByID(long ID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_ledger
+                    WHERE id = @ID
+            ");
+
+            cmd.AddParameter("ID", ID);
+
+            FacilityControlEvent? ev = await _ControlReader.ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return ev;
         }
 
         /// <summary>

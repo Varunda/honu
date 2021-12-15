@@ -1,5 +1,4 @@
-﻿
-export class Block {
+﻿export class Block {
 	public entries: BlockEntry[] = [];
 	public total: number = 0;
 }

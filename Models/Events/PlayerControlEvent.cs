@@ -7,6 +7,11 @@ namespace watchtower.Models.Events {
 
     public class PlayerControlEvent {
 
+        /// <summary>
+        ///     What <see cref="FacilityControlEvent"/> this event is from
+        /// </summary>
+        public long ControlID { get; set; }
+
         public bool IsCapture { get; set; }
 
         public string CharacterID { get; set; } = "";

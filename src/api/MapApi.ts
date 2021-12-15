@@ -45,6 +45,12 @@ export class MapApi extends ApiWrapper<ZoneMap> {
 		};
 	}
 
+	public static parseFacility(elem: any): PsFacility {
+		return {
+			...elem
+		};
+	}
+
 	public static async getZone(zoneID: number): Promise<Loading<ZoneMap>> {
 		return MapApi.get().readSingle(`/api/map/${zoneID}`, MapApi.parse);
 	}

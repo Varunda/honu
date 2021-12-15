@@ -27,7 +27,7 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_facility
-                    WHERE facility_id = @FacilityID;
+                    WHERE id = @FacilityID;
             ");
 
             cmd.AddParameter("FacilityID", facilityID);

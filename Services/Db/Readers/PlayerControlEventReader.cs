@@ -14,6 +14,7 @@ namespace watchtower.Services.Db.Readers {
         public override PlayerControlEvent? ReadEntry(NpgsqlDataReader reader) {
             PlayerControlEvent ev = new PlayerControlEvent();
 
+            ev.ControlID = reader.GetInt64("control_id");
             ev.CharacterID = reader.GetString("character_id");
             ev.FacilityID = reader.GetInt32("facility_id");
             ev.OutfitID = reader.GetNullableString("outfit_id");

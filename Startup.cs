@@ -148,7 +148,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<KillEvent>, KillEventReader>();
             services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
             services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
-            services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlEntryReader>();
+            services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlDbEntryReader>();
             services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
             services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
             services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
@@ -157,6 +157,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<CharacterMetadata>, CharacterMetadataReader>();
             services.AddSingleton<IDataReader<LogoutBufferEntry>, LogoutBufferEntryReader>();
             services.AddSingleton<IDataReader<PlayerControlEvent>, PlayerControlEventReader>();
+            services.AddSingleton<IDataReader<FacilityControlEvent>, FacilityControlEventReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();

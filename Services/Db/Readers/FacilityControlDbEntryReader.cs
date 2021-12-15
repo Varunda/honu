@@ -8,7 +8,7 @@ using watchtower.Models.Db;
 
 namespace watchtower.Services.Db.Readers {
 
-    public class FacilityControlEntryReader : IDataReader<FacilityControlDbEntry> {
+    public class FacilityControlDbEntryReader : IDataReader<FacilityControlDbEntry> {
 
         public override FacilityControlDbEntry ReadEntry(NpgsqlDataReader reader) {
             FacilityControlDbEntry entry = new FacilityControlDbEntry();

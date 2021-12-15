@@ -117,7 +117,14 @@
                                         }
                                     }
                                 }
-                            }
+                            },
+                            layout: {
+                                padding: {
+                                    right: 40
+                                }
+                            },
+                            responsive: false,
+                            maintainAspectRatio: false
                         }
                     });
                 } catch (err: any) {
