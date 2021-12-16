@@ -62,6 +62,10 @@ namespace watchtower.Controllers {
         public IActionResult OutfitViewer(string outfitID) {
             return View();
         }
+        
+        public IActionResult OutfitFinder() {
+            return View();
+        }
 
         public async Task<IActionResult> Player(string name) {
             List<PsCharacter> chars = await _CharacterRepository.GetByName(name);

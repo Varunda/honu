@@ -58,6 +58,22 @@ namespace watchtower.Services.Db.Implementations {
             return outfits;
         }
 
+        public async Task<List<PsOutfit>> SearchByName(string name) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_outfit
+                    WHERE LOWER(NAME) LIKE @Name;
+            ");
+
+            cmd.AddParameter("Name", $"%{name.ToLower()}%");
+
+            List<PsOutfit> outfits = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return outfits;
+        }
+
         public async Task Upsert(PsOutfit outfit) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

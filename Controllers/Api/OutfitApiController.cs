@@ -27,6 +27,7 @@ namespace watchtower.Controllers.Api {
         private readonly IOutfitRepository _OutfitRepository;
         private readonly IOutfitCollection _OutfitCollection;
         private readonly ICharacterHistoryStatDbStore _CharacterHistoryStatDb;
+        private readonly IOutfitDbStore _OutfitDb;
         private readonly ICharacterDbStore _CharacterDb;
 
         private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
@@ -34,7 +35,7 @@ namespace watchtower.Controllers.Api {
         public OutfitApiController(ILogger<OutfitApiController> logger,
             IOutfitRepository outfitRepo, IOutfitCollection outfitCollection,
             ICharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
-            BackgroundCharacterWeaponStatQueue cacheQueue) {
+            BackgroundCharacterWeaponStatQueue cacheQueue, IOutfitDbStore outfitDb) {
 
             _Logger = logger;
 
@@ -42,6 +43,7 @@ namespace watchtower.Controllers.Api {
             _OutfitCollection = outfitCollection ?? throw new ArgumentNullException(nameof(outfitCollection));
             _CharacterDb = charDb;
             _CharacterHistoryStatDb = histDb;
+            _OutfitDb = outfitDb;
 
             _CacheQueue = cacheQueue;
         }
@@ -82,6 +84,20 @@ namespace watchtower.Controllers.Api {
         [HttpGet("tag/{outfitTag}")]
         public async Task<ApiResponse<List<PsOutfit>>> GetByTag(string outfitTag) {
             List<PsOutfit> outfits = await _OutfitRepository.GetByTag(outfitTag);
+            return ApiOk(outfits);
+        }
+
+        /// <summary>
+        ///     Search an outfit by name
+        /// </summary>
+        /// <param name="name">Name to search by</param>
+        /// <response code="200">
+        ///     The response will contain a list of all <see cref="PsOutfit"/> with <see cref="PsOutfit.Name"/>
+        ///     contained in <paramref name="name"/>
+        /// </response>
+        [HttpGet("search/{name}")]
+        public async Task<ApiResponse<List<PsOutfit>>> SearchByName(string name) {
+            List<PsOutfit> outfits = await _OutfitDb.SearchByName(name);
             return ApiOk(outfits);
         }
 

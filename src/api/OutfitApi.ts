@@ -123,6 +123,10 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return flat;
 	}
 
+	public static async searchByName(name: string): Promise<Loading<PsOutfit[]>> {
+		return OutfitApi.get().readList(`/api/outfit/search/${name}`, OutfitApi.parse);
+    }
+
 	public static async getByID(outfitID: string): Promise<Loading<PsOutfit>> {
 		return OutfitApi.get().readSingle(`/api/outfit/${outfitID}`, OutfitApi.parse);
 	}
