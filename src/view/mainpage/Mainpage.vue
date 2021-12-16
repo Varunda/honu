@@ -89,6 +89,26 @@
         <hr class="border" />
 
         <div>
+            <h1 class="d-inline-block mr-2">
+                Outfits
+            </h1>
+
+            <div>
+                <a href="/outfitfinder">
+                    Search
+                </a>
+
+                <a href="/report">
+                    Report
+                </a>
+
+                <a href="/outfitpop">
+                    Pop
+                </a>
+            </div>
+        </div>
+
+        <div>
             <a href="/report">
                 Outfit report
             </a>
