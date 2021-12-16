@@ -10,7 +10,7 @@ namespace watchtower.Models.Report {
 
     public class OutfitReport {
 
-        public long ID { get; set; }
+        public Guid ID { get; set; } = Guid.Empty;
 
         public string Generator { get; set; } = "";
 
@@ -18,6 +18,11 @@ namespace watchtower.Models.Report {
         ///     -1 means not set yet
         /// </summary>
         public short TeamID { get; set; } = -1;
+
+        /// <summary>
+        ///     Optional zone filter
+        /// </summary>
+        public uint? ZoneID { get; set; } = null;
 
         public List<string> Players { get; set; } = new List<string>();
 

@@ -80,6 +80,19 @@
                 default-sort-order="asc"
                 display-type="table">
 
+                <a-col sort-field="online">
+                    <a-header></a-header>
+
+                    <a-body v-slot="entry">
+                        <span v-if="entry.online == true" style="color: green;" title="Online">
+                            ●
+                        </span>
+                        <span v-else style="color: red;" title="Offline">
+                            ●
+                        </span>
+                    </a-body>
+                </a-col>
+
                 <a-col sort-field="prestigeRank">
                     <a-header>
                         <b>BR</b>

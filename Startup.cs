@@ -37,6 +37,7 @@ using watchtower.Services.Queues;
 using watchtower.Models.Queues;
 using honu_census;
 using Microsoft.Extensions.Logging;
+using watchtower.Models.Report;
 
 namespace watchtower {
 
@@ -137,7 +138,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterItemDbStore, CharacterItemDbStore>();
             services.AddSingleton<ICharacterStatDbStore, CharacterStatDbStore>();
             services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
-            services.AddSingleton<IReportDbStore, ReportDbStore>();
+            services.AddSingleton<ReportDbStore>();
             services.AddSingleton<CharacterMetadataDbStore>();
             services.AddSingleton<LogoutBufferDbStore>();
             services.AddSingleton<FacilityPlayerControlDbStore>();
@@ -158,6 +159,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<LogoutBufferEntry>, LogoutBufferEntryReader>();
             services.AddSingleton<IDataReader<PlayerControlEvent>, PlayerControlEventReader>();
             services.AddSingleton<IDataReader<FacilityControlEvent>, FacilityControlEventReader>();
+            services.AddSingleton<IDataReader<OutfitReport>, OutfitReportReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();

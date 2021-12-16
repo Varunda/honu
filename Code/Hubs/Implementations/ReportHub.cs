@@ -31,7 +31,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly IKillEventDbStore _KillDb;
         private readonly IExpEventDbStore _ExpDb;
         private readonly ISessionDbStore _SessionDb;
-        private readonly IReportDbStore _ReportDb;
+        private readonly ReportDbStore _ReportDb;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly FacilityPlayerControlDbStore _PlayerControlDb;
         private readonly IFacilityDbStore _FacilityDb;
@@ -41,7 +41,7 @@ namespace watchtower.Code.Hubs.Implementations {
             IOutfitCollection outfitCensus, ISessionDbStore sessionDb,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             IItemRepository itemRepo, ICharacterDbStore charDb,
-            IReportDbStore reportDb, FacilityControlDbStore controlDb,
+            ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb) {
 
             _Logger = logger;
@@ -62,9 +62,33 @@ namespace watchtower.Code.Hubs.Implementations {
         }
 
         public async Task GenerateReport(string generator) {
+            OutfitReport report = new OutfitReport();
+            report.Timestamp = DateTime.UtcNow;
+
+            try {
+                await ParseGenerator(generator, report);
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"Failed to parse generator '{generator}'");
+                await Clients.Caller.SendError(ex.ToString());
+                return;
+            }
+
+            _Logger.LogDebug($"ID {report.ID} from {generator}");
+
+            if (report.ID != Guid.Empty) {
+                _Logger.LogDebug($"Loading previous report {report.ID}");
+                OutfitReport? dbReport = await _ReportDb.GetByID(report.ID);
+
+                if (dbReport != null) {
+                    _Logger.LogDebug($"Overriding generator string '{generator}' into '{dbReport.Generator}'");
+                    generator = dbReport.Generator;
+                }
+            }
+
             string cacheKey = string.Format(CACHE_KEY, generator);
 
-            if (_Cache.TryGetValue(cacheKey, out OutfitReport report) == true) {
+            if (_Cache.TryGetValue(cacheKey, out report) == true) {
+                _Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");
                 await Clients.Caller.SendReport(report);
                 await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
                 await Clients.Caller.UpdateSessions(report.Sessions);
@@ -82,21 +106,20 @@ namespace watchtower.Code.Hubs.Implementations {
             }
 
             try {
-                report = new OutfitReport();
-                report.Generator = generator;
-                report.Timestamp = DateTime.UtcNow;
-
-                await Clients.Caller.SendReport(report);
-
                 try {
+                    report = new OutfitReport();
                     await ParseGenerator(generator, report);
+                    report.ID = Guid.NewGuid();
+                    report.Generator = generator;
                 } catch (Exception ex) {
-                    await Clients.Caller.SendError(ex.Message);
+                    await Clients.Caller.SendError(ex.ToString());
                     return;
                 }
 
+                await Clients.Caller.SendReport(report);
+
                 if (report.PeriodStart >= report.PeriodEnd) {
-                    await Clients.Caller.SendError($"The start period at {report.PeriodStart:u} is after the end {report.PeriodEnd:u}");
+                    await Clients.Caller.SendError($"The start period at {report.PeriodStart:u} cannot be after the end {report.PeriodEnd:u}");
                     return;
                 }
 
@@ -110,7 +133,7 @@ namespace watchtower.Code.Hubs.Implementations {
                     return;
                 }
 
-                report.ID = await _ReportDb.Insert(report);
+                await _ReportDb.Insert(report);
                 report.Players = report.CharacterIDs;
 
                 await Clients.Caller.SendReport(report);
@@ -167,13 +190,13 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
                 report.Control = control;
                 await Clients.Caller.UpdateControls(report.Control);
-
                 await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
 
                 List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(report.CharacterIDs, report.PeriodStart, report.PeriodEnd);
                 foreach (ExpEvent ev in expEvents) {
                     chars.Add(ev.SourceID);
 
+                    // some of the exp events have a character id in the other_id field, add those to the character set to load
                     if (Experience.OtherIDIsCharacterID(ev.ExperienceID)) {
                         chars.Add(ev.OtherID);
                     }
@@ -266,7 +289,9 @@ namespace watchtower.Code.Hubs.Implementations {
                 //_Logger.LogTrace($"STATE {Enum.GetName(state)} >>> {i} >>> {word}");
 
                 if (state == GenState.GET_START) {
-                    if (i == ',') {
+                    if (i == '#') {
+                        state = GenState.READING_ID;
+                    } else if (i == ',') {
                         if (int.TryParse(word, out int startEpoch) == false) {
                             throw new FormatException($"In state GET_START, needed to parse '{word}' into an int32");
                         }
@@ -323,6 +348,8 @@ namespace watchtower.Code.Hubs.Implementations {
                         state = GenState.READING_OUTFIT_ID;
                     } else if (i == '-') {
                         state = GenState.READING_SKIPPED;
+                    } else if (i == '#') {
+                        state = GenState.READING_ID;
                     } else {
                         throw new FormatException($"In state READ_NEXT, unhandled token {i}");
                     }
@@ -391,6 +418,22 @@ namespace watchtower.Code.Hubs.Implementations {
                     } else {
                         word += i;
                     }
+                } else if (state == GenState.READING_ID) {
+                    if (i == ';') {
+                        _Logger.LogDebug($"In state READING_ID> ID is '{word}'");
+                        bool valid = Guid.TryParse(word, out Guid id);
+                        if (valid == true) {
+                            report.ID = id;
+                        } else {
+                            throw new FormatException($"Failed to parse '{word}' to a valid Guid");
+                        }
+                        word = "";
+                        state = GenState.READ_NEXT;
+                    } else {
+                        word += i;
+                    }
+                } else {
+                    throw new ArgumentException($"Unchecked state {state}, current word: '{word}'");
                 }
             }
 
@@ -415,6 +458,8 @@ namespace watchtower.Code.Hubs.Implementations {
         READING_OUTFIT_ID,
 
         READING_SKIPPED,
+
+        READING_ID
 
     }
 

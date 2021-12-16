@@ -79,7 +79,7 @@ namespace watchtower.Services.Db.Implementations {
                 INSERT INTO wt_character (
                     id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on, time_create, time_last_login, time_last_save
                 ) VALUES (
-                    @ID, @Name, @WorldID, @FactionID, @outfitID, @BattleRank, @Prestige, @LastUpdatedOn, @DateCreated, @DateLastLogin, @DateLastSave
+                    @ID, @Name, @WorldID, @FactionID, @OutfitID, @BattleRank, @Prestige, @LastUpdatedOn, @DateCreated, @DateLastLogin, @DateLastSave
                 ) ON CONFLICT (id) DO
                     UPDATE SET name = @Name,
                         world_id = @WorldID,

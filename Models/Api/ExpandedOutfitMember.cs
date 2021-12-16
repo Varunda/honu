@@ -26,5 +26,10 @@ namespace watchtower.Models.Api {
         /// </summary>
         public List<PsCharacterHistoryStat>? Stats { get; set; } = null;
 
+        /// <summary>
+        ///     Is the character currently online or not?
+        /// </summary>
+        public bool Online { get; set; }
+
     }
 }

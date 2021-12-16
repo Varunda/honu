@@ -29,6 +29,7 @@ export class ExpandedOutfitMember {
 	public member: OutfitMember = new OutfitMember();
 	public character: PsCharacter | null = null;
 	public stats: CharacterHistoryStat[] = [];
+	public online: boolean = false;
 }
 
 export class FlatExpandedOutfitMember {
@@ -38,6 +39,7 @@ export class FlatExpandedOutfitMember {
 	public rank: string = "";
 	public rankOrder: number = 0;
 	public worldID: number | null = null;
+	public online: boolean = false;
 
 	public outfitTag: string | null = null;
 	public outfitName: string | null = null;
@@ -75,7 +77,8 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return {
 			member: OutfitApi.parseOutfitMember(elem.member),
 			character: elem.character == null ? null : CharacterApi.parse(elem.character),
-			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter))
+			stats: elem.stats == null ? null : elem.stats.map((iter: any) => CharacterHistoryStatApi.parse(iter)),
+			online: elem.online
 		};
 	}
 
@@ -88,6 +91,7 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		flat.rank = entry.member.rank;
 		flat.rankOrder = entry.member.rankOrder;
 		flat.worldID = entry.member.worldID;
+		flat.online = entry.online;
 
 		if (entry.character != null) {
 			flat.outfitTag = entry.character.outfitTag;

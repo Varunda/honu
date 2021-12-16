@@ -19,9 +19,9 @@
                 <td>Total</td>
                 <td>{{all.kills}}</td>
                 <td>{{all.timeAs | mduration}}</td>
-                <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale}}</td>
+                <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
                 <td>{{all.deaths}}</td>
-                <td>{{all.kills / Math.max(1, all.deaths) | locale}}</td>
+                <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
                 <td>{{all.count}}</td>
             </tr>
 
@@ -29,9 +29,9 @@
                 <td>Infiltrator</td>
                 <td>{{infil.kills}}</td>
                 <td>{{infil.timeAs | mduration}}</td>
-                <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale}}</td>
+                <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
                 <td>{{infil.deaths}}</td>
-                <td>{{infil.kills / Math.max(1, infil.deaths) | locale}}</td>
+                <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
                 <td>{{infil.count}}</td>
             </tr>
 
@@ -39,9 +39,9 @@
                 <td>Light Assault</td>
                 <td>{{lightAssault.kills}}</td>
                 <td>{{lightAssault.timeAs | mduration}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale}}</td>
+                <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
                 <td>{{lightAssault.deaths}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale}}</td>
+                <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
                 <td>{{lightAssault.count}}</td>
             </tr>
 
@@ -49,9 +49,9 @@
                 <td>Medic</td>
                 <td>{{medic.kills}}</td>
                 <td>{{medic.timeAs | mduration}}</td>
-                <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale}}</td>
+                <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
                 <td>{{medic.deaths}}</td>
-                <td>{{medic.kills / Math.max(1, medic.deaths) | locale}}</td>
+                <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
                 <td>{{medic.count}}</td>
             </tr>
 
@@ -59,9 +59,9 @@
                 <td>Engineer</td>
                 <td>{{engineer.kills}}</td>
                 <td>{{engineer.timeAs | mduration}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale}}</td>
+                <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
                 <td>{{engineer.deaths}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale}}</td>
+                <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
                 <td>{{engineer.count}}</td>
             </tr>
 
@@ -69,9 +69,9 @@
                 <td>Heavy</td>
                 <td>{{heavy.kills}}</td>
                 <td>{{heavy.timeAs | mduration}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale}}</td>
+                <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
                 <td>{{heavy.deaths}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale}}</td>
+                <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
                 <td>{{heavy.count}}</td>
             </tr>
 
@@ -79,9 +79,9 @@
                 <td>MAX</td>
                 <td>{{max.kills}}</td>
                 <td>{{max.timeAs | mduration}}</td>
-                <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale}}</td>
+                <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
                 <td>{{max.deaths}}</td>
-                <td>{{max.kills / Math.max(1, max.deaths) | locale}}</td>
+                <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
                 <td>{{max.count}}</td>
             </tr>
 

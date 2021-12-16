@@ -160,6 +160,11 @@ namespace watchtower.Controllers.Api {
                     Member = member
                 };
 
+                lock (CharacterStore.Get().Players) {
+                    CharacterStore.Get().Players.TryGetValue(member.CharacterID, out TrackedPlayer? player);
+                    ex.Online = player?.Online ?? false;
+                }
+
                 bool hasCached = false;
 
                 // Load the character from the lookup table

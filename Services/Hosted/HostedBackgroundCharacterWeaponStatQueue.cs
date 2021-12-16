@@ -103,10 +103,6 @@ namespace watchtower.Services.Hosted {
                         };
                     }
 
-                    if (entry.CharacterID == "5428345446430485649") {
-                        _Logger.LogTrace($"{entry.CharacterID} metadata = LastUpdated: {metadata.LastUpdated:u}, NotFoundCount: {metadata.NotFoundCount}");
-                    }
-
                     // 3 conditions to check:
                     //      1. The character was not found in census. This could be from a deleted character, so increment the not found count
                     //      2. The character was found in census, but the metadata is AFTER the last time the character logged in,
@@ -179,10 +175,6 @@ namespace watchtower.Services.Hosted {
                     }
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopped {SERVICE_NAME} with {_Queue.Count()} left");
-                } finally {
-                    if (entry.CharacterID == "5428345446430485649") {
-                        _Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to cache {entry.CharacterID}");
-                    }
                 }
             }
         }

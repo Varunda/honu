@@ -9,7 +9,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Npgsql.TypeHandling;
 using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Events;

@@ -108,18 +108,6 @@
             </div>
         </div>
 
-        <div>
-            <a href="/report">
-                Outfit report
-            </a>
-        </div>
-
-        <div>
-            <a href="/outfitpop">
-                Outfit pop
-            </a>
-        </div>
-
         <hr class="border" />
 
         <div>

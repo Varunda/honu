@@ -11,7 +11,7 @@ import { PsFacility } from "api/MapApi";
 import Loadout from "util/Loadout";
 
 export default class Report {
-	public ID: number = 0;
+	public id: string = ""; // guid
 	public generator: string = "";
 	public timestamp: Date = new Date();
 	public periodStart: Date = new Date();

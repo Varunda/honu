@@ -293,6 +293,8 @@
                 isDone: false as boolean,
                 isMaking: false as boolean,
 
+                isGuidReport: false as boolean,
+
                 periodStartInput: "" as string,
                 periodStart: new Date() as Date,
                 periodEndInput: "" as string,
@@ -395,7 +397,7 @@
             searchTag: async function(): Promise<void> {
                 const outfits: Loading<PsOutfit[]> = await OutfitApi.getByTag(this.search.outfitTag);
                 if (outfits.state != "loaded") {
-                    this.log(``);
+                    this.log(`failed to a single outfit with [${this.search.outfitTag}]`);
                     return;
                 }
 
@@ -512,6 +514,10 @@
                     this.isDone = true;
                     this.isNew = false;
 
+                    this.genB64 = btoa(`#${this.report.id};`);
+                    this.report.generator = this.genB64;
+                    history.pushState({}, "", `/report/${this.genB64}`);
+
                     const metadatas: PlayerMetadata[] = PlayerMetadataGenerator.generate(this.report);
                     for (const metadata of metadatas) {
                         this.report.playerMetadata.set(metadata.ID, metadata);
@@ -551,7 +557,7 @@
             },
 
             onSendReport: function(report: Report): void {
-                this.report.ID = report.ID;
+                this.report.id = report.id;
                 // No idea why, but these dates don't include the Z, while the timestamp does
                 this.report.periodEnd = new Date(report.periodEnd + "Z");
                 this.report.periodStart = new Date(report.periodStart + "Z");

@@ -16,6 +16,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Remove="node_modules\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="Views\Home\OutfitPop.cshtml" />
   </ItemGroup>
 
@@ -26,15 +30,15 @@
   <ItemGroup>
     <PackageReference Include="DaybreakGames.Census" Version="3.1.0" />
     <PackageReference Include="DSharpPlus" Version="4.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.11" />
-    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.1.2">
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.1" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="4.5.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="morelinq" Version="3.3.2" />
-    <PackageReference Include="Npgsql" Version="5.0.7" />
+    <PackageReference Include="Npgsql" Version="6.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-    <PackageReference Include="Websocket.Client" Version="4.3.21" />
+    <PackageReference Include="Websocket.Client" Version="4.4.43" />
   </ItemGroup>
 
   <ItemGroup>
