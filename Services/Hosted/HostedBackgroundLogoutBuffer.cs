@@ -129,7 +129,7 @@ namespace watchtower.Services.Hosted {
                                             await _LogoutDb.Upsert(entry, stoppingToken);
                                         } else {
                                             // Character has been found, don't put back into the queue
-                                            _Logger.LogTrace($"Character {c.Name}/{c.WorldID} has {diff} time span, putting into weapon queue. Took {-(entry.Timestamp - DateTime.UtcNow)} to update, {entry.NotFoundCount}");
+                                            //_Logger.LogTrace($"Character {c.Name}/{c.WorldID} has {diff} time span, putting into weapon queue. Took {-(entry.Timestamp - DateTime.UtcNow)} to update, {entry.NotFoundCount}");
                                             Interlocked.Increment(ref left);
                                             await _LogoutDb.Delete(entry.CharacterID, stoppingToken);
                                             _WeaponQueue.Queue(entry.CharacterID);
@@ -144,7 +144,7 @@ namespace watchtower.Services.Hosted {
                                 queue.TryDequeue(out entry);
                             }
 
-                            _Logger.LogTrace($"Task handled {count}/{entries.Count} entries");
+                            //_Logger.LogTrace($"Task handled {count}/{entries.Count} entries");
                         }, stoppingToken);
                     }
 

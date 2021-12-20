@@ -27,7 +27,7 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterMetadataDbStore _MetadataDb;
 
         private readonly ICharacterCollection _CharacterCensus;
-        private readonly ICharacterDbStore _CharacterDb;
+        private readonly CharacterDbStore _CharacterDb;
         private readonly ICharacterWeaponStatCollection _WeaponCensus;
         private readonly ICharacterWeaponStatDbStore _WeaponStatDb;
         private readonly ICharacterHistoryStatCollection _HistoryCensus;
@@ -50,7 +50,7 @@ namespace watchtower.Services.Hosted {
             ICharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
             ICharacterStatCollection statCensus, ICharacterStatDbStore statDb,
             CharacterMetadataDbStore metadataDb, ICharacterCollection charColl,
-            ICharacterDbStore charDb) {
+            CharacterDbStore charDb) {
 
             _Logger = logger;
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));

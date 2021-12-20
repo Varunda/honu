@@ -185,12 +185,7 @@ namespace watchtower.Realtime {
 
                 timer.Restart();
                 await _FacilityPlayerDb.InsertMany(ID, events);
-                /*
-                foreach (PlayerControlEvent playerEvent in events) {
-                    await _FacilityPlayerDb.Insert(ID, playerEvent);
-                }
-                */
-                _Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
+                //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
                 //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
         }

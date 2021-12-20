@@ -28,13 +28,13 @@ namespace watchtower.Controllers.Api {
         private readonly IOutfitCollection _OutfitCollection;
         private readonly ICharacterHistoryStatDbStore _CharacterHistoryStatDb;
         private readonly IOutfitDbStore _OutfitDb;
-        private readonly ICharacterDbStore _CharacterDb;
+        private readonly CharacterDbStore _CharacterDb;
 
         private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
             IOutfitRepository outfitRepo, IOutfitCollection outfitCollection,
-            ICharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
+            CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
             BackgroundCharacterWeaponStatQueue cacheQueue, IOutfitDbStore outfitDb) {
 
             _Logger = logger;
@@ -136,6 +136,10 @@ namespace watchtower.Controllers.Api {
             List<PsCharacter> listCharacters = await _CharacterDb.GetByIDs(characterIDs);
             Dictionary<string, PsCharacter> charMap = new Dictionary<string, PsCharacter>(members.Count); // lookup table
             foreach (PsCharacter c in listCharacters) {
+                if (c.DateLastLogin == DateTime.MinValue) {
+                    _CacheQueue.Queue(c.ID);
+                }
+
                 charMap.Add(c.ID, c);
             }
 

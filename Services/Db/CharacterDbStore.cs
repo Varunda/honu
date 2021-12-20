@@ -8,20 +8,27 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class CharacterDbStore : IDataReader<PsCharacter>, ICharacterDbStore {
+    public class CharacterDbStore : IDataReader<PsCharacter> {
 
         private readonly ILogger<CharacterDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
 
         public CharacterDbStore(ILogger<CharacterDbStore> logger,
-                IDbHelper helper) {
+                IDbHelper helper, IBackgroundCharacterCacheQueue queue) {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
         }
 
+        /// <summary>
+        ///     Get a single character by ID
+        /// </summary>
+        /// <param name="charID">ID of the character to get</param>
+        /// <returns>
+        ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>
+        /// </returns>
         public async Task<PsCharacter?> GetByID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -39,6 +46,14 @@ namespace watchtower.Services.Db.Implementations {
             return c;
         }
 
+        /// <summary>
+        ///     Get characters base on name (case-insensitive)
+        /// </summary>
+        /// <param name="name">Name of the character to get</param>
+        /// <returns>
+        ///     A list of <see cref="PsCharacter"/> with <see cref="PsCharacter.Name"/>
+        ///     of <paramref name="name"/>, ignoring case
+        /// </returns>
         public async Task<List<PsCharacter>> GetByName(string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -56,6 +71,14 @@ namespace watchtower.Services.Db.Implementations {
             return c;
         }
 
+        /// <summary>
+        ///     Get a list of characters from DB by a list of IDs
+        /// </summary>
+        /// <param name="IDs">List of character IDs to get</param>
+        /// <returns>
+        ///     A list of <see cref="PsCharacter"/> that have a <see cref="PsCharacter.ID"/>
+        ///     as an element of <paramref name="IDs"/>
+        /// </returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -73,6 +96,13 @@ namespace watchtower.Services.Db.Implementations {
             return c;
         }
 
+        /// <summary>
+        ///     Update/Insert a <see cref="PsCharacter"/>
+        /// </summary>
+        /// <remarks>
+        ///     A character is updated if the insert fails due to a duplicate key
+        /// </remarks>
+        /// <param name="character">Parameters used to insert/update</param>
         public async Task Upsert(PsCharacter character) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -109,6 +139,14 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        /// <summary>
+        ///     Search for characters by name (case-insensitive)
+        /// </summary>
+        /// <param name="name">Name to search for</param>
+        /// <returns>
+        ///     A list of all <see cref="PsCharacter"/> where <paramref name="name"/>
+        ///     is contained in <see cref="PsCharacter.Name"/>
+        /// </returns>
         public async Task<List<PsCharacter>> SearchByName(string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -119,6 +157,25 @@ namespace watchtower.Services.Db.Implementations {
             ");
 
             cmd.AddParameter("Name", $"%{name.ToLower()}%");
+
+            List<PsCharacter> c = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return c;
+        }
+
+        /// <summary>
+        ///     Internal method
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<PsCharacter>> GetMissingDates() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
+                    FROM wt_character c
+                        LEFT JOIN wt_outfit o ON c.outfit_id = o.id
+                    WHERE c.time_create IS NULL;
+            ");
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();

@@ -125,7 +125,7 @@ namespace watchtower {
             services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
             services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
             services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
-            services.AddSingleton<ICharacterDbStore, CharacterDbStore>();
+            services.AddSingleton<CharacterDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<IItemDbStore, ItemDbStore>();
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
@@ -210,6 +210,7 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
             services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
             services.AddHostedService<HostedBackgroundLogoutBuffer>();
+            //services.AddHostedService<CharacterDatesFixerStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

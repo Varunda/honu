@@ -18,7 +18,7 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly ILogger<CharacterRepository> _Logger;
         private readonly IMemoryCache _Cache;
 
-        private readonly ICharacterDbStore _Db;
+        private readonly CharacterDbStore _Db;
         private readonly ICharacterCollection _Census;
 
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
@@ -36,7 +36,7 @@ namespace watchtower.Services.Repositories.Implementations {
         private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
-                ICharacterDbStore db, ICharacterCollection census,
+                CharacterDbStore db, ICharacterCollection census,
                 BackgroundCharacterWeaponStatQueue queue) {
 
             _Logger = logger;

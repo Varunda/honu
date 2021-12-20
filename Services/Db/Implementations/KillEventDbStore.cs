@@ -70,6 +70,8 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("IsHeadshot", ev.IsHeadshot);
             cmd.AddParameter("Timestamp", ev.Timestamp);
 
+            //_Logger.LogTrace($"{ev.Timestamp.Kind} {ev.Timestamp}");
+
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
         }
@@ -85,7 +87,7 @@ namespace watchtower.Services.Db.Implementations {
                                 FROM wt_kills 
                                 WHERE timestamp >= (NOW() at time zone 'utc' - interval '50 seconds')
                                     AND killed_character_id = @RevivedCharacterID
-                        );
+                        )
             ");
             // revives can only happen for 30 seconds, then 50 for lag and waiting to accept it
 
@@ -102,7 +104,7 @@ namespace watchtower.Services.Db.Implementations {
                 WITH top_killers AS (
                     SELECT attacker_character_id
                         FROM wt_kills
-                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        WHERE (timestamp AT TIME ZONE 'utc') >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id = @FactionID
                             AND attacker_team_id != killed_team_id
@@ -112,13 +114,13 @@ namespace watchtower.Services.Db.Implementations {
                 ), evs AS (
                     SELECT ID, attacker_character_id, killed_character_id, revived_event_id, attacker_team_id, killed_team_id
                         FROM wt_kills
-                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        WHERE (timestamp AT TIME ZONE 'utc') >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
                 ), exp as (
                     SELECT id, source_character_id
                         FROM wt_exp 
-                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        WHERE (timestamp AT TIME ZONE 'utc') >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND source_team_id = @FactionID
                             AND (experience_id = 2 OR experience_id = 3 OR experience_id = 371 OR experience_id = 372)

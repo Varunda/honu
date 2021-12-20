@@ -33,7 +33,7 @@
         </div>
 
         <div v-if="outfit.state == 'loaded'">
-            <table class="table table-sm w-auto">
+            <table class="table table-sm w-auto d-inline-block mr-2" style="vertical-align: top;">
                 <tr>
                     <td><b>Tag</b></td>
                     <td>{{outfit.data.tag}}</td>
@@ -58,6 +58,21 @@
                 </tr>
 
                 <tr>
+                    <td><b>Leader</b></td>
+                    <td>
+                        <a :href="'/c/' + outfit.data.leaderID">
+                            <span v-if="leader.state == 'loading'">
+                                &lt;loading...&gt;
+                            </span>
+                            <span v-else-if="leader.state == 'loaded'">
+                                {{leader.data | characterName}}
+                            </span>
+                        </a>
+
+                    </td>
+                </tr>
+
+                <tr>
                     <td><b>Census</b></td>
                     <td>
                         <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/outfit?outfit_id=' + outfit.data.id" target="_blank">
@@ -65,6 +80,41 @@
                             <span class="fas fa-external-link-alt"></span>
                         </a>
                     </td>
+                </tr>
+            </table>
+
+            <table v-if="members.state == 'loaded'" class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
+                <tr>
+                    <td><b>Members</b></td>
+                    <td>{{outfit.data.memberCount}}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Online</b></td>
+                    <td>{{onlineCount}}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Active</b></td>
+                    <td>
+                        {{active.length}}
+                        ({{active.length / members.data.length * 100 | locale(2)}}%)
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><b>Recent KPM</b></td>
+                    <td>{{recentKPM | locale(2)}}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Recent KD</b></td>
+                    <td>{{recentKD | locale(2)}}</td>
+                </tr>
+
+                <tr>
+                    <td><b>Recent SPM</b></td>
+                    <td>{{recentSPM | locale(2)}}</td>
                 </tr>
             </table>
         </div>
@@ -205,8 +255,10 @@
     import "filters/FactionNameFilter";
     import "filters/TimeAgoFilter";
     import "filters/WorldNameFilter";
+    import "filters/CharacterName";
 
     import { PsOutfit, OutfitApi, FlatExpandedOutfitMember } from "api/OutfitApi";
+    import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
@@ -222,7 +274,7 @@
                     --
                 </span>
                 <span v-else>
-                    {{data | locale}}
+                    {{data | locale(2)}}
                 </span>
             </span>
         `
@@ -237,8 +289,12 @@
             return {
                 outfitID: "0" as string,
 
-                outfit: Loadable.idle() as Loading<PsOutfit | null>,
+                leader: Loadable.idle() as Loading<PsCharacter>,
+
+                outfit: Loadable.idle() as Loading<PsOutfit>,
                 members: Loadable.idle() as Loading<FlatExpandedOutfitMember[]>,
+
+                activeCutoff: 1000 * 60 * 60 * 24 * 30 as number
             }
         },
 
@@ -273,7 +329,9 @@
                 this.outfit = await OutfitApi.getByID(this.outfitID);
 
                 if (this.outfit.state == "loaded") {
-                    document.title = `Honu / Outfit / ${this.outfit.data?.name}`;
+                    document.title = `Honu / Outfit / ${this.outfit.data.name}`;
+                    this.leader = Loadable.loading();
+                    this.leader = await CharacterApi.getByID(this.outfit.data.leaderID);
                 } else {
                     document.title = `Honu / Outfit / <not found>`;
                 }
@@ -283,6 +341,62 @@
                 this.members = Loadable.loading();
                 this.members = await OutfitApi.getMembersFlat(this.outfitID);
             }
+
+        },
+
+        computed: {
+            onlineCount: function(): number {
+                if (this.members.state != "loaded") {
+                    return -1;
+                }
+                return this.members.data.filter(iter => iter.online == true).length;
+            },
+
+            active: function(): FlatExpandedOutfitMember[] {
+                if (this.members.state != "loaded") {
+                    return [];
+                }
+
+                const now: number = new Date().getTime();
+
+                return this.members.data.filter(iter => {
+                    return iter.lastLogin != null
+                        && (now - iter.lastLogin.getTime()) <= this.activeCutoff
+                });
+            },
+
+            recentKPM: function(): number {
+                if (this.members.state != "loaded") {
+                    return -1;
+                }
+
+                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentKPM != null && iter.recentKPM > 0);
+                const acc: number = set.reduce((acc, iter) => acc += iter.recentKPM!, 0);
+
+                return acc / set.length;
+            },
+
+            recentKD: function(): number {
+                if (this.members.state != "loaded") {
+                    return -1;
+                }
+
+                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentKD != null && iter.recentKD > 0);
+                const acc: number = set.reduce((acc, iter) => acc += iter.recentKD!, 0);
+
+                return acc / set.length;
+            },
+
+            recentSPM: function(): number {
+                if (this.members.state != "loaded") {
+                    return -1;
+                }
+
+                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentSPM != null && iter.recentSPM > 0);
+                const acc: number = set.reduce((acc, iter) => acc += iter.recentSPM!, 0);
+
+                return acc / set.length;
+            },
 
         },
 
