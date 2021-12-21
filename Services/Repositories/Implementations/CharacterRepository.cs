@@ -129,30 +129,34 @@ namespace watchtower.Services.Repositories.Implementations {
 
             if (census.Count > 0) {
                 new Thread(async () => {
-                    Task[] inserts = new Task[census.Count];
+                    try {
+                        Task[] inserts = new Task[census.Count];
 
-                    // Get all characters that exist in census, but don't exist in DB
-                    for (int i = 0; i < census.Count; ++i) {
-                        PsCharacter c = census[i];
-                        PsCharacter? d = db.FirstOrDefault(iter => iter.ID == c.ID);
-                        if (d == null) {
-                            // Add the task for inserting them into the DB
-                            inserts[i] = _Db.Upsert(c);
-                            _Queue.Queue(c.ID);
-                        } else {
-                            // Else they already exist in DB, no need to get
-                            inserts[i] = Task.CompletedTask;
+                        // Get all characters that exist in census, but don't exist in DB
+                        for (int i = 0; i < census.Count; ++i) {
+                            PsCharacter c = census[i];
+                            PsCharacter? d = db.FirstOrDefault(iter => iter.ID == c.ID);
+                            if (d == null) {
+                                // Add the task for inserting them into the DB
+                                inserts[i] = _Db.Upsert(c);
+                                _Queue.Queue(c.ID);
+                            } else {
+                                // Else they already exist in DB, no need to get
+                                inserts[i] = Task.CompletedTask;
 
-                            // If the DateLastLogin is the min value, it means the value isn't set, so lets get it from Census
-                            // Usually this would be dumb, cause then you'd have a bunch of deleted characters clogging the queue,
-                            //      but since this is an iteration thru a list that comes from Census, the character must exist,
-                            //      it's just that that character hasn't been updated in the DB yet
-                            if (d.DateLastLogin == DateTime.MinValue) {
-                                _Queue.Queue(d.ID);
+                                // If the DateLastLogin is the min value, it means the value isn't set, so lets get it from Census
+                                // Usually this would be dumb, cause then you'd have a bunch of deleted characters clogging the queue,
+                                //      but since this is an iteration thru a list that comes from Census, the character must exist,
+                                //      it's just that that character hasn't been updated in the DB yet
+                                if (d.DateLastLogin == DateTime.MinValue) {
+                                    _Queue.Queue(d.ID);
+                                }
                             }
                         }
+                        await Task.WhenAll(inserts);
+                    } catch (Exception ex) {
+                        _Logger.LogError(ex, $"Error while performing update on {census.Count} characters");
                     }
-                    await Task.WhenAll(inserts);
                 }).Start();
             }
 
