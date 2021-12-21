@@ -69,7 +69,7 @@
             </tbody>
 
             <tbody v-else-if="characters.state == 'loaded' && characters.data.length > 0">
-                <tr v-for="c of characters.data" :key="c.id" :class="[ c.name.toLowerCase() == lastSearch.toLowerCase() ? 'table-info' : '' ]">
+                <tr v-for="(c, index) of characters.data" :key="c.id" :class="[ scrollIndex == index ? 'table-info' : '' ]">
                     <td>
                         <span v-if="c.outfitID != null" :title="'\'' + c.outfitName + '\''">
                             [{{c.outfitTag}}]
