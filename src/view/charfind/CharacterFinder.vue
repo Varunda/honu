@@ -40,6 +40,7 @@
                     <td>Character</td>
                     <td>Battle rank</td>
                     <td>Outfit</td>
+                    <td>Faction</td>
                     <td>Server</td>
                     <td>Last login</td>
                     <td>
@@ -94,15 +95,20 @@
                     </td>
 
                     <td>
+                        {{c.factionID | faction}}
+
+                    <td>
                         {{c.worldID | world}}
                     </td>
 
                     <td>
                         <span v-if="c.dateLastLogin.getTime() == defaultTime || c.dateLastLogin.getTime() == 0">
                             {{c.lastUpdated | moment}}
+                            ({{c.lastUpdated | timeAgo}})
                         </span>
                         <span v-else>
                             {{c.dateLastLogin | moment}}
+                            ({{c.dateLastLogin | timeAgo}})
                         </span>
                     </td>
 
@@ -145,6 +151,8 @@
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
+    import "filters/FactionNameFilter";
+    import "filters/TimeAgoFilter";
 
     import { Loading, Loadable } from "Loading";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
