@@ -27,7 +27,11 @@
 
                 <tr>
                     <td>Server</td>
-                    <td>{{character.worldID | world}}</td>
+                    <td>
+                        <a :href="'/view/' + character.worldID" title="View realtime stats">
+                            {{character.worldID | world}}
+                        </a>
+                    </td>
                 </tr>
 
                 <tr>

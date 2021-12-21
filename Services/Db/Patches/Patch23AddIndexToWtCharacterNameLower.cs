@@ -17,6 +17,8 @@ namespace watchtower.Services.Db.Patches {
             // https://niallburkley.com/blog/index-columns-for-like-in-postgres/
             using NpgsqlConnection conn = helper.Connection();
             using NpgsqlCommand cmd = await helper.Command(conn, @"
+                CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
                 CREATE INDEX IF NOT EXISTS idx_wt_character_name_lower
                     ON wt_character USING gin (name_lower gin_trgm_ops);
             ");

@@ -35,9 +35,10 @@ using System.IO;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using watchtower.Services.Queues;
 using watchtower.Models.Queues;
-using honu_census;
 using Microsoft.Extensions.Logging;
 using watchtower.Models.Report;
+
+//using honu_census;
 
 namespace watchtower {
 
@@ -71,7 +72,7 @@ namespace watchtower {
                 services.AddSingleton<ICensusStreamClient, OfflineCensusStreamClient>();
             }
 
-            services.AddSingleton<HonuCensus>();
+            //services.AddSingleton<HonuCensus>();
 
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;

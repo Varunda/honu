@@ -1,7 +1,6 @@
 ﻿using DaybreakGames.Census;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
-using honu_census;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,6 +11,8 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
+//using honu_census;
+
 namespace watchtower.Services.Census.Implementations {
 
     public class CharacterCollection : ICharacterCollection {
@@ -19,19 +20,20 @@ namespace watchtower.Services.Census.Implementations {
         private readonly ILogger<CharacterCollection> _Logger;
 
         private readonly ICensusQueryFactory _Census;
-        private readonly HonuCensus _HCensus;
+        //private readonly HonuCensus _HCensus;
 
         private const int BATCH_SIZE = 50;
 
         public CharacterCollection(ILogger<CharacterCollection> logger,
-                ICensusQueryFactory factory, HonuCensus hc) {
+                ICensusQueryFactory factory) { //, HonuCensus hc) {
 
             _Logger = logger;
             _Census = factory;
-            _HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
+            //_HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
         }
 
         public async Task<PsCharacter?> GetByName(string name) {
+            /*
             _HCensus.AddServiceId("asdf");
             honu_census.Models.CensusQuery q = _HCensus.New("character");
             q.WhereEquals("name.first_lower", name.ToLower());
@@ -41,6 +43,7 @@ namespace watchtower.Services.Census.Implementations {
                 PsCharacter? cc = _ParseCharacter(ttt);
                 return cc;
             }
+            */
 
             PsCharacter? c = await _GetCharacterFromCensusByName(name, true);
 
