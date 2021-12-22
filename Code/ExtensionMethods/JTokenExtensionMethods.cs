@@ -15,6 +15,10 @@ namespace watchtower.Code.ExtensionMethods {
             return token.Value<string?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}', from {token}");
         }
 
+        public static int GetRequiredInt32(this JToken token, string name) {
+            return token.Value<int?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}', from {token}");
+        }
+
         public static string GetString(this JToken token, string name, string fallback) {
             return token.Value<string?>(name) ?? fallback;
         }

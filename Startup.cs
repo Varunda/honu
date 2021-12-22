@@ -144,6 +144,10 @@ namespace watchtower {
             services.AddSingleton<LogoutBufferDbStore>();
             services.AddSingleton<FacilityPlayerControlDbStore>();
             services.AddSingleton<CharacterFriendDbStore>();
+            services.AddSingleton<DirectiveDbStore>();
+            services.AddSingleton<DirectiveTreeDbStore>();
+            services.AddSingleton<DirectiveTierDbStore>();
+            services.AddSingleton<DirectiveTreeCategoryDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -163,6 +167,10 @@ namespace watchtower {
             services.AddSingleton<IDataReader<FacilityControlEvent>, FacilityControlEventReader>();
             services.AddSingleton<IDataReader<OutfitReport>, OutfitReportReader>();
             services.AddSingleton<IDataReader<CharacterFriend>, CharacterFriendReader>();
+            services.AddSingleton<IDataReader<PsDirective>, DirectiveReader>();
+            services.AddSingleton<IDataReader<DirectiveTree>, DirectiveTreeReader>();
+            services.AddSingleton<IDataReader<DirectiveTier>, DirectiveTierReader>();
+            services.AddSingleton<IDataReader<DirectiveTreeCategory>, DirectiveTreeCategoryReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -175,11 +183,21 @@ namespace watchtower {
             services.AddSingleton<ICharacterItemCollection, CharacterItemCollection>();
             services.AddSingleton<ICharacterStatCollection, CharacterStatCollection>();
             services.AddSingleton<CharacterFriendCollection>();
+            services.AddSingleton<DirectiveCollection>();
+            services.AddSingleton<DirectiveTreeCollection>();
+            services.AddSingleton<DirectiveTierCollection>();
+            services.AddSingleton<DirectiveTreeCategoryCollection>();
+            services.AddSingleton<CharacterDirectiveCollection>();
 
             // Census reader
             services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
             services.AddSingleton<ICensusReader<PsCharacterStat>, CensusCharacterStatReader>();
             services.AddSingleton<ICensusReader<OutfitMember>, CensusOutfitMemberReader>();
+            services.AddSingleton<ICensusReader<PsDirective>, CensusDirectiveReader>();
+            services.AddSingleton<ICensusReader<DirectiveTree>, CensusDirectiveTreeReader>();
+            services.AddSingleton<ICensusReader<DirectiveTier>, CensusDirectiveTierReader>();
+            services.AddSingleton<ICensusReader<DirectiveTreeCategory>, CensusDirectiveTreeCategoryReader>();
+            services.AddSingleton<ICensusReader<CharacterDirective>, CensusCharacterDirectiveReader>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
@@ -194,6 +212,10 @@ namespace watchtower {
             services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
             services.AddSingleton<WorldPopulationRepository, WorldPopulationRepository>();
             services.AddSingleton<CharacterFriendRepository>();
+            services.AddSingleton<DirectiveRepository>();
+            services.AddSingleton<DirectiveTreeRepository>();
+            services.AddSingleton<DirectiveTierRepository>();
+            services.AddSingleton<DirectiveTreeCategoryRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
@@ -206,16 +228,17 @@ namespace watchtower {
             services.AddHostedService<WorldOverviewBroadcastService>();
             services.AddHostedService<CharacterStatGeneratorPopulator>();
             services.AddHostedService<ZoneStateStartupService>();
+            services.AddHostedService<FacilityPopulatorStartupService>();
+            services.AddHostedService<DirectiveCollectionsPopulator>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
-            services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
             services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
             services.AddHostedService<HostedBackgroundLogoutBuffer>();
-            services.AddHostedService<CharacterDatesFixerStartupService>();
+            //services.AddHostedService<CharacterDatesFixerStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

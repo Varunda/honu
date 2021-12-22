@@ -11,5 +11,7 @@ namespace watchtower.Models.Census {
 
         public short FactionID { get; set; }
 
+        public uint ZoneID { get; set; }
+
     }
 }

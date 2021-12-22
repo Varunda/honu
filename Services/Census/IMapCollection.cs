@@ -9,6 +9,8 @@ namespace watchtower.Services.Census {
 
     public interface IMapCollection {
 
+        Task<List<PsMap>> GetZoneMaps(short worldID, List<uint> zoneIDs);
+
         /// <summary>
         ///     Get who owns each base in a zone
         /// </summary>
@@ -43,7 +45,7 @@ namespace watchtower.Services.Census {
         public static async Task<short?> GetZoneMapOwner(this IMapCollection census, short worldID, uint zoneID) {
             List<PsMap> map = await census.GetZoneMap(worldID, zoneID);
 
-            return census._GetZoneMapOwner(worldID, zoneID, map);
+            return census.GetZoneMapOwner(worldID, zoneID, map);
         }
 
         /// <summary>
@@ -54,7 +56,7 @@ namespace watchtower.Services.Census {
         /// <param name="zoneID"></param>
         /// <param name="map"></param>
         /// <returns></returns>
-        private static short? _GetZoneMapOwner(this IMapCollection census, short worldID, uint zoneID, List<PsMap> map) {
+        public static short? GetZoneMapOwner(this IMapCollection census, short worldID, uint zoneID, List<PsMap> map) {
             int total = map.Count;
 
             Dictionary<short, int> counts = new();
@@ -113,7 +115,7 @@ namespace watchtower.Services.Census {
                 }
             }
 
-            if (_GetZoneMapOwner(census, worldID, zoneID, map) == null) {
+            if (GetZoneMapOwner(census, worldID, zoneID, map) == null) {
                 return UnstableState.UNLOCKED;
             }
 

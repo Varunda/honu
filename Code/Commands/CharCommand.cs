@@ -33,6 +33,7 @@ namespace watchtower.Commands {
         private readonly ICharacterStatCollection _StatCollection;
         private readonly ICharacterStatDbStore _StatDb;
         private readonly CharacterFriendRepository _CharFriend;
+        private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
@@ -48,6 +49,7 @@ namespace watchtower.Commands {
             _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
             _CharFriend = services.GetRequiredService<CharacterFriendRepository>();
+            _CharacterDirectiveCensus = services.GetRequiredService<CharacterDirectiveCollection>();
             _Queue = services.GetRequiredService<BackgroundCharacterWeaponStatQueue>();
         }
 
@@ -162,6 +164,22 @@ namespace watchtower.Commands {
             foreach (CharacterFriend friend in friends) {
                 _Logger.LogInformation($"{friend.FriendID}");
             }
+        }
+
+        public async Task Dirs(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<CharacterDirective> dirs = await _CharacterDirectiveCensus.GetByCharacterID(c.ID);
+            string s = $"{c.Name} has {dirs.Count} entries, and {dirs.Where(iter => iter.CompletionDate != null).Count()} done:\n";
+            foreach (CharacterDirective dir in dirs) {
+                s += $"{dir.DirectiveID} {dir.CompletionDate:u}\n";
+            }
+
+            _Logger.LogInformation(s);
         }
 
     }

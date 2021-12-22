@@ -28,6 +28,45 @@ namespace watchtower.Services.Census.Implementations {
             //_HCensus = hc;
         }
 
+        public async Task<List<PsMap>> GetZoneMaps(short worldID, List<uint> zoneIDs) {
+            CensusQuery query = _Census.Create("map");
+            query.Where("world_id").Equals(worldID);
+            foreach (uint zoneID in zoneIDs) {
+                query.Where("zone_ids").Equals(zoneID);
+            }
+
+            List<PsMap> regions = new List<PsMap>();
+
+            try {
+                IEnumerable<JToken> result = await query.GetListAsync();
+
+                foreach (JToken zone in result) {
+                    uint zoneID = zone.GetZoneID();
+
+                    JToken? row = zone.SelectToken("Row");
+                    if (row == null) {
+                        _Logger.LogError("");
+                        continue;
+                    }
+
+                    foreach (JToken entry in row) {
+                        JToken? data = entry.SelectToken("RowData");
+                        if (data != null) {
+                            PsMap region = _Parse(data);
+                            region.ZoneID = zoneID;
+                            regions.Add(region);
+                        }
+                    }
+                }
+            } catch (TaskCanceledException) {
+                _Logger.LogInformation($"Cancelled task for getting regions for {worldID} [{string.Join(", ", zoneIDs)}]");
+            } catch (Exception ex) {
+                _Logger.LogError(ex, "Failed to get regions for {worldID} [{zoneID}]", worldID, string.Join(", ", zoneIDs));
+            }
+
+            return regions;
+        }
+
         public async Task<List<PsMap>> GetZoneMap(short worldID, uint zoneID) {
             CensusQuery query = _Census.Create("map");
             query.Where("world_id").Equals(worldID);
