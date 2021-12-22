@@ -36,6 +36,8 @@ namespace watchtower.Services.Hosted {
         private readonly ICharacterItemDbStore _ItemDb;
         private readonly ICharacterStatCollection _StatCensus;
         private readonly ICharacterStatDbStore _StatDb;
+        private readonly CharacterFriendCollection _FriendCensus;
+        private readonly CharacterFriendDbStore _FriendDb;
 
         private static int _Count = 0;
 
@@ -50,7 +52,8 @@ namespace watchtower.Services.Hosted {
             ICharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
             ICharacterStatCollection statCensus, ICharacterStatDbStore statDb,
             CharacterMetadataDbStore metadataDb, ICharacterCollection charColl,
-            CharacterDbStore charDb) {
+            CharacterDbStore charDb, CharacterFriendCollection friendCensus,
+            CharacterFriendDbStore friendDb) {
 
             _Logger = logger;
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
@@ -67,6 +70,8 @@ namespace watchtower.Services.Hosted {
             _ItemDb = itemDb;
             _StatCensus = statCensus;
             _StatDb = statDb;
+            _FriendCensus = friendCensus;
+            _FriendDb = friendDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -152,6 +157,13 @@ namespace watchtower.Services.Hosted {
                             _StatCensus.GetByID(entry.CharacterID).ContinueWith(async result => {
                                 if (result.Result.Count > 0) {
                                     await _StatDb.Set(entry.CharacterID, result.Result);
+                                }
+                            }),
+
+                            // Get the character's friends
+                            _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
+                                if (result.Result.Count > 0) {
+                                    await _FriendDb.Set(entry.CharacterID, result.Result);
                                 }
                             })
                         );

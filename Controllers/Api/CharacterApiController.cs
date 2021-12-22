@@ -9,8 +9,10 @@ using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
 using watchtower.Models.Db;
+using watchtower.Services;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
@@ -32,12 +34,16 @@ namespace watchtower.Controllers.Api {
         private readonly IItemRepository _ItemRepository;
         private readonly ICharacterStatRepository _StatRepository;
         private readonly CharacterMetadataDbStore _MetadataDb;
+        private readonly CharacterFriendRepository _CharacterFriendRepository;
+
+        private readonly BackgroundCharacterWeaponStatQueue _UpdateQueue;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
             ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
             ICharacterItemRepository charItemRepo, IItemRepository itemRepo,
-            ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb) {
+            ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
+            CharacterFriendRepository charFriendRepo, BackgroundCharacterWeaponStatQueue queue) {
 
             _Logger = logger;
 
@@ -49,6 +55,8 @@ namespace watchtower.Controllers.Api {
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
             _StatRepository = statRepo ?? throw new ArgumentNullException(nameof(statRepo));
             _MetadataDb = metadataDb ?? throw new ArgumentNullException(nameof(metadataDb));
+            _CharacterFriendRepository = charFriendRepo;
+            _UpdateQueue = queue;
         }
 
         /// <summary>
@@ -284,6 +292,43 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(md);
+        }
+
+        /// <summary>
+        ///     Get the friends of a character
+        /// </summary>
+        /// <remarks>
+        ///     If the character does not exist, no 404 will be returned
+        ///     <br/><br/>
+        ///     
+        ///     The friends will be expanded, with the full PsCharacter information available
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <response code="200">
+        ///     The response will contain a list of the character's friends
+        /// </response>
+        [HttpGet("character/{charID}/friends")]
+        public async Task<ApiResponse<List<ExpandedCharacterFriend>>> GetFriends(string charID) {
+            List<CharacterFriend> friends = await _CharacterFriendRepository.GetByCharacterID(charID);
+
+            List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(friends.Select(iter => iter.FriendID).ToList());
+
+            foreach (CharacterFriend friend in friends) {
+                ExpandedCharacterFriend ex = new ExpandedCharacterFriend() {
+                    Entry = friend,
+                    Friend = chars.FirstOrDefault(iter => iter.ID == friend.FriendID)
+                };
+
+                if (ex.Friend == null) {
+                    _UpdateQueue.Queue(friend.FriendID);
+                }
+
+                expanded.Add(ex);
+            }
+
+            return ApiOk(expanded);
         }
 
         /// <summary>

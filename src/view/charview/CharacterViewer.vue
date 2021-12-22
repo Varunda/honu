@@ -70,6 +70,11 @@
                         Items
                     </a>
                 </li>
+                <li class="nav-item" @click="selectTab('friends')">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'friends' }">
+                        Friends
+                    </a>
+                </li>
             </ul>
 
             <keep-alive>
@@ -100,6 +105,7 @@
     import CharacterWeaponStats from "./components/CharacterWeaponStats.vue";
     import CharacterSessions from "./components/CharacterSessions.vue";
     import CharacterItems from "./components/CharacterItems.vue";
+    import CharacterFriends from "./components/CharacterFriends.vue";
 
     export const CharacterViewer = Vue.extend({
         beforeMount: function(): void {
@@ -135,6 +141,8 @@
                     this.selectedComponent = "CharacterSessions";
                 } else if (lower == "items") {
                     this.selectedComponent = "CharacterItems";
+                } else if (lower == "friends") {
+                    this.selectedComponent = "CharacterFriends";
                 } else {
                     throw `Unhandled tab selected '${lower}'`;
                 }
@@ -184,6 +192,7 @@
             CharacterWeaponStats,
             CharacterSessions,
             CharacterItems,
+            CharacterFriends,
         }
     });
     export default CharacterViewer;

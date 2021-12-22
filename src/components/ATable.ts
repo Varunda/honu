@@ -3,6 +3,8 @@
 //import DateTimePicker from "components/DateTimePicker.vue";
 import { Loading, Loadable } from "Loading";
 
+import Busy from "components/Busy.vue";
+
 const ValidFilterTypes: string[] = [ "string", "number", "date", "boolean" ];
 
 interface ConditionSettings {
@@ -292,7 +294,18 @@ export const ATable = Vue.extend({
 
         } else if (this.entries.state == "loading") {
 			rows.push(createElement("tr", [
-				createElement("td", { attrs: { "colspan": `${this.nodes.columns.length}` } }, ["Loading..."])
+                createElement("td", {
+                    attrs: {
+                        "colspan": `${this.nodes.columns.length}`
+                    }
+                }, [
+                    "Loading...",
+                    createElement(Busy, {
+                        staticStyle: {
+                            "height": "1.5rem"
+                        }
+                    })
+                ])
 			]));
 
             this.$emit("rerender", Loadable.loading());
@@ -1169,6 +1182,10 @@ export const ATable = Vue.extend({
         pageOffset: function(): number {
             return Math.floor(this.paging.page / 10) * 10;
         },
+    },
+
+    components: {
+        Busy
     }
 });
 export default ATable;

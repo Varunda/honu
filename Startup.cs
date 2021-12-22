@@ -143,6 +143,7 @@ namespace watchtower {
             services.AddSingleton<CharacterMetadataDbStore>();
             services.AddSingleton<LogoutBufferDbStore>();
             services.AddSingleton<FacilityPlayerControlDbStore>();
+            services.AddSingleton<CharacterFriendDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -161,6 +162,7 @@ namespace watchtower {
             services.AddSingleton<IDataReader<PlayerControlEvent>, PlayerControlEventReader>();
             services.AddSingleton<IDataReader<FacilityControlEvent>, FacilityControlEventReader>();
             services.AddSingleton<IDataReader<OutfitReport>, OutfitReportReader>();
+            services.AddSingleton<IDataReader<CharacterFriend>, CharacterFriendReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -172,6 +174,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterHistoryStatCollection, CharacterHistoryStatCollection>();
             services.AddSingleton<ICharacterItemCollection, CharacterItemCollection>();
             services.AddSingleton<ICharacterStatCollection, CharacterStatCollection>();
+            services.AddSingleton<CharacterFriendCollection>();
 
             // Census reader
             services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
@@ -190,6 +193,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();
             services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
             services.AddSingleton<WorldPopulationRepository, WorldPopulationRepository>();
+            services.AddSingleton<CharacterFriendRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist

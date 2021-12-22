@@ -203,8 +203,6 @@
 
                 ev.preventDefault();
                 this.lastSearch = this.characters.data[this.scrollIndex].name;
-
-                console.log(ev);
             },
 
             openEnter: function(ev: KeyboardEvent): void {

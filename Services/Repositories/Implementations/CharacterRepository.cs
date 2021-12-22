@@ -56,7 +56,7 @@ namespace watchtower.Services.Repositories.Implementations {
 
                 // Only update the character if it's expired
                 // If the DateLastLogin is the MinValue, it means the column was null from the DB, and it needs to be pulled from census
-                if (character == null || await HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue) {
+                if (character == null || HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue) {
                     // If we have the character in DB, but not in Census, return it from DB
                     //      Useful if census is down, or a character has been deleted
                     PsCharacter? censusChar = await _Census.GetByID(charID);
@@ -79,6 +79,67 @@ namespace watchtower.Services.Repositories.Implementations {
             }
 
             return character;
+        }
+
+        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
+            List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
+
+            int total = IDs.Count;
+
+            int inCache = 0;
+            foreach (string ID in IDs.ToList()) {
+                string cacheKey = string.Format(CACHE_KEY_ID, ID);
+
+                if (_Cache.TryGetValue(cacheKey, out PsCharacter? character) == true) {
+                    if (character != null) {
+                        chars.Add(character);
+                        IDs.Remove(ID);
+                        ++inCache;
+                    }
+                }
+            }
+
+            int inDb = 0;
+            int inExpired = 0;
+            foreach (string ID in IDs.ToList()) {
+                List<PsCharacter> db = await _Db.GetByIDs(IDs);
+
+                foreach (PsCharacter c in db) {
+                    // Only ignore DB entires if there are less than 100 entries to read from,
+                    //      else people with lots of characters take FOREVER to load cause of how
+                    //      many characters would be expired, and how many we then have to load from Census  
+                    if (HasExpired(c) == false && total < 100) {
+                        IDs.Remove(c.ID);
+                        chars.Add(c);
+                        ++inDb;
+                    } else {
+                        _Queue.Queue(c.ID);
+                        ++inExpired;
+                    }
+                }
+            }
+
+            int inCensus = 0;
+            foreach (string ID in IDs.ToList()) {
+                List<PsCharacter> census = await _Census.GetByIDs(IDs);
+
+                foreach (PsCharacter c in census) {
+                    IDs.Remove(c.ID);
+                    chars.Add(c);
+                    ++inCensus;
+                }
+            }
+
+            foreach (PsCharacter c in chars) {
+                string cacheKey = string.Format(CACHE_KEY_ID, c.ID);
+                _Cache.Set(cacheKey, c, new MemoryCacheEntryOptions() {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
+                });
+            }
+
+            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} characters. In cache: {inCache}, db: {inDb}, census: {inCensus}, left: {IDs.Count}");
+
+            return chars;
         }
 
         public async Task<List<PsCharacter>> GetByName(string name) {
@@ -180,8 +241,8 @@ namespace watchtower.Services.Repositories.Implementations {
             _Cache.Remove(string.Format(CACHE_KEY_NAME, character.Name));
         }
         
-        private Task<bool> HasExpired(PsCharacter character) {
-            return Task.FromResult(character.LastUpdated < DateTime.UtcNow + TimeSpan.FromHours(24));
+        private bool HasExpired(PsCharacter character) {
+            return character.LastUpdated < DateTime.UtcNow + TimeSpan.FromHours(24);
         }
 
     }

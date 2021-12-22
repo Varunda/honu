@@ -32,6 +32,7 @@ namespace watchtower.Commands {
         private readonly ICharacterItemRepository _CharItemRepository;
         private readonly ICharacterStatCollection _StatCollection;
         private readonly ICharacterStatDbStore _StatDb;
+        private readonly CharacterFriendRepository _CharFriend;
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
@@ -46,6 +47,7 @@ namespace watchtower.Commands {
             _CharItemRepository = services.GetRequiredService<ICharacterItemRepository>();
             _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
+            _CharFriend = services.GetRequiredService<CharacterFriendRepository>();
             _Queue = services.GetRequiredService<BackgroundCharacterWeaponStatQueue>();
         }
 
@@ -144,6 +146,21 @@ namespace watchtower.Commands {
 
             foreach (PsCharacterStat stat in stats) {
                 _Logger.LogInformation($"{JToken.FromObject(stat)}");
+            }
+        }
+
+        public async Task Friends(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<CharacterFriend> friends = await _CharFriend.GetByCharacterID(c.ID);
+            _Logger.LogInformation($"{c.Name}/{c.ID} has {friends.Count} friends");
+
+            foreach (CharacterFriend friend in friends) {
+                _Logger.LogInformation($"{friend.FriendID}");
             }
         }
 
