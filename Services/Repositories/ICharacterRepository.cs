@@ -19,7 +19,7 @@ namespace watchtower.Services.Repositories {
         /// </returns>
         Task<PsCharacter?> GetByID(string charID);
 
-        Task<List<PsCharacter>> GetByIDs(List<string> IDs);
+        Task<List<PsCharacter>> GetByIDs(List<string> IDs, bool fast = false);
 
         /// <summary>
         ///     Get a <see cref="PsCharacter"/> by name

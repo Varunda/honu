@@ -81,11 +81,12 @@ namespace watchtower.Services.Repositories.Implementations {
             return character;
         }
 
-        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
+        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, bool fast = false) {
             List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
 
             int total = IDs.Count;
 
+            Stopwatch timer = Stopwatch.StartNew();
             int inCache = 0;
             foreach (string ID in IDs.ToList()) {
                 string cacheKey = string.Format(CACHE_KEY_ID, ID);
@@ -98,17 +99,22 @@ namespace watchtower.Services.Repositories.Implementations {
                     }
                 }
             }
+            long toCache = timer.ElapsedMilliseconds;
+            timer.Restart();
+
+            _Logger.LogDebug($"Took {toCache}ms to load from cache");
 
             int inDb = 0;
             int inExpired = 0;
-            foreach (string ID in IDs.ToList()) {
-                List<PsCharacter> db = await _Db.GetByIDs(IDs);
+            List<PsCharacter> db = await _Db.GetByIDs(IDs);
 
-                foreach (PsCharacter c in db) {
-                    // Only ignore DB entires if there are less than 100 entries to read from,
-                    //      else people with lots of characters take FOREVER to load cause of how
-                    //      many characters would be expired, and how many we then have to load from Census  
-                    if (HasExpired(c) == false && total < 100) {
+            foreach (PsCharacter c in db) {
+                if (fast == true) {
+                    IDs.Remove(c.ID);
+                    chars.Add(c);
+                    ++inDb;
+                } else {
+                    if (HasExpired(c) == false) {
                         IDs.Remove(c.ID);
                         chars.Add(c);
                         ++inDb;
@@ -118,9 +124,13 @@ namespace watchtower.Services.Repositories.Implementations {
                     }
                 }
             }
+            long toDb = timer.ElapsedMilliseconds;
+            timer.Restart();
+
+            _Logger.LogDebug($"Took {toDb}ms to load from db");
 
             int inCensus = 0;
-            foreach (string ID in IDs.ToList()) {
+            if (fast == false) {
                 List<PsCharacter> census = await _Census.GetByIDs(IDs);
 
                 foreach (PsCharacter c in census) {
@@ -128,7 +138,13 @@ namespace watchtower.Services.Repositories.Implementations {
                     chars.Add(c);
                     ++inCensus;
                 }
+            } else {
+                foreach (string ID in IDs) {
+                    _Queue.Queue(ID);
+                }
             }
+            long toCensus = timer.ElapsedMilliseconds;
+            _Logger.LogDebug($"Took {toCensus}ms to load from census");
 
             foreach (PsCharacter c in chars) {
                 string cacheKey = string.Format(CACHE_KEY_ID, c.ID);
@@ -137,7 +153,8 @@ namespace watchtower.Services.Repositories.Implementations {
                 });
             }
 
-            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} characters. In cache: {inCache}, db: {inDb}, census: {inCensus}, left: {IDs.Count}");
+            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} characters. "
+                + $"In cache: {inCache} in {toCache}ms, db: {inDb} in {toDb}ms, census: {inCensus} in {toCensus}ms, left: {IDs.Count}");
 
             return chars;
         }

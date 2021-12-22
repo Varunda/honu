@@ -313,7 +313,7 @@ namespace watchtower.Controllers.Api {
 
             List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(friends.Select(iter => iter.FriendID).ToList());
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(friends.Select(iter => iter.FriendID).ToList(), fast: true);
 
             foreach (CharacterFriend friend in friends) {
                 ExpandedCharacterFriend ex = new ExpandedCharacterFriend() {

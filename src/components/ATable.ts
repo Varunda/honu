@@ -1072,13 +1072,26 @@ export const ATable = Vue.extend({
             }
 
             if (this.sorting.type == "unknown" && this.sorting.field != "") {
-                const first: object = this.entries.data[0];
+                let first: object = this.entries.data[0];
                 if (!first.hasOwnProperty(this.sorting.field)) {
                     throw `Cannot sort on '${this.sorting.field}', is not in ${JSON.stringify(first)}`;
                 }
 
-                const obj: any = first;
-                const val: any = obj[this.sorting.field];
+                let val: any = undefined;
+                for (let i = 0; i < this.entries.data.length; ++i) {
+                    const obj: any = this.entries.data[i];
+                    val = obj[this.sorting.field];
+
+                    if (val != null && val != undefined) {
+                        console.log(`a-table> Took ${i} iterations to find a non null value on field ${this.sorting.field}`);
+                        break;
+                    }
+                }
+
+                if (val == null || val == undefined) {
+                    console.error(`Found all null or undefined values on ${this.sorting.field}`);
+                }
+
                 let type: string = typeof val;
                 if (type == "object") {
                     if (val instanceof Date) {
@@ -1093,7 +1106,7 @@ export const ATable = Vue.extend({
                 } else if (type == "date") {
                     this.sorting.type = "date";
                 } else {
-                    throw `Unchecked type ${type} from field ${this.sorting.field}, expected 'string' | 'number' | 'date'`;
+                    throw `Unchecked type '${type}' from field ${this.sorting.field}, expected 'string' | 'number' | 'date'`;
                 }
             }
 
