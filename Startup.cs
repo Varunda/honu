@@ -215,7 +215,7 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
             services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
             services.AddHostedService<HostedBackgroundLogoutBuffer>();
-            //services.AddHostedService<CharacterDatesFixerStartupService>();
+            services.AddHostedService<CharacterDatesFixerStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

@@ -67,7 +67,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
 
                     if (i % 10 == 0) {
-                        _Logger.LogDebug($"{SERVICE_NAME}> Performed block {i}, did {i * 50} - {(i + 1) * 50}, missing {missing}/{slice.Count}");
+                        _Logger.LogDebug($"{SERVICE_NAME}> Performed block {i}/{blocks}, did {i * 50} - {(i + 1) * 50}, missing {missing}/{slice.Count}");
                     }
                 }
 
