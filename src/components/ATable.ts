@@ -1108,11 +1108,13 @@ export const ATable = Vue.extend({
                         const av: number | null = a[this.sorting.field];
                         const bv: number | null = b[this.sorting.field];
 
-                        if (!av && bv) { // 1 = B > A
+                        // Because !0 == true in JS, explicitly check for 0 values,
+                        //      which are handled differently from null or undefined values
+                        if (!av && av != 0 && (bv || bv == 0)) { // 1 = B > A
                             return 1;
-                        } else if (av && !bv) {
+                        } else if ((av || av == 0) && !bv && bv != 0) {
                             return -1;
-                        } else if (!av && !bv) {
+                        } else if (!av && av != 0 && !bv && bv != 0) {
                             return 0;
                         } else {
                             return av! - bv!;
