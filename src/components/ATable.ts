@@ -1090,24 +1090,48 @@ export const ATable = Vue.extend({
             if (this.sorting.field != "") {
                 if (this.sorting.type == "string") {
                     baseFunc = (a: any, b: any): number => {
-                        const av: string = a[this.sorting.field];
-                        const bv: string = b[this.sorting.field];
+                        const av: string | null = a[this.sorting.field];
+                        const bv: string | null = b[this.sorting.field];
 
-                        return av.localeCompare(bv);
+                        if (!av && bv) { // 1 = B > A
+                            return 1;
+                        } else if (av && !bv) {
+                            return -1;
+                        } else if (!av && !bv) {
+                            return 0;
+                        } else {
+                            return av!.localeCompare(bv!);
+                        }
                     }
                 } else if (this.sorting.type == "number") {
                     baseFunc = (a: any, b: any): number => {
-                        const av: number = a[this.sorting.field];
-                        const bv: number = b[this.sorting.field];
+                        const av: number | null = a[this.sorting.field];
+                        const bv: number | null = b[this.sorting.field];
 
-                        return av - bv;
+                        if (!av && bv) { // 1 = B > A
+                            return 1;
+                        } else if (av && !bv) {
+                            return -1;
+                        } else if (!av && !bv) {
+                            return 0;
+                        } else {
+                            return av! - bv!;
+                        }
                     }
                 } else if (this.sorting.type == "date") {
                     baseFunc = (a: any, b: any): number => {
-                        const av: number = a[this.sorting.field].getTime();
-                        const bv: number = b[this.sorting.field].getTime();
+                        const av: Date | null = a[this.sorting.field].getTime();
+                        const bv: Date | null = b[this.sorting.field].getTime();
 
-                        return av - bv;
+                        if (!av && bv) { // 1 = B > A
+                            return 1;
+                        } else if (av && !bv) {
+                            return -1;
+                        } else if (!av && !bv) {
+                            return 0;
+                        } else {
+                            return av!.getTime() - bv!.getTime();
+                        }
                     }
                 } else {
                     throw `Unchecked sorting type: '${this.sorting.type}'. Expected 'string' | 'number' | 'date'`;
