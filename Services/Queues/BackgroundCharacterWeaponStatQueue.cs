@@ -33,6 +33,12 @@ namespace watchtower.Services.Queues {
         /// <param name="character">Character to be updated</param>
         public void Queue(PsCharacter character) {
             _Items.Enqueue(new CharacterUpdateQueueEntry() { CharacterID = character.ID, CensusCharacter = character });
+            _Signal.Release();
+        }
+
+        public void Queue(CharacterUpdateQueueEntry entry) {
+            _Items.Enqueue(entry);
+            _Signal.Release();
         }
 
         /// <summary>

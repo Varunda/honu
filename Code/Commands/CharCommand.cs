@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.CharacterViewer;
@@ -34,6 +35,9 @@ namespace watchtower.Commands {
         private readonly ICharacterStatDbStore _StatDb;
         private readonly CharacterFriendRepository _CharFriend;
         private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
+        private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
+        private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
+        private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
@@ -50,6 +54,9 @@ namespace watchtower.Commands {
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
             _CharFriend = services.GetRequiredService<CharacterFriendRepository>();
             _CharacterDirectiveCensus = services.GetRequiredService<CharacterDirectiveCollection>();
+            _CharacterDirectiveTreeCensus = services.GetRequiredService<CharacterDirectiveTreeCollection>();
+            _CharacterDirectiveTierCensus = services.GetRequiredService<CharacterDirectiveTierCollection>();
+            _CharacterDirectiveObjectiveCensus = services.GetRequiredService<CharacterDirectiveObjectiveCollection>();
             _Queue = services.GetRequiredService<BackgroundCharacterWeaponStatQueue>();
         }
 
@@ -63,7 +70,13 @@ namespace watchtower.Commands {
                 nameOrId = c.ID;
             }
 
-            _Queue.Queue(nameOrId);
+            CharacterUpdateQueueEntry entry = new() {
+                CensusCharacter = null,
+                CharacterID = nameOrId,
+                Force = true
+            };
+
+            _Queue.Queue(entry);
         }
 
         public async Task Search(string name) {
@@ -174,10 +187,11 @@ namespace watchtower.Commands {
             }
 
             List<CharacterDirective> dirs = await _CharacterDirectiveCensus.GetByCharacterID(c.ID);
+            List<CharacterDirectiveTree> trees = await _CharacterDirectiveTreeCensus.GetByCharacterID(c.ID);
+            List<CharacterDirectiveTier> tiers = await _CharacterDirectiveTierCensus.GetByCharacterID(c.ID);
+            List<CharacterDirectiveObjective> objs = await _CharacterDirectiveObjectiveCensus.GetByCharacterID(c.ID);
+
             string s = $"{c.Name} has {dirs.Count} entries, and {dirs.Where(iter => iter.CompletionDate != null).Count()} done:\n";
-            foreach (CharacterDirective dir in dirs) {
-                s += $"{dir.DirectiveID} {dir.CompletionDate:u}\n";
-            }
 
             _Logger.LogInformation(s);
         }

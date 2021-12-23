@@ -38,6 +38,14 @@ namespace watchtower.Services.Hosted {
         private readonly ICharacterStatDbStore _StatDb;
         private readonly CharacterFriendCollection _FriendCensus;
         private readonly CharacterFriendDbStore _FriendDb;
+        private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
+        private readonly CharacterDirectiveDbStore _CharacterDirectiveDb;
+        private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
+        private readonly CharacterDirectiveTreeDbStore _CharacterDirectiveTreeDb;
+        private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
+        private readonly CharacterDirectiveTierDbStore _CharacterDirectiveTierDb;
+        private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
+        private readonly CharacterDirectiveObjectiveDbStore _CharacterDirectiveObjectiveDb;
 
         private static int _Count = 0;
 
@@ -53,6 +61,10 @@ namespace watchtower.Services.Hosted {
             ICharacterStatCollection statCensus, ICharacterStatDbStore statDb,
             CharacterMetadataDbStore metadataDb, ICharacterCollection charColl,
             CharacterDbStore charDb, CharacterFriendCollection friendCensus,
+            CharacterDirectiveCollection charDirCensus, CharacterDirectiveDbStore charDirDb,
+            CharacterDirectiveTreeCollection charDirTreeCensus, CharacterDirectiveTreeDbStore charDirTreeDb,
+            CharacterDirectiveTierCollection charDirTierCensus, CharacterDirectiveTierDbStore charDirTierDb,
+            CharacterDirectiveObjectiveCollection charDirObjectiveCensus, CharacterDirectiveObjectiveDbStore charDirObjectiveDb,
             CharacterFriendDbStore friendDb) {
 
             _Logger = logger;
@@ -72,6 +84,14 @@ namespace watchtower.Services.Hosted {
             _StatDb = statDb;
             _FriendCensus = friendCensus;
             _FriendDb = friendDb;
+            _CharacterDirectiveCensus = charDirCensus;
+            _CharacterDirectiveDb = charDirDb;
+            _CharacterDirectiveTreeCensus = charDirTreeCensus;
+            _CharacterDirectiveTreeDb = charDirTreeDb;
+            _CharacterDirectiveTierCensus = charDirTierCensus;
+            _CharacterDirectiveTierDb = charDirTierDb;
+            _CharacterDirectiveObjectiveCensus = charDirObjectiveCensus;
+            _CharacterDirectiveObjectiveDb = charDirObjectiveDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -115,12 +135,12 @@ namespace watchtower.Services.Hosted {
                     //      3. The character was found in census, and the character is logged in since the last time stats were updated
                     if (censusChar == null) {
                         ++metadata.NotFoundCount;
-                    } else if (censusChar.DateLastLogin < metadata.LastUpdated) {
+                    } else if (censusChar.DateLastLogin < metadata.LastUpdated && entry.Force == false) {
                         if (_Peepers.Contains(entry.CharacterID)) {
                             _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), skipping update");
                         }
                         metadata.NotFoundCount = 0;
-                    } else if (censusChar.DateLastLogin >= metadata.LastUpdated) {
+                    } else if (censusChar.DateLastLogin >= metadata.LastUpdated || entry.Force == true) {
                         if (_Peepers.Contains(entry.CharacterID)) {
                             _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), PERFORMING UPDATE");
                         }
@@ -165,7 +185,49 @@ namespace watchtower.Services.Hosted {
                                 if (result.Result.Count > 0) {
                                     await _FriendDb.Set(entry.CharacterID, result.Result);
                                 }
+                            }),
+
+                            // Get the character's directive data
+                            _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
+                                foreach (CharacterDirective dir in result.Result) {
+                                    try {
+                                        await _CharacterDirectiveDb.Upsert(entry.CharacterID, dir);
+                                    } catch (Exception ex) {
+                                        _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
+                                    }
+                                }
+                            }),
+
+                            _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
+                                foreach (CharacterDirectiveTree tree in result.Result) {
+                                    try {
+                                        await _CharacterDirectiveTreeDb.Upsert(entry.CharacterID, tree);
+                                    } catch (Exception ex) {
+                                        _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
+                                    }
+                                }
+                            }),
+
+                            _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
+                                foreach (CharacterDirectiveTier tier in result.Result) {
+                                    try {
+                                        await _CharacterDirectiveTierDb.Upsert(entry.CharacterID, tier);
+                                    } catch (Exception ex) {
+                                        _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
+                                    }
+                                }
+                            }),
+
+                            _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
+                                foreach (CharacterDirectiveObjective obj in result.Result) {
+                                    try {
+                                        await _CharacterDirectiveObjectiveDb.Upsert(entry.CharacterID, obj);
+                                    } catch (Exception ex) {
+                                        _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
+                                    }
+                                }
                             })
+
                         );
                     }
 

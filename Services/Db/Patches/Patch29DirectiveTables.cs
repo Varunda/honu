@@ -61,7 +61,7 @@ namespace watchtower.Services.Db.Patches {
                 );
 
                 CREATE INDEX IF NOT EXISTS idx_character_directive_tier_character_id
-                    ON character_directive_tree (character_id);
+                    ON character_directive_tier (character_id);
                 
                 CREATE TABLE IF NOT EXISTS directive (
                     id int NOT NULL PRIMARY KEY,

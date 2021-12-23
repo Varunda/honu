@@ -22,5 +22,10 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public PsCharacter? CensusCharacter { get; set; }
 
+        /// <summary>
+        ///     If the character will be updated even if Honu got the data after the last login
+        /// </summary>
+        public bool Force { get; set; } = false;
+
     }
 }

@@ -148,6 +148,10 @@ namespace watchtower {
             services.AddSingleton<DirectiveTreeDbStore>();
             services.AddSingleton<DirectiveTierDbStore>();
             services.AddSingleton<DirectiveTreeCategoryDbStore>();
+            services.AddSingleton<CharacterDirectiveDbStore>();
+            services.AddSingleton<CharacterDirectiveTreeDbStore>();
+            services.AddSingleton<CharacterDirectiveTierDbStore>();
+            services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
 
             // DB readers
             services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
@@ -171,6 +175,10 @@ namespace watchtower {
             services.AddSingleton<IDataReader<DirectiveTree>, DirectiveTreeReader>();
             services.AddSingleton<IDataReader<DirectiveTier>, DirectiveTierReader>();
             services.AddSingleton<IDataReader<DirectiveTreeCategory>, DirectiveTreeCategoryReader>();
+            services.AddSingleton<IDataReader<CharacterDirective>, CharacterDirectiveReader>();
+            services.AddSingleton<IDataReader<CharacterDirectiveTree>, CharacterDirectiveTreeReader>();
+            services.AddSingleton<IDataReader<CharacterDirectiveTier>, CharacterDirectiveTierReader>();
+            services.AddSingleton<IDataReader<CharacterDirectiveObjective>, CharacterDirectiveObjectiveReader>();
 
             // Census services
             services.AddSingleton<ICharacterCollection, CharacterCollection>();
@@ -188,6 +196,9 @@ namespace watchtower {
             services.AddSingleton<DirectiveTierCollection>();
             services.AddSingleton<DirectiveTreeCategoryCollection>();
             services.AddSingleton<CharacterDirectiveCollection>();
+            services.AddSingleton<CharacterDirectiveTreeCollection>();
+            services.AddSingleton<CharacterDirectiveTierCollection>();
+            services.AddSingleton<CharacterDirectiveObjectiveCollection>();
 
             // Census reader
             services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
@@ -198,6 +209,9 @@ namespace watchtower {
             services.AddSingleton<ICensusReader<DirectiveTier>, CensusDirectiveTierReader>();
             services.AddSingleton<ICensusReader<DirectiveTreeCategory>, CensusDirectiveTreeCategoryReader>();
             services.AddSingleton<ICensusReader<CharacterDirective>, CensusCharacterDirectiveReader>();
+            services.AddSingleton<ICensusReader<CharacterDirectiveTree>, CensusCharacterDirectiveTreeReader>();
+            services.AddSingleton<ICensusReader<CharacterDirectiveTier>, CensusCharacterDirectiveTierReader>();
+            services.AddSingleton<ICensusReader<CharacterDirectiveObjective>, CensusCharacterDirectiveObjectiveReader>();
 
             // Repositories
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
