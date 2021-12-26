@@ -50,6 +50,13 @@
                         </td>
                     </tr>
 
+                    <tr>
+                        <td><b>Faction</b></td>
+                        <td>
+                            {{session.data.teamID | faction}}
+                        </td>
+                    </tr>
+
                     <tr v-if="character.state == 'loaded'">
                         <td>
                             <b>Outfit (current)</b>
@@ -213,8 +220,7 @@
     import "MomentFilter";
     import "filters/FixedFilter";
     import "filters/LocaleFilter";
-
-    import Chart from "chart.js/auto/auto.esm";
+    import "filters/FactionNameFilter";
 
     import SessionViewerKills from "./components/SessionViewerKills.vue";
     import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";
