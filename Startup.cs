@@ -230,6 +230,10 @@ namespace watchtower {
             services.AddSingleton<DirectiveTreeRepository>();
             services.AddSingleton<DirectiveTierRepository>();
             services.AddSingleton<DirectiveTreeCategoryRepository>();
+            services.AddSingleton<CharacterDirectiveRepository>();
+            services.AddSingleton<CharacterDirectiveTreeRepository>();
+            services.AddSingleton<CharacterDirectiveTierRepository>();
+            services.AddSingleton<CharacterDirectiveObjectiveRepository>();
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
