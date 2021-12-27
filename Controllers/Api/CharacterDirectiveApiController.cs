@@ -129,15 +129,15 @@ namespace watchtower.Controllers.Api {
                     // Way 2: The objective_set_id is equal to an entry in objective_set, use the group_id as the lookup id 
                     // SELECT * FROM objective 
                     //      LEFT JOIN objective_set ON objective_set.set_id = directive.objective_set_id 
-                    //      WHERE objective.id = objective_set.group_id
+                    //      WHERE objective.group_id = objective_set.group_id
                     if (objSet != null && obj == null) {
-                        obj = await _ObjectiveRepository.GetByID(objSet.GroupID);
+                        obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
                         // Way 3: Use the objective_set, and search on group_id instead of id
                         // SELECT * FROM objective 
                         //      LEFT JOIN objective_set ON objective_set.set_id = directive.objective_set_id 
-                        //      WHERE objective.group_id = objective_set.group_id
+                        //      WHERE objective.id = objective_set.group_id
                         if (obj == null) {
-                            obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
+                            obj = await _ObjectiveRepository.GetByID(objSet.GroupID);
                             if (obj != null) {
                                 source = $"indirect by objective.group_id from set_group.group_id - {dir?.ObjectiveSetID} > {objSet.GroupID} > {obj.ID}";
                             }
