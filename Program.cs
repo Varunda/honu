@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
@@ -20,18 +21,40 @@ namespace watchtower {
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
         public static async Task Main(string[] args) {
-            Console.WriteLine($"Starting at {DateTime.UtcNow}");
+            Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
 
+            bool hostBuilt = false;
+
+            // Honu must be started in a background thread, as _Host.RunAsync will block until the whole server
+            //      shuts down. If we were to await this Task, then it would be blocked until the server is done
+            //      running, at which point then the command bus stuff would start
+            //
+            // That's not useful, because we want to be able to input commands while the server is running,
+            //      not after the server is done running
             _ = Task.Run(async () => {
                 try {
+                    Stopwatch timer = Stopwatch.StartNew();
                     _Host = CreateHostBuilder(args).Build();
+                    hostBuilt = true;
+                    Console.WriteLine($"Took {timer.ElapsedMilliseconds}ms to build Honu");
+                    timer.Stop();
                     await _Host.RunAsync();
                 } catch (Exception ex) {
-                    Console.WriteLine($"{ex.Message}");
+                    Console.WriteLine($"Fatal error starting Honu:\n{ex}");
                 }
             });
 
-            await Task.Delay(1000);
+            for (int i = 0; i < 10; ++i) {
+                await Task.Delay(1000);
+                if (hostBuilt == true) {
+                    break;
+                }
+            }
+
+            if (_Host == null) {
+                Console.Error.WriteLine($"FATAL> _Host was null after construction");
+                return;
+            }
 
             ICommandBus? commands = _Host.Services.GetService(typeof(ICommandBus)) as ICommandBus;
             if (commands == null) {

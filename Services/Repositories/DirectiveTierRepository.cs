@@ -43,6 +43,10 @@ namespace watchtower.Services.Repositories {
             return dirs;
         }
 
+        public async Task<DirectiveTier?> GetByTierAndTree(int tierID, int treeID) {
+            return (await GetAll()).FirstOrDefault(iter => iter.TierID == tierID && iter.TreeID == treeID);
+        }
+
     }
 
 }

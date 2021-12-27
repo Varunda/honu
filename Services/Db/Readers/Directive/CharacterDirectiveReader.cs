@@ -17,7 +17,7 @@ namespace watchtower.Services.Db.Readers {
             
             dir.CharacterID = reader.GetString("character_id");
             dir.DirectiveID = reader.GetInt32("directive_id");
-            dir.TreeID = reader.GetInt32("tree_id");
+            dir.TreeID = reader.GetInt32("directive_tree_id");
             dir.CompletionDate = reader.GetNullableDateTime("completion_date");
 
             return dir;

@@ -13,26 +13,15 @@ using watchtower.Models.Census;
 
 namespace watchtower.Services.Census {
 
-    public class DirectiveTreeCollection {
+    public class DirectiveTreeCollection : BaseStaticCollection<DirectiveTree> {
 
         private readonly ILogger<DirectiveTreeCollection> _Logger;
-        private readonly ICensusQueryFactory _Census;
-        private readonly ICensusReader<DirectiveTree> _Reader;
 
         public DirectiveTreeCollection(ILogger<DirectiveTreeCollection> logger,
-            ICensusQueryFactory census, ICensusReader<DirectiveTree> reader) {
+            ICensusQueryFactory census, ICensusReader<DirectiveTree> reader)
+            : base("directive_tree", census, reader) {
 
             _Logger = logger;
-            _Census = census;
-            _Reader = reader ?? throw new ArgumentNullException(nameof(reader));
-        }
-
-        public async Task<List<DirectiveTree>> GetAll() {
-            CensusQuery query = _Census.Create("directive_tree");
-            query.SetLimit(10_000);
-
-            List<DirectiveTree> trees = await _Reader.ReadList(query);
-            return trees;
         }
 
     }

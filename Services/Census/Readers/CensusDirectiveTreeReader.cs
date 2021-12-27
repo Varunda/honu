@@ -14,6 +14,7 @@ namespace watchtower.Services.Census.Readers {
             DirectiveTree tree = new DirectiveTree();
 
             tree.ID = token.GetRequiredInt32("directive_tree_id");
+            tree.Name = token.SelectToken("name")?.GetString("en", "<missing name>") ?? "<missing name>";
             tree.CategoryID = token.GetInt32("directive_tree_category_id", 0);
             tree.ImageSetID = token.GetInt32("image_set_id", 0);
             tree.ImageID = token.GetInt32("image_id", 0);

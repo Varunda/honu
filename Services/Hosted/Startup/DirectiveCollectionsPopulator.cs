@@ -15,7 +15,7 @@ namespace watchtower.Services.Hosted.Startup {
     /// <summary>
     ///     Runs once at startup, populating all the static directive databases
     /// </summary>
-    public class DirectiveCollectionsPopulator : IHostedService {
+    public class DirectiveCollectionsPopulator : BackgroundService {
 
         private readonly ILogger<DirectiveCollectionsPopulator> _Logger;
 
@@ -46,7 +46,7 @@ namespace watchtower.Services.Hosted.Startup {
             _DirectiveTreeCategoryDb = catDb ?? throw new ArgumentNullException(nameof(catDb));
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken) {
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
                 Stopwatch timer = Stopwatch.StartNew();
 
@@ -94,10 +94,6 @@ namespace watchtower.Services.Hosted.Startup {
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to populate directive tables");
             }
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken) {
-            return Task.CompletedTask;
         }
 
     }

@@ -122,118 +122,11 @@ namespace watchtower {
             services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
             services.AddSingleton<BackgroundLogoutBufferQueue>();
 
-            // Db services
-            services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
-            services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
-            services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
-            services.AddSingleton<CharacterDbStore>();
-            services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
-            services.AddSingleton<IItemDbStore, ItemDbStore>();
-            services.AddSingleton<ISessionDbStore, SessionDbStore>();
-            services.AddSingleton<FacilityControlDbStore>();
-            services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
-            services.AddSingleton<IMapDbStore, MapDbStore>();
-            services.AddSingleton<ICharacterWeaponStatDbStore, CharacterWeaponStatDbStore>();
-            services.AddSingleton<IWeaponStatPercentileCacheDbStore, WeaponStatPercentileCacheDbStore>();
-            services.AddSingleton<ICharacterHistoryStatDbStore, CharacterHistoryStatDbStore>();
-            services.AddSingleton<ICharacterItemDbStore, CharacterItemDbStore>();
-            services.AddSingleton<ICharacterStatDbStore, CharacterStatDbStore>();
-            services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
-            services.AddSingleton<ReportDbStore>();
-            services.AddSingleton<CharacterMetadataDbStore>();
-            services.AddSingleton<LogoutBufferDbStore>();
-            services.AddSingleton<FacilityPlayerControlDbStore>();
-            services.AddSingleton<CharacterFriendDbStore>();
-            services.AddSingleton<DirectiveDbStore>();
-            services.AddSingleton<DirectiveTreeDbStore>();
-            services.AddSingleton<DirectiveTierDbStore>();
-            services.AddSingleton<DirectiveTreeCategoryDbStore>();
-            services.AddSingleton<CharacterDirectiveDbStore>();
-            services.AddSingleton<CharacterDirectiveTreeDbStore>();
-            services.AddSingleton<CharacterDirectiveTierDbStore>();
-            services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
-
-            // DB readers
-            services.AddSingleton<IDataReader<KillDbEntry>, KillDbEntryReader>();
-            services.AddSingleton<IDataReader<KillDbOutfitEntry>, KillDbOutfitEntryReader>();
-            services.AddSingleton<IDataReader<KillEvent>, KillEventReader>();
-            services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
-            services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
-            services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlDbEntryReader>();
-            services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
-            services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
-            services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
-            services.AddSingleton<IDataReader<PsItem>, ItemDbStore>();
-            services.AddSingleton<IDataReader<PsCharacter>, CharacterDbStore>();
-            services.AddSingleton<IDataReader<CharacterMetadata>, CharacterMetadataReader>();
-            services.AddSingleton<IDataReader<LogoutBufferEntry>, LogoutBufferEntryReader>();
-            services.AddSingleton<IDataReader<PlayerControlEvent>, PlayerControlEventReader>();
-            services.AddSingleton<IDataReader<FacilityControlEvent>, FacilityControlEventReader>();
-            services.AddSingleton<IDataReader<OutfitReport>, OutfitReportReader>();
-            services.AddSingleton<IDataReader<CharacterFriend>, CharacterFriendReader>();
-            services.AddSingleton<IDataReader<PsDirective>, DirectiveReader>();
-            services.AddSingleton<IDataReader<DirectiveTree>, DirectiveTreeReader>();
-            services.AddSingleton<IDataReader<DirectiveTier>, DirectiveTierReader>();
-            services.AddSingleton<IDataReader<DirectiveTreeCategory>, DirectiveTreeCategoryReader>();
-            services.AddSingleton<IDataReader<CharacterDirective>, CharacterDirectiveReader>();
-            services.AddSingleton<IDataReader<CharacterDirectiveTree>, CharacterDirectiveTreeReader>();
-            services.AddSingleton<IDataReader<CharacterDirectiveTier>, CharacterDirectiveTierReader>();
-            services.AddSingleton<IDataReader<CharacterDirectiveObjective>, CharacterDirectiveObjectiveReader>();
-
-            // Census services
-            services.AddSingleton<ICharacterCollection, CharacterCollection>();
-            services.AddSingleton<IOutfitCollection, OutfitCollection>();
-            services.AddSingleton<IItemCollection, ItemCollection>();
-            services.AddSingleton<IMapCollection, MapCollection>();
-            services.AddSingleton<IFacilityCollection, FacilityCollection>();
-            services.AddSingleton<ICharacterWeaponStatCollection, CharacterWeaponStatCollection>();
-            services.AddSingleton<ICharacterHistoryStatCollection, CharacterHistoryStatCollection>();
-            services.AddSingleton<ICharacterItemCollection, CharacterItemCollection>();
-            services.AddSingleton<ICharacterStatCollection, CharacterStatCollection>();
-            services.AddSingleton<CharacterFriendCollection>();
-            services.AddSingleton<DirectiveCollection>();
-            services.AddSingleton<DirectiveTreeCollection>();
-            services.AddSingleton<DirectiveTierCollection>();
-            services.AddSingleton<DirectiveTreeCategoryCollection>();
-            services.AddSingleton<CharacterDirectiveCollection>();
-            services.AddSingleton<CharacterDirectiveTreeCollection>();
-            services.AddSingleton<CharacterDirectiveTierCollection>();
-            services.AddSingleton<CharacterDirectiveObjectiveCollection>();
-
-            // Census reader
-            services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
-            services.AddSingleton<ICensusReader<PsCharacterStat>, CensusCharacterStatReader>();
-            services.AddSingleton<ICensusReader<OutfitMember>, CensusOutfitMemberReader>();
-            services.AddSingleton<ICensusReader<PsDirective>, CensusDirectiveReader>();
-            services.AddSingleton<ICensusReader<DirectiveTree>, CensusDirectiveTreeReader>();
-            services.AddSingleton<ICensusReader<DirectiveTier>, CensusDirectiveTierReader>();
-            services.AddSingleton<ICensusReader<DirectiveTreeCategory>, CensusDirectiveTreeCategoryReader>();
-            services.AddSingleton<ICensusReader<CharacterDirective>, CensusCharacterDirectiveReader>();
-            services.AddSingleton<ICensusReader<CharacterDirectiveTree>, CensusCharacterDirectiveTreeReader>();
-            services.AddSingleton<ICensusReader<CharacterDirectiveTier>, CensusCharacterDirectiveTierReader>();
-            services.AddSingleton<ICensusReader<CharacterDirectiveObjective>, CensusCharacterDirectiveObjectiveReader>();
-
-            // Repositories
-            services.AddSingleton<ICharacterRepository, CharacterRepository>();
-            services.AddSingleton<IOutfitRepository, OutfitRepository>();
-            services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
-            services.AddSingleton<IItemRepository, ItemRepository>();
-            services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
-            services.AddSingleton<IMapRepository, MapRepository>();
-            services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
-            services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
-            services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();
-            services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
-            services.AddSingleton<WorldPopulationRepository, WorldPopulationRepository>();
-            services.AddSingleton<CharacterFriendRepository>();
-            services.AddSingleton<DirectiveRepository>();
-            services.AddSingleton<DirectiveTreeRepository>();
-            services.AddSingleton<DirectiveTierRepository>();
-            services.AddSingleton<DirectiveTreeCategoryRepository>();
-            services.AddSingleton<CharacterDirectiveRepository>();
-            services.AddSingleton<CharacterDirectiveTreeRepository>();
-            services.AddSingleton<CharacterDirectiveTierRepository>();
-            services.AddSingleton<CharacterDirectiveObjectiveRepository>();
+            services.AddHonuDatabasesServices(); // Db services
+            services.AddHonuDatabaseReadersServices(); // DB readers
+            services.AddHonuCollectionServices(); // Census services
+            services.AddHonuCensusReadersServices(); // Census readers
+            services.AddHonuRepositoryServices(); // Repositories
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
@@ -248,6 +141,7 @@ namespace watchtower {
             services.AddHostedService<ZoneStateStartupService>();
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<DirectiveCollectionsPopulator>();
+            services.AddHostedService<ObjectiveCollectionsPopulator>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
