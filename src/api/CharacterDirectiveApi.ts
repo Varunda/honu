@@ -43,8 +43,8 @@ export class ExpandedCharacterDirectiveTier {
 }
 
 export class ExpandedCharacterDirective {
-    public entry: CharacterDirective = new CharacterDirective();
-    public directive: PsDirective | null = null;
+    public entry: CharacterDirective | null = null;
+    public directive: PsDirective = new PsDirective();
     public characterObjective: CharacterDirectiveObjective | null = null;
     public objective: PsObjective | null = null;
     public objectiveType: ObjectiveType | null = null;

@@ -49,6 +49,12 @@ namespace watchtower.Services.Repositories {
             return all.FirstOrDefault(iter => iter.ID == ID);
         }
 
+        public async Task<List<PsDirective>> GetByTreeID(int treeID) {
+            List<PsDirective> all = await GetAll();
+
+            return all.Where(iter => iter.TreeID == treeID).ToList();
+        }
+
     }
 
 }

@@ -47,7 +47,7 @@ namespace watchtower {
         // Will watchtower attempt to connect to the Census Streaming service?
         //      if false, yes, operation is performed as normal and events are recorded in real time
         //      if true, no, no connections are made, and mock events are created to create fake data
-        private readonly bool OFFLINE_MODE = false;
+        private readonly bool OFFLINE_MODE = true;
 
         public Startup(IConfiguration configuration) {
             Configuration = configuration;
@@ -147,10 +147,6 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
-            services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
-            services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
-            services.AddHostedService<HostedBackgroundLogoutBuffer>();
-            //services.AddHostedService<CharacterDatesFixerStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();
@@ -158,6 +154,11 @@ namespace watchtower {
 
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();
+            } else {
+                services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
+                services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
+                services.AddHostedService<HostedBackgroundLogoutBuffer>();
+                //services.AddHostedService<CharacterDatesFixerStartupService>();
             }
         }
 

@@ -76,6 +76,10 @@ namespace watchtower.Controllers.Api {
 
             Dictionary<int, ExpandedCharacterDirectiveCategory> charCategories = new();
 
+            // Get the directive trees the character has
+            //      Get the directives in that tree
+            //      Iterate thru directives, group by tier, and find the character directive for each directive
+            //          get the objective and progress of each directive
             foreach (CharacterDirectiveTree charTree in charDirTrees) {
                 DirectiveTree? tree = await _DirectiveTreeRepository.GetByID(charTree.TreeID);
 
@@ -92,9 +96,52 @@ namespace watchtower.Controllers.Api {
                 exTree.Entry = charTree;
                 exTree.Tree = await _DirectiveTreeRepository.GetByID(charTree.TreeID);
 
-                List<CharacterDirective> charDirsInTree = charDirs.Where(iter => iter.TreeID == charTree.TreeID).ToList();
+                List<PsDirective> dirsInTree = await _DirectiveRepository.GetByTreeID(charTree.TreeID);
 
                 Dictionary<int, ExpandedCharacterDirectiveTier> tierMap = new();
+                foreach (PsDirective dir in dirsInTree) {
+                    int tierID = dir.TierID;
+                    if (tierMap.TryGetValue(tierID, out ExpandedCharacterDirectiveTier? tier) == false) {
+                        tier = new();
+                        tier.Entry = charDirTiers.FirstOrDefault(iter => iter.TierID == tierID && iter.TreeID == dir.TreeID);
+                        tier.TierID = tierID;
+                        tier.Tier = await _DirectiveTierRepository.GetByTierAndTree(tierID, dir.TreeID);
+                        tierMap.Add(tierID, tier);
+                    }
+
+                    string source = "failed to find an objective";
+                    PsObjective? obj = await _ObjectiveRepository.GetByID(dir.ObjectiveSetID);
+                    if (obj == null) {
+                        ObjectiveSet? objSet = await _ObjectiveSetRepository.GetByID(dir.ObjectiveSetID);
+                        if (objSet != null) {
+                            obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
+                            if (obj != null) {
+                                source = "indirectly by objective set";
+                            }
+                        }
+                    } else {
+                        source = "directly by objective_set_id";
+                    }
+
+                    ExpandedCharacterDirective aaa = new ExpandedCharacterDirective() {
+                        Entry = charDirs.FirstOrDefault(iter => iter.DirectiveID == dir.ID),
+                        Directive = dir,
+                        Objective = obj,
+                        ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID),
+                        CharacterObjective = charDirObjectives.FirstOrDefault(obj => obj.DirectiveID == dir.ID),
+                        ObjectiveSource = source,
+                    };
+
+                    tier.Directives.Add(aaa);
+                }
+
+                exTree.Tiers = tierMap.Values.ToList();
+
+                exCat.Trees.Add(exTree);
+
+                /*
+                List<CharacterDirective> charDirsInTree = charDirs.Where(iter => iter.TreeID == charTree.TreeID).ToList();
+
                 foreach (CharacterDirective charDir in charDirsInTree) {
                     PsDirective? dir = await _DirectiveRepository.GetByID(charDir.DirectiveID);
 
@@ -103,6 +150,7 @@ namespace watchtower.Controllers.Api {
                         tier = new();
                         tier.Entry = charDirTiers.FirstOrDefault(iter => iter.TierID == tierID && iter.TreeID == charDir.TreeID);
                         tier.TierID = tierID;
+                        tier.Tier = await _DirectiveTierRepository.GetByTierAndTree(tierID, charDir.TreeID);
                         tierMap.Add(tierID, tier);
                     }
 
@@ -152,7 +200,7 @@ namespace watchtower.Controllers.Api {
 
                     ExpandedCharacterDirective aaa = new ExpandedCharacterDirective() {
                         Entry = charDir,
-                        Directive = await _DirectiveRepository.GetByID(charDir.DirectiveID),
+                        Directive = dir,
                         Objective = obj,
                         ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID),
                         CharacterObjective = charDirObjectives.FirstOrDefault(obj => obj.DirectiveID == charDir.DirectiveID),
@@ -161,10 +209,8 @@ namespace watchtower.Controllers.Api {
 
                     tier.Directives.Add(aaa);
                 }
+                */
 
-                exTree.Tiers = tierMap.Values.ToList();
-
-                exCat.Trees.Add(exTree);
             }
 
             set.CharacterID = charID;

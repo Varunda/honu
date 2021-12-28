@@ -61,9 +61,9 @@ namespace watchtower.Models.Api {
 
     public class ExpandedCharacterDirective {
 
-        public CharacterDirective Entry { get; set; } = new();
+        public CharacterDirective? Entry { get; set; }
 
-        public PsDirective? Directive { get; set; }
+        public PsDirective Directive { get; set; } = new();
 
         public CharacterDirectiveObjective? CharacterObjective { get; set; }
 
