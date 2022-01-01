@@ -10,9 +10,9 @@ namespace watchtower.Services.Census {
 
     public class BaseStaticCollection<T> : IStaticCollection<T> where T : class {
 
-        private readonly ICensusQueryFactory _Census;
-        private readonly ICensusReader<T> _Reader;
-        private readonly string _CollectionName;
+        internal readonly ICensusQueryFactory _Census;
+        internal readonly ICensusReader<T> _Reader;
+        internal readonly string _CollectionName;
 
         public BaseStaticCollection(string collectionName,
             ICensusQueryFactory census, ICensusReader<T> reader) {

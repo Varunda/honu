@@ -19,11 +19,12 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<ExpEvent>, ExpEventReader>();
             services.AddSingleton<IDataReader<KillItemEntry>, KillItemEntryReader>();
             services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlDbEntryReader>();
+            services.AddSingleton<IDataReader<PsItem>, ItemReader>();
+            services.AddSingleton<IDataReader<CharacterAchievement>, CharacterAchievementReader>();
 
             services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
             services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();
             services.AddSingleton<IDataReader<OutfitPopulation>, OutfitPopulationReader>();
-            services.AddSingleton<IDataReader<PsItem>, ItemDbStore>();
             services.AddSingleton<IDataReader<PsCharacter>, CharacterDbStore>();
             services.AddSingleton<IDataReader<CharacterMetadata>, CharacterMetadataReader>();
 
@@ -48,6 +49,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<PsObjective>, ObjectiveReader>();
             services.AddSingleton<IDataReader<ObjectiveType>, ObjectiveTypeReader>();
             services.AddSingleton<IDataReader<ObjectiveSet>, ObjectiveSetReader>();
+
+            services.AddSingleton<IDataReader<Achievement>, AchievementReader>();
         }
 
     }

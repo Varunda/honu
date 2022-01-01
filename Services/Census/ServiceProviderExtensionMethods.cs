@@ -15,11 +15,13 @@ namespace watchtower.Services.Census {
             services.AddSingleton<ICharacterItemCollection, CharacterItemCollection>();
             services.AddSingleton<ICharacterStatCollection, CharacterStatCollection>();
             services.AddSingleton<CharacterFriendCollection>();
+            services.AddSingleton<CharacterAchievementCollection>();
 
             services.AddSingleton<IOutfitCollection, OutfitCollection>();
 
             // Static collections
-            services.AddSingleton<IItemCollection, ItemCollection>();
+            services.AddSingleton<IStaticCollection<PsItem>, ItemCollection>();
+            services.AddSingleton<ItemCollection>();
             services.AddSingleton<IMapCollection, MapCollection>();
             services.AddSingleton<IFacilityCollection, FacilityCollection>();
 
@@ -40,6 +42,9 @@ namespace watchtower.Services.Census {
             services.AddSingleton<ObjectiveTypeCollection>();
             services.AddSingleton<IStaticCollection<ObjectiveSet>, ObjectiveSetCollection>();
             services.AddSingleton<ObjectiveSetCollection>();
+
+            services.AddSingleton<IStaticCollection<Achievement>, AchievementCollection>();
+            services.AddSingleton<AchievementCollection>();
         }
     }
 

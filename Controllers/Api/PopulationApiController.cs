@@ -21,11 +21,11 @@ namespace watchtower.Controllers.Api {
     public class PopulationApiController : ApiControllerBase {
 
         private readonly ILogger<PopulationApiController> _Logger;
-        private readonly IOutfitDbStore _OutfitDb;
+        private readonly OutfitDbStore _OutfitDb;
         private readonly WorldPopulationRepository _PopulationRepository;
 
         public PopulationApiController(ILogger<PopulationApiController> logger,
-            IOutfitDbStore outfitRepo, WorldPopulationRepository popRepo) {
+            OutfitDbStore outfitRepo, WorldPopulationRepository popRepo) {
 
             _Logger = logger;
 

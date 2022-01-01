@@ -8,20 +8,20 @@ using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class OutfitRepository : IOutfitRepository {
+    public class OutfitRepository {
 
         private readonly ILogger<OutfitRepository> _Logger;
         private readonly IMemoryCache _Cache;
 
         private const string _CacheKeyID = "Outfit.ID.{0}"; // {0} => Outfit ID
 
-        private readonly IOutfitDbStore _Db;
+        private readonly OutfitDbStore _Db;
         private readonly IOutfitCollection _Census;
 
         public OutfitRepository(ILogger<OutfitRepository> logger, IMemoryCache cache,
-            IOutfitDbStore db, IOutfitCollection coll) {
+            OutfitDbStore db, IOutfitCollection coll) {
 
             _Logger = logger;
             _Cache = cache;
@@ -30,6 +30,13 @@ namespace watchtower.Services.Repositories.Implementations {
             _Census = coll ?? throw new ArgumentNullException(nameof(coll));
         }
 
+        /// <summary>
+        ///     Get an <see cref="PsOutfit"/> by ID
+        /// </summary>
+        /// <param name="outfitID">ID of the outfit to get</param>
+        /// <returns>
+        ///     The <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>
+        /// </returns>
         public async Task<PsOutfit?> GetByID(string outfitID) {
             if (outfitID == "") {
                 return null;

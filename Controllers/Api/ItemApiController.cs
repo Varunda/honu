@@ -24,13 +24,13 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<ItemApiController> _Logger;
 
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
         private readonly ICharacterRepository _CharacterRepository;
 
         public ItemApiController(ILogger<ItemApiController> logger,
-            IItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
+            ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
             ICharacterWeaponStatDbStore statDb, ICharacterRepository charRepo) {
 
             _Logger = logger;
@@ -52,7 +52,7 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsItem"/> with <see cref="PsItem.ID"/> of <paramref name="itemID"/> exists
         /// </response>
         [HttpGet("{itemID}")]
-        public async Task<ApiResponse<PsItem>> GetByID(string itemID) {
+        public async Task<ApiResponse<PsItem>> GetByID(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
             if (item == null) {
                 return ApiNoContent<PsItem>();

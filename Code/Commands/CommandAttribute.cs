@@ -8,7 +8,6 @@ namespace watchtower.Commands {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
     public class CommandAttribute : Attribute {
 
-
     }
 
 }

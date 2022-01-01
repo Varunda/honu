@@ -25,7 +25,7 @@ namespace watchtower.Commands {
         private readonly ILogger<CharCommand> _Logger;
 
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IOutfitRepository _Outfitrepository;
+        private readonly OutfitRepository _Outfitrepository;
         private readonly ISessionDbStore _SessionDb;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly ICharacterHistoryStatCollection _HistoryCollection;
@@ -44,7 +44,7 @@ namespace watchtower.Commands {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
 
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
-            _Outfitrepository = services.GetRequiredService<IOutfitRepository>();
+            _Outfitrepository = services.GetRequiredService<OutfitRepository>();
             _SessionDb = services.GetRequiredService<ISessionDbStore>();
             _GeneratorStore = services.GetRequiredService<ICharacterStatGeneratorStore>();
             _HistoryCollection = services.GetRequiredService<ICharacterHistoryStatCollection>();

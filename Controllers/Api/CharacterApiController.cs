@@ -31,7 +31,7 @@ namespace watchtower.Controllers.Api {
         private readonly ICharacterHistoryStatRepository _HistoryRepository;
         private readonly ISessionDbStore _SessionDb;
         private readonly ICharacterItemRepository _CharacterItemRepository;
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
         private readonly ICharacterStatRepository _StatRepository;
         private readonly CharacterMetadataDbStore _MetadataDb;
         private readonly CharacterFriendRepository _CharacterFriendRepository;
@@ -41,7 +41,7 @@ namespace watchtower.Controllers.Api {
         public CharacterApiController(ILogger<CharacterApiController> logger,
             ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
             ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
-            ICharacterItemRepository charItemRepo, IItemRepository itemRepo,
+            ICharacterItemRepository charItemRepo, ItemRepository itemRepo,
             ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
             CharacterFriendRepository charFriendRepo, BackgroundCharacterWeaponStatQueue queue) {
 
@@ -199,7 +199,7 @@ namespace watchtower.Controllers.Api {
             foreach (CharacterItem item in items) {
                 ExpandedCharacterItem ex = new ExpandedCharacterItem();
                 ex.Entry = item;
-                ex.Item = await _ItemRepository.GetByID(item.ItemID);
+                ex.Item = await _ItemRepository.GetByID(int.Parse(item.ItemID));
 
                 expanded.Add(ex);
             }

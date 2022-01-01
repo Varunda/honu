@@ -136,9 +136,11 @@ namespace watchtower.Services.Hosted {
                                         }
                                     }
                                     ++count;
-                                } catch (Exception ex) {
+                                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                                     _Logger.LogError(ex, $"failed to update logout entry for {entry.CharacterID} {entry.Timestamp}");
                                     await Task.Delay(100, stoppingToken);
+                                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
+
                                 }
 
                                 queue.TryDequeue(out entry);

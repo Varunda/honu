@@ -7,6 +7,10 @@ namespace watchtower.Services.Census.Readers {
 
     public static class ServiceCollectionExtensionMethods {
 
+        /// <summary>
+        ///     Add the <see cref="ICensusReader{T}"/>s used for the collection services
+        /// </summary>
+        /// <param name="services">Extension instance</param>
         public static void AddHonuCensusReadersServices(this IServiceCollection services) {
             services.AddSingleton<ICensusReader<CharacterItem>, CensusCharacterItemReader>();
             services.AddSingleton<ICensusReader<PsCharacterStat>, CensusCharacterStatReader>();
@@ -22,7 +26,11 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<ObjectiveType>, CensusObjectiveTypeReader>();
             services.AddSingleton<ICensusReader<ObjectiveSet>, CensusObjectiveSetReader>();
             services.AddSingleton<ICensusReader<PsObjective>, CensusObjectiveReader>();
+            services.AddSingleton<ICensusReader<Achievement>, CensusAchievementReader>();
+            services.AddSingleton<ICensusReader<PsItem>, CensusItemReader>();
+            services.AddSingleton<ICensusReader<CharacterAchievement>, CensusCharacterAchievementReader>();
         }
+
     }
 
 }

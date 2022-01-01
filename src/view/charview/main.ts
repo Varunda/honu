@@ -10,7 +10,9 @@ const vm = new Vue({
 	},
 
 	data: {
-
+		debug: {
+			directive: false as boolean
+        }
 	},
 
 	methods: {

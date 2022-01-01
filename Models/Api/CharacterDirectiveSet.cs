@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using watchtower.Models.Census;
+using watchtower.Models.CharacterViewer.WeaponStats;
 
 namespace watchtower.Models.Api {
 
@@ -65,11 +66,27 @@ namespace watchtower.Models.Api {
 
         public PsDirective Directive { get; set; } = new();
 
+        public string Name { get; set; } = "";
+
+        public string Description { get; set; } = "";
+
+        public int? Progress { get; set; }
+
+        public int? Goal { get; set; }
+
         public CharacterDirectiveObjective? CharacterObjective { get; set; }
 
         public PsObjective? Objective { get; set; }
 
         public ObjectiveType? ObjectiveType { get; set; }
+
+        public Achievement? Achievement { get; set; }
+
+        public PsObjective? AchievementObjective { get; set; }
+
+        public ObjectiveType? AchievementObjectiveType { get; set; }
+
+        public WeaponStatEntry? WeaponStatEntry { get; set; }
 
         public string ObjectiveSource { get; set; } = "";
 

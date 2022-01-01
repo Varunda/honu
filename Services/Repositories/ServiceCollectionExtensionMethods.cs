@@ -14,9 +14,10 @@ namespace watchtower.Services.Repositories {
 
         public static void AddHonuRepositoryServices(this IServiceCollection services) {
             services.AddSingleton<ICharacterRepository, CharacterRepository>();
-            services.AddSingleton<IOutfitRepository, OutfitRepository>();
+            services.AddSingleton<OutfitRepository>();
             services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
-            services.AddSingleton<IItemRepository, ItemRepository>();
+            services.AddSingleton<ItemRepository>();
+            services.AddSingleton<IStaticRepository<PsItem>, ItemRepository>();
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
             services.AddSingleton<IMapRepository, MapRepository>();
             services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
@@ -33,6 +34,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<CharacterDirectiveTreeRepository>();
             services.AddSingleton<CharacterDirectiveTierRepository>();
             services.AddSingleton<CharacterDirectiveObjectiveRepository>();
+            services.AddSingleton<CharacterAchievementRepository>();
 
             services.AddSingleton<IStaticRepository<PsObjective>, ObjectiveRepository>();
             services.AddSingleton<ObjectiveRepository>();
@@ -40,6 +42,9 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ObjectiveTypeRepository>();
             services.AddSingleton<IStaticRepository<ObjectiveSet>, ObjectiveSetRepository>();
             services.AddSingleton<ObjectiveSetRepository>();
+
+            services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
+            services.AddSingleton<AchievementRepository>();
         }
 
     }

@@ -23,7 +23,7 @@ namespace watchtower.Services.Db.Implementations {
                 + $"Password={_DbOptions.Password};" 
                 + $"Database={_DbOptions.DatabaseName};"
                 + $"Include Error Detail=true;"
-                + $"ApplicationName=watchtower"
+                + $"ApplicationName=watchtower;"
                 + $"Timezone=UTC";
 
             NpgsqlConnection conn = new NpgsqlConnection(connStr);

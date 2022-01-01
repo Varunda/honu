@@ -44,8 +44,6 @@ namespace watchtower.Services.Repositories {
             if (_Cache.TryGetValue(cacheKey, out List<CharacterFriend> friends) == false) {
                 friends = await _Db.GetByCharacterID(charID);
 
-                _Logger.LogTrace($"Got {friends.Count} entries from DB");
-
                 // Get the friends from Census if they have no friends, they have no metadata, or the last
                 //      time honu updated them was more than a day ago
                 //

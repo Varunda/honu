@@ -49,6 +49,8 @@ export class ExpandedCharacterDirective {
     public objective: PsObjective | null = null;
     public objectiveType: ObjectiveType | null = null;
     public objectiveSource: string = "";
+    public achievementObjective: PsObjective | null = null;
+    public achievementObjectiveType: ObjectiveType | null = null;
 }
 
 export class CharacterDirectiveApi extends ApiWrapper<CharacterDirective> {

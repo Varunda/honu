@@ -25,15 +25,15 @@ namespace watchtower.Controllers {
         private readonly ILogger<KillApiController> _Logger;
 
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IItemRepository _ItemRepository;
-        private readonly IOutfitRepository _OutfitRepository;
+        private readonly ItemRepository _ItemRepository;
+        private readonly OutfitRepository _OutfitRepository;
 
         private readonly IKillEventDbStore _KillDbStore;
         private readonly ISessionDbStore _SessionDb;
 
         public KillApiController(ILogger<KillApiController> logger,
             ICharacterRepository charRepo, IKillEventDbStore killDb,
-            IItemRepository itemRepo, IOutfitRepository outfitRepo,
+            ItemRepository itemRepo, OutfitRepository outfitRepo,
             ISessionDbStore sessionDb) {
 
             _Logger = logger;
@@ -94,7 +94,7 @@ namespace watchtower.Controllers {
                     chars.Add(ev.KilledCharacterID, await _CharacterRepository.GetByID(ev.KilledCharacterID));
                 }
                 if (items.ContainsKey(ev.WeaponID) == false) {
-                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(ev.WeaponID));
+                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(int.Parse(ev.WeaponID)));
                 }
 
                 ex.Attacker = chars[ev.AttackerCharacterID];
@@ -142,7 +142,7 @@ namespace watchtower.Controllers {
                 }
 
                 if (entries.TryGetValue(ev.WeaponID, out CharacterWeaponKillEntry? entry) == false) {
-                    PsItem? item = await _ItemRepository.GetByID(ev.WeaponID);
+                    PsItem? item = await _ItemRepository.GetByID(int.Parse(ev.WeaponID));
 
                     entry = new CharacterWeaponKillEntry() {
                         WeaponID = ev.WeaponID,

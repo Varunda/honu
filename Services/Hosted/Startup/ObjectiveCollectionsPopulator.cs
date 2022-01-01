@@ -22,15 +22,21 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly ObjectiveCollection _ObjectiveCensus;
         private readonly ObjectiveTypeCollection _ObjectiveTypeCensus;
         private readonly ObjectiveSetCollection _ObjectiveSetCensus;
+        private readonly AchievementCollection _AchievementCensus;
+        private readonly ItemCollection _ItemCensus;
 
         private readonly ObjectiveDbStore _ObjectiveDb;
         private readonly ObjectiveTypeDbStore _ObjectiveTypeDb;
         private readonly ObjectiveSetDbStore _ObjectiveSetDb;
+        private readonly AchievementDbStore _AchievementDb;
+        private readonly ItemDbStore _ItemDb;
 
         public ObjectiveCollectionsPopulator(ILogger<ObjectiveCollectionsPopulator> logger,
             ObjectiveCollection objCensus, ObjectiveDbStore objDb,
             ObjectiveTypeCollection objTypeCensus, ObjectiveTypeDbStore objTypeDb,
-            ObjectiveSetCollection objSetCensus, ObjectiveSetDbStore objSetDb) {
+            ObjectiveSetCollection objSetCensus, ObjectiveSetDbStore objSetDb,
+            AchievementCollection achCensus, AchievementDbStore achDb,
+            ItemCollection itemCensus, ItemDbStore itemDb) {
 
             _Logger = logger;
 
@@ -40,6 +46,10 @@ namespace watchtower.Services.Hosted.Startup {
             _ObjectiveTypeDb = objTypeDb ?? throw new ArgumentNullException(nameof(objTypeDb));
             _ObjectiveSetCensus = objSetCensus ?? throw new ArgumentNullException(nameof(objSetCensus));
             _ObjectiveSetDb = objSetDb ?? throw new ArgumentNullException(nameof(objSetDb));
+            _AchievementCensus = achCensus;
+            _AchievementDb = achDb;
+            _ItemCensus = itemCensus;
+            _ItemDb = itemDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -73,6 +83,26 @@ namespace watchtower.Services.Hosted.Startup {
                 if (censusSets.Count > dbSets.Count) {
                     foreach (ObjectiveSet type in censusSets) {
                         await _ObjectiveSetDb.Upsert(type);
+                    }
+                }
+
+                List<Achievement> censusAchs = await _AchievementCensus.GetAll();
+                List<Achievement> dbAchs = await _AchievementDb.GetAll();
+
+                _Logger.LogDebug($"Achievement: got {censusAchs.Count} from Census, have {dbAchs.Count} in DB");
+                if (censusAchs.Count > dbAchs.Count) {
+                    foreach (Achievement ach in censusAchs) {
+                        await _AchievementDb.Upsert(ach);
+                    }
+                }
+
+                List<PsItem> censusItems = await _ItemCensus.GetAll();
+                List<PsItem> dbItems = await _ItemDb.GetAll();
+
+                _Logger.LogDebug($"Item: got {censusItems.Count} from Census, have {dbItems.Count} in DB");
+                if (censusItems.Count > dbItems.Count) {
+                    foreach (PsItem item in censusItems) {
+                        await _ItemDb.Upsert(item);
                     }
                 }
 

@@ -15,14 +15,14 @@ namespace watchtower.Commands {
 
         private readonly ILogger<ItemCommand> _Logger;
 
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
 
         public ItemCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<ItemCommand>>();
-            _ItemRepository = services.GetRequiredService<IItemRepository>();
+            _ItemRepository = services.GetRequiredService<ItemRepository>();
         }
 
-        public async Task Get(string itemID) {
+        public async Task Get(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
             if (item != null) {
                 _Logger.LogInformation($"{JToken.FromObject(item)}");

@@ -9,9 +9,12 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class OutfitDbStore : IDataReader<PsOutfit>, IOutfitDbStore {
+    /// <summary>
+    ///     Service to interact with the outfit table
+    /// </summary>
+    public class OutfitDbStore : IDataReader<PsOutfit> {
 
         private readonly ILogger<OutfitDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -26,6 +29,14 @@ namespace watchtower.Services.Db.Implementations {
             _PopulationReader = popReader ?? throw new ArgumentNullException(nameof(popReader));
         }
 
+        /// <summary>
+        ///     Get an outfit by it's ID
+        /// </summary>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <returns>
+        ///     <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>,
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
         public async Task<PsOutfit?> GetByID(string outfitID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -42,15 +53,25 @@ namespace watchtower.Services.Db.Implementations {
             return outfit;
         }
 
+        /// <summary>
+        ///     Get an outfit that exactly matches a tag, case insensitive
+        /// </summary>
+        /// <remarks>
+        ///     This is a 
+        /// </remarks>
+        /// <param name="tag">Tag to search by</param>
+        /// <returns>
+        ///     A list of all outfits with <see cref="PsOutfit.Tag"/> equal to <paramref name="tag"/>
+        /// </returns>
         public async Task<List<PsOutfit>> GetByTag(string tag) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit
-                    WHERE tag = @Tag;
+                    WHERE LOWER(tag) = @Tag;
             ");
 
-            cmd.AddParameter("Tag", tag);
+            cmd.AddParameter("Tag", tag.ToLower());
 
             List<PsOutfit> outfits = await ReadList(cmd);
             await conn.CloseAsync();
@@ -58,6 +79,13 @@ namespace watchtower.Services.Db.Implementations {
             return outfits;
         }
 
+        /// <summary>
+        ///     Search for outfit by name, does not need to match exactly. Case insensitive
+        /// </summary>
+        /// <param name="name">Name to search for</param>
+        /// <returns>
+        ///     A list of all <see cref="PsOutfit"/>s that have <paramref name="name"/> contain <see cref="PsOutfit.Name"/>
+        /// </returns>
         public async Task<List<PsOutfit>> SearchByName(string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -74,6 +102,10 @@ namespace watchtower.Services.Db.Implementations {
             return outfits;
         }
 
+        /// <summary>
+        ///     Update/Insert an outfit
+        /// </summary>
+        /// <param name="outfit">Parameters used to update/insert the entry</param>
         public async Task Upsert(PsOutfit outfit) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -104,6 +136,15 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        /// <summary>
+        ///     Get the population of each outfit on a world at a specific time
+        /// </summary>
+        /// <param name="time">Time to search for</param>
+        /// <param name="worldID">ID of the world</param>
+        /// <returns>
+        ///     A list of <see cref="OutfitPopulation"/>s, each containing the outfit and how many members
+        ///     they had online at a given time
+        /// </returns>
         public async Task<List<OutfitPopulation>> GetPopulation(DateTime time, short worldID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

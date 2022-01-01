@@ -1,6 +1,6 @@
 <template>
     <div>
-        <hr class="border" />
+        <hr class="border" @click="toggleDebug" />
 
         <div>
             <div v-if="set.state == 'idle'"></div>
@@ -64,6 +64,16 @@
             load: async function(): Promise<void> {
                 this.set = Loadable.loading();
                 this.set = await CharacterDirectiveApi.getByCharacterID(this.character.id);
+            },
+
+            toggleDebug: function(): void {
+                (this.$root as any).debug.directive = !this.showDebug;
+            }
+        },
+
+        computed: {
+            showDebug: function(): boolean {
+                return (this.$root as any).debug.directive;
             }
         },
 

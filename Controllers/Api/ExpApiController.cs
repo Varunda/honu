@@ -28,21 +28,18 @@ namespace watchtower.Controllers {
         private readonly ILogger<ExpApiController> _Logger;
 
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IItemRepository _ItemRepository;
-        private readonly IOutfitRepository _OutfitRepository;
+        private readonly OutfitRepository _OutfitRepository;
 
         private readonly IExpEventDbStore _ExpDbStore;
         private readonly ISessionDbStore _SessionDb;
 
         public ExpApiController(ILogger<ExpApiController> logger,
             ICharacterRepository charRepo, IExpEventDbStore killDb,
-            IItemRepository itemRepo, IOutfitRepository outfitRepo,
-            ISessionDbStore sessionDb) {
+            OutfitRepository outfitRepo, ISessionDbStore sessionDb) {
 
             _Logger = logger;
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
-            _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
 
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));

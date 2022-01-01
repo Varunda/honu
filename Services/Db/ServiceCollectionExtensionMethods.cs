@@ -12,12 +12,13 @@ namespace watchtower.Services.Db {
     public static class ServiceCollectionExtensionMethods {
 
         public static void AddHonuDatabasesServices(this IServiceCollection services) {
-            services.AddSingleton<IOutfitDbStore, OutfitDbStore>();
+            services.AddSingleton<OutfitDbStore>();
             services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
             services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
             services.AddSingleton<CharacterDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
-            services.AddSingleton<IItemDbStore, ItemDbStore>();
+            services.AddSingleton<ItemDbStore>();
+            services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();
             services.AddSingleton<ISessionDbStore, SessionDbStore>();
             services.AddSingleton<FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
@@ -41,6 +42,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<CharacterDirectiveTreeDbStore>();
             services.AddSingleton<CharacterDirectiveTierDbStore>();
             services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
+            services.AddSingleton<CharacterAchievementDbStore>();
 
             // Objective
             services.AddSingleton<IStaticDbStore<PsObjective>, ObjectiveDbStore>();
@@ -50,6 +52,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<IStaticDbStore<ObjectiveSet>, ObjectiveSetDbStore>();
             services.AddSingleton<ObjectiveSetDbStore>();
 
+            services.AddSingleton<IStaticDbStore<Achievement>, AchievementDbStore>();
+            services.AddSingleton<AchievementDbStore>();
         }
 
     }

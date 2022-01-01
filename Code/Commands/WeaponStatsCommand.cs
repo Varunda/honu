@@ -23,7 +23,7 @@ namespace watchtower.Code.Commands {
 
         private readonly ICharacterWeaponStatCollection _StatCensus;
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
         private readonly ICharacterWeaponStatDbStore _StatDb;
@@ -33,7 +33,7 @@ namespace watchtower.Code.Commands {
 
             _StatCensus = services.GetRequiredService<ICharacterWeaponStatCollection>();
             _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
-            _ItemRepository = services.GetRequiredService<IItemRepository>();
+            _ItemRepository = services.GetRequiredService<ItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
             _PercentileQueue = services.GetRequiredService<IBackgroundWeaponPercentileCacheQueue>();
             _StatDb = services.GetRequiredService<ICharacterWeaponStatDbStore>();
@@ -52,7 +52,7 @@ namespace watchtower.Code.Commands {
                 if (entry.Kills == 0 || entry.SecondsWith < 10) {
                     continue;
                 }
-                PsItem? weapon = await _ItemRepository.GetByID(entry.WeaponID);
+                PsItem? weapon = await _ItemRepository.GetByID(int.Parse(entry.WeaponID));
                 _PercentileQueue.Queue(entry.WeaponID);
 
                 _Logger.LogInformation($"{entry.WeaponID}/{weapon?.Name}: KD = {entry.Kills}/{entry.Deaths}:{entry.KillDeathRatio} KPM = {entry.Kills}/{entry.SecondsWith}:{entry.KillsPerMinute} S{entry.Shots} H{entry.ShotsHit} HS{entry.Headshots}");
@@ -67,8 +67,8 @@ namespace watchtower.Code.Commands {
             public int Count { get; set; }
         }
 
-        public async Task edf(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
+        public async Task edf(int itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID.ToString(), 1159);
 
             if (entries.Count < 1) {
                 _Logger.LogWarning($"Have {entries.Count} stats for {itemID}");
@@ -110,71 +110,71 @@ namespace watchtower.Code.Commands {
             }
         }
 
-        public async Task TopKd(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
+        public async Task TopKd(int itemID) {
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID.ToString(), new List<short>(), new List<short>());
 
             foreach (WeaponStatEntry e in entries) {
                 _Logger.LogInformation($"{e.CharacterID} {e.Kills} / {e.Deaths} = {e.KillDeathRatio}");
             }
         }
 
-        public async Task Regen(string itemID) {
+        public async Task Regen(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
 
             _Logger.LogInformation($"Regening all cached percentile stats for {item?.Name}/{itemID}");
 
-            WeaponStatPercentileCache? kd = await _PercentileDb.GenerateKd(itemID);
-            if (kd != null) { await _PercentileDb.Upsert(itemID, kd); }
+            WeaponStatPercentileCache? kd = await _PercentileDb.GenerateKd(itemID.ToString());
+            if (kd != null) { await _PercentileDb.Upsert(itemID.ToString(), kd); }
 
-            WeaponStatPercentileCache? kpm = await _PercentileDb.GenerateKpm(itemID);
-            if (kpm != null) { await _PercentileDb.Upsert(itemID, kpm); }
+            WeaponStatPercentileCache? kpm = await _PercentileDb.GenerateKpm(itemID.ToString());
+            if (kpm != null) { await _PercentileDb.Upsert(itemID.ToString(), kpm); }
 
-            WeaponStatPercentileCache? acc = await _PercentileDb.GenerateAcc(itemID);
-            if (acc != null) { await _PercentileDb.Upsert(itemID, acc); }
+            WeaponStatPercentileCache? acc = await _PercentileDb.GenerateAcc(itemID.ToString());
+            if (acc != null) { await _PercentileDb.Upsert(itemID.ToString(), acc); }
 
-            WeaponStatPercentileCache? hsr = await _PercentileDb.GenerateHsr(itemID);
-            if (hsr != null) { await _PercentileDb.Upsert(itemID, hsr); }
+            WeaponStatPercentileCache? hsr = await _PercentileDb.GenerateHsr(itemID.ToString());
+            if (hsr != null) { await _PercentileDb.Upsert(itemID.ToString(), hsr); }
 
             _Logger.LogInformation($"Percentile weapon stats for {item?.Name}/{itemID} remade");
         }
 
-        public async Task RegenKPM(string itemID) {
+        public async Task RegenKPM(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
-            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateKpm(itemID);
+            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateKpm(itemID.ToString());
 
             _Logger.LogInformation($"KPM percentiles for {item?.Name}/{itemID}");
             await PrintPercentile(itemID, item, entry, PercentileCacheType.KPM);
         }
 
-        public async Task RegenKD(string itemID) {
+        public async Task RegenKD(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
-            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateKd(itemID);
+            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateKd(itemID.ToString());
 
             _Logger.LogInformation($"KD percentiles for {item?.Name}/{itemID}");
             await PrintPercentile(itemID, item, entry, PercentileCacheType.KD);
         }
 
-        public async Task RegenAcc(string itemID) {
+        public async Task RegenAcc(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
-            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateAcc(itemID);
+            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateAcc(itemID.ToString());
 
             _Logger.LogInformation($"ACC percentiles for {item?.Name}/{itemID}");
             await PrintPercentile(itemID, item, entry, PercentileCacheType.ACC);
         }
 
-        public async Task RegenHsr(string itemID) {
+        public async Task RegenHsr(int itemID) {
             PsItem? item = await _ItemRepository.GetByID(itemID);
-            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateHsr(itemID);
+            WeaponStatPercentileCache? entry = await _PercentileDb.GenerateHsr(itemID.ToString());
 
             _Logger.LogInformation($"HSR percentiles for {item?.Name}/{itemID}");
             await PrintPercentile(itemID, item, entry, PercentileCacheType.HSR);
         }
 
-        private async Task PrintPercentile(string itemID, PsItem? item, WeaponStatPercentileCache? entry, short typeID) {
+        private async Task PrintPercentile(int itemID, PsItem? item, WeaponStatPercentileCache? entry, short typeID) {
             if (entry != null) {
                 entry.TypeID = typeID;
                 _Logger.LogDebug($"Generated KD percentile, saving in cache");
-                await _PercentileDb.Upsert(itemID, entry);
+                await _PercentileDb.Upsert(itemID.ToString(), entry);
             }
 
             if (entry == null) {

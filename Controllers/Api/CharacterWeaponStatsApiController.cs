@@ -27,7 +27,7 @@ namespace watchtower.Controllers.Api {
 
         private readonly ICharacterWeaponStatRepository _CharacterWeaponStatRepository;
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
 
@@ -35,7 +35,7 @@ namespace watchtower.Controllers.Api {
 
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
             ICharacterWeaponStatRepository charWeaponRepo, ICharacterRepository charRepo,
-            IItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
+            ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
             IBackgroundWeaponPercentileCacheQueue percentQueue,
             ICharacterWeaponStatDbStore statDb) {
 
@@ -81,7 +81,7 @@ namespace watchtower.Controllers.Api {
                 stat.CharacterID = charID;
                 stat.Stat = entry;
                 stat.ItemID = entry.WeaponID;
-                stat.Item = await _ItemRepository.GetByID(stat.ItemID);
+                stat.Item = await _ItemRepository.GetByID(int.Parse(stat.ItemID));
 
                 if (stat.Stat.Kills > 100 && stat.ItemID != "0") {
                     stat = await _GetPercentileData(stat);

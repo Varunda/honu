@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
+using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -19,6 +20,7 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<CharacterDirectiveApiController> _Logger;
 
+        private readonly ICharacterRepository _CharacterRepository;
         private readonly CharacterDirectiveRepository _CharacterDirectiveRepository;
         private readonly CharacterDirectiveTreeRepository _CharacterDirectiveTreeRepository;
         private readonly CharacterDirectiveTierRepository _CharacterDirectiveTierRepository;
@@ -30,6 +32,9 @@ namespace watchtower.Controllers.Api {
         private readonly ObjectiveRepository _ObjectiveRepository;
         private readonly ObjectiveTypeRepository _ObjectiveTypeRepository;
         private readonly ObjectiveSetRepository _ObjectiveSetRepository;
+        private readonly AchievementRepository _AchievementRepository;
+        private readonly ICharacterWeaponStatDbStore _CharacterWeaponDb;
+        private readonly ItemRepository _ItemRepository;
 
         public CharacterDirectiveApiController(ILogger<CharacterDirectiveApiController> logger,
             CharacterDirectiveRepository charDirRepo, CharacterDirectiveTreeRepository charDirTreeRepo,
@@ -37,9 +42,13 @@ namespace watchtower.Controllers.Api {
             DirectiveRepository dirRepo, DirectiveTreeRepository dirTreeRepo,
             DirectiveTierRepository dirTierRepo, DirectiveTreeCategoryRepository dirTreeCatRepo,
             ObjectiveRepository objRepo, ObjectiveTypeRepository objTypeRepo,
-            ObjectiveSetRepository objSetRepo) {
+            ObjectiveSetRepository objSetRepo, AchievementRepository achRepo,
+            ICharacterWeaponStatDbStore charWeaponDb, ItemRepository itemRepo,
+            ICharacterRepository charRepo) {
 
             _Logger = logger;
+
+            _CharacterRepository = charRepo;
             _CharacterDirectiveRepository = charDirRepo;
             _CharacterDirectiveTreeRepository = charDirTreeRepo;
             _CharacterDirectiveTierRepository = charDirTierRepo;
@@ -52,6 +61,9 @@ namespace watchtower.Controllers.Api {
             _ObjectiveRepository = objRepo;
             _ObjectiveTypeRepository = objTypeRepo;
             _ObjectiveSetRepository = objSetRepo;
+            _AchievementRepository = achRepo;
+            _CharacterWeaponDb = charWeaponDb;
+            _ItemRepository = itemRepo;
         }
 
         /// <summary>
@@ -76,6 +88,11 @@ namespace watchtower.Controllers.Api {
 
             Dictionary<int, ExpandedCharacterDirectiveCategory> charCategories = new();
 
+            PsCharacter? character = await _CharacterRepository.GetByID(charID);
+            if (character == null) {
+                _Logger.LogError($"Failed to find character {charID}, some extra directives not for this faction will be included");
+            }
+
             // Get the directive trees the character has
             //      Get the directives in that tree
             //      Iterate thru directives, group by tier, and find the character directive for each directive
@@ -97,6 +114,7 @@ namespace watchtower.Controllers.Api {
                 exTree.Tree = await _DirectiveTreeRepository.GetByID(charTree.TreeID);
 
                 List<PsDirective> dirsInTree = await _DirectiveRepository.GetByTreeID(charTree.TreeID);
+                List<WeaponStatEntry> weaponStats = await _CharacterWeaponDb.GetByCharacterID(charID);
 
                 Dictionary<int, ExpandedCharacterDirectiveTier> tierMap = new();
                 foreach (PsDirective dir in dirsInTree) {
@@ -110,107 +128,51 @@ namespace watchtower.Controllers.Api {
                     }
 
                     string source = "failed to find an objective";
-                    PsObjective? obj = await _ObjectiveRepository.GetByID(dir.ObjectiveSetID);
-                    if (obj == null) {
-                        ObjectiveSet? objSet = await _ObjectiveSetRepository.GetByID(dir.ObjectiveSetID);
-                        if (objSet != null) {
-                            obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
-                            if (obj != null) {
-                                source = "indirectly by objective set";
-                            }
-                        }
-                    } else {
-                        source = "directly by objective_set_id";
-                    }
 
-                    ExpandedCharacterDirective aaa = new ExpandedCharacterDirective() {
+                    ExpandedCharacterDirective dirEntry = new ExpandedCharacterDirective() {
                         Entry = charDirs.FirstOrDefault(iter => iter.DirectiveID == dir.ID),
                         Directive = dir,
-                        Objective = obj,
-                        ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID),
                         CharacterObjective = charDirObjectives.FirstOrDefault(obj => obj.DirectiveID == dir.ID),
-                        ObjectiveSource = source,
                     };
 
-                    tier.Directives.Add(aaa);
-                }
+                    PsObjective? obj = await GetObjective(dir.ObjectiveSetID);
 
-                exTree.Tiers = tierMap.Values.ToList();
-
-                exCat.Trees.Add(exTree);
-
-                /*
-                List<CharacterDirective> charDirsInTree = charDirs.Where(iter => iter.TreeID == charTree.TreeID).ToList();
-
-                foreach (CharacterDirective charDir in charDirsInTree) {
-                    PsDirective? dir = await _DirectiveRepository.GetByID(charDir.DirectiveID);
-
-                    int tierID = dir == null ? -1 : dir.TierID;
-                    if (tierMap.TryGetValue(tierID, out ExpandedCharacterDirectiveTier? tier) == false) {
-                        tier = new();
-                        tier.Entry = charDirTiers.FirstOrDefault(iter => iter.TierID == tierID && iter.TreeID == charDir.TreeID);
-                        tier.TierID = tierID;
-                        tier.Tier = await _DirectiveTierRepository.GetByTierAndTree(tierID, charDir.TreeID);
-                        tierMap.Add(tierID, tier);
-                    }
-
-                    // There are 3 different ways the objective can be found
-                    // 1. the ObjectiveSetID of the PsDirective is PsDirective.ID
-                    // 2. the ObjectiveSetID of the PsDirective is DirectiveSet.SetID, and DirectiveSet.SetID, is the PsDirective.ID
-                    // 3. the ObjectiveSetID of the PsDirective is DirectiveSet.SetID, and DirectiveSet.GroupID is the PsDirective.ID
-
-                    ObjectiveSet? objSet = (dir == null) ? null : await _ObjectiveSetRepository.GetByID(dir.ObjectiveSetID);
-
-                    string source = "no valid path found";
-                    // Way 1: The objective_set_id is equal to the objective's ID, and a lookup on id using objective_set_id finds it
-                    // Below is a psuedo query to get the objective, I think it's an easier way to think about the relation
-                    // SELECT * FROM objective 
-                    //      WHERE objective.id = directive.objective_set_id
-                    PsObjective? obj = null;
-                    if (dir != null) {
-                        obj = await _ObjectiveRepository.GetByID(dir.ObjectiveSetID);
-                        if (obj != null) {
-                            source = $"directly by directive.objection_set_id - {dir.ObjectiveSetID} > {obj.ID}";
+                    // Skip weapons not for the faction of the character
+                    // 66 = Achievement, which can have an item attached to it
+                    if (obj != null && character != null && obj.TypeID == 66) {
+                        if (await IncludeObjective(obj, character.FactionID) == false) {
+                            continue;
                         }
                     }
 
-                    // Way 2: The objective_set_id is equal to an entry in objective_set, use the group_id as the lookup id 
-                    // SELECT * FROM objective 
-                    //      LEFT JOIN objective_set ON objective_set.set_id = directive.objective_set_id 
-                    //      WHERE objective.group_id = objective_set.group_id
-                    if (objSet != null && obj == null) {
-                        obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
-                        // Way 3: Use the objective_set, and search on group_id instead of id
-                        // SELECT * FROM objective 
-                        //      LEFT JOIN objective_set ON objective_set.set_id = directive.objective_set_id 
-                        //      WHERE objective.id = objective_set.group_id
-                        if (obj == null) {
-                            obj = await _ObjectiveRepository.GetByID(objSet.GroupID);
-                            if (obj != null) {
-                                source = $"indirect by objective.group_id from set_group.group_id - {dir?.ObjectiveSetID} > {objSet.GroupID} > {obj.ID}";
+                    if (obj != null) {
+                        dirEntry.Goal = await GetObjectiveGoal(obj);
+
+                        if (obj.TypeID == 66) {
+                            dirEntry.Progress = await GetAchievementProgress(obj, weaponStats);
+                            if (dirEntry.Progress == null) {
+                                dirEntry.Progress = dirEntry.CharacterObjective?.StateData;
                             }
                         } else {
-                            if (obj.GroupID == obj.ID) {
-                                source = $"indirect by objective.id from set_group.group_id (safe) - {dir?.ObjectiveSetID} > {objSet.GroupID} > {obj.GroupID}";
+                            if (dirEntry.Entry != null && dirEntry.Entry.CompletionDate != null) {
+                                dirEntry.Progress = dirEntry.Goal;
                             } else {
-                                source = $"indirect by objective.id from set_group.group_id (UNSAFE) - {dir?.ObjectiveSetID} > {objSet.GroupID} > {obj.GroupID}";
+                                dirEntry.Progress = dirEntry.CharacterObjective?.StateData;
                             }
                         }
                     }
+                    dirEntry.Objective = obj;
+                    dirEntry.ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID);
+                    dirEntry.ObjectiveSource = source;
+                    dirEntry.Name = dir.Name;
+                    dirEntry.Description = dir.Description;
 
-                    ExpandedCharacterDirective aaa = new ExpandedCharacterDirective() {
-                        Entry = charDir,
-                        Directive = dir,
-                        Objective = obj,
-                        ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID),
-                        CharacterObjective = charDirObjectives.FirstOrDefault(obj => obj.DirectiveID == charDir.DirectiveID),
-                        ObjectiveSource = source,
-                    };
-
-                    tier.Directives.Add(aaa);
+                    tier.Directives.Add(dirEntry);
                 }
-                */
 
+                exTree.Tiers = tierMap.Values.OrderBy(iter => iter.TierID).ToList();
+
+                exCat.Trees.Add(exTree);
             }
 
             set.CharacterID = charID;
@@ -219,6 +181,199 @@ namespace watchtower.Controllers.Api {
             return ApiOk(set);
         }
 
+        private async Task<PsObjective?> GetObjective(int objectiveSetID) {
+            PsObjective? obj = null;
+            ObjectiveSet? objSet = await _ObjectiveSetRepository.GetByID(objectiveSetID);
+            if (objSet != null) {
+                obj = await _ObjectiveRepository.GetByGroupID(objSet.GroupID);
+            }
+
+            return obj;
+        }
+
+        private async Task<bool> IncludeObjective(PsObjective obj, short factionID) {
+            if (obj.TypeID == 66) {
+                if (int.TryParse(obj.Param1, out int achID) == false) {
+                    _Logger.LogWarning($"Failed to parse objective {obj.ID}'s Parm1 ({obj.Param1}) into a valid int");
+                    return true;
+                }
+
+                Achievement? ach = await _AchievementRepository.GetByID(achID);
+                if (ach == null) {
+                    _Logger.LogWarning($"Failed to get Achievement {achID}");
+                    return true;
+                }
+
+                PsObjective? achObj = await _ObjectiveRepository.GetByGroupID(ach.ObjectiveGroupID);
+                if (achObj == null) {
+                    _Logger.LogWarning($"Failed to get Objective {ach.ObjectiveGroupID} by group ID");
+                    return true;
+                }
+                
+                // 12 = Kills, check the weapon the kills are meant for
+                if (achObj.TypeID == 12) {
+                    if (achObj.Param5 == null) {
+                        _Logger.LogError($"Missing Param5 'Item' on objective id {achObj.ID}");
+                        return true;
+                    }
+
+                    string weaponID = achObj.Param5;
+
+                    PsItem? weaponItem = await _ItemRepository.GetByID(int.Parse(weaponID));
+
+                    if (weaponItem == null) {
+                        _Logger.LogWarning($"Failed to get weapon ID {weaponID} from objective {achObj.ID}");
+                        return true;
+                    } else {
+                        // If the weapon is for a different faction, don't add it to the stats
+                        if (weaponItem.FactionID != -1 && weaponItem.FactionID != 0 && weaponItem.FactionID != 4 && (weaponItem.FactionID != factionID)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Get the total count needed to complete an objective
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        private async Task<int?> GetObjectiveGoal(PsObjective obj) {
+            string? param = null;
+
+            if (obj.TypeID == 66) {
+                if (obj.Param1 == null) {
+                    _Logger.LogWarning($"Param1 of {obj.ID} was null, cannot get Achievement");
+                    return null;
+                }
+
+                if (int.TryParse(obj.Param1, out int achID) == false) {
+                    _Logger.LogWarning($"Failed to parse '{obj.Param1}' to a valid Int32");
+                    return null;
+                }
+
+                Achievement? achievement = await _AchievementRepository.GetByID(achID);
+                if (achievement == null) {
+                    _Logger.LogWarning($"Failed to get achievement {achID} from objective {obj.ID}");
+                    return null;
+                }
+
+                PsObjective? achObj = await _ObjectiveRepository.GetByGroupID(achievement.ObjectiveGroupID);
+                if (achObj == null) {
+                    _Logger.LogWarning($"Failed to get objective {achievement.ObjectiveGroupID} from achievement {achievement.ID}");
+                    return null;
+                }
+
+                // If Param3 (achievement count) is not null, get use how many of them are required, else use how many the achievement objective needs
+                if (obj.Param3 != null) {
+                    if (int.TryParse(obj.Param3, out int achCount) == false) {
+                        _Logger.LogWarning($"Failed to parse Param3 of objective {obj.ID} to a valid Int32");
+                        return null;
+                    }
+
+                    return achCount;
+                }
+
+                param = achObj.Param1;
+            } else {
+                ObjectiveType? type = await _ObjectiveTypeRepository.GetByID(obj.TypeID);
+                if (type == null) {
+                    _Logger.LogError($"Missing objective type {obj.TypeID}");
+                    return null;
+                }
+
+                switch (obj.TypeID) {
+                    case 3: param = obj.Param1; break;
+                    case 12: param = obj.Param1; break;
+                    case 14: param = obj.Param1; break;
+                    case 15: param = obj.Param1; break;
+                    case 17: param = obj.Param1; break;
+                    case 19: param = obj.Param2; break;
+                    case 20: param = obj.Param1; break;
+                    case 35: param = obj.Param1; break;
+                    case 69: param = obj.Param1; break;
+                    case 66: _Logger.LogError("what"); break;
+                    case 89: param = obj.Param5; break;
+                    case 90: param = obj.Param1; break;
+                    case 91: param = obj.Param1; break;
+                    case 92: param = obj.Param1; break;
+                    case 93: param = obj.Param1; break;
+
+                    default:
+                        _Logger.LogError($"Unchecked objective type id {obj.TypeID}");
+                        break;
+                }
+            }
+
+            if (param == null) {
+                _Logger.LogWarning($"param was still null, objective type {obj.TypeID}, objective {obj.ID}");
+                return null;
+            } else {
+                if (int.TryParse(param, out int goal) == false) {
+                    _Logger.LogWarning($"Failed to parse '{param}' into a valid Int32, from objectve {obj.ID}");
+                    return null;
+                }
+
+                return goal;
+            }
+        }
+
+        /// <summary>
+        ///     Get how far a character has gotten in an objective that uses an achievement for progression
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="weaponStats"></param>
+        /// <returns></returns>
+        private async Task<int?> GetAchievementProgress(PsObjective obj, List<WeaponStatEntry> weaponStats) {
+            if (obj.TypeID != 66) {
+                throw new ArgumentException($"Expected {nameof(obj)} to have a TypeID of 66, but it was {obj.TypeID}");
+            }
+
+            if (obj.Param1 == null) {
+                _Logger.LogError($"Param1 of {obj.ID} was null, cannot get Achievement");
+                return null;
+            }
+
+            if (int.TryParse(obj.Param1, out int achID) == false) {
+                _Logger.LogError($"Failed to parse '{obj.Param1}' to a valid Int32");
+                return null;
+            }
+
+            Achievement? achievement = await _AchievementRepository.GetByID(achID);
+            if (achievement == null) {
+                _Logger.LogError($"Failed to get achievement {achID} from objective {obj.ID}");
+                return null;
+            }
+
+            PsObjective? achObj = await _ObjectiveRepository.GetByGroupID(achievement.ObjectiveGroupID);
+            if (achObj == null) {
+                _Logger.LogError($"Failed to get objective {achievement.ObjectiveGroupID} from achievement {achievement.ID}");
+                return null;
+            }
+
+            if (achObj.TypeID == 12) {
+                if (achObj.Param5 == null) {
+                    _Logger.LogError($"Param5 of {achObj.ID} is null, which is the weapon ID");
+                    return null;
+                }
+
+                string weaponID = achObj.Param5;
+                WeaponStatEntry? weaponEntry = weaponStats.FirstOrDefault(iter => iter.WeaponID == weaponID);
+
+                if (obj.ID == 13389) {
+                    _Logger.LogDebug($"Character has {weaponEntry?.Kills} on {weaponID} from objective {obj.ID}");
+                }
+
+                return weaponEntry?.Kills;
+            } else {
+                //_Logger.LogError($"Unchecked objective type {achObj.TypeID} when getting achievement progress");
+                return null;
+            }
+        }
+            
     }
 
 }

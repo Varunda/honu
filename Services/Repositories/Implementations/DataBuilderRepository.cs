@@ -23,16 +23,16 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly IWorldTotalDbStore _WorldTotalDb;
 
         private readonly ICharacterRepository _CharacterRepository;
-        private readonly IOutfitRepository _OutfitRepository;
-        private readonly IItemRepository _ItemRepository;
+        private readonly OutfitRepository _OutfitRepository;
+        private readonly ItemRepository _ItemRepository;
 
         private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
 
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
-            ICharacterRepository charRepo, IOutfitRepository outfitRepo,
-            IWorldTotalDbStore worldTotalDb, IItemRepository itemRepo) {
+            ICharacterRepository charRepo, OutfitRepository outfitRepo,
+            IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo) {
 
             _Logger = logger;
 
@@ -383,7 +383,7 @@ namespace watchtower.Services.Repositories.Implementations {
                 .Take(12).ToList();
 
             foreach (KillItemEntry itemIter in items) {
-                PsItem? item = await _ItemRepository.GetByID(itemIter.ItemID);
+                PsItem? item = await _ItemRepository.GetByID(int.Parse(itemIter.ItemID));
 
                 WeaponKillEntry entry = new WeaponKillEntry() {
                     ItemID = itemIter.ItemID,

@@ -24,18 +24,18 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<OutfitApiController> _Logger;
 
-        private readonly IOutfitRepository _OutfitRepository;
+        private readonly OutfitRepository _OutfitRepository;
         private readonly IOutfitCollection _OutfitCollection;
         private readonly ICharacterHistoryStatDbStore _CharacterHistoryStatDb;
-        private readonly IOutfitDbStore _OutfitDb;
+        private readonly OutfitDbStore _OutfitDb;
         private readonly CharacterDbStore _CharacterDb;
 
         private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
-            IOutfitRepository outfitRepo, IOutfitCollection outfitCollection,
+            OutfitRepository outfitRepo, IOutfitCollection outfitCollection,
             CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
-            BackgroundCharacterWeaponStatQueue cacheQueue, IOutfitDbStore outfitDb) {
+            BackgroundCharacterWeaponStatQueue cacheQueue, OutfitDbStore outfitDb) {
 
             _Logger = logger;
 

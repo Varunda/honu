@@ -12,7 +12,10 @@ namespace watchtower.Services.Db.Patches {
         public int MinVersion => 4;
         public string Name => "Add wt_item";
 
-        public async Task Execute(IDbHelper helper) {
+        public Task Execute(IDbHelper helper) {
+            return Task.CompletedTask;
+            // Table is deleted then recreated in Patch 32
+            /*
             using NpgsqlConnection conn = helper.Connection();
             using NpgsqlCommand cmd = await helper.Command(conn, @"
                 CREATE TABLE IF NOT EXISTS wt_item (
@@ -24,6 +27,7 @@ namespace watchtower.Services.Db.Patches {
             ");
 
             await cmd.ExecuteNonQueryAsync();
+            */
         }
 
     }

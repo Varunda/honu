@@ -23,11 +23,11 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY = "Report.{0}"; // {0} => Generator hash
 
-        private readonly IOutfitRepository _OutfitRepository;
+        private readonly OutfitRepository _OutfitRepository;
         private readonly IOutfitCollection _OutfitCensus;
         private readonly ICharacterRepository _CharacterRepository;
         private readonly CharacterDbStore _CharacterDb;
-        private readonly IItemRepository _ItemRepository;
+        private readonly ItemRepository _ItemRepository;
         private readonly IKillEventDbStore _KillDb;
         private readonly IExpEventDbStore _ExpDb;
         private readonly ISessionDbStore _SessionDb;
@@ -37,10 +37,10 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly IFacilityDbStore _FacilityDb;
 
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
-            ICharacterRepository charRepo, IOutfitRepository outfitRepo,
+            ICharacterRepository charRepo, OutfitRepository outfitRepo,
             IOutfitCollection outfitCensus, ISessionDbStore sessionDb,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
-            IItemRepository itemRepo, CharacterDbStore charDb,
+            ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb) {
 
@@ -142,7 +142,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 HashSet<string> outfits = new();
                 HashSet<string> chars = new();
-                HashSet<string> items = new();
+                HashSet<int> items = new();
                 HashSet<int> facilities = new();
 
                 foreach (string id in report.CharacterIDs) {
@@ -153,7 +153,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 foreach (KillEvent ev in killDeaths) {
                     chars.Add(ev.KilledCharacterID);
                     chars.Add(ev.AttackerCharacterID);
-                    items.Add(ev.WeaponID);
+                    items.Add(int.Parse(ev.WeaponID));
                 }
 
                 report.Kills = killDeaths.Where(iter => iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
@@ -205,7 +205,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 report.Experience = expEvents.Where(iter => iter.TeamID == report.TeamID).ToList();
                 await Clients.Caller.UpdateExp(report.Experience);
 
-                foreach (string itemID in items) {
+                foreach (int itemID in items) {
                     PsItem? item = await _ItemRepository.GetByID(itemID);
                     if (item != null) {
                         report.Items.Add(item);

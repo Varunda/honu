@@ -9,11 +9,11 @@ namespace watchtower.Services.Db {
 
     public abstract class BaseStaticDbStore<T> : IStaticDbStore<T> where T : class {
 
-        private readonly ILogger _Logger;
-        private readonly IDataReader<T> _Reader;
-        private readonly IDbHelper _DbHelper;
+        internal readonly ILogger _Logger;
+        internal readonly IDataReader<T> _Reader;
+        internal readonly IDbHelper _DbHelper;
 
-        private readonly string _TableName;
+        internal readonly string _TableName;
 
         public BaseStaticDbStore(string tableName, ILoggerFactory loggerFactory,
             IDataReader<T> reader, IDbHelper helper) {
