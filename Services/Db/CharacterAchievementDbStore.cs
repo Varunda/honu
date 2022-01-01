@@ -26,7 +26,7 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_achievement
-                    WHERE character_id = @ChararacterID;
+                    WHERE character_id = @CharacterID;
             ");
 
             cmd.AddParameter("CharacterID", charID);

@@ -35,6 +35,7 @@ namespace watchtower.Controllers.Api {
         private readonly AchievementRepository _AchievementRepository;
         private readonly ICharacterWeaponStatDbStore _CharacterWeaponDb;
         private readonly ItemRepository _ItemRepository;
+        private readonly CharacterAchievementRepository _CharacterAchievementRepository;
 
         public CharacterDirectiveApiController(ILogger<CharacterDirectiveApiController> logger,
             CharacterDirectiveRepository charDirRepo, CharacterDirectiveTreeRepository charDirTreeRepo,
@@ -44,7 +45,7 @@ namespace watchtower.Controllers.Api {
             ObjectiveRepository objRepo, ObjectiveTypeRepository objTypeRepo,
             ObjectiveSetRepository objSetRepo, AchievementRepository achRepo,
             ICharacterWeaponStatDbStore charWeaponDb, ItemRepository itemRepo,
-            ICharacterRepository charRepo) {
+            ICharacterRepository charRepo, CharacterAchievementRepository charAchRepo) {
 
             _Logger = logger;
 
@@ -64,6 +65,7 @@ namespace watchtower.Controllers.Api {
             _AchievementRepository = achRepo;
             _CharacterWeaponDb = charWeaponDb;
             _ItemRepository = itemRepo;
+            _CharacterAchievementRepository = charAchRepo;
         }
 
         /// <summary>
@@ -115,6 +117,7 @@ namespace watchtower.Controllers.Api {
 
                 List<PsDirective> dirsInTree = await _DirectiveRepository.GetByTreeID(charTree.TreeID);
                 List<WeaponStatEntry> weaponStats = await _CharacterWeaponDb.GetByCharacterID(charID);
+                List<CharacterAchievement> characterAchs = await _CharacterAchievementRepository.GetByCharacterID(charID);
 
                 Dictionary<int, ExpandedCharacterDirectiveTier> tierMap = new();
                 foreach (PsDirective dir in dirsInTree) {
@@ -149,7 +152,7 @@ namespace watchtower.Controllers.Api {
                         dirEntry.Goal = await GetObjectiveGoal(obj);
 
                         if (obj.TypeID == 66) {
-                            dirEntry.Progress = await GetAchievementProgress(obj, weaponStats);
+                            dirEntry.Progress = await GetAchievementProgress(obj, weaponStats, characterAchs);
                             if (dirEntry.Progress == null) {
                                 dirEntry.Progress = dirEntry.CharacterObjective?.StateData;
                             }
@@ -161,9 +164,6 @@ namespace watchtower.Controllers.Api {
                             }
                         }
                     }
-                    dirEntry.Objective = obj;
-                    dirEntry.ObjectiveType = (obj == null) ? null : await _ObjectiveTypeRepository.GetByID(obj.TypeID);
-                    dirEntry.ObjectiveSource = source;
                     dirEntry.Name = dir.Name;
                     dirEntry.Description = dir.Description;
 
@@ -327,7 +327,7 @@ namespace watchtower.Controllers.Api {
         /// <param name="obj"></param>
         /// <param name="weaponStats"></param>
         /// <returns></returns>
-        private async Task<int?> GetAchievementProgress(PsObjective obj, List<WeaponStatEntry> weaponStats) {
+        private async Task<int?> GetAchievementProgress(PsObjective obj, List<WeaponStatEntry> weaponStats, List<CharacterAchievement> charAchs) {
             if (obj.TypeID != 66) {
                 throw new ArgumentException($"Expected {nameof(obj)} to have a TypeID of 66, but it was {obj.TypeID}");
             }
@@ -363,12 +363,13 @@ namespace watchtower.Controllers.Api {
                 string weaponID = achObj.Param5;
                 WeaponStatEntry? weaponEntry = weaponStats.FirstOrDefault(iter => iter.WeaponID == weaponID);
 
-                if (obj.ID == 13389) {
-                    _Logger.LogDebug($"Character has {weaponEntry?.Kills} on {weaponID} from objective {obj.ID}");
-                }
-
                 return weaponEntry?.Kills;
             } else {
+                CharacterAchievement? charAch = charAchs.FirstOrDefault(iter => iter.AchievementID == achID);
+                if (charAch != null) {
+                    return charAch.EarnedCount;
+                }
+
                 //_Logger.LogError($"Unchecked objective type {achObj.TypeID} when getting achievement progress");
                 return null;
             }

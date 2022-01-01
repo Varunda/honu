@@ -76,20 +76,6 @@ namespace watchtower.Models.Api {
 
         public CharacterDirectiveObjective? CharacterObjective { get; set; }
 
-        public PsObjective? Objective { get; set; }
-
-        public ObjectiveType? ObjectiveType { get; set; }
-
-        public Achievement? Achievement { get; set; }
-
-        public PsObjective? AchievementObjective { get; set; }
-
-        public ObjectiveType? AchievementObjectiveType { get; set; }
-
-        public WeaponStatEntry? WeaponStatEntry { get; set; }
-
-        public string ObjectiveSource { get; set; } = "";
-
     }
 
 }
