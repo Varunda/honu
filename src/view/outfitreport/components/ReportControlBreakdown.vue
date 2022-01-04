@@ -66,9 +66,9 @@
                 </td>
 
                 <td>
-                    <span style="display: inline-block">
+                    <div>
                         <chart-block-pie-chart :data="control.block" :show-percent="true" style="max-height: 200px;"></chart-block-pie-chart>
-                    </span>
+                    </div>
                 </td>
             </tr>
         </table>
@@ -153,15 +153,18 @@
                 this.entries = [];
 
                 for (const control of this.report.control) {
+                    // Don't show captures
                     if (this.showCaptures == false && control.oldFactionID != control.newFactionID) {
                         continue;
                     }
 
-                    if (this.showDefenses == false && control.oldFactionID == control.newFactionID) {
+                    // Don't show captures that aren't from an outfit the report was generated on
+                    if (control.oldFactionID != control.newFactionID && this.showAllOutfits == false && this.ourOutfits.indexOf(control.outfitID ?? "") == -1) {
                         continue;
                     }
 
-                    if (this.showAllOutfits == false && this.ourOutfits.indexOf(control.outfitID ?? "") == -1) {
+                    // Don't show captures
+                    if (this.showDefenses == false && control.oldFactionID == control.newFactionID) {
                         continue;
                     }
 
@@ -198,6 +201,8 @@
 
                     this.entries.push(entry);
                 }
+
+                this.entries.sort((a, b) => a.control.timestamp.getTime() - b.control.timestamp.getTime());
             }
 
         },

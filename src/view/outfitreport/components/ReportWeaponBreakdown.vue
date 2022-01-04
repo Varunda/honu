@@ -91,7 +91,7 @@
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
 
     class WeaponEntry {
-        public itemID: string = "";
+        public itemID: number = 0;
         public itemName: string = "";
         public kills: number = 0;
         public headshotKills: number = 0;
@@ -137,25 +137,25 @@
 
         methods: {
             make: function(events: KillEvent[]): WeaponEntry[] {
-                const map: Map<string, WeaponEntry> = new Map();
+                const map: Map<number, WeaponEntry> = new Map();
 
                 const noWeapon: WeaponEntry = new WeaponEntry();
                 noWeapon.itemName = "<no weapon>";
-                map.set("", noWeapon);
+                map.set(0, noWeapon);
 
                 for (const kill of events) {
-                    if (map.has(kill.weaponID) == false) {
+                    if (map.has(Number.parseInt(kill.weaponID)) == false) {
                         const entry: WeaponEntry = new WeaponEntry();
 
-                        entry.itemID = kill.weaponID;
-                        entry.itemName = this.report.items.get(kill.weaponID)?.name ?? `<missing ${kill.weaponID}>`;
+                        entry.itemID = Number.parseInt(kill.weaponID);
+                        entry.itemName = this.report.items.get(entry.itemID)?.name ?? `<missing ${kill.weaponID}>`;
                         entry.kills = 0;
                         entry.headshotKills = 0;
 
-                        map.set(kill.weaponID, entry);
+                        map.set(entry.itemID, entry);
                     }
 
-                    const entry: WeaponEntry = map.get(kill.weaponID)!;
+                    const entry: WeaponEntry = map.get(Number.parseInt(kill.weaponID))!;
                     ++entry.kills;
                     if (kill.isHeadshot == true) {
                         ++entry.headshotKills;
