@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
+using watchtower.Models.Events;
 
 namespace watchtower.Models {
 
@@ -50,6 +51,11 @@ namespace watchtower.Models {
         ///     Timestamp (in unix milliseconds) of when the last event a player got. Used for determining AFK players
         /// </summary>
         public long LatestEventTimestamp { get; set; }
+
+        /// <summary>
+        ///     Last death of the character. Used to update when a character is revived
+        /// </summary>
+        public KillEvent? LatestDeath { get; set; }
 
         /// <summary>
         ///     When the character last logged in, or <c>null</c> if unknown (such as restarting Honu)

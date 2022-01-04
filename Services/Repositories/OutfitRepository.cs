@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
@@ -18,10 +20,19 @@ namespace watchtower.Services.Repositories {
         private const string _CacheKeyID = "Outfit.ID.{0}"; // {0} => Outfit ID
 
         private readonly OutfitDbStore _Db;
-        private readonly IOutfitCollection _Census;
+        private readonly OutfitCollection _Census;
+
+        /// <summary>
+        ///     How many milliseconds to wait when searching by Census. Once this time has elapsed, the search
+        ///     is cancelled, and only DB results are used
+        /// </summary>
+        /// <remarks>
+        ///     With the couple of tests I've done, the quick response takes around 600ms when loading ~30 entries from Census
+        /// </remarks>
+        private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
 
         public OutfitRepository(ILogger<OutfitRepository> logger, IMemoryCache cache,
-            OutfitDbStore db, IOutfitCollection coll) {
+            OutfitDbStore db, OutfitCollection coll) {
 
             _Logger = logger;
             _Cache = cache;
@@ -67,16 +78,135 @@ namespace watchtower.Services.Repositories {
             return outfit;
         }
 
+        /// <summary>
+        ///     Get a list of all outfits that have a tag (case-insensitive)
+        /// </summary>
+        /// <remarks>
+        ///     If an empty string, or a string with more than 4 characters is passed, an empty list is returned
+        ///     <br/>
+        ///     A list is returned, as while only one active outfit can have a tag, deleted outfits may have the tag
+        /// </remarks>
+        /// <param name="tag">Tag to search by</param>
+        /// <returns>
+        ///     A list of all <see cref="PsOutfit"/> with <see cref="PsOutfit.Tag"/> of <paramref name="tag"/>
+        /// </returns>
         public async Task<List<PsOutfit>> GetByTag(string tag) {
-            if (tag == "") {
+            if (tag == "" || tag.Length > 4) {
                 return new List<PsOutfit>();
             }
 
             return await _Db.GetByTag(tag);
         }
 
-        public Task Upsert(PsOutfit outfit) {
-            throw new NotImplementedException();
+        /// <summary>
+        ///     Search for outfits based on their tag and name (case-insensitive)
+        /// </summary>
+        /// <remarks>
+        ///     A Census lookup is done. The census lookup is cancelled if there are database entries, and the lookup takes more than 600ms.
+        ///     But if there are no DB entries found that contain the tag or name, the Census lookup runs fully
+        /// </remarks>
+        /// <param name="tagOrName">Tag or name to search</param>
+        /// <returns>
+        ///     A list of all outfits that have a <see cref="PsOutfit.Tag"/> of <paramref name="tagOrName"/>
+        ///     or contain <paramref name="tagOrName"/> in <see cref="PsOutfit.Name"/>
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     If <paramref name="tagOrName"/>'s Length is less than 1
+        /// </exception>
+        public async Task<List<PsOutfit>> Search(string tagOrName) {
+            if (tagOrName.Length < 1) {
+                throw new ArgumentException($"{nameof(tagOrName)} must be at least one character");
+            }
+
+            bool tagOnly = tagOrName.StartsWith('[');
+
+            Stopwatch timer = Stopwatch.StartNew();
+
+            List<PsOutfit> outfits = new List<PsOutfit>();
+
+            // Starting a search with a [ is a tag only search
+            if (tagOnly == false) {
+                outfits.AddRange(await _Db.SearchByName(tagOrName));
+
+                // Don't search for tags if the search param is over 4 chars, as outfit tags are only 4 chars
+                if (tagOrName.Length <= 4) {
+                    outfits.AddRange(await _Db.GetByTag(tagOrName));
+                }
+            } else {
+                string tag = tagOrName[1..]; // fancy new range operator :o
+
+                outfits.AddRange(await _Db.GetByTag(tag));
+            }
+
+            long dbLookup = timer.ElapsedMilliseconds;
+            timer.Restart();
+
+            bool hasDbResults = outfits.Count > 0;
+
+            bool censusCancelled = true;
+
+            List<PsOutfit> census = new List<PsOutfit>();
+
+            // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
+            Task<List<PsOutfit>> nameWrapper = Task.Run(() => _Census.SearchByName(tagOrName));
+            Task<PsOutfit?> tagWrapper = (tagOnly == false) ? Task.Run(() => _Census.GetByTag(tagOrName)) : Task.FromResult<PsOutfit?>(null);
+
+            // If the DB had results, set a timeout so this method is kinda quick for that speedy lookup time, 
+            //      else let the search run the full time
+            if (hasDbResults == true) {
+                censusCancelled = nameWrapper.Wait(TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS)) == false;
+                if (censusCancelled == false) {
+                    census.AddRange(nameWrapper.Result);
+                }
+
+                censusCancelled = tagWrapper.Wait(TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS)) == false;
+                if (censusCancelled == false && tagWrapper.Result != null) {
+                    census.Add(tagWrapper.Result);
+                }
+            } else {
+                census.AddRange(await nameWrapper);
+
+                PsOutfit? censusTagged = await tagWrapper;
+                if (censusTagged != null) {
+                    census.Add(censusTagged);
+                }
+            }
+
+            foreach (PsOutfit outfit in census) {
+                outfits.Add(outfit);
+            }
+
+            // If any outfits were found, get those that don't exist in the DB and upsert them
+            if (census.Count > 0) {
+                new Thread(async () => {
+                    try {
+                        int inserted = 0;
+
+                        foreach (PsOutfit outfit in census) {
+                            PsOutfit? d = outfits.FirstOrDefault(iter => iter.ID == outfit.ID);
+                            if (d == null) {
+                                await _Db.Upsert(outfit);
+                                ++inserted;
+                            }
+                        }
+
+                        _Logger.LogDebug($"Inserted {inserted} new outfits from the {census.Count} found in Census");
+                    } catch (Exception ex) {
+                        _Logger.LogError(ex, $"Error while performing update on {census.Count} outfits");
+                    }
+                }).Start();
+            }
+
+            long censusLookup = timer.ElapsedMilliseconds;
+
+            outfits = outfits.DistinctBy(iter => iter.ID).ToList();
+
+            _Logger.LogDebug($"Timings to lookup '{tagOrName}':\n"
+                + $"\tDB search: {dbLookup}ms\n"
+                + $"\tCensus search: {censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}"
+            );
+
+            return outfits;
         }
 
         private bool HasExpired(PsOutfit outfit) {

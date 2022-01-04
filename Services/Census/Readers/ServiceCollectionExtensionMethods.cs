@@ -29,6 +29,7 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<Achievement>, CensusAchievementReader>();
             services.AddSingleton<ICensusReader<PsItem>, CensusItemReader>();
             services.AddSingleton<ICensusReader<CharacterAchievement>, CensusCharacterAchievementReader>();
+            services.AddSingleton<ICensusReader<PsOutfit>, CensusOutfitReader>();
         }
 
     }

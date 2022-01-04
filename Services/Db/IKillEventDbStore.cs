@@ -16,15 +16,17 @@ namespace watchtower.Services.Db {
         ///     Insert a new <see cref="KillEvent"/>
         /// </summary>
         /// <param name="ev">Event to be inserted</param>
-        Task Insert(KillEvent ev);
+        /// <returns>
+        ///     The ID of the <see cref="KillEvent"/> that was just created
+        /// </returns>
+        Task<long> Insert(KillEvent ev);
 
         /// <summary>
-        ///     Update the revived column of a death to indicate a death was revived, and does not count towards K/D
+        ///     Update <see cref="KillEvent.RevivedEventID"/>
         /// </summary>
-        /// <param name="charID">ID of the character that was revived</param>
-        /// <param name="revivedID">ID of the exp event for the revive</param>
-        /// <returns>A task for when the operation is complete</returns>
-        Task SetRevivedID(string charID, long revivedID);
+        /// <param name="killEventID">ID of the kill event to update</param>
+        /// <param name="reviveEventID">ID of the exp event that the revive came from</param>
+        Task SetRevivedID(long killEventID, long reviveEventID);
 
         /// <summary>
         ///     Get the top 8 killers from the parameters given

@@ -146,89 +146,94 @@ namespace watchtower.Services.Hosted {
                         }
                         metadata.NotFoundCount = 0;
                         metadata.LastUpdated = DateTime.UtcNow;
+
+                        List<WeaponStatEntry> weaponStats = new();
+                        List<PsCharacterHistoryStat> historyStats = new();
+                        List<CharacterItem> itemStats = new();
+                        List<PsCharacterStat> statEntries = new();
+                        List<CharacterFriend> charFriends = new();
+                        List<CharacterDirective> charDirs = new();
+                        List<CharacterDirectiveTree> charTreeDirs = new();
+                        List<CharacterDirectiveTier> charTierDirs = new();
+                        List<CharacterDirectiveObjective> charObjDirs = new();
+
                         await _CharacterDb.Upsert(censusChar);
 
                         await Task.WhenAll(
                             // Update the characters weapon stats
-                            _WeaponCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (WeaponStatEntry entry in result.Result) {
-                                    await _WeaponStatDb.Upsert(entry);
-                                }
-                            }),
+                            _WeaponCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => weaponStats = result.Result),
 
                             // Update the characters history stats
-                            _HistoryCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (PsCharacterHistoryStat stat in result.Result) {
-                                    await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
-                                }
-                            }),
+                            _HistoryCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => historyStats = result.Result),
 
                             // Update the items the character has
-                            _ItemCensus.GetByID(entry.CharacterID).ContinueWith(async result => {
-                                // Because set will remove old entries, we don't want to accidentally
-                                //      delete a perfectly good copy of the DB data if for some reason
-                                //      a blank copy is returned from Census
-                                if (result.Result.Count > 0) {
-                                    await _ItemDb.Set(entry.CharacterID, result.Result);
-                                }
-                            }),
+                            _ItemCensus.GetByID(entry.CharacterID).ContinueWith(result => itemStats = result.Result),
 
                             // Get the character stats (not the history ones)
-                            _StatCensus.GetByID(entry.CharacterID).ContinueWith(async result => {
-                                if (result.Result.Count > 0) {
-                                    await _StatDb.Set(entry.CharacterID, result.Result);
-                                }
-                            }),
+                            _StatCensus.GetByID(entry.CharacterID).ContinueWith(result => statEntries = result.Result),
 
                             // Get the character's friends
-                            _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                if (result.Result.Count > 0) {
-                                    await _FriendDb.Set(entry.CharacterID, result.Result);
-                                }
-                            }),
+                            _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
 
                             // Get the character's directive data
-                            _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (CharacterDirective dir in result.Result) {
-                                    try {
-                                        await _CharacterDirectiveDb.Upsert(entry.CharacterID, dir);
-                                    } catch (Exception ex) {
-                                        _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
-                                    }
-                                }
-                            }),
-
-                            _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (CharacterDirectiveTree tree in result.Result) {
-                                    try {
-                                        await _CharacterDirectiveTreeDb.Upsert(entry.CharacterID, tree);
-                                    } catch (Exception ex) {
-                                        _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
-                                    }
-                                }
-                            }),
-
-                            _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (CharacterDirectiveTier tier in result.Result) {
-                                    try {
-                                        await _CharacterDirectiveTierDb.Upsert(entry.CharacterID, tier);
-                                    } catch (Exception ex) {
-                                        _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
-                                    }
-                                }
-                            }),
-
-                            _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(async result => {
-                                foreach (CharacterDirectiveObjective obj in result.Result) {
-                                    try {
-                                        await _CharacterDirectiveObjectiveDb.Upsert(entry.CharacterID, obj);
-                                    } catch (Exception ex) {
-                                        _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
-                                    }
-                                }
-                            })
-
+                            _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charDirs = result.Result),
+                            _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTreeDirs = result.Result),
+                            _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTierDirs = result.Result),
+                            _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
                         );
+
+                        foreach (WeaponStatEntry iter in weaponStats) {
+                            await _WeaponStatDb.Upsert(iter);
+                        }
+
+                        foreach (PsCharacterHistoryStat stat in historyStats) {
+                            await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
+                        }
+
+                        if (itemStats.Count > 0) {
+                            await _ItemDb.Set(entry.CharacterID, itemStats);
+                        }
+
+                        if (statEntries.Count > 0) {
+                            await _StatDb.Set(entry.CharacterID, statEntries);
+                        }
+
+                        if (charFriends.Count > 0) {
+                            await _FriendDb.Set(entry.CharacterID, charFriends);
+                        }
+
+                        foreach (CharacterDirective dir in charDirs) {
+                            try {
+                                await _CharacterDirectiveDb.Upsert(entry.CharacterID, dir);
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
+                            }
+                        }
+
+                        foreach (CharacterDirectiveTree tree in charTreeDirs) {
+                            try {
+                                await _CharacterDirectiveTreeDb.Upsert(entry.CharacterID, tree);
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
+                            }
+                        }
+
+                        foreach (CharacterDirectiveTier tier in charTierDirs) {
+                            try {
+                                await _CharacterDirectiveTierDb.Upsert(entry.CharacterID, tier);
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
+                            }
+                        }
+
+                        foreach (CharacterDirectiveObjective obj in charObjDirs) {
+                            try {
+                                await _CharacterDirectiveObjectiveDb.Upsert(entry.CharacterID, obj);
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
+                            }
+                        }
+
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

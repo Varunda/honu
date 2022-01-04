@@ -16,12 +16,12 @@ namespace watchtower.Code.Commands {
     public class OutfitCommand {
 
         private readonly ILogger<OutfitCommand> _Logger;
-        private readonly IOutfitCollection _OutfitCollection;
+        private readonly OutfitCollection _OutfitCollection;
         private readonly OutfitDbStore _OutfitDb;
 
         public OutfitCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<OutfitCommand>>();
-            _OutfitCollection = services.GetRequiredService<IOutfitCollection>();
+            _OutfitCollection = services.GetRequiredService<OutfitCollection>();
             _OutfitDb = services.GetRequiredService<OutfitDbStore>();
         }
 

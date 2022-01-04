@@ -27,14 +27,15 @@
                 <th>Tag</th>
                 <th>Name</th>
                 <th>Player count</th>
-                <th>Links</th>
+                <th>Faction</th>
+                <th>Permalink</th>
             </tr>
 
             <tr v-if="outfits.state == 'idle'">
             </tr>
 
             <tr v-else-if="outfits.state == 'loading'">
-                <td colspan="4">
+                <td colspan="5">
                     Loading...
                 </td>
             </tr>
@@ -44,6 +45,7 @@
                     <td>{{outfit.tag}}</td>
                     <td>'{{outfit.name}}'</td>
                     <td>{{outfit.memberCount}}</td>
+                    <td>{{outfit.factionID | faction}}</td>
                     <td>
                         <a :href="'/o/' + outfit.id" type="button" class="btn btn-success">
                             Open
@@ -62,6 +64,8 @@
 
     import { PsOutfit, OutfitApi } from "api/OutfitApi";
 
+    import "filters/FactionNameFilter";
+
     export const OutfitFinder = Vue.extend({
         props: {
 
@@ -72,18 +76,73 @@
                 outfits: Loadable.idle() as Loading<PsOutfit[]>,
 
                 name: "" as string,
-                searchName: "" as string
+                searchName: "" as string,
+                scrollIndex: 0 as number
             }
         },
 
         methods: {
+            scrollOptions: function(ev: KeyboardEvent): void {
+                if (this.outfits.state != "loaded") {
+                    return;
+                }
+
+                if (ev.key == "ArrowUp") {
+                    if (this.scrollIndex == 0) {
+                        return;
+                    }
+                    --this.scrollIndex;
+                } else if (ev.key == "ArrowDown") {
+                    if (this.scrollIndex - 1 == this.outfits.data.length) {
+                        return;
+                    }
+                    ++this.scrollIndex;
+                } else {
+                    return;
+                }
+
+                ev.preventDefault();
+            },
+
+            openEnter: function(ev: KeyboardEvent): void {
+                if (this.outfits.state != "loaded") {
+                    return;
+                }
+
+                const outfit: PsOutfit = this.outfits.data[this.scrollIndex];
+
+                if (ev.ctrlKey == true) {
+                    console.log(`opening ${outfit.id} in new tab`);
+                    window.open(`/o/${outfit.id}`, "_blank");
+                } else {
+                    console.log(`opening ${outfit.id} in this tab`);
+                    location.href = `/o/${outfit.id}`;
+                }
+
+                ev.preventDefault();
+            },
+
             search: async function(): Promise<void> {
+                this.scrollIndex = 0;
                 this.searchName = this.name;
                 this.outfits = Loadable.loading();
                 this.outfits = await OutfitApi.searchByName(this.searchName);
 
+                const lowerName: string = this.name.toLowerCase();
+
                 if (this.outfits.state == "loaded") {
-                    this.outfits.data = this.outfits.data.sort((a, b) => b.memberCount - a.memberCount);
+                    this.outfits.data = this.outfits.data.sort((a, b) => {
+                        let tagOnly: boolean = this.searchName.at(0) == '[';
+
+                        if ((!tagOnly && b.name.toLowerCase() == lowerName) || b.tag?.toLowerCase() == lowerName) {
+                            return 1;
+                        }
+                        if ((!tagOnly && a.name.toLowerCase() == lowerName) || a.tag?.toLowerCase() == lowerName) {
+                            return -1;
+                        }
+
+                        return b.memberCount - a.memberCount;
+                    });
                 }
             }
 

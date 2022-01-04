@@ -17,7 +17,7 @@ namespace watchtower.Services.Census {
             services.AddSingleton<CharacterFriendCollection>();
             services.AddSingleton<CharacterAchievementCollection>();
 
-            services.AddSingleton<IOutfitCollection, OutfitCollection>();
+            services.AddSingleton<OutfitCollection, OutfitCollection>();
 
             // Static collections
             services.AddSingleton<IStaticCollection<PsItem>, ItemCollection>();

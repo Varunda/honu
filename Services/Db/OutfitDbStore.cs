@@ -54,10 +54,10 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Get an outfit that exactly matches a tag, case insensitive
+        ///     Get the outfits that exactly matches a tag, case insensitive
         /// </summary>
         /// <remarks>
-        ///     This is a 
+        ///     A list is returned, as deleted outfits can have the same tag
         /// </remarks>
         /// <param name="tag">Tag to search by</param>
         /// <returns>
@@ -72,6 +72,23 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("Tag", tag.ToLower());
+
+            List<PsOutfit> outfits = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return outfits;
+        }
+
+        /// <summary>
+        ///     Get all outfits stored in the database
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<PsOutfit>> GetAll() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_outfit;
+            ");
 
             List<PsOutfit> outfits = await ReadList(cmd);
             await conn.CloseAsync();

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -101,6 +102,9 @@ namespace watchtower.Controllers.Api {
             //          get the objective and progress of each directive
             foreach (CharacterDirectiveTree charTree in charDirTrees) {
                 DirectiveTree? tree = await _DirectiveTreeRepository.GetByID(charTree.TreeID);
+                if (tree == null) {
+                    continue;
+                }
 
                 int categoryID = tree != null ? tree.CategoryID : -1;
 
@@ -130,8 +134,6 @@ namespace watchtower.Controllers.Api {
                         tierMap.Add(tierID, tier);
                     }
 
-                    string source = "failed to find an objective";
-
                     ExpandedCharacterDirective dirEntry = new ExpandedCharacterDirective() {
                         Entry = charDirs.FirstOrDefault(iter => iter.DirectiveID == dir.ID),
                         Directive = dir,
@@ -142,13 +144,13 @@ namespace watchtower.Controllers.Api {
 
                     // Skip weapons not for the faction of the character
                     // 66 = Achievement, which can have an item attached to it
-                    if (obj != null && character != null && obj.TypeID == 66) {
-                        if (await IncludeObjective(obj, character.FactionID) == false) {
-                            continue;
-                        }
-                    }
-
                     if (obj != null) {
+                        if (character != null && obj.TypeID == 66) {
+                            if (await IncludeObjective(obj, character.FactionID) == false) {
+                                continue;
+                            }
+                        }
+
                         dirEntry.Goal = await GetObjectiveGoal(obj);
 
                         if (obj.TypeID == 66) {
@@ -164,6 +166,7 @@ namespace watchtower.Controllers.Api {
                             }
                         }
                     }
+
                     dirEntry.Name = dir.Name;
                     dirEntry.Description = dir.Description;
 
@@ -212,23 +215,26 @@ namespace watchtower.Controllers.Api {
                 
                 // 12 = Kills, check the weapon the kills are meant for
                 if (achObj.TypeID == 12) {
-                    if (achObj.Param5 == null) {
-                        _Logger.LogError($"Missing Param5 'Item' on objective id {achObj.ID}");
-                        return true;
-                    }
+                    if (achObj.Param5 != null) {
+                        string weaponID = achObj.Param5;
 
-                    string weaponID = achObj.Param5;
+                        PsItem? weaponItem = await _ItemRepository.GetByID(int.Parse(weaponID));
 
-                    PsItem? weaponItem = await _ItemRepository.GetByID(int.Parse(weaponID));
-
-                    if (weaponItem == null) {
-                        _Logger.LogWarning($"Failed to get weapon ID {weaponID} from objective {achObj.ID}");
+                        if (weaponItem == null) {
+                            _Logger.LogWarning($"Failed to get weapon ID {weaponID} from objective {achObj.ID}");
+                            return true;
+                        } else {
+                            // If the weapon is for a different faction, don't add it to the stats
+                            if (weaponItem.FactionID != -1 && weaponItem.FactionID != 0 && weaponItem.FactionID != 4 && (weaponItem.FactionID != factionID)) {
+                                return false;
+                            }
+                        }
+                    } else if (achObj.Param6 != null) {
+                        _Logger.LogWarning($"do Param6 stuff");
                         return true;
                     } else {
-                        // If the weapon is for a different faction, don't add it to the stats
-                        if (weaponItem.FactionID != -1 && weaponItem.FactionID != 0 && weaponItem.FactionID != 4 && (weaponItem.FactionID != factionID)) {
-                            return false;
-                        }
+                        _Logger.LogError($"Missing Param5 'Item' on objective id {achObj.ID}");
+                        return true;
                     }
                 }
             }
@@ -303,7 +309,7 @@ namespace watchtower.Controllers.Api {
                     case 93: param = obj.Param1; break;
 
                     default:
-                        _Logger.LogError($"Unchecked objective type id {obj.TypeID}");
+                        _Logger.LogError($"Unchecked objective type id {obj.TypeID}: {JToken.FromObject(type)}");
                         break;
                 }
             }
@@ -326,6 +332,7 @@ namespace watchtower.Controllers.Api {
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="weaponStats"></param>
+        /// <param name="charAchs"></param>
         /// <returns></returns>
         private async Task<int?> GetAchievementProgress(PsObjective obj, List<WeaponStatEntry> weaponStats, List<CharacterAchievement> charAchs) {
             if (obj.TypeID != 66) {
@@ -355,15 +362,17 @@ namespace watchtower.Controllers.Api {
             }
 
             if (achObj.TypeID == 12) {
-                if (achObj.Param5 == null) {
-                    _Logger.LogError($"Param5 of {achObj.ID} is null, which is the weapon ID");
+                if (achObj.Param5 != null) {
+                    string weaponID = achObj.Param5;
+                    WeaponStatEntry? weaponEntry = weaponStats.FirstOrDefault(iter => iter.WeaponID == weaponID);
+
+                    return weaponEntry?.Kills;
+                } else if (achObj.Param6 != null) {
+                    return null;
+                } else {
+                    _Logger.LogError($"Param5 and Param6 of {achObj.ID} is null, which is the weapon ID");
                     return null;
                 }
-
-                string weaponID = achObj.Param5;
-                WeaponStatEntry? weaponEntry = weaponStats.FirstOrDefault(iter => iter.WeaponID == weaponID);
-
-                return weaponEntry?.Kills;
             } else {
                 CharacterAchievement? charAch = charAchs.FirstOrDefault(iter => iter.AchievementID == achID);
                 if (charAch != null) {

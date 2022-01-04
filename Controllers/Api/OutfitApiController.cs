@@ -25,7 +25,7 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<OutfitApiController> _Logger;
 
         private readonly OutfitRepository _OutfitRepository;
-        private readonly IOutfitCollection _OutfitCollection;
+        private readonly OutfitCollection _OutfitCollection;
         private readonly ICharacterHistoryStatDbStore _CharacterHistoryStatDb;
         private readonly OutfitDbStore _OutfitDb;
         private readonly CharacterDbStore _CharacterDb;
@@ -33,7 +33,7 @@ namespace watchtower.Controllers.Api {
         private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
-            OutfitRepository outfitRepo, IOutfitCollection outfitCollection,
+            OutfitRepository outfitRepo, OutfitCollection outfitCollection,
             CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
             BackgroundCharacterWeaponStatQueue cacheQueue, OutfitDbStore outfitDb) {
 
@@ -90,14 +90,14 @@ namespace watchtower.Controllers.Api {
         /// <summary>
         ///     Search an outfit by name
         /// </summary>
-        /// <param name="name">Name to search by</param>
+        /// <param name="tagOrName">Name to search by</param>
         /// <response code="200">
         ///     The response will contain a list of all <see cref="PsOutfit"/> with <see cref="PsOutfit.Name"/>
-        ///     contained in <paramref name="name"/>
+        ///     contained in <paramref name="tagOrName"/>, or the tag exactly matches 
         /// </response>
-        [HttpGet("search/{name}")]
-        public async Task<ApiResponse<List<PsOutfit>>> SearchByName(string name) {
-            List<PsOutfit> outfits = await _OutfitDb.SearchByName(name);
+        [HttpGet("search/{tagOrName}")]
+        public async Task<ApiResponse<List<PsOutfit>>> SearchByName(string tagOrName) {
+            List<PsOutfit> outfits = await _OutfitRepository.Search(tagOrName);
             return ApiOk(outfits);
         }
 

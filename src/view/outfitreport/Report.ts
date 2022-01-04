@@ -27,7 +27,7 @@ export default class Report {
 	public deaths: KillEvent[] = [];
 	public experience: ExpEvent[] = [];
 
-	public items: Map<string, PsItem> = new Map();
+	public items: Map<number, PsItem> = new Map();
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public sessions: Session[] = [];

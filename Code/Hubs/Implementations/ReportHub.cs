@@ -24,7 +24,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private const string CACHE_KEY = "Report.{0}"; // {0} => Generator hash
 
         private readonly OutfitRepository _OutfitRepository;
-        private readonly IOutfitCollection _OutfitCensus;
+        private readonly OutfitCollection _OutfitCensus;
         private readonly ICharacterRepository _CharacterRepository;
         private readonly CharacterDbStore _CharacterDb;
         private readonly ItemRepository _ItemRepository;
@@ -38,7 +38,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
             ICharacterRepository charRepo, OutfitRepository outfitRepo,
-            IOutfitCollection outfitCensus, ISessionDbStore sessionDb,
+            OutfitCollection outfitCensus, ISessionDbStore sessionDb,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,

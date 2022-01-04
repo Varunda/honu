@@ -37,7 +37,7 @@ namespace watchtower.Services.Db.Implementations {
             _KillItemEntryReader = itemReader ?? throw new ArgumentNullException(nameof(itemReader));
         }
 
-        public async Task Insert(KillEvent ev) {
+        public async Task<long> Insert(KillEvent ev) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_kills (
@@ -50,7 +50,7 @@ namespace watchtower.Services.Db.Implementations {
                     @AttackerCharacterID, @AttackerLoadoutID, @AttackerFireModeID, @AttackerVehicleID, @AttackerFactionID, @AttackerTeamID,
                     @KilledCharacterID, @KilledLoadoutID, @KilledFactionID, @KilledTeamID, @RevivedEventID,
                     @WeaponID, @IsHeadshot, @Timestamp
-                );
+                ) RETURNING id;
             ");
 
             cmd.AddParameter("WorldID", ev.WorldID);
@@ -72,27 +72,26 @@ namespace watchtower.Services.Db.Implementations {
 
             //_Logger.LogTrace($"{ev.Timestamp.Kind} {ev.Timestamp}");
 
-            await cmd.ExecuteNonQueryAsync();
+            object? objID = await cmd.ExecuteScalarAsync();
             await conn.CloseAsync();
+
+            if (objID != null && int.TryParse(objID.ToString(), out int ID) == true) {
+                return ID;
+            } else {
+                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
+            }
         }
 
-        public async Task SetRevivedID(string charID, long revivedID) {
+        public async Task SetRevivedID(long killEventID, long revivedEventID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_kills
-                    SET revived_event_id = @RevivedID
-                    WHERE killed_character_id = @RevivedCharacterID
-                        AND timestamp = (
-                            SELECT MAX(timestamp)
-                                FROM wt_kills 
-                                WHERE timestamp >= (NOW() at time zone 'utc' - interval '50 seconds')
-                                    AND killed_character_id = @RevivedCharacterID
-                        )
+                    SET revived_event_id = @RevivedEventID
+                    WHERE ID = @KillEventID
             ");
-            // revives can only happen for 30 seconds, then 50 for lag and waiting to accept it
 
-            cmd.AddParameter("RevivedID", revivedID);
-            cmd.AddParameter("RevivedCharacterID", charID);
+            cmd.AddParameter("KillEventID", killEventID);
+            cmd.AddParameter("RevivedEventID", revivedEventID);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

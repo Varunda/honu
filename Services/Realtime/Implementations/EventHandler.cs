@@ -151,42 +151,46 @@ namespace watchtower.Realtime {
             }
 
             new Thread(async () => {
-                // Wait a second for all the PlayerCapture and PlayerDefend events to come in
-                await Task.Delay(1000);
+                try {
+                    // Wait a second for all the PlayerCapture and PlayerDefend events to come in
+                    await Task.Delay(1000);
 
-                List<PlayerControlEvent> events;
+                    List<PlayerControlEvent> events;
 
-                lock (PlayerFacilityControlStore.Get().Events) {
-                    // Clean up is handled in a period hosted service
-                    events = PlayerFacilityControlStore.Get().Events.Where(iter => {
-                        return iter.FacilityID == ev.FacilityID
-                            && iter.WorldID == ev.WorldID
-                            && iter.ZoneID == ev.ZoneID
-                            && iter.Timestamp == ev.Timestamp;
-                    }).ToList();
+                    lock (PlayerFacilityControlStore.Get().Events) {
+                        // Clean up is handled in a period hosted service
+                        events = PlayerFacilityControlStore.Get().Events.Where(iter => {
+                            return iter.FacilityID == ev.FacilityID
+                                && iter.WorldID == ev.WorldID
+                                && iter.ZoneID == ev.ZoneID
+                                && iter.Timestamp == ev.Timestamp;
+                        }).ToList();
 
-                    ev.Players = events.Count;
+                        ev.Players = events.Count;
+                    }
+
+                    if (ev.Players == 0) {
+                        return;
+                    }
+
+                    Stopwatch timer = Stopwatch.StartNew();
+                    UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
+                    if (timer.ElapsedMilliseconds > 1000) {
+                        //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
+                    }
+                    timer.Stop();
+
+                    ev.UnstableState = state;
+
+                    long ID = await _ControlDb.Insert(ev);
+
+                    timer.Restart();
+                    await _FacilityPlayerDb.InsertMany(ID, events);
+                    //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
+                    //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, "error in background thread of control event");
                 }
-
-                if (ev.Players == 0) {
-                    return;
-                }
-
-                Stopwatch timer = Stopwatch.StartNew();
-                UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
-                if (timer.ElapsedMilliseconds > 1000) {
-                    //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
-                }
-                timer.Stop();
-
-                ev.UnstableState = state;
-
-                long ID = await _ControlDb.Insert(ev);
-
-                timer.Restart();
-                await _FacilityPlayerDb.InsertMany(ID, events);
-                //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
-                //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             }).Start();
         }
 
@@ -482,7 +486,9 @@ namespace watchtower.Realtime {
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
+
                 killed.LatestEventTimestamp = nowSeconds;
+                killed.LatestDeath = ev;
             }
 
             await _KillEventDb.Insert(ev);
@@ -519,6 +525,8 @@ namespace watchtower.Realtime {
                 ZoneID = zoneID
             };
 
+            TrackedPlayer? otherPlayer = null;
+
             lock (CharacterStore.Get().Players) {
                 // Default false for |Online| to ensure a session is started
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
@@ -541,11 +549,11 @@ namespace watchtower.Realtime {
                     p.TeamID = factionID;
                 }
 
-                // Update the team_id field if needed
+                // If the event could only happen if two characters are on the same faction, update the team_id field
                 if (Experience.IsRevive(expId) || Experience.IsHeal(expId) || Experience.IsResupply(expId)) {
                     // If either character was not NSO, update the team_id of the character
                     // If both are NSO, this field is not updated, as one bad team_id could then spread to other NSOs, messing up tracking
-                    if (CharacterStore.Get().Players.TryGetValue(otherID, out TrackedPlayer? otherPlayer)) {
+                    if (CharacterStore.Get().Players.TryGetValue(otherID, out otherPlayer)) {
                         if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS
                             && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
 
@@ -567,8 +575,13 @@ namespace watchtower.Realtime {
 
             long ID = await _ExpEventDb.Insert(ev);
 
-            if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
-                await _KillEventDb.SetRevivedID(ev.OtherID, ID);
+            // If this event was a revive, get the latest death of the character who died and set the revived id
+            if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) && otherPlayer != null && otherPlayer.LatestDeath != null) {
+                if (ev.Timestamp - otherPlayer.LatestDeath.Timestamp > TimeSpan.FromSeconds(50)) {
+                    otherPlayer.LatestDeath = null;
+                } else {
+                    await _KillEventDb.SetRevivedID(otherPlayer.LatestDeath.ID, ID);
+                }
             }
 
             // Track the sundy and how many spawns it has
