@@ -29,13 +29,13 @@
             </span>
         </h2>
 
-        <table class="table table-sm">
+        <table class="table table-sm" style="table-layout: fixed;">
             <tr class="table-secondary">
-                <th>Facility</th>
-                <th>Timestamp</th>
-                <th>Action</th>
-                <th>Players</th>
-                <th></th>
+                <th width="15%">Facility</th>
+                <th width="15%">Timestamp</th>
+                <th width="15%">Action</th>
+                <th width="15%">Players</th>
+                <th width="40%"></th>
             </tr>
 
             <tr v-for="control in entries">

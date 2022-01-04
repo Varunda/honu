@@ -123,8 +123,8 @@
                                     right: 40
                                 }
                             },
-                            responsive: false,
-                            maintainAspectRatio: false
+                            responsive: true,
+                            maintainAspectRatio: true
                         }
                     });
                 } catch (err: any) {
