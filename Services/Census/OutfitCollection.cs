@@ -1,4 +1,5 @@
 ﻿using DaybreakGames.Census;
+using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -19,6 +20,8 @@ namespace watchtower.Services.Census {
 
         private readonly ILogger<OutfitCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
+
+        private const int BATCH_SIZE = 50;
 
         private readonly ICensusReader<PsOutfit> _Reader;
         private readonly ICensusReader<OutfitMember> _MemberReader;
@@ -48,6 +51,38 @@ namespace watchtower.Services.Census {
             query.AddResolve("leader");
 
             return _Reader.ReadSingle(query);
+        }
+
+        /// <summary>
+        ///     Get outfits by a block of IDs
+        /// </summary>
+        /// <param name="IDs">ID of the outfits to get</param>
+        /// <returns></returns>
+        public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+            int batchCount = (int) Math.Ceiling(IDs.Count / (double) BATCH_SIZE);
+
+            List<PsOutfit> chars = new List<PsOutfit>(IDs.Count);
+
+            for (int i = 0; i < batchCount; ++i) {
+                List<string> slice = IDs.Skip(i * BATCH_SIZE).Take(BATCH_SIZE).ToList();
+
+                CensusQuery query = _Census.Create("outfit");
+                foreach (string id in slice) {
+                    query.Where("outfit_id").Equals(id);
+                }
+                query.SetLimit(10_000);
+                query.AddResolve("leader");
+
+                // If there is an exception, ignore census connection ones
+                try {
+                    List<PsOutfit> outfitSlice = await _Reader.ReadList(query);
+                } catch (CensusConnectionException) {
+                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
+                    continue;
+                }
+            }
+
+            return chars;
         }
 
         /// <summary>

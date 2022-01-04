@@ -66,19 +66,20 @@
 
             makeAll: function(): void {
                 this.makeKills();
+                this.makeKpm();
+                this.makeAssists();
                 this.makeHeals();
                 this.makeRevives();
                 this.makeResupplies();
                 this.makeMaxRepairs();
                 this.makeShieldRepairs();
-                this.makeKpm();
             },
 
             makeKills: function(): void {
                 const metric: WinterMetric = new WinterMetric();
                 metric.name = "Kills";
                 metric.funName = "Kills";
-                metric.description = "Players with the most kills";
+                metric.description = "Most kills (per minute)";
 
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -87,8 +88,7 @@
                         const entry: WinterEntry = new WinterEntry();
                         entry.characterID = kill.attackerCharacterID;
 
-                        const character: PsCharacter | null = this.report.characters.get(entry.characterID) || null;
-                        entry.name = character != null ? `${character.outfitID != null ? `[${character.outfitTag}] ` : ""}${character.name}` : `<missing ${entry.characterID}>`;
+                        entry.name = this.getCharacterName(kill.attackerCharacterID);
                         entry.value = 0;
 
                         map.set(entry.characterID, entry);
@@ -99,57 +99,77 @@
                     map.set(kill.attackerCharacterID, entry);
                 }
 
-                metric.entries = Array.from(map.values())
-                    .sort((a, b) => b.value - a.value);
+                const entries: WinterEntry[] = Array.from(map.values());
+                for (const entry of entries) {
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                    if (metadata != undefined) {
+                        entry.display = `${entry.value} (${(entry.value / Math.max(1, metadata.timeAs) * 60).toFixed(2)})`;
+                    }
+                }
+
+                metric.entries = entries.sort((a, b) => b.value - a.value);
 
                 if (metric.entries.length > 0) {
                     this.essential.push(metric);
                 }
             },
 
+            makeAssists: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Assists";
+                metric.funName = "Assists";
+                metric.description = "Highest assists (per minute)";
+
+                this.essential.push(this.generateExperience(
+                    metric,
+                    [Experience.ASSIST, Experience.HIGH_PRIORITY_ASSIST, Experience.PRIORITY_ASSIST, Experience.SPAWN_ASSIST],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
             makeHeals: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Heals";
-                metric.funName = "Necromancer";
-                metric.description = "Most heals";
+                metric.funName = "Green Wizard";
+                metric.description = "Most heals (per minute)";
 
-                this.essential.push(this.generateExperience(metric, [Experience.HEAL, Experience.SQUAD_HEAL]));
+                this.essential.push(this.generateExperience(metric, [Experience.HEAL, Experience.SQUAD_HEAL], (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeRevives: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Revives";
                 metric.funName = "Necromancer";
-                metric.description = "Most revives";
+                metric.description = "Most revives (per minute)";
 
-                this.essential.push(this.generateExperience(metric, [Experience.REVIVE, Experience.SQUAD_REVIVE]));
+                this.essential.push(this.generateExperience(metric, [Experience.REVIVE, Experience.SQUAD_REVIVE], (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeResupplies: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Resupplies";
                 metric.funName = "Ammo printer";
-                metric.description = "Most resupplies";
+                metric.description = "Most resupplies (per minute)";
 
-                this.essential.push(this.generateExperience(metric, [Experience.RESUPPLY, Experience.SQUAD_RESUPPLY]));
+                this.essential.push(this.generateExperience(metric, [Experience.RESUPPLY, Experience.SQUAD_RESUPPLY], (metadata) => metadata.classes.engineer.timeAs));
             },
 
             makeMaxRepairs: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "MAX repairs";
                 metric.funName = "Welder";
-                metric.description = "Most MAX repairs";
+                metric.description = "Most MAX repairs (per minute)";
 
-                this.essential.push(this.generateExperience(metric, [Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR]));
+                this.essential.push(this.generateExperience(metric, [Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR], (metadata) => metadata.classes.engineer.timeAs));
             },
 
             makeShieldRepairs: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Shield repairs";
                 metric.funName = "Shield battery";
-                metric.description = "Most shield repairs";
+                metric.description = "Most shield repairs (per minute)";
 
-                this.essential.push(this.generateExperience(metric, [Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR]));
+                this.essential.push(this.generateExperience(metric, [Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR], (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeKpm: function(): void {
@@ -162,11 +182,6 @@
 
                 for (const kill of this.report.kills) {
                     const id: string = kill.attackerCharacterID;
-                    if (map.has(kill.attackerCharacterID) == false) {
-                        const character: PsCharacter | null = this.report.characters.get(id) || null;
-                        map.set(id, 0);
-                    }
-
                     map.set(id, (map.get(id) || 0) + 1);
                 }
 
@@ -183,10 +198,8 @@
 
                     const entry: WinterEntry = new WinterEntry();
                     entry.characterID = charID;
-
-                    const character: PsCharacter | null = this.report.characters.get(entry.characterID) || null;
-                    entry.name = character != null ? `${character.outfitID != null ? `[${character.outfitTag}] ` : ""}${character.name}` : `<missing ${entry.characterID}>`;
-                    entry.value = kills / metadata.timeAs * 60;
+                    entry.name = this.getCharacterName(charID);
+                    entry.value = kills / Math.max(1, metadata.timeAs) * 60;
                     entry.display = entry.value.toFixed(2);
 
                     metric.entries.push(entry);
@@ -197,7 +210,7 @@
                 this.essential.push(metric);
             },
 
-            generateExperience: function(metric: WinterMetric, expIDs: number[]): WinterMetric {
+            generateExperience: function(metric: WinterMetric, expIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
                 const map: Map<string, WinterEntry> = new Map();
 
                 for (const exp of this.report.experience) {
@@ -209,8 +222,7 @@
                         const entry: WinterEntry = new WinterEntry();
                         entry.characterID = exp.sourceID;
 
-                        const character: PsCharacter | null = this.report.characters.get(entry.characterID) || null;
-                        entry.name = character != null ? `${character.outfitID != null ? `[${character.outfitTag}] ` : ""}${character.name}` : `<missing ${entry.characterID}>`;
+                        entry.name = this.getCharacterName(exp.sourceID);
                         entry.value = 0;
 
                         map.set(entry.characterID, entry);
@@ -221,10 +233,25 @@
                     map.set(exp.sourceID, entry);
                 }
 
-                metric.entries = Array.from(map.values())
-                    .sort((a, b) => b.value - a.value);
+                const entries: WinterEntry[] = Array.from(map.values());
+                if (perMinuteSelector != null) {
+                    for (const entry of entries) {
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            const minutes: number = perMinuteSelector(metadata);
+                            entry.display = `${entry.value} (${(entry.value / Math.max(1, minutes) * 60).toFixed(2)})`;
+                        }
+                    }
+                }
+
+                metric.entries = entries.sort((a, b) => b.value - a.value);
 
                 return metric;
+            },
+
+            getCharacterName(charID: string): string {
+                const character: PsCharacter | null = this.report.characters.get(charID) || null;
+                return character != null ? `${character.outfitID != null ? `[${character.outfitTag}] ` : ""}${character.name}` : `<missing ${charID}>`;
             }
 
         },

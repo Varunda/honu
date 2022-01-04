@@ -214,7 +214,7 @@
                         .map(iter => iter[0]);
 
                     value.mostUsedWeaponID = weapons[0];
-                    value.mostUsedWeapon = this.report.items.get(weapons[0]) || null;
+                    value.mostUsedWeapon = this.report.items.get(Number.parseInt(weapons[0])) || null;
                 }
 
             },

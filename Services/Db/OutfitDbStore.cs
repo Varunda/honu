@@ -54,6 +54,26 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Get a block of <see cref="PsOutfit"/>s by IDs
+        /// </summary>
+        /// <param name="IDs">IDs of the outfits to get</param>
+        public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_outfit
+                    WHERE id = ANY(@IDs)
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+
+            List<PsOutfit> outfits = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return outfits;
+        }
+
+        /// <summary>
         ///     Get the outfits that exactly matches a tag, case insensitive
         /// </summary>
         /// <remarks>

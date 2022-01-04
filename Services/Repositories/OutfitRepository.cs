@@ -99,6 +99,62 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
+        ///     Get a bunch of outfits at once by ID
+        /// </summary>
+        /// <remarks>
+        ///     It is assumed that all outfits are current, and none have expired
+        /// </remarks>
+        /// <param name="IDs">List of IDs to get</param>
+        /// <returns>
+        ///     A list of <see cref="PsOutfit"/>s, each on with a <see cref="PsOutfit.ID"/>
+        ///     that is an element of <paramref name="IDs"/>
+        /// </returns>
+        public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+            List<PsOutfit> outfits = new List<PsOutfit>(IDs.Count);
+
+            int total = IDs.Count;
+            int inCache = 0;
+
+            foreach (string ID in IDs.ToList()) {
+                string cacheKey = string.Format(_CacheKeyID, ID);
+
+                if (_Cache.TryGetValue(cacheKey, out PsOutfit outfit) == true) {
+                    outfits.Add(outfit);
+                    IDs.Remove(ID);
+                    ++inCache;
+                }
+            }
+
+            int inDb = 0;
+            List<PsOutfit> dbOutfits = await _Db.GetByIDs(IDs);
+            foreach (PsOutfit outfit in dbOutfits) {
+                outfits.Add(outfit);
+                IDs.Remove(outfit.ID);
+                ++inDb;
+            }
+
+            int inCensus = 0;
+            List<PsOutfit> censusOutfits = await _Db.GetByIDs(IDs);
+            foreach (PsOutfit outfit in censusOutfits) {
+                outfits.Add(outfit);
+                IDs.Remove(outfit.ID);
+                ++inCensus;
+            }
+
+            foreach (PsOutfit outfit in outfits) {
+                string cacheKey = string.Format(_CacheKeyID, outfit.ID);
+                _Cache.Set(cacheKey, outfit, new MemoryCacheEntryOptions() {
+                    SlidingExpiration = TimeSpan.FromMinutes(20)
+                });
+            }
+
+            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} outfits. "
+                + $"In cache: {inCache}, db: {inDb}, census: {inCensus}, left: {IDs.Count}");
+
+            return outfits;
+        }
+
+        /// <summary>
         ///     Search for outfits based on their tag and name (case-insensitive)
         /// </summary>
         /// <remarks>

@@ -223,12 +223,7 @@ namespace watchtower.Code.Hubs.Implementations {
                     }
                 }
 
-                foreach (string outfitID in outfits) {
-                    PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
-                    if (outfit != null) {
-                        report.Outfits.Add(outfit);
-                    }
-                }
+                report.Outfits = await _OutfitRepository.GetByIDs(outfits.ToList());
                 await Clients.Caller.UpdateOutfits(report.Outfits);
 
                 foreach (int facID in facilities) {
