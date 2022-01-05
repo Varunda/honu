@@ -26,12 +26,18 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    <a :href="'/i/' + entry.itemID">
-                        {{entry.itemName}}
-                    </a>
-                    <span v-if="showDebug == true">
-                        / {{entry.itemID}}
-                    </span>
+                    <div style="height: 3rem; position: relative;">
+                        <a :href="'/i/' + entry.itemID" style="position: absolute;">
+                            {{entry.itemName}}
+                            <span v-if="showDebug == true">
+                                / {{entry.itemID}}
+                            </span>
+                        </a>
+
+                        <census-image v-if="entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
+                            style="position: absolute; text-align: center; height: 100%">
+                        </census-image>
+                    </div>
                 </a-body>
             </a-col>
 
@@ -164,9 +170,13 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
+    import CensusImage from "components/CensusImage";
+
     import PercentileCell from "./PercentileCell.vue";
+
     import "MomentFilter";
 
     import { Loading, Loadable } from "Loading";
@@ -211,6 +221,7 @@
             AFilter,
             InfoHover,
             PercentileCell,
+            CensusImage
         }
 
     });

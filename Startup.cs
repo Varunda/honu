@@ -159,7 +159,7 @@ namespace watchtower {
                 services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
                 //services.AddHostedService<CharacterDatesFixerStartupService>();
-                services.AddHostedService<OutfitMemberFixerStartupService>();
+                //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
         }
 

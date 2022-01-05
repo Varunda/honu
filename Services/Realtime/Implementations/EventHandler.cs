@@ -575,12 +575,15 @@ namespace watchtower.Realtime {
 
             long ID = await _ExpEventDb.Insert(ev);
 
+            if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
+                await _KillEventDb.SetRevivedID(ev.OtherID, ID);
+            }
+
             // If this event was a revive, get the latest death of the character who died and set the revived id
             if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) && otherPlayer != null && otherPlayer.LatestDeath != null) {
                 if (ev.Timestamp - otherPlayer.LatestDeath.Timestamp > TimeSpan.FromSeconds(50)) {
                     otherPlayer.LatestDeath = null;
                 } else {
-                    await _KillEventDb.SetRevivedID(otherPlayer.LatestDeath.ID, ID);
                 }
             }
 

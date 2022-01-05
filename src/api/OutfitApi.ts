@@ -101,7 +101,9 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 			flat.name = entry.character.name;
 			flat.prestigeRank = `${entry.character.prestige}~${entry.character.battleRank}`;
 			flat.lastLogin = entry.character.dateLastLogin;
-		}
+		} else {
+			flat.name = `<not yet loaded>`;
+        }
 
 		if (entry.stats != null && entry.stats.length > 0) {
 			const kills: CharacterHistoryStat | null = entry.stats.find(iter => iter.type == "kills") || null;

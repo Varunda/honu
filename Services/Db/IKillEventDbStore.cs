@@ -26,7 +26,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="killEventID">ID of the kill event to update</param>
         /// <param name="reviveEventID">ID of the exp event that the revive came from</param>
-        Task SetRevivedID(long killEventID, long reviveEventID);
+        Task SetRevivedID(string charID, long reviveEventID);
 
         /// <summary>
         ///     Get the top 8 killers from the parameters given

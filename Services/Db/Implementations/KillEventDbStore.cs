@@ -82,15 +82,21 @@ namespace watchtower.Services.Db.Implementations {
             }
         }
 
-        public async Task SetRevivedID(long killEventID, long revivedEventID) {
+        public async Task SetRevivedID(string charID, long revivedEventID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_kills
                     SET revived_event_id = @RevivedEventID
-                    WHERE ID = @KillEventID
+                    WHERE killed_character_id = @RevivedCharacterID
+                        AND timestamp = (
+                            SELECT MAX(timestamp)
+                                FROM wt_kills 
+                                WHERE timestamp >= (NOW() at time zone 'utc' - interval '50 seconds')
+                                    AND killed_character_id = @RevivedCharacterID
+                        )
             ");
 
-            cmd.AddParameter("KillEventID", killEventID);
+            cmd.AddParameter("RevivedCharacterID", charID);
             cmd.AddParameter("RevivedEventID", revivedEventID);
 
             await cmd.ExecuteNonQueryAsync();
