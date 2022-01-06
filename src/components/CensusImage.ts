@@ -7,7 +7,7 @@ export const CensusImage = Vue.extend({
     },
 
     template: `
-        <img :src="'https://census.daybreakgames.com/files/ps2/images/static/' + ImageId + '.png'" />
+        <img :src="'https://census.daybreakgames.com/files/ps2/images/static/' + ImageId + '.png'" loading="lazy" />
     `
 
 });

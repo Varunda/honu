@@ -35,7 +35,7 @@
                         </a>
 
                         <census-image v-if="entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
-                            style="position: absolute; text-align: center; height: 100%">
+                            style="position: absolute; text-align: center; height: 100%; right: 0;">
                         </census-image>
                     </div>
                 </a-body>
