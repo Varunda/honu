@@ -152,6 +152,12 @@ namespace watchtower.Services.Repositories {
                         if (c != null && report.TeamID == -1) {
                             report.TeamID = c.FactionID;
                         }
+
+                        List<Session> sessions = await _SessionDb.GetByRangeAndCharacterID(word, report.PeriodStart, report.PeriodEnd);
+                        foreach (Session s in sessions) {
+                            report.Sessions.Add(s);
+                        }
+
                         report.CharacterIDs.Add(word);
                         word = "";
                         state = GenState.READ_NEXT;
@@ -175,6 +181,10 @@ namespace watchtower.Services.Repositories {
                                 if (report.TeamID == -1 && s.TeamID > 0) {
                                     report.TeamID = s.TeamID;
                                 }
+                            }
+
+                            if (report.TeamID == -1) {
+                                report.TeamID = outfit.FactionID;
                             }
                         }
 

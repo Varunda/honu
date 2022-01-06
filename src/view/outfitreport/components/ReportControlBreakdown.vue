@@ -41,7 +41,9 @@
             <tr v-for="control in entries">
                 <td>
                     <span v-if="control.facility != null">
-                        {{control.facility.name}} ({{control.facility.typeName}})
+                        {{control.facility.name}}
+                        <br />
+                        {{control.facility.typeName}} on {{control.control.zoneID | zone}}
                     </span>
                     <span v-else>
                         &lt;missing facility {{control.control.facility_id}}&gt;
@@ -89,6 +91,7 @@
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
 
     import "filters/FactionNameFilter";
+    import "filters/ZoneNameFilter";
     import "MomentFilter";
 
     class ControlEntry {

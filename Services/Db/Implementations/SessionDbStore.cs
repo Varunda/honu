@@ -74,6 +74,36 @@ namespace watchtower.Services.Db.Implementations {
 
             return session;
         }
+        
+        public async Task<List<Session>> GetByRangeAndCharacterID(string charID, DateTime start, DateTime end) {
+            if (start > end) {
+                _Logger.LogWarning($"Warning, start comes after end, {start} > {end}");
+            }
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE character_id = @CharID
+                        AND ((start BETWEEN @PeriodStart AND @PeriodEnd)
+                            OR (finish BETWEEN @PeriodStart AND @PeriodEnd)
+                            OR (start <= @PeriodStart AND finish >= @PeriodEnd)
+                            OR (start >= @PeriodStart AND finish <= @PeriodEnd)
+                            OR (start < @PeriodStart AND finish IS NULL)
+                        )
+            ");
+
+            cmd.AddParameter("CharID", charID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            //_Logger.LogTrace($"{cmd.Print()}");
+
+            List<Session> sessions = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
 
         public async Task<List<Session>> GetByRangeAndOutfit(string? outfitID, DateTime start, DateTime end) {
             if (start > end) {

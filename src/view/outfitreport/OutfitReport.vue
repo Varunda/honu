@@ -11,6 +11,35 @@
                 <a href="#">Report</a>
             </h1>
 
+            <div>
+                <table class="table table-sm mr-2">
+                    <tr>
+                        <th>Controls</th>
+                        <td>
+                            <a v-if="show.controls == true" @click="show.controls = false" href="#">
+                                Hide
+                            </a>
+
+                            <a v-else @click="show.controls = true" href="#">
+                                Show
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th></th>
+                        <td>
+                            <a href="/report">New</a>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+
             <div v-if="isDone == true">
                 <table class="table table-sm">
                     <tr>
@@ -27,29 +56,32 @@
                         <td><b>Duration</b></td>
                         <td>{{(report.periodEnd.getTime() - report.periodStart.getTime()) / 1000 | mduration}}</td>
                     </tr>
+
+                    <tr>
+                    </tr>
                 </table>
             </div>
         </div>
 
-        <h3 class="text-warning text-center">
-            work in progress
-        </h3>
-
-        <div class="btn-group w-100 mb-2">
-            <button @click="showLogs = !showLogs" type="button" class="btn btn-secondary">
+        <div class="btn-group w-100 mb-2" v-if="show.controls == true">
+            <button @click="show.logs = !show.logs" type="button" class="btn border" :class="[ show.logs ? 'btn-primary' : 'btn-secondary' ]">
                 Logs
             </button>
 
-            <button @click="isNew = !isNew" type="button" class="btn btn-secondary">
-                Is new
+            <button @click="show.gen = !show.gen" type="button" class="btn border" :class="[ show.gen ? 'btn-primary' : 'btn-secondary' ]">
+                Show generator
             </button>
 
-            <a href="/report" class="btn btn-secondary">
+            <button @click="show.debug = !show.debug" type="button" class="btn border" :class="[ show.debug ? 'btn-primary' : 'btn-secondary' ]">
+                Show debug
+            </button>
+
+            <a href="/report" class="btn btn-warning border">
                 Reset
             </a>
         </div>
 
-        <div v-if="showLogs == true" style="height: 300px; overflow-y: scroll;" class="container-fluid">
+        <div v-if="show.logs == true" style="height: 300px; overflow-y: scroll;" class="container-fluid">
             <div v-for="msg in logs" class="row">
                 <div class="col-2" style="font-family: monospace;">
                     {{msg.when | moment}}
@@ -61,68 +93,165 @@
             </div>
         </div>
 
-        <div v-if="isNew == true" class="mb-2">
+        <div v-if="show.gen == true" class="mb-2">
             <h2 class="wt-header">
                 Generator settings
             </h2>
 
-            <div class="input-group">
-                <span class="input-group-prepend input-group-text">
-                    Start time
-                </span>
-                <input v-model="periodStartInput" type="datetime-local" class="form-control" />
-                <div class="input-group-append">
-                    <button @click="setRelativeStart(2, 0)" type="button" class="btn btn-primary input-group-addon">
-                        -2 hours
-                    </button>
+            <div class="mb-3">
+                <h5>Time range</h5>
+
+                <div v-if="errors.badTime" class="alert alert-danger text-center">
+                    The start time cannot come after the end time
+                </div>
+
+                <div class="input-grid-col3" style="grid-template-columns:min-content 1fr min-content;">
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Start time
+                        <info-hover text="When the time period the report covers will start"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <date-time-input v-model="periodStart" class="form-control" :class="{ 'is-invalid': errors.badTime }"></date-time-input>
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="setRelativeStart(2, 0)" type="button" class="btn btn-primary">
+                            -2 hours
+                        </button>
+                    </div>
+
+                    <div class="input-cell input-group-text input-group-prepend">
+                        End time
+                        <info-hover text="When the time period the report covers will end. Must be after the start time"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <date-time-input v-model="periodEnd" class="form-control" :class="{ 'is-invalid': errors.badTime }"></date-time-input>
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="zeroHourEnd" type="button" class="btn btn-primary">
+                            Set to current hour
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="input-group">
-                <span class="input-group-prepend input-group-text">
-                    End time
-                </span>
-                <input v-model="periodEndInput" type="datetime-local" class="form-control" />
-                <div class="input-group-append">
-                    <button @click="zeroHourEnd" type="button" class="btn btn-primary input-group-addon">
-                        Set to current hour
-                    </button>
+            <div class="mb-3">
+                <h5>Add outfits/characters</h5>
+
+                <div v-if="errors.noPlayers" class="alert alert-danger text-center">
+                    No players have been given. Add an outfit or character
+                </div>
+
+                <div style="grid-template-columns: min-content 1fr min-content" class="input-grid-col3">
+                    <!-- Outfit by tag -->
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Outfit by tag
+                        <info-hover text="Add an outfit by it's tag"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <input v-model="search.outfitTag" type="text" class="form-control" @keyup.enter="searchOutfitTag" />
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="searchOutfitTag" type="button" class="btn btn-primary">
+                            Add
+                        </button>
+                    </div>
+
+                    <!-- Outfit of character -->
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Outfit of character
+                        <info-hover text="Add the outfit of a character"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <input v-model="search.outfitOfCharacter" type="text" class="form-control" @keyup.enter="searchOutfitOfCharacter" />
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="searchOutfitOfCharacter" type="button" class="btn btn-primary">
+                            Add
+                        </button>
+                    </div>
+
+                    <!-- outfit by id -->
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Outfit by ID
+                        <info-hover text="Add a outfit directly by ID"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <input v-model="search.outfitID" type="text" class="form-control" @keyup.enter="searchOutfitID" />
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="searchOutfitID" type="button" class="btn btn-primary">
+                            Add
+                        </button>
+                    </div>
+
+                    <!-- character by name -->
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Character by name
+                        <info-hover text="Add a character by their name"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <input v-model="search.characterName" type="text" class="form-control" @keyup.enter="searchCharacterName" />
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="searchCharacterName" type="button" class="btn btn-primary">
+                            Add
+                        </button>
+                    </div>
+
+                    <!-- character by id -->
+                    <div class="input-cell input-group-text input-group-prepend">
+                        Character by ID
+                        <info-hover text="Add a character directly by ID"></info-hover>
+                    </div>
+
+                    <div class="input-cell">
+                        <input v-model="search.characterID" type="text" class="form-control" @keyup.enter="searchCharacterID" />
+                    </div>
+
+                    <div class="input-cell px-2">
+                        <button @click="searchCharacterID" type="button" class="btn btn-primary">
+                            Add
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="input-group">
-                <span class="input-group-prepend input-group-text">
-                    Outfit tag
-                </span>
+            <div class="mb-3">
+                <h5>Set faction (for NSO)</h5>
 
-                <input v-model="search.outfitTag" type="text" class="form-control" @keyup.enter="searchTag" />
-                
-                <button @click="searchTag" class="btn btn-primary input-group-append">Add</button>
+                <div class="input-group">
+                    <select v-model.number="teamID" class="form-control">
+                        <option :value="1">VS</option>
+                        <option :value="2">NC</option>
+                        <option :value="3">TR</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="input-group">
-                <span class="input-group-prepend input-group-text">
-                    Character
-                </span>
-
-                <input v-model="search.characterName" type="text" class="form-control" @keyup.enter="searchCharacter" />
-
-                <button @click="searchCharacter" class="btn btn-primary input-group-append">Add</button>
+            <div v-if="show.debug" class="mb-3 input-group">
+                <input v-model="generator" type="text" class="form-control" @keyup.enter="start" />
+                <button @click="updateGenerator" type="button" class="btn btn-secondary input-group-append">
+                    Update
+                </button>
             </div>
-
-            <input v-model="generator" type="text" class="form-control" @keyup.enter="start" />
-
-            <button @click="updateGenerator" type="button" class="btn btn-secondary">
-                Update
-            </button>
-
-            <button @click="start" type="button" class="btn btn-primary" :disabled="connected == true">
-                Generate
-            </button>
-
-            <hr />
-
+            
             <div>
+                <h5>
+                    Outfits and characters used
+                </h5>
+
                 <table class="table table-sm">
                     <tr class="table-secondary">
                         <td colspan="2">Outfits</td>
@@ -160,6 +289,16 @@
                         </td>
                     </tr>
                 </table>
+            </div>
+
+            <div class="mb-3 w-100 border-top pt-3">
+                <div v-if="hasErrors" class="text-center">
+                    There are errors above. Fix them to continue
+                </div>
+
+                <button @click="start" type="button" class="btn btn-lg btn-primary w-100" :disabled="connected == true || hasErrors">
+                    Generate with {{outfits.length}} outfits and {{characters.length}} characters
+                </button>
             </div>
         </div>
 
@@ -247,6 +386,30 @@
     </div>
 </template>
 
+<style>
+    .input-cell {
+        white-space: nowrap;
+        align-self: center;
+    }
+
+    .input-grid-col3 {
+        display: grid;
+    }
+
+    .input-grid-col3 > div:nth-child(3n) {
+        grid-column: 3 / span 1;
+    }
+
+    .input-grid-col3 > div:nth-child(3n + 1) {
+        grid-column: 1 / span 1;
+    }
+
+    .input-grid-col3 > div:nth-child(3n + 2) {
+        grid-column: 2 / span 1;
+    }
+
+</style>
+
 <script lang="ts">
     import Vue from "vue";
     import * as sR from "signalR";
@@ -275,7 +438,7 @@
     import ReportWinter from "./components/ReportWinter.vue";
     import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
 
-    import DateTimePicker from "components/DateTimePicker.vue";
+    import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
 
     type Message = {
@@ -287,22 +450,36 @@
         data: function() {
             return {
                 logs: [] as Message[],
-                showLogs: false as boolean,
 
-                isNew: true as boolean,
+                show: {
+                    controls: true as boolean,
+                    logs: false as boolean,
+                    debug: false as boolean,
+                    gen: false as boolean,
+                },
+
+                makeOnConnection: false as boolean,
+                hasErrored: false as boolean,
+
                 isDone: false as boolean,
                 isMaking: false as boolean,
 
-                isGuidReport: false as boolean,
-
-                periodStartInput: "" as string,
                 periodStart: new Date() as Date,
-                periodEndInput: "" as string,
                 periodEnd: new Date() as Date,
+                teamID: null as number | null,
 
                 search: {
                     outfitTag: "" as string,
-                    characterName: "" as string
+                    outfitName: "" as string,
+                    outfitID: "" as string,
+                    outfitOfCharacter: "" as string,
+                    characterName: "" as string,
+                    characterID: "" as string
+                },
+
+                errors: {
+                    badTime: false as boolean,
+                    noPlayers: false as boolean,
                 },
 
                 steps: {
@@ -327,28 +504,24 @@
                 outfits: [] as PsOutfit[],
                 characters: [] as PsCharacter[],
 
-                generator: "" as string,
-                genB64: "" as string
+                generator: "" as string
             }
         },
 
         mounted: function(): void {
             this.$nextTick(() => {
                 $("#generation-progress").collapse();
-                this.createConnection();
-
                 this.parseUrl();
 
-                this.periodStart.setMilliseconds(0);
-                this.periodStart.setSeconds(0);
-                this.periodStart.setMinutes(0);
+                // Only set the defaults if no connection string has already been provided
+                if (this.makeOnConnection == false) {
+                    this.periodStart = DateUtil.zeroParts(this.periodStart, { minutes: true, seconds: true, milliseconds: true });
+                    this.periodEnd = DateUtil.zeroParts(this.periodEnd, { minutes: true, seconds: true, milliseconds: true });
 
-                this.periodEnd.setMilliseconds(0);
-                this.periodEnd.setSeconds(0);
-                this.periodEnd.setMinutes(0);
+                    this.setRelativeStart(2, 0);
+                }
 
-                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
-                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
+                this.createConnection();
             });
         },
 
@@ -365,19 +538,18 @@
             },
 
             zeroHourEnd: function(): void {
-                this.periodEnd.setMilliseconds(0);
-                this.periodEnd.setSeconds(0);
-                this.periodEnd.setMinutes(0);
-                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
+                this.periodEnd = DateUtil.zeroParts(this.periodEnd, { minutes: true, seconds: true, milliseconds: true });
                 this.updateGenerator();
             },
 
             setRelativeStart: function(hours: number, minutes: number): void {
-                this.periodStart.setMilliseconds(this.periodEnd.getMilliseconds());
-                this.periodStart.setSeconds(this.periodEnd.getSeconds());
-                this.periodStart.setMinutes(this.periodEnd.getMinutes() - minutes);
+                this.periodStart.setMonth(this.periodEnd.getMonth());
+                this.periodStart.setDate(this.periodEnd.getDate());
                 this.periodStart.setHours(this.periodEnd.getHours() - hours);
-                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
+                this.periodStart.setMinutes(this.periodEnd.getMinutes() - minutes);
+                this.periodStart.setSeconds(this.periodEnd.getSeconds());
+                this.periodStart.setMilliseconds(this.periodEnd.getMilliseconds());
+                this.periodStart = new Date(this.periodStart); // Needed as .setX isn't reactive
                 this.updateGenerator();
             },
 
@@ -386,15 +558,19 @@
                 console.log(parts);
 
                 if (parts.length > 1) {
-                    const gen: string = parts[1];
+                    const gen: string = atob(parts[1]);
                     console.log(`Loaded generator '${gen}' from URL`);
 
-                    this.isNew = false;
-                    this.generator = atob(gen);
+                    this.show.gen = false;
+                    this.show.controls = false;
+                    this.generator = gen;
+                    this.makeOnConnection = true;
+                } else {
+                    this.show.gen = true;
                 }
             },
 
-            searchTag: async function(): Promise<void> {
+            searchOutfitTag: async function(): Promise<void> {
                 const outfits: Loading<PsOutfit[]> = await OutfitApi.getByTag(this.search.outfitTag);
                 if (outfits.state != "loaded") {
                     this.log(`failed to a single outfit with [${this.search.outfitTag}]`);
@@ -407,12 +583,46 @@
                 }
 
                 outfits.data.sort((a, b) => b.id.localeCompare(a.id));
-                this.outfits.push(outfits.data[0]);
+                this.addOutfits(outfits.data[0]);
                 this.search.outfitTag = "";
-                this.updateGenerator();
             },
 
-            searchCharacter: async function(): Promise<void> {
+            searchOutfitID: async function(): Promise<void> {
+                const outfit: Loading<PsOutfit> = await OutfitApi.getByID(this.search.outfitID);
+
+                if (outfit.state == "loaded") {
+                    this.addOutfits(outfit.data);
+                    this.search.outfitID = "";
+                }
+            },
+
+            searchOutfitOfCharacter: async function(): Promise<void> {
+                const characters: Loading<PsCharacter[]> = await CharacterApi.getByName(this.search.outfitOfCharacter);
+
+                if (characters.state != "loaded" || characters.data.length == 0) {
+                    this.log(`failed to find characters with name ${this.search.outfitOfCharacter}`);
+                    return;
+                }
+
+                characters.data.sort((a, b) => b.id.localeCompare(a.id));
+                const character: PsCharacter = characters.data[0];
+
+                if (character.outfitID == null) {
+                    this.log(`Character ${character.name} is not in an outfit`);
+                    return;
+                }
+
+                const outfits: Loading<PsOutfit> = await OutfitApi.getByID(character.outfitID);
+                if (outfits.state != "loaded") {
+                    this.log(`Failed to get outfit ID ${character.outfitID}`);
+                    return;
+                }
+
+                this.addOutfits(outfits.data);
+                this.search.outfitOfCharacter = "";
+            },
+
+            searchCharacterName: async function(): Promise<void> {
                 const characters: Loading<PsCharacter[]> = await CharacterApi.getByName(this.search.characterName);
                 if (characters.state != "loaded") {
                     this.log(`Failed to search for ${this.search.characterName}, got state ${characters.state} from Honu API`);
@@ -425,9 +635,45 @@
                 }
 
                 characters.data.sort((a, b) => b.id.localeCompare(a.id));
-
-                this.characters.push(characters.data[0]);
+                this.addCharacters(characters.data[0]);
                 this.search.characterName = "";
+            },
+
+            searchCharacterID: async function(): Promise<void> {
+                throw `searchCharacterID not done yet`;
+            },
+
+            /**
+             * Add outfits to the generator 
+             * @param outfits Rest param of the outfits to add
+             */
+            addOutfits: function(...outfits: PsOutfit[]): void {
+                for (const outfit of outfits) {
+                    this.outfits.push(outfit);
+
+                    if (this.teamID == null) {
+                        this.teamID = outfit.factionID;
+                    }
+                }
+
+                this.outfits.sort((a, b) => a.name.localeCompare(b.name));
+                this.updateGenerator();
+            },
+
+            /**
+             * Add characters to the generator
+             * @param characters Rest param of the characters to add
+             */
+            addCharacters: function(...characters: PsCharacter[]): void {
+                for (const c of characters) {
+                    this.characters.push(c);
+
+                    if (this.teamID == null) {
+                        this.teamID = c.factionID;
+                    }
+                }
+
+                this.characters.sort((a, b) => a.name.localeCompare(b.name));
                 this.updateGenerator();
             },
 
@@ -466,8 +712,9 @@
                 this.connection.on("UpdateFacilities", this.onUpdateFacilities);
 
                 this.connection.start().then(() => {
-                    if (this.generator != "") {
+                    if (this.makeOnConnection == true && this.generator != "") {
                         this.log(`Connected! Generator string is set, starting`);
+                        console.log(`Generator is set: ${this.generator}`);
                         this.start();
                     } else {
                         this.log(`Connected! Waiting for generator string`);
@@ -503,28 +750,33 @@
                 }
 
                 this.log(`Sending generator string: '${this.generator}'`);
-                this.genB64 = btoa(this.generator);
                 this.report.generator = this.generator;
-                history.pushState({}, "", `/report/${this.genB64}`);
+                history.pushState({}, "", `/report/${this.generator64}`);
 
                 this.isMaking = true;
                 this.isDone = false;
+                this.show.gen = false;
+                this.show.logs = true;
 
                 this.connection.invoke("GenerateReport", this.generator).then((response: any) => {
                     this.isDone = true;
-                    this.isNew = false;
 
-                    this.genB64 = btoa(`#${this.report.id};`);
-                    this.report.generator = this.genB64;
-                    history.pushState({}, "", `/report/${this.genB64}`);
+                    this.report.generator = `#${this.report.id};`;
+                    this.generator = this.report.generator;
+                    console.log(`ID of report '${this.report.id}'`);
+                    history.pushState({}, "", `/report/${this.generator64}`);
 
                     const metadatas: PlayerMetadata[] = PlayerMetadataGenerator.generate(this.report);
                     for (const metadata of metadatas) {
                         this.report.playerMetadata.set(metadata.ID, metadata);
                     }
 
+                    this.closeConnection();
+
                     setTimeout(() => {
-                        this.showLogs = false;
+                        if (this.hasErrored == false) {
+                            this.show.logs = false;
+                        }
                         this.isMaking = false;
                     }, 2000);
                 }).catch((err: any) => {
@@ -532,28 +784,48 @@
                 });
             },
 
+            closeConnection: function(): void {
+                if (this.connection != null) {
+                    this.connection.stop().then(() => {
+                        this.connection = null;
+                    }).catch((err: any) => {
+                        console.error(`Failed to close connection: ${err}`);
+                    });
+                }
+            },
+
             updateGenerator: function(): void {
                 console.log(`Start: ${this.periodStart} = ${this.periodStart.toISOString()}`);
                 console.log(`End: ${this.periodEnd} = ${this.periodStart.toISOString()}`);
-
                 console.log(`Outfits: [${this.outfits.join(", ")}]`);
-
-                this.periodStart = new Date(this.periodStartInput);
-                this.periodEnd = new Date(this.periodEndInput);
 
                 const start: number = Math.floor(this.periodStart.getTime() / 1000);
                 const end: number = Math.floor(this.periodEnd.getTime() / 1000);
 
+                this.errors.badTime = start > end;
+                this.errors.noPlayers = (this.outfits.length == 0 && this.characters.length == 0);
+
                 const outfits: string = this.outfits.map(iter => `o${iter.id};`).join("");
                 const chars: string = this.characters.map(iter => `+${iter.id};`).join("");
+                const teamID: number = this.teamID ?? -1;
 
-                const gen: string = `${start},${end};${outfits}${chars}`;
+                const gen: string = `${start},${end},${teamID};${outfits}${chars}`;
                 this.generator = gen;
-                console.log(gen);
+                console.log(`Generator used: ${gen}`);
+            },
+
+            newReport: function(): void {
+                const conf: boolean = confirm(`Are you sure you want to leave this report and make a new one?`);
+
+                if (conf == true) {
+                    location.href = "/report";
+                }
             },
 
             onSendError: function(err: string): void {
                 this.log("ERROR: " + err);
+                this.show.logs = true;
+                this.hasErrored = true;
             },
 
             onSendReport: function(report: Report): void {
@@ -565,9 +837,7 @@
                 this.report.teamID = report.teamID;
 
                 this.periodStart = new Date(this.report.periodStart);
-                this.periodStartInput = DateUtil.getLocalDateString(this.periodStart);
                 this.periodEnd = new Date(this.report.periodEnd);
-                this.periodEndInput = DateUtil.getLocalDateString(this.periodEnd);
 
                 console.log(this.report);
                 this.log(`Got report: ${JSON.stringify(this.report)}`);
@@ -647,17 +917,21 @@
         },
 
         watch: {
-            periodStartInput: function(): void {
-                this.periodStart = new Date(this.periodStartInput);
+
+        },
+
+        computed: {
+            hasErrors: function(): boolean {
+                return this.errors.noPlayers || this.errors.badTime;
             },
 
-            periodEndInput: function(): void {
-                this.periodEnd = new Date(this.periodEndInput);
+            generator64: function(): string {
+                return btoa(this.generator);
             }
         },
 
         components: {
-            DateTimePicker,
+            DateTimeInput,
             InfoHover,
             ReportClassBreakdown,
             ReportPlayerList,

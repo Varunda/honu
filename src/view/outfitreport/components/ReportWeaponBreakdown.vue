@@ -21,14 +21,14 @@
                         </a>
                     </td>
                     <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / report.kills.length * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / weapon.kills * 100 | locale}}%</td>
+                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
+                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
                 </tr>
 
                 <tr class="table-dark">
                     <td colspan="4">
                         Unique weapon kills: {{kills.length}} over {{report.kills.length}}
-                        ({{report.kills.filter(iter => iter.isHeadshot == true).length / report.kills.length * 100 | locale}}% HSR)
+                        ({{report.kills.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.kills.length) * 100 | locale}}% HSR)
                     </td>
                 </tr>
             </table>
@@ -57,14 +57,14 @@
                         </a>
                     </td>
                     <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / report.kills.length * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / weapon.kills * 100 | locale}}%</td>
+                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
+                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
                 </tr>
 
                 <tr class="table-dark">
                     <td colspan="4">
                         Unique weapon deaths: {{deaths.length}} over {{report.deaths.length}}
-                        ({{report.deaths.filter(iter => iter.isHeadshot == true).length / report.deaths.length * 100 | locale}}% HSR)
+                        ({{report.deaths.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.deaths.length) * 100 | locale}}% HSR)
                     </td>
                 </tr>
             </table>

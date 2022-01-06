@@ -52,7 +52,7 @@
 
     import { PsCharacter } from "api/CharacterApi";
     import { Experience } from "api/ExpStatApi";
-import { KillEvent } from "../../../api/KillStatApi";
+    import { KillEvent } from "api/KillStatApi";
 
     const WinterSection = Vue.extend({
         props: {

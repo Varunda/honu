@@ -13,7 +13,7 @@
         props: {
             data: { type: Object as PropType<Block>, required: true },
             ShowAll: { type: Boolean, required: false, default: false },
-            ClippedAmount: { type: Number, required: false, default: 8 },
+            ClippedAmount: { type: Number, required: false, default: 7 },
             ShowPercent: { type: Boolean, required: false, default: false },
             PercentPrecision: { type: Number, required: false, default: 0 },
             ShowTotal: { type: Boolean, required: false, default: false },
@@ -106,7 +106,7 @@
                                                 const datum = dataset.data![index];
                                                 if (typeof (datum) == "number") {
                                                     return {
-                                                        text: `${(label as any).toString()} - ${datum} ${this.ShowPercent == true ? `(${(datum / sum * 100).toFixed(this.PercentPrecision)}%)` : ""}`,
+                                                        text: `${(label as any).toString()} - ${datum} ${this.ShowPercent == true ? `(${(datum / Math.max(1, sum) * 100).toFixed(this.PercentPrecision)}%)` : ""}`,
                                                         fillStyle: this.colors[index],
                                                         datasetIndex: index,
                                                         fontColor: "#fff"
