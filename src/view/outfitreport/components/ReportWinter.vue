@@ -52,6 +52,7 @@
 
     import { PsCharacter } from "api/CharacterApi";
     import { Experience } from "api/ExpStatApi";
+import { KillEvent } from "../../../api/KillStatApi";
 
     const WinterSection = Vue.extend({
         props: {
@@ -143,6 +144,8 @@
             makeAll: function(): void {
                 this.makeKills();
                 this.makeKpm();
+                this.makeKD();
+                this.makeHSR();
                 this.makeAssists();
 
                 this.makeHeals();
@@ -156,6 +159,14 @@
                 this.makeRouterSpawns();
                 this.makeRoutersPlaced();
                 this.makeSpawnsPerRouter();
+
+                this.makeVehicleKills();
+                this.makeFlashKills();
+                this.makeHarasserKills();
+                this.makeLightningKills();
+                this.makeMBTKills();
+                this.makeESFKills();
+                this.makeLiberatorKills();
             },
 
             makeKills: function(): void {
@@ -416,6 +427,159 @@
                 metric.entries.sort((a, b) => b.value - a.value);
 
                 this.catKills.metrics.push(metric);
+            },
+
+            makeHSR: function(): void {
+                const metric: WinterMetric = new WinterMetric();
+                metric.name = "Headshots";
+                metric.funName = "Headshots";
+                metric.description = "Highest HSR";
+
+                for (const player of this.report.players) {
+                    const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
+                    if (kills.length < 25) {
+                        continue;
+                    }
+
+                    const headshots: KillEvent[] = kills.filter(iter => iter.isHeadshot == true);
+
+                    const entry: WinterEntry = new WinterEntry();
+                    entry.characterID = player;
+                    entry.name = this.getCharacterName(player);
+                    entry.value = headshots.length / Math.max(1, kills.length);
+                    entry.display = `${(entry.value * 100).toFixed(2)}% (${headshots.length}/${kills.length})`;
+
+                    metric.entries.push(entry);
+                }
+
+                metric.entries.sort((a, b) => b.value - a.value);
+
+                this.catKills.metrics.push(metric);
+            },
+
+            makeKD: function(): void {
+                const metric: WinterMetric = new WinterMetric();
+                metric.name = "KDR";
+                metric.funName = "KDR";
+                metric.description = "Highest KDR";
+
+                for (const player of this.report.players) {
+                    const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
+                    if (kills.length < 25) {
+                        continue;
+                    }
+
+                    const deaths: KillEvent[] = this.report.deaths.filter(iter => iter.killedCharacterID == player);
+
+                    const entry: WinterEntry = new WinterEntry();
+                    entry.characterID = player;
+                    entry.name = this.getCharacterName(player);
+                    entry.value = kills.length / Math.max(1, deaths.length);
+                    entry.display = `${(entry.value).toFixed(2)} (${kills.length}/${deaths.length})`;
+
+                    metric.entries.push(entry);
+                }
+
+                metric.entries.sort((a, b) => b.value - a.value);
+
+                this.catKills.metrics.push(metric);
+            },
+
+            makeVehicleKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Vehicle kills";
+                metric.funName = "Vehicle kills";
+                metric.description = "Most vehicle kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [
+                        Experience.VKILL_FLASH, Experience.VKILL_HARASSER, Experience.VKILL_LIGHTNING, Experience.VKILL_ANT,
+                        Experience.VKILL_MOSQUITO, Experience.VKILL_REAVER, Experience.VKILL_SCYTHE, Experience.VKILL_DERVISH,
+                        Experience.VKILL_VALKYRIE, Experience.VKILL_LIBERATOR, Experience.VKILL_GALAXY,
+                        Experience.VKILL_PROWLER, Experience.VKILL_VANGUARD, Experience.VKILL_PROWLER, Experience.VKILL_CHIMERA,
+                        Experience.VKILL_COLOSSUS, Experience.VKILL_JAVELIN
+                    ],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeFlashKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Flash kills";
+                metric.funName = "Flash kills";
+                metric.description = "Most flashes kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_FLASH, Experience.VKILL_JAVELIN],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeLightningKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Lightning kills";
+                metric.funName = "Lightning kills";
+                metric.description = "Most lightning kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_LIGHTNING],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeMBTKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "MBT kills";
+                metric.funName = "MBT kills";
+                metric.description = "Most MBT kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_MAGRIDER, Experience.VKILL_VANGUARD, Experience.VKILL_PROWLER, Experience.VKILL_CHIMERA],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeHarasserKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Harasser kills";
+                metric.funName = "Harasser kills";
+                metric.description = "Most harasser kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_HARASSER],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeESFKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "ESF kills";
+                metric.funName = "ESF kills";
+                metric.description = "Most ESF kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_MOSQUITO, Experience.VKILL_SCYTHE, Experience.VKILL_REAVER, Experience.VKILL_DERVISH],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeLiberatorKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Liberator kills";
+                metric.funName = "Liberator kills";
+                metric.description = "Most liberator kills (per minute)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_LIBERATOR],
+                    (metadata) => metadata.timeAs)
+                );
             },
 
             generateExperience: function(metric: WinterMetric, expIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {

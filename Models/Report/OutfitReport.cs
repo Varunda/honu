@@ -55,4 +55,6 @@ namespace watchtower.Models.Report {
         public List<Session> Sessions { get; set; } = new List<Session>();
 
     }
+
+
 }
