@@ -440,6 +440,7 @@
 
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
+    import Busy from "components/Busy.vue";
 
     type Message = {
         when: Date;
@@ -939,7 +940,8 @@
             ReportWeaponBreakdown,
             ReportSupportBreakdown,
             ReportWinter,
-            ReportControlBreakdown
+            ReportControlBreakdown,
+            Busy
         }
 
     });

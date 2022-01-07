@@ -53,6 +53,9 @@
     import { PsCharacter } from "api/CharacterApi";
     import { Experience } from "api/ExpStatApi";
     import { KillEvent } from "api/KillStatApi";
+    import { ExpEvent } from "api/ExpStatApi";
+
+    import TimeUtils from "util/Time";
 
     const WinterSection = Vue.extend({
         props: {
@@ -86,7 +89,6 @@
     }
 
     class WinterCategory {
-
         public constructor(name: string) {
             this.name = name;
         }
@@ -140,7 +142,6 @@
         },
 
         methods: {
-
             makeAll: function(): void {
                 this.makeKills();
                 this.makeKpm();
@@ -167,6 +168,9 @@
                 this.makeMBTKills();
                 this.makeESFKills();
                 this.makeLiberatorKills();
+
+                this.makeMostUniqueWeapons();
+                this.makeAverageLifetime();
             },
 
             makeKills: function(): void {
@@ -580,6 +584,97 @@
                     [Experience.VKILL_LIBERATOR],
                     (metadata) => metadata.timeAs)
                 );
+            },
+
+            makeMostUniqueWeapons: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Most unique weapons";
+                metric.funName = "Diverse skillset";
+                metric.description = "Most amount of unique weapons";
+
+                const map: Map<string, Set<string>> = new Map();
+
+                for (const kill of this.report.kills) {
+                    const charID: string = kill.attackerCharacterID;
+
+                    if (map.has(charID) == false) {
+                        map.set(charID, new Set());
+                    }
+
+                    const set: Set<string> = map.get(charID)!;
+                    set.add(kill.weaponID);
+
+                    map.set(charID, set);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.name = this.getCharacterName(entry.characterID);
+                        entry.value = iter[1].size;
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = entries;
+
+                this.catMisc.metrics.push(metric);
+            },
+
+            makeAverageLifetime: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Longest life expectancy";
+                metric.funName = "Elders";
+                metric.description = "Longest average life expectancy";
+
+                for (const player of this.report.players) {
+                    // Get the first event of the player
+                    const firstKill: KillEvent | null = this.report.kills.find(iter => iter.attackerCharacterID == player) || null;
+                    const firstKillTime: number = firstKill?.timestamp.getTime() ?? 0;
+                    const firstExp: ExpEvent | null = this.report.experience.find(iter => iter.sourceID == player) || null;
+                    const firstExpTime: number = firstExp?.timestamp.getTime() ?? 0;
+
+                    let firstEvent: KillEvent | ExpEvent | null = (firstKillTime < firstExpTime) ? firstKill : firstExp;
+
+                    // Player had no events
+                    if (firstEvent == null) {
+                        continue;
+                    }
+
+                    const deaths: KillEvent[] = this.report.deaths.filter(iter => iter.killedCharacterID == player);
+                    if (deaths.length == 0) {
+                        continue;
+                    }
+
+                    const lifetimes: number[] = [];
+
+                    let start: number = firstEvent.timestamp.getTime();
+                    for (const death of deaths) {
+                        lifetimes.push((death.timestamp.getTime() - start) / 1000);
+                        start = death.timestamp.getTime();
+                    }
+
+                    // Don't have someone who joined then left
+                    if (lifetimes.length < 2) {
+                        continue;
+                    }
+
+                    const total: number = lifetimes.reduce((acc, val) => acc += val, 0);
+                    const avg: number = total / lifetimes.length;
+
+                    const entry: WinterEntry = new WinterEntry();
+                    entry.characterID = player;
+                    entry.name = this.getCharacterName(entry.characterID);
+                    entry.value = avg;
+                    entry.display = TimeUtils.duration(entry.value);
+
+                    metric.entries.push(entry);
+                }
+
+                metric.entries.sort((a, b) => b.value - a.value);
+
+                this.catMisc.metrics.push(metric);
             },
 
             generateExperience: function(metric: WinterMetric, expIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
