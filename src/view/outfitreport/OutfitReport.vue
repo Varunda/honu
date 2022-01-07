@@ -386,30 +386,6 @@
     </div>
 </template>
 
-<style>
-    .input-cell {
-        white-space: nowrap;
-        align-self: center;
-    }
-
-    .input-grid-col3 {
-        display: grid;
-    }
-
-    .input-grid-col3 > div:nth-child(3n) {
-        grid-column: 3 / span 1;
-    }
-
-    .input-grid-col3 > div:nth-child(3n + 1) {
-        grid-column: 1 / span 1;
-    }
-
-    .input-grid-col3 > div:nth-child(3n + 2) {
-        grid-column: 2 / span 1;
-    }
-
-</style>
-
 <script lang="ts">
     import Vue from "vue";
     import * as sR from "signalR";
