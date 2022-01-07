@@ -1148,8 +1148,8 @@ export const ATable = Vue.extend({
                     }
                 } else if (this.sorting.type == "date") {
                     baseFunc = (a: any, b: any): number => {
-                        const av: Date | null = a[this.sorting.field].getTime();
-                        const bv: Date | null = b[this.sorting.field].getTime();
+                        const av: Date | null = a[this.sorting.field];
+                        const bv: Date | null = b[this.sorting.field];
 
                         if (!av && bv) { // 1 = B > A
                             return 1;
