@@ -455,8 +455,9 @@ namespace watchtower.Services.Repositories.Implementations {
 
                 BlockEntry b = new BlockEntry() {
                     ID = (entry.ID == "") ? "0" : entry.ID,
-                    Name = (entry.ID == "") ? "No outfit" : (outfit == null) ? $"Missing {entry.ID}" : $"[{outfit.Tag}] {outfit.Name}",
-                    Value = entry.Count
+                    Name = (entry.ID == "") ? "<no outfit>" : (outfit == null) ? $"Missing {entry.ID}" : $"[{outfit.Tag}] {outfit.Name}",
+                    Value = entry.Count,
+                    FactionID = (entry.ID == "") ? (short) 0 : options.FactionID
                 };
 
                 blockEntries.Add(b);
@@ -490,6 +491,7 @@ namespace watchtower.Services.Repositories.Implementations {
                     }
 
                     outfit = new OutfitOnlineEntry() {
+                        OutfitID = psOutfit?.ID ?? "0",
                         Display = $"{(psOutfit?.Tag == null ? $"" : $"[{psOutfit?.Tag}] ")}{psOutfit?.Name}",
                         FactionID = teamID
                     };

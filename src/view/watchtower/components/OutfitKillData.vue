@@ -12,7 +12,11 @@
 
         <tbody>
             <tr v-for="entry in block.entries">
-                <td :title="entry.name">[{{entry.tag}}] {{entry.name}}</td>
+                <td :title="entry.name">
+                    <a :href="'/o/' + entry.id" class="text-white">
+                        [{{entry.tag}}] {{entry.name}}
+                    </a>
+                </td>
                 <td>
                     {{(entry.kills / (entry.members || 1)).toFixed(2)}}
                     <a @click="openOutfitKillers($event, entry.id)">

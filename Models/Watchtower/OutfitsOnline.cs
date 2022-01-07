@@ -15,6 +15,8 @@ namespace watchtower.Models {
 
     public class OutfitOnlineEntry {
 
+        public string OutfitID { get; set; } = "";
+
         public string Display { get; set; } = "";
 
         public int AmountOnline { get; set; }

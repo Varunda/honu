@@ -11,7 +11,15 @@
 
             <tbody>
                 <tr v-for="entry in data.outfits">
-                    <td>{{entry.display}}</td>
+                    <td>
+                        <a v-if="entry.outfitID" :href="'/o/' + entry.outfitID">
+                            {{entry.display}}
+                        </a>
+
+                        <span v-else>
+                            {{entry.display}}
+                        </span>
+                    </td>
                     <td>{{entry.amountOnline}}</td>
                     <td>{{(entry.amountOnline / data.totalOnline * 100).toFixed(2)}}%</td>
                 </tr>
@@ -19,7 +27,7 @@
                 <tr class="table-secondary">
                     <td colspan="2">Total</td>
                     <td>
-                        {{data.totalOnline}}	
+                        {{data.totalOnline}}
                     </td>
                 </tr>
             </tbody>

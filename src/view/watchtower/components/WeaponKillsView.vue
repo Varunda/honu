@@ -12,7 +12,11 @@
 
         <tbody>
             <tr v-for="entry in weaponKills.entries">
-                <td :title="entry.name">{{entry.itemName}}</td>
+                <td :title="entry.name">
+                    <a :href="'/i/' + entry.itemID">
+                        {{entry.itemName}}
+                    </a>
+                </td>
                 <td>
                     {{entry.users}} 
                 </td>

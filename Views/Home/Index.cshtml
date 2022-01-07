@@ -219,7 +219,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
-            <block-view :block="worldData.vs.outfitHeals" title="Outfits"
+            <block-view :block="worldData.vs.outfitHeals" title="Outfits" link="/o/"
                 :source="expSources.outfitHeal" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -228,7 +228,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
-            <block-view :block="worldData.vs.outfitRevives" title="Outfits"
+            <block-view :block="worldData.vs.outfitRevives" title="Outfits" link="/o/"
                 :source="expSources.outfitRevive" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -237,7 +237,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.vs.outfitShieldRepair"
+            <block-view :block="worldData.vs.outfitShieldRepair" link="/o/"
                 :source="expSources.outfitShield" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -246,7 +246,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplies">
             </block-view>
-            <block-view :block="worldData.vs.outfitResupplies" title="Outfits"
+            <block-view :block="worldData.vs.outfitResupplies" title="Outfits" link="/o/"
                 :source="expSources.outfitResupply" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -255,7 +255,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawn">
             </block-view>
-            <block-view :block="worldData.vs.outfitSpawns" title="Outfits"
+            <block-view :block="worldData.vs.outfitSpawns" title="Outfits" link="/o/"
                 :source="expSources.outfitSpawn" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -264,7 +264,7 @@
             <block-view class="mr-3" :block="worldData.vs.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
-            <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit"
+            <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit" link="/o/"
                 :source="expSources.outfitVKills" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -301,7 +301,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
-            <block-view :block="worldData.nc.outfitHeals" title="Outfits"
+            <block-view :block="worldData.nc.outfitHeals" title="Outfits" link="/o/"
                 :source="expSources.outfitHeal" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -310,7 +310,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
-            <block-view :block="worldData.nc.outfitRevives" title="Outfits"
+            <block-view :block="worldData.nc.outfitRevives" title="Outfits" link="/o/"
                 :source="expSources.outfitRevive" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -319,7 +319,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.nc.outfitShieldRepair"
+            <block-view :block="worldData.nc.outfitShieldRepair" link="/o/"
                 :source="expSources.outfitShield" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -328,7 +328,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplies">
             </block-view>
-            <block-view :block="worldData.nc.outfitResupplies" title="Outfits"
+            <block-view :block="worldData.nc.outfitResupplies" title="Outfits" link="/o/"
                 :source="expSources.outfitResupply" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -337,7 +337,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawns">
             </block-view>
-            <block-view :block="worldData.nc.outfitSpawns" title="Outfits"
+            <block-view :block="worldData.nc.outfitSpawns" title="Outfits" link="/o/"
                 :source="expSources.outfitSpawn" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -346,7 +346,7 @@
             <block-view class="mr-3" :block="worldData.nc.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
-            <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit"
+            <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit" link="/o/"
                 :source="expSources.outfitVKills" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -383,7 +383,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerHeals" link="/c/"
                 :source="expSources.charHeal" source-title="Players healed">
             </block-view>
-            <block-view :block="worldData.tr.outfitHeals" title="Outfits"
+            <block-view :block="worldData.tr.outfitHeals" title="Outfits" link="/o/"
                 :source="expSources.outfitHeal" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -392,7 +392,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerRevives" link="/c/"
                 :source="expSources.charRevive" source-title="Players revived">
             </block-view>
-            <block-view :block="worldData.tr.outfitRevives" title="Outfits"
+            <block-view :block="worldData.tr.outfitRevives" title="Outfits" link="/o/"
                 :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -401,7 +401,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerShieldRepair" link="/c/"
                 :source="expSources.charShield" source-title="Players shielded">
             </block-view>
-            <block-view :block="worldData.tr.outfitShieldRepair"
+            <block-view :block="worldData.tr.outfitShieldRepair" link="/o/"
                 :source="expSources.outfitShield" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -410,7 +410,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerResupplies" link="/c/"
                 :source="expSources.charResupply" source-title="Players resupplied">
             </block-view>
-            <block-view :block="worldData.tr.outfitResupplies" title="Outfits"
+            <block-view :block="worldData.tr.outfitResupplies" title="Outfits" link="/o/"
                 :source="expSources.outfitResupply" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -419,7 +419,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerSpawns" link="/c/"
                 :source="expSources.charSpawn" source-title="Types of spawns">
             </block-view>
-            <block-view :block="worldData.tr.outfitSpawns" title="Outfits"
+            <block-view :block="worldData.tr.outfitSpawns" title="Outfits" link="/o/"
                 :source="expSources.outfitSpawn" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
@@ -428,7 +428,7 @@
             <block-view class="mr-3" :block="worldData.tr.playerVehicleKills" link="/c/"
                 :source="expSources.charVKills" source-title="Vehicles destroyed">
             </block-view>
-            <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit"
+            <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit" link="/o/"
                 :source="expSources.outfitVKills" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
             </block-view>
         </div>
