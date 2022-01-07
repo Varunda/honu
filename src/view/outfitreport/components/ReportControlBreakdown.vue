@@ -40,14 +40,15 @@
 
             <tr v-for="control in entries">
                 <td>
-                    <span v-if="control.facility != null">
-                        {{control.facility.name}}
-                        <br />
-                        {{control.facility.typeName}} on {{control.control.zoneID | zone}}
-                    </span>
-                    <span v-else>
+                    <div v-if="control.facility != null">
+                        <h4>
+                            {{control.facility.name}}
+                        </h4>
+                        {{control.facility.typeName}} on {{control.facility.zoneID | zone}}
+                    </div>
+                    <div v-else>
                         &lt;missing facility {{control.control.facility_id}}&gt;
-                    </span>
+                    </div>
                 </td>
 
                 <td>

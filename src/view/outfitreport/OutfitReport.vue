@@ -105,6 +105,10 @@
                     The start time cannot come after the end time
                 </div>
 
+                <div v-if="errors.longTime" class="alert alert-danger text-center">
+                    The time range cannot be larger than 8 hours
+                </div>
+
                 <div class="input-grid-col3" style="grid-template-columns:min-content 1fr min-content;">
                     <div class="input-cell input-group-text input-group-prepend">
                         Start time
@@ -456,6 +460,7 @@
 
                 errors: {
                     badTime: false as boolean,
+                    longTime: false as boolean,
                     noPlayers: false as boolean,
                 },
 
@@ -748,7 +753,7 @@
                         this.report.playerMetadata.set(metadata.ID, metadata);
                     }
 
-                    this.closeConnection();
+                    //this.closeConnection();
 
                     setTimeout(() => {
                         if (this.hasErrored == false) {
@@ -778,6 +783,8 @@
 
                 const start: number = Math.floor(this.periodStart.getTime() / 1000);
                 const end: number = Math.floor(this.periodEnd.getTime() / 1000);
+
+                this.errors.longTime = end - start > 60 * 60 * 8;
 
                 this.errors.badTime = start > end;
                 this.errors.noPlayers = (this.outfits.length == 0 && this.characters.length == 0);
@@ -894,12 +901,18 @@
         },
 
         watch: {
+            periodStart: function(): void {
+                this.updateGenerator();
+            },
 
+            periodEnd: function(): void {
+                this.updateGenerator();
+            }
         },
 
         computed: {
             hasErrors: function(): boolean {
-                return this.errors.noPlayers || this.errors.badTime;
+                return this.errors.noPlayers || this.errors.badTime || this.errors.longTime;
             },
 
             generator64: function(): string {

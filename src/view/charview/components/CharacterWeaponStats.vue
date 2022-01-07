@@ -98,6 +98,7 @@
             <a-col sort-field="kdPercent">
                 <a-header>
                     <b>KD%</b>
+                    <info-hover text="What percentage of players have lower KD.<br> E.G. 80% would mean this KD is in the 80th percentile" :allow-html="true"></info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">
@@ -122,6 +123,7 @@
             <a-col sort-field="accPercent">
                 <a-header>
                     <b>ACC%</b>
+                    <info-hover text="What percentage of players have lower accuracy.<br> E.G. 80% would mean this accuracy is in the 80th percentile" :allow-html="true"></info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">
@@ -146,6 +148,7 @@
             <a-col sort-field="hsrPercent">
                 <a-header>
                     <b>HSR%</b>
+                    <info-hover text="What percentage of players have lower HSR.<br> E.G. 80% would mean this HSR is in the 80th percentile" :allow-html="true"></info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">

@@ -213,7 +213,7 @@
             makeAssists: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Assists";
-                metric.funName = "Assists";
+                metric.funName = "Wingman";
                 metric.description = "Highest assists (per minute)";
 
                 this.catKills.metrics.push(this.generateExperience(
@@ -270,7 +270,7 @@
             makeSpawns: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Spawns";
-                metric.funName = "Spawns";
+                metric.funName = "Mother";
                 metric.description = "Most spawns (per minute)";
 
                 this.catSpawns.metrics.push(this.generateExperience(
@@ -309,7 +309,7 @@
             makeRoutersPlaced: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Routers placed";
-                metric.funName = "Routers placed";
+                metric.funName = "Network installer";
                 metric.description = "Most routers placed (per hour)";
 
                 const map: Map<string, Set<string>> = new Map();
@@ -349,7 +349,7 @@
             makeSpawnsPerRouter: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Spawns per router";
-                metric.funName = "Spawns per router";
+                metric.funName = "Zerg in a can";
                 metric.description = "Spawns per router (# placed)";
 
                 const map: Map<string, Map<string, number>> = new Map();
@@ -436,7 +436,7 @@
             makeHSR: function(): void {
                 const metric: WinterMetric = new WinterMetric();
                 metric.name = "Headshots";
-                metric.funName = "Headshots";
+                metric.funName = "Head popper";
                 metric.description = "Highest HSR";
 
                 for (const player of this.report.players) {
