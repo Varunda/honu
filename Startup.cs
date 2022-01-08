@@ -152,13 +152,15 @@ namespace watchtower {
                 services.AddHostedService<DiscordService>();
             }
 
+            services.AddHostedService<PsbNamedImportStartupService>();
+
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();
             } else {
                 services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
                 services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
-                services.AddHostedService<CharacterDatesFixerStartupService>();
+                //services.AddHostedService<CharacterDatesFixerStartupService>();
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
         }

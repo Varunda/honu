@@ -3,10 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Census.Readers;
 using watchtower.Services.Db.Implementations;
+using watchtower.Services.Db.Readers.PSB;
 
 namespace watchtower.Services.Db.Readers {
 
@@ -49,8 +51,9 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<PsObjective>, ObjectiveReader>();
             services.AddSingleton<IDataReader<ObjectiveType>, ObjectiveTypeReader>();
             services.AddSingleton<IDataReader<ObjectiveSet>, ObjectiveSetReader>();
-
             services.AddSingleton<IDataReader<Achievement>, AchievementReader>();
+
+            services.AddSingleton<IDataReader<PsbNamedAccount>, PsbNamedReader>();
         }
 
     }

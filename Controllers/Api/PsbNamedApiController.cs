@@ -1,0 +1,75 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using watchtower.Models;
+using watchtower.Models.Api.PSB;
+using watchtower.Models.Census;
+using watchtower.Models.PSB;
+using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.PSB;
+
+namespace watchtower.Controllers.Api {
+
+    [ApiController]
+    [Route("/api/psb-named/")]
+    public class PsbNamedApiController : ApiControllerBase {
+
+        private readonly ILogger<PsbNamedApiController> _Logger;
+        private readonly PsbNamedRepository _NamedRepository;
+        private readonly ICharacterRepository _CharacterRepository;
+
+        public PsbNamedApiController(ILogger<PsbNamedApiController> logger,
+            PsbNamedRepository namedRepo, ICharacterRepository charRepo) {
+
+            _Logger = logger;
+            _NamedRepository = namedRepo;
+            _CharacterRepository = charRepo;
+        }
+
+        [HttpGet]
+        public async Task<ApiResponse<List<ExpandedPsbNamedAccount>>> GetAll() {
+            List<PsbNamedAccount> named = await _NamedRepository.GetAll();
+
+            List<ExpandedPsbNamedAccount> expanded = await MakeExpanded(named);
+
+            return ApiOk(expanded);
+        }
+
+        private async Task<List<ExpandedPsbNamedAccount>> MakeExpanded(List<PsbNamedAccount> named) {
+            List<ExpandedPsbNamedAccount> ex = new List<ExpandedPsbNamedAccount>(named.Count);
+
+            List<string> IDs = new List<string>();
+
+            foreach (PsbNamedAccount acc in named) {
+                if (acc.VsID != null) { IDs.Add(acc.VsID);  }
+                if (acc.NcID != null) { IDs.Add(acc.NcID);  }
+                if (acc.TrID != null) { IDs.Add(acc.TrID);  }
+                if (acc.NsID != null) { IDs.Add(acc.NsID);  }
+            }
+
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs, true);
+
+            foreach (PsbNamedAccount acc in named) {
+                PsCharacter? vs = (acc.VsID != null) ? characters.FirstOrDefault(iter => iter.ID == acc.VsID) : null;
+                PsCharacter? nc = (acc.NcID != null) ? characters.FirstOrDefault(iter => iter.ID == acc.NcID) : null;
+                PsCharacter? tr = (acc.TrID != null) ? characters.FirstOrDefault(iter => iter.ID == acc.TrID) : null;
+                PsCharacter? ns = (acc.NsID != null) ? characters.FirstOrDefault(iter => iter.ID == acc.NsID) : null;
+
+                ExpandedPsbNamedAccount expanded = new ExpandedPsbNamedAccount() {
+                    Account = acc,
+                    VsCharacter = vs,
+                    NcCharacter = nc,
+                    TrCharacter = tr,
+                    NsCharacter = ns
+                };
+
+                ex.Add(expanded);
+            }
+
+            return ex;
+        }
+
+    }
+}

@@ -47,6 +47,12 @@
             </tr>
         </table>
 
+        <div class="text-center">
+            <small>
+                Sessions before 2021-07-23 are not tracked
+            </small>
+        </div>
+
     </div>
 </template>
 

@@ -7,6 +7,7 @@ using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Db.Implementations;
 using watchtower.Services.Repositories.Implementations;
+using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Services.Repositories {
 
@@ -46,6 +47,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
             services.AddSingleton<AchievementRepository>();
             services.AddSingleton<ReportRepository>();
+            services.AddSingleton<PsbNamedRepository>();
         }
 
     }

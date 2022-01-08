@@ -79,5 +79,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult PsbNamed() {
+            return View();
+        }
+
     }
 }
