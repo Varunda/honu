@@ -310,6 +310,7 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loading());
         } else if (this.entries.state == "loaded") {
+            console.log(``);
 
             if (this.entries.data.length == 0) {
                 console.log(`0 entries, showing no data row`);
@@ -1071,6 +1072,15 @@ export const ATable = Vue.extend({
                 return [];
             }
 
+            if (this.sorting.field == "") {
+                if (this.paginate == true) {
+                    return this.filteredEntries
+                        .slice(this.paging.page * this.paging.size, (this.paging.page + 1) * this.paging.size);
+                } else {
+                    return this.filteredEntries;
+                }
+            }
+
             if (this.sorting.type == "unknown" && this.sorting.field != "") {
                 let first: object = this.entries.data[0];
                 if (!first.hasOwnProperty(this.sorting.field)) {
@@ -1110,7 +1120,7 @@ export const ATable = Vue.extend({
                 }
             }
 
-            let baseFunc: (a: object, b: object) => number = (a, b) => 1;
+            let baseFunc: (a: object, b: object) => number = (a, b) => -1;
             let sortFunc: (a: object, b: object) => number;
 
             if (this.sorting.field != "") {

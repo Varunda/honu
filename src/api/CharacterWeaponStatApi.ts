@@ -16,6 +16,13 @@ export class WeaponStatEntry {
 	public shotsHit: number = 0;
 	public secondsWith: number = 0;
 	public timestamp: Date = new Date();
+
+	public accuracy: number = 0;
+	public headshotRatio: number = 0;
+	public killDeathRatio: number = 0;
+	public killsPerMinute: number = 0;
+	public vehicleKillsPerMinute: number = 0;
+
 }
 
 export class CharacterWeaponStatEntry {

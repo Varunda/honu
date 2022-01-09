@@ -210,7 +210,14 @@
 
                 if (this.kd.state == "idle") {
                     this.kd = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKD(this.ItemId).then(iter => { this.kd = iter; this.entries = this.kd; });
+                    CharacterWeaponStatApi.getTopKD(this.ItemId).then(iter => {
+                        if (iter.state == "loaded") {
+                            console.log(`sorting KD`);
+                            iter.data = iter.data.sort((a, b) => b.entry.killDeathRatio - a.entry.killDeathRatio);
+                        }
+                        this.kd = iter;
+                        this.entries = this.kd;
+                    });
                 }
                 this.entries = this.kd;
             },
@@ -219,11 +226,32 @@
                 this.column = "kpm";
 
                 if (this.kpm.state == "idle") {
+                    console.log(`doing first load of KPM`);
                     this.kpm = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKPM(this.ItemId).then(iter => { this.kpm = iter; this.entries = this.kpm; });
+                    CharacterWeaponStatApi.getTopKPM(this.ItemId).then(iter => {
+                        if (iter.state == "loaded") {
+                            console.log(`sorting KPM`);
+                            iter.data = iter.data.sort((a, b) => b.entry.killsPerMinute - a.entry.killsPerMinute);
+                            console.log(`iter data: ${iter.data.map(iter => iter.entry.killsPerMinute)}`);
+                            this.kpm = Loadable.loaded(iter.data);
+                            if (this.kpm.state == "loaded") {
+                                console.log(`kpm data: ${this.kpm.data.map(iter => iter.entry.killsPerMinute)}`);
+                            }
+                        } else {
+                            this.kpm = iter;
+                        }
+
+                        this.entries = this.kpm;
+                        if (this.entries.state == "loaded") {
+                            console.log(`entries data: ${this.entries.data.map(iter => iter.entry.killsPerMinute)}`);
+                        }
+                    });
                 }
 
                 this.entries = this.kpm;
+                if (this.entries.state == "loaded") {
+                    console.log(`2entries data: ${this.entries.data.map(iter => iter.entry.killsPerMinute)}`);
+                }
             },
 
             loadAcc: function(): void {
@@ -231,7 +259,13 @@
 
                 if (this.acc.state == "idle") {
                     this.acc = Loadable.loading();
-                    CharacterWeaponStatApi.getTopAccuracy(this.ItemId).then(iter => { this.acc = iter; this.entries = this.acc; });
+                    CharacterWeaponStatApi.getTopAccuracy(this.ItemId).then(iter => {
+                        if (iter.state == "loaded") {
+                            iter.data = iter.data.sort((a, b) => b.entry.accuracy - a.entry.accuracy);
+                        }
+                        this.acc = iter;
+                        this.entries = this.acc;
+                    });
                 }
 
                 this.entries = this.acc;
@@ -242,7 +276,13 @@
 
                 if (this.hsr.state == "idle") {
                     this.hsr = Loadable.loading();
-                    CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId).then(iter => { this.hsr = iter; this.entries = this.hsr; });
+                    CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId).then(iter => {
+                        if (iter.state == "loaded") {
+                            iter.data = iter.data.sort((a, b) => b.entry.headshotRatio - a.entry.headshotRatio);
+                        }
+                        this.hsr = iter;
+                        this.entries = this.hsr;
+                    });
                 }
 
                 this.entries = this.hsr;
@@ -253,7 +293,13 @@
 
                 if (this.kills.state == "idle") {
                     this.kills = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKills(this.ItemId).then(iter => { this.kills = iter; this.entries = this.kills; });
+                    CharacterWeaponStatApi.getTopKills(this.ItemId).then(iter => {
+                        if (iter.state == "loaded") {
+                            iter.data.sort((a, b) => b.entry.kills - a.entry.kills);
+                        }
+                        this.kills = iter;
+                        this.entries = this.kills;
+                    });
                 }
 
                 this.entries = this.kills;
