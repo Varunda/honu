@@ -372,21 +372,27 @@
         </div>
 
         <div v-if="isDone == true">
-            <report-class-breakdown :report="report"></report-class-breakdown>
 
-            <report-control-breakdown :report="report"></report-control-breakdown>
+            <div v-if="report.sessions.length == 0" class="text-center text-danger">
+                No activity recorded during selected time period
+            </div>
 
-            <report-support-breakdown :report="report"></report-support-breakdown>
+            <div v-else>
+                <report-class-breakdown :report="report"></report-class-breakdown>
 
-            <report-winter :report="report"></report-winter>
+                <report-control-breakdown :report="report"></report-control-breakdown>
 
-            <report-outfit-versus :report="report"></report-outfit-versus>
+                <report-support-breakdown :report="report"></report-support-breakdown>
 
-            <report-weapon-breakdown :report="report"></report-weapon-breakdown>
+                <report-winter :report="report"></report-winter>
 
-            <report-player-list :report="report"></report-player-list>
+                <report-outfit-versus :report="report"></report-outfit-versus>
+
+                <report-weapon-breakdown :report="report"></report-weapon-breakdown>
+
+                <report-player-list :report="report"></report-player-list>
+            </div>
         </div>
-
     </div>
 </template>
 
