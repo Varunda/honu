@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <h2 class="wt-header d-flex">
-            <span class="flex-grow-1 mr-2">
+            <span class="flex-grow-1 mr-2" data-toggle="collapse" data-target="#report-control-breakdown">
                 Capture/Defenses participated in
             </span>
 
@@ -29,52 +29,54 @@
             </span>
         </h2>
 
-        <table class="table table-sm" style="table-layout: fixed;">
-            <tr class="table-secondary">
-                <th width="15%">Facility</th>
-                <th width="15%">Timestamp</th>
-                <th width="15%">Action</th>
-                <th width="15%">Players</th>
-                <th width="40%"></th>
-            </tr>
+        <div id="report-control-breakdown" class="collapse show">
+            <table class="table table-sm" style="table-layout: fixed;">
+                <tr class="table-secondary">
+                    <th width="15%">Facility</th>
+                    <th width="15%">Timestamp</th>
+                    <th width="15%">Action</th>
+                    <th width="15%">Players</th>
+                    <th width="40%"></th>
+                </tr>
 
-            <tr v-for="control in entries">
-                <td>
-                    <div v-if="control.facility != null">
-                        <h4>
-                            {{control.facility.name}}
-                        </h4>
-                        {{control.facility.typeName}} on {{control.facility.zoneID | zone}}
-                    </div>
-                    <div v-else>
-                        &lt;missing facility {{control.control.facility_id}}&gt;
-                    </div>
-                </td>
+                <tr v-for="control in entries">
+                    <td>
+                        <div v-if="control.facility != null">
+                            <h4>
+                                {{control.facility.name}}
+                            </h4>
+                            {{control.facility.typeName}} on {{control.facility.zoneID | zone}}
+                        </div>
+                        <div v-else>
+                            &lt;missing facility {{control.control.facility_id}}&gt;
+                        </div>
+                    </td>
 
-                <td>
-                    {{control.control.timestamp | moment}}
-                </td>
+                    <td>
+                        {{control.control.timestamp | moment}}
+                    </td>
 
-                <td>
-                    <span v-if="control.control.oldFactionID == control.control.newFactionID">
-                        Defended
-                    </span>
-                    <span v-else>
-                        Captured from {{control.control.oldFactionID | faction}}
-                    </span>
-                </td>
+                    <td>
+                        <span v-if="control.control.oldFactionID == control.control.newFactionID">
+                            Defended
+                        </span>
+                        <span v-else>
+                            Captured from {{control.control.oldFactionID | faction}}
+                        </span>
+                    </td>
 
-                <td>
-                    {{control.players.length}}
-                </td>
+                    <td>
+                        {{control.players.length}}
+                    </td>
 
-                <td>
-                    <div>
-                        <chart-block-pie-chart :data="control.block" :show-percent="true" style="max-height: 200px;"></chart-block-pie-chart>
-                    </div>
-                </td>
-            </tr>
-        </table>
+                    <td>
+                        <div>
+                            <chart-block-pie-chart :data="control.block" :show-percent="true" style="max-height: 200px;"></chart-block-pie-chart>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 </template>
 
@@ -111,6 +113,8 @@
         data: function() {
             return {
                 entries: [] as ControlEntry[],
+
+                shown: true as boolean,
 
                 ourOutfits: [] as string[],
 

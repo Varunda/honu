@@ -95,10 +95,26 @@
                 </tr>
 
                 <tr>
-                    <td><b>Active</b></td>
+                    <td>
+                        <b>Active</b>
+                        <info-hover text="30 days">
+                        </info-hover>
+                    </td>
                     <td>
                         {{active.length}}
                         ({{active.length / members.data.length * 100 | locale(2)}}%)
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <b>Mean login time</b>
+                        <info-hover text="Only of loaded characters">
+                        </info-hover>
+                    </td>
+
+                    <td>
+                        {{meanLoginDate | moment}}
                     </td>
                 </tr>
 
@@ -294,7 +310,8 @@
                 outfit: Loadable.idle() as Loading<PsOutfit>,
                 members: Loadable.idle() as Loading<FlatExpandedOutfitMember[]>,
 
-                activeCutoff: 1000 * 60 * 60 * 24 * 30 as number
+                activeCutoff: 1000 * 60 * 60 * 24 * 30 as number,
+                meanLoginDate: new Date() as Date
             }
         },
 
@@ -340,6 +357,13 @@
             bindMembers: async function(): Promise<void> {
                 this.members = Loadable.loading();
                 this.members = await OutfitApi.getMembersFlat(this.outfitID);
+
+                if (this.members.state == "loaded") {
+                    const logins: Date[] = this.members.data.filter(iter => iter.lastLogin != null).map(iter => iter.lastLogin!);
+                    const sum: number = logins.map(iter => iter.getTime()).reduce((acc, iter) => acc += iter, 0);
+                    const avg: number = sum / logins.length;
+                    this.meanLoginDate = new Date(avg);
+                }
             }
 
         },

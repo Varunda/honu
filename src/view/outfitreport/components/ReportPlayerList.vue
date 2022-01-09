@@ -1,49 +1,51 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header">
+        <h2 class="wt-header" data-toggle="collapse" data-target="#report-player-list">
             Player list
         </h2>
 
-        <table class="table table-sm table-striped">
-            <thead>
-                <tr class="table-secondary">
-                    <td>Character</td>
-                    <td>Most played class</td>
-                    <td>Playtime</td>
-                    <td>Infil</td>
-                    <td>Light assault</td>
-                    <td>Medic</td>
-                    <td>Engineer</td>
-                    <td>Heavy</td>
-                    <td>Max</td>
-                    <td>Sessions</td>
-                </tr>
-            </thead>
+        <div id="report-player-list" class="collapse show">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr class="table-secondary">
+                        <td>Character</td>
+                        <td>Most played class</td>
+                        <td>Playtime</td>
+                        <td>Infil</td>
+                        <td>Light assault</td>
+                        <td>Medic</td>
+                        <td>Engineer</td>
+                        <td>Heavy</td>
+                        <td>Max</td>
+                        <td>Sessions</td>
+                    </tr>
+                </thead>
 
-            <tbody>
-                <tr v-for="meta in metadata">
-                    <td>
-                        <a :href="'/c/' + meta.ID">
-                            [{{meta.outfitTag}}]
-                            {{meta.name}}
-                        </a>
-                    </td>
-                    <td>{{meta.classes.mostPlayed.name}}</td>
-                    <td>{{meta.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.infil.timeAs < 60 }">{{meta.classes.infil.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.lightAssault.timeAs < 60 }">{{meta.classes.lightAssault.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.medic.timeAs < 60 }">{{meta.classes.medic.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.engineer.timeAs < 60 }">{{meta.classes.engineer.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.heavy.timeAs < 60 }">{{meta.classes.heavy.timeAs | mduration}}</td>
-                    <td :class="{ 'text-muted': meta.classes.max.timeAs < 60 }">{{meta.classes.max.timeAs | mduration}}</td>
-                    <td>
-                        <a v-for="session in meta.sessions" :key="session.id" :href="'/s/' + session.id">
-                            {{session.id}}
-                        </a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                <tbody>
+                    <tr v-for="meta in metadata">
+                        <td>
+                            <a :href="'/c/' + meta.ID">
+                                [{{meta.outfitTag}}]
+                                {{meta.name}}
+                            </a>
+                        </td>
+                        <td>{{meta.classes.mostPlayed.name}}</td>
+                        <td>{{meta.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.infil.timeAs < 60 }">{{meta.classes.infil.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.lightAssault.timeAs < 60 }">{{meta.classes.lightAssault.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.medic.timeAs < 60 }">{{meta.classes.medic.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.engineer.timeAs < 60 }">{{meta.classes.engineer.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.heavy.timeAs < 60 }">{{meta.classes.heavy.timeAs | mduration}}</td>
+                        <td :class="{ 'text-muted': meta.classes.max.timeAs < 60 }">{{meta.classes.max.timeAs | mduration}}</td>
+                        <td>
+                            <a v-for="session in meta.sessions" :key="session.id" :href="'/s/' + session.id">
+                                {{session.id}}
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </template>
 

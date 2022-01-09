@@ -1,91 +1,103 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header">
-            Class stats
+        <h2 class="wt-header d-flex">
+            <span class="flex-grow-1" data-toggle="collapse" data-target="#report-class-breakdown">
+                Class stats
+            </span>
+
+            <span v-if="hideHint == false" @click="hideHint = true">
+                Click headers to hide sections
+
+                <button type="button" class="btn h-100">
+                    &times;
+                </button>
+            </span>
         </h2>
 
-        <table class="table table-sm">
-            <tr class="table-secondary">
-                <td>Class</td>
-                <td>Kills</td>
-                <td>Time</td>
-                <td>KPM</td>
-                <td>Deaths</td>
-                <td>KD</td>
-                <td>Players</td>
-            </tr>
+        <div id="report-class-breakdown" class="collapse show">
+            <table class="table table-sm">
+                <tr class="table-secondary">
+                    <td>Class</td>
+                    <td>Kills</td>
+                    <td>Time</td>
+                    <td>KPM</td>
+                    <td>Deaths</td>
+                    <td>KD</td>
+                    <td>Players</td>
+                </tr>
 
-            <tr>
-                <td>Total</td>
-                <td>{{all.kills}}</td>
-                <td>{{all.timeAs | mduration}}</td>
-                <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
-                <td>{{all.deaths}}</td>
-                <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
-                <td>{{all.count}}</td>
-            </tr>
+                <tr>
+                    <td>Total</td>
+                    <td>{{all.kills}}</td>
+                    <td>{{all.timeAs | mduration}}</td>
+                    <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{all.deaths}}</td>
+                    <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
+                    <td>{{all.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Infiltrator</td>
-                <td>{{infil.kills}}</td>
-                <td>{{infil.timeAs | mduration}}</td>
-                <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
-                <td>{{infil.deaths}}</td>
-                <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
-                <td>{{infil.count}}</td>
-            </tr>
+                <tr>
+                    <td>Infiltrator</td>
+                    <td>{{infil.kills}}</td>
+                    <td>{{infil.timeAs | mduration}}</td>
+                    <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{infil.deaths}}</td>
+                    <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
+                    <td>{{infil.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Light Assault</td>
-                <td>{{lightAssault.kills}}</td>
-                <td>{{lightAssault.timeAs | mduration}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
-                <td>{{lightAssault.deaths}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
-                <td>{{lightAssault.count}}</td>
-            </tr>
+                <tr>
+                    <td>Light Assault</td>
+                    <td>{{lightAssault.kills}}</td>
+                    <td>{{lightAssault.timeAs | mduration}}</td>
+                    <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{lightAssault.deaths}}</td>
+                    <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
+                    <td>{{lightAssault.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Medic</td>
-                <td>{{medic.kills}}</td>
-                <td>{{medic.timeAs | mduration}}</td>
-                <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
-                <td>{{medic.deaths}}</td>
-                <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
-                <td>{{medic.count}}</td>
-            </tr>
+                <tr>
+                    <td>Medic</td>
+                    <td>{{medic.kills}}</td>
+                    <td>{{medic.timeAs | mduration}}</td>
+                    <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{medic.deaths}}</td>
+                    <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
+                    <td>{{medic.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Engineer</td>
-                <td>{{engineer.kills}}</td>
-                <td>{{engineer.timeAs | mduration}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
-                <td>{{engineer.deaths}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
-                <td>{{engineer.count}}</td>
-            </tr>
+                <tr>
+                    <td>Engineer</td>
+                    <td>{{engineer.kills}}</td>
+                    <td>{{engineer.timeAs | mduration}}</td>
+                    <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{engineer.deaths}}</td>
+                    <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
+                    <td>{{engineer.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Heavy</td>
-                <td>{{heavy.kills}}</td>
-                <td>{{heavy.timeAs | mduration}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
-                <td>{{heavy.deaths}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
-                <td>{{heavy.count}}</td>
-            </tr>
+                <tr>
+                    <td>Heavy</td>
+                    <td>{{heavy.kills}}</td>
+                    <td>{{heavy.timeAs | mduration}}</td>
+                    <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{heavy.deaths}}</td>
+                    <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
+                    <td>{{heavy.count}}</td>
+                </tr>
 
-            <tr>
-                <td>MAX</td>
-                <td>{{max.kills}}</td>
-                <td>{{max.timeAs | mduration}}</td>
-                <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
-                <td>{{max.deaths}}</td>
-                <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
-                <td>{{max.count}}</td>
-            </tr>
+                <tr>
+                    <td>MAX</td>
+                    <td>{{max.kills}}</td>
+                    <td>{{max.timeAs | mduration}}</td>
+                    <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{max.deaths}}</td>
+                    <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
+                    <td>{{max.count}}</td>
+                </tr>
+            </table>
 
-        </table>
+        </div>
     </div>
 </template>
 
@@ -112,6 +124,8 @@
 
         data: function() {
             return {
+                hideHint: false as boolean,
+
                 all: new ClassStats() as ClassStats,
                 infil: new ClassStats() as ClassStats,
                 lightAssault: new ClassStats() as ClassStats,

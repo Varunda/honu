@@ -182,6 +182,8 @@ namespace watchtower.Services.Hosted {
                             _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
                         );
 
+                        long censusTime = timer.ElapsedMilliseconds;
+
                         foreach (WeaponStatEntry iter in weaponStats) {
                             await _WeaponStatDb.Upsert(iter);
                         }
@@ -234,6 +236,9 @@ namespace watchtower.Services.Hosted {
                             }
                         }
 
+                        long dbTime = timer.ElapsedMilliseconds;
+
+                        _Logger.LogTrace($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

@@ -1,78 +1,80 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header">
+        <h2 class="wt-header" data-toggle="collapse" data-target="#report-weapon-breakdown">
             Weapons
         </h2>
 
-        <h4>Weapon kills</h4>
-        <div class="d-flex">
-            <table class="table table-sm flex-grow-1 flex-basis-0">
-                <tr class="table-secondary">
-                    <td>Weapon</td>
-                    <td>Kills</td>
-                    <td>%</td>
-                    <td>HSR%</td>
-                </tr>
+        <div id="report-weapon-breakdown" class="collapse show">
+            <h4>Weapon kills</h4>
+            <div class="d-flex">
+                <table class="table table-sm flex-grow-1 flex-basis-0">
+                    <tr class="table-secondary">
+                        <td>Weapon</td>
+                        <td>Kills</td>
+                        <td>%</td>
+                        <td>HSR%</td>
+                    </tr>
 
-                <tr v-for="weapon in kills.slice(0, sliceSize)">
-                    <td>
-                        <a :href="'/i/' + weapon.itemID">
-                            {{weapon.itemName}}
-                        </a>
-                    </td>
-                    <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
-                </tr>
+                    <tr v-for="weapon in kills.slice(0, sliceSize)">
+                        <td>
+                            <a :href="'/i/' + weapon.itemID">
+                                {{weapon.itemName}}
+                            </a>
+                        </td>
+                        <td>{{weapon.kills}}</td>
+                        <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
+                        <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
+                    </tr>
 
-                <tr class="table-dark">
-                    <td colspan="4">
-                        Unique weapon kills: {{kills.length}} over {{report.kills.length}}
-                        ({{report.kills.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.kills.length) * 100 | locale}}% HSR)
-                    </td>
-                </tr>
-            </table>
+                    <tr class="table-dark">
+                        <td colspan="4">
+                            Unique weapon kills: {{kills.length}} over {{report.kills.length}}
+                            ({{report.kills.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.kills.length) * 100 | locale}}% HSR)
+                        </td>
+                    </tr>
+                </table>
 
-            <div class="flex-grow-1 flex-basis-0">
-                <chart-block-pie-chart :data="killsBlock"
-                    :show-percent="true" :show-total="true">
-                </chart-block-pie-chart>
+                <div class="flex-grow-1 flex-basis-0">
+                    <chart-block-pie-chart :data="killsBlock"
+                        :show-percent="true" :show-total="true">
+                    </chart-block-pie-chart>
+                </div>
             </div>
-        </div>
 
-        <h4>Weapon deaths</h4>
-        <div class="d-flex">
-            <table class="table table-sm flex-grow-1 flex-basis-0">
-                <tr class="table-secondary">
-                    <td>Weapon</td>
-                    <td>Deaths</td>
-                    <td>%</td>
-                    <td>HSR%</td>
-                </tr>
+            <h4>Weapon deaths</h4>
+            <div class="d-flex">
+                <table class="table table-sm flex-grow-1 flex-basis-0">
+                    <tr class="table-secondary">
+                        <td>Weapon</td>
+                        <td>Deaths</td>
+                        <td>%</td>
+                        <td>HSR%</td>
+                    </tr>
 
-                <tr v-for="weapon in deaths.slice(0, sliceSize)">
-                    <td>
-                        <a :href="'/i/' + weapon.itemID">
-                            {{weapon.itemName}}
-                        </a>
-                    </td>
-                    <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
-                </tr>
+                    <tr v-for="weapon in deaths.slice(0, sliceSize)">
+                        <td>
+                            <a :href="'/i/' + weapon.itemID">
+                                {{weapon.itemName}}
+                            </a>
+                        </td>
+                        <td>{{weapon.kills}}</td>
+                        <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
+                        <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
+                    </tr>
 
-                <tr class="table-dark">
-                    <td colspan="4">
-                        Unique weapon deaths: {{deaths.length}} over {{report.deaths.length}}
-                        ({{report.deaths.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.deaths.length) * 100 | locale}}% HSR)
-                    </td>
-                </tr>
-            </table>
+                    <tr class="table-dark">
+                        <td colspan="4">
+                            Unique weapon deaths: {{deaths.length}} over {{report.deaths.length}}
+                            ({{report.deaths.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.deaths.length) * 100 | locale}}% HSR)
+                        </td>
+                    </tr>
+                </table>
 
-            <div class="flex-grow-1 flex-basis-0">
-                <chart-block-pie-chart :data="deathsBlock"
-                    :show-percent="true" :show-total="true">
-                </chart-block-pie-chart>
+                <div class="flex-grow-1 flex-basis-0">
+                    <chart-block-pie-chart :data="deathsBlock"
+                        :show-percent="true" :show-total="true">
+                    </chart-block-pie-chart>
+                </div>
             </div>
         </div>
 

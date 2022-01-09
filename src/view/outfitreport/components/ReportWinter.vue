@@ -1,12 +1,8 @@
 ﻿<template>
     <div>
         <h2 class="wt-header d-flex">
-            <span>
+            <span class="flex-grow-1" data-toggle="collapse" data-target="#report-winter">
                 Winter Leaderboard
-            </span>
-
-            <span class="flex-grow-1">
-
             </span>
 
             <button type="button" class="btn btn-small border" :class="[ settings.showFunNames == true ? 'btn-primary' : 'btn-secondary' ]" @click="settings.showFunNames = !settings.showFunNames">
@@ -36,11 +32,14 @@
             </span>
         </h2>
 
-        <winter-section v-if="show.kills" :category="catKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-        <winter-section v-if="show.support" :category="catSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-        <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-        <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-        <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+        <div id="report-winter" class="collapse show">
+            <winter-section v-if="show.kills" :category="catKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.support" :category="catSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+        </div>
+
     </div>
 </template>
 
