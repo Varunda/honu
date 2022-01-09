@@ -12,5 +12,7 @@ namespace watchtower.Models.PSB {
 
         public PsCharacter? NS { get; set; }
 
+        public string? NsName { get; set; }
+
     }
 }

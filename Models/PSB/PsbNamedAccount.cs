@@ -1,4 +1,6 @@
-﻿namespace watchtower.Models.PSB {
+﻿using System.Collections.Generic;
+
+namespace watchtower.Models.PSB {
 
     public class PsbNamedAccount {
 
@@ -28,7 +30,14 @@
 
         public static string TR(string? tag, string name) => $"{tag}x{name}TR";
 
-        public static string NS(string? tag, string name) => $"{tag}x{name}NS";
+        public static List<string> NS(string? tag, string name) => new List<string>() {
+            $"{tag}x{name}NS",
+            $"{tag}x{name}DONOTUSE",
+            $"DONOTUSEx{name}",
+            $"DONTUSEx{name}",
+            $"{name}xDONOTUSE",
+            $"{name}xDONTUSE"
+        };
 
     }
 

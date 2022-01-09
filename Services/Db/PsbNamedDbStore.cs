@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -68,21 +69,65 @@ namespace watchtower.Services.Db {
             return acc;
         }
 
-        public async Task Upsert(PsbNamedAccount acc) {
+        /// <summary>
+        ///     Insert a new <see cref="PsbNamedAccount"/>
+        /// </summary>
+        /// <param name="acc">Parameters used to insert</param>
+        /// <returns>
+        ///     The ID of the row just inserted
+        /// </returns>
+        /// <exception cref="Exception">
+        ///     If the DB failed to return a valid ID
+        /// </exception>
+        public async Task<long> Insert(PsbNamedAccount acc) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO psb_named (
                     tag, name, vs_id, nc_id, tr_id, ns_id, notes
                 ) VALUES (
                     @Tag, @Name, @VsID, @NcID, @TrID, @NsID, @Notes
-                ) ON CONFLICT (tag, name) DO 
-                    UPDATE SET vs_id = @VsID,
+                ) RETURNING id;
+            ");
+
+            cmd.AddParameter("Tag", acc.Tag);
+            cmd.AddParameter("Name", acc.Name);
+            cmd.AddParameter("VsID", acc.VsID);
+            cmd.AddParameter("NcID", acc.NcID);
+            cmd.AddParameter("TrID", acc.TrID);
+            cmd.AddParameter("NsID", acc.NsID);
+            cmd.AddParameter("Notes", acc.Notes);
+
+            object? objID = await cmd.ExecuteScalarAsync();
+            await conn.CloseAsync();
+
+            if (objID != null && long.TryParse(objID.ToString(), out long ID) == true) {
+                return ID;
+            } else {
+                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
+            }
+        }
+
+        /// <summary>
+        ///     Update an existing entry by ID
+        /// </summary>
+        /// <param name="ID">ID of the account to update</param>
+        /// <param name="acc">Parameters used to update</param>
+        /// <returns></returns>
+        public async Task UpdateByID(long ID, PsbNamedAccount acc) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE psb_named 
+                    SET tag = @Tag,
+                        name = @Name,
+                        vs_id = @VsID,
                         nc_id = @NcID,
                         tr_id = @TrID,
                         ns_id = @NsID,
-                        notes = @Notes;
+                        notes = @Notes
+                    WHERE id = @ID;
             ");
 
+            cmd.AddParameter("ID", ID);
             cmd.AddParameter("Tag", acc.Tag);
             cmd.AddParameter("Name", acc.Name);
             cmd.AddParameter("VsID", acc.VsID);
@@ -94,7 +139,6 @@ namespace watchtower.Services.Db {
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
         }
-
 
     }
 }
