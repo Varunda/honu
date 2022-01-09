@@ -34,6 +34,22 @@ namespace watchtower.Services.Db {
             return accs;
         }
 
+        public async Task<PsbNamedAccount?> GetByID(long ID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM psb_named
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", ID);
+
+            PsbNamedAccount? acc = await _Reader.ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return acc;
+        }
+
         public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

@@ -80,6 +80,15 @@ namespace watchtower.Controllers {
             List<ExpandedKillEvent> expanded = new List<ExpandedKillEvent>(events.Count);
 
             Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
+
+            List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
+            IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
+
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs);
+            foreach (PsCharacter c in characters) {
+                chars.Add(c.ID, c);
+            }
+
             Dictionary<string, PsItem?> items = new Dictionary<string, PsItem?>();
 
             foreach (KillEvent ev in events) {
@@ -87,18 +96,15 @@ namespace watchtower.Controllers {
 
                 ex.Event = ev;
 
-                if (chars.ContainsKey(ev.AttackerCharacterID) == false) {
-                    chars.Add(ev.AttackerCharacterID, await _CharacterRepository.GetByID(ev.AttackerCharacterID));
-                }
-                if (chars.ContainsKey(ev.KilledCharacterID) == false) {
-                    chars.Add(ev.KilledCharacterID, await _CharacterRepository.GetByID(ev.KilledCharacterID));
-                }
                 if (items.ContainsKey(ev.WeaponID) == false) {
                     items.Add(ev.WeaponID, await _ItemRepository.GetByID(int.Parse(ev.WeaponID)));
                 }
 
-                ex.Attacker = chars[ev.AttackerCharacterID];
-                ex.Killed = chars[ev.KilledCharacterID];
+                chars.TryGetValue(ev.AttackerCharacterID, out PsCharacter? attacker);
+                chars.TryGetValue(ev.KilledCharacterID, out PsCharacter? killed);
+
+                ex.Attacker = attacker;
+                ex.Killed = killed;
                 ex.Item = items[ev.WeaponID];
 
                 expanded.Add(ex);
