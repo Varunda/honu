@@ -1120,7 +1120,7 @@ export const ATable = Vue.extend({
                 }
             }
 
-            let baseFunc: (a: object, b: object) => number = (a, b) => -1;
+            let baseFunc: (a: object, b: object) => number = (a, b) => 1;
             let sortFunc: (a: object, b: object) => number;
 
             if (this.sorting.field != "") {
