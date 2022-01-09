@@ -61,6 +61,20 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get all items
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a list of all <see cref="PsItem"/>s
+        /// </response>
+        [HttpGet]
+        [Route("/api/items/weapons")]
+        public async Task<ApiResponse<List<PsItem>>> GetWeapons() {
+            List<PsItem> items = (await _ItemRepository.GetAll()).Where(iter => iter.TypeID == 26 || iter.TypeID == 36).ToList();
+
+            return ApiOk(items);
+        }
+
+        /// <summary>
         ///     Get the characters (and their weapon stats) with the top KD of an item
         /// </summary>
         /// <remarks>

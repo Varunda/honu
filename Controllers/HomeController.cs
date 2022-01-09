@@ -83,5 +83,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Items() {
+            return View();
+        }
+
     }
 }

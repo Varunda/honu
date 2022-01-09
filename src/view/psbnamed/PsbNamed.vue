@@ -378,6 +378,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / PSB named`;
+        },
+
         mounted: function(): void {
             this.loadAll();
 

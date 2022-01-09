@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DaybreakGames.Census.Exceptions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -128,6 +129,8 @@ namespace watchtower.Services.Hosted {
                         };
                     }
 
+                    stoppingToken.ThrowIfCancellationRequested();
+
                     // 3 conditions to check:
                     //      1. The character was not found in census. This could be from a deleted character, so increment the not found count
                     //      2. The character was found in census, but the metadata is AFTER the last time the character logged in,
@@ -159,50 +162,62 @@ namespace watchtower.Services.Hosted {
 
                         await _CharacterDb.Upsert(censusChar);
 
-                        await Task.WhenAll(
-                            // Update the characters weapon stats
-                            _WeaponCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => weaponStats = result.Result),
+                        try {
+                            await Task.WhenAll(
+                                // Update the characters weapon stats
+                                _WeaponCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => weaponStats = result.Result),
 
-                            // Update the characters history stats
-                            _HistoryCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => historyStats = result.Result),
+                                // Update the characters history stats
+                                _HistoryCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => historyStats = result.Result),
 
-                            // Update the items the character has
-                            _ItemCensus.GetByID(entry.CharacterID).ContinueWith(result => itemStats = result.Result),
+                                // Update the items the character has
+                                _ItemCensus.GetByID(entry.CharacterID).ContinueWith(result => itemStats = result.Result),
 
-                            // Get the character stats (not the history ones)
-                            _StatCensus.GetByID(entry.CharacterID).ContinueWith(result => statEntries = result.Result),
+                                // Get the character stats (not the history ones)
+                                _StatCensus.GetByID(entry.CharacterID).ContinueWith(result => statEntries = result.Result),
 
-                            // Get the character's friends
-                            _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
+                                // Get the character's friends
+                                _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
 
-                            // Get the character's directive data
-                            _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charDirs = result.Result),
-                            _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTreeDirs = result.Result),
-                            _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTierDirs = result.Result),
-                            _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
-                        );
+                                // Get the character's directive data
+                                _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charDirs = result.Result),
+                                _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTreeDirs = result.Result),
+                                _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTierDirs = result.Result),
+                                _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
+                            );
+                        } catch (AggregateException ex) when (ex.InnerException is CensusConnectionException) {
+                            _Logger.LogWarning($"Got timeout when getting data for {entry.CharacterID}, requeuing");
+                            _Queue.Queue(entry);
+                            await Task.Delay(1000 * 15, stoppingToken);
+                            continue;
+                        }
 
                         long censusTime = timer.ElapsedMilliseconds;
 
                         foreach (WeaponStatEntry iter in weaponStats) {
                             await _WeaponStatDb.Upsert(iter);
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (PsCharacterHistoryStat stat in historyStats) {
                             await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         if (itemStats.Count > 0) {
                             await _ItemDb.Set(entry.CharacterID, itemStats);
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         if (statEntries.Count > 0) {
                             await _StatDb.Set(entry.CharacterID, statEntries);
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         if (charFriends.Count > 0) {
                             await _FriendDb.Set(entry.CharacterID, charFriends);
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirective dir in charDirs) {
                             try {
@@ -211,6 +226,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
                             }
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveTree tree in charTreeDirs) {
                             try {
@@ -219,6 +235,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
                             }
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveTier tier in charTierDirs) {
                             try {
@@ -227,6 +244,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
                             }
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveObjective obj in charObjDirs) {
                             try {
@@ -235,6 +253,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
                             }
                         }
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         long dbTime = timer.ElapsedMilliseconds;
 

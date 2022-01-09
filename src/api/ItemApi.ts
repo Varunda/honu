@@ -88,6 +88,10 @@ export class ItemApi extends ApiWrapper<PsItem> {
 		return ItemApi.get().readSingle(`/api/item/${itemID}`, ItemApi.parse)
 	}
 
+	public static async getAll(): Promise<Loading<PsItem[]>> {
+		return ItemApi.get().readList(`/api/items/weapons`, ItemApi.parse);
+    }
+
 	public static async getStatsByID(itemID: string): Promise<Loading<ItemPercentileAll>> {
 		return ItemApi.get().readSingle(`/api/item/${itemID}/percentile_stats`, ItemApi.parsePercentileAll)
 	}
