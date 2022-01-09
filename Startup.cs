@@ -37,6 +37,7 @@ using watchtower.Services.Queues;
 using watchtower.Models.Queues;
 using Microsoft.Extensions.Logging;
 using watchtower.Models.Report;
+using watchtower.Services.Hosted.PSB;
 
 //using honu_census;
 
@@ -153,6 +154,7 @@ namespace watchtower {
             }
 
             services.AddHostedService<PsbNamedImportStartupService>();
+            //services.AddHostedService<PsbNamedCheckerService>();
 
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();

@@ -28,6 +28,12 @@ namespace watchtower.Controllers.Api {
             _CharacterRepository = charRepo;
         }
 
+        /// <summary>
+        ///     Get all PSB named accounts
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a list of all PSB named accounts
+        /// </response>
         [HttpGet]
         public async Task<ApiResponse<List<ExpandedPsbNamedAccount>>> GetAll() {
             List<PsbNamedAccount> named = await _NamedRepository.GetAll();
@@ -37,6 +43,11 @@ namespace watchtower.Controllers.Api {
             return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     Take a list of <see cref="PsbNamedAccount"/>s and make <see cref="ExpandedPsbNamedAccount"/>s for them
+        /// </summary>
+        /// <param name="named"></param>
+        /// <returns></returns>
         private async Task<List<ExpandedPsbNamedAccount>> MakeExpanded(List<PsbNamedAccount> named) {
             List<ExpandedPsbNamedAccount> ex = new List<ExpandedPsbNamedAccount>(named.Count);
 

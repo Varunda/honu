@@ -37,7 +37,9 @@
                 <tr>
                     <td>Battle rank</td>
                     <td>
-                        {{character.prestige}}~{{character.battleRank}}
+                        <span title="Battle rank ~ ASP">
+                            {{character.battleRank}}~{{character.prestige}}
+                        </span>
                     </td>
                 </tr>
 

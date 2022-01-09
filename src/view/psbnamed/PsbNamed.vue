@@ -15,16 +15,34 @@
 
             <div>
                 <button type="button" class="btn" :class="[ filter.missingCharacter ? 'btn-primary' : 'btn-secondary' ]" @click="filter.missingCharacters = !filter.missingCharacters">
-                    <span v-if="filter.missingCharacter">
-                        Y
-                    </span>
-                    <span>
-                        N
-                    </span>
+                    <span v-if="filter.missingCharacter">Y</span>
+                    <span v-else>N</span>
                 </button>
 
                 <span>
                     Only show accounts with missing characters
+                </span>
+            </div>
+
+            <div>
+                <button type="button" class="btn" :class="[ filter.mismatchFactions ? 'btn-primary' : 'btn-secondary' ]" @click="filter.mismatchFactions = !filter.mismatchFactions">
+                    <span v-if="filter.mismatchFactions">Y</span>
+                    <span v-else>N</span>
+                </button>
+
+                <span>
+                    Only show accounts that have characters on the wrong faction (VS on NC for example) (excludes NS)
+                </span>
+            </div>
+
+            <div>
+                <button type="button" class="btn" :class="[ filter.wrongWorlds ? 'btn-primary' : 'btn-secondary' ]" @click="filter.wrongWorlds = !filter.wrongWorlds">
+                    <span v-if="filter.wrongWorlds">Y</span>
+                    <span v-else>N</span>
+                </button>
+
+                <span>
+                    Only show accounts not on Jaeger (includes NSO)
                 </span>
             </div>
 
@@ -35,6 +53,16 @@
             :show-filters="true"
             default-sort-field="tag" default-sort-order="asc"
             display-type="table">
+
+            <a-col>
+                <a-header></a-header>
+
+                <a-body v-slot="entry">
+                    <div @click="viewAccount(entry.id)">
+                        View
+                    </div>
+                </a-body>
+            </a-col>
 
             <a-col sort-field="tag">
                 <a-header>
@@ -55,7 +83,7 @@
                     <b>Name</b>
                 </a-header>
 
-                <a-filter method="input" type="string" field="tag"
+                <a-filter method="input" type="string" field="name"
                     :conditions="[ 'contains', 'equals' ]">
                 </a-filter>
 
@@ -64,24 +92,32 @@
                 </a-body>
             </a-col>
 
-            <a-col sort-field="missingCharacter">
+            <a-col>
                 <a-header>
                     Status
                 </a-header>
 
+                <a-filter method="dropdown" type="string" field="status"
+                    :conditions="[ 'equals' ]">
+                </a-filter>
+
                 <a-body v-slot="entry">
-                    <span v-if="entry.missingCharacter == true" class="text-danger">
+                    <span v-if="entry.status == 'Missing'" class="text-danger">
                         Missing
                     </span>
 
-                    <span v-else-if="entry.lastUsed != null && (new Date().getTime() - entry.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90" class="text-warning">
+                    <span v-else-if="entry.status == 'Unused'" class="text-warning">
                         Unused
                         <info-hover text="Last login >90 days">
                         </info-hover>
                     </span>
 
-                    <span v-else class="text-success">
+                    <span v-else-if="entry.status == 'Ok'" class="text-success">
                         Ok
+                    </span>
+
+                    <span v-else>
+                        Unchecked status {{entry.status}}
                     </span>
                 </a-body>
             </a-col>
@@ -92,8 +128,11 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span :title="entry.lastUsed | moment">
+                    <span v-if="entry.lastUsed != null" :title="entry.lastUsed | moment">
                         {{entry.lastUsed | timeAgo}}
+                    </span>
+                    <span v-else class="text-danger">
+                        --
                     </span>
                 </a-body>
             </a-col>
@@ -293,8 +332,12 @@
                     </span>
                 </a-body>
             </a-col>
-
         </a-table>
+
+        <div class="modal" id="psb-account-modal">
+            <psb-named-account-modal v-if="view.opened == true" :account="view.account">
+            </psb-named-account-modal>
+        </div>
     </div>
 </template>
 
@@ -304,6 +347,7 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
+    import PsbNamedAccountModal from "./components/PsbNamedAccountModal.vue";
 
     import "MomentFilter";
     import "filters/CharacterName";
@@ -322,16 +366,52 @@
                 wrapped: Loadable.idle() as Loading<FlatPsbNamedAccount[]>,
 
                 filter: {
-                    missingCharacters: false as boolean
+                    missingCharacters: false as boolean,
+                    mismatchFactions: false as boolean,
+                    wrongWorlds: false as boolean
+                },
+
+                view: {
+                    opened: false as boolean,
+                    account: null as FlatPsbNamedAccount | null
                 }
             }
         },
 
         mounted: function(): void {
             this.loadAll();
+
+            this.$nextTick(() => {
+                $("#psb-account-modal").on("hide.bs.modal", () => {
+                    this.view.opened = false;
+                    this.view.account = null;
+                });
+            });
         },
 
         methods: {
+            viewAccount: function(accID: number): void {
+                if (this.accounts.state != "loaded") {
+                    return console.warn(`accounts.state is not loaded, cannot load ${accID}`);
+                }
+
+                const acc: FlatPsbNamedAccount | undefined = this.accounts.data.find(iter => iter.id == accID);
+                if (acc == undefined) {
+                    return console.warn(`failed to find ${accID}`);
+                }
+
+                this.view.account = acc;
+                this.view.opened = true;
+
+                this.$nextTick(() => {
+                    this.openModal();
+                });
+            },
+
+            openModal: function(): void {
+                $("#psb-account-modal").modal("show");
+            },
+
             loadAll: async function(): Promise<void> {
                 this.accounts = Loadable.loading();
                 this.accounts = await PsbNamedAccountApi.getAll();
@@ -348,9 +428,48 @@
                     return console.warn(`accounts.state is not loaded, cannot filter`);
                 }
 
-                this.wrapped = Loadable.loaded(this.accounts.data.filter(iter => {
-                    return iter.missingCharacter == true;
-                }));
+                let data: FlatPsbNamedAccount[] = this.accounts.data;
+
+                if (this.filter.missingCharacters) {
+                    data = data.filter(iter => iter.missingCharacter == true);
+                }
+
+                if (this.filter.mismatchFactions) {
+                    data = data.filter(iter => {
+                        if ((iter.vsCharacter?.factionID ?? 1) != 1) {
+                            return true;
+                        }
+                        if ((iter.ncCharacter?.factionID ?? 2) != 2) {
+                            return true;
+                        }
+                        if ((iter.trCharacter?.factionID ?? 3) != 3) {
+                            return true;
+                        }
+
+                        return false;
+                    });
+                }
+
+                if (this.filter.wrongWorlds == true) {
+                    data = data.filter(iter => {
+                        if (iter.vsCharacter != null && iter.vsCharacter?.worldID != 19) {
+                            return true;
+                        }
+                        if (iter.ncCharacter != null && iter.ncCharacter?.worldID != 19) {
+                            return true;
+                        }
+                        if (iter.trCharacter != null && iter.trCharacter?.worldID != 19) {
+                            return true;
+                        }
+                        if (iter.nsCharacter != null && iter.nsCharacter?.worldID != 19) {
+                            return true;
+                        }
+
+                        return false;
+                    });
+                }
+
+                this.wrapped = Loadable.loaded(data);
             },
         },
 
@@ -358,12 +477,22 @@
             "filter.missingCharacters": function(): void {
                 console.log(`filter.missingCharacters changed`);
                 this.updateFilters();
+            },
+
+            "filter.mismatchFactions": function(): void {
+                console.log(`filter.mismatchFactions changed`);
+                this.updateFilters();
+            },
+
+            "filter.wrongWorlds": function(): void {
+                console.log(`filter.wrongWorlds changed`);
+                this.updateFilters();
             }
         },
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
-                if (this.filter.missingCharacters == true) {
+                if (this.filter.missingCharacters == true || this.filter.mismatchFactions || this.filter.wrongWorlds) {
                     return this.wrapped;
                 }
 
@@ -373,7 +502,8 @@
 
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
-            InfoHover
+            InfoHover,
+            PsbNamedAccountModal
         }
 
     });

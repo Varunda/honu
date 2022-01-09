@@ -4,6 +4,7 @@ import ApiWrapper from "api/ApiWrapper";
 import { CharacterApi, PsCharacter } from "api/CharacterApi";
 
 export class PsbNamedAccount {
+    public id: number = 0;
     public tag: string | null = null;
     public name: string = "";
     public vsID: string | null = null;
@@ -22,10 +23,12 @@ export class ExpandedPsbNamedAccount {
 }
 
 export class FlatPsbNamedAccount {
+    public id: number = 0;
     public tag: string | null = null;
     public name: string = "";
     public lastUsed: Date | null = null;
     public missingCharacter: boolean = false;
+    public status: string = "";
 
     public vsID: string | null = null;
     public vsCharacter: PsCharacter | null = null;
@@ -75,6 +78,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
 
     public static parse(entry: any): PsbNamedAccount {
         return {
+            id: entry.id,
             tag: entry.tag,
             name: entry.name,
             vsID: entry.vsID,
@@ -100,6 +104,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         const expanded: ExpandedPsbNamedAccount = PsbNamedAccountApi.parseExpanded(elem);
 
         const flat: FlatPsbNamedAccount = {
+            id: expanded.account.id,
             tag: expanded.account.tag,
             name: expanded.account.name,
             lastUsed: null, 
@@ -107,6 +112,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
                 || expanded.account.ncID == null || expanded.ncCharacter == null
                 || expanded.account.trID == null || expanded.trCharacter == null
                 || expanded.account.nsID == null || expanded.nsCharacter == null,
+            status: "",
 
             vsID: expanded.account.vsID,
             vsCharacter: expanded.vsCharacter ?? null,
@@ -149,8 +155,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             nsLastLogin: expanded.nsCharacter?.dateLastLogin ?? null,
         };
 
-        // expanded.vsCharacter?.dateLastLogin ?? expanded.ncCharacter?.dateLastLogin ?? expanded.trCharacter?.dateLastLogin ?? null,
-
+        // If all the last login dates are null, keep lastUsed as null
         if ((expanded.vsCharacter?.dateLastLogin ?? null) == null && (expanded.ncCharacter?.dateLastLogin ?? null) == null && (expanded.trCharacter?.dateLastLogin ?? null) == null) {
 
         } else {
@@ -162,6 +167,14 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
 
             const mostRecent: Date = new Date(Math.max(...dates));
             flat.lastUsed = mostRecent;
+        }
+
+        if (flat.missingCharacter || flat.lastUsed == null) {
+            flat.status = "Missing";
+        } else if (flat.lastUsed != null && (new Date().getTime() - flat.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90) {
+            flat.status = "Unused";
+        } else {
+            flat.status = "Ok";
         }
 
         return flat;

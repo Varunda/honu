@@ -43,17 +43,73 @@ namespace watchtower.Services.Repositories.PSB {
             return _Db.GetByTagAndName(tag, name);
         }
 
+        /// <summary>
+        ///     Create a new <see cref="PsbNamedAccount"/> using the tag and name passed in
+        /// </summary>
+        /// <param name="tag">Optional name of the account</param>
+        /// <param name="name">Name of the person who the account is for</param>
+        /// <returns>
+        ///     The <see cref="PsbNamedAccount"/> created
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        ///     If a <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Tag"/> of <paramref name="tag"/>
+        ///     and <see cref="PsbNamedAccount.Name"/> of <paramref name="name"/> already exists, this is thrown
+        /// </exception>
         public async Task<PsbNamedAccount> Create(string? tag, string name) {
             PsbNamedAccount? dbAccount = await _Db.GetByTagAndName(tag, name);
             if (dbAccount != null) {
                 throw new ArgumentException($"PSB named account with tag '{tag}' and name '{name}' already exists");
             }
 
-            string baseName = $"{tag}x{name}";
-            string trName = $"{tag}x{name}TR";
-            string ncName = $"{tag}x{name}NC";
-            string vsName = $"{tag}x{name}VS";
-            string nsName = $"{tag}x{name}NS";
+            PsbCharacterSet charSet = await GetCharacterSet(tag, name);
+
+            PsbNamedAccount acc = new PsbNamedAccount() {
+                Tag = tag,
+                Name = name,
+                VsID = charSet.VS?.ID,
+                NcID = charSet.NC?.ID,
+                TrID = charSet.TR?.ID,
+                NsID = charSet.NS?.ID,
+                Notes = null
+            };
+
+            await Upsert(acc);
+
+            return acc;
+        }
+
+        /// <summary>
+        ///     Get the <see cref="PsbCharacterSet"/> of a tag and name
+        /// </summary>
+        /// <param name="tag">Optional tag</param>
+        /// <param name="name">Name of the character</param>
+        /// <returns></returns>
+        public async Task<PsbCharacterSet> GetCharacterSet(string? tag, string name) {
+            string ncName = PsbNameTemplates.NC(tag, name);
+            string vsName = PsbNameTemplates.VS(tag, name);
+            string trName = PsbNameTemplates.TR(tag, name);
+            string nsName = PsbNameTemplates.NS(tag, name);
+            string doNotUseName = $"{tag}x{name}DONOTUSE";
+            string doNotUse2Name = $"DONOTUSEx{name}";
+
+            List<PsCharacter> characters = await GetCharacters(tag, name);
+
+            PsbCharacterSet set = new PsbCharacterSet();
+            set.VS = characters.FirstOrDefault(iter => iter.Name == vsName);
+            set.NC = characters.FirstOrDefault(iter => iter.Name == ncName);
+            set.TR = characters.FirstOrDefault(iter => iter.Name == trName);
+            set.NS = characters.FirstOrDefault(iter => iter.Name == nsName)
+                ?? characters.FirstOrDefault(iter => iter.Name == doNotUseName)
+                ?? characters.FirstOrDefault(iter => iter.Name == doNotUse2Name);
+
+            return set;
+        }
+
+        public async Task<List<PsCharacter>> GetCharacters(string? tag, string name) {
+            string ncName = PsbNameTemplates.NC(tag, name);
+            string vsName = PsbNameTemplates.VS(tag, name);
+            string trName = PsbNameTemplates.TR(tag, name);
+            string nsName = PsbNameTemplates.NS(tag, name);
             string doNotUseName = $"{tag}x{name}DONOTUSE";
             string doNotUse2Name = $"DONOTUSEx{name}";
 
@@ -64,31 +120,12 @@ namespace watchtower.Services.Repositories.PSB {
             foreach (string iter in names) {
                 PsCharacter? c = await _CharacterCollection.GetByName(iter);
 
-                if (c != null) {
+                if (c != null && c.WorldID == 19) {
                     characters.Add(c);
                 }
             }
 
-            PsCharacter? vsChar = characters.FirstOrDefault(iter => iter.Name == vsName);
-            PsCharacter? ncChar = characters.FirstOrDefault(iter => iter.Name == ncName);
-            PsCharacter? trChar = characters.FirstOrDefault(iter => iter.Name == trName);
-            PsCharacter? nsChar = characters.FirstOrDefault(iter => iter.Name == nsName)
-                ?? characters.FirstOrDefault(iter => iter.Name == doNotUseName)
-                ?? characters.FirstOrDefault(iter => iter.Name == doNotUse2Name);
-
-            PsbNamedAccount acc = new PsbNamedAccount() {
-                Tag = tag,
-                Name = name,
-                VsID = vsChar?.ID,
-                NcID = ncChar?.ID,
-                TrID = trChar?.ID,
-                NsID = nsChar?.ID,
-                Notes = ""
-            };
-
-            await Upsert(acc);
-
-            return acc;
+            return characters;
         }
 
     }

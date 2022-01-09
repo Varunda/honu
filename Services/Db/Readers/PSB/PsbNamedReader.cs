@@ -10,6 +10,7 @@ namespace watchtower.Services.Db.Readers.PSB {
         public override PsbNamedAccount? ReadEntry(NpgsqlDataReader reader) {
             PsbNamedAccount acc = new PsbNamedAccount();
 
+            acc.ID = reader.GetInt64("id");
             acc.Tag = reader.GetNullableString("tag");
             acc.Name = reader.GetString("name");
             acc.VsID = reader.GetNullableString("vs_id");
