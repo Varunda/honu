@@ -86,7 +86,9 @@ namespace watchtower.Controllers {
 
             List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs);
             foreach (PsCharacter c in characters) {
-                chars.Add(c.ID, c);
+                if (chars.ContainsKey(c.ID) == false) {
+                    chars.Add(c.ID, c);
+                }
             }
 
             Dictionary<string, PsItem?> items = new Dictionary<string, PsItem?>();
