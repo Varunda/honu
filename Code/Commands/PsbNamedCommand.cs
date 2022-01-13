@@ -47,11 +47,33 @@ namespace watchtower.Code.Commands {
         public async Task Rename(long ID, string tagg, string name) {
             string? tag = tagg == "." ? null : tagg;
 
-            bool success = await _NamedRepository.Rename(ID, tag, name);
-            if (success == true) {
+            PsbNamedAccount? acc = await _NamedRepository.Rename(ID, tag, name);
+            if (acc != null) {
                 _Logger.LogInformation($"Successfully renamed {ID} to {tag}x{name}");
             } else {
                 _Logger.LogWarning($"Failed to update {ID} to {tag}x{name}");
+            }
+        }
+
+        public async Task SetPlayerName(long ID, string playerName) {
+            PsbNamedAccount? acc = await _NamedRepository.SetPlayerName(ID, playerName);
+            if (acc != null) {
+                _Logger.LogInformation($"Successfully set player name for {ID} to {playerName}");
+            } else {
+                _Logger.LogWarning($"Failed to set player name for {ID} to {playerName}");
+            }
+        }
+
+        public async Task Recheck(long ID) {
+            PsbNamedAccount? acc = await _NamedRepository.RecheckByID(ID);
+            if (acc == null) {
+                _Logger.LogWarning($"Failed to update status of {nameof(PsbNamedAccount)}");
+            } else {
+                string vs = PsbCharacterStatus.GetName(acc.VsStatus);
+                string nc = PsbCharacterStatus.GetName(acc.NcStatus);
+                string tr = PsbCharacterStatus.GetName(acc.TrStatus);
+                string ns = PsbCharacterStatus.GetName(acc.NsStatus);
+                _Logger.LogInformation($"{acc.Tag}x{acc.Name} => VS: {vs}, NC: {nc}, TR: {tr}, NS: {ns}");
             }
         }
 

@@ -98,6 +98,20 @@ namespace watchtower {
                 Console.WriteLine("");
             });
 
+            /*
+            services.AddAuthentication().AddGoogle(options => {
+                options.ClientId = Configuration["Authentication:Google:ClientId"];
+                if (options.ClientId == "") {
+                    throw new SystemException($"aaaaaaaaaaaa");
+                }
+
+                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+                if (options.ClientSecret == "") {
+                    throw new SystemException($"aaaaaaaaaaaa");
+                }
+            });
+            */
+
             services.AddRazorPages();
             services.AddMemoryCache();
 
@@ -188,6 +202,8 @@ namespace watchtower {
                 doc.RoutePrefix = "api-doc";
                 doc.DocumentTitle = "Honu API documentation";
             });
+
+            app.UseAuthentication();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(

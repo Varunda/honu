@@ -87,5 +87,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult PsbSignin() {
+            return View();
+        }
+
     }
 }

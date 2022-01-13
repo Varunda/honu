@@ -13,11 +13,17 @@ namespace watchtower.Services.Db.Readers.PSB {
             acc.ID = reader.GetInt64("id");
             acc.Tag = reader.GetNullableString("tag");
             acc.Name = reader.GetString("name");
+            acc.PlayerName = reader.GetString("player_name");
+
             acc.VsID = reader.GetNullableString("vs_id");
             acc.NcID = reader.GetNullableString("nc_id");
             acc.TrID = reader.GetNullableString("tr_id");
             acc.NsID = reader.GetNullableString("ns_id");
-            acc.Notes = reader.GetNullableString("notes");
+
+            acc.VsStatus = reader.GetInt32("vs_status");
+            acc.NcStatus = reader.GetInt32("nc_status");
+            acc.TrStatus = reader.GetInt32("tr_status");
+            acc.NsStatus = reader.GetInt32("ns_status");
 
             return acc;
         }

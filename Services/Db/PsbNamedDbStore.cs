@@ -83,19 +83,29 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO psb_named (
-                    tag, name, vs_id, nc_id, tr_id, ns_id, notes
+                    tag, name, player_name,
+                    vs_id, nc_id, tr_id, ns_id,
+                    vs_status, nc_status, tr_status, ns_status
                 ) VALUES (
-                    @Tag, @Name, @VsID, @NcID, @TrID, @NsID, @Notes
+                    @Tag, @Name, @PlayerName,
+                    @VsID, @NcID, @TrID, @NsID,
+                    @VsStatus, @NcStatus, @TrStatus, @NsStatus
                 ) RETURNING id;
             ");
 
             cmd.AddParameter("Tag", acc.Tag);
             cmd.AddParameter("Name", acc.Name);
+            cmd.AddParameter("PlayerName", acc.PlayerName);
+
             cmd.AddParameter("VsID", acc.VsID);
             cmd.AddParameter("NcID", acc.NcID);
             cmd.AddParameter("TrID", acc.TrID);
             cmd.AddParameter("NsID", acc.NsID);
-            cmd.AddParameter("Notes", acc.Notes);
+
+            cmd.AddParameter("VsStatus", acc.VsStatus);
+            cmd.AddParameter("NcStatus", acc.NcStatus);
+            cmd.AddParameter("TrStatus", acc.TrStatus);
+            cmd.AddParameter("NsStatus", acc.NsStatus);
 
             object? objID = await cmd.ExecuteScalarAsync();
             await conn.CloseAsync();
@@ -119,22 +129,32 @@ namespace watchtower.Services.Db {
                 UPDATE psb_named 
                     SET tag = @Tag,
                         name = @Name,
+                        player_name = @PlayerName,
                         vs_id = @VsID,
                         nc_id = @NcID,
                         tr_id = @TrID,
                         ns_id = @NsID,
-                        notes = @Notes
+                        vs_status = @VsStatus,
+                        nc_status = @NcStatus,
+                        tr_status = @TrStatus,
+                        ns_status = @NsStatus
                     WHERE id = @ID;
             ");
 
             cmd.AddParameter("ID", ID);
             cmd.AddParameter("Tag", acc.Tag);
             cmd.AddParameter("Name", acc.Name);
+            cmd.AddParameter("PlayerName", acc.PlayerName);
+
             cmd.AddParameter("VsID", acc.VsID);
             cmd.AddParameter("NcID", acc.NcID);
             cmd.AddParameter("TrID", acc.TrID);
             cmd.AddParameter("NsID", acc.NsID);
-            cmd.AddParameter("Notes", acc.Notes);
+
+            cmd.AddParameter("VsStatus", acc.VsStatus);
+            cmd.AddParameter("NcStatus", acc.NcStatus);
+            cmd.AddParameter("TrStatus", acc.TrStatus);
+            cmd.AddParameter("NsStatus", acc.NsStatus);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

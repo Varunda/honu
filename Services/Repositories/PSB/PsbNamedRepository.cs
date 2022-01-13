@@ -92,11 +92,15 @@ namespace watchtower.Services.Repositories.PSB {
             PsbNamedAccount acc = new PsbNamedAccount() {
                 Tag = tag,
                 Name = name,
+                PlayerName = name,
                 VsID = charSet.VS?.ID,
                 NcID = charSet.NC?.ID,
                 TrID = charSet.TR?.ID,
                 NsID = charSet.NS?.ID,
-                Notes = null
+                VsStatus = charSet.VS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK,
+                NcStatus = charSet.NC == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK,
+                TrStatus = charSet.TR == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK,
+                NsStatus = charSet.NS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK,
             };
 
             long ID = await Insert(acc);
@@ -111,13 +115,16 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="ID">ID of the account to rename</param>
         /// <param name="tag">New tag</param>
         /// <param name="name">New name</param>
-        /// <returns></returns>
-        public async Task<bool> Rename(long ID, string? tag, string name) {
+        /// <returns>
+        ///     The <see cref="PsbNamedAccount"/> after the change is mode,
+        ///     or <c>null</c> if the change failed
+        /// </returns>
+        public async Task<PsbNamedAccount?> Rename(long ID, string? tag, string name) {
             PsbNamedAccount? acc = await GetByID(ID);
 
             if (acc == null) {
                 _Logger.LogWarning($"Cannot rename {nameof(PsbNamedAccount)} to {tag}x{name}, ID {ID} does not exist");
-                return false;
+                return null;
             }
 
             PsbCharacterSet set = await GetCharacterSet(tag, name);
@@ -125,7 +132,7 @@ namespace watchtower.Services.Repositories.PSB {
             bool missing = set.VS == null || set.NC == null || set.TR == null || set.NS == null;
             if (missing == true) {
                 _Logger.LogWarning($"One of the characters was missing. VS: {set.VS?.ID}, NC {set.NC?.ID}, TR {set.TR?.ID}, NS {set.NS?.ID} ({set.NsName})");
-                return false;
+                return null;
             }
 
             acc.Tag = tag;
@@ -134,10 +141,114 @@ namespace watchtower.Services.Repositories.PSB {
             acc.NcID = set.NC!.ID;
             acc.TrID = set.TR!.ID;
             acc.NsID = set.NS!.ID;
+            acc.VsStatus = set.VS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK;
+            acc.NcStatus = set.NC == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK;
+            acc.TrStatus = set.TR == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK;
+            acc.NsStatus = set.NS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK;
 
             await _Db.UpdateByID(ID, acc);
 
-            return true;
+            return acc;
+        }
+
+        /// <summary>
+        ///     Set the <see cref="PsbNamedAccount.PlayerName"/>
+        /// </summary>
+        /// <param name="ID">ID of the <see cref="PsbNamedAccount"/> to set the player name of</param>
+        /// <param name="playerName">New player name</param>
+        /// <returns>
+        ///     The <see cref="PsbNamedAccount"/> with the new <see cref="PsbNamedAccount.PlayerName"/> if successful,
+        ///     else <c>null</c>
+        /// </returns>
+        public async Task<PsbNamedAccount?> SetPlayerName(long ID, string playerName) {
+            PsbNamedAccount? acc = await GetByID(ID);
+
+            if (acc == null) {
+                _Logger.LogWarning($"Cannot set player name {nameof(PsbNamedAccount)} to {playerName}, ID {ID} does not exist");
+                return null;
+            }
+
+            acc.PlayerName = playerName;
+
+            await _Db.UpdateByID(ID, acc);
+
+            return acc;
+        }
+
+        public async Task RecheckByStatus(int? status) {
+            List<PsbNamedAccount> accounts = await GetAll();
+
+            if (status != null) {
+                accounts = accounts.Where(iter => iter.VsStatus == status || iter.NcStatus == status || iter.TrStatus == status || iter.NsStatus == status).ToList();
+            }
+
+            _Logger.LogDebug($"Rechecking {accounts.Count} accounts");
+
+            foreach (PsbNamedAccount acc in accounts) {
+                await RecheckAccount(acc);
+            }
+        }
+
+        /// <summary>
+        ///     Recheck a specific account by ID
+        /// </summary>
+        /// <param name="ID">ID of the account to recheck</param>
+        /// <returns></returns>
+        public async Task<PsbNamedAccount?> RecheckByID(long ID) {
+            PsbNamedAccount? acc = await GetByID(ID);
+            if (acc == null) {
+                _Logger.LogWarning($"Cannot recheck {nameof(PsbNamedAccount)} {ID}: Does not exist");
+                return null;
+            }
+
+            return await RecheckAccount(acc);
+        }
+
+        private async Task<PsbNamedAccount> RecheckAccount(PsbNamedAccount acc) {
+            if (acc.VsID == null) {
+                PsCharacter? c = await _CharacterCollection.GetByName(PsbNameTemplate.VS(acc.Tag, acc.Name));
+                if (c != null) {
+                    acc.VsID = c.ID;
+                    acc.VsStatus = PsbCharacterStatus.OK;
+                }
+            } else {
+                acc.VsStatus = await GetStatus(acc.VsID, new List<string>() { PsbNameTemplate.VS(acc.Tag, acc.Name) });
+            }
+
+            if (acc.NcID == null) {
+                PsCharacter? c = await _CharacterCollection.GetByName(PsbNameTemplate.NC(acc.Tag, acc.Name));
+                if (c != null) {
+                    acc.NcID = c.ID;
+                    acc.NcStatus = PsbCharacterStatus.OK;
+                }
+            } else {
+                acc.NcStatus = await GetStatus(acc.NcID, new List<string>() { PsbNameTemplate.NC(acc.Tag, acc.Name) });
+            }
+
+            if (acc.TrID == null) {
+                PsCharacter? c = await _CharacterCollection.GetByName(PsbNameTemplate.TR(acc.Tag, acc.Name));
+                if (c != null) {
+                    acc.TrID = c.ID;
+                    acc.TrStatus = PsbCharacterStatus.OK;
+                }
+            } else {
+                acc.TrStatus = await GetStatus(acc.TrID, new List<string>() { PsbNameTemplate.TR(acc.Tag, acc.Name) });
+            }
+
+            if (acc.NsID == null) {
+                PsbCharacterSet set = await GetCharacterSet(acc.Tag, acc.Name);
+
+                if (set.NS != null) {
+                    acc.NsID = set.NS.ID;
+                    acc.NsStatus = PsbCharacterStatus.OK;
+                }
+            } else {
+                acc.NsStatus = await GetStatus(acc.TrID, PsbNameTemplate.NS(acc.Tag, acc.Name));
+            }
+
+            await _Db.UpdateByID(acc.ID, acc);
+
+            return acc;
         }
 
         /// <summary>
@@ -147,10 +258,10 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="name">Name of the character</param>
         /// <returns></returns>
         public async Task<PsbCharacterSet> GetCharacterSet(string? tag, string name) {
-            string ncName = PsbNameTemplates.NC(tag, name);
-            string vsName = PsbNameTemplates.VS(tag, name);
-            string trName = PsbNameTemplates.TR(tag, name);
-            List<string> nsNames = PsbNameTemplates.NS(tag, name);
+            string ncName = PsbNameTemplate.NC(tag, name);
+            string vsName = PsbNameTemplate.VS(tag, name);
+            string trName = PsbNameTemplate.TR(tag, name);
+            List<string> nsNames = PsbNameTemplate.NS(tag, name);
 
             List<PsCharacter> characters = await GetCharacters(tag, name);
 
@@ -178,10 +289,10 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="name"></param>
         /// <returns></returns>
         public async Task<List<PsCharacter>> GetCharacters(string? tag, string name) {
-            string ncName = PsbNameTemplates.NC(tag, name);
-            string vsName = PsbNameTemplates.VS(tag, name);
-            string trName = PsbNameTemplates.TR(tag, name);
-            List<string> nsNames = PsbNameTemplates.NS(tag, name);
+            string ncName = PsbNameTemplate.NC(tag, name);
+            string vsName = PsbNameTemplate.VS(tag, name);
+            string trName = PsbNameTemplate.TR(tag, name);
+            List<string> nsNames = PsbNameTemplate.NS(tag, name);
 
             List<string> names = new List<string>() {
                 trName, ncName, vsName
@@ -199,6 +310,34 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             return characters;
+        }
+
+        private async Task<int> GetStatus(string? charID, List<string> names) {
+            PsCharacter? byID = (charID != null) ? await _CharacterRepository.GetByID(charID) : null;
+
+            PsCharacter? byName = null;
+            foreach (string name in names) {
+                byName = await _CharacterCollection.GetByName(name);
+                if (byName != null) {
+                    break;
+                }
+            }
+
+            _Logger.LogTrace($"Getting character status for ID={charID}, Names={string.Join(", ", names)} :: ");
+
+            if (charID != null) {
+                if (byID == null) {
+                    if (byName != null) {
+                        return PsbCharacterStatus.REMADE;
+                    } else {
+                        return PsbCharacterStatus.DELETED;
+                    }
+                } else {
+                    return PsbCharacterStatus.OK;
+                }
+            }
+
+            return PsbCharacterStatus.DOES_NOT_EXIST;
         }
 
     }
