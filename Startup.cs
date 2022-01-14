@@ -209,7 +209,7 @@ namespace watchtower {
             IHostApplicationLifetime lifetime, ILogger<Startup> logger) {
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions {
-                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
             });
 
             if (env.IsDevelopment()) {
@@ -218,7 +218,7 @@ namespace watchtower {
 
             logger.LogInformation($"Environment: {env.EnvironmentName}");
 
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseRouting();
