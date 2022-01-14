@@ -117,7 +117,7 @@ namespace watchtower {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
                 }).AddCookie(options => {
-                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                    //options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                     options.Cookie.SameSite = SameSiteMode.Lax;
                 }).AddGoogle(options => {
                     options.ClientId = googleClientID;
