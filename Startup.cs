@@ -119,7 +119,7 @@ namespace watchtower {
                     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
                 }).AddCookie(options => {
                     //options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                    options.Cookie.SameSite = SameSiteMode.Lax;
+                    //options.Cookie.SameSite = SameSiteMode.Lax;
                 }).AddGoogle(options => {
                     options.ClientId = googleClientID;
                     options.ClientSecret = googleSecret;
@@ -205,9 +205,6 @@ namespace watchtower {
 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-                // Only loopback proxies are allowed by default.
-                // Clear that restriction because forwarders are enabled by explicit 
-                // configuration.
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
             });
