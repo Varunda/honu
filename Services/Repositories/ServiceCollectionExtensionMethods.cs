@@ -47,7 +47,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
             services.AddSingleton<AchievementRepository>();
             services.AddSingleton<ReportRepository>();
-            services.AddSingleton<PsbNamedRepository>();
+            services.AddSingleton<PsbAccountRepository>();
         }
 
     }

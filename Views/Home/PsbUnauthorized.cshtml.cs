@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace watchtower.Views.Home
+namespace watchtower.Views.Psb
 {
-    public class PsbSigninModel : PageModel
+    public class PsbUnauthorizedModel : PageModel
     {
         public void OnGet()
         {

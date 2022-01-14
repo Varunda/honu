@@ -13,11 +13,11 @@ namespace watchtower.Code.Commands {
     public class PsbNamedCommand {
 
         private readonly ILogger<PsbNamedCommand> _Logger;
-        private readonly PsbNamedRepository _NamedRepository;
+        private readonly PsbAccountRepository _NamedRepository;
 
         public PsbNamedCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<PsbNamedCommand>>();
-            _NamedRepository = services.GetRequiredService<PsbNamedRepository>();
+            _NamedRepository = services.GetRequiredService<PsbAccountRepository>();
         }
 
         public async Task Create(string tagg, string name) {
@@ -42,6 +42,17 @@ namespace watchtower.Code.Commands {
             }
 
             _Logger.LogInformation($"{tag}x{name} => \n{JToken.FromObject(acc)}");
+        }
+
+        public async Task GetID(long ID) {
+            PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
+
+            if (acc == null) {
+                _Logger.LogWarning($"No {nameof(PsbNamedAccount)} {ID} exists");
+                return;
+            }
+
+            _Logger.LogInformation($"{JToken.FromObject(acc)}");
         }
 
         public async Task Rename(long ID, string tagg, string name) {
@@ -75,6 +86,12 @@ namespace watchtower.Code.Commands {
                 string ns = PsbCharacterStatus.GetName(acc.NsStatus);
                 _Logger.LogInformation($"{acc.Tag}x{acc.Name} => VS: {vs}, NC: {nc}, TR: {tr}, NS: {ns}");
             }
+        }
+
+        public async Task RecheckStatus(int statuss) {
+            int? status = statuss == 0 ? null : statuss;
+
+            await _NamedRepository.RecheckByStatus(status);
         }
 
     }

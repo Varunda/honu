@@ -10,49 +10,61 @@
             </h1>
         </div>
 
-        <div class="mb-3">
-            <h4>Filters</h4>
+        <div class="mb-3 d-flex">
 
-            <div>
-                <button type="button" class="btn" :class="[ filter.missingCharacter ? 'btn-primary' : 'btn-secondary' ]" @click="filter.missingCharacters = !filter.missingCharacters">
-                    <span v-if="filter.missingCharacter">Y</span>
-                    <span v-else>N</span>
-                </button>
+            <div class="flex-grow-1">
+                <h4>Filters</h4>
+                <div>
+                    <button type="button" class="btn" :class="[ filter.missingCharacter ? 'btn-primary' : 'btn-secondary' ]" @click="filter.missingCharacters = !filter.missingCharacters">
+                        <span v-if="filter.missingCharacter">Y</span>
+                        <span v-else>N</span>
+                    </button>
 
-                <span>
-                    Only show accounts with missing characters
-                </span>
+                    <span>
+                        Only show accounts with missing characters
+                    </span>
+                </div>
+
+                <div>
+                    <button type="button" class="btn" :class="[ filter.mismatchFactions ? 'btn-primary' : 'btn-secondary' ]" @click="filter.mismatchFactions = !filter.mismatchFactions">
+                        <span v-if="filter.mismatchFactions">Y</span>
+                        <span v-else>N</span>
+                    </button>
+
+                    <span>
+                        Only show accounts that have characters on the wrong faction (VS on NC for example) (excludes NS)
+                    </span>
+                </div>
+
+                <div>
+                    <button type="button" class="btn" :class="[ filter.wrongWorlds ? 'btn-primary' : 'btn-secondary' ]" @click="filter.wrongWorlds = !filter.wrongWorlds">
+                        <span v-if="filter.wrongWorlds">Y</span>
+                        <span v-else>N</span>
+                    </button>
+
+                    <span>
+                        Only show accounts not on Jaeger (includes NSO)
+                    </span>
+                </div>
             </div>
 
-            <div>
-                <button type="button" class="btn" :class="[ filter.mismatchFactions ? 'btn-primary' : 'btn-secondary' ]" @click="filter.mismatchFactions = !filter.mismatchFactions">
-                    <span v-if="filter.mismatchFactions">Y</span>
-                    <span v-else>N</span>
-                </button>
-
-                <span>
-                    Only show accounts that have characters on the wrong faction (VS on NC for example) (excludes NS)
-                </span>
+            <div class="flex-grow-1">
+                <h4>Settings</h4>
+                <div>
+                    <select class="form-control" v-model="padding">
+                        <option>compact</option>
+                        <option>normal</option>
+                        <option>expanded</option>
+                    </select>
+                </div>
             </div>
-
-            <div>
-                <button type="button" class="btn" :class="[ filter.wrongWorlds ? 'btn-primary' : 'btn-secondary' ]" @click="filter.wrongWorlds = !filter.wrongWorlds">
-                    <span v-if="filter.wrongWorlds">Y</span>
-                    <span v-else>N</span>
-                </button>
-
-                <span>
-                    Only show accounts not on Jaeger (includes NSO)
-                </span>
-            </div>
-
         </div>
 
         <a-table
             :entries="filtered"
             :show-filters="true"
             default-sort-field="tag" default-sort-order="asc"
-            display-type="table">
+            display-type="table" :row-padding="padding">
 
             <a-col>
                 <a-header></a-header>
@@ -64,12 +76,26 @@
                 </a-body>
             </a-col>
 
+            <a-col>
+                <a-header>
+                    <b>Player name</b>
+                </a-header>
+
+                <a-filter method="input" type="string" field="playerName"
+                    :conditions="[ 'contains', 'equals' ]">
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.playerName}}
+                </a-body>
+            </a-col>
+
             <a-col sort-field="tag">
                 <a-header>
                     <b>Tag</b>
                 </a-header>
 
-                <a-filter method="input" type="string" field="tag"
+                <a-filter method="input" type="string" field="tag" max-width="10ch"
                     :conditions="[ 'contains', 'equals' ]">
                 </a-filter>
 
@@ -94,7 +120,7 @@
 
             <a-col>
                 <a-header>
-                    Status
+                    <b>Status</b>
                 </a-header>
 
                 <a-filter method="dropdown" type="string" field="status"
@@ -128,208 +154,102 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.lastUsed != null" :title="entry.lastUsed | moment">
-                        {{entry.lastUsed | timeAgo}}
-                    </span>
-                    <span v-else class="text-danger">
-                        --
-                    </span>
+                    <div class="border-right my-n2 py-2">
+                        <span v-if="entry.lastUsed != null" :title="entry.lastUsed | moment">
+                            {{entry.lastUsed | timeAgo}}
+                        </span>
+                        <span v-else class="text-danger">
+                            --
+                        </span>
+                    </div>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="vsName">
                 <a-header>
-                    VS
+                    <b>VS</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.vsID == null" class="text-danger">
-                        &lt;missing VS character&gt;
-                    </span>
-
-                    <span v-else-if="entry.vsCharacter == null">
-                        <a :href="'/c/' + entry.vsID">
-                            &lt;missing {{entry.vsID}}&gt;
-                        </a>
-                    </span>
-
-                    <span v-if="entry.vsCharacter != null">
-                        <a v-if="entry.vsOutfitID != null" :href="'/o/' + entry.vsOutfitID" :title="entry.vsOutfitName">
-                            [{{entry.vsOutfitTag}}]
-                        </a>
-
-                        <a :href="'/c/' + entry.vsID">
-                            {{entry.vsName}}
-                        </a>
-                    </span>
+                    <psb-named-character-cell :id="entry.vsID"
+                        :character="entry.vsCharacter" faction-id="1">
+                    </psb-named-character-cell>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="vsLastLogin">
                 <a-header>
-                    VS last used
+                    <b>VS last used</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.vsID == null"></span>
-
-                    <span v-else-if="entry.vsLastLogin == null">
-                        &lt;never signed in&gt;
-                    </span>
-
-                    <span v-else-if="entry.vsLastLogin != null" :title="entry.vsLastLogin | moment">
-                        {{entry.vsLastLogin | timeAgo}}
-                    </span>
-                    <span v-else class="text-danger">
-                        --
-                    </span>
+                    <psb-named-character-login :character="entry.vsCharacter"></psb-named-character-login>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="ncName">
                 <a-header>
-                    NC
+                    <b>NC</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.ncID == null" class="text-danger">
-                        &lt;missing NC character&gt;
-                    </span>
-
-                    <span v-else-if="entry.ncCharacter == null">
-                        <a :href="'/c/' + entry.ncID">
-                            &lt;missing ID {{entry.ncID}}&gt;
-                        </a>
-                    </span>
-
-                    <span v-if="entry.ncCharacter != null">
-                        <a v-if="entry.ncOutfitID != null" :href="'/o/' + entry.ncOutfitID" :title="entry.ncOutfitName">
-                            [{{entry.ncOutfitTag}}]
-                        </a>
-
-                        <a :href="'/c/' + entry.ncID">
-                            {{entry.ncName}}
-                        </a>
-                    </span>
+                    <psb-named-character-cell :id="entry.ncID"
+                        :character="entry.ncCharacter" faction-id="2">
+                    </psb-named-character-cell>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="ncLastLogin">
                 <a-header>
-                    NC last used
+                    <b>NC last used</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.ncID == null"></span>
-
-                    <span v-else-if="entry.ncLastLogin == null">
-                        &lt;never signed in&gt;
-                    </span>
-
-                    <span v-else-if="entry.ncLastLogin != null" :title="entry.ncLastLogin | moment">
-                        {{entry.ncLastLogin | timeAgo}}
-                    </span>
-                    <span v-else class="text-danger">
-                        --
-                    </span>
+                    <psb-named-character-login :character="entry.ncCharacter"></psb-named-character-login>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="trName">
                 <a-header>
-                    TR
+                    <b>TR</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.trID == null" class="text-danger">
-                        &lt;missing TR character&gt;
-                    </span>
-
-                    <span v-else-if="entry.trCharacter == null">
-                        <a :href="'/c/' + entry.trID">
-                            &lt;missing ID {{entry.trID}}&gt;
-                        </a>
-                    </span>
-
-                    <span v-if="entry.trCharacter != null">
-                        <a v-if="entry.trOutfitID != null" :href="'/o/' + entry.trOutfitID" :title="entry.trOutfitName">
-                            [{{entry.trOutfitTag}}]
-                        </a>
-
-                        <a :href="'/c/' + entry.trID">
-                            {{entry.trName}}
-                        </a>
-                    </span>
+                    <psb-named-character-cell :id="entry.trID"
+                        :character="entry.trCharacter" faction-id="3">
+                    </psb-named-character-cell>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="trLastLogin">
                 <a-header>
-                    TR last used
+                    <b>TR last used</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.trID == null"></span>
-
-                    <span v-else-if="entry.trLastLogin == null">
-                        &lt;never signed in&gt;
-                    </span>
-
-                    <span v-else-if="entry.trLastLogin != null" :title="entry.trLastLogin | moment">
-                        {{entry.trLastLogin | timeAgo}}
-                    </span>
-                    <span v-else class="text-danger">
-                        --
-                    </span>
+                    <psb-named-character-login :character="entry.trCharacter"></psb-named-character-login>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="nsName">
                 <a-header>
-                    NS
+                    <b>NS</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.nsID == null" class="text-danger">
-                        &lt;missing NS character&gt;
-                    </span>
-
-                    <span v-else-if="entry.nsCharacter == null">
-                        <a :href="'/c/' + entry.nsID">
-                            &lt;missing {{entry.nsID}}&gt;
-                        </a>
-                    </span>
-
-                    <span v-if="entry.nsCharacter != null">
-                        <a v-if="entry.nsOutfitID != null" :href="'/o/' + entry.nsOutfitID" :title="entry.nsOutfitName">
-                            [{{entry.nsOutfitTag}}]
-                        </a>
-
-                        <a :href="'/c/' + entry.nsID">
-                            {{entry.nsName}}
-                        </a>
-                    </span>
+                    <psb-named-character-cell :id="entry.nsID"
+                        :character="entry.nsCharacter" faction-id="4">
+                    </psb-named-character-cell>
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="nsLastLogin">
                 <a-header>
-                    NS last used
+                    <b>NS last used</b>
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.nsID == null"></span>
-
-                    <span v-else-if="entry.nsLastLogin == null">
-                        &lt;never signed in&gt;
-                    </span>
-
-                    <span v-else-if="entry.nsLastLogin != null" :title="entry.nsLastLogin | moment">
-                        {{entry.nsLastLogin | timeAgo}}
-                    </span>
-                    <span v-else class="text-danger">
-                        --
-                    </span>
+                    <psb-named-character-login :character="entry.nsCharacter"></psb-named-character-login>
                 </a-body>
             </a-col>
         </a-table>
@@ -342,7 +262,7 @@
 </template>
 
 <script lang="ts">
-    import Vue from "vue";
+    import Vue, { PropType } from "vue";
     import { Loadable, Loading } from "Loading";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
@@ -352,8 +272,68 @@
     import "MomentFilter";
     import "filters/CharacterName";
     import "filters/TimeAgoFilter";
+    import "filters/FactionNameFilter";
 
     import { FlatPsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
+    import { PsCharacter } from "api/CharacterApi";
+
+    const PsbNamedCharacterCell = Vue.extend({
+        props: {
+            id: { type: String, required: false },
+            character: { type: Object as PropType<PsCharacter | null>, required: false },
+            FactionId: { type: String, required: true }
+        },
+
+        template: `
+            <span v-if="id == null" class="text-danger">
+                <info-hover icon="exclamation-circle" class="text-danger"
+                    text="This character is missing">
+                </info-hover>
+            </span>
+
+            <span v-else>
+                <a v-if="character == null" :href="'/c/' + id">
+                    &lt;missing {{id}}&gt;
+                </a>
+                    
+                <span v-else>
+                    <info-hover v-if="character.worldID != 19" icon="exclamation" 
+                        class="text-warning" text="This character is on the wrong server">
+                    </info-hover>
+
+                    <a :href="'/c/' + id">
+                        View
+                    </a>
+                </span>
+            </span>
+        `,
+
+        components: {
+            InfoHover
+        }
+    });
+
+    const PsbNamedCharacterLogin = Vue.extend({
+        props: {
+            character: { type: Object as PropType<PsCharacter | null>, required: false }
+        },
+
+        template: `
+            <span v-if="character == null">
+
+            </span>
+
+            <span v-else>
+                <span v-if="character.dateLastLogin == null">
+                    &lt;never signed in&gt;
+                </span>
+
+                <span v-else :title="character.dateLastLogin | moment">
+                    {{character.dateLastLogin | timeAgo}}
+                </span>
+            </span>
+        `
+    });
 
     export const PsbNamed = Vue.extend({
         props: {
@@ -374,7 +354,9 @@
                 view: {
                     opened: false as boolean,
                     account: null as FlatPsbNamedAccount | null
-                }
+                },
+
+                padding: "normal" as "normal" | "expanded" | "compact"
             }
         },
 
@@ -507,7 +489,8 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
-            PsbNamedAccountModal
+            PsbNamedAccountModal,
+            PsbNamedCharacterCell, PsbNamedCharacterLogin
         }
 
     });

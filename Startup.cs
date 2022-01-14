@@ -38,6 +38,9 @@ using watchtower.Models.Queues;
 using Microsoft.Extensions.Logging;
 using watchtower.Models.Report;
 using watchtower.Services.Hosted.PSB;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 
 //using honu_census;
 
@@ -98,22 +101,35 @@ namespace watchtower {
                 Console.WriteLine("");
             });
 
-            /*
-            services.AddAuthentication().AddGoogle(options => {
-                options.ClientId = Configuration["Authentication:Google:ClientId"];
-                if (options.ClientId == "") {
-                    throw new SystemException($"aaaaaaaaaaaa");
-                }
+            string gIDKey = "Authentication:Google:ClientId";
+            string gSecretKey = "Authentication:Google:ClientSecret";
 
-                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
-                if (options.ClientSecret == "") {
-                    throw new SystemException($"aaaaaaaaaaaa");
-                }
-            });
-            */
+            string? googleClientID = Configuration[gIDKey];
+            string? googleSecret = Configuration[gSecretKey];
+
+            if (string.IsNullOrEmpty(googleClientID) == false && string.IsNullOrEmpty(googleSecret) == false) {
+                services.AddAuthentication(options => {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+                }).AddCookie(options => {
+
+                }).AddGoogle(options => {
+                    options.ClientId = googleClientID;
+                    options.ClientSecret = googleSecret;
+                });
+
+                Console.WriteLine($"Added Google auth");
+            } else {
+                Console.WriteLine($"===============================================================");
+                Console.WriteLine($"!!! GOOGLE AUTH NOT SETUP");
+                Console.WriteLine($"!!! missing either '{gIDKey}' ({string.IsNullOrEmpty(googleClientID)}) or '{gSecretKey}' ({string.IsNullOrEmpty(googleSecret)})");
+                Console.WriteLine($"!!! GOOGLE AUTH NOT SETUP");
+                Console.WriteLine($"===============================================================");
+            }
 
             services.AddRazorPages();
             services.AddMemoryCache();
+            services.AddHttpContextAccessor();
 
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
@@ -167,7 +183,7 @@ namespace watchtower {
                 services.AddHostedService<DiscordService>();
             }
 
-            services.AddHostedService<PsbNamedImportStartupService>();
+            //services.AddHostedService<PsbNamedImportStartupService>();
             //services.AddHostedService<PsbNamedCheckerService>();
 
             if (OFFLINE_MODE == true) {
@@ -204,8 +220,15 @@ namespace watchtower {
             });
 
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {
+                endpoints.MapControllerRoute(
+                    name: "psb",
+                    pattern: "psb/{action}",
+                    defaults: new { controller = "Psb" }
+                );
+
                 endpoints.MapControllerRoute(
                     name: "selectworld",
                     pattern: "/{action}",

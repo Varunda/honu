@@ -50,6 +50,9 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetInt64(field);
         }
 
+        public static ulong GetUInt64(this NpgsqlDataReader reader, string field) {
+            return unchecked((ulong)reader.GetInt64(field));
+        }
 
         /// <summary>
         /// Get a <see cref="uint"/> from a column

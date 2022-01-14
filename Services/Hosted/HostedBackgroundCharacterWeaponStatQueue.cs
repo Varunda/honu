@@ -257,7 +257,7 @@ namespace watchtower.Services.Hosted {
 
                         long dbTime = timer.ElapsedMilliseconds;
 
-                        _Logger.LogTrace($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
+                        //_Logger.LogTrace($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

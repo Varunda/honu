@@ -30,6 +30,7 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<PsItem>, CensusItemReader>();
             services.AddSingleton<ICensusReader<CharacterAchievement>, CensusCharacterAchievementReader>();
             services.AddSingleton<ICensusReader<PsOutfit>, CensusOutfitReader>();
+            services.AddSingleton<ICensusReader<PsCharacter>, CensusCharacterReader>();
         }
 
     }

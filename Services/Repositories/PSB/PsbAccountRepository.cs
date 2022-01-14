@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.PSB;
 using watchtower.Services.Census;
@@ -11,24 +13,28 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services.Repositories.PSB {
 
-    public class PsbNamedRepository {
+    public class PsbAccountRepository {
 
-        private readonly ILogger<PsbNamedRepository> _Logger;
+        private readonly ILogger<PsbAccountRepository> _Logger;
         private readonly PsbNamedDbStore _Db;
         private readonly ICharacterRepository _CharacterRepository;
         private readonly ICharacterCollection _CharacterCollection;
+        private readonly PsbAccountNoteDbStore _NoteDb;
 
         private readonly IMemoryCache _Cache;
 
-        public PsbNamedRepository(ILogger<PsbNamedRepository> logger,
+        public PsbAccountRepository(ILogger<PsbAccountRepository> logger,
             PsbNamedDbStore db, ICharacterRepository charRepo,
-            IMemoryCache cache, ICharacterCollection charColl) {
+            IMemoryCache cache, ICharacterCollection charColl,
+            PsbAccountNoteDbStore noteDb) {
 
             _Logger = logger;
+            _Cache = cache;
+
             _Db = db;
             _CharacterRepository = charRepo;
             _CharacterCollection = charColl;
-            _Cache = cache;
+            _NoteDb = noteDb;
         }
 
         /// <summary>
@@ -135,6 +141,11 @@ namespace watchtower.Services.Repositories.PSB {
                 return null;
             }
 
+            PsbAccountNote note = new PsbAccountNote();
+            note.AccountID = ID;
+            note.HonuID = HonuAccount.SystemID;
+            note.Message = $"Renamed {acc.Tag}x{acc.Name} to {tag}x{name}";
+
             acc.Tag = tag;
             acc.Name = name;
             acc.VsID = set.VS!.ID;
@@ -147,6 +158,7 @@ namespace watchtower.Services.Repositories.PSB {
             acc.NsStatus = set.NS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK;
 
             await _Db.UpdateByID(ID, acc);
+            await _NoteDb.Insert(acc.ID, note, CancellationToken.None);
 
             return acc;
         }
@@ -243,7 +255,7 @@ namespace watchtower.Services.Repositories.PSB {
                     acc.NsStatus = PsbCharacterStatus.OK;
                 }
             } else {
-                acc.NsStatus = await GetStatus(acc.TrID, PsbNameTemplate.NS(acc.Tag, acc.Name));
+                acc.NsStatus = await GetStatus(acc.NsID, PsbNameTemplate.NS(acc.Tag, acc.Name));
             }
 
             await _Db.UpdateByID(acc.ID, acc);
@@ -313,29 +325,38 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         private async Task<int> GetStatus(string? charID, List<string> names) {
-            PsCharacter? byID = (charID != null) ? await _CharacterRepository.GetByID(charID) : null;
+            PsCharacter? byID = (charID != null) ? await _CharacterCollection.GetByID(charID) : null;
 
+            string? usedName = null;
             PsCharacter? byName = null;
             foreach (string name in names) {
                 byName = await _CharacterCollection.GetByName(name);
                 if (byName != null) {
+                    usedName = name;
                     break;
                 }
             }
 
-            _Logger.LogTrace($"Getting character status for ID={charID}, Names={string.Join(", ", names)} :: ");
+            _Logger.LogTrace($"Getting character status for ID={charID}, Names={string.Join(", ", names)} :: byID={byID?.Name}, byName={byName?.ID} ({usedName})");
 
             if (charID != null) {
+                _Logger.LogTrace($"charID {charID} is not null, checking if the character exists");
                 if (byID == null) {
+                    _Logger.LogTrace($"Character {charID} does not exist, checking if the name exists");
                     if (byName != null) {
+                        _Logger.LogTrace($"Character {charID} is null, but a character with the name of {string.Join(", ", names)} does exist, REMADE");
                         return PsbCharacterStatus.REMADE;
                     } else {
+                        _Logger.LogTrace($"Character {charID} is null, and no character with name of {string.Join(", ", names)} exists, DELETED");
                         return PsbCharacterStatus.DELETED;
                     }
                 } else {
+                    _Logger.LogTrace($"Character {charID} exists, all is good");
                     return PsbCharacterStatus.OK;
                 }
             }
+
+            _Logger.LogTrace($"charID is null, character does not exist");
 
             return PsbCharacterStatus.DOES_NOT_EXIST;
         }

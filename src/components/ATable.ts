@@ -1129,11 +1129,11 @@ export const ATable = Vue.extend({
                         const av: string | null = a[this.sorting.field];
                         const bv: string | null = b[this.sorting.field];
 
-                        if (!av && bv) { // 1 = B > A
-                            return 1;
-                        } else if (av && !bv) {
+                        if (av == null && bv != null) { // 1 = B > A
                             return -1;
-                        } else if (!av && !bv) {
+                        } else if (av != null && bv == null) {
+                            return 1;
+                        } else if (av == null && bv == null) {
                             return 0;
                         } else {
                             return av!.localeCompare(bv!);
@@ -1147,9 +1147,9 @@ export const ATable = Vue.extend({
                         // Because !0 == true in JS, explicitly check for 0 values,
                         //      which are handled differently from null or undefined values
                         if (!av && av != 0 && (bv || bv == 0)) { // 1 = B > A
-                            return 1;
-                        } else if ((av || av == 0) && !bv && bv != 0) {
                             return -1;
+                        } else if ((av || av == 0) && !bv && bv != 0) {
+                            return 1;
                         } else if (!av && av != 0 && !bv && bv != 0) {
                             return 0;
                         } else {
@@ -1161,11 +1161,11 @@ export const ATable = Vue.extend({
                         const av: Date | null = a[this.sorting.field];
                         const bv: Date | null = b[this.sorting.field];
 
-                        if (!av && bv) { // 1 = B > A
-                            return 1;
-                        } else if (av && !bv) {
+                        if (av == null && bv != null) { // 1 = B > A
                             return -1;
-                        } else if (!av && !bv) {
+                        } else if (av != null && bv == null) {
+                            return 1;
+                        } else if (av == null && bv == null) {
                             return 0;
                         } else {
                             return av!.getTime() - bv!.getTime();

@@ -20,15 +20,17 @@ namespace watchtower.Services.Census.Implementations {
         private readonly ILogger<CharacterCollection> _Logger;
 
         private readonly ICensusQueryFactory _Census;
+        private readonly ICensusReader<PsCharacter> _Reader;
         //private readonly HonuCensus _HCensus;
 
         private const int BATCH_SIZE = 50;
 
         public CharacterCollection(ILogger<CharacterCollection> logger,
-                ICensusQueryFactory factory) { //, HonuCensus hc) {
+                ICensusQueryFactory factory, ICensusReader<PsCharacter> reader) { //, HonuCensus hc) {
 
             _Logger = logger;
             _Census = factory;
+            _Reader = reader;
             //_HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
         }
 
@@ -78,14 +80,8 @@ namespace watchtower.Services.Census.Implementations {
 
                 // If there is an exception, ignore census connection ones
                 try {
-                    IEnumerable<JToken> result = await query.GetListAsync();
-
-                    foreach (JToken token in result) {
-                        PsCharacter? c = _ParseCharacter(token);
-                        if (c != null) {
-                            chars.Add(c);
-                        }
-                    }
+                    List<PsCharacter> sliceCharacters = await _Reader.ReadList(query);
+                    chars.AddRange(sliceCharacters);
                 } catch (CensusConnectionException) {
                     _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
                     continue;
@@ -109,15 +105,7 @@ namespace watchtower.Services.Census.Implementations {
             List<PsCharacter> chars;
 
             try {
-                IEnumerable<JToken> result = await query.GetListAsync();
-                chars = new List<PsCharacter>(result.Count());
-
-                foreach (JToken token in result) {
-                    PsCharacter? c = _ParseCharacter(token);
-                    if (c != null) {
-                        chars.Add(c);
-                    }
-                }
+                chars = await _Reader.ReadList(query);
             } catch (Exception) when (stop.IsCancellationRequested == false) {
                 throw;
             } catch (Exception) when (stop.IsCancellationRequested == true) {
@@ -135,11 +123,7 @@ namespace watchtower.Services.Census.Implementations {
             query.AddResolve("outfit", "world");
 
             try {
-                JToken result = await query.GetAsync();
-
-                PsCharacter? player = _ParseCharacter(result);
-
-                return player;
+                return await _Reader.ReadSingle(query);
             } catch (CensusConnectionException ex) {
                 if (retry == true) {
                     _Logger.LogWarning("Retrying {Char} from API", ID);
@@ -158,11 +142,7 @@ namespace watchtower.Services.Census.Implementations {
             query.AddResolve("outfit", "world");
 
             try {
-                JToken result = await query.GetAsync();
-
-                PsCharacter? player = _ParseCharacter(result);
-
-                return player;
+                return await _Reader.ReadSingle(query);
             } catch (CensusConnectionException ex) {
                 if (retry == true) {
                     _Logger.LogWarning("Retrying {Char} from API", name);
@@ -172,40 +152,6 @@ namespace watchtower.Services.Census.Implementations {
                     throw;
                 }
             }
-        }
-
-        private PsCharacter? _ParseCharacter(JToken result) {
-            if (result == null) {
-                return null;
-            }
-
-            PsCharacter player = new PsCharacter {
-                ID = result.GetString("character_id", "0"),
-                FactionID = result.GetInt16("faction_id", -1),
-                Prestige = result.GetInt32("prestige_level", 0),
-                WorldID = result.GetWorldID()
-            };
-
-            JToken? nameToken = result.SelectToken("name");
-            if (nameToken == null) {
-                _Logger.LogWarning($"Missing name field from {result}");
-            } else {
-                player.Name = nameToken.Value<string?>("first") ?? "BAD NAME";
-            }
-
-            JToken? times = result.SelectToken("times");
-            if (times != null) {
-                player.DateCreated = times.CensusTimestamp("creation");
-                player.DateLastLogin = times.CensusTimestamp("last_login");
-                player.DateLastSave = times.CensusTimestamp("last_save");
-            }
-
-            player.OutfitID = result.SelectToken("outfit")?.Value<string?>("outfit_id");
-            player.OutfitName = result.SelectToken("outfit")?.Value<string?>("name");
-            player.OutfitTag = result.SelectToken("outfit")?.Value<string?>("alias");
-            player.BattleRank = result.SelectToken("battle_rank")?.GetInt16("value", 0) ?? 0;
-
-            return player;
         }
 
     }

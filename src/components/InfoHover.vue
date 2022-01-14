@@ -3,9 +3,13 @@
             class="d-inline-block" data-toggle="popover" data-trigger="hover"
             :data-content="text"
             :data-html="AllowHtml"
-            style="filter: invert(1);">
+            :style="{ 'filter': !icon ? 'invert(1)' : ''}">
 
-        <img src="/img/question-circle.svg" />
+        <span v-if="icon != null" :class="'fas fa-' + icon">
+
+        </span>
+
+        <img v-else src="/img/question-circle.svg" />
     </span>
 </template>
 
@@ -15,7 +19,8 @@
     export const InfoHover = Vue.extend({
         props: {
             text: { type: String, required: true },
-            AllowHtml: { type: Boolean, required: false, default: false }
+            AllowHtml: { type: Boolean, required: false, default: false },
+            icon: { type: String, required: false }
         },
 
         data: function () {

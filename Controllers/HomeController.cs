@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using watchtower.Models.Census;
 using watchtower.Services;
@@ -87,7 +88,7 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public IActionResult PsbSignin() {
+        public IActionResult PsbUnauthorized() {
             return View();
         }
 

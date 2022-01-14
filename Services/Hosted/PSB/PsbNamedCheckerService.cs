@@ -14,14 +14,14 @@ namespace watchtower.Services.Hosted.PSB {
 
         private readonly ILogger<PsbNamedCheckerService> _Logger;
         private readonly PsbNamedDbStore _NamedDb;
-        private readonly PsbNamedRepository _NamedRepository;
+        private readonly PsbAccountRepository _NamedRepository;
 
         private const string SERVICE_NAME = "psb_named_checker";
         private const int STARTUP_DELAY = 1000 * 60 * 5; // 5 minutes
         private const int INTERVAL_DELAY = 1000 * 60 * 60; // 60 mins / 1 hour
 
         public PsbNamedCheckerService(ILogger<PsbNamedCheckerService> logger,
-            PsbNamedDbStore namedDb, PsbNamedRepository namedRepo) {
+            PsbNamedDbStore namedDb, PsbAccountRepository namedRepo) {
 
             _Logger = logger;
             _NamedDb = namedDb;

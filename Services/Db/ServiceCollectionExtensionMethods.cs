@@ -56,6 +56,9 @@ namespace watchtower.Services.Db {
             services.AddSingleton<AchievementDbStore>();
 
             services.AddSingleton<PsbNamedDbStore>();
+            services.AddSingleton<PsbAccountNoteDbStore>();
+            services.AddSingleton<HonuAccountDbStore>();
+            services.AddSingleton<HonuAccountAccessLogDbStore>();
         }
 
     }

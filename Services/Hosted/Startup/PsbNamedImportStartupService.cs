@@ -14,10 +14,10 @@ namespace watchtower.Services.Hosted.Startup {
     public class PsbNamedImportStartupService : BackgroundService {
 
         private readonly ILogger<PsbNamedImportStartupService> _Logger;
-        private readonly PsbNamedRepository _NamedRepository;
+        private readonly PsbAccountRepository _NamedRepository;
 
         public PsbNamedImportStartupService(ILogger<PsbNamedImportStartupService> logger,
-            PsbNamedRepository namedRepo) {
+            PsbAccountRepository namedRepo) {
 
             _Logger = logger;
             _NamedRepository = namedRepo;

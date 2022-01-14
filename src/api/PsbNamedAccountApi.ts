@@ -7,11 +7,21 @@ export class PsbNamedAccount {
     public id: number = 0;
     public tag: string | null = null;
     public name: string = "";
+    public playerName: string = "";
+
+    public deletedAt: Date | null = null;
+    public deletedBy: number | null = null;
+    public timestamp: Date = new Date();
+
     public vsID: string | null = null;
     public ncID: string | null = null;
     public trID: string | null = null;
     public nsID: string | null = null;
-    public notes: string | null = null;
+
+    public vsStatus: number = 0;
+    public ncStatus: number = 0;
+    public trStatus: number = 0;
+    public nsStatus: number = 0;
 }
 
 export class ExpandedPsbNamedAccount {
@@ -26,6 +36,7 @@ export class FlatPsbNamedAccount {
     public id: number = 0;
     public tag: string | null = null;
     public name: string = "";
+    public playerName: string = "";
     public lastUsed: Date | null = null;
     public missingCharacter: boolean = false;
     public status: string = "";
@@ -81,11 +92,21 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             id: entry.id,
             tag: entry.tag,
             name: entry.name,
+            playerName: entry.playerName,
+
+            deletedAt: (entry.deletedAt == null) ? null : new Date(entry.deletedAt),
+            deletedBy: entry.deletedBy,
+            timestamp: new Date(entry.timestamp),
+
             vsID: entry.vsID,
             ncID: entry.ncID,
             trID: entry.trID,
             nsID: entry.nsID,
-            notes: entry.notes,
+
+            vsStatus: entry.vsStatus,
+            ncStatus: entry.ncStatus,
+            trStatus: entry.trStatus,
+            nsStatus: entry.nsStatus,
         };
     }
 
@@ -107,6 +128,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             id: expanded.account.id,
             tag: expanded.account.tag,
             name: expanded.account.name,
+            playerName: expanded.account.playerName,
             lastUsed: null, 
             missingCharacter: expanded.account.vsID == null || expanded.vsCharacter == null
                 || expanded.account.ncID == null || expanded.ncCharacter == null

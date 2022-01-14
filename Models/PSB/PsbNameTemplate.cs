@@ -42,8 +42,6 @@ namespace watchtower.Models.PSB {
             $"{tag}x{name}DONOTUSE",
             $"DONOTUSEx{name}",
             $"DONTUSEx{name}",
-            $"{name}xDONOTUSE",
-            $"{name}xDONTUSE"
         };
 
     }

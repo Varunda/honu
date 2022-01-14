@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Models;
 using watchtower.Models.Api.PSB;
 using watchtower.Models.Census;
@@ -14,14 +16,16 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-named/")]
+    [Authorize]
+    [PsbAdmin]
     public class PsbNamedApiController : ApiControllerBase {
 
         private readonly ILogger<PsbNamedApiController> _Logger;
-        private readonly PsbNamedRepository _NamedRepository;
+        private readonly PsbAccountRepository _NamedRepository;
         private readonly ICharacterRepository _CharacterRepository;
 
         public PsbNamedApiController(ILogger<PsbNamedApiController> logger,
-            PsbNamedRepository namedRepo, ICharacterRepository charRepo) {
+            PsbAccountRepository namedRepo, ICharacterRepository charRepo) {
 
             _Logger = logger;
             _NamedRepository = namedRepo;
