@@ -61,6 +61,10 @@ namespace watchtower {
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services) {
+
+            string stuff = ((IConfigurationRoot)Configuration).GetDebugView();
+            Console.WriteLine(stuff);
+
             services.AddRouting();
 
             if (OFFLINE_MODE == false) {
