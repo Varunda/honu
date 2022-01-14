@@ -218,7 +218,7 @@ namespace watchtower {
 
             logger.LogInformation($"Environment: {env.EnvironmentName}");
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseRouting();
