@@ -41,6 +41,7 @@ using watchtower.Services.Hosted.PSB;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Http;
 
 //using honu_census;
 
@@ -116,7 +117,8 @@ namespace watchtower {
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
                 }).AddCookie(options => {
-
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                    options.Cookie.SameSite = SameSiteMode.Lax;
                 }).AddGoogle(options => {
                     options.ClientId = googleClientID;
                     options.ClientSecret = googleSecret;
