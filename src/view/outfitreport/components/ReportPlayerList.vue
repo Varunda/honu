@@ -5,55 +5,165 @@
         </h2>
 
         <div id="report-player-list" class="collapse show">
-            <table class="table table-sm table-striped">
-                <thead>
-                    <tr class="table-secondary">
-                        <td>Character</td>
-                        <td>Most played class</td>
-                        <td>Playtime</td>
-                        <td>Infil</td>
-                        <td>Light assault</td>
-                        <td>Medic</td>
-                        <td>Engineer</td>
-                        <td>Heavy</td>
-                        <td>Max</td>
-                        <td>Sessions</td>
-                    </tr>
-                </thead>
 
-                <tbody>
-                    <tr v-for="meta in metadata">
-                        <td>
-                            <a :href="'/c/' + meta.ID">
-                                [{{meta.outfitTag}}]
-                                {{meta.name}}
-                            </a>
-                        </td>
-                        <td>{{meta.classes.mostPlayed.name}}</td>
-                        <td>{{meta.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.infil.timeAs < 60 }">{{meta.classes.infil.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.lightAssault.timeAs < 60 }">{{meta.classes.lightAssault.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.medic.timeAs < 60 }">{{meta.classes.medic.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.engineer.timeAs < 60 }">{{meta.classes.engineer.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.heavy.timeAs < 60 }">{{meta.classes.heavy.timeAs | mduration}}</td>
-                        <td :class="{ 'text-muted': meta.classes.max.timeAs < 60 }">{{meta.classes.max.timeAs | mduration}}</td>
-                        <td>
-                            <a v-for="session in meta.sessions" :key="session.id" :href="'/s/' + session.id">
-                                {{session.id}}
-                            </a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+
+            <a-table 
+                :entries="metadata"
+                default-sort-field="name" default-sort-order="asc"
+                :paginate="false" :striped="true"
+                display-type="table" row-padding="compact">
+
+                <a-col sort-field="name">
+                    <a-header>
+                        <b>Player</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <a :href="'/c/' + entry.id">
+                            <span v-if="entry.outfitTag != null">
+                                [{{entry.outfitTag}}]
+                            </span>
+                            {{entry.name}}
+                        </a>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="mostPlayedClass">
+                    <a-header>
+                        <b>Most played class</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.mostPlayedClass}}
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="playtime">
+                    <a-header>
+                        <b>Playtime</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.playtime | mduration}}
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="infilPlaytime">
+                    <a-header>
+                        <b>Infil</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span :class="{ 'text-muted': entry.infilPlaytime < 60 }">
+                            {{entry.infilPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="lightAssaultPlaytime">
+                    <a-header>
+                        <b>Light Assault</b>
+                    </a-header>
+
+                    <a-body v-slot="entry" class="text-danger">
+                        <span :class="{ 'text-muted': entry.lightAssaultPlaytime < 60 }">
+                            {{entry.lightAssaultPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="medicPlaytime">
+                    <a-header>
+                        <b>Medic</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span :class="{ 'text-muted': entry.medicPlaytime < 60 }">
+                            {{entry.medicPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="engineerPlaytime">
+                    <a-header>
+                        <b>Engineer</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span :class="{ 'text-muted': entry.engineerPlaytime < 60 }">
+                            {{entry.engineerPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="heavyPlaytime">
+                    <a-header>
+                        <b>Heavy</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span :class="{ 'text-muted': entry.heavyPlaytime < 60 }">
+                            {{entry.heavyPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="maxPlaytime">
+                    <a-header>
+                        <b>MAX</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span :class="{ 'text-muted': entry.maxPlaytime < 60 }">
+                            {{entry.maxPlaytime | mduration}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col>
+                    <a-header>
+                        <b>Sessions</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <a v-for="session in entry.sessions" :key="session.id" :href="'/s/' + session.id">
+                            {{session.id}}
+                        </a>
+                    </a-body>
+                </a-col>
+
+            </a-table>
         </div>
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import { Loading, Loadable } from "Loading";
     import Report, { PlayerMetadata } from "../Report";
 
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+
     import "MomentFilter";
+
+    import { Session } from "/api/SessionApi";
+
+    class FlatPlayerMetadata {
+        public id: string = "";
+        public name: string = "";
+        public outfitTag: string | null = null;
+        public mostPlayedClass: string = "";
+        public playtime: number = 0;
+
+        public infilPlaytime: number = 0;
+        public lightAssaultPlaytime: number = 0;
+        public medicPlaytime: number = 0;
+        public engineerPlaytime: number = 0;
+        public heavyPlaytime: number = 0;
+        public maxPlaytime: number = 0;
+
+        public sessions: Session[] = [];
+    }
 
     export const ReportPlayerList = Vue.extend({
         props: {
@@ -61,17 +171,43 @@
         },
 
         created: function(): void {
-            this.metadata = Array.from(this.report.playerMetadata.values()).sort((a, b) => a.name.localeCompare(b.name));
+            this.metadata = Loadable.loaded(
+                Array.from(this.report.playerMetadata.values())
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((iter: PlayerMetadata): FlatPlayerMetadata => {
+                        console.log(iter);
+                        return {
+                            id: iter.ID,
+                            name: iter.name,
+                            outfitTag: iter.outfitTag,
+                            mostPlayedClass: iter.classes.mostPlayed.name,
+                            playtime: iter.timeAs,
+
+                            infilPlaytime: iter.classes.infil.timeAs,
+                            lightAssaultPlaytime: iter.classes.lightAssault.timeAs,
+                            medicPlaytime: iter.classes.medic.timeAs,
+                            engineerPlaytime: iter.classes.engineer.timeAs,
+                            heavyPlaytime: iter.classes.heavy.timeAs,
+                            maxPlaytime: iter.classes.max.timeAs,
+
+                            sessions: iter.sessions
+                        };
+                    })
+            );
         },
 
         data: function() {
             return {
-                metadata: [] as PlayerMetadata[]
+                metadata: Loadable.idle() as Loading<FlatPlayerMetadata[]>,
             }
         },
 
         methods: {
 
+        },
+
+        components: {
+            ATable, ACol, ABody, AFilter, AHeader,
         }
     });
 

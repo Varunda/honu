@@ -85,7 +85,10 @@ export const ATable = Vue.extend({
         DefaultSortField: { type: String, required: false, default: undefined },
 
         // Order to sort by default
-        DefaultSortOrder: { type: String, required: false, default: "asc" }
+        DefaultSortOrder: { type: String, required: false, default: "asc" },
+
+        // Will the resulting table be rendered with .table-striped or no
+        striped: { type: Boolean, required: false, default: true }
     },
 
     data: function() {
@@ -310,15 +313,15 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loading());
         } else if (this.entries.state == "loaded") {
-            console.log(``);
-
             if (this.entries.data.length == 0) {
                 console.log(`0 entries, showing no data row`);
                 rows.push(this.renderNoDataRow(createElement));
             } else {
-                for (const elem of this.displayedEntries) {
-                    rows.push(this.renderDataRow(createElement, elem));
-                }
+                rows.push(createElement("tbody", {},
+                    this.displayedEntries.map(iter => {
+                        return this.renderDataRow(createElement, iter);
+                    }))
+                );
             }
 
             this.$emit("rerender", Loadable.loaded(this.displayedEntries));
@@ -348,7 +351,8 @@ export const ATable = Vue.extend({
 			{
 				staticClass: "table a-table",
 				class: {
-					"table-sm": (this.RowPadding == "compact")
+                    "table-sm": (this.RowPadding == "compact"),
+                    "table-striped": (this.striped == true)
 				}
 			},
 			rows
@@ -456,12 +460,14 @@ export const ATable = Vue.extend({
             }
 
             // Return the .list-group-item for the header along with all of the headers set
-            return createElement("tr",
-                {
-                    staticClass: `a-table-header-row`
-                },
-                headers
-            );
+            return createElement("thead", {}, [
+                createElement("tr",
+                    {
+                        staticClass: `a-table-header-row`
+                    },
+                    headers
+                )
+            ]);
         },
 
         renderPages(createElement: CreateElement): VNode {
@@ -508,17 +514,19 @@ export const ATable = Vue.extend({
                     }
 
                     let lineHeight: string = "1.5";
+                    /*
                     switch (this.RowPadding) {
                         case "compact": lineHeight = "1"; break;
                         case "expanded": lineHeight = "2"; break;
                         case "tiny": lineHeight = "0.8"; break;
                         default: lineHeight = "1.5"; break;
                     }
+                    */
 
                     const options: VNodeData = {
                         staticClass: colClass,
                         staticStyle: {
-                            "line-height": lineHeight
+                            //"line-height": lineHeight
                         }
                     }
 

@@ -119,7 +119,7 @@
                     kills: true as boolean,
                     support: true as boolean,
                     spawns: true as boolean,
-                    vehicleKills: false as boolean,
+                    vehicleKills: true as boolean,
                     misc: true as boolean
                 },
 
