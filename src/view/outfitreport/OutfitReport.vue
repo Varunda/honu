@@ -378,6 +378,8 @@
             </div>
 
             <div v-else>
+                <report-header :report="report"></report-header>
+
                 <report-class-breakdown :report="report"></report-class-breakdown>
 
                 <report-control-breakdown :report="report"></report-control-breakdown>
@@ -423,6 +425,7 @@
     import ReportSupportBreakdown from "./components/ReportSupportBreakdown.vue";
     import ReportWinter from "./components/ReportWinter.vue";
     import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
+    import ReportHeader from "./components/ReportHeader.vue";
 
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
@@ -523,6 +526,8 @@
                 if (this.logs.length > 100) {
                     this.logs = this.logs.slice(0, 100);
                 }
+
+                console.log("LOG: " + msg);
             },
 
             zeroHourEnd: function(): void {
@@ -749,8 +754,8 @@
                 this.connection.invoke("GenerateReport", this.generator).then((response: any) => {
                     this.isDone = true;
 
-                    this.report.generator = `#${this.report.id};`;
-                    this.generator = this.report.generator;
+                    //this.report.generator = `#${this.report.id};`;
+                    this.generator = `#${this.report.id};`;
                     console.log(`ID of report '${this.report.id}'`);
                     history.pushState({}, "", `/report/${this.generator64}`);
 
@@ -820,11 +825,16 @@
 
             onSendReport: function(report: Report): void {
                 this.report.id = report.id;
+                this.report.generator = report.generator;
+                this.generator = this.report.generator;
+                console.log(`set generator to ${this.report.generator} from ${report.generator}`);
                 // No idea why, but these dates don't include the Z, while the timestamp does
                 this.report.periodEnd = new Date(report.periodEnd + "Z");
                 this.report.periodStart = new Date(report.periodStart + "Z");
                 this.report.timestamp = new Date(report.timestamp);
                 this.report.teamID = report.teamID;
+                this.report.trackedCharacters = report.trackedCharacters;
+                this.report.trackedOutfits = report.trackedOutfits;
 
                 this.periodStart = new Date(this.report.periodStart);
                 this.periodEnd = new Date(this.report.periodEnd);
@@ -908,10 +918,18 @@
 
         watch: {
             periodStart: function(): void {
+                if (this.isMaking == true) {
+                    console.log(`currently making a report, not updating the generator, current gen: ${this.report.generator}`);
+                    return;
+                }
                 this.updateGenerator();
             },
 
             periodEnd: function(): void {
+                if (this.isMaking == true) {
+                    console.log(`currently making a report, not updating the generator, current gen: ${this.report.generator}`);
+                    return;
+                }
                 this.updateGenerator();
             }
         },
@@ -936,6 +954,7 @@
             ReportSupportBreakdown,
             ReportWinter,
             ReportControlBreakdown,
+            ReportHeader,
             Busy
         }
 

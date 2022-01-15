@@ -142,6 +142,24 @@ namespace watchtower.Code.Hubs.Implementations {
                 await _ReportDb.Insert(report);
                 report.Players = report.CharacterIDs;
 
+                HashSet<string> trackedOutfitIDs = new HashSet<string>();
+                foreach (string charID in report.Players) {
+                    PsCharacter? c = await _CharacterRepository.GetByID(charID);
+                    if (c != null) {
+                        report.TrackedCharacters.Add(c);
+                        if (c.OutfitID != null) {
+                            trackedOutfitIDs.Add(c.OutfitID);
+                        }
+                    }
+                }
+
+                foreach (string outfitID in trackedOutfitIDs) {
+                    PsOutfit? o = await _OutfitRepository.GetByID(outfitID);
+                    if (o != null) {
+                        report.TrackedOutfits.Add(o);
+                    }
+                }
+
                 await Clients.Caller.SendReport(report);
                 await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
                 await Clients.Caller.UpdateSessions(report.Sessions);

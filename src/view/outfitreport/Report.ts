@@ -23,18 +23,20 @@ export default class Report {
 	 */
 	public players: string[] = [];
 
+	public trackedCharacters: PsCharacter[] = [];
+	public trackedOutfits: PsOutfit[] = [];
+
 	public kills: KillEvent[] = [];
 	public deaths: KillEvent[] = [];
 	public experience: ExpEvent[] = [];
+	public sessions: Session[] = [];
+	public control: FacilityControlEvent[] = [];
+	public playerControl: PlayerControlEvent[] = [];
 
 	public items: Map<number, PsItem> = new Map();
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
-	public sessions: Session[] = [];
-	public control: FacilityControlEvent[] = [];
-	public playerControl: PlayerControlEvent[] = [];
 	public facilities: Map<number, PsFacility> = new Map();
-
 	public playerMetadata: Map<string, PlayerMetadata> = new Map();
 }
 
@@ -81,7 +83,7 @@ export class PlayerMetadataGenerator {
 
 		function getEntry(charID: string): PlayerMetadata {
 			if (map.has(charID) == false) {
-				console.log(`Adding new metadata entry for ${charID}`);
+				//console.log(`Adding new metadata entry for ${charID}`);
 
 				const char: PsCharacter | null = report.characters.get(charID) || null;
 
@@ -157,7 +159,7 @@ export class PlayerMetadataGenerator {
 			timedEvents.push(...meta.deaths.map(iter => { return { timestamp: iter.timestamp, loadoutID: iter.killedLoadoutID }; }));
 			timedEvents.push(...meta.exp.map(iter => { return { timestamp: iter.timestamp, loadoutID: iter.loadoutID }; }));
 
-			console.log(`Character ${meta.ID}/${meta.name} has ${timedEvents.length} events to build class playtime from`);
+			//console.log(`Character ${meta.ID}/${meta.name} has ${timedEvents.length} events to build class playtime from`);
 
 			if (timedEvents.length == 0) {
 				continue;

@@ -5,8 +5,6 @@
         </h2>
 
         <div id="report-player-list" class="collapse show">
-
-
             <a-table 
                 :entries="metadata"
                 default-sort-field="name" default-sort-order="asc"
@@ -175,7 +173,7 @@
                 Array.from(this.report.playerMetadata.values())
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((iter: PlayerMetadata): FlatPlayerMetadata => {
-                        console.log(iter);
+                        //console.log(iter);
                         return {
                             id: iter.ID,
                             name: iter.name,

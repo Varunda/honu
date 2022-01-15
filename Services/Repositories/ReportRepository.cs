@@ -204,7 +204,7 @@ namespace watchtower.Services.Repositories {
                     }
                 } else if (state == GenState.READING_ID) {
                     if (i == ';') {
-                        _Logger.LogDebug($"In state READING_ID> ID is '{word}'");
+                        //_Logger.LogTrace($"In state READING_ID> ID is '{word}'");
                         bool valid = Guid.TryParse(word, out Guid id);
                         if (valid == true) {
                             report.ID = id;
