@@ -32,11 +32,12 @@
         <div id="report-control-breakdown" class="collapse show">
             <table class="table table-sm" style="table-layout: fixed;">
                 <tr class="table-secondary">
-                    <th width="15%">Facility</th>
-                    <th width="15%">Timestamp</th>
-                    <th width="15%">Action</th>
-                    <th width="15%">Players</th>
-                    <th width="40%"></th>
+                    <th width="14%">Facility</th>
+                    <th width="14%">Timestamp</th>
+                    <th width="14%">Action</th>
+                    <th width="14%">Outfit</th>
+                    <th width="14%">Players</th>
+                    <th width="30%"></th>
                 </tr>
 
                 <tr v-for="control in entries">
@@ -62,6 +63,27 @@
                         </span>
                         <span v-else>
                             Captured from {{control.control.oldFactionID | faction}}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span v-if="control.control.oldFactionID != control.control.newFactionID">
+                            <span v-if="control.outfit == null">
+                                &lt;no outfit&gt;
+                            </span>
+
+                            <span v-else>
+                                <a :href="'/o/' + control.outfit.id">
+                                    <span v-if="control.outfit.tag != null">
+                                        [{{control.outfit.tag}}]
+                                    </span>
+                                    {{control.outfit.name}}
+                                </a>
+                            </span>
+                        </span>
+
+                        <span v-else>
+                            --
                         </span>
                     </td>
 
@@ -103,6 +125,7 @@
         public control: FacilityControlEvent = new FacilityControlEvent();
         public facility: PsFacility | null = null;
         public block: Block = new Block();
+        public outfit: PsOutfit | null = null;
     }
 
     export const ReportControlBreakdown = Vue.extend({
@@ -181,6 +204,7 @@
                     entry.control = control;
                     entry.players = this.report.playerControl.filter(iter => iter.controlID == control.id);
                     entry.facility = this.report.facilities.get(control.facilityID) || null;
+                    entry.outfit = (control.outfitID != null) ? this.report.outfits.get(control.outfitID) || null : null;
 
                     const map: Map<string, BlockEntry> = new Map();
                     const zero: BlockEntry = new BlockEntry();
