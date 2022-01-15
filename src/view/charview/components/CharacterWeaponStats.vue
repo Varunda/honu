@@ -13,6 +13,7 @@
         <a-table
             :entries="entries"
             :show-filters="true"
+            :striped="false"
             default-sort-field="kills" default-sort-order="desc"
             display-type="table">
 
@@ -27,16 +28,16 @@
 
                 <a-body v-slot="entry">
                     <div style="height: 3rem; position: relative;">
-                        <a :href="'/i/' + entry.itemID" style="position: absolute;">
+                        <census-image v-if="entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
+                            style="position: absolute; text-align: center; height: 100%; right: 0;">
+                        </census-image>
+
+                        <a :href="'/i/' + entry.itemID" style="position: absolute; background-color: rgb(34, 34, 34);">
                             {{entry.itemName}}
                             <span v-if="showDebug == true">
                                 / {{entry.itemID}}
                             </span>
                         </a>
-
-                        <census-image v-if="entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
-                            style="position: absolute; text-align: center; height: 100%; right: 0;">
-                        </census-image>
                     </div>
                 </a-body>
             </a-col>

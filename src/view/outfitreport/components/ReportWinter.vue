@@ -511,7 +511,7 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Flash kills";
                 metric.funName = "Flash kills";
-                metric.description = "Most flashes kills (per minute)";
+                metric.description = "Most flash kills (per minute)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,

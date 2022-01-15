@@ -14,11 +14,26 @@
                             Report link
                             <info-hover text="Get a report for this outfit, at the same time"></info-hover>
                         </td>
-                        <td>Kills</td>
-                        <td>Deaths</td>
-                        <td>Assists</td>
-                        <td>KD</td>
-                        <td>KDA</td>
+                        <td>
+                            Kills
+                            <info-hover text="How many kills the tracked players got against players in this outfit"></info-hover>
+                        </td>
+                        <td>
+                            Deaths
+                            <info-hover text="How many deaths the tracked players had against players in this outfit"></info-hover>
+                        </td>
+                        <td>
+                            Assists
+                            <info-hover text="How many assists the tracked players got against players in this outfit"></info-hover>
+                        </td>
+                        <td>
+                            KD
+                            <info-hover text="Kills/Deaths against this outfit. >1 means the tracked players got more kills than deaths from this outfit"></info-hover>
+                        </td>
+                        <td>
+                            KDA
+                            <info-hover text="Kills + Assists / Deaths"></info-hover>
+                        </td>
                         <td>
                             HSR% kills
                             <info-hover text="What percent of kills came from headshots against this outfit"></info-hover>
