@@ -8,6 +8,10 @@
             <button type="button" class="btn btn-primary" @click="loadEntries">
                 Reload
             </button>
+
+            <button type="button" class="btn btn-secondary" @click="showImages = !showImages">
+                Show images
+            </button>
         </div>
 
         <a-table
@@ -27,8 +31,8 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    <div style="height: 3rem; position: relative;">
-                        <census-image v-if="entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
+                    <div :style="{ height: (showImages == true) ? '3rem' : '', position: 'relative' }">
+                        <census-image v-if="showImages == true && entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
                             style="position: absolute; text-align: center; height: 100%; right: 0;">
                         </census-image>
 
@@ -195,7 +199,8 @@
         data: function() {
             return {
                 entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>,
-                showDebug: false as boolean
+                showDebug: false as boolean,
+                showImages: true as boolean,
             }
         },
 
