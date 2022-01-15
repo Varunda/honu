@@ -32,11 +32,16 @@
 
                 <a-body v-slot="entry">
                     <div :style="{ height: (showImages == true) ? '3rem' : '', position: 'relative' }">
+                        <div
+                            class="d-inline-block position-absolute"
+                            :style="getWeaponNameStyle(entry) ">
+                        </div>
+
                         <census-image v-if="showImages == true && entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
-                            style="position: absolute; text-align: center; height: 100%; right: 0;">
+                            style="position: absolute; text-align: center; height: 100%; right: 0;" class="mr-1">
                         </census-image>
 
-                        <a :href="'/i/' + entry.itemID" style="position: absolute; background-color: rgb(34, 34, 34);">
+                        <a :href="'/i/' + entry.itemID" class="ml-1" style="position: absolute; text-shadow: -1px -1px 2px rgb(32, 32, 32), -1px 1px 2px rgb(32, 32, 32), 1px -1px 2px rgb(32, 32, 32), 1px 1px 2px rgb(32, 32, 32)">
                             {{entry.itemName}}
                             <span v-if="showDebug == true">
                                 / {{entry.itemID}}
@@ -210,6 +215,30 @@
         },
 
         methods: {
+            getWeaponNameStyle: function(entry: CharacterWeaponStatEntry): object {
+                let background: string = "rgb(32, 32, 32)";
+
+                if (entry.kills >= 10) {
+                    background = "#5c2b00";
+                }
+                if (entry.kills >= 60) {
+                    background = "#4c4c4c";
+                }
+                if (entry.kills > 160) {
+                    background = "#544e01";
+                }
+                if (entry.kills > 1160) {
+                    background = "#5c005c";
+                }
+
+                return {
+                    'height': (this.showImages == true) ? '3rem' : '1.5rem',
+                    'background-color': background,
+                    width: Math.min(100, (entry.kills / 1160 * 100)) + '%',
+                    'border-radius': '3px' 
+                }
+            },
+
             loadEntries: async function(): Promise<void> {
                 this.entries = Loadable.loading();
                 this.entries = await CharacterWeaponStatApi.getByCharacterID(this.character.id);

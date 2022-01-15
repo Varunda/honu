@@ -591,7 +591,7 @@ export const ATable = Vue.extend({
 
                 // Filter column wrapped in the .input-group
 				filters.push(createElement("td",
-					{ staticStyle: { "max-width": filter.width ?? "auto" } },
+					{ staticStyle: { "max-width": filter.width ?? "", "flex-grow": 0 } },
                     [inputNode]
                 ));
             }
