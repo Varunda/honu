@@ -59,6 +59,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<PsbAccountNoteDbStore>();
             services.AddSingleton<HonuAccountDbStore>();
             services.AddSingleton<HonuAccountAccessLogDbStore>();
+            services.AddSingleton<VehicleDestroyDbStore>();
         }
 
     }

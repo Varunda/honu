@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Models.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
@@ -39,11 +40,12 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-                    string charID = await _Queue.DequeueAsync(stoppingToken);
+                    CharacterFetchQueueEntry entry = await _Queue.DequeueAsync(stoppingToken);
 
+                    string charID = entry.CharacterID;
                     PsCharacter? character = await _CharacterRepository.GetByID(charID);
 
-                    if (character != null) {
+                    if (character != null && entry.Store == true) {
                         lock (CharacterStore.Get().Players) {
                             TrackedPlayer tracked = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                                 ID = charID,

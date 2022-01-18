@@ -57,6 +57,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<PsbNamedAccount>, PsbNamedReader>();
             services.AddSingleton<IDataReader<PsbAccountNote>, PsbAccountNoteReader>();
             services.AddSingleton<IDataReader<HonuAccount>, HonuAccountReader>();
+            services.AddSingleton<IDataReader<VehicleDestroyEvent>, VehicleDestroyEventReader>();
         }
 
     }

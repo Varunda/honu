@@ -32,6 +32,7 @@ namespace watchtower.Realtime {
         private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
+        private readonly VehicleDestroyDbStore _VehicleDestroyDb;
 
         private readonly IBackgroundCharacterCacheQueue _CacheQueue;
         private readonly IBackgroundSessionStarterQueue _SessionQueue;
@@ -41,6 +42,7 @@ namespace watchtower.Realtime {
 
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IMapCollection _MapCensus;
+        private readonly ItemRepository _ItemRepository;
 
         private readonly List<JToken> _Recent;
 
@@ -51,7 +53,8 @@ namespace watchtower.Realtime {
             IDiscordMessageQueue msgQueue, IMapCollection mapColl,
             FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
             IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
-            FacilityPlayerControlDbStore fpDb) {
+            FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
+            ItemRepository itemRepo) {
 
             _Logger = logger;
 
@@ -63,6 +66,7 @@ namespace watchtower.Realtime {
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
             _BattleRankDb = rankDb ?? throw new ArgumentNullException(nameof(rankDb));
             _FacilityPlayerDb = fpDb ?? throw new ArgumentNullException(nameof(fpDb));
+            _VehicleDestroyDb = vehicleDestroyDb ?? throw new ArgumentNullException(nameof(vehicleDestroyDb));
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -72,6 +76,7 @@ namespace watchtower.Realtime {
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
+            _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
         }
 
         public async Task Process(JToken ev) {
@@ -120,9 +125,159 @@ namespace watchtower.Realtime {
                     await _ProcessBattleRankUp(payloadToken);
                 } else if (eventName == "MetagameEvent") {
                     _ProcessMetagameEvent(payloadToken);
+                } else if (eventName == "VehicleDestroy") {
+                    await _ProcessVehicleDestroy(payloadToken);
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
+            }
+        }
+
+        private async Task _ProcessVehicleDestroy(JToken payload) {
+            //_Logger.LogDebug($"{payload}");
+
+            short attackerLoadoutID = payload.GetInt16("attacker_loadout_id", -1);
+            short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
+
+            VehicleDestroyEvent ev = new() {
+                AttackerCharacterID = payload.GetRequiredString("attacker_character_id"),
+                AttackerLoadoutID = attackerLoadoutID,
+                AttackerVehicleID = payload.GetString("attacker_vehicle_id", "0"),
+                AttackerFactionID = attackerFactionID,
+                // AttackerTeamID - This is set from CharacterStore
+                AttackerWeaponID = payload.GetInt32("attacker_weapon_id", 0),
+
+                KilledCharacterID = payload.GetRequiredString("character_id"),
+                KilledFactionID = payload.GetInt16("faction_id", Faction.UNKNOWN),
+                KilledVehicleID = payload.GetString("vehicle_id", "0"),
+                // KilledTeamID - This is set from CharacterStore
+
+                ZoneID = payload.GetZoneID(),
+                WorldID = payload.GetWorldID(),
+                FacilityID = payload.GetString("facility_id", "0"),
+                Timestamp = payload.CensusTimestamp("timestamp")
+            };
+
+            if (ev.AttackerCharacterID == "0" && ev.KilledCharacterID == "0") {
+                return;
+            }
+
+            if (ev.AttackerCharacterID == ev.KilledCharacterID) {
+                ev.KilledFactionID = ev.AttackerFactionID;
+            }
+
+            lock (CharacterStore.Get().Players) {
+                // The default value for Online must be false, else when a new TrackedPlayer is constructed,
+                //      the session will never start, as the handler already sees the character online,
+                //      so no need to start a new session
+                TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
+                    ID = ev.AttackerCharacterID,
+                    FactionID = ev.AttackerFactionID,
+                    TeamID = (ev.AttackerFactionID == 4) ? Faction.UNKNOWN : ev.AttackerFactionID,
+                    Online = false,
+                    WorldID = ev.WorldID
+                });
+
+                if (attacker.Online == false) {
+                    _SessionQueue.Queue(attacker);
+                }
+
+                _CacheQueue.Queue(attacker.ID);
+
+                attacker.ZoneID = ev.ZoneID;
+
+                if (attacker.FactionID == Faction.UNKNOWN) {
+                    attacker.FactionID = ev.AttackerFactionID; // If a tracked player was made from a login, no faction ID is given
+                    attacker.TeamID = ev.AttackerTeamID;
+                }
+
+                ev.AttackerTeamID = attacker.TeamID;
+
+                // See above for why false is used for the Online value, instead of true
+                TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
+                    ID = ev.KilledCharacterID,
+                    FactionID = ev.KilledFactionID,
+                    TeamID = (ev.KilledFactionID == 4) ? Faction.UNKNOWN : ev.KilledFactionID,
+                    Online = false,
+                    WorldID = ev.WorldID
+                });
+
+                _CacheQueue.Queue(killed.ID);
+
+                // Ensure that 2 sessions aren't started if the attacker and killed are the same
+                if (killed.Online == false && attacker.ID != killed.ID) {
+                    _SessionQueue.Queue(attacker);
+                }
+
+                killed.ZoneID = ev.ZoneID;
+                if (killed.FactionID == Faction.UNKNOWN) {
+                    killed.FactionID = ev.KilledFactionID;
+                    killed.TeamID = killed.FactionID;
+                }
+
+                ev.KilledTeamID = killed.TeamID;
+
+                long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                attacker.LatestEventTimestamp = nowSeconds;
+                killed.LatestEventTimestamp = nowSeconds;
+            }
+
+            //_Logger.LogDebug($"\n{payload.ToString(Newtonsoft.Json.Formatting.None)}\n=>\n{JToken.FromObject(ev).ToString(Newtonsoft.Json.Formatting.None)}");
+
+            await _VehicleDestroyDb.Insert(ev, CancellationToken.None);
+
+            if (ev.KilledVehicleID == Vehicle.SUNDERER && ev.WorldID == World.Jaeger) {
+                List<ExpEvent> possibleEvents = RecentSundererDestroyExpStore.Get().GetList();
+                ExpEvent? expEvent = null;
+
+                foreach (ExpEvent exp in possibleEvents) {
+                    if (exp.SourceID == ev.AttackerCharacterID && exp.Timestamp == ev.Timestamp) {
+                        expEvent = exp;
+                        break;
+                    }
+
+                    // Easily break in case there are many events to look at
+                    if (exp.Timestamp > ev.Timestamp) {
+                        break;
+                    }
+                }
+
+                TrackedNpc? bus = null;
+
+                if (expEvent != null && expEvent.OtherID != "0") {
+                    lock (NpcStore.Get().Npcs) {
+                        NpcStore.Get().Npcs.TryGetValue(expEvent.OtherID, out bus);
+                    }
+                }
+
+                new Thread(async () => {
+                    try {
+                        PsCharacter? attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
+                        PsCharacter? owner = (bus != null) ? await _CharacterRepository.GetByID(bus.OwnerID) : null;
+                        PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
+                        PsItem? attackerItem = await _ItemRepository.GetByID(ev.AttackerWeaponID);
+
+                        string msg = $"A bus has been blown up at {ev.Timestamp:u} in {ev.ZoneID}\n";
+                        msg += $"Attacker: {attacker?.GetDisplayName() ?? $"<missing {ev.AttackerCharacterID}>"}. Faction: {Faction.GetName(ev.AttackerFactionID)}, Team: {Faction.GetName(ev.AttackerTeamID)}\n";
+                        msg += $"Weapon: {attackerItem?.Name} ({ev.AttackerWeaponID})\n";
+
+                        msg += $"Owner: {killed?.GetDisplayName() ?? $"<missing {ev.KilledCharacterID}>"}. Faction {Faction.GetName(ev.KilledFactionID)}, Team: {Faction.GetName(ev.KilledTeamID)}\n";
+
+                        if (bus != null) {
+                            msg += $"Owner EXP: {owner?.GetDisplayName() ?? $"<missing {bus.OwnerID}>"}\n";
+                            DateTime lastUsed = DateTimeOffset.FromUnixTimeMilliseconds(bus.LatestEventAt).UtcDateTime;
+
+                            msg += $"First spawn at: {bus.FirstSeenAt:u} UTC\n";
+                            msg += $"Spawns: {bus.SpawnCount}\n";
+                            msg += $"Last used: {(int) (DateTime.UtcNow - lastUsed).TotalSeconds} seconds ago";
+                        }
+
+                        _MessageQueue.Queue(msg);
+                    } catch (Exception ex) {
+                        _Logger.LogError(ex, $"error in background tracked sunderer death handler");
+                    }
+                }).Start();
             }
         }
 
@@ -188,6 +343,8 @@ namespace watchtower.Realtime {
                     await _FacilityPlayerDb.InsertMany(ID, events);
                     //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
                     //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
+
+                    RecentFacilityControlStore.Get().Add(ev.WorldID, ev);
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "error in background thread of control event");
                 }
@@ -620,33 +777,9 @@ namespace watchtower.Realtime {
 
             if (expId == Experience.VKILL_SUNDY && worldID == World.Jaeger) {
             //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
-                TrackedNpc? bus = null;
 
-                if (otherID != null && otherID != "0") {
-                    lock (NpcStore.Get().Npcs) {
-                        NpcStore.Get().Npcs.TryGetValue(otherID, out bus);
-                    }
-                }
-
-                new Thread(async () => {
-                    PsCharacter? attacker = await _CharacterRepository.GetByID(charID);
-                    PsCharacter? owner = (bus != null) ? await _CharacterRepository.GetByID(bus.OwnerID) : null;
-
-                    string msg = $"A bus was blown up by {attacker?.GetDisplayName() ?? $"<Missing {charID}>"}\n";
-                    msg += $"Owner: {owner?.GetDisplayName() ?? $"<Missing {bus?.OwnerID}>"}\n";
-
-                    if (bus != null) {
-                        DateTime lastUsed = DateTimeOffset.FromUnixTimeMilliseconds(bus.LatestEventAt).UtcDateTime;
-
-                        msg += $"First spawn at: {bus.FirstSeenAt} UTC\n";
-                        msg += $"Spawns: {bus.SpawnCount}\n";
-                        msg += $"Last used: {(int) (DateTime.UtcNow - lastUsed).TotalSeconds} seconds ago";
-                    }
-
-                    _MessageQueue.Queue(msg);
-                }).Start();
+                RecentSundererDestroyExpStore.Get().Add(ev);
             }
-
         }
 
     }

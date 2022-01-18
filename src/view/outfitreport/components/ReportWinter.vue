@@ -1,9 +1,16 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header d-flex">
+        <h2 class="wt-header d-flex" style="align-items: center;">
             <span class="flex-grow-1" data-toggle="collapse" data-target="#report-winter">
                 Winter Leaderboard
             </span>
+
+            <select class="form-control flex-grow-0" v-model.number="settings.size" style="width: 12ch;">
+                <option :value="5">5</option>
+                <option :value="8">8</option>
+                <option :value="10">10</option>
+                <option :value="12">12</option>
+            </select>
 
             <button type="button" class="btn btn-small border" :class="[ settings.showFunNames == true ? 'btn-primary' : 'btn-secondary' ]" @click="settings.showFunNames = !settings.showFunNames">
                 Use fun names

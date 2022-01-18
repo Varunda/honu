@@ -52,6 +52,7 @@ namespace watchtower.Realtime {
             _Subscription.EventNames = _Subscription.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")
+                .Append("VehicleDestroy")
                 .Append("FacilityControl").Append("PlayerFacilityCapture").Append("PlayerFacilityDefend")
                 .Append("ContinentLock").Append("ContinentUnlock").Append("MetagameEvent");
 

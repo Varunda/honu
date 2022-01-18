@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Models.Queues;
 
 namespace watchtower.Services {
 
@@ -14,10 +15,12 @@ namespace watchtower.Services {
         /// <param name="charID">ID of the character</param>
         void Queue(string charID);
 
-        Task<string> DequeueAsync(CancellationToken cancel);
+        void Queue(CharacterFetchQueueEntry entry);
+
+        Task<CharacterFetchQueueEntry> DequeueAsync(CancellationToken cancel);
 
         /// <summary>
-        /// Get current queue length
+        ///     Get current queue length
         /// </summary>
         /// <returns></returns>
         int Count();

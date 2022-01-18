@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Models.Queues;
 
 namespace watchtower.Services.Implementations {
 
     public class CharacterCacheQueue : IBackgroundCharacterCacheQueue {
 
-        private ConcurrentQueue<string> _Items = new ConcurrentQueue<string>();
+        private ConcurrentQueue<CharacterFetchQueueEntry> _Items = new ConcurrentQueue<CharacterFetchQueueEntry>();
 
         private SemaphoreSlim _Signal = new SemaphoreSlim(0);
 
@@ -18,13 +19,21 @@ namespace watchtower.Services.Implementations {
                 throw new ArgumentNullException(nameof(payload));
             }
 
-            _Items.Enqueue(payload);
+            _Items.Enqueue(new CharacterFetchQueueEntry() {
+                CharacterID = payload,
+                Store = true
+            });
             _Signal.Release();
         }
 
-        public async Task<string> DequeueAsync(CancellationToken cancel) {
+        public void Queue(CharacterFetchQueueEntry entry) {
+            _Items.Enqueue(entry);
+            _Signal.Release();
+        }
+
+        public async Task<CharacterFetchQueueEntry> DequeueAsync(CancellationToken cancel) {
             await _Signal.WaitAsync(cancel);
-            _Items.TryDequeue(out string? token);
+            _Items.TryDequeue(out CharacterFetchQueueEntry? token);
 
             return token!;
         }

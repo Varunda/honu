@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -31,11 +32,13 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterDbStore _CharacterDb;
 
         private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
+        private readonly IBackgroundCharacterCacheQueue _CharacterQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
             OutfitRepository outfitRepo, OutfitCollection outfitCollection,
             CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
-            BackgroundCharacterWeaponStatQueue cacheQueue, OutfitDbStore outfitDb) {
+            BackgroundCharacterWeaponStatQueue cacheQueue, OutfitDbStore outfitDb,
+            IBackgroundCharacterCacheQueue charQueue) {
 
             _Logger = logger;
 
@@ -46,6 +49,7 @@ namespace watchtower.Controllers.Api {
             _OutfitDb = outfitDb;
 
             _CacheQueue = cacheQueue;
+            _CharacterQueue = charQueue;
         }
 
         /// <summary>
@@ -177,7 +181,7 @@ namespace watchtower.Controllers.Api {
 
                 // Character was not in the local DB, add to the queue to be cached
                 if (ex.Character == null) {
-                    _CacheQueue.Queue(member.CharacterID);
+                    _CharacterQueue.Queue(new CharacterFetchQueueEntry() { CharacterID = member.CharacterID, Store = false });
                     hasCached = true;
                 }
 
@@ -190,6 +194,7 @@ namespace watchtower.Controllers.Api {
                 // If they have no stats (cause we load from DB not census), assume they haven't been pulled, so do so
                 if ((stats == null || stats.Count == 0) && hasCached == false) {
                     _CacheQueue.Queue(member.CharacterID);
+                    _CharacterQueue.Queue(new CharacterFetchQueueEntry() { CharacterID = member.CharacterID, Store = false });
                 }
 
                 expanded.Add(ex);

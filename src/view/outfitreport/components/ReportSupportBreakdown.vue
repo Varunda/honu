@@ -7,10 +7,16 @@
         <div id="report-support-breakdown" class="collapse show">
             <div class="d-flex">
                 <div class="flex-grow-1 flex-basis-0">
-                    <h4>Heals</h4>
+                    <h4>
+                        Heals
+                        <info-hover text="What outfits were healed by the tracked characters"></info-hover>
+                    </h4>
                 </div>
                 <div class="flex-grow-1 flex-basis-0">
-                    <h4>Revives</h4>
+                    <h4>
+                        Revives
+                        <info-hover text="What outfits were revived by the tracked characters. The total is how many total revives the tracked players got"></info-hover>
+                    </h4>
                 </div>
             </div>
             <div class="d-flex">
@@ -37,10 +43,16 @@
 
             <div class="d-flex">
                 <div class="flex-grow-1 flex-basis-0">
-                    <h4>Resupplies</h4>
+                    <h4>
+                        Resupplies
+                        <info-hover text="What outfits were resupplied by the tracked characters"></info-hover>
+                    </h4>
                 </div>
                 <div class="flex-grow-1 flex-basis-0">
-                    <h4>Repairs</h4>
+                    <h4>
+                        MAX repairs
+                        <info-hover text="What outfits were repaired by the tracked characters"></info-hover>
+                    </h4>
                 </div>
             </div>
             <div class="d-flex">

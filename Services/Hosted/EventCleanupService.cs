@@ -22,6 +22,7 @@ namespace watchtower.Services {
         private const int _SundyKeepPeriod = 60 * 5; // 60 seconds, 5 minutes
         private const int _AfkPeriod = 60 * 15; // 60 seconds, 15 minutes
         private const int _ControlPeriod = 60; // 60 seconds
+        private const int _VehicleDestroyPeriod = 60; // 60 seconds
 
         private readonly ILogger<EventCleanupService> _Logger;
 
@@ -89,6 +90,8 @@ namespace watchtower.Services {
                             return timestamp <= controlAdjustedTime;
                         }).ToList();
                     }
+
+                    RecentSundererDestroyExpStore.Get().Clean(_VehicleDestroyPeriod);
 
                     time.Stop();
 
