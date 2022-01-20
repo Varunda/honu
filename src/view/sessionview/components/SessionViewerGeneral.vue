@@ -174,8 +174,20 @@
 
             <tr class="table-secondary">
                 <td><b>Total</b></td>
-                <td colspan="6">
+                <td colspan="2">
                     {{durationInSeconds | mduration}}
+                </td>
+                <td>
+                    {{kills.length}}
+                </td>
+                <td>
+                    {{deaths.length}}
+                </td>
+                <td>
+                    {{(kills.length / Math.max(1, deaths.length)).toFixed(2)}}
+                </td>
+                <td>
+                    {{(kills.length / Math.max(1, durationInSeconds) * 60).toFixed(2)}}
                 </td>
             </tr>
         </table>
@@ -202,8 +214,6 @@
     import { Session } from "api/SessionApi";
 
     import Loadout from "util/Loadout";
-
-    import { randomRGB, rgbToString } from "util/Color";
 
     interface LoadoutEvent {
         loadoutID: number;

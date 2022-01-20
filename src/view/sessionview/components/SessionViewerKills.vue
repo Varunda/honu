@@ -1,118 +1,115 @@
 ﻿<template>
-    <div class="d-flex">
+    <div>
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <h3>Weapons</h3>
 
-        <div class="flex-grow-1 flex-basis-0">
-            <h3>Weapons</h3>
+                <table class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
+                    <thead>
+                        <tr class="table-secondary">
+                            <th>Weapon</th>
+                            <th>Kills</th>
+                            <th>HS kills</th>
+                            <th>HSR</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
 
-            <table class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
-                <thead>
-                    <tr class="table-secondary">
-                        <th>Weapon</th>
-                        <th>Kills</th>
-                        <th>HS kills</th>
-                        <th>HSR</th>
-                        <th>%</th>
-                    </tr>
-                </thead>
+                    <tbody>
+                        <tr v-for="entry in groupedKillEventsArray">
+                            <td>
+                                <a :href="'/i/' + entry[0]">
+                                    <span v-if="groupedKillWeapons.get(entry[0])">
+                                        {{groupedKillWeapons.get(entry[0]).name}}
+                                    </span>
+                                    <span v-else>
+                                        &lt;missing {{entry[0]}}&gt;
+                                    </span>
+                                </a>
+                            </td>
 
-                <tbody>
-                    <tr v-for="entry in groupedKillEventsArray">
-                        <td>
-                            <a :href="'/i/' + entry[0]">
-                                <span v-if="groupedKillWeapons.get(entry[0])">
-                                    {{groupedKillWeapons.get(entry[0]).name}}
+                            <td>
+                                {{entry[1].length}}
+                            </td>
+
+                            <td>
+                                {{entry[1].filter(iter => iter.isHeadshot == true).length}}
+                            </td>
+
+                            <td>
+                                {{entry[1].filter(iter => iter.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%
+                            </td>
+
+                            <td>
+                                {{entry[1].length / kills.length * 100 | fixed | locale}}%
+                            </td>
+                        </tr>
+
+                        <tr class="table-secondary">
+                            <td>
+                                <b>Total</b>
+                            </td>
+
+                            <td>
+                                {{kills.length | locale}}
+                            </td>
+
+                            <td colspan="3">
+                                {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <canvas id="chart-kills-weapon-usage" style="max-height: 300px; max-width: 50%;" class="d-inline-block mb-2"></canvas>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                <h3>Outfits</h3>
+
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="table-secondary">
+                            <th>Outfit</th>
+                            <th>Kills</th>
+                            <th>Deaths</th>
+                            <th>K/D</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="entry in outfitData">
+                            <td>
+                                <span v-if="entry.outfitID == '0'">
+                                    no outfit
                                 </span>
-                                <span v-else>
-                                    &lt;missing {{entry[0]}}&gt;
-                                </span>
-                            </a>
-                        </td>
 
-                        <td>
-                            {{entry[1].length}}
-                        </td>
-
-                        <td>
-                            {{entry[1].filter(iter => iter.isHeadshot == true).length}}
-                        </td>
-
-                        <td>
-                            {{entry[1].filter(iter => iter.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%
-                        </td>
-
-                        <td>
-                            {{entry[1].length / kills.length * 100 | fixed | locale}}%
-                        </td>
-                    </tr>
-
-                    <tr class="table-secondary">
-                        <td>
-                            <b>Total</b>
-                        </td>
-
-                        <td>
-                            {{kills.length | locale}}
-                        </td>
-
-                        <td colspan="3">
-                            {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <canvas id="chart-kills-weapon-usage" style="max-height: 300px; max-width: 50%;" class="d-inline-block mb-2"></canvas>
+                                <a v-else :href="'/o/' + entry.outfitID">
+                                    <span v-if="entry.outfitTag != null">
+                                        [{{entry.outfitTag}}]
+                                    </span>
+                                    {{entry.outfitName}}
+                                </a>
+                            </td>
+                            <td>
+                                {{entry.kills}}
+                            </td>
+                            <td>
+                                {{entry.deaths}}
+                            </td>
+                            <td>
+                                {{entry.kills / Math.max(entry.deaths, 1) | fixed}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <div class="flex-grow-1 flex-basis-0">
-            <h3>Outfits</h3>
-
-            <table class="table table-sm">
-                <thead>
-                    <tr class="table-secondary">
-                        <th>Outfit</th>
-                        <th>Kills</th>
-                        <th>Deaths</th>
-                        <th>K/D</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="entry in outfitData">
-                        <td>
-                            <span v-if="entry.outfitID == '0'">
-                                no outfit
-                            </span>
-
-                            <a v-else :href="'/o/' + entry.outfitID">
-                                <span v-if="entry.outfitTag != null">
-                                    [{{entry.outfitTag}}]
-                                </span>
-                                {{entry.outfitName}}
-                            </a>
-                        </td>
-                        <td>
-                            {{entry.kills}}
-                        </td>
-                        <td>
-                            {{entry.deaths}}
-                        </td>
-                        <td>
-                            {{entry.kills / Math.max(entry.deaths, 1) | fixed}}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-        </div>
-
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import { Loading, Loadable } from "Loading";
-    import * as moment from "moment";
 
     import "MomentFilter";
     import "filters/FixedFilter";

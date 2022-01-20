@@ -29,7 +29,7 @@
         </div>
 
         <div v-else-if="session.state == 'loaded'">
-            <collapsible header-text="Sesion">
+            <collapsible header-text="Session">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
                         <td><b>ID</b></td>

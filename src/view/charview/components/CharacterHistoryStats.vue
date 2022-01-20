@@ -1,41 +1,41 @@
 ﻿<template>
     <div>
         <div class="btn-group w-100">
-            <button @click="show.kills = !show.kills" type="button" class="btn" :class="[ show.kills == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show kills
-            </button>
+            <toggle-button v-model="show.kills">
+                Kills
+            </toggle-button>
 
-            <button @click="show.deaths = !show.deaths" type="button" class="btn" :class="[ show.deaths == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show deaths
-            </button>
+            <toggle-button v-model="show.deaths">
+                Deaths
+            </toggle-button>
 
-            <button @click="show.score = !show.score" type="button" class="btn" :class="[ show.score == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show score
-            </button>
+            <toggle-button v-model="show.score">
+                Score
+            </toggle-button>
 
-            <button @click="show.certs = !show.certs" type="button" class="btn" :class="[ show.certs == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show certs
-            </button>
+            <toggle-button v-model="show.certs">
+                Certs
+            </toggle-button>
 
-            <button @click="show.time = !show.time" type="button" class="btn" :class="[ show.time == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show time
-            </button>
+            <toggle-button v-model="show.time">
+                Time
+            </toggle-button>
 
-            <button @click="show.kd = !show.kd" type="button" class="btn" :class="[ show.kd == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show KD
-            </button>
+            <toggle-button v-model="show.kd">
+                KD
+            </toggle-button>
 
-            <button @click="show.kpm = !show.kpm" type="button" class="btn" :class="[ show.kpm == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show KPM
-            </button>
+            <toggle-button v-model="show.kpm">
+                KPM
+            </toggle-button>
 
-            <button @click="show.spm = !show.spm" type="button" class="btn" :class="[ show.spm == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show SPM
-            </button>
+            <toggle-button v-model="show.spm">
+                Score per minute
+            </toggle-button>
 
-            <button @click="show.cpm = !show.cpm" type="button" class="btn" :class="[ show.cpm == true ? 'btn-primary' : 'btn-secondary' ]">
-                Show CPM
-            </button>
+            <toggle-button v-model="show.cpm">
+                Certs per minute
+            </toggle-button>
         </div>
 
         <div class="btn-group w-100 mt-2">
@@ -94,6 +94,8 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+
+    import ToggleButton from "components/ToggleButton";
 
     import { CharacterHistoryStat } from "api/CharacterHistoryStatApi";
 
@@ -244,6 +246,7 @@
 
         components: {
             ChartHistoryStat,
+            ToggleButton
         }
     });
     export default CharacterHistoryStats;

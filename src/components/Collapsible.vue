@@ -1,6 +1,7 @@
 ﻿<template>
     <div>
         <h2 class="wt-header" data-toggle="collapse" :data-target="'#' + elementID">
+            <span :id="'icon-' + elementID" class="fas fa-caret-down"></span>
             {{HeaderText}}
         </h2>
 
@@ -22,12 +23,69 @@
         data: function() {
             return {
                 id: Math.floor(Math.random() * 1000000),
-                opened: this.show as boolean
+
+                opened: this.show as boolean,
+                direction: this.show as boolean,
+
+                icon: null as HTMLElement | null,
             }
         },
 
-        methods: {
+        mounted: function(): void {
+            this.$nextTick(() => {
+                this.addListeners();
 
+                this.icon = document.getElementById(`icon-${this.elementID}`);
+            });
+        },
+
+        methods: {
+            addListeners: function(): void {
+                $(`#${this.elementID}`).on("show.bs.collapse", () => {
+                    this.direction = true;
+                    this.startAnimation();
+                    //console.log(`showing`);
+                });
+
+                $(`#${this.elementID}`).on("hide.bs.collapse", () => {
+                    this.direction= false;
+                    this.startAnimation();
+                    //console.log(`hidding`);
+                });
+            },
+
+            startAnimation: function(): void {
+                if (this.icon == null) {
+                    return console.warn(`Cannot animate on ${this.elementID}, icon is null`);
+                }
+
+                let start: number = 0;
+                let prev: number = 0;
+
+                const step = (timestamp: number) => {
+                    if (start == 0) {
+                        start = timestamp;
+                    }
+
+                    const elapsed = timestamp - start;
+
+                    if (prev != timestamp) {
+                        const count: number = Math.min(0.4 * elapsed, 90);
+                        if (this.direction == true) {
+                            this.icon!.style.transform = `rotate(${count - 90}deg)`;
+                        } else {
+                            this.icon!.style.transform = `rotate(-${count}deg)`;
+                        }
+                    }
+
+                    if (elapsed < 500) {
+                        prev = timestamp;
+                        window.requestAnimationFrame(step);
+                    }
+                }
+
+                window.requestAnimationFrame(step);
+            },
         },
 
         computed: {
