@@ -85,7 +85,7 @@
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="timestamp">
                 <a-header>
                     <b>Timestamp</b>
                 </a-header>

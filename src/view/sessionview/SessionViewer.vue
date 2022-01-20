@@ -210,6 +210,17 @@
                     :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
                 </session-action-log>
             </collapsible>
+
+            <collapsible header-text="Vehicle kills">
+                <div v-if="exp.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-vehicles v-else-if="exp.state == 'loaded'"
+                    :session="session.data" :exp="exp.data">
+                </session-viewer-vehicles>
+            </collapsible>
         </div>
     </div>
 </template>
@@ -228,7 +239,9 @@
     import SessionViewerExp from "./components/SessionViewerExp.vue";
     import SessionViewerTrends from "./components/SessionViewerTrends.vue";
     import SessionActionLog from "./components/SessionActionLog.vue";
+    import SessionViewerVehicles from "./components/SessionViewerVehicles.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
+
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
     import Collapsible from "components/Collapsible.vue";
@@ -237,8 +250,6 @@
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
-
-    import { randomRGB, rgbToString } from "util/Color";
 
     export const SessionViewer = Vue.extend({
         props: {
@@ -356,6 +367,7 @@
             SessionViewerExp,
             SessionViewerTrends,
             SessionActionLog,
+            SessionViewerVehicles,
             ChartTimestamp,
             InfoHover,
             Busy,

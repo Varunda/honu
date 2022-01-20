@@ -74,8 +74,6 @@
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
-    import { randomRGB, rgbToString } from "util/Color";
-
     export const SessionViewerTrends = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
@@ -103,7 +101,6 @@
         },
 
         methods: {
-
             bindExp: function(): void {
                 this.healData = this.exp.filter(iter => Experience.isHeal(iter.event.experienceID)).map(iter => iter.event.timestamp);
                 this.reviveData = this.exp.filter(iter => Experience.isRevive(iter.event.experienceID)).map(iter => iter.event.timestamp);
