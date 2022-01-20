@@ -4,13 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class MapRepository : IMapRepository {
+    public class MapRepository {
 
         private readonly ILogger<MapRepository> _Logger;
         private readonly IMemoryCache _Cache;
@@ -23,6 +24,8 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly IFacilityDbStore _FacilityDb;
         private readonly IMapCollection _MapCensus;
 
+        private readonly Dictionary<short, PsWorldMap> _Maps = new Dictionary<short, PsWorldMap>();
+
         public MapRepository(ILogger<MapRepository> logger,
             IMemoryCache cache, IMapDbStore mapDb,
             IFacilityDbStore facDb, IMapCollection mapColl) {
@@ -33,6 +36,42 @@ namespace watchtower.Services.Repositories.Implementations {
             _MapDb = mapDb ?? throw new ArgumentNullException(nameof(mapDb));
             _FacilityDb = facDb ?? throw new ArgumentNullException(nameof(facDb));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
+        }
+
+        /// <summary>
+        ///     Set the faction that owns a facility
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <param name="zoneID">Zone the facility is in</param>
+        /// <param name="facilityID">ID of the facility</param>
+        /// <param name="factionID">ID of the faction</param>
+        public void Set(short worldID, uint zoneID, int facilityID, short factionID) {
+            if (_Maps.TryGetValue(worldID, out PsWorldMap? map) == false) {
+                map = new PsWorldMap();
+                map.WorldID = worldID;
+
+                _Maps.Add(worldID, map);
+            }
+
+            PsZone zone = map.GetZone(zoneID);
+            zone.SetFacilityOwner(facilityID, factionID);
+        }
+
+        /// <summary>
+        ///     Get the zone map of a world
+        /// </summary>
+        /// <param name="worldID">ID of the world to get the zone of</param>
+        /// <param name="zoneID">Zone ID</param>
+        /// <returns></returns>
+        public PsZone? GetZone(short worldID, uint zoneID) {
+            if (_Maps.TryGetValue(worldID, out PsWorldMap? map) == false) {
+                map = new PsWorldMap();
+                map.WorldID = worldID;
+
+                _Maps.Add(worldID, map);
+            }
+
+            return map.GetZone(zoneID);
         }
 
         public async Task<List<PsFacility>> GetFacilities() {
@@ -86,6 +125,7 @@ namespace watchtower.Services.Repositories.Implementations {
 
             return hexes;
         }
+
 
     }
 }

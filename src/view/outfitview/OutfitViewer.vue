@@ -8,7 +8,7 @@
 
                 <span>/</span>
 
-                <a href="#">Outfit</a>
+                <a href="/outfitfinder">Outfit</a>
 
                 <span>/</span>
 

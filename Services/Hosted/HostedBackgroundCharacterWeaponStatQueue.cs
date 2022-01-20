@@ -177,7 +177,7 @@ namespace watchtower.Services.Hosted {
                                 _StatCensus.GetByID(entry.CharacterID).ContinueWith(result => statEntries = result.Result),
 
                                 // Get the character's friends
-                                _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
+                                //_FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
 
                                 // Get the character's directive data
                                 _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charDirs = result.Result),
@@ -214,9 +214,11 @@ namespace watchtower.Services.Hosted {
                         }
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        /*
                         if (charFriends.Count > 0) {
                             await _FriendDb.Set(entry.CharacterID, charFriends);
                         }
+                        */
                         stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirective dir in charDirs) {

@@ -20,7 +20,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ItemRepository>();
             services.AddSingleton<IStaticRepository<PsItem>, ItemRepository>();
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
-            services.AddSingleton<IMapRepository, MapRepository>();
+            services.AddSingleton<MapRepository>();
             services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
             services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
             services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();

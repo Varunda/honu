@@ -43,6 +43,7 @@ namespace watchtower.Realtime {
         private readonly ICharacterRepository _CharacterRepository;
         private readonly IMapCollection _MapCensus;
         private readonly ItemRepository _ItemRepository;
+        private readonly MapRepository _MapRepository;
 
         private readonly List<JToken> _Recent;
 
@@ -54,7 +55,7 @@ namespace watchtower.Realtime {
             FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
             IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
-            ItemRepository itemRepo) {
+            ItemRepository itemRepo, MapRepository mapRepo) {
 
             _Logger = logger;
 
@@ -77,6 +78,7 @@ namespace watchtower.Realtime {
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
+            _MapRepository = mapRepo ?? throw new ArgumentNullException(nameof(mapRepo));
         }
 
         public async Task Process(JToken ev) {
@@ -299,11 +301,16 @@ namespace watchtower.Realtime {
             // Exclude flips that aren't interesting
             if (ev.OldFactionID == 0 || ev.NewFactionID == 0 // Came from a cont unlock
                 || defID == 95 // A tutorial area
-                || defID == 364 // Another tutorial area
+                || defID == 364 // Another tutorial area (0x16C)
                 ) {
 
                 return;
             }
+
+            //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
+            _Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
+
+            _MapRepository.Set(ev.WorldID, ev.ZoneID, ev.FacilityID, ev.NewFactionID);
 
             new Thread(async () => {
                 try {
