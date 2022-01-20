@@ -33,7 +33,6 @@ namespace watchtower.Code {
                         recent.Captures.RemoveAt(10);
                     }
                 }
-
             }
         }
 

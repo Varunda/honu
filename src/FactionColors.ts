@@ -22,4 +22,5 @@ export default class FactionColors {
 
 		return "";
 	}
+
 }

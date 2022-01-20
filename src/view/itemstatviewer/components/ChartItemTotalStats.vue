@@ -9,7 +9,7 @@
 
     import { Bucket } from "api/ItemApi";
 
-    import { randomRGB, rgbToString, randomColors } from "util/Color";
+    import ColorUtils from "util/Color";
 
     export const ChartItemTotalStats = Vue.extend({
         props: {
@@ -58,7 +58,7 @@
                         datasets: [{
                             data: this.stats.map((iter: Bucket) => (acc += iter.count) / total * 100),
                             fill: true,
-                            backgroundColor: randomColors(Math.random(), 1)[0],
+                            backgroundColor: ColorUtils.randomColors(Math.random(), 1)[0],
                             label: this.name,
                             //spanGaps: true
                         }]

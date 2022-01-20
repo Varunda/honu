@@ -6,7 +6,7 @@
     import Vue, { PropType } from "vue";
     import Chart, { LegendItem } from "chart.js/auto/auto.esm";
 
-    import { randomRGB, rgbToString, randomColors, randomColor } from "util/Color";
+    import ColorUtils from "util/Color";
     import { Block, BlockEntry } from "./common";
 
     export const ChartBlockPieChart = Vue.extend({
@@ -53,14 +53,14 @@
 
                 this.labels = shown.map((iter: BlockEntry) => iter.name);
                 this.numbers = shown.map((iter: BlockEntry) => iter.count);
-                this.colors = randomColors(colorHue, colorLen);
+                this.colors = ColorUtils.randomColors(colorHue, colorLen);
 
                 if (this.ShowAll == false && this.data.entries.length > this.ClippedAmount) {
                     const hidden = this.data.entries.slice(this.ClippedAmount);
 
                     this.labels.push("Other");
                     this.numbers.push(hidden.reduce((acc, val) => acc += val.count, 0));
-                    this.colors.push(randomColor(colorHue, colorLen, colorLen - 1));
+                    this.colors.push(ColorUtils.randomColor(colorHue, colorLen, colorLen - 1));
                 }
             },
 

@@ -8,7 +8,7 @@ import { FacilityControlEvent } from "api/FacilityControlEventApi";
 import { PlayerControlEvent } from "api/PlayerControlEventApi";
 import { PsFacility } from "api/MapApi";
 
-import Loadout from "util/Loadout";
+import LoadoutUtils from "util/Loadout";
 
 export default class Report {
 	public id: string = ""; // guid
@@ -102,17 +102,17 @@ export class PlayerMetadataGenerator {
 		function getClass(charID: string, loadoutID: number): PlayerClassStats | null {
 			const meta: PlayerMetadata = getEntry(charID);
 
-			if (Loadout.isInfiltrator(loadoutID)) {
+			if (LoadoutUtils.isInfiltrator(loadoutID)) {
 				return meta.classes.infil;
-			} else if (Loadout.isLightAssault(loadoutID)) {
+			} else if (LoadoutUtils.isLightAssault(loadoutID)) {
 				return meta.classes.lightAssault;
-			} else if (Loadout.isMedic(loadoutID)) {
+			} else if (LoadoutUtils.isMedic(loadoutID)) {
 				return meta.classes.medic;
-			} else if (Loadout.isEngineer(loadoutID)) {
+			} else if (LoadoutUtils.isEngineer(loadoutID)) {
 				return meta.classes.engineer;
-			} else if (Loadout.isHeavy(loadoutID)) {
+			} else if (LoadoutUtils.isHeavy(loadoutID)) {
 				return meta.classes.heavy;
-			} else if (Loadout.isMax(loadoutID)) {
+			} else if (LoadoutUtils.isMax(loadoutID)) {
 				return meta.classes.max;
 			}
 			return null;

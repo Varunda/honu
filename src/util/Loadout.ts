@@ -1,5 +1,5 @@
 ﻿
-export default class Loadout {
+export default class LoadoutUtils {
 
 	public static NC_INFILTRATOR: number = 1;
 	public static NC_LIGHT_ASSAULT: number = 3;
@@ -70,5 +70,43 @@ export default class Loadout {
 			|| id == this.VS_MAX
 			|| id == this.NS_MAX;
 	}
+
+	public static getFactionID(loadoutID: number): number {
+        switch (loadoutID) {
+            case LoadoutUtils.NC_INFILTRATOR:
+            case LoadoutUtils.NC_LIGHT_ASSAULT:
+            case LoadoutUtils.NC_MEDIC:
+            case LoadoutUtils.NC_ENGINEER:
+            case LoadoutUtils.NC_HEAVY_ASSAULT:
+            case LoadoutUtils.NC_MAX:
+                return 2;
+
+            case LoadoutUtils.TR_INFILTRATOR:
+            case LoadoutUtils.TR_LIGHT_ASSAULT:
+            case LoadoutUtils.TR_MEDIC:
+            case LoadoutUtils.TR_ENGINEER:
+            case LoadoutUtils.TR_HEAVY_ASSAULT:
+            case LoadoutUtils.TR_MAX:
+                return 3;
+
+            case LoadoutUtils.VS_INFILTRATOR:
+            case LoadoutUtils.VS_LIGHT_ASSAULT:
+            case LoadoutUtils.VS_MEDIC:
+            case LoadoutUtils.VS_ENGINEER:
+            case LoadoutUtils.VS_HEAVY_ASSAULT:
+            case LoadoutUtils.VS_MAX:
+                return 1;
+
+            case LoadoutUtils.NS_INFILTRATOR:
+            case LoadoutUtils.NS_LIGHT_ASSAULT:
+            case LoadoutUtils.NS_MEDIC:
+            case LoadoutUtils.NS_ENGINEER:
+            case LoadoutUtils.NS_HEAVY_ASSAULT:
+            case LoadoutUtils.NS_MAX:
+                return 4;
+
+			default: return -1;
+        }
+    }
 
 }

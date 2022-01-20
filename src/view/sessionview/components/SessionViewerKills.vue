@@ -18,12 +18,14 @@
                 <tbody>
                     <tr v-for="entry in groupedKillEventsArray">
                         <td>
-                            <span v-if="groupedKillWeapons.get(entry[0])">
-                                {{groupedKillWeapons.get(entry[0]).name}}
-                            </span>
-                            <span v-else>
-                                &lt;missing {{entry[0]}}&gt;
-                            </span>
+                            <a :href="'/i/' + entry[0]">
+                                <span v-if="groupedKillWeapons.get(entry[0])">
+                                    {{groupedKillWeapons.get(entry[0]).name}}
+                                </span>
+                                <span v-else>
+                                    &lt;missing {{entry[0]}}&gt;
+                                </span>
+                            </a>
                         </td>
 
                         <td>
@@ -78,10 +80,16 @@
                 <tbody>
                     <tr v-for="entry in outfitData">
                         <td>
-                            <span v-if="entry.outfitTag != null">
-                                [{{entry.outfitTag}}]
+                            <span v-if="entry.outfitID == '0'">
+                                no outfit
                             </span>
-                            {{entry.outfitName}}
+
+                            <a v-else :href="'/o/' + entry.outfitID">
+                                <span v-if="entry.outfitTag != null">
+                                    [{{entry.outfitTag}}]
+                                </span>
+                                {{entry.outfitName}}
+                            </a>
                         </td>
                         <td>
                             {{entry.kills}}
@@ -112,7 +120,7 @@
 
     import Chart from "chart.js/auto/auto.esm";
 
-    import { randomColors, randomRGB, rgbToString } from "util/Color";
+    import ColorUtils from "util/Color";
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
     import { PsItem } from "api/ItemApi";
@@ -133,7 +141,7 @@
         props: {
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true }
+            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
         },
 
         data: function() {
@@ -177,7 +185,7 @@
                         }),
                         datasets: [{
                             data: arr.map(iter => iter[1].length),
-                            backgroundColor: randomColors(Math.random(), arr.length)
+                            backgroundColor: ColorUtils.randomColors(Math.random(), arr.length)
                         }]
                     },
                     options: {

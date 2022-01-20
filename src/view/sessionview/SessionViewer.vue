@@ -29,9 +29,7 @@
         </div>
 
         <div v-else-if="session.state == 'loaded'">
-            <div>
-                <h2 class="wt-header">Session</h2>
-
+            <collapsible header-text="Sesion">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
                         <td><b>ID</b></td>
@@ -158,11 +156,9 @@
                         </td>
                     </tr>
                 </table>
-            </div>
+            </collapsible>
 
-            <div>
-                <h2 class="wt-header">General</h2>
-
+            <collapsible header-text="General">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -171,11 +167,9 @@
                 <session-viewer-general v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
                     :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths">
                 </session-viewer-general>
-            </div>
+            </collapsible>
 
-            <div>
-                <h2 class="wt-header">Kills</h2>
-
+            <collapsible header-text="Kills">
                 <div v-if="killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -184,22 +178,18 @@
                 <session-viewer-kills v-else-if="killsOrDeaths.state == 'loaded'"
                     :kills="kills" :deaths="deaths" :session="session.data">
                 </session-viewer-kills>
-            </div>
+            </collapsible>
 
-            <div>
-                <h2 class="wt-header">Experience</h2>
-
+            <collapsible header-text="Experience">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
                 <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data"></session-viewer-exp>
-            </div>
+            </collapsible>
 
-            <div>
-                <h2 class="wt-header">Trends</h2>
-
+            <collapsible header-text="Trends">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -208,7 +198,18 @@
                 <session-viewer-trends v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
                     :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
                 </session-viewer-trends>
-            </div>
+            </collapsible>
+
+            <collapsible header-text="Action log">
+                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-action-log v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
+                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
+                </session-action-log>
+            </collapsible>
         </div>
     </div>
 </template>
@@ -226,9 +227,11 @@
     import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";
     import SessionViewerExp from "./components/SessionViewerExp.vue";
     import SessionViewerTrends from "./components/SessionViewerTrends.vue";
+    import SessionActionLog from "./components/SessionActionLog.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
@@ -352,9 +355,11 @@
             SessionViewerGeneral,
             SessionViewerExp,
             SessionViewerTrends,
+            SessionActionLog,
             ChartTimestamp,
             InfoHover,
             Busy,
+            Collapsible
         }
 
     });

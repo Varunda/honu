@@ -7,7 +7,7 @@
 
     import Chart from "chart.js/auto/auto.esm";
 
-    import { randomColorSingle } from "util/Color";
+    import ColorUtils from "util/Color";
     import * as moment from "moment";
 
     export const ChartHistoryStat = Vue.extend({
@@ -51,7 +51,7 @@
                     format = "yyyy-MM";
                 }
 
-                const color: string = randomColorSingle();
+                const color: string = ColorUtils.randomColorSingle();
 
                 this.chart = new Chart((canvas as any).getContext("2d"), {
                     type: "line",

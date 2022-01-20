@@ -156,7 +156,7 @@
 
     import * as L from "leaflet";
     import { Loading, Loadable } from "Loading";
-    import { RGB, colorGradient } from "util/Color";
+    import ColorUtils, { RGB } from "util/Color";
     import { Quartile } from "util/Quartile";
 
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";
@@ -469,7 +469,7 @@
 
                     if (entry.value < min) {
                         v = (entry.value - t_min) / min;
-                        color = colorGradient(
+                        color = ColorUtils.colorGradient(
                             v,
                             this.colors.min.start,
                             this.colors.min.end,
@@ -477,14 +477,14 @@
                         );
                     } else if (entry.value > max) {
                         v = (entry.value - t_min) / t_max;
-                        color = colorGradient(
+                        color = ColorUtils.colorGradient(
                             v,
                             this.colors.max.start,
                             this.colors.max.end,
                             this.colors.max.middle
                         );
                     } else {
-                        color = colorGradient(
+                        color = ColorUtils.colorGradient(
                             v,
                             this.colors.normal.start,
                             this.colors.normal.end,

@@ -6,7 +6,8 @@
     import Vue, { PropType } from "vue";
 
     import Chart from "chart.js/auto/auto.esm";
-    import { randomRGB, rgbToString, randomColors } from "util/Color";
+    //import { randomRGB, rgbToString, randomColors } from "util/Color";
+    import ColorUtils from "util/Color";
 
     interface Entry {
         display: string;
@@ -63,7 +64,7 @@
                         labels: show.map(iter => `${iter.display} - ${(iter.count / total * 100).toFixed(2)}%`),
                         datasets: [{
                             data: show.map(iter => iter.count),
-                            backgroundColor: randomColors(Math.random(), show.length)
+                            backgroundColor: ColorUtils.randomColors(Math.random(), show.length)
                         }]
                     },
                     options: {

@@ -88,7 +88,10 @@ export const ATable = Vue.extend({
         DefaultSortOrder: { type: String, required: false, default: "asc" },
 
         // Will the resulting table be rendered with .table-striped or no
-        striped: { type: Boolean, required: false, default: true }
+        striped: { type: Boolean, required: false, default: true },
+
+        // Will the resulting table be rendered with .table-hover or no
+        hover: { type: Boolean, required: false, default: false }
     },
 
     data: function() {
@@ -352,7 +355,8 @@ export const ATable = Vue.extend({
 				staticClass: "table a-table",
 				class: {
                     "table-sm": (this.RowPadding == "compact"),
-                    "table-striped": (this.striped == true)
+                    "table-striped": (this.striped == true),
+                    "table-hover": (this.hover == true)
 				}
 			},
 			rows
