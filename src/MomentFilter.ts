@@ -95,7 +95,11 @@ Vue.filter("mduration", (input: string | number): string => {
         return `${Math.floor(dur.asDays())}d ${dur.hours().toString().padStart(2, "0")}h`;
     }
 
-    return `${dur.hours()}h ${dur.minutes().toString().padStart(2, "0")}m`;
+    if (dur.asHours() >= 1) {
+        return `${dur.hours()}h ${dur.minutes().toString().padStart(2, "0")}m`;
+    }
+
+    return `${dur.minutes().toString().padStart(2, "0")}m ${dur.seconds().toString().padStart(2, "0")}s`;
 });
 
 Vue.filter("til", (time: Date) => {
