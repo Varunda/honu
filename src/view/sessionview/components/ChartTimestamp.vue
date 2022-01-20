@@ -24,6 +24,8 @@
             return {
                 chart: null as Chart | null,
 
+                sortedData: [] as Date[],
+
                 ID: 0 as number,
 
                 period: 30 as number,
@@ -41,6 +43,10 @@
                 this.generateTrend();
                 this.makeChart();
             });
+        },
+
+        mounted: function(): void {
+            this.sortedData = [...this.data].sort((a, b) => a.getTime() - b.getTime());
         },
 
         methods: {
@@ -61,7 +67,7 @@
                 for (let i = start; i <= last; i += this.period * 1000) {
                     //console.log(`Getting kills from ${i} - ${i + this.kpmIntervalPeriod * 1000}`);
 
-                    const slice: Date[] = this.data.filter(iter => iter.getTime() >= i && iter.getTime() < (i + this.period * 1000));
+                    const slice: Date[] = this.sortedData.filter(iter => iter.getTime() >= i && iter.getTime() < (i + this.period * 1000));
                     //console.log(`\tGot ${slice.length} kills in this interval`);
 
                     if (previous.length > 8) {
@@ -104,7 +110,7 @@
                     timestamp: this.data[0]
                 });
 
-                for (const kill of this.data) {
+                for (const kill of this.sortedData) {
                     ++total;
 
                     const totalTime: number = (kill.getTime() - start) / 1000 / 60;
