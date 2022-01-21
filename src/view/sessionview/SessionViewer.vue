@@ -201,13 +201,13 @@
             </collapsible>
 
             <collapsible header-text="Action log">
-                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
+                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading' || vehicleDestroy.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-action-log v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
+                <session-action-log v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data">
                 </session-action-log>
             </collapsible>
 
@@ -248,6 +248,7 @@
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
@@ -265,6 +266,7 @@
 
                 killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExpandedExpEvent[]>,
+                vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>
             }
         },
 
@@ -300,6 +302,7 @@
                 // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
                 this.bindKills();
                 this.bindExp();
+                this.bindVehicleDestroy();
             },
 
             bindSession: async function(): Promise<void> {
@@ -330,6 +333,11 @@
                 this.killsOrDeaths = Loadable.loading();
                 this.killsOrDeaths = await KillStatApi.getSessionKills(this.sessionID);
             },
+
+            bindVehicleDestroy: async function(): Promise<void> {
+                this.vehicleDestroy = Loadable.loading();
+                this.vehicleDestroy = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+            }
 
         },
 

@@ -111,12 +111,14 @@
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
     import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
+    import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
 
     import ZoneUtils from "util/Zone";
     import TimeUtils from "util/Time";
     import ColorUtils from "util/Color";
+    import LoadoutUtils from "util/Loadout";
 
     type LogPart = {
         html: string;
@@ -140,7 +142,8 @@
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true }
+            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true },
+            VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
         },
 
         data: function() {
@@ -155,6 +158,7 @@
                     ["kill", "Kill"],
                     ["death", "Death"],
                     ["assist", "Assist"],
+                    ["vehicle_destroy", "Vehicle destroy"],
 
                     ["heal", "Heal"],
                     ["revive", "Revive"],
@@ -175,6 +179,7 @@
                     shieldRepairs: false as boolean,
                     resupplies: false as boolean,
                     maxRepairs: false as boolean,
+                    vehicleDestroy: true as boolean,
                     expOther: false as boolean
                 }
             }
@@ -190,6 +195,7 @@
                 this.makeDeaths();
                 this.makeExp();
                 this.makeZoneChange();
+                this.makeVehicleDestroy();
 
                 // Add the session start and end
                 this.entries.push({
@@ -239,7 +245,9 @@
                             { html: `killed` },
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
                             { html: `using` },
-                            { html: (iter.event.weaponID == "0") ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) }
+                            { html: (iter.event.weaponID == "0") ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
+                            this.createLogText("as a"),
+                            this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
                         type: (asKill == true) ? "kill" : "death",
@@ -319,6 +327,35 @@
                         parts.push({
                             html: `<a href="/c/${iter.event.otherID}">${this.getCharacterName(iter.other, iter.event.otherID)}</a>'s shield`
                         });
+                    } else if (Experience.isVehicleKill(expID)) {
+                        /*
+                        parts.push(this.createLogText("destroyed a"));
+                        type = "vehicle_destroy";
+
+                        let vehicleName: string = "unknown vehicle";
+
+                        switch (expID) {
+                            case Experience.VKILL_FLASH: vehicleName = "Flash"; break;
+                            case Experience.VKILL_CHIMERA: vehicleName = "Chimera"; break;
+                            case Experience.VKILL_COLOSSUS: vehicleName = "Colossus"; break;
+                            case Experience.VKILL_DERVISH: vehicleName = "Dervish"; break;
+                            case Experience.VKILL_ANT: vehicleName = "ANT"; break;
+                            case Experience.VKILL_GALAXY: vehicleName = "Galaxy"; break;
+                            case Experience.VKILL_HARASSER: vehicleName = "Harasser"; break;
+                            case Experience.VKILL_JAVELIN: vehicleName = "Javline"; break;
+                            case Experience.VKILL_LIBERATOR: vehicleName = "Liberator"; break;
+                            case Experience.VKILL_LIGHTNING: vehicleName = "Lightning"; break;
+                            case Experience.VKILL_MAGRIDER: vehicleName = "Magrider"; break;
+                            case Experience.VKILL_MOSQUITO: vehicleName = "Mosquito"; break;
+                            case Experience.VKILL_PROWLER: vehicleName = "Prowler"; break;
+                            case Experience.VKILL_REAVER: vehicleName = "Reaver"; break;
+                            case Experience.VKILL_SCYTHE: vehicleName = "Scythe"; break;
+                            case Experience.VKILL_VALKYRIE: vehicleName = "Valkyrie"; break;
+                            case Experience.VKILL_VANGUARD: vehicleName = "Vanguard"; break;
+                        }
+
+                        parts.push(this.createLogText(vehicleName));
+                        */
                     } else {
                         let verb: string = "supported (generic)";
 
@@ -332,7 +369,7 @@
                             type = "resupply"; verb = "resupplied";
                         }
 
-                        parts.push({ html: verb });
+                        parts.push(this.createLogText(verb));
                         parts.push(this.createCharacterLink(iter.other, iter.event.otherID));
 
                         // For assist events, the amount of score gained is relative to the % of damage dealt (i think)
@@ -347,10 +384,13 @@
                             }
 
                             parts.push({
-                                html: `(did ${((iter.event.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
+                                html: `(${((iter.event.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
                             });
                         }
                     }
+
+                    parts.push(this.createLogText(`as a`));
+                    parts.push(this.createLoadoutName(iter.event.loadoutID));
 
                     if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.event.otherID) {
                         ++prev.count;
@@ -367,6 +407,34 @@
                         prev = entry;
                     }
                 }
+            },
+
+            makeVehicleDestroy: function(): void {
+                const entries: ActionLogEntry[] = this.VehicleDestroy.map(iter => {
+                    const killedColor: string = ColorUtils.getFactionColor(iter.killed?.factionID ?? iter.event.killedFactionID);
+
+                    const entry: ActionLogEntry = {
+                        parts: [
+                            this.createCharacterLink(iter.attacker, iter.event.attackerCharacterID),
+                            this.createLogText(`destroyed`),
+                            this.createLogText(`<a style="color: ${killedColor}" href="/c/${iter.event.killedCharacterID}">${this.getCharacterName(iter.killed, iter.event.killedCharacterID)}</a>'s`),
+                            this.createLogText(`${iter.killedVehicle?.name ?? `&lt;missing vehicle ${iter.event.killedVehicleID}&gt;`}`),
+                            this.createLogText(`using the`),
+                            this.createLogText(`${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
+                            { html: (iter.event.attackerWeaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.attackerWeaponID}&gt;`, `/i/${iter.event.attackerWeaponID}`) },
+                            this.createLogText("as a"),
+                            this.createLoadoutName(iter.event.attackerLoadoutID)
+                        ],
+                        timestamp: iter.event.timestamp,
+                        type: "vehicle_destroy",
+                        count: 1,
+                        otherID: null
+                    };
+
+                    return entry;
+                });
+
+                this.entries.push(...entries);
             },
 
             makeZoneChange: function(): void {
@@ -408,8 +476,8 @@
                 }
             },
 
-            createLogText: function(text: string): LogPart {
-                return { html: text };
+            createLogText: function(text: string, color?: string): LogPart {
+                return { html: `<span ${(color != undefined ? `style="color: ${color}"` : ``)}>${text}</span>` };
             },
 
             createLink: function(name: string, link: string, color?: string): string {
@@ -420,6 +488,10 @@
                 return {
                     html: this.createLink(this.getCharacterName(c, id), `/c/${id}`, (c != null) ? ColorUtils.getFactionColor(c.factionID) : undefined)
                 }
+            },
+
+            createLoadoutName: function(loadoutID: number): LogPart {
+                return this.createLogText(`${LoadoutUtils.getLoadoutName(loadoutID)}`);
             },
 
             getCharacterName: function(c: PsCharacter | null, id: string): string {
@@ -476,6 +548,10 @@
                     }
 
                     if (iter.type == "shield_repair" && this.show.shieldRepairs == true) {
+                        return true;
+                    }
+
+                    if (iter.type == "vehicle_destroy" && this.show.vehicleDestroy == true) {
                         return true;
                     }
 

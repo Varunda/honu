@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -22,6 +24,32 @@ namespace watchtower.Services.Db {
             _Logger = logger;
             _DbHelper = helper;
             _Reader = reader;
+        }
+
+        /// <summary>
+        ///     Get the vehicle destroy events that a character got during a time period
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="start">Lower bound of the range</param>
+        /// <param name="end">Upper bound of the range</param>
+        /// <returns></returns>
+        public async Task<List<VehicleDestroyEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM vehicle_destroy
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                        AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID)
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
         }
 
         /// <summary>

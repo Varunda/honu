@@ -24,19 +24,22 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly ObjectiveSetCollection _ObjectiveSetCensus;
         private readonly AchievementCollection _AchievementCensus;
         private readonly ItemCollection _ItemCensus;
+        private readonly VehicleCollection _VehicleCensus;
 
         private readonly ObjectiveDbStore _ObjectiveDb;
         private readonly ObjectiveTypeDbStore _ObjectiveTypeDb;
         private readonly ObjectiveSetDbStore _ObjectiveSetDb;
         private readonly AchievementDbStore _AchievementDb;
         private readonly ItemDbStore _ItemDb;
+        private readonly VehicleDbStore _VehicleDb;
 
         public ObjectiveCollectionsPopulator(ILogger<ObjectiveCollectionsPopulator> logger,
             ObjectiveCollection objCensus, ObjectiveDbStore objDb,
             ObjectiveTypeCollection objTypeCensus, ObjectiveTypeDbStore objTypeDb,
             ObjectiveSetCollection objSetCensus, ObjectiveSetDbStore objSetDb,
             AchievementCollection achCensus, AchievementDbStore achDb,
-            ItemCollection itemCensus, ItemDbStore itemDb) {
+            ItemCollection itemCensus, ItemDbStore itemDb,
+            VehicleCollection vehCensus, VehicleDbStore vehDb) {
 
             _Logger = logger;
 
@@ -50,6 +53,8 @@ namespace watchtower.Services.Hosted.Startup {
             _AchievementDb = achDb;
             _ItemCensus = itemCensus;
             _ItemDb = itemDb;
+            _VehicleCensus = vehCensus;
+            _VehicleDb = vehDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -103,6 +108,16 @@ namespace watchtower.Services.Hosted.Startup {
                 if (censusItems.Count > dbItems.Count) {
                     foreach (PsItem item in censusItems) {
                         await _ItemDb.Upsert(item);
+                    }
+                }
+
+                List<PsVehicle> censusVehs = await _VehicleCensus.GetAll();
+                List<PsVehicle> dbVehs = await _VehicleDb.GetAll();
+
+                _Logger.LogDebug($"Vehicle: got {censusVehs.Count} from Census, have {dbVehs.Count} in DB");
+                if (censusVehs.Count > dbVehs.Count) {
+                    foreach (PsVehicle veh in censusVehs) {
+                        await _VehicleDb.Upsert(veh);
                     }
                 }
 

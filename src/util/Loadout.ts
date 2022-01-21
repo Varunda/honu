@@ -109,4 +109,50 @@ export default class LoadoutUtils {
         }
     }
 
+	public static getLoadoutName(loadoutID: number): string {
+
+        switch (loadoutID) {
+            case LoadoutUtils.VS_INFILTRATOR:
+            case LoadoutUtils.NC_INFILTRATOR:
+            case LoadoutUtils.TR_INFILTRATOR:
+			case LoadoutUtils.NS_INFILTRATOR:
+				return "infiltrator";
+
+            case LoadoutUtils.NC_ENGINEER:
+            case LoadoutUtils.TR_ENGINEER:
+            case LoadoutUtils.VS_ENGINEER:
+			case LoadoutUtils.NS_ENGINEER:
+				return "engineer";
+
+            case LoadoutUtils.NC_MAX:
+            case LoadoutUtils.TR_MAX:
+            case LoadoutUtils.VS_MAX:
+			case LoadoutUtils.NS_MAX:
+				return "MAX";
+
+            case LoadoutUtils.TR_LIGHT_ASSAULT:
+            case LoadoutUtils.NC_LIGHT_ASSAULT:
+            case LoadoutUtils.VS_LIGHT_ASSAULT:
+			case LoadoutUtils.NS_LIGHT_ASSAULT:
+				return "light assault";
+
+            case LoadoutUtils.TR_MEDIC:
+            case LoadoutUtils.NC_MEDIC:
+            case LoadoutUtils.VS_MEDIC:
+			case LoadoutUtils.NS_MEDIC:
+				return "medic";
+
+            case LoadoutUtils.TR_HEAVY_ASSAULT:
+            case LoadoutUtils.NC_HEAVY_ASSAULT:
+            case LoadoutUtils.VS_HEAVY_ASSAULT:
+			case LoadoutUtils.NS_HEAVY_ASSAULT:
+				return "heavy assault";
+
+			default: ``;
+        }
+
+
+
+    }
+
 }

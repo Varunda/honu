@@ -43,6 +43,9 @@ namespace watchtower.Services.Census {
             services.AddSingleton<IStaticCollection<ObjectiveSet>, ObjectiveSetCollection>();
             services.AddSingleton<ObjectiveSetCollection>();
 
+            services.AddSingleton<IStaticCollection<PsVehicle>, VehicleCollection>();
+            services.AddSingleton<VehicleCollection>();
+
             services.AddSingleton<IStaticCollection<Achievement>, AchievementCollection>();
             services.AddSingleton<AchievementCollection>();
         }
