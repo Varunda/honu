@@ -1,17 +1,21 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown>
+                <menu-realtime></menu-realtime>
+                <menu-characters></menu-characters>
+                <menu-outfits></menu-outfits>
+                <menu-ledger></menu-ledger>
+            </menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
+            <li class="nav-item h1 p-0">
+                <a href="/character">Characters</a>
+            </li>
 
-                <a href="/character" title="Return to character search">Character Viewer</a>
-
-                <span>/</span>
-
+            <li class="nav-item h1 p-0 mx-2">
+                /
                 <span v-if="character.state == 'loading'">
                     &lt;Loading...&gt;
                 </span>
@@ -19,8 +23,73 @@
                 <span v-else-if="character.state == 'loaded'">
                     {{character.data.name}}
                 </span>
-            </h1>
-        </div>
+            </li>
+        </honu-menu>
+
+        <!--
+        <nav class="navbar navbar-expand p-0">
+            <div class="navbar-collapse">
+                <ul class="navbar-nav h1">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle h1 p-0" href="/" data-toggle="dropdown">
+                            <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+                            Honu
+                        </a>
+
+                        <ul class="dropdown-menu mt-0">
+                            <li class="dropdown-submenu">
+                                <span class="dropdown-item dropdown-toggle">Realtime</span>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/view/connery">Connery</a></li>
+                                    <li><a class="dropdown-item" href="/view/cobalt">Cobalt</a></li>
+                                    <li><a class="dropdown-item" href="/view/emerald">Emerald</a></li>
+                                    <li><a class="dropdown-item" href="/view/jaeger">Jaeger</a></li>
+                                    <li><a class="dropdown-item" href="/view/miller">Miller</a></li>
+                                    <li><a class="dropdown-item" href="/view/soltech">SolTech</a></li>
+                                </ul>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" href="/character">Characters</a>
+                            </li>
+
+                            <li class="dropdown-submenu">
+                                <span class="dropdown-item dropdown-toggle">Outfits</span>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/outfitfinder">Search</a></li>
+                                    <li><a class="dropdown-item" href="/report">Report</a></li>
+                                    <li><a class="dropdown-item" href="/outfitpop">Population</a></li>
+                                </ul>
+                            </li>
+
+                            <li>
+                                <a class="dropdown-item" href="/ledger">Ledger</a>
+                            </li>
+
+                        </ul>
+                    </li>
+
+                    <li class="nav-item h1 p-0 mx-2">/</li>
+
+                    <li class="nav-item h1 p-0">
+                        <a href="/character">Characters</a>
+                    </li>
+
+                    <li class="nav-item h1 p-0 mx-2">
+                        /
+                        <span v-if="character.state == 'loading'">
+                            &lt;Loading...&gt;
+                        </span>
+
+                        <span v-else-if="character.state == 'loaded'">
+                            {{character.data.name}}
+                        </span>
+                    </li>
+
+                </ul>
+            </div>
+        </nav>
+        -->
 
         <hr class="border" />
 
@@ -103,6 +172,8 @@
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
     import { Loadable, Loading } from "Loading";
+
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import Busy from "components/Busy.vue";
     import CharacterHeader from "./components/CharacterHeader.vue";
@@ -201,7 +272,8 @@
             CharacterSessions,
             CharacterItems,
             CharacterFriends,
-            CharacterDirectives
+            CharacterDirectives,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
     export default CharacterViewer;

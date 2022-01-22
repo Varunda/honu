@@ -1,51 +1,66 @@
 ﻿<template>
     <div>
-        <table class="table table-sm">
-            <thead class="table-secondary">
-                <tr>
-                    <th>Start</th>
-                    <th>Finish</th>
-                    <th>Duration</th>
-                    <th>View</th>
-                </tr>
-            </thead>
 
-            <tbody v-if="sessions.state == 'idle'"></tbody>
+        <a-table
+            display-type="table" row-padding="compact" :striped="false" :hover="true"
+            :entries="filteredSessions" :page-sizes="[50, 100, 200, 500]" :default-page-size="200">
 
-            <tbody v-else-if="sessions.state == 'loading'">
-                <tr>
-                    <td colspan="4">Loading...</td>
-                </tr>
-            </tbody>
+            <a-col>
+                <a-header>
+                    <b>Start</b>
+                </a-header>
 
-            <tbody v-else-if="sessions.state == 'loaded' && sessions.data.length > 0">
-                <tr v-for="session in sessions.data" :key="session.id">
-                    <td>{{session.start | moment}}</td>
-                    <td>{{session.end | moment}}</td>
-                    <td>
-                        <span v-if="session.end == null">
-                            &lt;In progress&gt;
-                        </span>
+                <a-body v-slot="entry">
+                    {{entry.start | moment}}
+                </a-body>
+            </a-col>
 
-                        <span v-else>
-                            {{(session.end.getTime() - session.start.getTime()) / 1000 | mduration}}
-                        </span>
-                    </td>
+            <a-col>
+                <a-header>
+                    <b>Finish</b>
+                </a-header>
 
-                    <td>
-                        <a :href="'/s/' + session.id">
-                            View
-                        </a>
-                    </td>
-                </tr>
-            </tbody>
+                <a-body v-slot="entry">
+                    <span v-if="entry.end">
+                        {{entry.end | moment}}
+                    </span>
+                </a-body>
+            </a-col>
 
-            <tr v-else-if="sessions.state == 'loaded' && sessions.data.length == 0">
-                <td colspan="4">
-                    No sessions recorded
-                </td>
-            </tr>
-        </table>
+            <a-col>
+                <a-header>
+                    <b>Duration</b>
+                    <button type="button" class="btn btn-sm py-0 mx-2 border" @click="showAll = !showAll" :class="[ showAll ? 'btn-success' : 'btn-secondary' ]">
+                        All
+                    </button>
+
+                    <info-hover text="Sessions under 5 minutes are hidden by default. Click 'All' to see all sessions">
+                    </info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <span v-if="entry.end == null">
+                        &lt;in progress&gt;
+                    </span>
+
+                    <span v-else>
+                        {{(entry.end.getTime() - entry.start.getTime()) / 1000 | mduration}}
+                    </span>
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>View</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <a :href="'/s/' + entry.id">
+                        View
+                    </a>
+                </a-body>
+            </a-col>
+        </a-table>
 
         <div class="text-center">
             <small>
@@ -60,6 +75,9 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import InfoHover from "components/InfoHover.vue";
+
     import "filters/LocaleFilter";
     import "filters/FixedFilter";
 
@@ -73,7 +91,9 @@
 
         data: function() {
             return {
-                sessions: Loadable.idle() as Loading<Session[]>
+                sessions: Loadable.idle() as Loading<Session[]>,
+
+                showAll: false as boolean
             }
         },
 
@@ -92,9 +112,28 @@
         },
 
         computed: {
+            filteredSessions: function(): Loading<Session[]> {
+                if (this.sessions.state != "loaded") {
+                    return this.sessions;
+                }
 
+                if (this.showAll == true) {
+                    return this.sessions;
+                }
+
+                return Loadable.loaded(this.sessions.data.filter(iter => {
+                    const end: number = (iter.end ?? new Date()).getTime();
+                    const start: number = iter.start.getTime();
+
+                    return (end - start) > 1000 * 60 * 5;
+                }));
+            }
+        },
+
+        components: {
+            ATable, ACol, AHeader, ABody, AFilter,
+            InfoHover
         }
-
     });
     export default CharacterSessions;
 </script>

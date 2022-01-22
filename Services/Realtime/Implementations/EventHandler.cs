@@ -622,7 +622,9 @@ namespace watchtower.Realtime {
                     attacker.TeamID = ev.AttackerTeamID;
                 }
 
-                ev.AttackerTeamID = attacker.TeamID;
+                if (attacker.FactionID == Faction.NS) {
+                    ev.AttackerTeamID = attacker.TeamID;
+                }
 
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
@@ -646,7 +648,9 @@ namespace watchtower.Realtime {
                     killed.TeamID = ev.KilledTeamID;
                 }
 
-                ev.KilledTeamID = killed.TeamID;
+                if (attacker.FactionID == Faction.NS) {
+                    ev.KilledTeamID = killed.TeamID;
+                }
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;

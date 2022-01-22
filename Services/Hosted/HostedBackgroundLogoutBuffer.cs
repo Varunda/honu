@@ -36,6 +36,8 @@ namespace watchtower.Services.Hosted {
         private const int PERIOD_WAIT_SHORT = 15;
         private const int TASK_COUNT = 4;
 
+        private int _LastCount = 0;
+
         public HostedBackgroundLogoutBuffer(ILogger<HostedBackgroundLogoutBuffer> logger,
             ICharacterCollection charColl, BackgroundCharacterWeaponStatQueue weaponQueue,
             IServiceHealthMonitor healthMon, LogoutBufferDbStore logoutDb) {
@@ -67,6 +69,8 @@ namespace watchtower.Services.Hosted {
                     List<LogoutBufferEntry> entries;
                     try {
                         entries = await _LogoutDb.GetPending(stoppingToken);
+
+                        _LastCount = entries.Count;
                     } catch (Exception ex) {
                         _Logger.LogError(ex, $"failed to get pending entries in logout buffer");
                         await Task.Delay(5000, stoppingToken);

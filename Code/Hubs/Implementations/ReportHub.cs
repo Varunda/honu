@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -180,10 +181,22 @@ namespace watchtower.Code.Hubs.Implementations {
                     items.Add(int.Parse(ev.WeaponID));
                 }
 
-                report.Kills = killDeaths.Where(iter => iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
+                HashSet<string> killChars = new();
+
+                report.Kills = killDeaths.Where(iter => {
+                    bool ret = iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID && iter.KilledTeamID != 0 && iter.KilledTeamID != 4;
+                    if (ret == true && killChars.Contains(iter.AttackerCharacterID) == false) {
+                        _Logger.LogDebug($"{iter.AttackerCharacterID} got a kill that was returned from the killDeathEvents: {JToken.FromObject(iter)}");
+                        killChars.Add(iter.AttackerCharacterID);
+                    }
+
+                    return ret;
+                }).ToList();
                 await Clients.Caller.UpdateKills(report.Kills);
 
-                report.Deaths = killDeaths.Where(iter => iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.RevivedEventID == null).ToList();
+                report.Deaths = killDeaths.Where(iter => {
+                    return iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.AttackerTeamID != 0 && iter.AttackerTeamID != 4 && iter.RevivedEventID == null;
+                }).ToList();
                 await Clients.Caller.UpdateDeaths(report.Deaths);
 
                 // Get all the control events the players participated in

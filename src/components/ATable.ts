@@ -4,6 +4,7 @@
 import { Loading, Loadable } from "Loading";
 
 import Busy from "components/Busy.vue";
+import { PropType } from "../../node_modules/vue/types/umd";
 
 const ValidFilterTypes: string[] = [ "string", "number", "date", "boolean" ];
 
@@ -91,7 +92,11 @@ export const ATable = Vue.extend({
         striped: { type: Boolean, required: false, default: true },
 
         // Will the resulting table be rendered with .table-hover or no
-        hover: { type: Boolean, required: false, default: false }
+        hover: { type: Boolean, required: false, default: false },
+
+        PageSizes: { type: Array as PropType<number[]>, required: false },
+
+        DefaultPageSize: { type: Number, required: false },
     },
 
     data: function() {
@@ -110,7 +115,7 @@ export const ATable = Vue.extend({
             filters: [] as Filter[],
 
             paging: {
-                size: 50 as number,
+                size: this.DefaultPageSize || 50 as number,
                 page: 0 as number
             },
         }
@@ -872,7 +877,7 @@ export const ATable = Vue.extend({
                             },
                         },
                         [
-                            [5, 10, 25, 50, 100, 200].map((amount: number): VNode => {
+                            this.pageSizes.map((amount: number): VNode => {
                                 return createElement("option",
                                     {
                                         domProps: {
@@ -1217,6 +1222,14 @@ export const ATable = Vue.extend({
         pageOffset: function(): number {
             return Math.floor(this.paging.page / 10) * 10;
         },
+
+        pageSizes: function(): number[] {
+            return this.PageSizes || [5, 10, 25, 50, 100, 200];
+        },
+
+        defaultPageSize: function(): number {
+            return this.DefaultPageSize || 50;
+        }
     },
 
     components: {

@@ -1,43 +1,18 @@
 ﻿<template>
     <div>
-        <h4>Filters</h4>
-
-        <div class="btn-group w-100 mb-3">
-            <toggle-button v-model="show.kills">
-                Kills
-            </toggle-button>
-
-            <toggle-button v-model="show.deaths">
-                Deaths
-            </toggle-button>
-
-            <toggle-button v-model="show.assists">
-                Assists
-            </toggle-button>
-
-            <toggle-button v-model="show.revives">
-                Revives
-            </toggle-button>
-
-            <toggle-button v-model="show.heals">
-                Heals
-            </toggle-button>
-
-            <toggle-button v-model="show.shieldRepairs">
-                Shield repairs
-            </toggle-button>
-
-            <toggle-button v-model="show.maxRepairs">
-                MAX repairs
-            </toggle-button>
-
-            <toggle-button v-model="show.resupplies">
-                Resupplies
-            </toggle-button>
-
-            <toggle-button v-model="show.expOther">
-                Other exp events
-            </toggle-button>
+        <div>
+            <h4>Filters</h4>
+            <div class="btn-group w-100 mb-3">
+                <toggle-button v-model="show.kills">Kills</toggle-button>
+                <toggle-button v-model="show.deaths">Deaths</toggle-button>
+                <toggle-button v-model="show.assists">Assists</toggle-button>
+                <toggle-button v-model="show.revives">Revives</toggle-button>
+                <toggle-button v-model="show.heals">Heals</toggle-button>
+                <toggle-button v-model="show.shieldRepairs">Shield repairs</toggle-button>
+                <toggle-button v-model="show.maxRepairs">MAX repairs</toggle-button>
+                <toggle-button v-model="show.resupplies">Resupplies</toggle-button>
+                <toggle-button v-model="show.expOther">Other exp events</toggle-button>
+            </div>
         </div>
 
         <div v-if="assistScoreMult != 1" class="bg-warning text-center">
@@ -47,7 +22,8 @@
         <a-table
             :entries="tableActions"
             default-sort-column="timestamp" default-sort-order="asc"
-            :paginate="false" row-padding="compact" display-type="table" :striped="false" :show-filters="true" :hover="true">
+            :paginate="false" row-padding="compact" display-type="table" 
+            :striped="false" :show-filters="true" :hover="true">
 
             <a-col>
                 <a-header>

@@ -81,11 +81,11 @@ export class PlayerMetadataGenerator {
 
 		const map: Map<string, PlayerMetadata> = new Map();
 
-		function getEntry(charID: string): PlayerMetadata {
+		function getEntry(charID: string, source?: string): PlayerMetadata {
 			if (map.has(charID) == false) {
-				//console.log(`Adding new metadata entry for ${charID}`);
-
 				const char: PsCharacter | null = report.characters.get(charID) || null;
+
+				console.log(`Adding new metadata entry for ${charID}/${char?.name} ${(source ? source : "")}`);
 
 				const metadata: PlayerMetadata = new PlayerMetadata();
 				metadata.ID = charID;
@@ -119,7 +119,7 @@ export class PlayerMetadataGenerator {
 		}
 
 		for (const kill of report.kills) {
-			const entry: PlayerMetadata = getEntry(kill.attackerCharacterID);
+			const entry: PlayerMetadata = getEntry(kill.attackerCharacterID, "kill");
 
 			entry.kills.push(kill);
 
@@ -130,7 +130,7 @@ export class PlayerMetadataGenerator {
 		}
 
 		for (const death of report.deaths) {
-			const entry: PlayerMetadata = getEntry(death.killedCharacterID);
+			const entry: PlayerMetadata = getEntry(death.killedCharacterID, "death");
 
 			entry.deaths.push(death);
 
@@ -141,12 +141,12 @@ export class PlayerMetadataGenerator {
 		}
 
 		for (const exp of report.experience) {
-			const entry: PlayerMetadata = getEntry(exp.sourceID);
+			const entry: PlayerMetadata = getEntry(exp.sourceID, "exp");
 			entry.exp.push(exp);
 		}
 
 		for (const session of report.sessions) {
-			const entry: PlayerMetadata = getEntry(session.characterID);
+			const entry: PlayerMetadata = getEntry(session.characterID, "session");
 			entry.sessions.push(session);
 		}
 
