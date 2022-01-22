@@ -181,16 +181,8 @@ namespace watchtower.Code.Hubs.Implementations {
                     items.Add(int.Parse(ev.WeaponID));
                 }
 
-                HashSet<string> killChars = new();
-
                 report.Kills = killDeaths.Where(iter => {
-                    bool ret = iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID && iter.KilledTeamID != 0 && iter.KilledTeamID != 4;
-                    if (ret == true && killChars.Contains(iter.AttackerCharacterID) == false) {
-                        _Logger.LogDebug($"{iter.AttackerCharacterID} got a kill that was returned from the killDeathEvents: {JToken.FromObject(iter)}");
-                        killChars.Add(iter.AttackerCharacterID);
-                    }
-
-                    return ret;
+                    return iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID && iter.KilledTeamID != 0 && iter.KilledTeamID != 4;
                 }).ToList();
                 await Clients.Caller.UpdateKills(report.Kills);
 

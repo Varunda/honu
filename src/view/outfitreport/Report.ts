@@ -85,7 +85,7 @@ export class PlayerMetadataGenerator {
 			if (map.has(charID) == false) {
 				const char: PsCharacter | null = report.characters.get(charID) || null;
 
-				console.log(`Adding new metadata entry for ${charID}/${char?.name} ${(source ? source : "")}`);
+				//console.log(`Adding new metadata entry for ${charID}/${char?.name} ${(source ? source : "")}`);
 
 				const metadata: PlayerMetadata = new PlayerMetadata();
 				metadata.ID = charID;
