@@ -51,23 +51,38 @@ namespace watchtower.Services.Repositories.Implementations {
         public async Task<PsCharacter?> GetByID(string charID) {
             string key = string.Format(CACHE_KEY_ID, charID);
 
+            // When Honu fails to get a character cause of a timeout, don't cache a potentially outdated
+            //      character and wait a bit until getting from the cache again
+            bool doShortCache = false;
+
             if (_Cache.TryGetValue(key, out PsCharacter? character) == false) {
                 character = await _Db.GetByID(charID);
 
                 // Only update the character if it's expired
                 // If the DateLastLogin is the MinValue, it means the column was null from the DB, and it needs to be pulled from census
                 if (character == null || HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue) {
-                    // If we have the character in DB, but not in Census, return it from DB
-                    //      Useful if census is down, or a character has been deleted
-                    PsCharacter? censusChar = await _Census.GetByID(charID);
-                    if (censusChar != null) {
-                        character = await _Census.GetByID(charID);
-                        await _Db.Upsert(censusChar);
+                    try {
+                        // If we have the character in DB, but not in Census, return it from DB
+                        //      Useful if census is down, or a character has been deleted
+                        PsCharacter? censusChar = await _Census.GetByID(charID);
+                        if (censusChar != null) {
+                            character = await _Census.GetByID(charID);
+                            await _Db.Upsert(censusChar);
+                        }
+                    } catch (Exception ex) {
+                        // If Honu failed to find any character, propogate the error up
+                        //      else, since we have the character, but it's out of date, use that one instead
+                        if (character == null) {
+                            throw;
+                        } else {
+                            doShortCache = true;
+                            _Logger.LogError(ex, $"failed to get {charID} from census");
+                        }
                     }
                 }
 
                 _Cache.Set(key, character, new MemoryCacheEntryOptions() {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(20)
+                    AbsoluteExpirationRelativeToNow = doShortCache == true ? TimeSpan.FromMinutes(1) : TimeSpan.FromMinutes(20)
                 });
 
                 if (character != null) {

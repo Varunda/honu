@@ -182,12 +182,21 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
 
                 report.Kills = killDeaths.Where(iter => {
-                    return iter.AttackerTeamID == report.TeamID && iter.AttackerTeamID != iter.KilledTeamID && iter.KilledTeamID != 0 && iter.KilledTeamID != 4;
+                    return iter.AttackerTeamID == report.TeamID 
+                        && report.Players.Contains(iter.AttackerCharacterID)
+                        && iter.AttackerTeamID != iter.KilledTeamID 
+                        && iter.KilledTeamID != 0 
+                        && iter.KilledTeamID != 4;
                 }).ToList();
                 await Clients.Caller.UpdateKills(report.Kills);
 
                 report.Deaths = killDeaths.Where(iter => {
-                    return iter.KilledTeamID == report.TeamID && iter.KilledTeamID != iter.AttackerTeamID && iter.AttackerTeamID != 0 && iter.AttackerTeamID != 4 && iter.RevivedEventID == null;
+                    return iter.KilledTeamID == report.TeamID 
+                        && report.Players.Contains(iter.KilledCharacterID)
+                        && iter.KilledTeamID != iter.AttackerTeamID 
+                        && iter.AttackerTeamID != 0 
+                        && iter.AttackerTeamID != 4 
+                        && iter.RevivedEventID == null;
                 }).ToList();
                 await Clients.Caller.UpdateDeaths(report.Deaths);
 

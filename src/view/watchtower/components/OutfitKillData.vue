@@ -6,7 +6,7 @@
                 <th title="Per Players (Total)">Kills</th>
                 <th title="Revives remove a death, like in game">Deaths</th>
                 <th title="Kills / Deaths">K/D</th>
-                <th>Online</th>
+                <th>Characters</th>
             </tr>
         </thead>
 
