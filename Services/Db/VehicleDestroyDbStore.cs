@@ -53,6 +53,33 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Get the vehicle destroy events a block of characters got
+        /// </summary>
+        /// <param name="IDs"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        public async Task<List<VehicleDestroyEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM vehicle_destroy
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                        AND (attacker_character_id = ANY(@CharacterIDs) OR killed_character_id = ANY(@CharacterIDs))
+            ");
+
+            cmd.AddParameter("CharacterID", IDs);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+
+        }
+
+        /// <summary>
         ///     Insert a new <see cref="VehicleDestroyEvent"/> into the storing Db
         /// </summary>
         /// <param name="ev">Event to be inserted</param>

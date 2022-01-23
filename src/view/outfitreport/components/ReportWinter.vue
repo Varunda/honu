@@ -62,6 +62,7 @@
     import { ExpEvent } from "api/ExpStatApi";
 
     import TimeUtils from "util/Time";
+    import LoadoutUtils from "util/Loadout";
 
     const WinterSection = Vue.extend({
         props: {
@@ -154,6 +155,7 @@
                 this.makeKD();
                 this.makeHSR();
                 this.makeAssists();
+                this.makeMostMaxKills();
 
                 this.makeHeals();
                 this.makeRevives();
@@ -227,6 +229,39 @@
                     [Experience.ASSIST, Experience.HIGH_PRIORITY_ASSIST, Experience.PRIORITY_ASSIST, Experience.SPAWN_ASSIST],
                     (metadata) => metadata.timeAs)
                 );
+            },
+
+            makeMostMaxKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "MAX kills";
+                metric.funName = "Bad mechanic";
+                metric.description = "Most MAX kills (per hour)";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.kills) {
+                    if (LoadoutUtils.isMax(ev.killedLoadoutID) == true) {
+                        map.set(ev.attackerCharacterID, (map.get(ev.attackerCharacterID) || 0) + 1);
+                    }
+                }
+
+                const metrics: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.value = iter[1];
+                        entry.name = this.getCharacterName(iter[0]);
+
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            entry.display = `${entry.value} (${(entry.value / metadata.timeAs * 60 * 60).toFixed(2)})`;
+                        }
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = metrics;
+
+                this.catMisc.metrics.push(metric);
             },
 
             makeHeals: function(): void {
