@@ -18,6 +18,11 @@
         </div>
 
         <div>
+            <h3>Kill/Death ratio</h3>
+            <chart-kill-death-ratio-trend :session="session" :kills="kills" :deaths="deaths"></chart-kill-death-ratio-trend>
+        </div>
+
+        <div>
             <h3>Assists per minute</h3>
             <chart-timestamp :start="session.start" :end="session.end || new Date()" :data="assistData"></chart-timestamp>
         </div>
@@ -66,6 +71,7 @@
     import Chart from "chart.js/auto/auto.esm";
 
     import ChartTimestamp from "./ChartTimestamp.vue";
+    import ChartKillDeathRatioTrend from "./ChartKillDeathRatioTrend.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
 
@@ -125,6 +131,7 @@
 
         components: {
             ChartTimestamp,
+            ChartKillDeathRatioTrend,
             InfoHover,
             Busy,
         }

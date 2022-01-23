@@ -173,7 +173,6 @@
                 Array.from(this.report.playerMetadata.values())
                     .sort((a, b) => a.name.localeCompare(b.name))
                     .map((iter: PlayerMetadata): FlatPlayerMetadata => {
-                        //console.log(iter);
                         return {
                             id: iter.ID,
                             name: iter.name,

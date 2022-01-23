@@ -211,6 +211,17 @@
                 </session-action-log>
             </collapsible>
 
+            <collapsible header-text="Routers & Sunderers">
+                <div v-if="exp.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-spawns v-else-if="exp.state == 'loaded'"
+                    :session="session.data" :exp="exp.data">
+                </session-viewer-spawns>
+            </collapsible>
+
             <collapsible header-text="Vehicle kills">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
@@ -239,6 +250,7 @@
     import SessionViewerExp from "./components/SessionViewerExp.vue";
     import SessionViewerTrends from "./components/SessionViewerTrends.vue";
     import SessionActionLog from "./components/SessionActionLog.vue";
+    import SessionViewerSpawns from "./components/SessionViewerSpawns.vue";
     import SessionViewerVehicles from "./components/SessionViewerVehicles.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
@@ -375,6 +387,7 @@
             SessionViewerExp,
             SessionViewerTrends,
             SessionActionLog,
+            SessionViewerSpawns,
             SessionViewerVehicles,
             ChartTimestamp,
             InfoHover,

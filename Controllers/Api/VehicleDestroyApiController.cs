@@ -40,6 +40,17 @@ namespace watchtower.Controllers.Api {
             _ItemRepository = itemRepo;
         }
 
+        /// <summary>
+        ///     Get the vehicle destory events that occured during a session
+        /// </summary>
+        /// <param name="sessionID">ID of the session</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpandedVehicleDestroyEvent"/>s
+        ///     that happening during the <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/>
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("session/{sessionID}")]
         public async Task<ApiResponse<List<ExpandedVehicleDestroyEvent>>> GetBySessionID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);

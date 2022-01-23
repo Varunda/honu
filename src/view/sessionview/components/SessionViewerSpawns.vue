@@ -1,5 +1,14 @@
 ﻿<template>
     <div>
+
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
+
         ye
     </div>
 </template>
@@ -33,16 +42,17 @@
     export const SessionViewerSpawns = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
-            kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true },
-            VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
         },
 
         data: function() {
             return {
                 spawns: [] as Spawn[]
             }
+        },
+
+        mounted: function(): void {
+            this.makeSpawns();
         },
 
         methods: {
@@ -52,7 +62,7 @@
                 for (const ev of this.exp) {
                     const expID: number = ev.event.experienceID;
                     if (expID != Experience.SUNDERER_SPAWN_BONUS && expID != Experience.GENERIC_NPC_SPAWN) {
-                        return;
+                        continue;
                     }
 
                     let spawn: Spawn;
@@ -67,6 +77,7 @@
                                 lastSpawn: ev.event.timestamp
                             };
                             map.set(spawn.id, spawn);
+                            console.log(`SessionViewerSpawns> new sunderer`);
                         }
                     } else if (expID == Experience.GENERIC_NPC_SPAWN) {
                         if (map.has(ev.event.otherID) == false) {
@@ -78,6 +89,7 @@
                                 lastSpawn: ev.event.timestamp
                             };
                             map.set(spawn.id, spawn);
+                            console.log(`SessionViewerSpawns> new router`);
                         }
                     }
 

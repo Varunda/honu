@@ -110,7 +110,6 @@ export default class LoadoutUtils {
     }
 
 	public static getLoadoutName(loadoutID: number): string {
-
         switch (loadoutID) {
             case LoadoutUtils.VS_INFILTRATOR:
             case LoadoutUtils.NC_INFILTRATOR:
@@ -148,10 +147,8 @@ export default class LoadoutUtils {
 			case LoadoutUtils.NS_HEAVY_ASSAULT:
 				return "heavy assault";
 
-			default: ``;
+			default: return `unchecked loudoutID ${loadoutID}`;
         }
-
-
 
     }
 
