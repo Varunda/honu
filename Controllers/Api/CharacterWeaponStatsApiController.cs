@@ -26,7 +26,7 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<CharacterWeaponStatsApiController> _Logger;
 
         private readonly ICharacterWeaponStatRepository _CharacterWeaponStatRepository;
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
@@ -34,7 +34,7 @@ namespace watchtower.Controllers.Api {
         private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
 
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
-            ICharacterWeaponStatRepository charWeaponRepo, ICharacterRepository charRepo,
+            ICharacterWeaponStatRepository charWeaponRepo, CharacterRepository charRepo,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
             IBackgroundWeaponPercentileCacheQueue percentQueue,
             ICharacterWeaponStatDbStore statDb) {

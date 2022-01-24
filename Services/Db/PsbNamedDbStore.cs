@@ -2,6 +2,7 @@
 using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.PSB;
@@ -166,14 +167,8 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("TrStatus", acc.TrStatus);
             cmd.AddParameter("NsStatus", acc.NsStatus);
 
-            object? objID = await cmd.ExecuteScalarAsync();
-            await conn.CloseAsync();
-
-            if (objID != null && long.TryParse(objID.ToString(), out long ID) == true) {
-                return ID;
-            } else {
-                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
-            }
+            long ID = await cmd.ExecuteInt64(CancellationToken.None);
+            return ID;
         }
 
         /// <summary>

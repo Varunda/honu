@@ -7,9 +7,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Census.Implementations {
+namespace watchtower.Services.Census {
 
-    public class CharacterStatCollection : ICharacterStatCollection {
+    public class CharacterStatCollection {
 
         private readonly ILogger<CharacterStatCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
@@ -23,6 +23,10 @@ namespace watchtower.Services.Census.Implementations {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Get the <see cref="PsCharacterStat"/>s of a character
+        /// </summary>
+        /// <param name="charID">Character ID</param>
         public async Task<List<PsCharacterStat>> GetByID(string charID) {
             CensusQuery query = _Census.Create("characters_stat");
             query.Where("character_id").Equals(charID);

@@ -40,8 +40,8 @@ namespace watchtower.Realtime {
         private readonly IDiscordMessageQueue _MessageQueue;
         private readonly BackgroundLogoutBufferQueue _LogoutQueue;
 
-        private readonly ICharacterRepository _CharacterRepository;
-        private readonly IMapCollection _MapCensus;
+        private readonly CharacterRepository _CharacterRepository;
+        private readonly MapCollection _MapCensus;
         private readonly ItemRepository _ItemRepository;
         private readonly MapRepository _MapRepository;
 
@@ -49,9 +49,9 @@ namespace watchtower.Realtime {
 
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
-            IBackgroundCharacterCacheQueue cacheQueue, ICharacterRepository charRepo,
+            IBackgroundCharacterCacheQueue cacheQueue, CharacterRepository charRepo,
             ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
-            IDiscordMessageQueue msgQueue, IMapCollection mapColl,
+            IDiscordMessageQueue msgQueue, MapCollection mapColl,
             FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
             IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,

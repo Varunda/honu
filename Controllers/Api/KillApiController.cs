@@ -24,7 +24,7 @@ namespace watchtower.Controllers {
 
         private readonly ILogger<KillApiController> _Logger;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly OutfitRepository _OutfitRepository;
 
@@ -32,7 +32,7 @@ namespace watchtower.Controllers {
         private readonly ISessionDbStore _SessionDb;
 
         public KillApiController(ILogger<KillApiController> logger,
-            ICharacterRepository charRepo, IKillEventDbStore killDb,
+            CharacterRepository charRepo, IKillEventDbStore killDb,
             ItemRepository itemRepo, OutfitRepository outfitRepo,
             ISessionDbStore sessionDb) {
 

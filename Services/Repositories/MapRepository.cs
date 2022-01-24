@@ -22,13 +22,13 @@ namespace watchtower.Services.Repositories {
 
         private readonly IMapDbStore _MapDb;
         private readonly IFacilityDbStore _FacilityDb;
-        private readonly IMapCollection _MapCensus;
+        private readonly MapCollection _MapCensus;
 
         private readonly Dictionary<short, PsWorldMap> _Maps = new Dictionary<short, PsWorldMap>();
 
         public MapRepository(ILogger<MapRepository> logger,
             IMemoryCache cache, IMapDbStore mapDb,
-            IFacilityDbStore facDb, IMapCollection mapColl) {
+            IFacilityDbStore facDb, MapCollection mapColl) {
 
             _Logger = logger;
             _Cache = cache;

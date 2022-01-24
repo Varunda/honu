@@ -26,7 +26,7 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<CharacterApiController> _Logger;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly ICharacterHistoryStatRepository _HistoryRepository;
         private readonly ISessionDbStore _SessionDb;
@@ -39,7 +39,7 @@ namespace watchtower.Controllers.Api {
         private readonly BackgroundCharacterWeaponStatQueue _UpdateQueue;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
-            ICharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
+            CharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
             ICharacterHistoryStatRepository histRepo, ISessionDbStore sessionDb,
             ICharacterItemRepository charItemRepo, ItemRepository itemRepo,
             ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,

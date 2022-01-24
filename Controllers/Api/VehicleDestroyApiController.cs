@@ -22,13 +22,13 @@ namespace watchtower.Controllers.Api {
         private VehicleDestroyDbStore _VehicleDestroyDb;
         private ISessionDbStore _SessionDb;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly Services.Repositories.CharacterRepository _CharacterRepository;
         private readonly VehicleRepository _VehicleRepository;
         private readonly ItemRepository _ItemRepository;
 
         public VehicleDestroyApiController(ILogger<VehicleDestroyApiController> logger,
             VehicleDestroyDbStore vehicleDestroyDb, ISessionDbStore sessionDb,
-            ICharacterRepository charRepo, VehicleRepository vehRepo,
+            Services.Repositories.CharacterRepository charRepo, VehicleRepository vehRepo,
             ItemRepository itemRepo) {
 
             _Logger = logger;

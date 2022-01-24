@@ -9,11 +9,11 @@ namespace watchtower.Services.Census {
 
         public static void AddHonuCollectionServices(this IServiceCollection services) {
             // Character collections
-            services.AddSingleton<ICharacterCollection, CharacterCollection>();
-            services.AddSingleton<ICharacterWeaponStatCollection, CharacterWeaponStatCollection>();
-            services.AddSingleton<ICharacterHistoryStatCollection, CharacterHistoryStatCollection>();
-            services.AddSingleton<ICharacterItemCollection, CharacterItemCollection>();
-            services.AddSingleton<ICharacterStatCollection, CharacterStatCollection>();
+            services.AddSingleton<CharacterCollection>();
+            services.AddSingleton<CharacterWeaponStatCollection>();
+            services.AddSingleton<CharacterHistoryStatCollection>();
+            services.AddSingleton<CharacterItemCollection>();
+            services.AddSingleton<CharacterStatCollection>();
             services.AddSingleton<CharacterFriendCollection>();
             services.AddSingleton<CharacterAchievementCollection>();
 
@@ -22,8 +22,8 @@ namespace watchtower.Services.Census {
             // Static collections
             services.AddSingleton<IStaticCollection<PsItem>, ItemCollection>();
             services.AddSingleton<ItemCollection>();
-            services.AddSingleton<IMapCollection, MapCollection>();
-            services.AddSingleton<IFacilityCollection, FacilityCollection>();
+            services.AddSingleton<MapCollection>();
+            services.AddSingleton<FacilityCollection>();
 
             // Directive collections
             services.AddSingleton<DirectiveCollection>();

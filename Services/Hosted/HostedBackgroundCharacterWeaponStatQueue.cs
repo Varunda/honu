@@ -27,15 +27,15 @@ namespace watchtower.Services.Hosted {
 
         private readonly CharacterMetadataDbStore _MetadataDb;
 
-        private readonly ICharacterCollection _CharacterCensus;
+        private readonly CharacterCollection _CharacterCensus;
         private readonly CharacterDbStore _CharacterDb;
-        private readonly ICharacterWeaponStatCollection _WeaponCensus;
+        private readonly CharacterWeaponStatCollection _WeaponCensus;
         private readonly ICharacterWeaponStatDbStore _WeaponStatDb;
-        private readonly ICharacterHistoryStatCollection _HistoryCensus;
+        private readonly CharacterHistoryStatCollection _HistoryCensus;
         private readonly ICharacterHistoryStatDbStore _HistoryDb;
-        private readonly ICharacterItemCollection _ItemCensus;
+        private readonly CharacterItemCollection _ItemCensus;
         private readonly ICharacterItemDbStore _ItemDb;
-        private readonly ICharacterStatCollection _StatCensus;
+        private readonly CharacterStatCollection _StatCensus;
         private readonly ICharacterStatDbStore _StatDb;
         private readonly CharacterFriendCollection _FriendCensus;
         private readonly CharacterFriendDbStore _FriendDb;
@@ -56,11 +56,11 @@ namespace watchtower.Services.Hosted {
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
             BackgroundCharacterWeaponStatQueue queue,
-            ICharacterWeaponStatDbStore db, ICharacterWeaponStatCollection weaponColl,
-            ICharacterHistoryStatDbStore hDb, ICharacterHistoryStatCollection hColl,
-            ICharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
-            ICharacterStatCollection statCensus, ICharacterStatDbStore statDb,
-            CharacterMetadataDbStore metadataDb, ICharacterCollection charColl,
+            ICharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
+            ICharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
+            CharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
+            CharacterStatCollection statCensus, ICharacterStatDbStore statDb,
+            CharacterMetadataDbStore metadataDb, CharacterCollection charColl,
             CharacterDbStore charDb, CharacterFriendCollection friendCensus,
             CharacterDirectiveCollection charDirCensus, CharacterDirectiveDbStore charDirDb,
             CharacterDirectiveTreeCollection charDirTreeCensus, CharacterDirectiveTreeDbStore charDirTreeDb,

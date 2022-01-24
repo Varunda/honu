@@ -9,9 +9,12 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Census.Implementations {
+namespace watchtower.Services.Census {
 
-    public class FacilityCollection : IFacilityCollection {
+    /// <summary>
+    ///     Service to interact with the /map_region collection
+    /// </summary>
+    public class FacilityCollection {
 
         private readonly ILogger<FacilityCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
@@ -23,6 +26,10 @@ namespace watchtower.Services.Census.Implementations {
             _Census = census;
         }
 
+        /// <summary>
+        ///     Get all <see cref="PsFacility"/>s currently in Census
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<PsFacility>> GetAll() {
             CensusQuery query = _Census.Create("map_region");
             query.SetLimit(1000);
@@ -47,10 +54,6 @@ namespace watchtower.Services.Census.Implementations {
             }
 
             return facilities;
-        }
-
-        public Task<PsFacility?> GetByFacilityID(int facilityID) {
-            throw new NotImplementedException();
         }
 
         private PsFacility _Parse(JToken token) {

@@ -21,11 +21,11 @@ namespace watchtower.Services.Hosted {
         private readonly ILogger<HostedBackgroundCharacterCacheQueue> _Logger;
         private readonly IBackgroundCharacterCacheQueue _Queue;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
 
         public HostedBackgroundCharacterCacheQueue(ILogger<HostedBackgroundCharacterCacheQueue> logger,
-            IBackgroundCharacterCacheQueue queue, ICharacterRepository charRepo,
+            IBackgroundCharacterCacheQueue queue, CharacterRepository charRepo,
             OutfitRepository outfitRepo) {
 
             _Logger = logger;

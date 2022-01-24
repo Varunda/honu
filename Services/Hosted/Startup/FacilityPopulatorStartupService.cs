@@ -18,11 +18,11 @@ namespace watchtower.Services.Hosted.Startup {
     public class FacilityPopulatorStartupService : IHostedService {
 
         private readonly ILogger<FacilityPopulatorStartupService> _Logger;
-        private readonly IFacilityCollection _FacilityCollection;
+        private readonly FacilityCollection _FacilityCollection;
         private readonly IFacilityDbStore _FacilityDb;
 
         public FacilityPopulatorStartupService(ILogger<FacilityPopulatorStartupService> logger,
-            IFacilityCollection facCollection, IFacilityDbStore facDb) {
+            FacilityCollection facCollection, IFacilityDbStore facDb) {
 
             _Logger = logger;
 

@@ -21,7 +21,7 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<CharacterDirectiveApiController> _Logger;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly CharacterDirectiveRepository _CharacterDirectiveRepository;
         private readonly CharacterDirectiveTreeRepository _CharacterDirectiveTreeRepository;
         private readonly CharacterDirectiveTierRepository _CharacterDirectiveTierRepository;
@@ -46,7 +46,7 @@ namespace watchtower.Controllers.Api {
             ObjectiveRepository objRepo, ObjectiveTypeRepository objTypeRepo,
             ObjectiveSetRepository objSetRepo, AchievementRepository achRepo,
             ICharacterWeaponStatDbStore charWeaponDb, ItemRepository itemRepo,
-            ICharacterRepository charRepo, CharacterAchievementRepository charAchRepo) {
+            CharacterRepository charRepo, CharacterAchievementRepository charAchRepo) {
 
             _Logger = logger;
 

@@ -22,7 +22,7 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly IWorldTotalDbStore _WorldTotalDb;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly Repositories.CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly ItemRepository _ItemRepository;
 
@@ -31,7 +31,7 @@ namespace watchtower.Services.Repositories.Implementations {
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             IBackgroundCharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
-            ICharacterRepository charRepo, OutfitRepository outfitRepo,
+            Repositories.CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo) {
 
             _Logger = logger;

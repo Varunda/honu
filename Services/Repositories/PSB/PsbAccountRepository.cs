@@ -17,15 +17,15 @@ namespace watchtower.Services.Repositories.PSB {
 
         private readonly ILogger<PsbAccountRepository> _Logger;
         private readonly PsbNamedDbStore _Db;
-        private readonly ICharacterRepository _CharacterRepository;
-        private readonly ICharacterCollection _CharacterCollection;
+        private readonly CharacterRepository _CharacterRepository;
+        private readonly CharacterCollection _CharacterCollection;
         private readonly PsbAccountNoteDbStore _NoteDb;
 
         private readonly IMemoryCache _Cache;
 
         public PsbAccountRepository(ILogger<PsbAccountRepository> logger,
-            PsbNamedDbStore db, ICharacterRepository charRepo,
-            IMemoryCache cache, ICharacterCollection charColl,
+            PsbNamedDbStore db, CharacterRepository charRepo,
+            IMemoryCache cache, CharacterCollection charColl,
             PsbAccountNoteDbStore noteDb) {
 
             _Logger = logger;

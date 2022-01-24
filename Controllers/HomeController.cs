@@ -13,10 +13,10 @@ namespace watchtower.Controllers {
 
     public class HomeController : Controller {
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
-        public HomeController(ICharacterRepository charRepo,
+        public HomeController(CharacterRepository charRepo,
             BackgroundCharacterWeaponStatQueue queue) {
 
             _CharacterRepository = charRepo;

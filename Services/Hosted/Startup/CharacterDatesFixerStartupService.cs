@@ -19,10 +19,10 @@ namespace watchtower.Services.Hosted.Startup {
 
         private readonly ILogger<CharacterDatesFixerStartupService> _Logger;
         private readonly CharacterDbStore _CharacterDb;
-        private readonly ICharacterCollection _CharacterCensus;
+        private readonly CharacterCollection _CharacterCensus;
 
         public CharacterDatesFixerStartupService(ILogger<CharacterDatesFixerStartupService> logger,
-            CharacterDbStore charDb, ICharacterCollection charColl) {
+            CharacterDbStore charDb, CharacterCollection charColl) {
 
             _Logger = logger;
             _CharacterDb = charDb;

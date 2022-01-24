@@ -17,11 +17,11 @@ namespace watchtower.Code.Commands {
     public class ZoneCommand {
 
         private readonly ILogger<ZoneCommand> _Logger;
-        private readonly IMapCollection _MapCollection;
+        private readonly MapCollection _MapCollection;
 
         public ZoneCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<ZoneCommand>>();
-            _MapCollection = services.GetRequiredService<IMapCollection>();
+            _MapCollection = services.GetRequiredService<MapCollection>();
         }
 
         public void Print() {

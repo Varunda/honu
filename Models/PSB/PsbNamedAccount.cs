@@ -83,6 +83,9 @@ namespace watchtower.Models.PSB {
         /// </summary>
         public int NsStatus { get; set; }
 
+        /// <summary>
+        ///     How many seconds the VS + NC + TR characters have been used in the last 90 days
+        /// </summary>
         public int SecondsUsage { get; set; }
 
     }

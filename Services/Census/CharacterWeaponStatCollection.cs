@@ -9,12 +9,14 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.CharacterViewer.WeaponStats;
 
-namespace watchtower.Services.Census.Implementations {
+namespace watchtower.Services.Census {
 
-    public class CharacterWeaponStatCollection : ICharacterWeaponStatCollection {
+    /// <summary>
+    ///     Service to get data from the /characters_weapon_stat
+    /// </summary>
+    public class CharacterWeaponStatCollection {
 
         private readonly ILogger<CharacterWeaponStatCollection> _Logger;
-
         private readonly ICensusQueryFactory _Census;
 
         public CharacterWeaponStatCollection(ILogger<CharacterWeaponStatCollection> logger,
@@ -24,6 +26,13 @@ namespace watchtower.Services.Census.Implementations {
             _Census = census;
         }
 
+        /// <summary>
+        ///     Get all the <see cref="WeaponStatEntry"/>s for a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns>
+        ///     A list from census of all the <see cref="WeaponStatEntry"/>s that exist
+        /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
             List<WeaponStat> weaponStats = await GetWeaponStatByCharacterIDAsync(charID);
             List<WeaponStatByFactionEntry> byFaction = await GetWeaponStatByFactionByCharacterIDAsync(charID);

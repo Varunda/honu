@@ -184,7 +184,7 @@ namespace watchtower.Services.Db.Implementations {
 
             // Until I know where the -1 values are coming from, set it to saner value
             short teamID = player.TeamID;
-            if (teamID == -1) {
+            if (teamID == -1 || teamID == 0) {
                 teamID = player.FactionID;
             }
 

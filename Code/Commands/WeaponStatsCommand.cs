@@ -21,8 +21,8 @@ namespace watchtower.Code.Commands {
 
         private readonly ILogger<WeaponStatsCommand> _Logger;
 
-        private readonly ICharacterWeaponStatCollection _StatCensus;
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterWeaponStatCollection _StatCensus;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
@@ -31,8 +31,8 @@ namespace watchtower.Code.Commands {
         public WeaponStatsCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<WeaponStatsCommand>>();
 
-            _StatCensus = services.GetRequiredService<ICharacterWeaponStatCollection>();
-            _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
+            _StatCensus = services.GetRequiredService<CharacterWeaponStatCollection>();
+            _CharacterRepository = services.GetRequiredService<CharacterRepository>();
             _ItemRepository = services.GetRequiredService<ItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
             _PercentileQueue = services.GetRequiredService<IBackgroundWeaponPercentileCacheQueue>();

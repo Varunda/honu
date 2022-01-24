@@ -14,14 +14,14 @@ namespace watchtower.Services.Repositories.Implementations {
 
         private readonly ILogger<CharacterStatRepository> _Logger;
 
-        private readonly ICharacterStatCollection _Census;
+        private readonly CharacterStatCollection _Census;
         private readonly ICharacterStatDbStore _Db;
 
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY = "CharacterStat.{0}"; // {0} => Character stat
 
         public CharacterStatRepository(ILogger<CharacterStatRepository> logger,
-            ICharacterStatCollection census, ICharacterStatDbStore db,
+            CharacterStatCollection census, ICharacterStatDbStore db,
             IMemoryCache cache) {
 
             _Logger = logger;

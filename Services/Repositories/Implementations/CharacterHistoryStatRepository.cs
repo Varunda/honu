@@ -17,12 +17,12 @@ namespace watchtower.Services.Repositories.Implementations {
 
         private const string CACHE_KEY = "CharacterHistoryStat.{0}"; // {0} => Char ID
 
-        private readonly ICharacterHistoryStatCollection _Census;
+        private readonly CharacterHistoryStatCollection _Census;
         private readonly ICharacterHistoryStatDbStore _Db;
 
         public CharacterHistoryStatRepository(ILogger<CharacterHistoryStatRepository> logger,
             IMemoryCache cache,
-            ICharacterHistoryStatCollection census, ICharacterHistoryStatDbStore db) {
+            CharacterHistoryStatCollection census, ICharacterHistoryStatDbStore db) {
 
             _Logger = logger;
             _Cache = cache;

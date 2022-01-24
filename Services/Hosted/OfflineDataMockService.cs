@@ -21,7 +21,7 @@ namespace watchtower.Services.Hosted {
 
         private readonly ILogger<OfflineDataMockService> _Logger;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly IExpEventDbStore _ExpDb;
         private readonly IKillEventDbStore _KillDb;
 
@@ -37,7 +37,7 @@ namespace watchtower.Services.Hosted {
         };
 
         public OfflineDataMockService(ILogger<OfflineDataMockService> logger,
-            ICharacterRepository charRepo, IExpEventDbStore expDb,
+            CharacterRepository charRepo, IExpEventDbStore expDb,
             IKillEventDbStore killDb, IBackgroundTaskQueue eventQueue) {
 
             _Logger = logger;

@@ -24,14 +24,14 @@ namespace watchtower.Commands {
 
         private readonly ILogger<CharCommand> _Logger;
 
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _Outfitrepository;
         private readonly ISessionDbStore _SessionDb;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
-        private readonly ICharacterHistoryStatCollection _HistoryCollection;
+        private readonly CharacterHistoryStatCollection _HistoryCollection;
         private readonly ICharacterHistoryStatRepository _HistoryStatRepository;
         private readonly ICharacterItemRepository _CharItemRepository;
-        private readonly ICharacterStatCollection _StatCollection;
+        private readonly CharacterStatCollection _StatCollection;
         private readonly ICharacterStatDbStore _StatDb;
         private readonly CharacterFriendRepository _CharFriend;
         private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
@@ -43,14 +43,14 @@ namespace watchtower.Commands {
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
 
-            _CharacterRepository = services.GetRequiredService<ICharacterRepository>();
+            _CharacterRepository = services.GetRequiredService<CharacterRepository>();
             _Outfitrepository = services.GetRequiredService<OutfitRepository>();
             _SessionDb = services.GetRequiredService<ISessionDbStore>();
             _GeneratorStore = services.GetRequiredService<ICharacterStatGeneratorStore>();
-            _HistoryCollection = services.GetRequiredService<ICharacterHistoryStatCollection>();
+            _HistoryCollection = services.GetRequiredService<CharacterHistoryStatCollection>();
             _HistoryStatRepository = services.GetRequiredService<ICharacterHistoryStatRepository>();
             _CharItemRepository = services.GetRequiredService<ICharacterItemRepository>();
-            _StatCollection = services.GetRequiredService<ICharacterStatCollection>();
+            _StatCollection = services.GetRequiredService<CharacterStatCollection>();
             _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
             _CharFriend = services.GetRequiredService<CharacterFriendRepository>();
             _CharacterDirectiveCensus = services.GetRequiredService<CharacterDirectiveCollection>();

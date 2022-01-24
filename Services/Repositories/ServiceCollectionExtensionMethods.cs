@@ -14,7 +14,7 @@ namespace watchtower.Services.Repositories {
     public static class ServiceCollectionExtensionMethods {
 
         public static void AddHonuRepositoryServices(this IServiceCollection services) {
-            services.AddSingleton<ICharacterRepository, CharacterRepository>();
+            services.AddSingleton<CharacterRepository, CharacterRepository>();
             services.AddSingleton<OutfitRepository>();
             services.AddSingleton<IWorldDataRepository, WorldDataRepository>();
             services.AddSingleton<ItemRepository>();

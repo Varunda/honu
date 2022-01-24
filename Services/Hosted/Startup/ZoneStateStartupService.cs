@@ -17,10 +17,10 @@ namespace watchtower.Services.Hosted.Startup {
     public class ZoneStateStartupService : IHostedService {
 
         private readonly ILogger<ZoneStateStartupService> _Logger;
-        private readonly IMapCollection _MapCollection;
+        private readonly MapCollection _MapCollection;
 
         public ZoneStateStartupService(ILogger<ZoneStateStartupService> logger,
-            IMapCollection mapColl) {
+            MapCollection mapColl) {
 
             _Logger = logger;
             _MapCollection = mapColl;

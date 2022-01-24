@@ -12,15 +12,18 @@ using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class CharacterRepository : ICharacterRepository {
+    /// <summary>
+    ///     Repository to get characters
+    /// </summary>
+    public class CharacterRepository {
 
         private readonly ILogger<CharacterRepository> _Logger;
         private readonly IMemoryCache _Cache;
 
         private readonly CharacterDbStore _Db;
-        private readonly ICharacterCollection _Census;
+        private readonly CharacterCollection _Census;
 
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
 
@@ -37,7 +40,7 @@ namespace watchtower.Services.Repositories.Implementations {
         private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
-                CharacterDbStore db, ICharacterCollection census,
+                CharacterDbStore db, CharacterCollection census,
                 BackgroundCharacterWeaponStatQueue queue) {
 
             _Logger = logger;
@@ -49,6 +52,11 @@ namespace watchtower.Services.Repositories.Implementations {
             _Queue = queue;
         }
 
+        /// <summary>
+        ///     Get a single character by ID. If the load failed from Census for some reason, a fallback of what's in the DB
+        ///     is used if possible
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
         public async Task<PsCharacter?> GetByID(string charID) {
             string key = string.Format(CACHE_KEY_ID, charID);
 
@@ -73,7 +81,7 @@ namespace watchtower.Services.Repositories.Implementations {
                     } catch (Exception ex) {
                         // If Honu failed to find any character, propogate the error up
                         //      else, since we have the character, but it's out of date, use that one instead
-                        if (character == null || !(ex is CensusConnectionException)) {
+                        if (character == null || ex is not CensusConnectionException) {
                             throw;
                         } else {
                             doShortCache = true;
@@ -97,6 +105,12 @@ namespace watchtower.Services.Repositories.Implementations {
             return character;
         }
 
+        /// <summary>
+        ///     Get all the characters that have an ID
+        /// </summary>
+        /// <param name="IDs">List of IDs to load</param>
+        /// <param name="fast">If only characters from DB will be loaded, and any characters not in the DB will be queued for retrieval</param>
+        /// <returns></returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, bool fast = false) {
             List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
 
@@ -177,6 +191,14 @@ namespace watchtower.Services.Repositories.Implementations {
             return chars;
         }
 
+        /// <summary>
+        ///     Get all characters that match the name (case-insensitive)
+        /// </summary>
+        /// <remarks>
+        ///     This return is a list, as deleted characters name have may be reused
+        /// </remarks>
+        /// <param name="name">Name to get</param>
+        /// <returns></returns>
         public async Task<List<PsCharacter>> GetByName(string name) {
             string key = string.Format(CACHE_KEY_NAME, name);
 
@@ -198,6 +220,11 @@ namespace watchtower.Services.Repositories.Implementations {
             return characters;
         }
 
+        /// <summary>
+        ///     Search for characters that have a partial match to a name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public async Task<List<PsCharacter>> SearchByName(string name) {
             List<PsCharacter> all = new List<PsCharacter>();
 
@@ -212,7 +239,7 @@ namespace watchtower.Services.Repositories.Implementations {
             List<PsCharacter> census = new List<PsCharacter>();
 
             // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
-            Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name));
+            Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name, CancellationToken.None));
             bool censusCancelled = wrapper.Wait(TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS)) == false;
             if (censusCancelled == false) {
                 census = wrapper.Result;
@@ -262,16 +289,33 @@ namespace watchtower.Services.Repositories.Implementations {
 
             return all;
         }
-
-        public async Task Upsert(PsCharacter character) {
-            await _Db.Upsert(character);
-            _Cache.Remove(string.Format(CACHE_KEY_ID, character.ID));
-            _Cache.Remove(string.Format(CACHE_KEY_NAME, character.Name));
-        }
         
         private bool HasExpired(PsCharacter character) {
             return character.LastUpdated < DateTime.UtcNow + TimeSpan.FromHours(24);
         }
 
     }
+
+    public static class ICharacterRepositoryExtensions {
+
+        /// <summary>
+        ///     Get a single character by name, with the character with the most recent logged on character being used
+        ///     if multiple characters with the same name exist
+        /// </summary>
+        /// <param name="repo"></param>
+        /// <param name="name">Name to get (case-insensitive)</param>
+        /// <returns></returns>
+        public static async Task<PsCharacter?> GetFirstByName(this CharacterRepository repo, string name) {
+            List<PsCharacter> chars = await repo.GetByName(name);
+            chars = chars.OrderByDescending(iter => iter.DateLastLogin).ToList();
+
+            if (chars.Count == 0) {
+                return null;
+            }
+
+            return chars[0];
+        }
+
+    }
+
 }

@@ -21,7 +21,7 @@ namespace watchtower.Commands {
 
         private readonly ILogger<StoreCommand> _Logger;
 
-        private readonly ICharacterCollection _Characters;
+        private readonly CharacterCollection _Characters;
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly IKillEventDbStore _KillEventDb;
         private readonly ISessionDbStore _SessionDb;
@@ -31,7 +31,7 @@ namespace watchtower.Commands {
 
             _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
             _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
-            _Characters = services.GetRequiredService<ICharacterCollection>();
+            _Characters = services.GetRequiredService<CharacterCollection>();
             _SessionDb = services.GetRequiredService<ISessionDbStore>();
         }
 

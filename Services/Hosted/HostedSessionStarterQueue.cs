@@ -15,6 +15,9 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
 
+    /// <summary>
+    ///     Hosted queue that starts sessions for characters
+    /// </summary>
     public class HostedSessionStarterQueue : BackgroundService {
 
         private const string SERVICE_NAME = "background_session_queue";

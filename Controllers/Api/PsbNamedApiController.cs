@@ -22,10 +22,10 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<PsbNamedApiController> _Logger;
         private readonly PsbAccountRepository _NamedRepository;
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
 
         public PsbNamedApiController(ILogger<PsbNamedApiController> logger,
-            PsbAccountRepository namedRepo, ICharacterRepository charRepo) {
+            PsbAccountRepository namedRepo, CharacterRepository charRepo) {
 
             _Logger = logger;
             _NamedRepository = namedRepo;

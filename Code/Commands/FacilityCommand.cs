@@ -16,12 +16,12 @@ namespace watchtower.Code.Commands {
 
         private readonly ILogger<FacilityCommand> _Logger;
         private readonly FacilityControlDbStore _ControlDb;
-        private readonly IFacilityCollection _FacilityCollection;
+        private readonly FacilityCollection _FacilityCollection;
 
         public FacilityCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<FacilityCommand>>();
             _ControlDb = services.GetRequiredService<FacilityControlDbStore>();
-            _FacilityCollection = services.GetRequiredService<IFacilityCollection>();
+            _FacilityCollection = services.GetRequiredService<FacilityCollection>();
         }
 
         public async Task Control() {

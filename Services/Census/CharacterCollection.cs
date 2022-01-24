@@ -2,20 +2,16 @@
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-//using honu_census;
+namespace watchtower.Services.Census {
 
-namespace watchtower.Services.Census.Implementations {
-
-    public class CharacterCollection : ICharacterCollection {
+    public class CharacterCollection {
 
         private readonly ILogger<CharacterCollection> _Logger;
 
@@ -34,6 +30,14 @@ namespace watchtower.Services.Census.Implementations {
             //_HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
         }
 
+        /// <summary>
+        ///     Get a <see cref="PsCharacter"/> by name
+        /// </summary>
+        /// <param name="name">Name of the <see cref="PsCharacter"/> to get</param>
+        /// <returns>
+        ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.Name"/> of <paramref name="name"/>,
+        ///     or <c>null</c> if it doesn't exist
+        /// </returns>
         public async Task<PsCharacter?> GetByName(string name) {
             /*
             _HCensus.AddServiceId("asdf");
@@ -47,17 +51,42 @@ namespace watchtower.Services.Census.Implementations {
             }
             */
 
-            PsCharacter? c = await _GetCharacterFromCensusByName(name, true);
+            CensusQuery query = _Census.Create("character");
+
+            query.Where("name.first_lower").Equals(name.ToLower());
+            query.AddResolve("outfit", "world");
+
+            PsCharacter? c = await _Reader.ReadSingle(query);
 
             return c;
         }
 
+        /// <summary>
+        ///     Get a <see cref="PsCharacter"/> by ID
+        /// </summary>
+        /// <param name="ID">ID of the character to get</param>
+        /// <returns>
+        ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="ID"/>,
+        ///     or <c>null</c> if it doesn't exist
+        /// </returns>
         public async Task<PsCharacter?> GetByID(string ID) {
-            PsCharacter? c = await _GetCharacterFromCensus(ID, true);
+            CensusQuery query = _Census.Create("character");
+            query.Where("character_id").Equals(ID);
+            query.AddResolve("outfit", "world");
+
+            PsCharacter? c = await _Reader.ReadSingle(query);
 
             return c;
         }
 
+        /// <summary>
+        ///     Get a list of characters by IDs
+        /// </summary>
+        /// <param name="IDs">IDs to get from Census</param>
+        /// <returns>
+        ///     A list of <see cref="PsCharacter"/> with a <see cref="PsCharacter.ID"/>
+        ///     as an element of <paramref name="IDs"/>
+        /// </returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
             int batchCount = (int) Math.Ceiling(IDs.Count / (double) BATCH_SIZE);
 
@@ -91,6 +120,18 @@ namespace watchtower.Services.Census.Implementations {
             return chars;
         }
 
+        /// <summary>
+        ///     Search for characters by name
+        /// </summary>
+        /// <remarks>
+        ///     Census does not support wildcard searching with less than 3 characters, and if
+        ///     less than 3 characters are passed, an empty list will be returned
+        /// </remarks>
+        /// <param name="name">Name to search by</param>
+        /// <param name="stop">Stopping token</param>
+        /// <returns>
+        ///     A list of <see cref="PsCharacter"/>s that match the name given
+        /// </returns>
         public async Task<List<PsCharacter>> SearchByName(string name, CancellationToken stop) {
             // Cannot search less than 3 characters in Census
             if (name.Length < 3) {
@@ -116,43 +157,6 @@ namespace watchtower.Services.Census.Implementations {
             return chars;
         }
 
-        private async Task<PsCharacter?> _GetCharacterFromCensus(string ID, bool retry) {
-            CensusQuery query = _Census.Create("character");
-
-            query.Where("character_id").Equals(ID);
-            query.AddResolve("outfit", "world");
-
-            try {
-                return await _Reader.ReadSingle(query);
-            } catch (CensusConnectionException ex) {
-                if (retry == true) {
-                    _Logger.LogWarning("Retrying {Char} from API", ID);
-                    return await _GetCharacterFromCensus(ID, false); 
-                } else {
-                    _Logger.LogError(ex, "Failed to get {0} from API", ID);
-                    throw;
-                }
-            }
-        }
-
-        private async Task<PsCharacter?> _GetCharacterFromCensusByName(string name, bool retry) {
-            CensusQuery query = _Census.Create("character");
-
-            query.Where("name.first_lower").Equals(name.ToLower());
-            query.AddResolve("outfit", "world");
-
-            try {
-                return await _Reader.ReadSingle(query);
-            } catch (CensusConnectionException ex) {
-                if (retry == true) {
-                    _Logger.LogWarning("Retrying {Char} from API", name);
-                    return await _GetCharacterFromCensusByName(name, false); 
-                } else {
-                    _Logger.LogError(ex, "Failed to get {0} from API", name);
-                    throw;
-                }
-            }
-        }
-
     }
+
 }

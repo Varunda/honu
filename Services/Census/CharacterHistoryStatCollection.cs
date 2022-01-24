@@ -9,9 +9,13 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Census.Implementations {
 
-    public class CharacterHistoryStatCollection : ICharacterHistoryStatCollection {
+namespace watchtower.Services.Census {
+
+    /// <summary>
+    ///     Service that uses the characters_stat_history collection
+    /// </summary>
+    public class CharacterHistoryStatCollection {
 
         private readonly ILogger<CharacterHistoryStatCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
@@ -23,6 +27,10 @@ namespace watchtower.Services.Census.Implementations {
             _Census = census;
         }
 
+        /// <summary>
+        ///     Get the entries from census
+        /// </summary>
+        /// <param name="charID">Character ID to get</param>
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterID(string charID) {
             CensusQuery query = _Census.Create("characters_stat_history");
             query.Where("character_id").Equals(charID);

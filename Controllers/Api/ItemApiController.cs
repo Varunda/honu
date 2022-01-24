@@ -27,11 +27,11 @@ namespace watchtower.Controllers.Api {
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
-        private readonly ICharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
 
         public ItemApiController(ILogger<ItemApiController> logger,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
-            ICharacterWeaponStatDbStore statDb, ICharacterRepository charRepo) {
+            ICharacterWeaponStatDbStore statDb, CharacterRepository charRepo) {
 
             _Logger = logger;
 
