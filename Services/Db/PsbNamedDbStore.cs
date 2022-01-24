@@ -64,7 +64,7 @@ namespace watchtower.Services.Db {
                             WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
                             GROUP BY pn2.id
                     ) usage ON usage.id = pn1.id
-                    WHERE id = @ID;
+                    WHERE pn1.id = @ID;
             ");
 
             cmd.AddParameter("ID", ID);
@@ -93,8 +93,8 @@ namespace watchtower.Services.Db {
                             WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
                             GROUP BY pn2.id
                     ) usage ON usage.id = pn1.id
-                    WHERE tag = @Tag
-                        AND name = @Name;
+                    WHERE pn1.tag = @Tag
+                        AND pn1.name = @Name;
             ");
 
             cmd.AddParameter("Tag", tag);
