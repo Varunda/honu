@@ -40,7 +40,7 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet]
         public async Task<ApiResponse<List<ExpandedPsbNamedAccount>>> GetAll() {
-            List<PsbNamedAccount> named = await _NamedRepository.GetAll();
+            List<PsbNamedAccount> named = (await _NamedRepository.GetAll()).Where(iter => iter.DeletedBy == null).ToList();
 
             List<ExpandedPsbNamedAccount> expanded = await MakeExpanded(named);
 
