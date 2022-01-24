@@ -25,6 +25,8 @@ namespace watchtower.Services.Db.Readers.PSB {
             acc.TrStatus = reader.GetInt32("tr_status");
             acc.NsStatus = reader.GetInt32("ns_status");
 
+            acc.SecondsUsage = (int) (reader.GetNullableDouble("seconds_online") ?? 0d);
+
             acc.DeletedBy = reader.GetNullableInt64("deleted_by");
             acc.DeletedAt = reader.GetNullableDateTime("deleted_at");
 

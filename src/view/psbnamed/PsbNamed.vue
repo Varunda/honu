@@ -148,6 +148,16 @@
                 </a-body>
             </a-col>
 
+            <a-col sort-field="secondsUsage">
+                <a-header>
+                    <b>Time used</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.secondsUsage | mduration}}
+                </a-body>
+            </a-col>
+
             <a-col sort-field="lastUsed">
                 <a-header>
                     <b>Last used</b>

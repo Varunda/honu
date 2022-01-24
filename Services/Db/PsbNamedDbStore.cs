@@ -29,22 +29,16 @@ namespace watchtower.Services.Db {
         public async Task<List<PsbNamedAccount>> GetAll() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM psb_named;
-            ");
-
-            List<PsbNamedAccount> accs = await _Reader.ReadList(cmd);
-            await conn.CloseAsync();
-
-            return accs;
-        }
-
-        public async Task<List<PsbNamedAccount>> GetActive() {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM psb_named
-                    WHERE deleted_at IS NOT NULL;
+                SELECT pn1.*, usage.seconds_online
+                    FROM psb_named pn1
+                    LEFT JOIN (
+                        SELECT pn2.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
+                            FROM psb_named pn2
+                            LEFT JOIN wt_session s ON s.character_id = pn2.vs_id OR s.character_id = pn2.nc_id OR s.character_id = pn2.tr_id
+                            WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
+                            GROUP BY pn2.id
+                    ) usage ON usage.id = pn1.id
+                    ORDER BY pn1.ID ASC;
             ");
 
             List<PsbNamedAccount> accs = await _Reader.ReadList(cmd);

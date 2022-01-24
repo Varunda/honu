@@ -229,10 +229,10 @@
                 if (entry.kills >= 60) {
                     background = "#4c4c4c";
                 }
-                if (entry.kills > 160) {
+                if (entry.kills >= 160) {
                     background = "#544e01";
                 }
-                if (entry.kills > 1160) {
+                if (entry.kills >= 1160) {
                     background = "#5c005c";
                 }
 

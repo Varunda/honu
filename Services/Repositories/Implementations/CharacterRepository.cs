@@ -102,6 +102,8 @@ namespace watchtower.Services.Repositories.Implementations {
 
             int total = IDs.Count;
 
+            _Logger.LogDebug($"Loading {total} characters");
+
             Stopwatch timer = Stopwatch.StartNew();
             int inCache = 0;
             foreach (string ID in IDs.ToList()) {

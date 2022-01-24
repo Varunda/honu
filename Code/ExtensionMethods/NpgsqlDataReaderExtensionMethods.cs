@@ -43,6 +43,13 @@ namespace watchtower.Code.ExtensionMethods {
             return reader.GetInt32(field);
         }
 
+        public static double? GetNullableDouble(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return reader.GetDouble(field);
+        }
+
         public static long? GetNullableInt64(this NpgsqlDataReader reader, string field) {
             if (reader.IsDBNull(field)) {
                 return null;

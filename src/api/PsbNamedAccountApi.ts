@@ -13,6 +13,8 @@ export class PsbNamedAccount {
     public deletedBy: number | null = null;
     public timestamp: Date = new Date();
 
+    public secondsUsage: number = 0;
+
     public vsID: string | null = null;
     public ncID: string | null = null;
     public trID: string | null = null;
@@ -40,6 +42,7 @@ export class FlatPsbNamedAccount {
     public lastUsed: Date | null = null;
     public missingCharacter: boolean = false;
     public status: string = "";
+    public secondsUsage: number = 0;
 
     public vsID: string | null = null;
     public vsCharacter: PsCharacter | null = null;
@@ -97,6 +100,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             deletedAt: (entry.deletedAt == null) ? null : new Date(entry.deletedAt),
             deletedBy: entry.deletedBy,
             timestamp: new Date(entry.timestamp),
+            secondsUsage: entry.secondsUsage,
 
             vsID: entry.vsID,
             ncID: entry.ncID,
@@ -135,6 +139,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
                 || expanded.account.trID == null || expanded.trCharacter == null
                 || expanded.account.nsID == null || expanded.nsCharacter == null,
             status: "",
+            secondsUsage: expanded.account.secondsUsage,
 
             vsID: expanded.account.vsID,
             vsCharacter: expanded.vsCharacter ?? null,

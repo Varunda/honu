@@ -83,6 +83,8 @@ namespace watchtower.Models.PSB {
         /// </summary>
         public int NsStatus { get; set; }
 
+        public int SecondsUsage { get; set; }
+
     }
 
 
