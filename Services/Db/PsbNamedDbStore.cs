@@ -55,8 +55,15 @@ namespace watchtower.Services.Db {
         public async Task<PsbNamedAccount?> GetByID(long ID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM psb_named
+                SELECT pn1.*, usage.seconds_online
+                    FROM psb_named pn1
+                    LEFT JOIN (
+                        SELECT pn2.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
+                            FROM psb_named pn2
+                            LEFT JOIN wt_session s ON s.character_id = pn2.vs_id OR s.character_id = pn2.nc_id OR s.character_id = pn2.tr_id
+                            WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
+                            GROUP BY pn2.id
+                    ) usage ON usage.id = pn1.id
                     WHERE id = @ID;
             ");
 
@@ -77,8 +84,15 @@ namespace watchtower.Services.Db {
         public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM psb_named
+                SELECT pn1.*, usage.seconds_online
+                    FROM psb_named pn1
+                    LEFT JOIN (
+                        SELECT pn2.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
+                            FROM psb_named pn2
+                            LEFT JOIN wt_session s ON s.character_id = pn2.vs_id OR s.character_id = pn2.nc_id OR s.character_id = pn2.tr_id
+                            WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
+                            GROUP BY pn2.id
+                    ) usage ON usage.id = pn1.id
                     WHERE tag = @Tag
                         AND name = @Name;
             ");

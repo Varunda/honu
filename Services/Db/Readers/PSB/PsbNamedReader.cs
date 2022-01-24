@@ -14,6 +14,7 @@ namespace watchtower.Services.Db.Readers.PSB {
             acc.Tag = reader.GetNullableString("tag");
             acc.Name = reader.GetString("name");
             acc.PlayerName = reader.GetString("player_name");
+            acc.Timestamp = reader.GetDateTime("timestamp");
 
             acc.VsID = reader.GetNullableString("vs_id");
             acc.NcID = reader.GetNullableString("nc_id");
