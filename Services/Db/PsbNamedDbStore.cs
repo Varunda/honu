@@ -22,6 +22,10 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Get all psb named account
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<PsbNamedAccount>> GetAll() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -35,6 +39,25 @@ namespace watchtower.Services.Db {
             return accs;
         }
 
+        public async Task<List<PsbNamedAccount>> GetActive() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM psb_named
+                    WHERE deleted_at IS NOT NULL;
+            ");
+
+            List<PsbNamedAccount> accs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return accs;
+        }
+
+        /// <summary>
+        ///     Get a single named account by ID
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <returns></returns>
         public async Task<PsbNamedAccount?> GetByID(long ID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -51,6 +74,12 @@ namespace watchtower.Services.Db {
             return acc;
         }
 
+        /// <summary>
+        ///     Get the named account that has the tag and name (case sensitive)
+        /// </summary>
+        /// <param name="tag"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -67,6 +96,28 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
 
             return acc;
+        }
+
+        /// <summary>
+        ///     Mark a named account as deleted. Does not actually delete from DB
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="deletedByID"></param>
+        /// <returns></returns>
+        public async Task Delete(long ID, long deletedByID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE psb_named
+                    SET deleted_at = NOW() AT TIME ZONE 'utc',
+                        deleted_by = @DeletedByID
+                WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", ID);
+            cmd.AddParameter("DeletedByID", deletedByID);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
         }
 
         /// <summary>

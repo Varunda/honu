@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using DaybreakGames.Census.Exceptions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -72,11 +73,11 @@ namespace watchtower.Services.Repositories.Implementations {
                     } catch (Exception ex) {
                         // If Honu failed to find any character, propogate the error up
                         //      else, since we have the character, but it's out of date, use that one instead
-                        if (character == null) {
+                        if (character == null || !(ex is CensusConnectionException)) {
                             throw;
                         } else {
                             doShortCache = true;
-                            _Logger.LogError(ex, $"failed to get {charID} from census");
+                            _Logger.LogWarning($"timeout when getting {charID}");
                         }
                     }
                 }

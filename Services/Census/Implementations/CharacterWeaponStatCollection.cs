@@ -109,20 +109,16 @@ namespace watchtower.Services.Census.Implementations {
 
             //_Logger.LogTrace($"characters_weapon_stat: {query.GetUri()}");
 
-            try {
-                Uri uri = query.GetUri();
-                IEnumerable<JToken> result = await query.GetListAsync();
+            Uri uri = query.GetUri();
+            IEnumerable<JToken> result = await query.GetListAsync();
 
-                weaponStats = new List<WeaponStat>(result.Count());
+            weaponStats = new List<WeaponStat>(result.Count());
 
-                foreach (JToken t in result) {
-                    WeaponStat? s = _ParseWeaponStat(t);
-                    if (s != null) {
-                        weaponStats.Add(s);
-                    }
+            foreach (JToken t in result) {
+                WeaponStat? s = _ParseWeaponStat(t);
+                if (s != null) {
+                    weaponStats.Add(s);
                 }
-            } catch (Exception) {
-                throw new Exception($"Failed to get characters_weapon_stat for {charID}. URL: {query.GetUri()}");
             }
 
             return weaponStats;
@@ -143,20 +139,16 @@ namespace watchtower.Services.Census.Implementations {
 
             //_Logger.LogTrace($"characters_weapon_stat_by_faction: {query.GetUri()}");
 
-            try {
-                Uri uri = query.GetUri();
-                IEnumerable<JToken> result = await query.GetListAsync();
+            Uri uri = query.GetUri();
+            IEnumerable<JToken> result = await query.GetListAsync();
 
-                weaponStats = new List<WeaponStatByFactionEntry>(result.Count());
+            weaponStats = new List<WeaponStatByFactionEntry>(result.Count());
 
-                foreach (JToken t in result) {
-                    WeaponStatByFactionEntry? s = _ParseWeaponByFaction(t);
-                    if (s != null) { 
-                        weaponStats.Add(s);
-                    }
+            foreach (JToken t in result) {
+                WeaponStatByFactionEntry? s = _ParseWeaponByFaction(t);
+                if (s != null) { 
+                    weaponStats.Add(s);
                 }
-            } catch (Exception) {
-                throw new Exception($"Failed to get characters_weapon_stat_by_faction for {charID}. URL: {query.GetUri()}");
             }
 
             return weaponStats;

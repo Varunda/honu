@@ -30,15 +30,11 @@ namespace watchtower.Services.Census.Implementations {
 
             List<PsCharacterHistoryStat> stats = new List<PsCharacterHistoryStat>();
 
-            try {
-                IEnumerable<JToken> results = await query.GetListAsync();
+            IEnumerable<JToken> results = await query.GetListAsync();
 
-                foreach (JToken token in results) {
-                    PsCharacterHistoryStat stat = _Parse(token);
-                    stats.Add(stat);
-                }
-            } catch (Exception ex) {
-                _Logger.LogError(ex, "Failed to get all");
+            foreach (JToken token in results) {
+                PsCharacterHistoryStat stat = _Parse(token);
+                stats.Add(stat);
             }
 
             return stats;

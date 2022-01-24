@@ -216,6 +216,21 @@ namespace watchtower.Services.Repositories.PSB {
             return await RecheckAccount(acc);
         }
 
+        /// <summary>
+        ///     Mark a PSB account as deleted
+        /// </summary>
+        /// <param name="ID">ID of the account to mark as deleted</param>
+        /// <param name="deletedByID">ID of the honu account that is marking the account as deleted</param>
+        public async Task DeleteByID(long ID, long deletedByID) {
+            PsbNamedAccount? acc = await GetByID(ID);
+            if (acc != null && (acc.DeletedAt != null || acc.DeletedAt != null)) {
+                _Logger.LogWarning($"Cannot delete account {ID}, already deleted by {acc.DeletedBy} at {acc.DeletedAt:u}");
+                return;
+            }
+
+            await _Db.Delete(ID, deletedByID);
+        }
+
         private async Task<PsbNamedAccount> RecheckAccount(PsbNamedAccount acc) {
             if (acc.VsID == null) {
                 PsCharacter? c = await _CharacterCollection.GetByName(PsbNameTemplate.VS(acc.Tag, acc.Name));

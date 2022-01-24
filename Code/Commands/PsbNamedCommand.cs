@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Threading.Tasks;
 using watchtower.Commands;
+using watchtower.Models;
 using watchtower.Models.PSB;
 using watchtower.Services.Repositories.PSB;
 
@@ -92,6 +93,17 @@ namespace watchtower.Code.Commands {
             int? status = statuss == 0 ? null : statuss;
 
             await _NamedRepository.RecheckByStatus(status);
+        }
+
+        public async Task Delete(long ID) {
+            PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
+            if (acc == null) {
+                _Logger.LogWarning($"Account {ID} does not exist");
+                return;
+            }
+
+            await _NamedRepository.DeleteByID(ID, HonuAccount.SystemID);
+            _Logger.LogInformation($"Successfully marked {ID} as deleted");
         }
 
     }

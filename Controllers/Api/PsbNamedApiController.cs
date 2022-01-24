@@ -16,8 +16,8 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-named/")]
-    [Authorize]
-    [PsbAdmin]
+    //[Authorize]
+    //[PsbAdmin]
     public class PsbNamedApiController : ApiControllerBase {
 
         private readonly ILogger<PsbNamedApiController> _Logger;

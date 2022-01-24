@@ -4,8 +4,8 @@ using watchtower.Code;
 
 namespace watchtower.Controllers {
 
-    [Authorize]
-    [PsbAdmin]
+    //[Authorize]
+    //[PsbAdmin]
     public class PsbController : Controller {
 
         public IActionResult Named() {

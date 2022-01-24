@@ -308,7 +308,7 @@ namespace watchtower.Realtime {
             }
 
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
-            _Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
+            //_Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
 
             _MapRepository.Set(ev.WorldID, ev.ZoneID, ev.FacilityID, ev.NewFactionID);
 

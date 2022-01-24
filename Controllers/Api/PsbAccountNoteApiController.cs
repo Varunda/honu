@@ -13,7 +13,7 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-notes")]
-    [Authorize]
+    //[Authorize]
     public class PsbAccountNoteApiController : ApiControllerBase {
 
         private readonly ILogger<PsbAccountNoteApiController> _Logger;

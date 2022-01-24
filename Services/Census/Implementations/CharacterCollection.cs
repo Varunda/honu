@@ -83,7 +83,7 @@ namespace watchtower.Services.Census.Implementations {
                     List<PsCharacter> sliceCharacters = await _Reader.ReadList(query);
                     chars.AddRange(sliceCharacters);
                 } catch (CensusConnectionException) {
-                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
+                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}, had timeout");
                     continue;
                 }
             }
