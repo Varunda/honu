@@ -71,7 +71,7 @@
 
                 <a-body v-slot="entry">
                     <div @click="viewAccount(entry.id)">
-                        View
+                        View {{entry.id}}
                     </div>
                 </a-body>
             </a-col>
@@ -81,7 +81,7 @@
                     <b>Player name</b>
                 </a-header>
 
-                <a-filter method="input" type="string" field="playerName"
+                <a-filter method="input" type="string" field="playerName" max-width="10ch"
                     :conditions="[ 'contains', 'equals' ]">
                 </a-filter>
 
@@ -109,7 +109,7 @@
                     <b>Name</b>
                 </a-header>
 
-                <a-filter method="input" type="string" field="name"
+                <a-filter method="input" type="string" field="name" max-width="24ch"
                     :conditions="[ 'contains', 'equals' ]">
                 </a-filter>
 
