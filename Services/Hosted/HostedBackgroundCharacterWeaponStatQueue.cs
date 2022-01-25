@@ -106,21 +106,19 @@ namespace watchtower.Services.Hosted {
                 CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
                 try {
-                    PsCharacter? censusChar = null;
-                    CharacterMetadata? metadata = null;
+                    PsCharacter? censusChar = entry.CensusCharacter;
+                    CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(entry.CharacterID);
 
-                    // If the queue entry came with a character (say from the logout buffer), use that instead, saving a Census call
-                    Task[] tasks = new Task[2];
-                    if (entry.CensusCharacter != null) {
-                        tasks[0] = Task.CompletedTask;
-                        censusChar = entry.CensusCharacter;
-                    } else {
-                        tasks[0] = _CharacterCensus.GetByID(entry.CharacterID).ContinueWith(result => censusChar = result.Result);
+                    if (censusChar == null) {
+                        try {
+                            censusChar = await _CharacterCensus.GetByID(entry.CharacterID);
+                        } catch (CensusConnectionException) {
+                            _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, requeueing and retrying");
+                            await Task.Delay(30 * 1000, stoppingToken);
+                            _Queue.Queue(entry);
+                            continue;
+                        }
                     }
-
-                    tasks[1] = _MetadataDb.GetByCharacterID(entry.CharacterID).ContinueWith(result => metadata = result.Result);
-
-                    await Task.WhenAll(tasks);
 
                     if (metadata == null) {
                         metadata = new CharacterMetadata() {

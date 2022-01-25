@@ -30,8 +30,6 @@ namespace watchtower.Services.Db.Implementations {
 	                FROM weapon_stats
 		                LEFT JOIN wt_item i ON CAST(weapon_stats.item_id as int) = i.id
 	                WHERE weapon_stats.character_id = @CharID
-		                AND (i.type_id IS NULL OR i.type_id = 26)
-		                AND (i.category_id IS NULL OR (i.category_id != 139 AND i.category_id != 104))
 		                AND (weapon_stats.kills > 0 OR weapon_stats.seconds_with > 299)
             ");
 

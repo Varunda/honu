@@ -12,10 +12,14 @@
             <button type="button" class="btn btn-secondary" @click="showImages = !showImages">
                 Show images
             </button>
+
+            <toggle-button v-model="showNonWeapons">
+                Show non-weapons
+            </toggle-button>
         </div>
 
         <a-table
-            :entries="entries"
+            :entries="filteredEntries"
             :show-filters="true"
             :striped="false"
             default-sort-field="kills" default-sort-order="desc"
@@ -58,7 +62,11 @@
 
             <a-col sort-field="kills">
                 <a-header>
-                    <b>Kills</b>
+                    <span v-if="showNonWeapons == true">
+                        <b>Kills / Uses</b>
+                    </span>
+                    
+                    <b v-else>Kills</b>
                 </a-header>
 
                 <a-filter method="input" type="number" field="kills"
@@ -66,7 +74,12 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.kills}}
+                    <span v-if="entry.item == null || (entry.item.categoryID != 139 && entry.item.categoryID != 104)">
+                        {{entry.kills | locale}}
+                    </span>
+                    <span v-else>
+                        {{(entry.kills || entry.shots) | locale}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -192,6 +205,7 @@
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
     import CensusImage from "components/CensusImage";
+    import ToggleButton from "components/ToggleButton";
 
     import PercentileCell from "./PercentileCell.vue";
 
@@ -199,7 +213,7 @@
 
     import { Loading, Loadable } from "Loading";
     import { PsCharacter } from "api/CharacterApi";
-    import { CharacterWeaponStatEntry, CharacterWeaponStatApi } from "api/CharacterWeaponStatApi";
+    import { CharacterWeaponStatEntry, CharacterWeaponStatApi, WeaponStatEntry } from "api/CharacterWeaponStatApi";
 
     export const CharacterWeaponStats = Vue.extend({
         props: {
@@ -211,6 +225,7 @@
                 entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>,
                 showDebug: false as boolean,
                 showImages: true as boolean,
+                showNonWeapons: false as boolean
             }
         },
 
@@ -250,6 +265,21 @@
             }
         },
 
+        computed: {
+            filteredEntries: function(): Loading<CharacterWeaponStatEntry[]> {
+                if (this.entries.state != "loaded") {
+                    return this.entries;
+                }
+
+                return Loadable.loaded(this.entries.data.filter(iter => {
+                    if (this.showNonWeapons == false) {
+                        return iter.item == null || (iter.item.categoryID != 139 && iter.item.categoryID != 104);
+                    }
+                    return true;
+                }));
+            }
+        },
+
         watch: {
             "character.id": function(): void {
                 console.log(`NEW CHAR ID ${this.character.id}`);
@@ -264,7 +294,8 @@
             AFilter,
             InfoHover,
             PercentileCell,
-            CensusImage
+            CensusImage,
+            ToggleButton
         }
 
     });

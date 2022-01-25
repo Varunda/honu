@@ -1,7 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models.Census;
-using watchtower.Services.Census.Implementations;
 
 namespace watchtower.Services.Census {
 

@@ -106,13 +106,13 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
         /// </response>
         [HttpGet("character/{charID}/extra")]
-        public async Task<ApiResponse<List<CharacterStatBase>>> GetExtraStats(string charID) {
+        public async Task<ApiResponse<List<ExtraStatSet>>> GetExtraStats(string charID) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID);
             if (c == null) {
-                return ApiNotFound<List<CharacterStatBase>>($"{nameof(PsCharacter)} {charID}");
+                return ApiNotFound<List<ExtraStatSet>>($"{nameof(PsCharacter)} {charID}");
             }
 
-            List<CharacterStatBase> stats = await _GeneratorStore.GenerateAll(charID);
+            List<ExtraStatSet> stats = await _GeneratorStore.GenerateAll(charID);
 
             return ApiOk(stats);
         }

@@ -70,9 +70,9 @@
                 <a-header></a-header>
 
                 <a-body v-slot="entry">
-                    <div @click="viewAccount(entry.id)">
+                    <a href="#" @click="viewAccount(entry.id)">
                         View {{entry.id}}
-                    </div>
+                    </a>
                 </a-body>
             </a-col>
 
@@ -151,10 +151,24 @@
             <a-col sort-field="secondsUsage">
                 <a-header>
                     <b>Time used</b>
+                    <info-hover text="How much time has been spent on the VS + NC + TR characters in the last 90 days">
+                    </info-hover>
                 </a-header>
 
                 <a-body v-slot="entry">
                     {{entry.secondsUsage | mduration}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="timestamp">
+                <a-header>
+                    <b>Created</b>
+                    <info-hover text="When this named account was created">
+                    </info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.timestamp | timeAgo}}
                 </a-body>
             </a-col>
 

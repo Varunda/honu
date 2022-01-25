@@ -26,4 +26,21 @@ namespace watchtower.Models.Census {
         public DateTime Timestamp { get; set; }
 
     }
+
+    public class CharacterStatProfileID {
+
+        public const int INFIL = 1;
+
+        public const int LIGHT_ASSAULT = 3;
+
+        public const int MEDIC = 4;
+
+        public const int ENGINEER = 5;
+
+        public const int HEAVY = 6;
+
+        public const int MAX = 7;
+
+    }
+
 }

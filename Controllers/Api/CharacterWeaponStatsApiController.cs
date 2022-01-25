@@ -83,12 +83,19 @@ namespace watchtower.Controllers.Api {
                 stat.ItemID = entry.WeaponID;
                 stat.Item = await _ItemRepository.GetByID(int.Parse(stat.ItemID));
 
+                // Ignore boring stuff like a helmet
+                if (stat.Item == null || stat.Item.TypeID != 26) {
+                    continue;
+                }
+
                 if (stat.Stat.Kills > 100 && stat.ItemID != "0") {
                     stat = await _GetPercentileData(stat);
                 }
 
                 entries.Add(stat);
             }
+
+            entries = entries.OrderBy(iter => iter.ItemID).ToList();
 
             return ApiOk(entries);
         }

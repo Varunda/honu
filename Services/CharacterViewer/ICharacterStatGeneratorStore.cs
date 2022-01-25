@@ -13,7 +13,7 @@ namespace watchtower.Services.CharacterViewer {
 
         List<ICharacterStatGenerator> GetAll();
 
-        Task<List<CharacterStatBase>> GenerateAll(string charID);
+        Task<List<ExtraStatSet>> GenerateAll(string charID);
 
     }
 }

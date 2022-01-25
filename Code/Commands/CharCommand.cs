@@ -114,9 +114,12 @@ namespace watchtower.Commands {
                 return;
             }
 
-            List<CharacterStatBase> stats = await _GeneratorStore.GenerateAll(c.ID);
-            foreach (CharacterStatBase stat in stats) {
-                _Logger.LogInformation($"{stat.Name} => {stat.Value}");
+            List<ExtraStatSet> sets = await _GeneratorStore.GenerateAll(c.ID);
+            foreach (ExtraStatSet set in sets) {
+                _Logger.LogInformation($"{set.Name}:");
+                foreach (CharacterStatBase stat in set.Stats) {
+                    _Logger.LogInformation($"\t{stat.Name} => {stat.Value}");
+                }
             }
         }
 

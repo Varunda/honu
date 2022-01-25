@@ -27,14 +27,13 @@ namespace watchtower.Services.CharacterViewer.Implementations {
             return _Generators;
         }
 
-        public async Task<List<CharacterStatBase>> GenerateAll(string charID) {
-            List<CharacterStatBase> stats = new List<CharacterStatBase>();
+        public async Task<List<ExtraStatSet>> GenerateAll(string charID) {
+            List<ExtraStatSet> stats = new List<ExtraStatSet>();
 
             foreach (ICharacterStatGenerator gen in _Generators) {
-                CharacterStatBase? stat = await gen.Generate(charID);
-                if (stat != null) {
-                    stat.CharacterID = charID; // Some generators don't set this grrr
-                    stats.Add(stat);
+                ExtraStatSet? set = await gen.Generate(charID);
+                if (set != null) {
+                    stats.Add(set);
                 }
             }
 

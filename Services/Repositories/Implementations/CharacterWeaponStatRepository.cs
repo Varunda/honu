@@ -46,7 +46,7 @@ namespace watchtower.Services.Repositories.Implementations {
                 }
 
                 _Cache.Set(cacheKey, entries, new MemoryCacheEntryOptions() {
-                    SlidingExpiration = TimeSpan.FromSeconds(5)
+                    SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
             }
 
