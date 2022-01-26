@@ -738,7 +738,8 @@ namespace watchtower.Realtime {
                     }
                 }
 
-                if (p.FactionID == Faction.NS) {
+                // If the character is NS, and we know what team they're currently on (not -1 or 0), update the event
+                if (p.FactionID == Faction.NS && p.TeamID != Faction.UNKNOWN && p.TeamID != 0) {
                     ev.TeamID = p.TeamID;
                 }
             }
