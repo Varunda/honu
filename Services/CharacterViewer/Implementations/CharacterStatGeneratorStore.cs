@@ -23,6 +23,10 @@ namespace watchtower.Services.CharacterViewer.Implementations {
             return true;
         }
 
+        public void ClearGenerators() {
+            _Generators.Clear();
+        }
+
         public List<ICharacterStatGenerator> GetAll() {
             return _Generators;
         }

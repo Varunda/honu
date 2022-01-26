@@ -40,7 +40,7 @@
                                     {{stat.figuredOutBy}}
 
                                     <span v-if="stat.figuredOutOn != null">
-                                        <br />on {{stat.figuredOutOn | moment}}
+                                        <br />on {{stat.figuredOutOn | moment("YYYY-MM-DD")}}
                                     </span>
                                 </span>
                             </p>

@@ -30,7 +30,7 @@ namespace watchtower.Services.Db.Implementations {
 	                FROM weapon_stats
 		                LEFT JOIN wt_item i ON CAST(weapon_stats.item_id as int) = i.id
 	                WHERE weapon_stats.character_id = @CharID
-		                AND (weapon_stats.kills > 0 OR weapon_stats.seconds_with > 299)
+		                AND (weapon_stats.kills > 0 OR weapon_stats.seconds_with > 0)
             ");
 
             cmd.AddParameter("CharID", charID);

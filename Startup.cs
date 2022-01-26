@@ -158,6 +158,7 @@ namespace watchtower {
             services.AddSingleton<BackgroundCharacterWeaponStatQueue>();
             services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
             services.AddSingleton<BackgroundLogoutBufferQueue>();
+            services.AddSingleton<ExtraStatHoster>();
 
             services.AddHonuDatabasesServices(); // Db services
             services.AddHonuDatabaseReadersServices(); // DB readers

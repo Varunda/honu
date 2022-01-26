@@ -1089,6 +1089,11 @@ export const ATable = Vue.extend({
                 return [];
             }
 
+            if (this.paging.page >= this.pageCount) {
+                console.log(`current page ${this.paging.page} would be cut off as the current page count is ${this.pageCount}, setting to ${this.pageCount - 1}`);
+                this.paging.page = this.pageCount - 1;
+            }
+
             if (this.sorting.field == "") {
                 if (this.paginate == true) {
                     return this.filteredEntries

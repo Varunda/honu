@@ -11,6 +11,8 @@ namespace watchtower.Services.CharacterViewer {
 
         bool Add(ICharacterStatGenerator generator);
 
+        void ClearGenerators();
+
         List<ICharacterStatGenerator> GetAll();
 
         Task<List<ExtraStatSet>> GenerateAll(string charID);
