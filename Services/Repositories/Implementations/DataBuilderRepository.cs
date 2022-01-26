@@ -316,6 +316,7 @@ namespace watchtower.Services.Repositories.Implementations {
                 data.ContinentCount.Hossin.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Hossin);
                 data.ContinentCount.Amerish.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Amerish);
                 data.ContinentCount.Esamir.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Esamir);
+                data.ContinentCount.Oshur.Metadata = ZoneStateStore.Get().GetZone(worldID, Zone.Oshur);
             }
 
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;

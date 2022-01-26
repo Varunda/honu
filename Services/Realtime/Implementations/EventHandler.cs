@@ -601,10 +601,10 @@ namespace watchtower.Realtime {
                 // The default value for Online must be false, else when a new TrackedPlayer is constructed,
                 //      the session will never start, as the handler already sees the character online,
                 //      so no need to start a new session
-                TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(attackerID, new TrackedPlayer() {
-                    ID = attackerID,
+                TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
+                    ID = ev.AttackerCharacterID,
                     FactionID = attackerFactionID,
-                    TeamID = ev.AttackerTeamID,
+                    TeamID = (attackerFactionID == 4) ? Faction.UNKNOWN : attackerFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -627,10 +627,10 @@ namespace watchtower.Realtime {
                 }
 
                 // See above for why false is used for the Online value, instead of true
-                TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
-                    ID = charID,
+                TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
+                    ID = ev.KilledCharacterID,
                     FactionID = factionID,
-                    TeamID = ev.KilledTeamID,
+                    TeamID = (factionID == 4) ? Faction.UNKNOWN : factionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -738,7 +738,9 @@ namespace watchtower.Realtime {
                     }
                 }
 
-                ev.TeamID = p.TeamID;
+                if (p.FactionID == Faction.NS) {
+                    ev.TeamID = p.TeamID;
+                }
             }
 
             long ID = await _ExpEventDb.Insert(ev);

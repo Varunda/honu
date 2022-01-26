@@ -43,6 +43,10 @@ namespace watchtower.Code.ExtensionMethods {
             return token.Value<uint?>("zone_id") ?? 0;
         }
 
+        public static uint GetUInt32(this JToken token, string field) {
+            return token.Value<uint?>(field) ?? 0;
+        }
+
         public static bool GetBoolean(this JToken token, string name, bool fallback) {
             return token.Value<bool?>(name) ?? fallback;
         }

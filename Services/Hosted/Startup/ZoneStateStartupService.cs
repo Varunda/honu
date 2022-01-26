@@ -10,6 +10,7 @@ using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models;
+using watchtower.Models.Census;
 using watchtower.Services.Census;
 
 namespace watchtower.Services.Hosted.Startup {
@@ -32,8 +33,13 @@ namespace watchtower.Services.Hosted.Startup {
                 Stopwatch timer = Stopwatch.StartNew();
 
                 foreach (short worldID in World.All) {
+                    _Logger.LogDebug($"Getting zone maps for {string.Join(", ", Zone.All.Select(iter => $"{Zone.GetName(iter)}/{iter}"))} for the world {World.GetName(worldID)}");
+                    List<PsMap> maps = await _MapCollection.GetZoneMaps(worldID, Zone.All);
+
                     foreach (uint zoneID in Zone.All) {
-                        short? owner = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
+                        List<PsMap> zoneMap = maps.Where(iter => iter.ZoneID == zoneID).ToList();
+                        _Logger.LogDebug($"Found {zoneMap.Count} entries for {zoneID}");
+                        short? owner = _MapCollection.GetZoneMapOwner(worldID, zoneID, zoneMap);
 
                         lock (ZoneStateStore.Get().Zones) {
                             ZoneState state = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new() { WorldID = worldID, ZoneID = zoneID };

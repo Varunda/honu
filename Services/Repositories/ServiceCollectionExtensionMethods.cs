@@ -50,6 +50,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<AchievementRepository>();
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();
+            services.AddSingleton<WorldOverviewRepository>();
         }
 
     }

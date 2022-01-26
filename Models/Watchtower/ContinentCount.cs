@@ -19,6 +19,8 @@ namespace watchtower.Models {
 
         public FactionCount Esamir { get; set; } = new FactionCount();
 
+        public FactionCount Oshur { get; set; } = new FactionCount();
+
         public FactionCount Other { get; set; } = new FactionCount();
 
         /// <summary>
@@ -34,6 +36,8 @@ namespace watchtower.Models {
                 ++Amerish.VS;
             } else if (zoneID == Zone.Esamir) {
                 ++Esamir.VS;
+            } else if (zoneID == Zone.Oshur) {
+                ++Oshur.VS;
             } else {
                 ++Other.VS;
             }
@@ -48,6 +52,8 @@ namespace watchtower.Models {
                 ++Amerish.NC;
             } else if (zoneID == Zone.Esamir) {
                 ++Esamir.NC;
+            } else if (zoneID == Zone.Oshur) {
+                ++Oshur.NC;
             } else {
                 ++Other.NC;
             }
@@ -62,6 +68,8 @@ namespace watchtower.Models {
                 ++Amerish.TR;
             } else if (zoneID == Zone.Esamir) {
                 ++Esamir.TR;
+            } else if (zoneID == Zone.Oshur) {
+                ++Oshur.TR;
             } else {
                 ++Other.TR;
             }
@@ -76,6 +84,8 @@ namespace watchtower.Models {
                 ++Amerish.NS;
             } else if (zoneID == Zone.Esamir) {
                 ++Esamir.NS;
+            } else if (zoneID == Zone.Oshur) {
+                ++Oshur.NS;
             } else {
                 ++Other.NS;
             }

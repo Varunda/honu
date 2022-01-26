@@ -10,9 +10,12 @@ export default class ZoneUtils {
             case 4: return "Hossin";
             case 6: return "Amerish";
             case 8: return "Esamir";
+            case 344: return "Oshur";
+
             case 14: return "Koltyr";
             case 361: return (instanceID > 0) ? `Desolation (instance ${instanceID})` : "Desolation";
             case 362: return "Sancutary";
+
             case 96: return "VR training (NC)";
             case 97: return "VR training (TR)";
             case 98: return "VR training (VS)";

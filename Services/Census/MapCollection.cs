@@ -34,27 +34,34 @@ namespace watchtower.Services.Census {
                 query.Where("zone_ids").Equals(zoneID);
             }
 
+            _Logger.LogDebug($"Census endpoint to get zones {zoneIDs} of {worldID}: {query.GetUri()}");
+
             List<PsMap> regions = new List<PsMap>();
 
             try {
                 IEnumerable<JToken> result = await query.GetListAsync();
 
                 foreach (JToken zone in result) {
-                    uint zoneID = zone.GetZoneID();
+                    uint zoneID = zone.GetUInt32("ZoneId");
 
-                    JToken? row = zone.SelectToken("Row");
-                    if (row == null) {
-                        _Logger.LogError("");
-                        continue;
-                    }
+                    //_Logger.LogDebug($"Zone data of {zoneID} => {zone}");
 
-                    foreach (JToken entry in row) {
-                        JToken? data = entry.SelectToken("RowData");
-                        if (data != null) {
-                            PsMap region = _Parse(data);
-                            region.ZoneID = zoneID;
-                            regions.Add(region);
+                    JToken? row = zone.SelectToken("Regions")?.SelectToken("Row");
+
+                    if (row != null) {
+                        foreach (JToken entry in row) {
+                            //_Logger.LogDebug($"{entry}");
+                            JToken? data = entry.SelectToken("RowData");
+                            if (data != null) {
+                                PsMap region = _Parse(data);
+                                region.ZoneID = zoneID;
+                                regions.Add(region);
+                            } else {
+                                _Logger.LogWarning($"Missing RowData from {entry}");
+                            }
                         }
+                    } else {
+                        _Logger.LogWarning($"Missing Regions?.Row?");
                     }
                 }
             } catch (TaskCanceledException) {
@@ -95,6 +102,8 @@ namespace watchtower.Services.Census {
                                 regions.Add(region);
                             }
                         }
+                    } else {
+                        _Logger.LogWarning($"Missing Regions?.Row?");
                     }
                 }
             } catch (TaskCanceledException) {
@@ -154,6 +163,41 @@ namespace watchtower.Services.Census {
             return hexes;
         }
 
+        /// <summary>
+        /// Get who the owner of a zone is, based on list of regions and their owners
+        /// </summary>
+        /// <param name="worldID"></param>
+        /// <param name="zoneID"></param>
+        /// <param name="map"></param>
+        /// <returns></returns>
+        public short? GetZoneMapOwner(short worldID, uint zoneID, List<PsMap> map) {
+            _Logger.LogDebug($"{worldID}:{zoneID} => using {map.Count} regions");
+            int total = map.Count;
+
+            Dictionary<short, int> counts = new();
+
+            foreach (PsMap region in map) {
+                if (counts.ContainsKey(region.FactionID) == false) {
+                    counts.Add(region.FactionID, 0);
+                }
+
+                ++counts[region.FactionID];
+            }
+
+            _Logger.LogInformation($"{worldID}:{zoneID} => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
+
+            if (total > 10 && counts.Count > 0) {
+                KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();
+
+                // Esamir has 2 disabled regions
+                if (majority.Value >= total - 2) {
+                    return majority.Key;
+                }
+            }
+
+            return null;
+        }
+
         private PsMap _Parse(JToken token) {
             PsMap region = new PsMap();
 
@@ -203,38 +247,6 @@ namespace watchtower.Services.Census {
             return census.GetZoneMapOwner(worldID, zoneID, map);
         }
 
-        /// <summary>
-        /// Get who the owner of a zone is, based on list of regions and their owners
-        /// </summary>
-        /// <param name="census"></param>
-        /// <param name="worldID"></param>
-        /// <param name="zoneID"></param>
-        /// <param name="map"></param>
-        /// <returns></returns>
-        public static short? GetZoneMapOwner(this MapCollection census, short worldID, uint zoneID, List<PsMap> map) {
-            int total = map.Count;
-
-            Dictionary<short, int> counts = new();
-
-            foreach (PsMap region in map) {
-                if (counts.ContainsKey(region.FactionID) == false) {
-                    counts.Add(region.FactionID, 0);
-                }
-
-                ++counts[region.FactionID];
-            }
-
-            if (total > 10 && counts.Count > 0) {
-                KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();
-
-                // Esamir has 2 disabled regions
-                if (majority.Value >= total - 2) {
-                    return majority.Key;
-                }
-            }
-
-            return null;
-        }
 
         /// <summary>
         ///     Get what <c>UnstableState</c> a zone is
@@ -270,7 +282,7 @@ namespace watchtower.Services.Census {
                 }
             }
 
-            if (GetZoneMapOwner(census, worldID, zoneID, map) == null) {
+            if (census.GetZoneMapOwner(worldID, zoneID, map) == null) {
                 return UnstableState.UNLOCKED;
             }
 
