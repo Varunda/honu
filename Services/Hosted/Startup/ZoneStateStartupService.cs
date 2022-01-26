@@ -38,7 +38,6 @@ namespace watchtower.Services.Hosted.Startup {
 
                     foreach (uint zoneID in Zone.All) {
                         List<PsMap> zoneMap = maps.Where(iter => iter.ZoneID == zoneID).ToList();
-                        _Logger.LogDebug($"Found {zoneMap.Count} entries for {zoneID}");
                         short? owner = _MapCollection.GetZoneMapOwner(worldID, zoneID, zoneMap);
 
                         lock (ZoneStateStore.Get().Zones) {

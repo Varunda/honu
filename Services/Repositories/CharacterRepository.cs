@@ -75,7 +75,7 @@ namespace watchtower.Services.Repositories {
                         //      Useful if census is down, or a character has been deleted
                         PsCharacter? censusChar = await _Census.GetByID(charID);
                         if (censusChar != null) {
-                            character = await _Census.GetByID(charID);
+                            character = censusChar;
                             await _Db.Upsert(censusChar);
                         }
                     } catch (Exception ex) {

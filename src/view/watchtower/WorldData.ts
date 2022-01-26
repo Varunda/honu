@@ -64,6 +64,7 @@ export class ContinentCount {
 	public hossin: FactionCount = new FactionCount();
 	public amerish: FactionCount = new FactionCount();
 	public esamir: FactionCount = new FactionCount();
+	public oshur: FactionCount = new FactionCount();
 	public other: FactionCount = new FactionCount();
 }
 

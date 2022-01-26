@@ -102,6 +102,10 @@
                         Esamir
                         <continent-metadata :metadata="worldData.continentCount.esamir.metadata"></continent-metadata>
                     </th>
+                    <th colspan="5" v-if="oshurCount > 19" class="border-right">
+                        Oshur
+                        <continent-metadata :metadata="worldData.continentCount.oshur.metadata"></continent-metadata>
+                    </th>
                     <th colspan="5">
                         Other
                         <info-hover text="Zones such as Koltyr, Desolation or Santuary"></info-hover>
@@ -146,6 +150,14 @@
                         <td>{{worldData.continentCount.esamir.nc}} NC</td>
                         <td>{{worldData.continentCount.esamir.tr}} TR</td>
                         <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
+                    </template>
+
+                    <template v-if="oshurCount > 19">
+                        <td>All: {{oshurCount}}</td>
+                        <td>{{worldData.continentCount.oshur.vs}} VS</td>
+                        <td>{{worldData.continentCount.oshur.nc}} NC</td>
+                        <td>{{worldData.continentCount.oshur.tr}} TR</td>
+                        <td class="border-right">{{worldData.continentCount.oshur.ns}} NS</td>
                     </template>
 
                     <!-- Other, currently unknown -->

@@ -224,6 +224,13 @@ const vm = new Vue({
 				+ this.worldData.continentCount.esamir.ns;
 		},
 
+		oshurCount: function(): number {
+			return this.worldData.continentCount.oshur.vs
+				+ this.worldData.continentCount.oshur.nc
+				+ this.worldData.continentCount.oshur.tr
+				+ this.worldData.continentCount.oshur.ns;
+        },
+
 		otherCount: function (): number {
 			return this.worldData.continentCount.other.vs
 				+ this.worldData.continentCount.other.nc
@@ -240,6 +247,7 @@ const vm = new Vue({
 				+ this.worldData.continentCount.hossin.vs
 				+ this.worldData.continentCount.amerish.vs
 				+ this.worldData.continentCount.esamir.vs
+				+ this.worldData.continentCount.oshur.vs
 				+ this.worldData.continentCount.other.vs;
 		},
 
@@ -248,6 +256,7 @@ const vm = new Vue({
 				+ this.worldData.continentCount.hossin.nc
 				+ this.worldData.continentCount.amerish.nc
 				+ this.worldData.continentCount.esamir.nc
+				+ this.worldData.continentCount.oshur.nc
 				+ this.worldData.continentCount.other.nc;
 		},
 
@@ -256,6 +265,7 @@ const vm = new Vue({
 				+ this.worldData.continentCount.hossin.tr
 				+ this.worldData.continentCount.amerish.tr
 				+ this.worldData.continentCount.esamir.tr
+				+ this.worldData.continentCount.oshur.tr
 				+ this.worldData.continentCount.other.tr;
 		},
 
@@ -264,6 +274,7 @@ const vm = new Vue({
 				+ this.worldData.continentCount.hossin.ns
 				+ this.worldData.continentCount.amerish.ns
 				+ this.worldData.continentCount.esamir.ns
+				+ this.worldData.continentCount.oshur.ns
 				+ this.worldData.continentCount.other.ns;
 		},
 	},

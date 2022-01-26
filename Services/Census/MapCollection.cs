@@ -50,7 +50,6 @@ namespace watchtower.Services.Census {
 
                     if (row != null) {
                         foreach (JToken entry in row) {
-                            //_Logger.LogDebug($"{entry}");
                             JToken? data = entry.SelectToken("RowData");
                             if (data != null) {
                                 PsMap region = _Parse(data);
@@ -99,6 +98,7 @@ namespace watchtower.Services.Census {
                             JToken? data = entry.SelectToken("RowData");
                             if (data != null) {
                                 PsMap region = _Parse(data);
+                                region.ZoneID = zoneID; // Yeah we do a bit of cheating here
                                 regions.Add(region);
                             }
                         }
@@ -109,7 +109,7 @@ namespace watchtower.Services.Census {
             } catch (TaskCanceledException) {
                 _Logger.LogInformation($"Cancelled task for getting regions for {worldID} {zoneID}");
             } catch (Exception ex) {
-                _Logger.LogError(ex, "Failed to get regions for {worldID} {zoneID}", worldID, zoneID);
+                _Logger.LogError(ex, $"Failed to get regions for {worldID} {zoneID}");
             }
 
             return regions;
@@ -171,7 +171,7 @@ namespace watchtower.Services.Census {
         /// <param name="map"></param>
         /// <returns></returns>
         public short? GetZoneMapOwner(short worldID, uint zoneID, List<PsMap> map) {
-            _Logger.LogDebug($"{worldID}:{zoneID} => using {map.Count} regions");
+            //_Logger.LogDebug($"{worldID}:{zoneID} => using {map.Count} regions");
             int total = map.Count;
 
             Dictionary<short, int> counts = new();
@@ -184,7 +184,7 @@ namespace watchtower.Services.Census {
                 ++counts[region.FactionID];
             }
 
-            _Logger.LogInformation($"{worldID}:{zoneID} => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
+            //_Logger.LogInformation($"{worldID}:{zoneID} => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
 
             if (total > 10 && counts.Count > 0) {
                 KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();
