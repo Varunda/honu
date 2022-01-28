@@ -42,6 +42,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 
 //using honu_census;
 
@@ -122,6 +123,7 @@ namespace watchtower {
                 }).AddGoogle(options => {
                     options.ClientId = googleClientID;
                     options.ClientSecret = googleSecret;
+                    options.CorrelationCookie.SameSite = SameSiteMode.Lax;
                 });
 
                 Console.WriteLine($"Added Google auth");
@@ -207,6 +209,7 @@ namespace watchtower {
 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownProxies.Add(IPAddress.Parse("64.227.19.86"));
             });
         }
 
