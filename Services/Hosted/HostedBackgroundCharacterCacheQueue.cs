@@ -74,7 +74,11 @@ namespace watchtower.Services.Hosted {
                         await _OutfitRepository.GetByID(character.OutfitID);
                     }
                 } catch (CensusServiceUnavailableException) {
-                    _Logger.LogWarning($"Failed to get character from API");
+                    _Logger.LogWarning($"Failed to get character from API, service unavailable");
+                } catch (CensusConnectionException) {
+                    _Logger.LogWarning($"Failed to get character from API, connection exception");
+                } catch (CensusException) {
+                    _Logger.LogWarning($"Failed to get character from API, general exception");
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error while caching character");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {

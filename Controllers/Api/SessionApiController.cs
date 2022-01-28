@@ -57,6 +57,15 @@ namespace watchtower.Controllers.Api {
             return ApiOk(session);
         }
 
+        /// <summary>
+        ///     Get all sessions that were online at a given time
+        /// </summary>
+        /// <param name="whenEpoch">When to lookup the sessions, in unix epoch seconds</param>
+        /// <param name="worldID">Optional world ID to limit the lookup by</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpandedSession"/>s that represent characters online
+        ///     at the <c>DateTime</c> from <paramref name="whenEpoch"/>, which is in units of Unix epoch seconds
+        /// </response>
         [HttpGet("history/{whenEpoch}")]
         public async Task<ApiResponse<List<ExpandedSession>>> GetByDateTime(long whenEpoch, [FromQuery] short? worldID) {
             DateTime when = DateTimeOffset.FromUnixTimeSeconds(whenEpoch).DateTime;

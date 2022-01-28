@@ -25,8 +25,8 @@ namespace watchtower.Services.Hosted {
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private const string SERVICE_NAME = "jaeger_signinout_process";
-        //private const int RUN_DELAY = 1000 * 60 * 5;
-        private const int RUN_DELAY = 1000 * 10 * 1;
+        private const int RUN_DELAY = 1000 * 60 * 5;
+        //private const int RUN_DELAY = 1000 * 10 * 1;
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
