@@ -71,7 +71,7 @@
                 </li>
                 <li class="nav-item" @click="selectTab('items')">
                     <a class="nav-link" :class="{ 'text-success': selectedTab != 'items' }">
-                        Items
+                        Unlocks
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('friends')">

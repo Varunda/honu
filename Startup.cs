@@ -159,6 +159,7 @@ namespace watchtower {
             services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
             services.AddSingleton<BackgroundLogoutBufferQueue>();
             services.AddSingleton<ExtraStatHoster>();
+            services.AddSingleton<JaegerSignInOutQueue>();
 
             services.AddHonuDatabasesServices(); // Db services
             services.AddHonuDatabaseReadersServices(); // DB readers
@@ -185,6 +186,7 @@ namespace watchtower {
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
+            services.AddHostedService<HostedJaegerSignInOutProcess>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

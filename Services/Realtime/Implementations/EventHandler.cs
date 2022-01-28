@@ -39,6 +39,7 @@ namespace watchtower.Realtime {
         private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
         private readonly IDiscordMessageQueue _MessageQueue;
         private readonly BackgroundLogoutBufferQueue _LogoutQueue;
+        private readonly JaegerSignInOutQueue _JaegerQueue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly MapCollection _MapCensus;
@@ -55,7 +56,8 @@ namespace watchtower.Realtime {
             FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
             IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
-            ItemRepository itemRepo, MapRepository mapRepo) {
+            ItemRepository itemRepo, MapRepository mapRepo,
+            JaegerSignInOutQueue jaegerQueue) {
 
             _Logger = logger;
 
@@ -74,6 +76,7 @@ namespace watchtower.Realtime {
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
             _WeaponQueue = weaponQueue ?? throw new ArgumentNullException(nameof(weaponQueue));
             _LogoutQueue = logoutQueue ?? throw new ArgumentNullException(nameof(logoutQueue));
+            _JaegerQueue = jaegerQueue ?? throw new ArgumentNullException(nameof(jaegerQueue));
 
             _CharacterRepository = charRepo ?? throw new ArgumentNullException(nameof(charRepo));
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
@@ -406,14 +409,21 @@ namespace watchtower.Realtime {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
-
                 TrackedPlayer p;
+
+                short worldID = payload.GetWorldID();
+                if (worldID == World.Jaeger) {
+                    _JaegerQueue.QueueSignIn(new JaegerSigninoutEntry() {
+                        CharacterID = charID,
+                        Timestamp = payload.CensusTimestamp("timestamp")
+                    });
+                }
 
                 lock (CharacterStore.Get().Players) {
                     // The FactionID and TeamID are updated as part of caching the character
                     p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                         ID = charID,
-                        WorldID = payload.GetWorldID(),
+                        WorldID = worldID,
                         ZoneID = 0,
                         FactionID = Faction.UNKNOWN,
                         TeamID = Faction.UNKNOWN,
@@ -434,6 +444,14 @@ namespace watchtower.Realtime {
             if (charID != null) {
                 _CacheQueue.Queue(charID);
                 //_WeaponQueue.Queue(charID);
+
+                short worldID = payload.GetWorldID();
+                if (worldID == World.Jaeger) {
+                    _JaegerQueue.QueueSignOut(new JaegerSigninoutEntry() {
+                        CharacterID = charID,
+                        Timestamp = payload.CensusTimestamp("timestamp")
+                    });
+                }
 
                 TrackedPlayer? p;
                 lock (CharacterStore.Get().Players) {
