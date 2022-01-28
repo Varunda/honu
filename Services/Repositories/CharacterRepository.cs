@@ -26,6 +26,7 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterCollection _Census;
 
         private readonly BackgroundCharacterWeaponStatQueue _Queue;
+        private readonly IBackgroundCharacterCacheQueue _CacheQueue;
 
         private const string CACHE_KEY_ID = "Character.ID.{0}"; // {0} => char ID
         private const string CACHE_KEY_NAME = "Character.Name.{0}"; // {0} => char ID
@@ -41,7 +42,7 @@ namespace watchtower.Services.Repositories {
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
                 CharacterDbStore db, CharacterCollection census,
-                BackgroundCharacterWeaponStatQueue queue) {
+                BackgroundCharacterWeaponStatQueue queue, IBackgroundCharacterCacheQueue cacheQueue) {
 
             _Logger = logger;
             _Cache = cache;
@@ -50,6 +51,7 @@ namespace watchtower.Services.Repositories {
             _Census = census;
 
             _Queue = queue;
+            _CacheQueue = cacheQueue;
         }
 
         /// <summary>
@@ -172,7 +174,7 @@ namespace watchtower.Services.Repositories {
                 }
             } else {
                 foreach (string ID in IDs) {
-                    _Queue.Queue(ID);
+                    _CacheQueue.Queue(ID);
                 }
             }
             long toCensus = timer.ElapsedMilliseconds;

@@ -24,8 +24,8 @@ namespace watchtower.Services.Hosted {
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private const string SERVICE_NAME = "jaeger_signinout_process";
-        //private const int RUN_DELAY = 1000 * 60 * 5;
-        private const int RUN_DELAY = 1000 * 10 * 1;
+        private const int RUN_DELAY = 1000 * 60 * 5;
+        //private const int RUN_DELAY = 1000 * 10 * 1;
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
@@ -70,14 +70,14 @@ namespace watchtower.Services.Hosted {
 
                         msg += $"Currently {onlineCount} characters are online on Jaeger\n";
 
-                        msg += "Logins:\n";
+                        msg += $"Logins ({signin.Count}):\n";
 
                         foreach (JaegerSigninoutEntry s in signin) {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
                             msg += $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
                         }
 
-                        msg += $"\nLogouts:\n";
+                        msg += $"\nLogouts ({signout.Count}):\n";
                         foreach (JaegerSigninoutEntry s in signout) {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
                             msg += $"-[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
