@@ -92,5 +92,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult JaegerNsa() {
+            return View();
+        }
+
     }
 }

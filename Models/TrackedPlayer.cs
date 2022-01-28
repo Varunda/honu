@@ -58,6 +58,11 @@ namespace watchtower.Models {
         public KillEvent? LatestDeath { get; set; }
 
         /// <summary>
+        ///     ID of the session a character is currently in
+        /// </summary>
+        public long? SessionID { get; set; }
+
+        /// <summary>
         ///     When the character last logged in, or <c>null</c> if unknown (such as restarting Honu)
         /// </summary>
         public DateTime? LastLogin { get; set; }

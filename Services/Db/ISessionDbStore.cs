@@ -38,6 +38,14 @@ namespace watchtower.Services.Db {
         Task<List<Session>> GetByRangeAndCharacterID(string charID, DateTime start, DateTime end);
 
         /// <summary>
+        ///     Get all sessions that occured between a time period
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        Task<List<Session>> GetByRange(DateTime start, DateTime end);
+
+        /// <summary>
         ///     Get a specific session
         /// </summary>
         /// <param name="sessionID">ID of the session to get</param>

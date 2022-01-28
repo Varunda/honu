@@ -105,6 +105,33 @@ namespace watchtower.Services.Db.Implementations {
             return sessions;
         }
 
+        public async Task<List<Session>> GetByRange(DateTime start, DateTime end) {
+            if (start > end) {
+                throw new ArgumentException($"{nameof(start)} cannot come after {nameof(end)}");
+            }
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE (
+                        (start BETWEEN @PeriodStart AND @PeriodEnd)
+                        OR (finish BETWEEN @PeriodStart AND @PeriodEnd)
+                        OR (start <= @PeriodStart AND finish >= @PeriodEnd)
+                        OR (start >= @PeriodStart AND finish <= @PeriodEnd)
+                        OR (start < @PeriodStart AND finish IS NULL)
+                    );
+            ");
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<Session> sessions = await ReadList(cmd);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
         public async Task<List<Session>> GetByRangeAndOutfit(string? outfitID, DateTime start, DateTime end) {
             if (start > end) {
                 _Logger.LogWarning($"Warning, start comes after end, {start} > {end}");

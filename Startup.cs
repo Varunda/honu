@@ -295,6 +295,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "jaegernsa",
+                    pattern: "/jaegernsa/{*.}",
+                    defaults: new { controller = "Home", action = "JaegerNsa" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );

@@ -57,5 +57,37 @@ namespace watchtower.Controllers.Api {
             return ApiOk(session);
         }
 
+        [HttpGet("history/{whenEpoch}")]
+        public async Task<ApiResponse<List<ExpandedSession>>> GetByDateTime(long whenEpoch, [FromQuery] short? worldID) {
+            DateTime when = DateTimeOffset.FromUnixTimeSeconds(whenEpoch).DateTime;
+
+            List<Session> sessions = await _SessionDb.GetByRange(when - TimeSpan.FromMinutes(1), when + TimeSpan.FromMinutes(1));
+
+            _Logger.LogDebug($"Loaded {sessions.Count} sessions from {when:u}");
+
+            List<string> charIDs = sessions.Select(iter => iter.CharacterID).Distinct().ToList();
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs);
+
+            List<ExpandedSession> expanded = new List<ExpandedSession>(sessions.Count);
+
+            foreach (Session session in sessions) {
+                PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == session.CharacterID);
+
+                if (worldID != null && c != null && c.WorldID != worldID) {
+                    continue;
+                }
+
+                ExpandedSession ex = new ExpandedSession() {
+                    Session = session,
+                    Character = chars.FirstOrDefault(iter => iter.ID == session.CharacterID)
+                };
+
+                expanded.Add(ex);
+            }
+
+            return ApiOk(expanded);
+        }
+
     }
 }
