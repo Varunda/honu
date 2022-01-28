@@ -12,7 +12,7 @@ using watchtower.Models.Db;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
-using watchtower.Services;
+using watchtower.Services.Queues;
 
 namespace watchtower.Code.Commands {
 
@@ -25,7 +25,7 @@ namespace watchtower.Code.Commands {
         private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
-        private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
+        private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly ICharacterWeaponStatDbStore _StatDb;
 
         public WeaponStatsCommand(IServiceProvider services) {
@@ -35,7 +35,7 @@ namespace watchtower.Code.Commands {
             _CharacterRepository = services.GetRequiredService<CharacterRepository>();
             _ItemRepository = services.GetRequiredService<ItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
-            _PercentileQueue = services.GetRequiredService<IBackgroundWeaponPercentileCacheQueue>();
+            _PercentileQueue = services.GetRequiredService<WeaponPercentileCacheQueue>();
             _StatDb = services.GetRequiredService<ICharacterWeaponStatDbStore>();
         }
 

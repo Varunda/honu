@@ -10,6 +10,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
@@ -19,13 +20,13 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "background_character_cache";
 
         private readonly ILogger<HostedBackgroundCharacterCacheQueue> _Logger;
-        private readonly IBackgroundCharacterCacheQueue _Queue;
+        private readonly CharacterCacheQueue _Queue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
 
         public HostedBackgroundCharacterCacheQueue(ILogger<HostedBackgroundCharacterCacheQueue> logger,
-            IBackgroundCharacterCacheQueue queue, CharacterRepository charRepo,
+            CharacterCacheQueue queue, CharacterRepository charRepo,
             OutfitRepository outfitRepo) {
 
             _Logger = logger;
@@ -40,7 +41,7 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-                    CharacterFetchQueueEntry entry = await _Queue.DequeueAsync(stoppingToken);
+                    CharacterFetchQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
                     string charID = entry.CharacterID;
                     PsCharacter? character = await _CharacterRepository.GetByID(charID);

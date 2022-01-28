@@ -12,10 +12,7 @@ namespace watchtower.Services.Queues {
     /// <summary>
     ///     Background queue for performing a character update
     /// </summary>
-    public class BackgroundCharacterWeaponStatQueue {
-
-        private ConcurrentQueue<CharacterUpdateQueueEntry> _Items = new ConcurrentQueue<CharacterUpdateQueueEntry>();
-        private SemaphoreSlim _Signal = new SemaphoreSlim(0);
+    public class CharacterUpdateQueue : BaseQueue<CharacterUpdateQueueEntry> {
 
         /// <summary>
         ///     Add a character ID to be updated
@@ -34,30 +31,6 @@ namespace watchtower.Services.Queues {
         public void Queue(PsCharacter character) {
             _Items.Enqueue(new CharacterUpdateQueueEntry() { CharacterID = character.ID, CensusCharacter = character });
             _Signal.Release();
-        }
-
-        public void Queue(CharacterUpdateQueueEntry entry) {
-            _Items.Enqueue(entry);
-            _Signal.Release();
-        }
-
-        /// <summary>
-        ///     Get a <see cref="CharacterUpdateQueueEntry"/> from the queue. This is a blocking call,
-        ///     and will not be completed until something can be released from the queue
-        /// </summary>
-        /// <param name="cancel">Cancel token</param>
-        public async Task<CharacterUpdateQueueEntry> Dequeue(CancellationToken cancel) {
-            await _Signal.WaitAsync(cancel);
-            _Items.TryDequeue(out CharacterUpdateQueueEntry? charID);
-
-            return charID!;
-        }
-
-        /// <summary>
-        ///     How many items are currently in the queue
-        /// </summary>
-        public int Count() {
-            return _Items.Count();
         }
 
     }

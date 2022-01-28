@@ -10,8 +10,8 @@ using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Models.Db;
-using watchtower.Services;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
@@ -31,12 +31,12 @@ namespace watchtower.Controllers.Api {
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly ICharacterWeaponStatDbStore _StatDb;
 
-        private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
+        private readonly WeaponPercentileCacheQueue _PercentileQueue;
 
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
             ICharacterWeaponStatRepository charWeaponRepo, CharacterRepository charRepo,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
-            IBackgroundWeaponPercentileCacheQueue percentQueue,
+            WeaponPercentileCacheQueue percentQueue,
             ICharacterWeaponStatDbStore statDb) {
 
             _Logger = logger;

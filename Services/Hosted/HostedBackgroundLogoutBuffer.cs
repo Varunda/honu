@@ -28,7 +28,7 @@ namespace watchtower.Services.Hosted {
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private readonly CharacterCollection _CharacterCensus;
-        private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
+        private readonly CharacterUpdateQueue _WeaponQueue;
         private readonly LogoutBufferDbStore _LogoutDb;
 
         private const string SERVICE_NAME = "logout_buffer";
@@ -39,7 +39,7 @@ namespace watchtower.Services.Hosted {
         private int _LastCount = 0;
 
         public HostedBackgroundLogoutBuffer(ILogger<HostedBackgroundLogoutBuffer> logger,
-            CharacterCollection charColl, BackgroundCharacterWeaponStatQueue weaponQueue,
+            CharacterCollection charColl, CharacterUpdateQueue weaponQueue,
             IServiceHealthMonitor healthMon, LogoutBufferDbStore logoutDb) {
 
             _Logger = logger;

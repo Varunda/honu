@@ -10,6 +10,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
+using watchtower.Services.Queues;
+
+using HonuDiscord = watchtower.Models.Discord;
 
 namespace watchtower.Services.Hosted {
 
@@ -17,7 +20,7 @@ namespace watchtower.Services.Hosted {
 
         private readonly ILogger<DiscordService> _Logger;
 
-        private readonly IDiscordMessageQueue _MessageQueue;
+        private readonly DiscordMessageQueue _MessageQueue;
 
         private readonly DiscordClient _Discord;
         private IOptions<DiscordOptions> _DiscordOptions;
@@ -26,7 +29,7 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "discord";
 
         public DiscordService(ILogger<DiscordService> logger,
-            IDiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions) {
+            DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions) {
 
             _Logger = logger;
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
@@ -65,11 +68,32 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
-                    string msg = await _MessageQueue.DequeueAsync(stoppingToken);
+                    HonuDiscord.DiscordMessage msg = await _MessageQueue.Dequeue(stoppingToken);
 
                     DiscordChannel? channel = await _Discord.GetChannelAsync(_DiscordOptions.Value.ChannelId);
-                    if (channel != null) {
-                        await channel.SendMessageAsync(msg);
+                    if (channel == null) {
+                        _Logger.LogWarning($"Failed to find channel {_DiscordOptions.Value.ChannelId}, cannot send message");
+                    } else {
+                        DiscordMessageBuilder builder = new DiscordMessageBuilder();
+
+                        if (msg.Embeds.Count > 0) {
+                            foreach (HonuDiscord.DiscordEmbed embed in msg.Embeds) {
+                                DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder();
+                                embedBuilder.Color = new DiscordColor(embed.Color);
+                                embedBuilder.Description = embed.Description;
+                                embedBuilder.Title = embed.Description;
+
+                                foreach (HonuDiscord.DiscordEmbedField field in embed.Fields) {
+                                    embedBuilder.AddField(field.Name, field.Value, field.Inline);
+                                }
+
+                                builder.AddEmbed(embedBuilder.Build());
+                            }
+                        } else {
+                            builder.Content = msg.Message;
+                        }
+
+                        await channel.SendMessageAsync(builder);
                     }
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error while caching character");

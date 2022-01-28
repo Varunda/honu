@@ -14,10 +14,10 @@ namespace watchtower.Controllers {
     public class HomeController : Controller {
 
         private readonly CharacterRepository _CharacterRepository;
-        private readonly BackgroundCharacterWeaponStatQueue _Queue;
+        private readonly CharacterUpdateQueue _Queue;
 
         public HomeController(CharacterRepository charRepo,
-            BackgroundCharacterWeaponStatQueue queue) {
+            CharacterUpdateQueue queue) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;

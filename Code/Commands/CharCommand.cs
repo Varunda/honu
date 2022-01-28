@@ -38,7 +38,7 @@ namespace watchtower.Commands {
         private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
         private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
         private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
-        private readonly BackgroundCharacterWeaponStatQueue _Queue;
+        private readonly CharacterUpdateQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<CharCommand>>();
@@ -57,7 +57,7 @@ namespace watchtower.Commands {
             _CharacterDirectiveTreeCensus = services.GetRequiredService<CharacterDirectiveTreeCollection>();
             _CharacterDirectiveTierCensus = services.GetRequiredService<CharacterDirectiveTierCollection>();
             _CharacterDirectiveObjectiveCensus = services.GetRequiredService<CharacterDirectiveObjectiveCollection>();
-            _Queue = services.GetRequiredService<BackgroundCharacterWeaponStatQueue>();
+            _Queue = services.GetRequiredService<CharacterUpdateQueue>();
         }
 
         public async Task Refresh(string nameOrId) {

@@ -25,8 +25,8 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterDbStore _Db;
         private readonly CharacterCollection _Census;
 
-        private readonly BackgroundCharacterWeaponStatQueue _Queue;
-        private readonly IBackgroundCharacterCacheQueue _CacheQueue;
+        private readonly CharacterUpdateQueue _Queue;
+        private readonly CharacterCacheQueue _CacheQueue;
 
         private const string CACHE_KEY_ID = "Character.ID.{0}"; // {0} => char ID
         private const string CACHE_KEY_NAME = "Character.Name.{0}"; // {0} => char ID
@@ -42,7 +42,7 @@ namespace watchtower.Services.Repositories {
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
                 CharacterDbStore db, CharacterCollection census,
-                BackgroundCharacterWeaponStatQueue queue, IBackgroundCharacterCacheQueue cacheQueue) {
+                CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue) {
 
             _Logger = logger;
             _Cache = cache;

@@ -5,6 +5,9 @@ using watchtower.Models.Queues;
 
 namespace watchtower.Services.Queues {
 
+    /// <summary>
+    ///     Queue of characters that have signed in or out
+    /// </summary>
     public class JaegerSignInOutQueue {
 
         private readonly ILogger<JaegerSignInOutQueue> _Logger;

@@ -8,7 +8,6 @@ using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
-using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -31,14 +30,14 @@ namespace watchtower.Controllers.Api {
         private readonly OutfitDbStore _OutfitDb;
         private readonly CharacterDbStore _CharacterDb;
 
-        private readonly BackgroundCharacterWeaponStatQueue _CacheQueue;
-        private readonly IBackgroundCharacterCacheQueue _CharacterQueue;
+        private readonly CharacterUpdateQueue _CacheQueue;
+        private readonly CharacterCacheQueue _CharacterQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
             OutfitRepository outfitRepo, OutfitCollection outfitCollection,
             CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
-            BackgroundCharacterWeaponStatQueue cacheQueue, OutfitDbStore outfitDb,
-            IBackgroundCharacterCacheQueue charQueue) {
+            CharacterUpdateQueue cacheQueue, OutfitDbStore outfitDb,
+            CharacterCacheQueue charQueue) {
 
             _Logger = logger;
 

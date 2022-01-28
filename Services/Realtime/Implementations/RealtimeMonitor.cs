@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Constants;
-using watchtower.Services;
+using watchtower.Services.Queues;
 using Websocket.Client;
 
 namespace watchtower.Realtime {
@@ -42,11 +42,11 @@ namespace watchtower.Realtime {
 
         private readonly ILogger<RealtimeMonitor> _Logger;
         private readonly ICensusStreamClient _Stream;
-        private readonly IBackgroundTaskQueue _Queue;
+        private readonly CensusRealtimeEventQueue _Queue;
 
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger,
             ICensusStreamClient stream,
-            IBackgroundTaskQueue queue) {
+            CensusRealtimeEventQueue queue) {
 
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
             _Subscription.EventNames = _Subscription.EventNames.Append("Death")

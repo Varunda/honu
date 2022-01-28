@@ -22,20 +22,20 @@ namespace watchtower.Controllers.Api {
 
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
-        private readonly IBackgroundCharacterCacheQueue _CharacterCache;
-        private readonly IBackgroundSessionStarterQueue _SessionQueue;
-        private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
-        private readonly IBackgroundTaskQueue _TaskQueue;
-        private readonly IBackgroundWeaponPercentileCacheQueue _PercentileQueue;
-        private readonly IDiscordMessageQueue _DiscordQueue;
-        private readonly BackgroundLogoutBufferQueue _LogoutQueue;
+        private readonly CharacterCacheQueue _CharacterCache;
+        private readonly SessionStarterQueue _SessionQueue;
+        private readonly CharacterUpdateQueue _WeaponQueue;
+        private readonly CensusRealtimeEventQueue _TaskQueue;
+        private readonly WeaponPercentileCacheQueue _PercentileQueue;
+        private readonly DiscordMessageQueue _DiscordQueue;
+        private readonly LogoutUpdateBuffer _LogoutQueue;
 
         public ServiceApiController(ILogger<ServiceApiController> logger,
             IServiceHealthMonitor mon,
-            IBackgroundCharacterCacheQueue charQueue, IBackgroundSessionStarterQueue session,
-            BackgroundCharacterWeaponStatQueue weapon, IBackgroundTaskQueue task,
-            IBackgroundWeaponPercentileCacheQueue percentile, IDiscordMessageQueue discord,
-            BackgroundLogoutBufferQueue logoutQueue) {
+            CharacterCacheQueue charQueue, SessionStarterQueue session,
+            CharacterUpdateQueue weapon, CensusRealtimeEventQueue task,
+            WeaponPercentileCacheQueue percentile, DiscordMessageQueue discord,
+            LogoutUpdateBuffer logoutQueue) {
 
             _Logger = logger;
 

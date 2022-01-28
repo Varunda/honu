@@ -11,6 +11,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
@@ -23,12 +24,12 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "background_session_queue";
 
         private readonly ILogger<HostedSessionStarterQueue> _Logger;
-        private readonly IBackgroundSessionStarterQueue _Queue;
+        private readonly SessionStarterQueue _Queue;
 
         private readonly ISessionDbStore _SessionDb;
 
         public HostedSessionStarterQueue(ILogger<HostedSessionStarterQueue> logger,
-            IBackgroundSessionStarterQueue queue, ISessionDbStore sessionDb) {
+            SessionStarterQueue queue, ISessionDbStore sessionDb) {
 
             _Logger = logger;
 
@@ -41,7 +42,7 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-                    TrackedPlayer player = await _Queue.DequeueAsync(stoppingToken);
+                    TrackedPlayer player = await _Queue.Dequeue(stoppingToken);
 
                     await _SessionDb.Start(player);
 

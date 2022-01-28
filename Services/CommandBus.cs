@@ -10,7 +10,7 @@ using watchtower.Commands;
 
 namespace watchtower.Services {
 
-    public class CommandBus : ICommandBus {
+    public class CommandBus {
 
         private readonly ILogger<CommandBus> _Logger;
         private readonly IServiceProvider _Services;
@@ -146,7 +146,6 @@ namespace watchtower.Services {
             }
             return msg.ToString();
         }
-        
 
     }
 }

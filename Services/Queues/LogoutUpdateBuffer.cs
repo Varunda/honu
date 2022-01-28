@@ -11,27 +11,25 @@ using watchtower.Services.Db;
 namespace watchtower.Services.Queues {
 
     /// <summary>
-    ///     A queue of <see cref="LogoutBufferEntry"/>s 
+    ///     A database buffer of characters to perform updates on, after Census has updated their data
     /// </summary>
-    public class BackgroundLogoutBufferQueue {
+    public class LogoutUpdateBuffer {
 
-        private readonly ILogger<BackgroundLogoutBufferQueue> _Logger;
+        private readonly ILogger<LogoutUpdateBuffer> _Logger;
         private LogoutBufferDbStore _LogoutDb;
 
-        public BackgroundLogoutBufferQueue(ILogger<BackgroundLogoutBufferQueue> logger,
+        public LogoutUpdateBuffer(ILogger<LogoutUpdateBuffer> logger,
             LogoutBufferDbStore db) {
 
             _Logger = logger;
             _LogoutDb = db ?? throw new ArgumentNullException(nameof(db));
         }
 
-        //private SemaphoreSlim _Signal = new SemaphoreSlim(0);
-
         /// <summary>
         ///     Queue a new <see cref="LogoutBufferEntry"/>
         /// </summary>
         /// <param name="entry">Parmeters inserted</param>
-        public async void Queue(LogoutBufferEntry entry) {
+        public async Task Queue(LogoutBufferEntry entry) {
             try {
                 await _LogoutDb.Upsert(entry, CancellationToken.None);
             } catch (Exception ex) {

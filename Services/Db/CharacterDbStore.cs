@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Queues;
 
 namespace watchtower.Services.Db {
 
@@ -16,7 +17,7 @@ namespace watchtower.Services.Db {
         private readonly IDbHelper _DbHelper;
 
         public CharacterDbStore(ILogger<CharacterDbStore> logger,
-                IDbHelper helper, IBackgroundCharacterCacheQueue queue) {
+                IDbHelper helper, CharacterCacheQueue queue) {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));

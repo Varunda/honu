@@ -146,18 +146,18 @@ namespace watchtower {
 
             services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
             services.AddSingleton<IEventHandler, Realtime.EventHandler>();
-            services.AddSingleton<ICommandBus, CommandBus>();
+            services.AddSingleton<CommandBus, CommandBus>();
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
+            services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
 
             // Queues
-            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
-            services.AddSingleton<IBackgroundCharacterCacheQueue, CharacterCacheQueue>();
-            services.AddSingleton<IBackgroundSessionStarterQueue, BackgroundSessionStarterQueue>();
-            services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
-            services.AddSingleton<IDiscordMessageQueue, DiscordMessageQueue>();
-            services.AddSingleton<BackgroundCharacterWeaponStatQueue>();
-            services.AddSingleton<IBackgroundWeaponPercentileCacheQueue, BackgroundWeaponPercentileCacheQueue>();
-            services.AddSingleton<BackgroundLogoutBufferQueue>();
+            services.AddSingleton<CensusRealtimeEventQueue>();
+            services.AddSingleton<CharacterCacheQueue, CharacterCacheQueue>();
+            services.AddSingleton<SessionStarterQueue, SessionStarterQueue>();
+            services.AddSingleton<DiscordMessageQueue, DiscordMessageQueue>();
+            services.AddSingleton<CharacterUpdateQueue>();
+            services.AddSingleton<WeaponPercentileCacheQueue>();
+            services.AddSingleton<LogoutUpdateBuffer>();
             services.AddSingleton<ExtraStatHoster>();
             services.AddSingleton<JaegerSignInOutQueue>();
 

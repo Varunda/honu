@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 
 namespace watchtower.Services.Hosted {
 
@@ -16,12 +17,12 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "background_weapon_pcache";
 
         private readonly ILogger<HostedBackgroundWeaponPercentileCacheQueue> _Logger;
-        private readonly IBackgroundWeaponPercentileCacheQueue _Queue;
+        private readonly WeaponPercentileCacheQueue _Queue;
 
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
 
         public HostedBackgroundWeaponPercentileCacheQueue(ILogger<HostedBackgroundWeaponPercentileCacheQueue> logger,
-            IBackgroundWeaponPercentileCacheQueue queue, IWeaponStatPercentileCacheDbStore percentDb) { 
+            WeaponPercentileCacheQueue queue, IWeaponStatPercentileCacheDbStore percentDb) { 
 
             _Logger = logger;
 

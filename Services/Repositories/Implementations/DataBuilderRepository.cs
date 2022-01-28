@@ -12,6 +12,7 @@ using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 
 namespace watchtower.Services.Repositories.Implementations {
 
@@ -26,10 +27,10 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly OutfitRepository _OutfitRepository;
         private readonly ItemRepository _ItemRepository;
 
-        private readonly IBackgroundCharacterCacheQueue _CharacterCacheQueue;
+        private readonly CharacterCacheQueue _CharacterCacheQueue;
 
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
-            IBackgroundCharacterCacheQueue charQueue,
+            CharacterCacheQueue charQueue,
             IKillEventDbStore killDb, IExpEventDbStore expDb,
             Repositories.CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo) {

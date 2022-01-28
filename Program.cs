@@ -56,7 +56,7 @@ namespace watchtower {
                 return;
             }
 
-            ICommandBus? commands = _Host.Services.GetService(typeof(ICommandBus)) as ICommandBus;
+            CommandBus? commands = _Host.Services.GetService(typeof(CommandBus)) as CommandBus;
             if (commands == null) {
                 Console.Error.WriteLine($"Missing ICommandBus");
             }

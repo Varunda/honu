@@ -14,7 +14,6 @@ using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Models.Queues;
-using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -34,11 +33,11 @@ namespace watchtower.Realtime {
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
 
-        private readonly IBackgroundCharacterCacheQueue _CacheQueue;
-        private readonly IBackgroundSessionStarterQueue _SessionQueue;
-        private readonly BackgroundCharacterWeaponStatQueue _WeaponQueue;
-        private readonly IDiscordMessageQueue _MessageQueue;
-        private readonly BackgroundLogoutBufferQueue _LogoutQueue;
+        private readonly CharacterCacheQueue _CacheQueue;
+        private readonly SessionStarterQueue _SessionQueue;
+        private readonly CharacterUpdateQueue _WeaponQueue;
+        private readonly DiscordMessageQueue _MessageQueue;
+        private readonly LogoutUpdateBuffer _LogoutQueue;
         private readonly JaegerSignInOutQueue _JaegerQueue;
 
         private readonly CharacterRepository _CharacterRepository;
@@ -50,11 +49,11 @@ namespace watchtower.Realtime {
 
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
-            IBackgroundCharacterCacheQueue cacheQueue, CharacterRepository charRepo,
-            ISessionDbStore sessionDb, IBackgroundSessionStarterQueue sessionQueue,
-            IDiscordMessageQueue msgQueue, MapCollection mapColl,
-            FacilityControlDbStore controlDb, BackgroundCharacterWeaponStatQueue weaponQueue,
-            IBattleRankDbStore rankDb, BackgroundLogoutBufferQueue logoutQueue,
+            CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
+            ISessionDbStore sessionDb, SessionStarterQueue sessionQueue,
+            DiscordMessageQueue msgQueue, MapCollection mapColl,
+            FacilityControlDbStore controlDb, CharacterUpdateQueue weaponQueue,
+            IBattleRankDbStore rankDb, LogoutUpdateBuffer logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue) {

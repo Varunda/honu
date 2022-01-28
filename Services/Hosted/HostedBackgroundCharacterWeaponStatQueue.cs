@@ -23,7 +23,7 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "background_character_cache";
 
         private readonly ILogger<HostedBackgroundCharacterWeaponStatQueue> _Logger;
-        private readonly BackgroundCharacterWeaponStatQueue _Queue;
+        private readonly CharacterUpdateQueue _Queue;
 
         private readonly CharacterMetadataDbStore _MetadataDb;
 
@@ -55,7 +55,7 @@ namespace watchtower.Services.Hosted {
         };
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
-            BackgroundCharacterWeaponStatQueue queue,
+            CharacterUpdateQueue queue,
             ICharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
             ICharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
             CharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,

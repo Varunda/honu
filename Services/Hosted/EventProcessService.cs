@@ -8,17 +8,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Realtime;
+using watchtower.Services.Queues;
 
 namespace watchtower.Services {
 
     public class EventProcessService : BackgroundService {
 
         private readonly ILogger<EventProcessService> _Logger;
-        private readonly IBackgroundTaskQueue _Queue;
+        private readonly CensusRealtimeEventQueue _Queue;
         private readonly IEventHandler _Handler;
 
         public EventProcessService(ILogger<EventProcessService> logger,
-            IBackgroundTaskQueue queue, IEventHandler handler) {
+            CensusRealtimeEventQueue queue, IEventHandler handler) {
 
             _Logger = logger;
 
@@ -29,7 +30,7 @@ namespace watchtower.Services {
         protected async override Task ExecuteAsync(CancellationToken cancel) {
             Stopwatch timer = Stopwatch.StartNew();
             while (cancel.IsCancellationRequested == false) {
-                JToken token = await _Queue.DequeueAsync(cancel);
+                JToken token = await _Queue.Dequeue(cancel);
                 try {
                     timer.Restart();
                     await _Handler.Process(token);

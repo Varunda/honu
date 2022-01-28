@@ -4,34 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Models.Discord;
 
-namespace watchtower.Services.Implementations {
+namespace watchtower.Services.Queues {
 
-    public class DiscordMessageQueue : IDiscordMessageQueue {
+    /// <summary>
+    ///     Queue of messages to be sent in Discord
+    /// </summary>
+    public class DiscordMessageQueue : BaseQueue<DiscordMessage> {
 
-        private ConcurrentQueue<string> _Items = new ConcurrentQueue<string>();
-
-        private SemaphoreSlim _Signal = new SemaphoreSlim(0);
-
-        public async Task<string> DequeueAsync(CancellationToken cancel) {
-            await _Signal.WaitAsync(cancel);
-            _Items.TryDequeue(out string? message);
-
-            return message!;
-        }
-
+        /// <summary>
+        ///     Queue a basic text discord message
+        /// </summary>
         public void Queue(string message) {
-            if (message == null) {
-                throw new ArgumentNullException(nameof(message));
-            }
-
-            _Items.Enqueue(message);
+            _Items.Enqueue(new DiscordMessage() {
+                Type = DiscordMessageType.TEXT,
+                Message = message
+            });
             _Signal.Release();
         }
 
-        public int Count() {
-            return _Items.Count;
-        }
-
     }
+
 }

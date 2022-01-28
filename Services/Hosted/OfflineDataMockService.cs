@@ -13,6 +13,7 @@ using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted {
@@ -25,7 +26,7 @@ namespace watchtower.Services.Hosted {
         private readonly IExpEventDbStore _ExpDb;
         private readonly IKillEventDbStore _KillDb;
 
-        private readonly IBackgroundTaskQueue _EventQueue;
+        private readonly CensusRealtimeEventQueue _EventQueue;
 
         private readonly Random _Random;
 
@@ -38,7 +39,7 @@ namespace watchtower.Services.Hosted {
 
         public OfflineDataMockService(ILogger<OfflineDataMockService> logger,
             CharacterRepository charRepo, IExpEventDbStore expDb,
-            IKillEventDbStore killDb, IBackgroundTaskQueue eventQueue) {
+            IKillEventDbStore killDb, CensusRealtimeEventQueue eventQueue) {
 
             _Logger = logger;
 

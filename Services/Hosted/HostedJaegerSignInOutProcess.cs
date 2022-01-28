@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Models.Discord;
 using watchtower.Models.Queues;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
@@ -20,16 +21,16 @@ namespace watchtower.Services.Hosted {
         private readonly ILogger<HostedJaegerSignInOutProcess> _Logger;
         private readonly JaegerSignInOutQueue _Queue;
         private readonly CharacterRepository _CharacterRepository;
-        private readonly IDiscordMessageQueue _DiscordQueue;
+        private readonly DiscordMessageQueue _DiscordQueue;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private const string SERVICE_NAME = "jaeger_signinout_process";
-        private const int RUN_DELAY = 1000 * 60 * 5;
-        //private const int RUN_DELAY = 1000 * 10 * 1;
+        //private const int RUN_DELAY = 1000 * 60 * 5;
+        private const int RUN_DELAY = 1000 * 10 * 1;
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
-            IDiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon) {
+            DiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon) {
 
             _Logger = logger;
             _Queue = queue;
@@ -61,7 +62,7 @@ namespace watchtower.Services.Hosted {
 
                         List<PsCharacter> chars = await _CharacterRepository.GetByIDs(both.ToList(), fast: false);
 
-                        string msg = $"https://wt.honu.pw/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}\n";
+                        string msg = $"<https://wt.honu.pw/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}>\n";
 
                         msg += "```diff\n";
 
@@ -70,10 +71,9 @@ namespace watchtower.Services.Hosted {
                             onlineCount = CharacterStore.Get().Players.Count(iter => iter.Value.WorldID == World.Jaeger && iter.Value.Online == true);
                         }
 
-                        msg += $"Currently {onlineCount} characters are online on Jaeger\n";
+                        msg += $"As of {DateTime.UtcNow:u} UTC, there are {onlineCount} characters online\n";
 
-                        msg += $"Logins ({signin.Count}):\n";
-
+                        msg += $"\nLogins ({signin.Count}):\n";
                         foreach (JaegerSigninoutEntry s in signin) {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
                             msg += $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
