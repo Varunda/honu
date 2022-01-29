@@ -73,10 +73,13 @@ namespace watchtower.Commands {
             CharacterUpdateQueueEntry entry = new() {
                 CensusCharacter = null,
                 CharacterID = nameOrId,
-                Force = true
+                Force = true,
+                Print = true
             };
 
-            _Queue.Queue(entry);
+            _Queue.QueueAtFront(entry);
+
+            _Logger.LogInformation($"Inserted {nameOrId} into character update queue");
         }
 
         public async Task Search(string name) {

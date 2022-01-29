@@ -22,6 +22,7 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly PsbAccountNoteDbStore _NoteDb;
 
         private readonly IMemoryCache _Cache;
+        private const string CACHE_KEY = "PsbNamed.All";
 
         public PsbAccountRepository(ILogger<PsbAccountRepository> logger,
             PsbNamedDbStore db, CharacterRepository charRepo,
@@ -41,7 +42,15 @@ namespace watchtower.Services.Repositories.PSB {
         ///     Get all <see cref="PsbNamedAccount"/>s
         /// </summary>
         public async Task<List<PsbNamedAccount>> GetAll() {
-            return await _Db.GetAll();
+            if (_Cache.TryGetValue(CACHE_KEY, out List<PsbNamedAccount> accounts) == false) {
+                accounts = await _Db.GetAll();
+
+                _Cache.Set(CACHE_KEY, accounts, new MemoryCacheEntryOptions() {
+                    SlidingExpiration = TimeSpan.FromHours(4)
+                });
+            }
+
+            return accounts;
         }
 
         /// <summary>
@@ -49,8 +58,8 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="ID"></param>
         /// <returns></returns>
-        public Task<PsbNamedAccount?> GetByID(long ID) {
-            return _Db.GetByID(ID);
+        public async Task<PsbNamedAccount?> GetByID(long ID) {
+            return (await GetAll()).FirstOrDefault(iter => iter.ID == ID);
         }
 
         /// <summary>
@@ -59,6 +68,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="acc">Parameters used to insert</param>
         /// <returns>The new <see cref="PsbNamedAccount.ID"/> that was assigned</returns>
         public Task<long> Insert(PsbNamedAccount acc) {
+            _Cache.Remove(CACHE_KEY);
             return _Db.Insert(acc);
         }
 
@@ -112,6 +122,8 @@ namespace watchtower.Services.Repositories.PSB {
             long ID = await Insert(acc);
             acc.ID = ID;
 
+            _Cache.Remove(CACHE_KEY);
+
             return acc;
         }
 
@@ -159,6 +171,7 @@ namespace watchtower.Services.Repositories.PSB {
 
             await _Db.UpdateByID(ID, acc);
             await _NoteDb.Insert(acc.ID, note, CancellationToken.None);
+            _Cache.Remove(CACHE_KEY);
 
             return acc;
         }
@@ -183,6 +196,7 @@ namespace watchtower.Services.Repositories.PSB {
             acc.PlayerName = playerName;
 
             await _Db.UpdateByID(ID, acc);
+            _Cache.Remove(CACHE_KEY);
 
             return acc;
         }
@@ -199,6 +213,8 @@ namespace watchtower.Services.Repositories.PSB {
             foreach (PsbNamedAccount acc in accounts) {
                 await RecheckAccount(acc);
             }
+
+            _Cache.Remove(CACHE_KEY);
         }
 
         /// <summary>
@@ -212,6 +228,7 @@ namespace watchtower.Services.Repositories.PSB {
                 _Logger.LogWarning($"Cannot recheck {nameof(PsbNamedAccount)} {ID}: Does not exist");
                 return null;
             }
+            _Cache.Remove(CACHE_KEY);
 
             return await RecheckAccount(acc);
         }

@@ -44,6 +44,7 @@ export class FlatPsbNamedAccount {
     public status: string = "";
     public secondsUsage: number = 0;
     public timestamp: Date = new Date();
+    public account: PsbNamedAccount = new PsbNamedAccount();
 
     public vsID: string | null = null;
     public vsCharacter: PsCharacter | null = null;
@@ -142,6 +143,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             status: "",
             secondsUsage: expanded.account.secondsUsage,
             timestamp: expanded.account.timestamp,
+            account: expanded.account,
 
             vsID: expanded.account.vsID,
             vsCharacter: expanded.vsCharacter ?? null,

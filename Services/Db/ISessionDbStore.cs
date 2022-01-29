@@ -71,19 +71,21 @@ namespace watchtower.Services.Db {
         ///     Start a new session of a tracked player
         /// </summary>
         /// <param name="player">Player that will have a new session</param>
+        /// <param name="when">When the session started</param>
         /// <returns>
         ///     A task for when the task is completed
         /// </returns>
-        Task Start(TrackedPlayer player);
+        Task Start(TrackedPlayer player, DateTime when);
 
         /// <summary>
         ///     End an existing session of a tracked player
         /// </summary>
         /// <param name="player">Player who's session is endign</param>
+        /// <param name="when">When the session ended</param>
         /// <returns>
         ///     A task for when the task is complete
         /// </returns>
-        Task End(TrackedPlayer player);
+        Task End(TrackedPlayer player, DateTime when);
 
         /// <summary>
         ///     End all sessions currently opened in the DB

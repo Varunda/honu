@@ -16,8 +16,8 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-named/")]
-    //[Authorize]
-    //[PsbAdmin]
+    [Authorize]
+    [PsbAdmin]
     public class PsbNamedApiController : ApiControllerBase {
 
         private readonly ILogger<PsbNamedApiController> _Logger;
@@ -40,11 +40,30 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet]
         public async Task<ApiResponse<List<ExpandedPsbNamedAccount>>> GetAll() {
-            List<PsbNamedAccount> named = (await _NamedRepository.GetAll()).Where(iter => iter.DeletedBy == null).ToList();
+            List<PsbNamedAccount> named = await _NamedRepository.GetAll();
 
             List<ExpandedPsbNamedAccount> expanded = await MakeExpanded(named);
 
             return ApiOk(expanded);
+        }
+
+        /// <summary>
+        ///     Recheck an account
+        /// </summary>
+        /// <param name="accountID">Account ID to recheck</param>
+        /// <response code="200">
+        ///     Returned after the recheck is complete
+        /// </response>
+        [HttpGet("recheck/accountID")]
+        public async Task<ApiResponse> Recheck(long accountID) {
+            PsbNamedAccount? acc = await _NamedRepository.GetByID(accountID);
+            if (acc == null) {
+                return ApiNotFound($"{nameof(PsbNamedAccount)} {accountID}");
+            }
+
+            await _NamedRepository.RecheckByID(accountID);
+
+            return ApiOk();
         }
 
         /// <summary>

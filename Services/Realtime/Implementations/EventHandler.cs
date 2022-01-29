@@ -410,11 +410,12 @@ namespace watchtower.Realtime {
                 _CacheQueue.Queue(charID);
                 TrackedPlayer p;
 
+                DateTime timestamp = payload.CensusTimestamp("timestamp");
                 short worldID = payload.GetWorldID();
                 if (worldID == World.Jaeger) {
                     _JaegerQueue.QueueSignIn(new JaegerSigninoutEntry() {
                         CharacterID = charID,
-                        Timestamp = payload.CensusTimestamp("timestamp")
+                        Timestamp = timestamp
                     });
                 }
 
@@ -432,7 +433,7 @@ namespace watchtower.Realtime {
                     p.LastLogin = DateTime.UtcNow;
                 }
 
-                await _SessionDb.Start(p);
+                await _SessionDb.Start(p, timestamp);
 
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
@@ -444,11 +445,13 @@ namespace watchtower.Realtime {
                 _CacheQueue.Queue(charID);
                 //_WeaponQueue.Queue(charID);
 
+                DateTime timestamp = payload.CensusTimestamp("timestamp");
+
                 short worldID = payload.GetWorldID();
                 if (worldID == World.Jaeger) {
                     _JaegerQueue.QueueSignOut(new JaegerSigninoutEntry() {
                         CharacterID = charID,
-                        Timestamp = payload.CensusTimestamp("timestamp")
+                        Timestamp = timestamp
                     });
                 }
 
@@ -460,7 +463,8 @@ namespace watchtower.Realtime {
                 if (p != null) {
                     // Null if Honu was started when the character was online
                     if (p.LastLogin != null) {
-                        _LogoutQueue.Queue(new LogoutBufferEntry() {
+                        // Intentionally discard, we do not care about the result of this
+                        _ = _LogoutQueue.Queue(new LogoutBufferEntry() {
                             CharacterID = charID,
                             LoginTime = p.LastLogin.Value
                         });
@@ -468,7 +472,7 @@ namespace watchtower.Realtime {
                         _WeaponQueue.Queue(charID);
                     }
 
-                    await _SessionDb.End(p);
+                    await _SessionDb.End(p, timestamp);
 
                     // Reset team of the NSO player as they're now offline
                     if (p.FactionID == Faction.NS) {

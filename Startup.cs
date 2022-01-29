@@ -194,6 +194,8 @@ namespace watchtower {
                 services.AddHostedService<DiscordService>();
             }
 
+            services.AddTransient<CurrentHonuAccount>();
+
             //services.AddHostedService<PsbNamedImportStartupService>();
             //services.AddHostedService<PsbNamedCheckerService>();
 

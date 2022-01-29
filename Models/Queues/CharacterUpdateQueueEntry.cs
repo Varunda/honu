@@ -27,5 +27,10 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public bool Force { get; set; } = false;
 
+        /// <summary>
+        ///     Will the refresh be printed (useful for debug)
+        /// </summary>
+        public bool Print { get; set; } = false;
+
     }
 }

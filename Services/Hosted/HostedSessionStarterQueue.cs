@@ -44,7 +44,7 @@ namespace watchtower.Services.Hosted {
                 try {
                     TrackedPlayer player = await _Queue.Dequeue(stoppingToken);
 
-                    await _SessionDb.Start(player);
+                    await _SessionDb.Start(player, player.LastLogin ?? DateTime.UtcNow);
 
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error starting session in the background");

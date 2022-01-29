@@ -162,7 +162,7 @@ namespace watchtower.Services.Db.Implementations {
             return sessions;
         }
 
-        public async Task Start(TrackedPlayer player) {
+        public async Task Start(TrackedPlayer player, DateTime when) {
             if (player.Online == true) {
                 return;
             }
@@ -178,12 +178,13 @@ namespace watchtower.Services.Db.Implementations {
                 INSERT INTO wt_session (
                     character_id, start, finish, outfit_id, team_id
                 )
-                SELECT @CharacterID, NOW() at time zone 'utc', null, c.outfit_id, c.faction_id
+                SELECT @CharacterID, @Timestamp, null, c.outfit_id, c.faction_id
                     FROM wt_character c
                     WHERE c.id = @CharacterID;
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
+            cmd.AddParameter("Timestamp", when);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -191,7 +192,7 @@ namespace watchtower.Services.Db.Implementations {
             player.Online = true;
         }
 
-        public async Task End(TrackedPlayer player) {
+        public async Task End(TrackedPlayer player, DateTime when) {
             if (player.Online == false) {
                 //_Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
             }
@@ -199,7 +200,7 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = NOW() at time zone 'utc',
+                    SET finish = @Timestamp,
                         team_id = @TeamID,
                         outfit_id = @OutfitID
                     WHERE id = (
@@ -218,6 +219,7 @@ namespace watchtower.Services.Db.Implementations {
             cmd.AddParameter("CharacterID", player.ID);
             cmd.AddParameter("OutfitID", player.OutfitID);
             cmd.AddParameter("TeamID", teamID);
+            cmd.AddParameter("Timestamp", when);
 
             player.Online = false;
 

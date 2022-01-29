@@ -24,6 +24,18 @@ namespace watchtower.Services.Queues {
             return entry!;
         }
 
+        public void QueueAtFront(T entry) {
+            lock (_Items) {
+                T[] items = _Items.ToArray();
+                _Items.Clear();
+                _Items.Enqueue(entry);
+                foreach (T iter in items) {
+                    _Items.Enqueue(iter);
+                }
+            }
+            _Signal.Release();
+        }
+
         /// <summary>
         ///     Queue a new entry into the queue
         /// </summary>

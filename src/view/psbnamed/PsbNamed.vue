@@ -46,11 +46,23 @@
                         Only show accounts not on Jaeger (includes NSO)
                     </span>
                 </div>
+
+                <div>
+                    <button type="button" class="btn" :class="[ filter.deleted ? 'btn-primary' : 'btn-secondary' ]" @click="filter.deleted = !filter.deleted">
+                        <span v-if="filter.deleted">Y</span>
+                        <span v-else>N</span>
+                    </button>
+
+                    <span>
+                        Show deleted accounts
+                    </span>
+                </div>
             </div>
 
             <div class="flex-grow-1">
                 <h4>Settings</h4>
                 <div>
+                    Padding
                     <select class="form-control" v-model="padding">
                         <option>compact</option>
                         <option>normal</option>
@@ -372,7 +384,8 @@
                 filter: {
                     missingCharacters: false as boolean,
                     mismatchFactions: false as boolean,
-                    wrongWorlds: false as boolean
+                    wrongWorlds: false as boolean,
+                    deleted: false as boolean
                 },
 
                 view: {
@@ -479,6 +492,12 @@
                     });
                 }
 
+                if (this.filter.deleted == false) {
+                    data = data.filter(iter => {
+                        return iter.account.deletedAt == null;
+                    });
+                }
+
                 this.wrapped = Loadable.loaded(data);
             },
         },
@@ -497,12 +516,18 @@
             "filter.wrongWorlds": function(): void {
                 console.log(`filter.wrongWorlds changed`);
                 this.updateFilters();
+            },
+
+            "filter.deleted": function(): void {
+                console.log(`filter.deletd changed`);
+                this.updateFilters();
             }
+
         },
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
-                if (this.filter.missingCharacters == true || this.filter.mismatchFactions || this.filter.wrongWorlds) {
+                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == true) {
                     return this.wrapped;
                 }
 

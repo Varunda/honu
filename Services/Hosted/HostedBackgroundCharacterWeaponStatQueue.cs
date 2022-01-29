@@ -137,12 +137,12 @@ namespace watchtower.Services.Hosted {
                     if (censusChar == null) {
                         ++metadata.NotFoundCount;
                     } else if (censusChar.DateLastLogin < metadata.LastUpdated && entry.Force == false) {
-                        if (_Peepers.Contains(entry.CharacterID)) {
+                        if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
                             _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), skipping update");
                         }
                         metadata.NotFoundCount = 0;
                     } else if (censusChar.DateLastLogin >= metadata.LastUpdated || entry.Force == true) {
-                        if (_Peepers.Contains(entry.CharacterID)) {
+                        if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
                             _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), PERFORMING UPDATE");
                         }
                         metadata.NotFoundCount = 0;
@@ -191,30 +191,50 @@ namespace watchtower.Services.Hosted {
                         }
 
                         long censusTime = timer.ElapsedMilliseconds;
+                        timer.Restart();
+
+                        if (entry.Print == true) {
+                            _Logger.LogDebug($"{entry.CharacterID}> Took {censusTime}ms to get data from Census.\n"
+                                + $"\tWeapons: {weaponStats.Count}\n"
+                                + $"\tHistory stats: {historyStats.Count}\n"
+                                + $"\tItems: {itemStats.Count}\n"
+                                + $"\tStat entries: {statEntries.Count}\n"
+                                + $"\tFriends: {charFriends.Count}\n"
+                                + $"\tDirectives: {charDirs.Count}\n"
+                                + $"\tDirective trees: {charTreeDirs.Count}\n"
+                                + $"\tDirective tiers: {charTierDirs.Count}\n"
+                                + $"\tDirective objectives: {charObjDirs.Count}\n"
+                            );
+                        }
 
                         foreach (WeaponStatEntry iter in weaponStats) {
                             await _WeaponStatDb.Upsert(iter);
                         }
                         stoppingToken.ThrowIfCancellationRequested();
+                        long dbWeapon = timer.ElapsedMilliseconds; timer.Restart();
 
                         foreach (PsCharacterHistoryStat stat in historyStats) {
                             await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
                         }
+                        long dbHistory = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         if (itemStats.Count > 0) {
                             await _ItemDb.Set(entry.CharacterID, itemStats);
                         }
+                        long dbItem = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         if (statEntries.Count > 0) {
                             await _StatDb.Set(entry.CharacterID, statEntries);
                         }
+                        long dbStats = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         if (charFriends.Count > 0) {
                             await _FriendDb.Set(entry.CharacterID, charFriends);
                         }
+                        long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirective dir in charDirs) {
@@ -224,6 +244,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
                             }
                         }
+                        long dbCharDir = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveTree tree in charTreeDirs) {
@@ -233,6 +254,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
                             }
                         }
+                        long dbCharDirTree = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveTier tier in charTierDirs) {
@@ -242,6 +264,7 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
                             }
                         }
+                        long dbCharDirTier = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         foreach (CharacterDirectiveObjective obj in charObjDirs) {
@@ -251,9 +274,26 @@ namespace watchtower.Services.Hosted {
                                 _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
                             }
                         }
+                        long dbCharDirObj = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
                         long dbTime = timer.ElapsedMilliseconds;
+
+                        long dbSum = dbWeapon + dbHistory + dbItem + dbStats + dbFriends + dbCharDir + dbCharDirTree + dbCharDirTier + dbCharDirObj;
+
+                        if (entry.Print == true) {
+                            _Logger.LogDebug($"{entry.CharacterID}> Took {dbSum}ms to update\n"
+                                + $"\tWeapon: {dbWeapon}ms\n"
+                                + $"\tHistory stats: {dbHistory}ms\n"
+                                + $"\tItem unlocks: {dbItem}ms\n"
+                                + $"\tStat entries: {dbStats}ms\n"
+                                + $"\tFriends: {dbFriends}ms\n"
+                                + $"\tDirectives: {dbCharDir}ms\n"
+                                + $"\tDirective trees: {dbCharDirTree}ms\n"
+                                + $"\tDirective tiers: {dbCharDirTier}ms\n"
+                                + $"\tDirective objs: {dbCharDirObj}ms"
+                            );
+                        }
 
                         //_Logger.LogTrace($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
                     }

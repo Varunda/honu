@@ -64,7 +64,7 @@ namespace watchtower.Services {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
                                 //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
-                                _ = _SessionDb.End(entry.Value);
+                                _ = _SessionDb.End(entry.Value, DateTime.UtcNow);
                             }
                         }
                     }
