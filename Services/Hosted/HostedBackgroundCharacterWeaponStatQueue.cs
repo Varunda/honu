@@ -50,6 +50,8 @@ namespace watchtower.Services.Hosted {
 
         private static int _Count = 0;
 
+        private readonly Random _Random = new Random();
+
         private List<string> _Peepers = new List<string>() {
             "5429119940672421393", "5428345446430485649"
         };
@@ -108,6 +110,10 @@ namespace watchtower.Services.Hosted {
                 try {
                     PsCharacter? censusChar = entry.CensusCharacter;
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(entry.CharacterID);
+
+                    if (_Random.Next(100) >= 99) {
+                        entry.Print = true;
+                    }
 
                     if (censusChar == null) {
                         try {
