@@ -111,7 +111,7 @@ namespace watchtower.Services.Hosted {
                     PsCharacter? censusChar = entry.CensusCharacter;
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(entry.CharacterID);
 
-                    if (_Random.Next(100) >= 99) {
+                    if (_Random.Next(101) >= 99) {
                         entry.Print = true;
                     }
 
@@ -299,9 +299,9 @@ namespace watchtower.Services.Hosted {
                                 + $"\tDirective tiers: {dbCharDirTier}ms\n"
                                 + $"\tDirective objs: {dbCharDirObj}ms"
                             );
-                        }
 
-                        //_Logger.LogTrace($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
+                            _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
+                        }
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

@@ -118,7 +118,7 @@ namespace watchtower.Services.Repositories {
 
             int total = IDs.Count;
 
-            _Logger.LogDebug($"Loading {total} characters");
+            _Logger.LogTrace($"Loading {total} characters");
 
             Stopwatch timer = Stopwatch.StartNew();
             int inCache = 0;
@@ -136,7 +136,7 @@ namespace watchtower.Services.Repositories {
             long toCache = timer.ElapsedMilliseconds;
             timer.Restart();
 
-            _Logger.LogDebug($"Took {toCache}ms to load from cache");
+            _Logger.LogTrace($"Took {toCache}ms to load from cache");
 
             int inDb = 0;
             int inExpired = 0;
@@ -161,7 +161,7 @@ namespace watchtower.Services.Repositories {
             long toDb = timer.ElapsedMilliseconds;
             timer.Restart();
 
-            _Logger.LogDebug($"Took {toDb}ms to load from db");
+            _Logger.LogTrace($"Took {toDb}ms to load from db");
 
             int inCensus = 0;
             if (fast == false) {
@@ -178,7 +178,7 @@ namespace watchtower.Services.Repositories {
                 }
             }
             long toCensus = timer.ElapsedMilliseconds;
-            _Logger.LogDebug($"Took {toCensus}ms to load from census");
+            _Logger.LogTrace($"Took {toCensus}ms to load from census");
 
             foreach (PsCharacter c in chars) {
                 string cacheKey = string.Format(CACHE_KEY_ID, c.ID);

@@ -79,7 +79,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
             report.Timestamp = DateTime.UtcNow;
 
-            _Logger.LogDebug($"ID {report.ID} from {generator}");
+            //_Logger.LogDebug($"ID {report.ID} from {generator}");
 
             if (report.ID != Guid.Empty) {
                 _Logger.LogDebug($"Loading previous report {report.ID}");
@@ -94,7 +94,7 @@ namespace watchtower.Code.Hubs.Implementations {
             string cacheKey = string.Format(CACHE_KEY, generator);
 
             if (_Cache.TryGetValue(cacheKey, out report) == true) {
-                _Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");
+                //_Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");
                 await Clients.Caller.SendReport(report);
                 await Clients.Caller.UpdateCharacterIDs(report.CharacterIDs);
                 await Clients.Caller.UpdateSessions(report.Sessions);
