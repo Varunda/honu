@@ -98,9 +98,13 @@
                     Search
                 </a>
 
+                -
+
                 <a href="/report">
                     Report
                 </a>
+
+                -
 
                 <a href="/outfitpop">
                     Pop

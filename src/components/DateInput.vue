@@ -1,23 +1,22 @@
 ﻿<template>
-    <input type="datetime-local" :value="str" @input="handleInput" />
+    <input type="date" :value="str" @input="handleInput" />
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import { Fragment } from "vue-fragment";
 
     import DateUtil from "util/Date";
 
-    export const DateTimeInput = Vue.extend({
+    export const DateInput = Vue.extend({
         props: {
-            value: { type: Date as PropType<Date>, required: false },
+            value: { type: Date as PropType<Date | null>, required: false },
             AllowNull: { type: Boolean, required: false, default: false },
         },
 
         data: function() {
             return {
-                date: new Date() as Date,
-                str: "" as string
+                date: new Date() as Date | null,
+                str: "" as string | null
             }
         },
 
@@ -28,13 +27,22 @@
         methods: {
             updateDate: function(): void {
                 this.date = this.value;
-                this.str = DateUtil.getLocalDateString(this.date);
+                if (this.date != null) {
+                    this.str = DateUtil.getLocalDateOnlyString(DateUtil.zeroParts(this.date, { hours: true, minutes: true, seconds: true }));
+                } else {
+                    this.str = "";
+                }
             },
 
             handleInput: function(ev: any): void {
                 const target: HTMLInputElement = ev.target;
                 this.str = target.value;
-                this.date = new Date(this.str);
+
+                if (this.AllowNull == true && (this.str == "" || this.str == undefined)) {
+                    this.date = null;
+                } else {
+                    this.date = new Date(this.str);
+                }
 
                 this.$emit("input", this.date);
             }
@@ -46,12 +54,8 @@
                     this.updateDate();
                 });
             }
-        },
-
-        components: {
-            Fragment
         }
     });
-    export default DateTimeInput;
+    export default DateInput;
 
 </script>

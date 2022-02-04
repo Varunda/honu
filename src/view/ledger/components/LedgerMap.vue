@@ -199,7 +199,7 @@
 
     export const LedgerMap = Vue.extend({
         props: {
-
+            entries: { type: Object as PropType<Loading<FacilityControlEntry[]>>, required: true }
         },
 
         data: function() {
@@ -222,7 +222,7 @@
                     fillOpacity: 0.4 as number
                 },
 
-                ledgerData: Loadable.idle() as Loading<FacilityControlEntry[]>,
+                //ledgerData: Loadable.idle() as Loading<FacilityControlEntry[]>,
                 selectedFacility: null as FacilityControlEntry | null,
                 zoneData: null as ZoneMap | null,
 
@@ -266,11 +266,7 @@
             loadFacility: async function(facilityID: number): Promise<void> {
                 this.selectedFacility = null;
 
-                if (this.ledgerData.state != "loaded") {
-                    return console.error(`ledgerData is not loaded`);
-                }
-
-                const entry: FacilityControlEntry | null = this.ledgerData.data.find(iter => iter.facilityID == facilityID) || null;
+                const entry: FacilityControlEntry | null = this.ledgerData.find(iter => iter.facilityID == facilityID) || null;
                 if (entry == null) {
                     return console.error(`Failed to find facility ID ${facilityID}`);
                 }
@@ -279,20 +275,15 @@
             },
 
             loadLedgerData: async function(zoneID: number): Promise<void> {
-                this.ledgerEntries = Loadable.loading();
-                this.ledgerData = Loadable.loading();
-
-                const ledgerData: Loading<FacilityControlEntry[]> = await LedgerApi.getLedger();
-                if (ledgerData.state == "loaded") {
-                    ledgerData.data = ledgerData.data.filter(iter => iter.zoneID == zoneID);
-                } else {
-                    console.warn(`Got ${ledgerData.state} instead of 'loaded'`);
+                if (this.entries.state != "loaded") {
                     return;
                 }
-                this.ledgerData = ledgerData;
+
+                this.ledgerEntries = Loadable.loading();
+                const data = this.entries.data.filter(iter => iter.zoneID == zoneID);
 
                 const arr: LedgerEntry[] = [];
-                for (const datum of ledgerData.data) {
+                for (const datum of data) {
                     let value: number = 0;
                     if (this.orderBy == "ratio") {
                         value = datum.ratio;
@@ -489,6 +480,11 @@
             },
 
             setColors: function(data: LedgerEntry[]): LedgerEntry[] {
+                if (data.length == 0) {
+                    console.warn(`cannot set colors, got passed 0 data`);
+                    return [];
+                }
+
                 const sorted: LedgerEntry[] = [...data].sort((a, b) => a.value - b.value);
 
                 const values: number[] = [...sorted].map(iter => iter.value);
@@ -539,7 +535,12 @@
         },
 
         computed: {
-
+            ledgerData: function(): FacilityControlEntry[] {
+                if (this.entries.state != "loaded") {
+                    return [];
+                }
+                return this.entries.data;
+            }
         },
 
         components: {

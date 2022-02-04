@@ -19,9 +19,10 @@ export class FacilityControlEntry {
 }
 
 export class LedgerOptions {
-	public zoneID: number | null = null;
 	public worldID: number[] = [];
 	public playerThreshold: number | null = null;
+	public startPeriod: Date | null = null;
+	public endPeriod: Date | null = null;
 }
 
 export class LedgerApi extends ApiWrapper<FacilityControlEntry> {
@@ -49,6 +50,17 @@ export class LedgerApi extends ApiWrapper<FacilityControlEntry> {
 			if (options.playerThreshold) {
 				param.set("playerThreshold", options.playerThreshold.toString());
 			}
+
+			if (options.startPeriod) {
+				const str: string = Math.floor(options.startPeriod.getTime() / 1000).toString(); // convert to seconds
+				param.set("periodStart", str);
+            }
+
+			if (options.endPeriod) {
+				const str: string = Math.floor(options.endPeriod.getTime() / 1000).toString();
+				param.set("periodEnd", str);
+				//param.set("periodEnd", options.endPeriod.toISOString());
+            }
 		}
 
 		return LedgerApi.get().readList(`/api/ledger/?${param.toString()}`, LedgerApi.parseControlEntry);

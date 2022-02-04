@@ -16,6 +16,14 @@ export default class DateUtil {
 		return `${year}-${month}-${day}T${hours}:${minutes}`;
 	}
 
+	public static getLocalDateOnlyString(date: Date): string {
+		const year: string = date.getFullYear().toString().padStart(4, "0");
+		const month: string = (date.getMonth() + 1).toString().padStart(2, "0");
+		const day: string = date.getDate().toString().padStart(2, "0");
+
+		return `${year}-${month}-${day}`;
+    }
+
 	/**
 	 * Zero out parts of a Date, for example setting the seconds of a Date to 0
 

@@ -62,10 +62,9 @@
             </div>
         </div>
 
-        <div v-if="view == 'list'" class="mb-3 form-row align-items-center">
+        <div class="row mb-2">
             <div class="col-auto">
-                <label>Player theshold</label>
-                <input class="form-control" type="number" v-model.number="filter.playerThreshold" />
+                <input v-model.number="filter.playerThreshold" class="form-control" placeholder="Player threshold" />
             </div>
 
             <div class="col-auto">
@@ -97,36 +96,40 @@
                     <input type="checkbox" value="40" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">SolTech</label>
                 </div>
-
             </div>
 
             <div class="col-auto">
-                <button type="button" @click="bindLedgerData" class="btn btn-primary">Load</button>
+                <date-input v-model="filter.periodStart" :allow-null="true" class="form-control"></date-input>
             </div>
 
-            <!--
-            <div class="form-group">
-                <label>Start date</label>
-                <input type="datetime-local" class="form-control" />
+            <div class="col-auto">
+                <date-input v-model="filter.periodEnd" :allow-null="true" class="form-control"></date-input>
             </div>
 
-            <div class="form-group">
-                <label>End date</label>
-                <input type="datetime-local" class="form-control" />
+            <div class="col-auto">
+                <button @click="bindLedgerData" type="button" class="btn btn-primary">Load</button>
             </div>
-            -->
         </div>
 
-        <ledger-list v-if="view == 'list'" :entries="entries"></ledger-list>
+        <div v-if="entries.state == 'loading'">
+            Loading...
+        </div>
 
-        <ledger-map v-if="view == 'map'"></ledger-map>
+        <div v-else-if="entries.state == 'loaded'">
+            <ledger-list v-if="view == 'list'" :entries="entries"></ledger-list>
+
+            <ledger-map v-if="view == 'map'" :entries="entries"></ledger-map>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
     import Vue from "vue";
     import { Loading, Loadable } from "Loading";
+
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import DateTimeInput from "components/DateTimeInput.vue";
+    import DateInput from "components/DateInput.vue";
 
     import { LedgerApi, FacilityControlEntry, LedgerOptions } from "api/LedgerApi";
 
@@ -144,7 +147,9 @@
 
                 filter: {
                     worldID: [1, 10, 13, 17, 40] as number[],
-                    playerThreshold: 12 as number
+                    playerThreshold: 12 as number,
+                    periodStart: null as Date | null,
+                    periodEnd: null as Date | null
                 }
             }
         },
@@ -159,6 +164,8 @@
                 const options: LedgerOptions = new LedgerOptions();
                 options.playerThreshold = this.filter.playerThreshold;
                 options.worldID = this.filter.worldID;
+                options.startPeriod = this.filter.periodStart;
+                options.endPeriod = this.filter.periodEnd;
 
                 this.entries = Loadable.loading();
                 this.entries = await LedgerApi.getLedger(options);
@@ -186,13 +193,10 @@
         },
 
         components: {
-            ATable,
-            ACol,
-            AHeader,
-            ABody,
-            AFilter,
+            ATable, ACol, AHeader, ABody, AFilter,
             LedgerList,
-            LedgerMap
+            LedgerMap,
+            DateTimeInput, DateInput
         }
 
     });

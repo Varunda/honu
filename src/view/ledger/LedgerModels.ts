@@ -111,7 +111,7 @@ export class ZoneRegion extends Polygon {
                 const locY: number = (facility.locationX ?? 0) / 32;
                 const size: number = 5;
                 //verts.push(new VertexPoint(locX, locY));
-                verts.push(new VertexPoint(locX - size, locY));
+                verts.push(new VertexPoint(locX - size, locY)); // If there are no hexes, make a small diamond around the data
                 verts.push(new VertexPoint(locX, locY - size));
                 verts.push(new VertexPoint(locX + size, locY));
                 verts.push(new VertexPoint(locX, locY + size));

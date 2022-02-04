@@ -38,8 +38,8 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="parameters">Parameters for getting the data</param>
         public async Task<List<FacilityControlDbEntry>> Get(FacilityControlOptions parameters) {
-            string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp <= @PeriodStart ";
-            string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp >= @PeriodEnd ";
+            string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp >= @PeriodStart ";
+            string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp <= @PeriodEnd ";
             string zoneIDWhere = parameters.ZoneID == null ? "" : "AND zone_id = @ZoneID ";
             string stateWhere = parameters.UnstableState == null ? "" : "AND zone_state = @ZoneState ";
 
@@ -72,6 +72,8 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodEnd", parameters.PeriodEnd);
             cmd.AddParameter("Worlds", worldIDs);
             cmd.AddParameter("ZoneState", (int?)parameters.UnstableState);
+
+            _Logger.LogDebug($"{cmd.Print()}");
 
             List<FacilityControlDbEntry> entries = await _ControlDbReader.ReadList(cmd);
             await conn.CloseAsync();
