@@ -13,6 +13,11 @@
                     </tr>
 
                     <tr>
+                        <td>ID</td>
+                        <td>{{selectedFacility.facilityID}}</td>
+                    </tr>
+
+                    <tr>
                         <td>Type</td>
                         <td>{{selectedFacility.typeName}}</td>
                     </tr>

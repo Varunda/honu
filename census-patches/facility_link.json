@@ -232,11 +232,6 @@
         },
         {
             "zone_id": "334",
-            "facility_id_a": "400346",
-            "facility_id_b": "400334"
-        },
-        {
-            "zone_id": "334",
             "facility_id_a": "400342",
             "facility_id_b": "400331"
         },
@@ -262,23 +257,18 @@
         },
         {
             "zone_id": "334",
-            "facility_id_a": "400334",
-            "facility_id_b": "400346"
-        },
-        {
-            "zone_id": "334",
-            "facility_id_a": "400334",
-            "facility_id_b": "400373"
-        },
-        {
-            "zone_id": "334",
-            "facility_id_a": "400334",
-            "facility_id_b": "400361"
-        },
-        {
-            "zone_id": "334",
             "facility_id_a": "400404",
             "facility_id_b": "400347"
+        },
+        {
+            "zone_id": "334",
+            "facility_id_a": "400346",
+            "facility_id_b": "400344"
+        },
+        {
+            "zone_id": "334",
+            "facility_id_a": "400344",
+            "facility_id_b": "400361"
         },
         {
             "zone_id": "334",
@@ -537,11 +527,6 @@
         },
         {
             "zone_id": "334",
-            "facility_id_a": "400361",
-            "facility_id_b": "400334"
-        },
-        {
-            "zone_id": "334",
             "facility_id_a": "400362",
             "facility_id_b": "400363"
         },
@@ -699,11 +684,6 @@
             "zone_id": "334",
             "facility_id_a": "400372",
             "facility_id_b": "400342"
-        },
-        {
-            "zone_id": "334",
-            "facility_id_a": "400373",
-            "facility_id_b": "400334"
         },
         {
             "zone_id": "334",

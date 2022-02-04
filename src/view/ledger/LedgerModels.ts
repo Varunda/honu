@@ -109,7 +109,12 @@ export class ZoneRegion extends Polygon {
             } else {
                 const locX: number = (facility.locationZ ?? 0) / 32;
                 const locY: number = (facility.locationX ?? 0) / 32;
-                verts.push(new VertexPoint(locX, locY));
+                const size: number = 5;
+                //verts.push(new VertexPoint(locX, locY));
+                verts.push(new VertexPoint(locX - size, locY));
+                verts.push(new VertexPoint(locX, locY - size));
+                verts.push(new VertexPoint(locX + size, locY));
+                verts.push(new VertexPoint(locX, locY + size));
             }
 
             const options: PolylineOptions = {
