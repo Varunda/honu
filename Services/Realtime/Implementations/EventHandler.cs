@@ -44,6 +44,7 @@ namespace watchtower.Realtime {
         private readonly MapCollection _MapCensus;
         private readonly ItemRepository _ItemRepository;
         private readonly MapRepository _MapRepository;
+        private readonly FacilityRepository _FacilityRepository;
 
         private readonly List<JToken> _Recent;
 
@@ -56,7 +57,7 @@ namespace watchtower.Realtime {
             IBattleRankDbStore rankDb, LogoutUpdateBuffer logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
-            JaegerSignInOutQueue jaegerQueue) {
+            JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo) {
 
             _Logger = logger;
 
@@ -81,6 +82,7 @@ namespace watchtower.Realtime {
             _MapCensus = mapColl ?? throw new ArgumentNullException(nameof(mapColl));
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
             _MapRepository = mapRepo ?? throw new ArgumentNullException(nameof(mapRepo));
+            _FacilityRepository = facRepo ?? throw new ArgumentNullException(nameof(facRepo));
         }
 
         public async Task Process(JToken ev) {
@@ -285,7 +287,7 @@ namespace watchtower.Realtime {
             }
         }
 
-        private void _ProcessFacilityControl(JToken payload) {
+        private async void _ProcessFacilityControl(JToken payload) {
             FacilityControlEvent ev = new() {
                 FacilityID = payload.GetInt32("facility_id", 0),
                 DurationHeld = payload.GetInt32("duration_held", 0),
@@ -296,6 +298,8 @@ namespace watchtower.Realtime {
                 WorldID = payload.GetWorldID(),
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
+
+            //_Logger.LogTrace($"Facility control: {payload}");
 
             ushort defID = (ushort) (ev.ZoneID & 0xFFFF);
             ushort instanceID = (ushort) ((ev.ZoneID & 0xFFFF0000) >> 4);
@@ -311,6 +315,8 @@ namespace watchtower.Realtime {
 
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
+
+            PsFacility? fac = await _FacilityRepository.GetByID(ev.FacilityID);
 
             _MapRepository.Set(ev.WorldID, ev.ZoneID, ev.FacilityID, ev.NewFactionID);
 
@@ -339,6 +345,10 @@ namespace watchtower.Realtime {
 
                     Stopwatch timer = Stopwatch.StartNew();
                     UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
+                    UnstableState stat2 = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
+                    if (state != stat2) {
+                        //_Logger.LogError($"Unstable state for {ev.WorldID} {ev.ZoneID} is different, {state} != {stat2}");
+                    }
                     if (timer.ElapsedMilliseconds > 1000) {
                         //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
                     }
@@ -351,7 +361,7 @@ namespace watchtower.Realtime {
                     timer.Restart();
                     await _FacilityPlayerDb.InsertMany(ID, events);
                     //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
-                    //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
+                    //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: with {ev.Players} players, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}/{stat2}, {ev.Timestamp}");
 
                     RecentFacilityControlStore.Get().Add(ev.WorldID, ev);
                 } catch (Exception ex) {
@@ -521,16 +531,25 @@ namespace watchtower.Realtime {
                         await Task.Delay(5000);
 
                         short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
+                        short? indarOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Indar);
                         short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
+                        short? hossinOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Hossin);
                         short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
+                        short? amerishOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Amerish);
                         short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
+                        short? esamirOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Esamir);
 
                         if (indarOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
                         if (hossinOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
                         if (amerishOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
                         if (esamirOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
 
-                        _Logger.LogDebug($"ALERT ended in {worldID}, current owners:\nIndar: {indarOwner}\nHossin: {hossinOwner}\nAmerish: {amerishOwner}\nEsamir: {esamirOwner}");
+                        _Logger.LogDebug($"ALERT ended in {worldID}, current owners:"
+                            + $"\nIndar: {indarOwner}/{indarOwner2}"
+                            + $"\nHossin: {hossinOwner}/{hossinOwner2}"
+                            + $"\nAmerish: {amerishOwner}/{amerishOwner2}"
+                            + $"\nEsamir: {esamirOwner}/{esamirOwner2}"
+                        );
                     }).Start();
                 }
 

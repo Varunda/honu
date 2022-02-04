@@ -1,5 +1,5 @@
 ﻿﻿import { latLng, polyline, LatLng, Map as LMap, Polygon, Polyline, Marker, PolylineOptions, MarkerOptions } from 'leaflet';
-import { PsFacility, PsMapHex } from 'api/MapApi';
+import { PsFacility, PsMapHex, ZoneMap } from 'api/MapApi';
 
 export class VertexPoint {
 	public x: number = 0;
@@ -47,7 +47,9 @@ export class ZoneRegion extends Polygon {
         this.unbindPopup();
     }
 
-    public static setupMapRegions(hexes: PsMapHex[]): ZoneRegion[] {
+    public static setupMapRegions(zone: ZoneMap): ZoneRegion[] {
+        const hexes: PsMapHex[] = zone.hexes;
+
         const regions: ZoneRegion[] = [];
 
         let width = 50 / 8;
@@ -56,71 +58,59 @@ export class ZoneRegion extends Polygon {
         let c = b / Math.sqrt(3) * 2;
         let a = c / 2;
 
-        const regionHexes = hexes.reduce((rv: Map<number, PsMapHex[]>, x) => {
-            if (rv.has(x.regionID) == false) {
-                rv.set(x.regionID, []);
-            }
+        console.log(`ZoneRegion.setupMapRegions> Have ${hexes.length} hexes to use`);
 
-            const h: PsMapHex[] = rv.get(x.regionID) || [];
-            h.push(x);
+        for (const facility of zone.facilities) {
+            const hexs: PsMapHex[] = zone.hexes.filter(iter => iter.regionID == facility.regionID);
+            let verts: VertexPoint[] = [];
 
-            rv.set(x.regionID, h);
-            return rv;
-        }, new Map());
+            if (hexs.length > 0) {
+                let regionLines: VertexLine[] = [];
 
-        console.log(regionHexes);
+                for (const hex of hexs) {
+                    const x = (2 * hex.x + hex.y) / 2 * width;
 
-        for (const regionId of regionHexes.keys()) {
-            const hexs: PsMapHex[] | undefined = regionHexes.get(regionId);
+                    let y;
+                    if (hex.y % 2 == 1) {
+                        let t = Math.floor(hex.y / 2);
+                        y = c * t + 2 * c * (t + 1) + c / 2;
+                    } else {
+                        y = (3 * c * hex.y) / 2 + c;
+                    }
 
-            if (hexs == undefined) {
-                console.error(`Skipping region with no hexes: ${regionId}`);
-                continue;
-            }
+                    const hexVerts = [
+                        new VertexPoint(x - b, y - a),
+                        new VertexPoint(x, y - c),
+                        new VertexPoint(x + b, y - a),
+                        new VertexPoint(x + b, y + a),
+                        new VertexPoint(x, y + c),
+                        new VertexPoint(x - b, y + a)
+                    ];
 
-            let regionLines: VertexLine[] = [];
+                    const hexLines = [
+                        new VertexLine(hexVerts[0], hexVerts[1]),
+                        new VertexLine(hexVerts[1], hexVerts[2]),
+                        new VertexLine(hexVerts[2], hexVerts[3]),
+                        new VertexLine(hexVerts[3], hexVerts[4]),
+                        new VertexLine(hexVerts[4], hexVerts[5]),
+                        new VertexLine(hexVerts[5], hexVerts[0])
+                    ];
 
-            for (const hex of hexs) {
-                const x = (2 * hex.x + hex.y) / 2 * width;
-
-                let y;
-                if (hex.y % 2 == 1) {
-                    let t = Math.floor(hex.y / 2);
-                    y = c * t + 2 * c * (t + 1) + c / 2;
-                } else {
-                    y = (3 * c * hex.y) / 2 + c;
+                    regionLines.push(...hexLines);
                 }
 
-                const hexVerts = [
-                    new VertexPoint(x - b, y - a),
-                    new VertexPoint(x, y - c),
-                    new VertexPoint(x + b, y - a),
-                    new VertexPoint(x + b, y + a),
-                    new VertexPoint(x, y + c),
-                    new VertexPoint(x - b, y + a)
-                ];
+                let regionOuterLines: VertexLine[] = ZoneRegion.getOuterLines(regionLines);
 
-                const hexLines = [
-                    new VertexLine(hexVerts[0], hexVerts[1]),
-                    new VertexLine(hexVerts[1], hexVerts[2]),
-                    new VertexLine(hexVerts[2], hexVerts[3]),
-                    new VertexLine(hexVerts[3], hexVerts[4]),
-                    new VertexLine(hexVerts[4], hexVerts[5]),
-                    new VertexLine(hexVerts[5], hexVerts[0])
-                ];
+                if (regionOuterLines.length == 0) {
+                    console.warn(`Failed to find outer lines for ${facility.facilityID}`);
+                }
 
-                regionLines.push(...hexLines);
+                verts = ZoneRegion.getOuterVerts(regionOuterLines);
+            } else {
+                const locX: number = (facility.locationZ ?? 0) / 32;
+                const locY: number = (facility.locationX ?? 0) / 32;
+                verts.push(new VertexPoint(locX, locY));
             }
-
-            let regionOuterLines: VertexLine[] = ZoneRegion.getOuterLines(regionLines);
-
-            if (regionOuterLines.length == 0) {
-                console.warn(`Failed to find outer lines for ${regionId}`);
-            }
-
-            let regionOuterVerts: VertexPoint[] = ZoneRegion.getOuterVerts(regionOuterLines);
-
-            let latLngVerts = regionOuterVerts.map((a: VertexPoint) => a.toLatLng());
 
             const options: PolylineOptions = {
                 weight: 2,
@@ -129,7 +119,8 @@ export class ZoneRegion extends Polygon {
                 pane: 'regions',
             };
 
-            let region = new ZoneRegion(regionId, latLngVerts, options);
+            let latLngVerts = verts.map((a: VertexPoint) => a.toLatLng());
+            let region = new ZoneRegion(facility.regionID, latLngVerts, options);
 
             regions.push(region);
         }

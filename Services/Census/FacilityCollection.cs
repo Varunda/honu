@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -18,6 +19,8 @@ namespace watchtower.Services.Census {
 
         private readonly ILogger<FacilityCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
+
+        private const string PATCH_FILE = "./census-patches/map_region.json";
 
         public FacilityCollection(ILogger<FacilityCollection> logger,
             ICensusQueryFactory census) {
@@ -53,6 +56,37 @@ namespace watchtower.Services.Census {
                 _Logger.LogError(ex, "Failed to get all");
             }
 
+            try {
+                do {
+                    string patch = File.ReadAllText(PATCH_FILE);
+
+                    JToken json = JToken.Parse(patch);
+
+                    JToken? mapRegionList = json.SelectToken("map_region_list");
+                    if (mapRegionList == null) {
+                        _Logger.LogError($"Missing token 'map_region_list' from {PATCH_FILE}");
+                        break;
+                    }
+
+                    IEnumerable<JToken> arr = mapRegionList.Children();
+
+                    foreach (JToken token in arr) {
+                        string? facilityID = token.Value<string?>("facility_id");
+                        if (facilityID == null || facilityID == "0") {
+                            continue;
+                        }
+
+                        PsFacility fac = _Parse(token);
+                        facilities.Add(fac);
+                        //_Logger.LogDebug($"Parsed facility: {fac.Name} => {JToken.FromObject(fac)}");
+                    }
+
+                    _Logger.LogInformation($"Found {arr.Count()} entries in map_region_list object");
+                } while (false);
+            } catch (Exception ex) {
+                _Logger.LogError(ex, "failed to patch map_region");
+            }
+
             return facilities;
         }
 
@@ -66,9 +100,13 @@ namespace watchtower.Services.Census {
             facility.TypeID = token.GetInt32("facility_type_id", 0);
             facility.TypeName = token.GetString("facility_type", "<missing type name>");
             facility.LocationX = token.Value<decimal?>("location_x");
-            facility.LocationY = token.Value<decimal?>("location_y");
             facility.LocationZ = token.Value<decimal?>("location_z");
+            facility.LocationY = token.Value<decimal?>("location_y");
 
+            // The map_region patch has null for the Y coord, but has X//Z coords
+            if (facility.LocationX != null && facility.LocationZ != null && facility.LocationY == null) {
+                facility.LocationY = 0;
+            }
             return facility;
         }
 

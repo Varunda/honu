@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace watchtower.Models {
 
@@ -24,18 +26,39 @@ namespace watchtower.Models {
 
         public uint ZoneID { get; set; }
 
-        private Dictionary<int, short> _Faciltities { get; set; } = new Dictionary<int, short>();
+        private Dictionary<int, PsFacilityOwner> _Faciltities { get; set; } = new Dictionary<int, PsFacilityOwner>();
 
-        public short? GetFacilityOwner(int facID) {
-            if (_Faciltities.TryGetValue(facID, out short owner) == false) {
+        public PsFacilityOwner? GetFacilityOwner(int facID) {
+            if (_Faciltities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
                 return null;
             }
             return owner;
         }
 
-        public void SetFacilityOwner(int facID, short owner) {
-            _Faciltities[facID] = owner;
+        public List<PsFacilityOwner> GetFacilities() {
+            return _Faciltities.Values.ToList();
         }
+
+        public void SetFacilityOwner(int facID, short ownerID) {
+            if (_Faciltities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
+                owner = new PsFacilityOwner() {
+                    FacilityID = facID,
+                    Owner = ownerID
+                };
+
+                _Faciltities.Add(facID, owner);
+            }
+
+            owner.Owner = ownerID;
+        }
+
+    }
+
+    public class PsFacilityOwner {
+
+        public int FacilityID { get; set; }
+
+        public short Owner { get; set; }
 
     }
 

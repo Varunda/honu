@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
@@ -54,6 +55,9 @@ namespace watchtower.Services.Repositories {
             }
 
             PsZone zone = map.GetZone(zoneID);
+            if (zone.GetFacilityOwner(facilityID) == null) {
+                //_Logger.LogDebug($"Adding new facilityID {facilityID} in world {worldID}, zone {zoneID}, owner {factionID}");
+            }
             zone.SetFacilityOwner(facilityID, factionID);
         }
 
@@ -74,6 +78,102 @@ namespace watchtower.Services.Repositories {
             return map.GetZone(zoneID);
         }
 
+        /// <summary>
+        ///     Get the owner of a zone
+        /// </summary>
+        /// <param name="worldID">World ID</param>
+        /// <param name="zoneID">Zone ID to get the owner of</param>
+        /// <returns>The faction ID that currently owns a zone, or <c>null</c> if there is no owner</returns>
+        public short? GetZoneMapOwner(short worldID, uint zoneID) {
+            PsZone? zone = GetZone(worldID, zoneID);
+            if (zone == null) {
+                return null;
+            }
+
+            List<PsFacilityOwner> facs = zone.GetFacilities();
+
+            //_Logger.LogTrace($"GetZoneMapOwner = {worldID}:{zoneID} => using {facs.Count} regions");
+            int total = facs.Count;
+
+            Dictionary<short, int> counts = new();
+            int found = 0;
+
+            foreach (PsFacilityOwner region in facs) {
+                if (counts.ContainsKey(region.Owner) == false) {
+                    counts.Add(region.Owner, 0);
+                }
+
+                ++counts[region.Owner];
+                ++found;
+            }
+
+            //_Logger.LogTrace($"GetZoneMapOwner = {worldID}:{zoneID}, have {found} regions in zone => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
+
+            if (total > 10 && counts.Count > 0) {
+                KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();
+
+                // Esamir has 2 disabled regions
+                if (majority.Value >= total - 2) {
+                    return majority.Key;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        ///     Get what <c>UnstableState</c> a zone is
+        /// </summary>
+        /// <param name="worldID">World ID</param>
+        /// <param name="zoneID">Zone ID</param>
+        /// <returns>
+        ///     The <see cref="UnstableState"/> of the zone. If no zone is found, <see cref="UnstableState.LOCKED"/> is returned
+        /// </returns>
+        public UnstableState GetUnstableState(short worldID, uint zoneID) {
+            PsZone? zone = GetZone(worldID, zoneID);
+            if (zone == null) {
+                return UnstableState.LOCKED;
+            }
+
+            List<PsFacilityOwner> facs = zone.GetFacilities();
+
+            int total = facs.Count;
+            //_Logger.LogDebug($"GetUnstableState = {worldID}:{zoneID} => using {facs.Count} regions");
+
+            Dictionary<short, int> counts = new();
+            int found = 0;
+
+            foreach (PsFacilityOwner region in facs) {
+                if (counts.ContainsKey(region.Owner) == false) {
+                    counts.Add(region.Owner, 0);
+                }
+
+                ++counts[region.Owner];
+                ++found;
+            }
+
+            //_Logger.LogInformation($"GetUnstableState = {worldID}:{zoneID}, have {found} regions in zone => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}\n\t{string.Join(", ", facs.Select(iter => iter.FacilityID))}");
+
+            if (counts.TryGetValue(0, out int value) == true) {
+                if (value > (total / 2)) {
+                    return UnstableState.SINGLE_LANE;
+                }
+
+                if (value > 10) {
+                    return UnstableState.DOUBLE_LANE;
+                }
+            }
+
+            if (GetZoneMapOwner(worldID, zoneID) == null) {
+                return UnstableState.UNLOCKED;
+            }
+
+            return UnstableState.LOCKED;
+        }
+
+        /// <summary>
+        ///     Get the <see cref="PsFacility"/>s
+        /// </summary>
         public async Task<List<PsFacility>> GetFacilities() {
             if (_Cache.TryGetValue(KEY_FACILITIES, out List<PsFacility> facs) == false) {
                 facs = await _FacilityDb.GetAll();
@@ -86,6 +186,9 @@ namespace watchtower.Services.Repositories {
             return facs;
         }
 
+        /// <summary>
+        ///     Get the <see cref="PsFacilityLink"/>s
+        /// </summary>
         public async Task<List<PsFacilityLink>> GetFacilityLinks() {
             if (_Cache.TryGetValue(KEY_LINKS, out List<PsFacilityLink> links) == false) {
                 links = await _MapDb.GetFacilityLinks();
@@ -106,6 +209,9 @@ namespace watchtower.Services.Repositories {
             return links;
         }
 
+        /// <summary>
+        ///     Get all the <see cref="PsMapHex"/>es
+        /// </summary>
         public async Task<List<PsMapHex>> GetHexes() {
             if (_Cache.TryGetValue(KEY_HEXES, out List<PsMapHex> hexes) == false) {
                 hexes = await _MapDb.GetHexes();

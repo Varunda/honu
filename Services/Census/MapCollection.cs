@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
@@ -14,9 +15,11 @@ namespace watchtower.Services.Census {
 
     public class MapCollection {
 
-        private readonly ILogger<MapCollection> _Logger;
+        internal readonly ILogger<MapCollection> _Logger;
         private readonly ICensusQueryFactory _Census;
         //private readonly HonuCensus _HCensus;
+
+        private const string LINK_PATCH_FILE = "./census-patches/facility_link.json";
 
         public MapCollection(ILogger<MapCollection> logger,
             ICensusQueryFactory census) { //, HonuCensus hc) {
@@ -34,7 +37,7 @@ namespace watchtower.Services.Census {
                 query.Where("zone_ids").Equals(zoneID);
             }
 
-            _Logger.LogDebug($"Census endpoint to get zones {zoneIDs} of {worldID}: {query.GetUri()}");
+            //_Logger.LogDebug($"Census endpoint to get zones {zoneIDs} of {worldID}: {query.GetUri()}");
 
             List<PsMap> regions = new List<PsMap>();
 
@@ -149,15 +152,33 @@ namespace watchtower.Services.Census {
 
             List<PsFacilityLink> hexes = new List<PsFacilityLink>();
 
-            try {
-                IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JToken> result = await query.GetListAsync();
 
-                foreach (JToken token in result) {
-                    PsFacilityLink hex = _ParseLink(token);
-                    hexes.Add(hex);
-                }
+            foreach (JToken token in result) {
+                PsFacilityLink hex = _ParseLink(token);
+                hexes.Add(hex);
+            }
+
+            try {
+                do {
+                    string patch = File.ReadAllText(LINK_PATCH_FILE);
+                    JToken json = JToken.Parse(patch);
+
+                    JToken? facilityLinkList = json.SelectToken("facility_link_list");
+                    if (facilityLinkList == null) {
+                        _Logger.LogWarning($"Missing 'facility_link_list' from patch file in {LINK_PATCH_FILE}");
+                        break;
+                    }
+
+                    IEnumerable<JToken> arr = facilityLinkList.Children();
+                    _Logger.LogInformation($"Have {arr.Count()} entries to patch into facility_link");
+                    foreach (JToken token in arr) {
+                        PsFacilityLink hex = _ParseLink(token);
+                        hexes.Add(hex);
+                    }
+                } while (false);
             } catch (Exception ex) {
-                _Logger.LogError(ex, $"Failed to get facility links");
+                _Logger.LogError(ex, $"failed to patch collection facility_link from patch file {LINK_PATCH_FILE}");
             }
 
             return hexes;
@@ -263,6 +284,7 @@ namespace watchtower.Services.Census {
             int total = map.Count;
 
             Dictionary<short, int> counts = new();
+            int found = 0;
 
             foreach (PsMap region in map) {
                 if (counts.ContainsKey(region.FactionID) == false) {
@@ -270,7 +292,10 @@ namespace watchtower.Services.Census {
                 }
 
                 ++counts[region.FactionID];
+                ++found;
             }
+
+            //census._Logger.LogInformation($"GetUnstableState = {worldID}:{zoneID}, have {found} regions in zone => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}\n\t{string.Join(", ", map.Select(iter => iter.RegionID))}");
 
             if (counts.TryGetValue(0, out int value) == true) {
                 if (value > (total / 2)) {

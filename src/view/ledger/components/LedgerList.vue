@@ -158,7 +158,8 @@
                         { value: 2, key: "Indar" },
                         { value: 4, key: "Hossin" },
                         { value: 6, key: "Amerish" },
-                        { value: 8, key: "Esamir" }
+                        { value: 8, key: "Esamir" },
+                        { value: 344, key: "Oshur" }
                     ]
                 }
             }

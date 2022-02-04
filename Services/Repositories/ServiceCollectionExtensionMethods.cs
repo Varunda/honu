@@ -51,6 +51,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();
             services.AddSingleton<WorldOverviewRepository>();
+            services.AddSingleton<FacilityRepository>();
         }
 
     }

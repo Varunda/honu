@@ -1,6 +1,16 @@
 ﻿
 export default class ZoneUtils {
 
+    public static readonly Indar: number = 2;
+
+    public static readonly Hossin: number = 4;
+
+    public static readonly Amerish: number = 6;
+
+    public static readonly Esamir: number = 8;
+
+    public static readonly Oshur: number = 334;
+
     public static getZoneName(zoneID: number): string {
         const defID: number = zoneID & 0xFFFF;
         const instanceID: number = (zoneID & 0xFFFF0000) >> 16;
@@ -10,7 +20,7 @@ export default class ZoneUtils {
             case 4: return "Hossin";
             case 6: return "Amerish";
             case 8: return "Esamir";
-            case 344: return "Oshur";
+            case 334: return "Oshur";
 
             case 14: return "Koltyr";
             case 361: return (instanceID > 0) ? `Desolation (instance ${instanceID})` : "Desolation";

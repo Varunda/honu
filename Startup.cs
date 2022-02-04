@@ -179,7 +179,7 @@ namespace watchtower {
             services.AddHostedService<RealtimeResubcribeService>();
             services.AddHostedService<WorldOverviewBroadcastService>();
             services.AddHostedService<CharacterStatGeneratorPopulator>();
-            services.AddHostedService<ZoneStateStartupService>();
+            services.AddHostedService<ZoneCheckerService>();
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<DirectiveCollectionsPopulator>();
             services.AddHostedService<ObjectiveCollectionsPopulator>();

@@ -18,32 +18,50 @@
                     </tr>
 
                     <tr>
-                        <td>Ratio</td>
+                        <td>
+                            Ratio
+                            <info-hover text="The ration of defenses to captures. For example, a ratio of 4.5 means for every 1 capture, there are 4.5 defenses"></info-hover>
+                        </td>
                         <td>{{selectedFacility.ratio.toFixed(2)}}</td>
                     </tr>
 
                     <tr>
-                        <td>Total fights</td>
+                        <td>
+                            Total fights
+                            <info-hover text="The total number of captures and defenses that have occured at this facility"></info-hover>
+                        </td>
                         <td>{{selectedFacility.total}}</td>
                     </tr>
 
                     <tr>
-                        <td>Capture count</td>
+                        <td>
+                            Capture count
+                            <info-hover text="The number of times this base has been captured"></info-hover>
+                        </td>
                         <td>{{selectedFacility.captured}}</td>
                     </tr>
 
                     <tr>
-                        <td>Defended count</td>
+                        <td>
+                            Defended count
+                            <info-hover text="The number of times this base has been defended"></info-hover>
+                        </td>
                         <td>{{selectedFacility.defended}}</td>
                     </tr>
 
                     <tr>
-                        <td>Average players for capture</td>
+                        <td>
+                            Average players for capture
+                            <info-hover text="The average number of players who get credit when a capture occurs"></info-hover>
+                        </td>
                         <td>{{selectedFacility.captureAverage.toFixed(2)}}</td>
                     </tr>
 
                     <tr>
-                        <td>Average players for defense</td>
+                        <td>
+                            Average players for defense
+                            <info-hover text="The average number of players who get credit when a defense occurs"></info-hover>
+                        </td>
                         <td>{{selectedFacility.defenseAverage.toFixed(2)}}</td>
                     </tr>
                 </table>
@@ -63,6 +81,7 @@
                     <option :value="4">Hossin</option>
                     <option :value="6">Amerish</option>
                     <option :value="8">Esamir</option>
+                    <option :value="334">Oshur</option>
                 </select>
 
                 <label>
@@ -71,9 +90,11 @@
 
                 <select class="form-control mb-2" v-model="orderBy">
                     <option value="ratio">Ratio</option>
-                    <option value="total">Total</option>
-                    <option value="capture">Avg capture</option>
-                    <option value="defend">Avg defend</option>
+                    <option value="total">Total # of fights</option>
+                    <option value="cap_total"># of captures</option>
+                    <option value="def_total"># of defenses</option>
+                    <option value="capture">Avg # of players who get capture credit</option>
+                    <option value="defend">Avg # of players who get defense credit</option>
                     <option value="all">Avg players</option>
                     <option value="layna">Fight inequality</option>
                 </select>
@@ -82,7 +103,7 @@
 
                 <select class="form-control mb-2" v-model="orderAsc">
                     <option value="asc">Ascending (0-9)</option>
-                    <option value="desc">Desending (9-0)</option>
+                    <option value="desc">Descending (9-0)</option>
                 </select>
 
                 <span>
@@ -156,8 +177,12 @@
 
     import * as L from "leaflet";
     import { Loading, Loadable } from "Loading";
+
+    import InfoHover from "components/InfoHover.vue";
+
     import ColorUtils, { RGB } from "util/Color";
     import { Quartile } from "util/Quartile";
+    import ZoneUtils from "util/Zone";
 
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";
     import { LedgerApi, FacilityControlEntry, LedgerOptions } from "api/LedgerApi";
@@ -200,7 +225,7 @@
 
                 regions: [] as ZoneRegion[],
 
-                orderBy: "ratio" as "ratio" | "total" | "capture" | "defend" | "all" | "layna",
+                orderBy: "ratio" as "ratio" | "total" | "cap_total" | "def_total" | "capture" | "defend" | "all" | "layna",
                 orderAsc: "desc" as "asc" | "desc",
                 orderByName: "" as string
             }
@@ -216,14 +241,16 @@
             loadData: function(): void {
                 let zoneName: string = "";
 
-                if (this.zoneID == 2) {
+                if (this.zoneID == ZoneUtils.Indar) { // 2
                     zoneName = "indar";
-                } else if (this.zoneID == 4) {
+                } else if (this.zoneID == ZoneUtils.Hossin) { // 4
                     zoneName = "hossin";
-                } else if (this.zoneID == 6) {
+                } else if (this.zoneID == ZoneUtils.Amerish) { // 6
                     zoneName = "amerish";
-                } else if (this.zoneID == 8) {
+                } else if (this.zoneID == ZoneUtils.Esamir) { // 8
                     zoneName = "esamir";
+                } else if (this.zoneID == ZoneUtils.Oshur) { // 334
+                    zoneName = "oshur";
                 } else {
                     throw `Missing zoneName from zoneID ${this.zoneID}`;
                 }
@@ -266,6 +293,10 @@
                         value = datum.ratio;
                     } else if (this.orderBy == "total") {
                         value = datum.total;
+                    } else if (this.orderBy == "cap_total") {
+                        value = datum.captured;
+                    } else if (this.orderBy == "def_total") {
+                        value = datum.defended;
                     } else if (this.orderBy == "capture") {
                         value = datum.captureAverage;
                     } else if (this.orderBy == "defend") {
@@ -307,7 +338,7 @@
                 }
                 this.zoneData = zoneData.data;
 
-                const regions: ZoneRegion[] = ZoneRegion.setupMapRegions(zoneData.data.hexes);
+                const regions: ZoneRegion[] = ZoneRegion.setupMapRegions(zoneData.data);
 
                 // If there is currently a map, the view will be copied to the new map
                 let center: L.LatLng = L.latLng(0.00, 0.00);
@@ -365,7 +396,8 @@
                     region.bindTooltip(name, {
                         permanent: true,
                         direction: "center",
-                        className: "ledger-base-name"
+                        className: "ledger-base-name",
+                        interactive: true
                     });
 
                     region.addTo(this.map);
@@ -503,8 +535,11 @@
 
         computed: {
 
-        }
+        },
 
+        components: {
+            InfoHover
+        }
     });
     export default LedgerMap;
 

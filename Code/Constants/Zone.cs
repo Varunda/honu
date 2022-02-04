@@ -17,7 +17,7 @@ namespace watchtower.Constants {
 
         public const uint Koltyr = 14;
 
-        public const uint Oshur = 344;
+        public const uint Oshur = 334;
 
         public const uint Sancutary = 362;
 
