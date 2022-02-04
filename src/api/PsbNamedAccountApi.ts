@@ -262,4 +262,12 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         return PsbNamedAccountApi.get().postReply(`/api/psb-named?${param.toString()}`, PsbNamedAccountApi.parse);
     }
 
+    public static rename(id: number, tag: string | null, name: string): Promise<Loading<PsbNamedAccount>> {
+        const param: URLSearchParams = new URLSearchParams();
+        param.append("tag", tag ?? "");
+        param.append("name", name);
+
+        return PsbNamedAccountApi.get().postReply(`/api/psb-named/${id}?${param.toString()}`, PsbNamedAccountApi.parse);
+    }
+
 }

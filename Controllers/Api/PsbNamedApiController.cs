@@ -187,6 +187,64 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Rename an existing named account with a new name. Used when the player who owns the account has not changed,
+        ///     but they have renamed for whatever reason
+        /// </summary>
+        /// <param name="accountID">ID of the account</param>
+        /// <param name="tag">New tag of the account</param>
+        /// <param name="name">New name of the account</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="PsbNamedAccount"/> that was successfully renamed using the parameters
+        /// </response>
+        /// <response code="400">
+        ///     One of the following errors occured. The response data will have a string describing the error
+        ///     <ul>
+        ///         <li>
+        ///             One of the 4 characters (one for each faction) was missing
+        ///         </li>
+        ///         <li>
+        ///             A named account using the tag and name already exist
+        ///         </li>
+        ///     </ul>
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsbNamedAccount"/>  with <see cref="PsbNamedAccount.ID"/> of <paramref name="accountID"/> exists
+        /// </response>
+        [HttpPost("{accountID}")]
+        public async Task<ApiResponse<PsbNamedAccount>> Rename(long accountID, [FromQuery] string? tag, [FromQuery] string name) {
+            if (string.IsNullOrEmpty(name) == true) {
+                return ApiBadRequest<PsbNamedAccount>($"Missing {nameof(name)} parameter");
+            }
+
+            PsbNamedAccount? acc = await _NamedRepository.GetByID(accountID);
+            if (acc == null) {
+                return ApiNotFound<PsbNamedAccount>($"{nameof(PsbNamedAccount)} {accountID}");
+            }
+
+            PsbNamedAccount? existing = await _NamedRepository.GetByTagAndName(tag, name);
+            if (existing != null && existing.ID != accountID) {
+                return ApiBadRequest<PsbNamedAccount>($"A {nameof(PsbNamedAccount)} already exist with name {tag}x{name}");
+            }
+
+            PsbCharacterSet set = await _NamedRepository.GetCharacterSet(tag, name);
+            List<string> errors = new List<string>();
+            if (set.VS == null) { errors.Add($"Missing VS character"); }
+            if (set.NC == null) { errors.Add($"Missing NC character"); }
+            if (set.TR == null) { errors.Add($"Missing TR character"); }
+            if (set.NS == null) { errors.Add($"Missing NS character"); }
+            if (errors.Count > 0) {
+                return ApiBadRequest<PsbNamedAccount>($"One of the faction is missing a character: {string.Join(", ", errors)}");
+            }
+
+            acc = await _NamedRepository.Rename(accountID, tag, name);
+            if (acc == null) {
+                return ApiBadRequest<PsbNamedAccount>($"failed to rename, generic error");
+            }
+
+            return ApiOk(acc);
+        }
+
+        /// <summary>
         ///     Take a list of <see cref="PsbNamedAccount"/>s and make <see cref="ExpandedPsbNamedAccount"/>s for them
         /// </summary>
         /// <param name="named"></param>

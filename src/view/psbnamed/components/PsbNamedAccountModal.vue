@@ -53,29 +53,79 @@
                 <div class="mb-2">
                     <h3 class="wt-header">Account</h3>
 
-                    <div class="input-grid-col2" style="grid-template-columns: min-content 1fr;">
-                        <div class="input-cell mr-2">
-                            <b>ID</b>
+                    <div class="input-grid-col2" style="grid-template-columns: min-content 1fr">
+                        <div class="input-cell">
+                            <span class="input-group-text input-group-prepend">
+                                <b>ID</b>
+                            </span>
                         </div>
 
                         <div class="input-cell">
-                            {{account.id}}
-                        </div>
-
-                        <div class="input-cell mr-2">
-                            <b>Last used</b>
+                            <input :value="account.id" readonly class="form-control" type="text" />
                         </div>
 
                         <div class="input-cell">
-                            {{account.lastUsed | moment}}
-                        </div>
-
-                        <div class="input-cell mr-2">
-                            <b>Time used</b>
+                            <span class="input-group-text input-group-prepend">
+                                <b>Last used</b>
+                            </span>
                         </div>
 
                         <div class="input-cell">
-                            {{account.secondsUsage | mduration}}
+                            <input :value="account.lastUsed | moment" readonly class="form-control" type="text" />
+                        </div>
+
+                        <div class="input-cell">
+                            <span class="input-group-text input-group-prepend">
+                                <b>Time used</b>
+                            </span>
+                        </div>
+
+                        <div class="input-cell">
+                            <input :value="account.secondsUsage | mduration" readonly class="form-control" type="text" />
+                        </div>
+
+                        <div class="input-cell pt-1 mt-3 border-top">Edit</div>
+                        <div class="input-cell pt-1 mt-3 border-top">&nbsp;</div>
+
+                        <div class="input-cell">
+                            <span class="input-group-text input-group-prepend">
+                                Tag
+                            </span>
+                        </div>
+
+                        <div class="input-cell">
+                            <input v-model="edit.tag" :readonly="edit.editing == false" class="form-control" type="text" />
+                        </div>
+
+                        <div class="input-cell">
+                            <span class="input-group-text input-group-prepend">
+                                Character name
+                            </span>
+                        </div>
+
+                        <div class="input-cell">
+                            <input v-model="edit.name" :readonly="edit.editing == false" class="form-control" type="text" />
+                        </div>
+
+                        <div class="input-cell"></div>
+
+                        <div class="input-cell">
+                            <div v-if="edit.editing == false">
+                                <button @click="startEdit" type="button" class="btn btn-primary">Edit</button>
+                            </div>
+
+                            <div v-else>
+                                <button @click="submitEdit" type="button" class="btn btn-success" :disabled="edit.response.state == 'loading'">
+                                    Save
+                                </button>
+
+                                <button @click="cancelEdit" type="button" class="btn btn-secondary">
+                                    Cancel
+                                </button>
+
+                                <busy v-if="edit.response.state == 'loading'" style="height: 1.5rem;">
+                                </busy>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -114,6 +164,7 @@
     import Vue, { PropType } from "vue";
     import { Loadable, Loading } from "Loading";
     import EventBus from "EventBus";
+    import Toaster from "Toaster";
 
     import PsbNamedCharacterColumn from "./PsbNamedCharacterColumn.vue";
 
@@ -128,6 +179,15 @@
 
         data: function() {
             return {
+                edit: {
+                    tag: "" as string,
+                    name: "" as string,
+
+                    editing: false as boolean,
+
+                    response: Loadable.idle() as Loading<PsbNamedAccount>
+                },
+
                 loading: {
                     delete: false as boolean,
                     recheck: false as boolean
@@ -135,7 +195,36 @@
             }
         },
 
+        created: function(): void {
+            this.cancelEdit();
+        },
+
         methods: {
+
+            cancelEdit: function(): void {
+                this.edit.tag = this.account.tag ?? "";
+                this.edit.name = this.account.name;
+
+                this.edit.editing = false;
+            },
+
+            startEdit: function(): void {
+                this.edit.editing = true;
+            },
+
+            submitEdit: async function(): Promise<void> {
+                this.edit.response = Loadable.loading();
+                this.edit.response = await PsbNamedAccountApi.rename(this.account.id, this.edit.tag, this.edit.name);
+
+                if (this.edit.response.state == "loaded") {
+                    EventBus.$emit("rebind-accounts");
+                    Toaster.add("Successfully renamed account", `Account successfully renamed to ${this.edit.tag}x${this.edit.name}`, "success");
+                    this.cancelEdit();
+                } else if (this.edit.response.state == "error") {
+                    Toaster.add("Failed to rename account", `Failed to rename account: ${this.edit.response.message}`, "danger");
+                }
+            },
+
             deleteByID: async function(): Promise<void> {
                 const conf: boolean = confirm(`Are you sure you want to delete the account for ${this.account.playerName}?`);
                 if (conf == false) {
