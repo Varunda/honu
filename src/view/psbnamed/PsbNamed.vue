@@ -79,10 +79,14 @@
             display-type="table" :row-padding="padding">
 
             <a-col>
-                <a-header></a-header>
+                <a-header>
+                    <button @click="openCreateModal" type="button" class="btn btn-success">
+                        <span class="fas fa-plus"></span>
+                    </button>
+                </a-header>
 
                 <a-body v-slot="entry">
-                    <a href="#" @click="viewAccount(entry.id)">
+                    <a href="#" @click="viewAccount(entry.id)" :class="{ 'text-danger': entry.account.deletedByID != null }">
                         View {{entry.id}}
                     </a>
                 </a-body>
@@ -98,7 +102,10 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.playerName}}
+                    <span :class="{ 'text-danger': entry.account.deletedBy != null }">
+                        {{entry.playerName}}
+                        <info-hover v-if="entry.account.deletedBy != null" text="This account has been deleted"></info-hover>
+                    </span>
                 </a-body>
             </a-col>
 
@@ -112,7 +119,9 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.tag}}
+                    <span :class="{ 'text-danger': entry.account.deletedBy != null }">
+                        {{entry.tag}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -126,7 +135,9 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.name}}
+                    <span :class="{ 'text-danger': entry.account.deletedBy != null }">
+                        {{entry.name}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -140,7 +151,11 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.status == 'Missing'" class="text-danger">
+                    <span v-if="entry.status == 'Deleted'" class="text-muted">
+                        Deleted
+                    </span>
+
+                    <span v-else-if="entry.status == 'Missing'" class="text-danger">
                         Missing
                     </span>
 
@@ -294,16 +309,23 @@
             <psb-named-account-modal v-if="view.opened == true" :account="view.account">
             </psb-named-account-modal>
         </div>
+
+        <div class="modal" id="account-create-modal">
+            <psb-named-account-create-modal v-if="create.opened == true" :entries="filtered.data">
+            </psb-named-account-create-modal>
+        </div>
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import { Loadable, Loading } from "Loading";
+    import EventBus from "EventBus";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
     import PsbNamedAccountModal from "./components/PsbNamedAccountModal.vue";
+    import PsbNamedAccountCreateModal from "./components/PsbNamedAccountCreateModal.vue";
 
     import "MomentFilter";
     import "filters/CharacterName";
@@ -388,6 +410,10 @@
                     deleted: false as boolean
                 },
 
+                create: {
+                    opened: false as boolean,
+                },
+
                 view: {
                     opened: false as boolean,
                     account: null as FlatPsbNamedAccount | null
@@ -409,11 +435,28 @@
                     this.view.opened = false;
                     this.view.account = null;
                 });
+
+                EventBus.$on("rebind-accounts", async () => {
+                    console.log(`Rebinding accounts`);
+                    await this.loadAll();
+
+                    if (this.view.account != null) {
+                        this.updateAccount(this.view.account.id);
+                    }
+                });
             });
         },
 
         methods: {
             viewAccount: function(accID: number): void {
+                this.updateAccount(accID);
+                this.view.opened = true;
+                this.$nextTick(() => {
+                    this.openViewModal();
+                });
+            },
+
+            updateAccount: function(accID: number): void {
                 if (this.accounts.state != "loaded") {
                     return console.warn(`accounts.state is not loaded, cannot load ${accID}`);
                 }
@@ -424,15 +467,17 @@
                 }
 
                 this.view.account = acc;
-                this.view.opened = true;
-
-                this.$nextTick(() => {
-                    this.openModal();
-                });
             },
 
-            openModal: function(): void {
+            openViewModal: function(): void {
+                $("#account-create-modal").modal("hide");
                 $("#psb-account-modal").modal("show");
+            },
+
+            openCreateModal: function(): void {
+                this.create.opened = true;
+                $("#psb-account-modal").modal("hide");
+                $("#account-create-modal").modal("show");
             },
 
             loadAll: async function(): Promise<void> {
@@ -445,7 +490,7 @@
             },
 
             updateFilters: function(): void {
-                console.log(`updating filters`);
+                console.log(`PsbNamed> updating filters`);
 
                 if (this.accounts.state != "loaded") {
                     return console.warn(`accounts.state is not loaded, cannot filter`);
@@ -504,22 +549,22 @@
 
         watch: {
             "filter.missingCharacters": function(): void {
-                console.log(`filter.missingCharacters changed`);
+                console.log(`PsbNamed> filter.missingCharacters changed`);
                 this.updateFilters();
             },
 
             "filter.mismatchFactions": function(): void {
-                console.log(`filter.mismatchFactions changed`);
+                console.log(`PsbNamed> filter.mismatchFactions changed`);
                 this.updateFilters();
             },
 
             "filter.wrongWorlds": function(): void {
-                console.log(`filter.wrongWorlds changed`);
+                console.log(`PsbNamed> filter.wrongWorlds changed`);
                 this.updateFilters();
             },
 
             "filter.deleted": function(): void {
-                console.log(`filter.deletd changed`);
+                console.log(`PsbNamed> filter.deleted changed`);
                 this.updateFilters();
             }
 
@@ -527,7 +572,7 @@
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
-                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == true) {
+                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false) {
                     return this.wrapped;
                 }
 
@@ -538,7 +583,7 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
-            PsbNamedAccountModal,
+            PsbNamedAccountModal, PsbNamedAccountCreateModal,
             PsbNamedCharacterCell, PsbNamedCharacterLogin
         }
 

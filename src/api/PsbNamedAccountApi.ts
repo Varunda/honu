@@ -85,7 +85,14 @@ export class FlatPsbNamedAccount {
     public nsBattleRank: number | null = null;
     public nsPrestige: number | null = null;
     public nsLastLogin: Date | null = null;
+}
 
+export class PsbCharacterSet {
+    public vs: PsCharacter | null = null;
+    public nc: PsCharacter | null = null;
+    public tr: PsCharacter | null = null;
+    public ns: PsCharacter | null = null;
+    public nsName: string | null = null;
 }
 
 export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
@@ -204,6 +211,8 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
             flat.status = "Missing";
         } else if (flat.lastUsed != null && (new Date().getTime() - flat.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90) {
             flat.status = "Unused";
+        } else if (flat.account.deletedAt != null || flat.account.deletedBy != null) {
+            flat.status = "Deleted";
         } else {
             flat.status = "Ok";
         }
@@ -211,8 +220,46 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         return flat;
     }
 
+    public static parseCharacterSet(elem: any): PsbCharacterSet {
+        return {
+            vs: (elem.vs == null) ? null : CharacterApi.parse(elem.vs),
+            nc: (elem.nc == null) ? null : CharacterApi.parse(elem.nc),
+            tr: (elem.tr == null) ? null : CharacterApi.parse(elem.tr),
+            ns: (elem.ns == null) ? null : CharacterApi.parse(elem.ns),
+            nsName: elem.nsName
+        };
+    }
+
     public static getAll(): Promise<Loading<FlatPsbNamedAccount[]>> {
         return PsbNamedAccountApi.get().readList(`/api/psb-named/`, PsbNamedAccountApi.parseFlat);
+    }
+
+    public static getByID(id: number): Promise<Loading<ExpandedPsbNamedAccount>> {
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/${id}`, PsbNamedAccountApi.parseExpanded);
+    }
+
+    public static deleteByID(id: number): Promise<Loading<void>> {
+        return PsbNamedAccountApi.get().delete(`/api/psb-named/${id}`);
+    }
+
+    public static recheckByID(id: number): Promise<Loading<PsbNamedAccount>> {
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/recheck/${id}`, PsbNamedAccountApi.parse);
+    }
+
+    public static getCharacterSet(tag: string | null, name: string): Promise<Loading<PsbCharacterSet>> {
+		const param: URLSearchParams = new URLSearchParams();
+        param.append("tag", tag ?? "");
+        param.append("name", name);
+
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/character-set?${param.toString()}`, PsbNamedAccountApi.parseCharacterSet);
+    }
+
+    public static create(tag: string | null, name: string): Promise<Loading<PsbNamedAccount>> {
+        const param: URLSearchParams = new URLSearchParams();
+        param.append("tag", tag ?? "");
+        param.append("name", name);
+
+        return PsbNamedAccountApi.get().postReply(`/api/psb-named?${param.toString()}`, PsbNamedAccountApi.parse);
     }
 
 }

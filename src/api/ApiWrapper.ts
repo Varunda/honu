@@ -49,6 +49,62 @@ export default class ApiWrapper<T> {
 		return Loadable.loaded(datum);
 	}
 
+	public async delete(url: string): Promise<Loading<void>> {
+		const response: axios.AxiosResponse<any> = await axios.default.delete(url, { validateStatus: () => true });
+
+		if (response.status == 204) {
+			return Loadable.nocontent();
+		} else if (response.status == 400) {
+			return Loadable.error(`bad request: ${response.data}`);
+		} else if (response.status == 404) {
+			return Loadable.notFound(response.data);
+		} else if (response.status == 500) {
+			return Loadable.error(`internal server error: ${response.data}`);
+		}
+
+		if (response.status != 200) {
+			throw `unchecked status code ${response.status}: ${response.data}`;
+		}
+
+		return Loadable.loaded(undefined as any);
+    }
+
+	public async postReply<U>(url: string, reader: ApiReader<U>): Promise<Loading<U>> {
+		try {
+			const response: axios.AxiosResponse<any> = await axios.default.post(url, { validateStatus: () => true });
+
+            if (response.status == 204) {
+                return Loadable.nocontent();
+            } else if (response.status == 400) {
+                return Loadable.error(`bad request: ${response.data}`);
+            } else if (response.status == 404) {
+                return Loadable.notFound(response.data);
+            } else if (response.status == 500) {
+                return Loadable.error(`internal server error: ${response.data}`);
+            }
+
+            if (response.status != 200) {
+                throw `unchecked status code ${response.status}: ${response.data}`;
+            }
+
+            const datum: U = reader(response.data);
+            return Loadable.loaded(datum);
+		} catch (err) {
+			const responseData = err.response.data;
+			const responseCode = err.response.status;
+
+			if (responseCode == 400) {
+				return Loadable.error(`bad request: ${responseData}`);
+			} else if (responseCode == 404) {
+				return Loadable.notFound(responseData);
+			} else if (responseCode == 500) {
+				return Loadable.error(`internal server error: ${responseData}`);
+            }
+
+			throw `unchecked status code ${responseCode}: ${responseData}`;
+        }
+	}
+
 	/**
 	 * Common 
 	 */

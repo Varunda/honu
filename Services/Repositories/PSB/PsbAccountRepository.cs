@@ -67,7 +67,8 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="acc">Parameters used to insert</param>
         /// <returns>The new <see cref="PsbNamedAccount.ID"/> that was assigned</returns>
-        public Task<long> Insert(PsbNamedAccount acc) {
+        [Obsolete("Use Insert instead")]
+        protected Task<long> Insert(PsbNamedAccount acc) {
             _Cache.Remove(CACHE_KEY);
             return _Db.Insert(acc);
         }
@@ -81,8 +82,17 @@ namespace watchtower.Services.Repositories.PSB {
         ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Tag"/> of <paramref name="tag"/>,
         ///     and <see cref="PsbNamedAccount.Name"/> of <paramref name="name"/>
         /// </returns>
-        public Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
-            return _Db.GetByTagAndName(tag, name);
+        public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
+            List<PsbNamedAccount> acc = (await GetAll()).Where(iter => iter.Tag == tag && iter.Name == name && iter.DeletedAt == null).ToList();
+            if (acc.Count > 1) {
+                throw new Exception($"Multiple named accounts named {tag}x{name} exist");
+            }
+
+            if (acc.Count == 0) {
+                return null;
+            }
+
+            return acc.ElementAt(0);
         }
 
         /// <summary>
@@ -99,7 +109,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </exception>
         public async Task<PsbNamedAccount> Create(string? tag, string name) {
             PsbNamedAccount? dbAccount = await _Db.GetByTagAndName(tag, name);
-            if (dbAccount != null) {
+            if (dbAccount != null && dbAccount.DeletedAt == null) {
                 throw new ArgumentException($"PSB named account with tag '{tag}' and name '{name}' already exists");
             }
 
@@ -119,7 +129,9 @@ namespace watchtower.Services.Repositories.PSB {
                 NsStatus = charSet.NS == null ? PsbCharacterStatus.DOES_NOT_EXIST : PsbCharacterStatus.OK,
             };
 
+#pragma warning disable CS0618 // Type or member is obsolete -- Okay, it's still used internally
             long ID = await Insert(acc);
+#pragma warning restore CS0618 // Type or member is obsolete
             acc.ID = ID;
 
             _Cache.Remove(CACHE_KEY);
@@ -201,6 +213,10 @@ namespace watchtower.Services.Repositories.PSB {
             return acc;
         }
 
+        /// <summary>
+        ///     Recheck all accounts that have any of the characters match the status passed
+        /// </summary>
+        /// <param name="status">Status to limit the recheck by. Pass <c>null</c> to recheck all accounts</param>
         public async Task RecheckByStatus(int? status) {
             List<PsbNamedAccount> accounts = await GetAll();
 
@@ -246,6 +262,7 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             await _Db.Delete(ID, deletedByID);
+            _Cache.Remove(CACHE_KEY);
         }
 
         private async Task<PsbNamedAccount> RecheckAccount(PsbNamedAccount acc) {

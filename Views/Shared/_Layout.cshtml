@@ -24,6 +24,13 @@
 
 </head>
 <body>
+
+    <div style="position: fixed; top: 0; right: 0; z-index: 1080;" id="toaster"></div>
+
+    <script>
+        $(".toast").toast("show");
+    </script>
+
     <div class="container-fluid">
         <main role="main" class="pb-3">
             @RenderBody()

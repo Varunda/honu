@@ -322,7 +322,7 @@ export const ATable = Vue.extend({
             this.$emit("rerender", Loadable.loading());
         } else if (this.entries.state == "loaded") {
             if (this.entries.data.length == 0) {
-                console.log(`0 entries, showing no data row`);
+                console.log(`<a-table> 0 entries, showing no data row`);
                 rows.push(this.renderNoDataRow(createElement));
             } else {
                 rows.push(createElement("tbody", {},
@@ -1015,7 +1015,7 @@ export const ATable = Vue.extend({
                 return this.entries.data;
             }
 
-            console.log(`Enabled filters:\n${enabledFilters.map(iter => `${iter.field} ${iter.type}: ${iter.value}`).join("\n")}`);
+            console.log(`<a-table> Enabled filters:\n${enabledFilters.map(iter => `${iter.field} ${iter.type}: ${iter.value}`).join("\n")}`);
 
             const filterFuncs: ((iter: object) => boolean)[] = enabledFilters.map((iter: Filter) => {
                 if (iter.type == "string") {
@@ -1090,8 +1090,8 @@ export const ATable = Vue.extend({
             }
 
             if (this.paging.page >= this.pageCount) {
-                console.log(`current page ${this.paging.page} would be cut off as the current page count is ${this.pageCount}, setting to ${this.pageCount - 1}`);
-                this.paging.page = this.pageCount - 1;
+                console.log(`<a-table> current page ${this.paging.page} would be cut off as the current page count is ${this.pageCount}, setting to ${this.pageCount - 1}`);
+                this.paging.page = Math.max(0, this.pageCount - 1);
             }
 
             if (this.sorting.field == "") {
@@ -1115,13 +1115,13 @@ export const ATable = Vue.extend({
                     val = obj[this.sorting.field];
 
                     if (val != null && val != undefined) {
-                        console.log(`a-table> Took ${i} iterations to find a non null value on field ${this.sorting.field}`);
+                        console.log(`<a-table> Took ${i} iterations to find a non null value on field ${this.sorting.field}`);
                         break;
                     }
                 }
 
                 if (val == null || val == undefined) {
-                    console.error(`Found all null or undefined values on ${this.sorting.field}`);
+                    console.error(`<a-table> Found all null or undefined values on ${this.sorting.field}`);
                 }
 
                 let type: string = typeof val;
