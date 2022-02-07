@@ -28,7 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DaybreakGames.Census" Version="3.1.0" />
+    <!-- 
+	    <PackageReference Include="DaybreakGames.Census" Version="3.1.0" /> 
+	-->
     <PackageReference Include="DSharpPlus" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.1" />
