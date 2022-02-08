@@ -83,7 +83,7 @@ namespace watchtower.Realtime {
 
         public async Task OnStartAsync(CancellationToken cancel) {
             try {
-                await _Stream.ConnectAsync();
+                _ = _Stream.ConnectAsync();
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"Failed to start RealtimeMonitor");
             }
