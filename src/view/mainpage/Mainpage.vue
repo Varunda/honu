@@ -1,13 +1,9 @@
 ﻿<template>
     <div class="container-fluid">
         <div class="d-flex align-items-center">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
-
-                <a href="/" title="Return to home page">
-                    Honu
-                </a>
-            </h1>
+            <honu-menu class="flex-grow-1">
+                <menu-dropdown></menu-dropdown>
+            </honu-menu>
 
             <div>
                 <table class="table table-sm">
@@ -129,8 +125,10 @@
 
     import * as sR from "signalR";
 
-    import WorldOverview from "./components/WorldOverview.vue";
     import InfoHover from "components/InfoHover.vue";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+
+    import WorldOverview from "./components/WorldOverview.vue";
 
     export const Mainpage = Vue.extend({
         props: {
@@ -207,7 +205,8 @@
 
         components: {
             WorldOverview,
-            InfoHover
+            InfoHover,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
     export default Mainpage;

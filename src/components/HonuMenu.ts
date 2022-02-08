@@ -35,17 +35,12 @@ export const MenuImage = Vue.extend({
     components: { Fragment }
 });
 
-export const MenuDropdown = Vue.extend({
+export const MenuHomepage = Vue.extend({
     template: `
-        <li class="nav-item dropdown">
-            <menu-image></menu-image>
-            <ul class="dropdown-menu mt-0">
-                <slot></slot>
-            </ul>
+        <li>
+            <a class="dropdown-item" href="/">Homepage</a>
         </li>
-    `,
-
-    components: { MenuImage }
+    `
 });
 
 export const MenuRealtime = Vue.extend({
@@ -91,6 +86,14 @@ export const MenuOutfits = Vue.extend({
     components: { Fragment }
 });
 
+export const MenuItems = Vue.extend({
+    template: `
+        <li>
+            <a class="dropdown-item" href="/items">Items</a>
+        </li>
+    `
+});
+
 export const MenuLedger = Vue.extend({
     template: `
         <li>
@@ -99,4 +102,26 @@ export const MenuLedger = Vue.extend({
     `,
 
     components: { Fragment }
+});
+
+export const MenuDropdown = Vue.extend({
+    template: `
+        <li class="nav-item dropdown">
+            <menu-image></menu-image>
+            <ul class="dropdown-menu mt-0">
+                <slot>
+                    <menu-homepage></menu-homepage>
+                    <menu-realtime></menu-realtime>
+                    <menu-characters></menu-characters>
+                    <menu-outfits></menu-outfits>
+                    <menu-ledger></menu-ledger>
+                    <menu-items></menu-items>
+                </slot>
+            </ul>
+        </li>
+    `,
+
+    components: {
+        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuItems
+    }
 });

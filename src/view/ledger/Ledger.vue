@@ -1,15 +1,14 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                 / Ledger
-            </h1>
-
-        </div>
+            <li class="nav-item h1 p-0">
+                Ledger
+            </li>
+        </honu-menu>
 
         <div>
             <div class="w-100 mb-1">
@@ -128,6 +127,7 @@
     import { Loading, Loadable } from "Loading";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
     import DateInput from "components/DateInput.vue";
 
@@ -196,7 +196,8 @@
             ATable, ACol, AHeader, ABody, AFilter,
             LedgerList,
             LedgerMap,
-            DateTimeInput, DateInput
+            DateTimeInput, DateInput,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

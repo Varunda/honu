@@ -1,6 +1,14 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header">Jaeger NSA - {{(when * 1000) | moment}}</h2>
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
+
+            <menu-sep></menu-sep>
+
+            <li class="nav-item h1 p-0">
+                <a href="/items">Jaeger NSA - {{(when * 1000) | moment}}</a>
+            </li>
+        </honu-menu>
 
         <a-table
             :entries="entries" display-type="table" :hover="true">
@@ -70,6 +78,7 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import { ExpandedSession, SessionApi } from "api/SessionApi";
 
@@ -123,6 +132,7 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
 

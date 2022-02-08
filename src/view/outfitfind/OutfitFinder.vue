@@ -1,16 +1,14 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
-
-                <a href="#">Outfit</a>
-            </h1>
-        </div>
+            <li class="nav-item h1 p-0">
+                <a href="/outfitfinder">Outfits</a>
+            </li>
+        </honu-menu>
 
         <div class="input-group">
             <input v-model="name" class="form-control" @keyup.enter="search" />
@@ -61,6 +59,8 @@
 <script lang="ts">
     import Vue from "vue";
     import { Loading, Loadable } from "Loading";
+
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import { PsOutfit, OutfitApi } from "api/OutfitApi";
 
@@ -146,6 +146,10 @@
                 }
             }
 
+        },
+
+        components: {
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

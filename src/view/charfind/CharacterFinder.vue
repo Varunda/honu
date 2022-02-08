@@ -1,14 +1,14 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                 / Character Viewer
-            </h1>
-        </div>
+            <li class="nav-item h1 p-0">
+                <a href="/character">Characters</a>
+            </li>
+        </honu-menu>
 
         <hr />
 
@@ -148,6 +148,7 @@
     import Vue from "vue";
 
     import InfoHover from "components/InfoHover.vue";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
@@ -339,7 +340,8 @@
         },
 
         components: {
-            InfoHover
+            InfoHover,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
     export default CharacterFinder;

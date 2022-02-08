@@ -1,28 +1,32 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu class="flex-grow-1">
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
+            <li class="nav-item h1 p-0">
+                <a href="/character">Characters</a>
+            </li>
 
-                <a href="/character">Character</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
-
+            <li class="nav-item h1 p-0">
                 <span v-if="character.state == 'loading'">
-                    &lt;Loading...&gt;
+                    &lt;loading...&gt;
                 </span>
 
                 <a v-else-if="character.state == 'loaded'" :href="'/c/' + character.data.id + '/sessions'">
                     {{character.data.name}}
                 </a>
+            </li>
 
-                <span>/ Session {{sessionID}}</span>
-            </h1>
-        </div>
+            <menu-sep></menu-sep>
+
+            <li class="nav-item h1 p-0">
+                Session {{sessionID}}
+            </li>
+        </honu-menu>
 
         <div v-if="session.state == 'loading'">
             Loading session...
@@ -239,6 +243,7 @@
 <script lang="ts">
     import Vue from "vue";
     import { Loading, Loadable } from "Loading";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import "MomentFilter";
     import "filters/FixedFilter";
@@ -382,17 +387,12 @@
         },
 
         components: {
-            SessionViewerKills,
-            SessionViewerGeneral,
-            SessionViewerExp,
-            SessionViewerTrends,
-            SessionActionLog,
-            SessionViewerSpawns,
-            SessionViewerVehicles,
+            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerVehicles,
             ChartTimestamp,
             InfoHover,
             Busy,
-            Collapsible
+            Collapsible,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

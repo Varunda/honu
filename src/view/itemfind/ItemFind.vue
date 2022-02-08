@@ -1,14 +1,14 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/ Items</span>
-            </h1>
-        </div>
+            <li class="nav-item h1 p-0">
+                <a href="/items">Items</a>
+            </li>
+        </honu-menu>
 
         <a-table
             :entries="items"
@@ -71,6 +71,7 @@
     import { Loadable, Loading } from "Loading";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
     import CensusImage from "components/CensusImage";
 
@@ -114,6 +115,7 @@
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
             CensusImage,
+            HonuMenu, MenuSep, MenuHomepage, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

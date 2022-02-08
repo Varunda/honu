@@ -1,17 +1,16 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu class="flex-grow-1">
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/ PSB named</span>
-            </h1>
-        </div>
+            <li class="nav-item h1 p-0">
+                PSB named
+            </li>
+        </honu-menu>
 
         <div class="mb-3 d-flex">
-
             <div class="flex-grow-1">
                 <h4>Filters</h4>
                 <div>
@@ -322,6 +321,7 @@
     import { Loadable, Loading } from "Loading";
     import EventBus from "EventBus";
 
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
     import PsbNamedAccountModal from "./components/PsbNamedAccountModal.vue";
@@ -584,7 +584,8 @@
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
             PsbNamedAccountModal, PsbNamedAccountCreateModal,
-            PsbNamedCharacterCell, PsbNamedCharacterLogin
+            PsbNamedCharacterCell, PsbNamedCharacterLogin,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

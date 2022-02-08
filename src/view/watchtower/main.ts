@@ -15,6 +15,7 @@ import OutfitKillData from "./components/OutfitKillData.vue";
 import OutfitsOnline from "./components/OutfitsOnline.vue";
 import FactionFocus from "./components/FactionFocus.vue";
 
+import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 import ContinentMetadata from "components/ContinentMetadata.vue";
 import InfoHover from "components/InfoHover.vue";
 import "MomentFilter";
@@ -287,7 +288,8 @@ const vm = new Vue({
 		"OutfitKillBlock": OutfitKillData,
 		OutfitsOnline,
 		"WeaponKills": WeaponKillsView,
-		InfoHover
+		InfoHover,
+        HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
 	}
 });
 (window as any).vm = vm;

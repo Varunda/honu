@@ -1,15 +1,15 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu>
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
+            <li class="nav-item h1 p-0">
+                <a href="/items">Items</a>
+            </li>
 
-                <a href="/items">Item</a>
-
+            <li class="nav-item h1 p-0 mx-2">
                 <span>/</span>
 
                 <span v-if="item.state == 'loading'">
@@ -23,8 +23,8 @@
                 <span v-else-if="item.state == 'nocontent'">
                     &lt;missing {{itemID}}&gt;
                 </span>
-            </h1>
-        </div>
+            </li>
+        </honu-menu>
 
         <div class="w-100 mw-100">
             <h2 class="wt-header">Percentile stats</h2>
@@ -42,6 +42,8 @@
 <script lang="ts">
     import Vue from "vue";
     import { Loadable, Loading } from "Loading";
+
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import { PsItem, ItemApi } from "api/ItemApi";
     import { ExpandedWeaponStatEntry, CharacterWeaponStatApi } from "api/CharacterWeaponStatApi";
@@ -115,7 +117,8 @@
 
         components: {
             ItemPercentileViewer,
-            ItemTopViewer
+            ItemTopViewer,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
     export default ItemStatViewer;

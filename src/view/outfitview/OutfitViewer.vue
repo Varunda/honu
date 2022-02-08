@@ -1,17 +1,17 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu class="flex-grow-1">
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
+            <li class="nav-item h1 p-0">
+                <a href="/outfitfinder">Outfits</a>
+            </li>
 
-                <a href="/outfitfinder">Outfit</a>
+            <menu-sep></menu-sep>
 
-                <span>/</span>
-
+            <li class="nav-item h1 p-0">
                 <span v-if="outfit.state == 'loading'">
                     &lt;Loading...&gt;
                 </span>
@@ -19,8 +19,8 @@
                 <span v-else>
                     {{outfit.data.name}}
                 </span>
-            </h1>
-        </div>
+            </li>
+        </honu-menu>
 
         <h3 class="text-warning text-center">
             work in progress
@@ -278,6 +278,7 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     const QuickNumber = Vue.extend({
         props: {
@@ -425,13 +426,10 @@
         },
 
         components: {
-            ATable,
-            ACol,
-            ABody,
-            AFilter,
-            AHeader,
+            ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
-            QuickNumber
+            QuickNumber,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

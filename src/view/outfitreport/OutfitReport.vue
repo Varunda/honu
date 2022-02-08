@@ -1,15 +1,15 @@
 ﻿<template>
     <div>
         <div class="d-flex align-items-center mb-2">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+            <honu-menu class="flex-grow-1">
+                <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+                <menu-sep></menu-sep>
 
-                <span>/</span>
-
-                <a href="#">Report</a>
-            </h1>
+                <li class="nav-item h1 p-0">
+                    <a href="/report">Report</a>
+                </li>
+            </honu-menu>
 
             <div>
                 <table class="table table-sm mr-2">
@@ -427,6 +427,7 @@
     import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
     import ReportHeader from "./components/ReportHeader.vue";
 
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
@@ -947,15 +948,9 @@
         components: {
             DateTimeInput,
             InfoHover,
-            ReportClassBreakdown,
-            ReportPlayerList,
-            ReportOutfitVersus,
-            ReportWeaponBreakdown,
-            ReportSupportBreakdown,
-            ReportWinter,
-            ReportControlBreakdown,
-            ReportHeader,
-            Busy
+            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader,
+            Busy,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });

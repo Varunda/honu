@@ -32,13 +32,15 @@
 
 <div class="container-fluid" id="app" style="font-size: 14px; line-height: 1;" v-cloak>
     <div class="d-flex align-items-center">
-        <h1 class="d-inline-block flex-grow-1">
-            <img src="~/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu class="flex-grow-1">
+            <menu-dropdown></menu-dropdown>
 
-            <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-            / Carl Watchtower
-        </h1>
+            <li class="nav-item h1 p-0">
+                Realtime {{worldID | world}}
+            </li>
+        </honu-menu>
 
         <div>
             <table class="table table-sm">
@@ -69,8 +71,6 @@
             </table>
         </div>
     </div>
-
-    <hr />
 
     <div v-if="worldData != null" class="wt-grid-container" style="display: grid;">
         <div class="grid-continent-population">

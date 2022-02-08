@@ -1,12 +1,7 @@
 ﻿<template>
     <div>
         <honu-menu>
-            <menu-dropdown>
-                <menu-realtime></menu-realtime>
-                <menu-characters></menu-characters>
-                <menu-outfits></menu-outfits>
-                <menu-ledger></menu-ledger>
-            </menu-dropdown>
+            <menu-dropdown></menu-dropdown>
 
             <menu-sep></menu-sep>
 

@@ -1,14 +1,16 @@
 ﻿<template>
     <div>
-        <div class="d-flex align-items-center">
-            <h1 class="d-inline-block flex-grow-1">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+        <honu-menu class="flex-grow-1">
+            <menu-dropdown></menu-dropdown>
 
-                <a href="/" title="Return to home page">Honu</a>
+            <menu-sep></menu-sep>
 
-                 / Big Beans
-            </h1>
-        </div>
+            <li class="nav-item h1 p-0">
+                Big Beans
+            </li>
+        </honu-menu>
+
+        <hr class="border" />
 
         <div class="row">
             <div class="col-2">
@@ -55,8 +57,8 @@
 
 <script lang="ts">
     import Vue from "vue";
-
     import { Loading, Loadable } from "Loading";
+    import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 
     import { OutfitPopulation, OutfitPopulationApi } from "api/OutfitPopulationApi";
 
@@ -92,7 +94,8 @@
         },
 
         components: {
-            OutfitList
+            OutfitList,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 
     });
