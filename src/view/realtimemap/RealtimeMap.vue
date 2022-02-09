@@ -459,14 +459,14 @@
             },
 
             "settings.zoneID": async function(): Promise<void> {
-                if (this.socketState == "connected") {
+                if (this.socketState == "opened") {
                     await this.updateConnection();
                     this.createMap();
                 }
             },
 
             "settings.worldID": function(): void {
-                if (this.socketState == "connected") {
+                if (this.socketState == "opened") {
                     this.updateConnection();
                 }
             }
