@@ -96,5 +96,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult RealtimeMap() {
+            return View();
+        }
+
     }
 }

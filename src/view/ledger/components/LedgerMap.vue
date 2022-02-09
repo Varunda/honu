@@ -192,7 +192,7 @@
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";
     import { LedgerApi, FacilityControlEntry, LedgerOptions } from "api/LedgerApi";
 
-    import { ZoneRegion, LatticeLink } from "../LedgerModels";
+    import { ZoneRegion, LatticeLink } from "map/LedgerModels";
     import { ColorSet, colorMin, colorNormal, colorMax, bwMin, bwNormal, bwMax } from "../ColorSet"
 
     type LedgerEntry = { id: number, name: string, value: number, color: string };

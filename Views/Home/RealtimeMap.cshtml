@@ -1,0 +1,36 @@
+﻿<meta property="og:title" content="Honu / Realtime Map" />
+<meta property="og:description" content="Planetside 2 realtime map" />
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="~/lib/signalr/signalr.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+      crossorigin=""/>
+
+<script src="~/dist/view/realtimemap/view.js" defer asp-append-version="true"></script>
+
+<style>
+    a {
+        cursor: pointer !important;
+        color: var(--success) !important;
+    }
+
+    .realtime-map-base-name {
+        color: #fff;
+        width: 16ch;
+        text-align: center;
+        padding: 0.25rem 0.125rem;
+        border: none;
+        background: #051110;
+        white-space: initial;
+        border-radius: 7px;
+    }
+
+    .leaflet-container {
+        background-color: #051110;
+    }
+</style>
+
+<div class="mx-n2" id="app" style="font-size: 14px; line-height: 1;">
+    <realtime-map></realtime-map>
+</div>

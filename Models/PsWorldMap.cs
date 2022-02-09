@@ -26,27 +26,27 @@ namespace watchtower.Models {
 
         public uint ZoneID { get; set; }
 
-        private Dictionary<int, PsFacilityOwner> _Faciltities { get; set; } = new Dictionary<int, PsFacilityOwner>();
+        public Dictionary<int, PsFacilityOwner> Facilities { get; private set; } = new Dictionary<int, PsFacilityOwner>();
 
         public PsFacilityOwner? GetFacilityOwner(int facID) {
-            if (_Faciltities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
+            if (Facilities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
                 return null;
             }
             return owner;
         }
 
         public List<PsFacilityOwner> GetFacilities() {
-            return _Faciltities.Values.ToList();
+            return Facilities.Values.ToList();
         }
 
         public void SetFacilityOwner(int facID, short ownerID) {
-            if (_Faciltities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
+            if (Facilities.TryGetValue(facID, out PsFacilityOwner? owner) == false) {
                 owner = new PsFacilityOwner() {
                     FacilityID = facID,
                     Owner = ownerID
                 };
 
-                _Faciltities.Add(facID, owner);
+                Facilities.Add(facID, owner);
             }
 
             owner.Owner = ownerID;

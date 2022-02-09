@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,8 @@ using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Hubs;
+using watchtower.Code.Hubs.Implementations;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -48,6 +51,8 @@ namespace watchtower.Realtime {
 
         private readonly List<JToken> _Recent;
 
+        private readonly IHubContext<RealtimeMapHub> _MapHub;
+
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
@@ -57,7 +62,8 @@ namespace watchtower.Realtime {
             IBattleRankDbStore rankDb, LogoutUpdateBuffer logoutQueue,
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
-            JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo) {
+            JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
+            IHubContext<RealtimeMapHub> mapHub) {
 
             _Logger = logger;
 
@@ -83,6 +89,8 @@ namespace watchtower.Realtime {
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
             _MapRepository = mapRepo ?? throw new ArgumentNullException(nameof(mapRepo));
             _FacilityRepository = facRepo ?? throw new ArgumentNullException(nameof(facRepo));
+
+            _MapHub = mapHub;
         }
 
         public async Task Process(JToken ev) {
@@ -287,7 +295,7 @@ namespace watchtower.Realtime {
             }
         }
 
-        private async void _ProcessFacilityControl(JToken payload) {
+        private void _ProcessFacilityControl(JToken payload) {
             FacilityControlEvent ev = new() {
                 FacilityID = payload.GetInt32("facility_id", 0),
                 DurationHeld = payload.GetInt32("duration_held", 0),
@@ -305,23 +313,35 @@ namespace watchtower.Realtime {
             ushort instanceID = (ushort) ((ev.ZoneID & 0xFFFF0000) >> 4);
 
             // Exclude flips that aren't interesting
-            if (ev.OldFactionID == 0 || ev.NewFactionID == 0 // Came from a cont unlock
-                || defID == 95 // A tutorial area
+            if (defID == 95 // A tutorial area
                 || defID == 364 // Another tutorial area (0x16C)
                 ) {
 
                 return;
             }
 
+            _MapRepository.Set(ev.WorldID, ev.ZoneID, ev.FacilityID, ev.NewFactionID);
+
+            try {
+                PsZone? zone = _MapRepository.GetZone(ev.WorldID, ev.ZoneID);
+                if (zone != null) {
+                    _ = _MapHub.Clients.Group($"RealtimeMap.{ev.WorldID}.{ev.ZoneID}").SendAsync("UpdateMap", zone);
+                }
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"failed to send 'UpdateMap' event to signalR for worldID {ev.WorldID}, zone ID {ev.ZoneID}");
+            }
+
+            // Set the map repository before we discard server events, such as a continent unlock, to keep the map repo in sync with live
+            if (ev.OldFactionID == 0 || ev.NewFactionID == 0) {
+                return;
+            }
+
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
 
-            PsFacility? fac = await _FacilityRepository.GetByID(ev.FacilityID);
-
-            _MapRepository.Set(ev.WorldID, ev.ZoneID, ev.FacilityID, ev.NewFactionID);
-
             new Thread(async () => {
                 try {
+                    PsFacility? fac = await _FacilityRepository.GetByID(ev.FacilityID);
                     // Wait a second for all the PlayerCapture and PlayerDefend events to come in
                     await Task.Delay(1000);
 

@@ -36,6 +36,7 @@ export class VertexLine {
 export class ZoneRegion extends Polygon {
     public regionID: number;
     public facility: PsFacility | null = null;
+    public ownerID: number | null = null;
 
     constructor(regionId: number, latLngs: LatLng[], options?: PolylineOptions) {
         super(latLngs, options);
@@ -195,12 +196,16 @@ export class LatticeLink {
     public outline: Polyline | null = null;
     public line: Polyline | null = null;
 
+    public width: number = 4;
+    public color: string;
+
     public facilityA: ZoneRegion;
     public facilityB: ZoneRegion;
 
-    constructor(facA: ZoneRegion, facB: ZoneRegion) {
+    constructor(facA: ZoneRegion, facB: ZoneRegion, color?: string) {
         this.facilityA = facA;
         this.facilityB = facB;
+        this.color = color || "#9999ff";
 
         const points = [facA.getCenter(), facB.getCenter()];
 
@@ -208,18 +213,51 @@ export class LatticeLink {
 			pane: 'lattices',
             interactive: false,
             color: "#000",
-            weight: 6
+            weight: this.width * 1.5
 		});
 
 		this.line = polyline(points, {
 			pane: 'lattices',
 			interactive: false,
-            color: "#9999ff",
-            weight: 4
+            color: this.color,
+            weight: this.width
 		});
     }
 
-    public addTo(map: LMap) {
+    public setThickness(width: number): void {
+        if (this.line != null) {
+            this.line.setStyle({
+                weight: width
+            });
+            this.line.redraw();
+        }
+
+        if (this.outline != null) {
+            this.outline.setStyle({
+                weight: width * 1.5
+            });
+            this.outline.redraw();
+        }
+    }
+
+    /**
+     * Set the color of the line on this lattice  ink
+     * @param color Hex color
+     */
+    public setLinkColor(color: string): void {
+        if (this.line != null) {
+            if (this.outline != null) {
+                this.outline.redraw();
+            }
+
+            this.line.setStyle({
+                color: color
+            });
+            this.line.redraw();
+        }
+    }
+
+    public addTo(map: LMap): void {
         if (this.line && this.outline) {
             this.outline.addTo(map);
             this.line.addTo(map);

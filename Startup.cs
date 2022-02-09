@@ -311,6 +311,7 @@ namespace watchtower {
                 endpoints.MapHub<WorldDataHub>("/ws/data");
                 endpoints.MapHub<WorldOverviewHub>("/ws/overview");
                 endpoints.MapHub<ReportHub>("/ws/report");
+                endpoints.MapHub<RealtimeMapHub>("/ws/realtime-map");
 
                 endpoints.MapSwagger();
             });
