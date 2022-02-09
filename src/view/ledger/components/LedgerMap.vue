@@ -86,7 +86,7 @@
                     <option :value="4">Hossin</option>
                     <option :value="6">Amerish</option>
                     <option :value="8">Esamir</option>
-                    <option :value="334">Oshur</option>
+                    <option :value="344">Oshur</option>
                 </select>
 
                 <label>

@@ -2,7 +2,7 @@
     "map_region_list": [
         {
             "map_region_id": "18263",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400329",
             "facility_name": "Mirror Bay Watchtower",
             "facility_type_id": "6",
@@ -83,7 +83,7 @@
         },
         {
             "map_region_id": "18264",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400330",
             "facility_name": "Astira Hydroelectric",
             "facility_type_id": "6",
@@ -144,7 +144,7 @@
         },
         {
             "map_region_id": "18328",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "0",
             "facility_name": "Oshur: Inner: NW: Waterbase 01",
             "facility_type_id": "0",
@@ -157,7 +157,7 @@
         },
         {
             "map_region_id": "18265",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400331",
             "facility_name": "Pommel Gardens",
             "facility_type_id": "6",
@@ -236,7 +236,7 @@
         },
         {
             "map_region_id": "18329",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400390",
             "facility_name": "Seapost J5",
             "facility_type_id": "6",
@@ -279,7 +279,7 @@
         },
         {
             "map_region_id": "18266",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400332",
             "facility_name": "Centri Import Hub",
             "facility_type_id": "9",
@@ -347,7 +347,7 @@
         },
         {
             "map_region_id": "18330",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400391",
             "facility_name": "Seapost K10",
             "facility_type_id": "6",
@@ -396,7 +396,7 @@
         },
         {
             "map_region_id": "18267",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400333",
             "facility_name": "Binusilan Interlink",
             "facility_type_id": "8",
@@ -457,7 +457,7 @@
         },
         {
             "map_region_id": "18331",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400392",
             "facility_name": "Seapost K12",
             "facility_type_id": "6",
@@ -509,7 +509,7 @@
         },
         {
             "map_region_id": "18268",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400334",
             "facility_name": "Ligalai Station",
             "facility_type_id": "9",
@@ -560,7 +560,7 @@
         },
         {
             "map_region_id": "18269",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400335",
             "facility_name": "Outpost Kalis",
             "facility_type_id": "6",
@@ -623,7 +623,7 @@
         },
         {
             "map_region_id": "18270",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400336",
             "facility_name": "Seaside Bluffs",
             "facility_type_id": "9",
@@ -684,7 +684,7 @@
         },
         {
             "map_region_id": "18271",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400337",
             "facility_name": "Viridian Genetics Lab",
             "facility_type_id": "5",
@@ -738,7 +738,7 @@
         },
         {
             "map_region_id": "18272",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400338",
             "facility_name": "Viridian Decontamination",
             "facility_type_id": "9",
@@ -785,7 +785,7 @@
         },
         {
             "map_region_id": "18273",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400339",
             "facility_name": "Centri Mining Operation",
             "facility_type_id": "5",
@@ -851,7 +851,7 @@
         },
         {
             "map_region_id": "18274",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400340",
             "facility_name": "Mirror Bay Checkpoint",
             "facility_type_id": "6",
@@ -898,7 +898,7 @@
         },
         {
             "map_region_id": "18275",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400341",
             "facility_name": "Pilay Interlink",
             "facility_type_id": "8",
@@ -968,7 +968,7 @@
         },
         {
             "map_region_id": "18276",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400346",
             "facility_name": "Gildad Cliffs",
             "facility_type_id": "6",
@@ -1031,7 +1031,7 @@
         },
         {
             "map_region_id": "18277",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400342",
             "facility_name": "Lamplight Security",
             "facility_type_id": "6",
@@ -1089,7 +1089,7 @@
         },
         {
             "map_region_id": "18278",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400343",
             "facility_name": "Hopeswell Beachhead",
             "facility_type_id": "9",
@@ -1144,7 +1144,7 @@
         },
         {
             "map_region_id": "18279",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400344",
             "facility_name": "Wavecrest Beachhead",
             "facility_type_id": "9",
@@ -1184,7 +1184,7 @@
         },
         {
             "map_region_id": "18343",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400404",
             "facility_name": "Veridad Pass",
             "facility_type_id": "9",
@@ -1239,7 +1239,7 @@
         },
         {
             "map_region_id": "18280",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400345",
             "facility_name": "Anat Interlink",
             "facility_type_id": "8",
@@ -1294,7 +1294,7 @@
         },
         {
             "map_region_id": "18344",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400405",
             "facility_name": "Solstice Pass",
             "facility_type_id": "9",
@@ -1361,7 +1361,7 @@
         },
         {
             "map_region_id": "18281",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400347",
             "facility_name": "Sage R&D Labs",
             "facility_type_id": "6",
@@ -1438,7 +1438,7 @@
         },
         {
             "map_region_id": "18282",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400348",
             "facility_name": "Tannae Power",
             "facility_type_id": "5",
@@ -1511,7 +1511,7 @@
         },
         {
             "map_region_id": "18346",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400407",
             "facility_name": "Wakerift Beachhead",
             "facility_type_id": "9",
@@ -1553,7 +1553,7 @@
         },
         {
             "map_region_id": "18283",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400349",
             "facility_name": "Hunter's Ravine",
             "facility_type_id": "9",
@@ -1613,7 +1613,7 @@
         },
         {
             "map_region_id": "18347",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "0",
             "facility_name": "Oshur Vast Expanse",
             "facility_type_id": "0",
@@ -2335,7 +2335,7 @@
         },
         {
             "map_region_id": "18284",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400350",
             "facility_name": "K&H Tech Station",
             "facility_type_id": "9",
@@ -2407,7 +2407,7 @@
         },
         {
             "map_region_id": "18285",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400351",
             "facility_name": "High Ridge Security",
             "facility_type_id": "6",
@@ -2479,7 +2479,7 @@
         },
         {
             "map_region_id": "18286",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400352",
             "facility_name": "Dekat Interlink",
             "facility_type_id": "8",
@@ -2549,7 +2549,7 @@
         },
         {
             "map_region_id": "18287",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400353",
             "facility_name": "Astira Solar Station",
             "facility_type_id": "9",
@@ -2629,7 +2629,7 @@
         },
         {
             "map_region_id": "18288",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400354",
             "facility_name": "Southpeak Meadows",
             "facility_type_id": "9",
@@ -2680,7 +2680,7 @@
         },
         {
             "map_region_id": "18289",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400355",
             "facility_name": "Emerald Research Co.",
             "facility_type_id": "6",
@@ -2740,7 +2740,7 @@
         },
         {
             "map_region_id": "18290",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400356",
             "facility_name": "Remnant Cove",
             "facility_type_id": "9",
@@ -2837,7 +2837,7 @@
         },
         {
             "map_region_id": "18291",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400357",
             "facility_name": "Viridian East Terrace",
             "facility_type_id": "6",
@@ -2902,7 +2902,7 @@
         },
         {
             "map_region_id": "18292",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400358",
             "facility_name": "South Viridian Beachhead",
             "facility_type_id": "9",
@@ -2959,7 +2959,7 @@
         },
         {
             "map_region_id": "18293",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400359",
             "facility_name": "Terran Genetics Inc.",
             "facility_type_id": "6",
@@ -3036,7 +3036,7 @@
         },
         {
             "map_region_id": "18294",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400360",
             "facility_name": "Sibo Interlink",
             "facility_type_id": "8",
@@ -3110,7 +3110,7 @@
         },
         {
             "map_region_id": "18295",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400361",
             "facility_name": "Wellerman Watch",
             "facility_type_id": "5",
@@ -3190,7 +3190,7 @@
         },
         {
             "map_region_id": "18296",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400362",
             "facility_name": "Palaso Supply Depot",
             "facility_type_id": "6",
@@ -3288,7 +3288,7 @@
         },
         {
             "map_region_id": "18297",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400363",
             "facility_name": "Fort Arceo",
             "facility_type_id": "5",
@@ -3354,7 +3354,7 @@
         },
         {
             "map_region_id": "18298",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400364",
             "facility_name": "Eagle Outpost",
             "facility_type_id": "6",
@@ -3437,7 +3437,7 @@
         },
         {
             "map_region_id": "18299",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400365",
             "facility_name": "Meridian Listening Post",
             "facility_type_id": "9",
@@ -3520,7 +3520,7 @@
         },
         {
             "map_region_id": "18300",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400366",
             "facility_name": "Imbanon Interlink",
             "facility_type_id": "8",
@@ -3584,7 +3584,7 @@
         },
         {
             "map_region_id": "18301",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400367",
             "facility_name": "Nascent Shipping and Storage",
             "facility_type_id": "6",
@@ -3647,7 +3647,7 @@
         },
         {
             "map_region_id": "18302",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400368",
             "facility_name": "Emerald Arboretum",
             "facility_type_id": "5",
@@ -3737,7 +3737,7 @@
         },
         {
             "map_region_id": "18303",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400370",
             "facility_name": "Oshur Northern Flotilla",
             "facility_type_id": "7",
@@ -3813,7 +3813,7 @@
         },
         {
             "map_region_id": "18304",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400369",
             "facility_name": "Oshur Southwest Flotilla",
             "facility_type_id": "7",
@@ -3911,7 +3911,7 @@
         },
         {
             "map_region_id": "18305",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400371",
             "facility_name": "Oshur Southeast Flotilla",
             "facility_type_id": "7",
@@ -4019,7 +4019,7 @@
         },
         {
             "map_region_id": "18307",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400372",
             "facility_name": "Sirinan Trident",
             "facility_type_id": "12",
@@ -4131,7 +4131,7 @@
         },
         {
             "map_region_id": "18308",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400373",
             "facility_name": "Bago Trident",
             "facility_type_id": "12",
@@ -4237,7 +4237,7 @@
         },
         {
             "map_region_id": "18309",
-            "zone_id": "334",
+            "zone_id": "344",
             "facility_id": "400374",
             "facility_name": "Anlabban Trident",
             "facility_type_id": "12",
