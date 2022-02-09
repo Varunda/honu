@@ -74,11 +74,16 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.item == null || (entry.item.categoryID != 139 && entry.item.categoryID != 104)">
+                    <span v-if="entry.item == null || (entry.item.categoryID != 139 && (entry.item.categoryID == 104 && entry.kills > 0 || entry.item.categoryID != 104))">
                         {{entry.kills | locale}}
                     </span>
                     <span v-else>
-                        {{(entry.kills || entry.shots) | locale}}
+                        <span v-if="entry.kills == 0">
+                            {{entry.shots | locale}} (shots)
+                        </span>
+                        <span v-else>
+                            {{entry.kills | locale}}
+                        </span>
                     </span>
                 </a-body>
             </a-col>
@@ -273,7 +278,7 @@
 
                 return Loadable.loaded(this.entries.data.filter(iter => {
                     if (this.showNonWeapons == false) {
-                        return iter.item == null || (iter.item.categoryID != 139 && iter.item.categoryID != 104);
+                        return iter.item == null || (iter.item.categoryID != 139 && (((iter.item.categoryID == 104 && iter.kills > 0) || iter.item.categoryID != 104)));
                     }
                     return true;
                 }));

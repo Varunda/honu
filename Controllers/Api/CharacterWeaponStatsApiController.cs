@@ -84,7 +84,7 @@ namespace watchtower.Controllers.Api {
                 stat.Item = await _ItemRepository.GetByID(int.Parse(stat.ItemID));
 
                 // Ignore boring stuff like a helmet
-                if (stat.Item == null || stat.Item.TypeID != 26) {
+                if (stat.Item != null && stat.Item.TypeID != 26) {
                     continue;
                 }
 
