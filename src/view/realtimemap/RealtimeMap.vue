@@ -35,6 +35,14 @@
                 </toggle-button>
             </div>
 
+            <div class="col-1 input-group">
+                <span class="input-group-text input-group-prepend">
+                    Line thickness
+                </span>
+
+                <input v-model.number="settings.thickness" class="form-control" type="number" />
+            </div>
+
             <div class="col-2 input-group">
                 <span class="input-group-text input-group-prepend">
                     Server
@@ -124,7 +132,8 @@
 
                 settings: {
                     worldID: 1 as number | null,
-                    zoneID: 6 as number | null
+                    zoneID: 6 as number | null,
+                    thickness: 10 as number
                 },
 
                 panes: {
@@ -270,7 +279,7 @@
                             const regionB: ZoneRegion | null = regions.find(iter => iter.facility != null && iter.facility.facilityID == link.facilityB) || null;
                             if (regionB != null) {
                                 const lattice: LatticeLink = new LatticeLink(region, regionB, "#aaaaaa");
-                                lattice.setThickness(10);
+                                lattice.setThickness(this.settings.thickness);
                                 lattice.addTo(this.map);
 
                                 this.latticeData.push(lattice);
@@ -473,6 +482,10 @@
                 if (this.socketState == "opened") {
                     this.updateConnection();
                 }
+            },
+
+            "settings.thickness": function(): void {
+                this.createMap();
             }
         },
 
