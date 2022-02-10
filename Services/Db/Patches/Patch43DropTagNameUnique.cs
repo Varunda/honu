@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Services.Db.Patches {
 
+    [Patch]
     public class Patch43DropTagNameUnique : IDbPatch {
         public int MinVersion => 43;
         public string Name => "Drop psb_named_tag_name_key";
