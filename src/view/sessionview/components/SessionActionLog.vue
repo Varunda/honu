@@ -396,7 +396,7 @@
                             this.createLogText(`<a style="color: ${killedColor}" href="/c/${iter.event.killedCharacterID}">${this.getCharacterName(iter.killed, iter.event.killedCharacterID)}</a>'s`),
                             this.createLogText(`${iter.killedVehicle?.name ?? `&lt;missing vehicle ${iter.event.killedVehicleID}&gt;`}`),
                             this.createLogText(`using the`),
-                            this.createLogText(`${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
+                            this.createLogText((iter.event.attackerVehicleID == "0") ? "": `${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
                             { html: (iter.event.attackerWeaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.attackerWeaponID}&gt;`, `/i/${iter.event.attackerWeaponID}`) },
                             this.createLogText("as a"),
                             this.createLoadoutName(iter.event.attackerLoadoutID)
