@@ -117,6 +117,7 @@ namespace watchtower.Services.Repositories {
             List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
 
             int total = IDs.Count;
+            int found = 0;
 
             _Logger.LogTrace($"Loading {total} characters");
 
@@ -130,6 +131,7 @@ namespace watchtower.Services.Repositories {
                         chars.Add(character);
                         IDs.Remove(ID);
                         ++inCache;
+                        ++found;
                     }
                 }
             }
@@ -138,47 +140,56 @@ namespace watchtower.Services.Repositories {
 
             _Logger.LogTrace($"Took {toCache}ms to load from cache");
 
+            long toDb = 0;
             int inDb = 0;
             int inExpired = 0;
-            List<PsCharacter> db = await _Db.GetByIDs(IDs);
+            if (found < total) {
+                List<PsCharacter> db = await _Db.GetByIDs(IDs);
 
-            foreach (PsCharacter c in db) {
-                if (fast == true) {
-                    IDs.Remove(c.ID);
-                    chars.Add(c);
-                    ++inDb;
-                } else {
-                    if (HasExpired(c) == false) {
+                foreach (PsCharacter c in db) {
+                    if (fast == true) {
                         IDs.Remove(c.ID);
                         chars.Add(c);
                         ++inDb;
+                        ++found;
                     } else {
-                        _Queue.Queue(c.ID);
-                        ++inExpired;
+                        if (HasExpired(c) == false) {
+                            IDs.Remove(c.ID);
+                            chars.Add(c);
+                            ++inDb;
+                            ++found;
+                        } else {
+                            _Queue.Queue(c.ID);
+                            ++inExpired;
+                        }
                     }
                 }
+                toDb = timer.ElapsedMilliseconds;
+                timer.Restart();
+
+                _Logger.LogTrace($"Took {toDb}ms to load from db");
             }
-            long toDb = timer.ElapsedMilliseconds;
-            timer.Restart();
 
-            _Logger.LogTrace($"Took {toDb}ms to load from db");
-
+            long toCensus = 0;
             int inCensus = 0;
-            if (fast == false) {
-                List<PsCharacter> census = await _Census.GetByIDs(IDs);
+            if (found < total) {
+                if (fast == false) {
+                    List<PsCharacter> census = await _Census.GetByIDs(IDs);
 
-                foreach (PsCharacter c in census) {
-                    IDs.Remove(c.ID);
-                    chars.Add(c);
-                    ++inCensus;
+                    foreach (PsCharacter c in census) {
+                        IDs.Remove(c.ID);
+                        chars.Add(c);
+                        ++inCensus;
+                        ++found;
+                    }
+                } else {
+                    foreach (string ID in IDs) {
+                        _CacheQueue.Queue(ID);
+                    }
                 }
-            } else {
-                foreach (string ID in IDs) {
-                    _CacheQueue.Queue(ID);
-                }
+                toCensus = timer.ElapsedMilliseconds;
+                _Logger.LogTrace($"Took {toCensus}ms to load from census");
             }
-            long toCensus = timer.ElapsedMilliseconds;
-            _Logger.LogTrace($"Took {toCensus}ms to load from census");
 
             foreach (PsCharacter c in chars) {
                 string cacheKey = string.Format(CACHE_KEY_ID, c.ID);

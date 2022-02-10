@@ -23,7 +23,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
             services.AddSingleton<IMapDbStore, MapDbStore>();
-            services.AddSingleton<ICharacterWeaponStatDbStore, CharacterWeaponStatDbStore>();
+            services.AddSingleton<CharacterWeaponStatDbStore>();
             services.AddSingleton<IWeaponStatPercentileCacheDbStore, WeaponStatPercentileCacheDbStore>();
             services.AddSingleton<ICharacterHistoryStatDbStore, CharacterHistoryStatDbStore>();
             services.AddSingleton<ICharacterItemDbStore, CharacterItemDbStore>();

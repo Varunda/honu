@@ -23,6 +23,10 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Get the directives of a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
         public async Task<List<CharacterDirective>> GetByCharacterID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -55,6 +59,57 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("DirectiveID", dir.DirectiveID);
             cmd.AddParameter("DirectiveTreeID", dir.TreeID);
             cmd.AddParameter("CompletionDate", dir.CompletionDate);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
+        /// <summary>
+        ///     Upsert (update/insert) many entries at once, saving potentially thousands of DB calls when updating characters
+        /// </summary>
+        /// <remarks>
+        ///     This works by deleting all directive information that is passed, which means data that doesn't exist in Census,
+        ///     will NOT be deleted, which is good cause I don't like deleting data
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="dirs">Directives being updated</param>
+        public async Task UpsertMany(string charID, List<CharacterDirective> dirs) {
+            if (dirs.Count == 0) {
+                return;
+            }
+
+            List<int> existingIDs = dirs.Select(iter => iter.DirectiveID).ToList();
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                BEGIN;
+
+                DELETE FROM character_directives
+                    WHERE character_id = @CharacterID
+                        AND directive_id IN ({string.Join(",", existingIDs)});
+
+                INSERT INTO character_directives (
+                    character_id, directive_id, directive_tree_id, completion_date
+                ) VALUES    
+                    {string.Join(",", dirs.Select((iter, index) => $"(@CharacterID, @DirectiveID_{index}, @DirectiveTreeID_{index}, @CompletionDate_{index})\n"))}
+                ;
+
+                COMMIT;
+            ");
+
+
+            cmd.AddParameter("ExistingIDs", existingIDs);
+            cmd.AddParameter("CharacterID", charID);
+
+            for (int i = 0; i < dirs.Count; ++i) {
+                CharacterDirective dir = dirs[i];
+
+                cmd.AddParameter($"DirectiveID_{i}", dir.DirectiveID);
+                cmd.AddParameter($"DirectiveTreeID_{i}", dir.TreeID);
+                cmd.AddParameter($"CompletionDate_{i}", dir.CompletionDate);
+            }
+
+            //_Logger.LogDebug(cmd.Print());
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

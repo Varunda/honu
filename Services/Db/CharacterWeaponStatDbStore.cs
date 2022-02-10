@@ -8,9 +8,12 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.CharacterViewer.WeaponStats;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class CharacterWeaponStatDbStore : IDataReader<WeaponStatEntry>, ICharacterWeaponStatDbStore {
+    /// <summary>
+    ///     Service to interact with the character_weapon table
+    /// </summary>
+    public class CharacterWeaponStatDbStore : IDataReader<WeaponStatEntry> {
 
         private readonly ILogger<CharacterWeaponStatDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -23,6 +26,14 @@ namespace watchtower.Services.Db.Implementations {
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
         }
 
+        /// <summary>
+        ///     Get the <see cref="WeaponStatEntry"/>s for a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns>
+        ///     A list of all the <see cref="WeaponStatEntry"/> with <see cref="WeaponStatEntry.CharacterID"/>
+        ///     of <paramref name="charID"/>
+        /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -41,6 +52,15 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
+        /// <summary>
+        ///     Get the top performers with a weapon. This is meant to be used internally and isn't commented :)
+        /// </summary>
+        /// <param name="itemID"></param>
+        /// <param name="column"></param>
+        /// <param name="worlds"></param>
+        /// <param name="factions"></param>
+        /// <param name="minKills"></param>
+        /// <returns></returns>
         public async Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> worlds, List<short> factions, int minKills = 1159) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
@@ -71,6 +91,14 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
+        /// <summary>
+        ///     Get all the <see cref="WeaponStatEntry"/> for a weapon
+        /// </summary>
+        /// <param name="itemID">ID of the weapon</param>
+        /// <param name="minKills">Minimum number of kills to be included</param>
+        /// <returns>
+        ///     A list of all <see cref="WeaponStatEntry"/> with <see cref="WeaponStatEntry.WeaponID"/> of <paramref name="itemID"/>
+        /// </returns>
         public async Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -89,6 +117,10 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
+        /// <summary>
+        ///     Update or insert an entry
+        /// </summary>
+        /// <param name="entry">Entry to upsert</param>
         public async Task Upsert(WeaponStatEntry entry) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -140,6 +172,62 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        public async Task UpsertMany(string characterID, List<WeaponStatEntry> entries) {
+            List<string> existingIDs = entries.Select(iter => iter.WeaponID).ToList();
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                BEGIN;
+
+                DELETE FROM weapon_stats
+                    WHERE character_id = @CharacterID
+                        AND item_id IN ({string.Join(",", existingIDs.Select(iter => $"'{iter}'"))});
+
+                INSERT INTO weapon_stats (
+                    character_id, item_id, kills, deaths, shots, shots_hit, headshots, vehicle_kills, seconds_with, kd, kpm, acc, hsr, vkpm
+                ) VALUES    
+                    {string.Join(",", entries.Select((iter, index) => $"(@CharacterID, @ItemID_{index}, @Kills_{index}, @Deaths_{index}, "
+                        + $"@Shots_{index}, @ShotsHit_{index}, @Headshots_{index}, @VehicleKills_{index}, @SecondsWith_{index}, "
+                        + $"@KD_{index}, @KPM_{index}, @Accuracy_{index}, @HeadshotRatio_{index}, @VKPM_{index})\n"
+                    ))}
+                ;
+
+                COMMIT;
+            ");
+
+            cmd.AddParameter("ExistingIDs", existingIDs);
+            cmd.AddParameter("CharacterID", characterID);
+
+            for (int i = 0; i < entries.Count; ++i) {
+                WeaponStatEntry entry = entries[i];
+
+                decimal kd = entry.Kills / Math.Max(1m, entry.Deaths);
+                decimal kpm = entry.Kills / (Math.Max(1m, entry.SecondsWith) / 60m);
+                decimal acc = entry.ShotsHit / Math.Max(1m, entry.Shots);
+                decimal hsr = entry.Headshots / Math.Max(1m, entry.Kills);
+                decimal vkpm = entry.VehicleKills / (Math.Max(1m, entry.SecondsWith) / 60m);
+
+                cmd.AddParameter($"ItemID_{i}", entry.WeaponID);
+                cmd.AddParameter($"Kills_{i}", entry.Kills);
+                cmd.AddParameter($"Deaths_{i}", entry.Deaths);
+                cmd.AddParameter($"Shots_{i}", entry.Shots);
+                cmd.AddParameter($"ShotsHit_{i}", entry.ShotsHit);
+                cmd.AddParameter($"Headshots_{i}", entry.Headshots);
+                cmd.AddParameter($"VehicleKills_{i}", entry.VehicleKills);
+                cmd.AddParameter($"SecondsWith_{i}", entry.SecondsWith);
+                cmd.AddParameter($"KD_{i}", kd);
+                cmd.AddParameter($"KPM_{i}", kpm);
+                cmd.AddParameter($"Accuracy_{i}", acc);
+                cmd.AddParameter($"HeadshotRatio_{i}", hsr);
+                cmd.AddParameter($"VKPM_{i}", vkpm);
+            }
+
+            //_Logger.LogDebug(cmd.Print());
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
         public override WeaponStatEntry ReadEntry(NpgsqlDataReader reader) {
             WeaponStatEntry entry = new WeaponStatEntry();
 
@@ -163,6 +251,29 @@ namespace watchtower.Services.Db.Implementations {
             return entry;
         }
 
+    }
+
+    public static class ICharacterWeaponStatDbStoreExtensionMethods {
+
+        public static Task<List<WeaponStatEntry>> GetTopKD(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "kd", worlds, factions, minKills);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopKPM(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "kpm", worlds, factions, minKills);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopAccuracy(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "acc", worlds, factions, minKills);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopHeadshotRatio(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
+            return repo.GetTopEntries(itemID, "hsr", worlds, factions, minKills);
+        }
+
+        public static Task<List<WeaponStatEntry>> GetTopKills(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
+            return repo.GetTopEntries(itemID, "kills", worlds, factions, 0);
+        }
     }
 
 }

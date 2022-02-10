@@ -30,7 +30,7 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterCollection _CharacterCensus;
         private readonly CharacterDbStore _CharacterDb;
         private readonly CharacterWeaponStatCollection _WeaponCensus;
-        private readonly ICharacterWeaponStatDbStore _WeaponStatDb;
+        private readonly CharacterWeaponStatDbStore _WeaponStatDb;
         private readonly CharacterHistoryStatCollection _HistoryCensus;
         private readonly ICharacterHistoryStatDbStore _HistoryDb;
         private readonly CharacterItemCollection _ItemCensus;
@@ -58,7 +58,7 @@ namespace watchtower.Services.Hosted {
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
             CharacterUpdateQueue queue,
-            ICharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
+            CharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
             ICharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
             CharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
             CharacterStatCollection statCensus, ICharacterStatDbStore statDb,
@@ -213,8 +213,17 @@ namespace watchtower.Services.Hosted {
                             );
                         }
 
+                        /*
                         foreach (WeaponStatEntry iter in weaponStats) {
                             await _WeaponStatDb.Upsert(iter);
+                        }
+                        */
+                        if (weaponStats.Count > 0) {
+                            try {
+                                await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
+                            } catch (Exception ex) {
+                                _Logger.LogError($"Error updating character weapon stat data for {entry.CharacterID}");
+                            }
                         }
                         stoppingToken.ThrowIfCancellationRequested();
                         long dbWeapon = timer.ElapsedMilliseconds; timer.Restart();
@@ -243,12 +252,19 @@ namespace watchtower.Services.Hosted {
                         long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        /*
                         foreach (CharacterDirective dir in charDirs) {
                             try {
                                 await _CharacterDirectiveDb.Upsert(entry.CharacterID, dir);
                             } catch (Exception ex) {
                                 _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
                             }
+                        }
+                        */
+                        try {
+                            await _CharacterDirectiveDb.UpsertMany(entry.CharacterID, charDirs);
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"Error updating character directive data for {entry.CharacterID}");
                         }
                         long dbCharDir = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
@@ -283,8 +299,6 @@ namespace watchtower.Services.Hosted {
                         long dbCharDirObj = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        long dbTime = timer.ElapsedMilliseconds;
-
                         long dbSum = dbWeapon + dbHistory + dbItem + dbStats + dbFriends + dbCharDir + dbCharDirTree + dbCharDirTier + dbCharDirObj;
 
                         if (entry.Print == true) {
@@ -300,7 +314,7 @@ namespace watchtower.Services.Hosted {
                                 + $"\tDirective objs: {dbCharDirObj}ms"
                             );
 
-                            _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbTime}ms to update DB data");
+                            _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbSum}ms to update DB data");
                         }
                     }
 

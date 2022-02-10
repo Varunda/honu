@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
+using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Census;
@@ -38,6 +39,10 @@ namespace watchtower.Commands {
         private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
         private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
         private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
+        private readonly CharacterDirectiveDbStore _CharacterDirectiveDb;
+        private readonly CharacterWeaponStatCollection _WeaponCensus;
+        private readonly CharacterWeaponStatDbStore _WeaponDb;
+
         private readonly CharacterUpdateQueue _Queue;
 
         public CharCommand(IServiceProvider services) {
@@ -58,6 +63,9 @@ namespace watchtower.Commands {
             _CharacterDirectiveTierCensus = services.GetRequiredService<CharacterDirectiveTierCollection>();
             _CharacterDirectiveObjectiveCensus = services.GetRequiredService<CharacterDirectiveObjectiveCollection>();
             _Queue = services.GetRequiredService<CharacterUpdateQueue>();
+            _CharacterDirectiveDb = services.GetRequiredService<CharacterDirectiveDbStore>();
+            _WeaponCensus = services.GetRequiredService<CharacterWeaponStatCollection>();
+            _WeaponDb = services.GetRequiredService<CharacterWeaponStatDbStore>();
         }
 
         public async Task Refresh(string nameOrId) {
@@ -200,6 +208,32 @@ namespace watchtower.Commands {
             string s = $"{c.Name} has {dirs.Count} entries, and {dirs.Where(iter => iter.CompletionDate != null).Count()} done:\n";
 
             _Logger.LogInformation(s);
+        }
+
+        public async Task DirUpdate(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<CharacterDirective> dirs = await _CharacterDirectiveCensus.GetByCharacterID(c.ID);
+            await _CharacterDirectiveDb.UpsertMany(c.ID, dirs);
+
+            _Logger.LogInformation($"done!");
+        }
+
+        public async Task ItemUpdate(string name) {
+            PsCharacter? c = await _CharacterRepository.GetFirstByName(name);
+            if (c == null) {
+                _Logger.LogWarning($"Character {name} does not exist");
+                return;
+            }
+
+            List<WeaponStatEntry> entries = await _WeaponCensus.GetByCharacterID(c.ID);
+            await _WeaponDb.UpsertMany(c.ID, entries);
+
+            _Logger.LogInformation($"done!");
         }
 
     }
