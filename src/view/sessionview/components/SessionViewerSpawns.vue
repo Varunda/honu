@@ -1,35 +1,84 @@
 ﻿<template>
     <div>
+        <a-table
+            :entries="loadedSpawns" :paginate="false">
 
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th></th>
-                </tr>
-            </thead>
-        </table>
+            <a-col>
+                <a-header>
+                    <b>Type</b>
+                </a-header>
 
-        ye
+                <a-body v-slot="entry">
+                    <span v-if="entry.type == 'sunderer'">
+                        Sunderer
+                    </span>
+
+                    <span v-else-if="entry.type == 'router'">
+                        Router
+                    </span>
+
+                    <span v-else class="text-danger">
+                        Unchecked type {{entry.type}}
+                    </span>
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>First spawn</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.firstSpawn | moment}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Time alive</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{(entry.lastSpawn.getTime() - entry.firstSpawn.getTime()) / 1000 | mduration}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Spawns</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.spawns}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Spawns per minute</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{(entry.spawns / ((entry.lastSpawn.getTime() - entry.firstSpawn.getTime()) / 1000 / 60)) | locale(2)}}
+                </a-body>
+            </a-col>
+        </a-table>
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import { Loadable, Loading } from "Loading";
 
     import "MomentFilter";
     import "filters/FixedFilter";
     import "filters/LocaleFilter";
 
-    import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
-    import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
-    import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
-    import { Session } from "api/SessionApi";
-    import { PsCharacter } from "api/CharacterApi";
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import ToggleButton from "components/ToggleButton";
 
-    import ZoneUtils from "util/Zone";
-    import TimeUtils from "util/Time";
-    import ColorUtils from "util/Color";
-    import LoadoutUtils from "util/Loadout";
+    import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
+    import { Session } from "api/SessionApi";
 
     type Spawn = {
         id: string;
@@ -104,8 +153,15 @@
             }
         },
 
-        components: {
+        computed: {
+            loadedSpawns: function(): Loading<Spawn[]> {
+                return Loadable.loaded(this.spawns);
+            }
+        },
 
+        components: {
+            ATable, ACol, ABody, AFilter, AHeader,
+            ToggleButton
         }
     });
     export default SessionViewerSpawns;

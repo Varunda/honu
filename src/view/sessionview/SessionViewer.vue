@@ -225,17 +225,6 @@
                     :session="session.data" :exp="exp.data">
                 </session-viewer-spawns>
             </collapsible>
-
-            <collapsible header-text="Vehicle kills">
-                <div v-if="exp.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
-
-                <session-viewer-vehicles v-else-if="exp.state == 'loaded'"
-                    :session="session.data" :exp="exp.data">
-                </session-viewer-vehicles>
-            </collapsible>
         </div>
     </div>
 </template>
@@ -256,7 +245,6 @@
     import SessionViewerTrends from "./components/SessionViewerTrends.vue";
     import SessionActionLog from "./components/SessionActionLog.vue";
     import SessionViewerSpawns from "./components/SessionViewerSpawns.vue";
-    import SessionViewerVehicles from "./components/SessionViewerVehicles.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
     import InfoHover from "components/InfoHover.vue";
@@ -387,7 +375,7 @@
         },
 
         components: {
-            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerVehicles,
+            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, 
             ChartTimestamp,
             InfoHover,
             Busy,
