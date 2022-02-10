@@ -335,6 +335,12 @@
                                 continue;
                             }
 
+                            if (other.ownerID == 0 || region.ownerID == 0) {
+                                link.setOpacity(0);
+                            } else {
+                                link.setOpacity(1);
+                            }
+
                             if (other.ownerID == region.ownerID) {
                                 link.setLinkColor(FactionColors.getFactionColor(region.ownerID));
                             } else {
@@ -433,14 +439,12 @@
                 }
                 this.panes.terrain.redraw();
 
-                if (this.layers.owner == true) {
-                    for (const region of this.regionData) {
-                        region.setStyle({
-                            fillOpacity: this.layers.outline == true ? this.regionFillOpacity : 0
-                        });
+                for (const region of this.regionData) {
+                    region.setStyle({
+                        fillOpacity: this.layers.owner == true ? this.regionFillOpacity : 0
+                    });
 
-                        region.redraw();
-                    }
+                    region.redraw();
                 }
             },
 

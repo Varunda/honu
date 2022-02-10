@@ -240,6 +240,22 @@ export class LatticeLink {
         }
     }
 
+    public setOpacity(opacity: number): void {
+        if (this.line != null) {
+            this.line.setStyle({
+                opacity: opacity
+            });
+            this.line.redraw();
+        }
+
+        if (this.outline != null) {
+            this.outline.setStyle({
+                opacity: opacity
+            });
+            this.outline.redraw();
+        }
+    }
+
     /**
      * Set the color of the line on this lattice  ink
      * @param color Hex color
