@@ -24,7 +24,7 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     Update <see cref="KillEvent.RevivedEventID"/>
         /// </summary>
-        /// <param name="killEventID">ID of the kill event to update</param>
+        /// <param name="charID">Character ID that was revived</param>
         /// <param name="reviveEventID">ID of the exp event that the revive came from</param>
         Task SetRevivedID(string charID, long reviveEventID);
 

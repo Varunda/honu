@@ -68,7 +68,7 @@ namespace watchtower.Models.Events {
         /// <summary>
         ///     Weapon used by the attacker
         /// </summary>
-        public string WeaponID { get; set; } = "";
+        public int WeaponID { get; set; }
 
         /// <summary>
         ///     If the kill waas a headshot kill or not

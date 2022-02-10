@@ -178,7 +178,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 foreach (KillEvent ev in killDeaths) {
                     chars.Add(ev.KilledCharacterID);
                     chars.Add(ev.AttackerCharacterID);
-                    items.Add(int.Parse(ev.WeaponID));
+                    items.Add(ev.WeaponID);
                 }
 
                 report.Kills = killDeaths.Where(iter => {

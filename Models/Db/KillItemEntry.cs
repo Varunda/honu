@@ -9,7 +9,7 @@ namespace watchtower.Models.Db {
         /// <summary>
         /// ID of the weapon
         /// </summary>
-        public string ItemID { get; set; } = "";
+        public int ItemID { get; set; }
 
         /// <summary>
         /// How many kills the weapon has gotten

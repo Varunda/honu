@@ -14,7 +14,7 @@ namespace watchtower.Services.Db.Readers {
         public override KillItemEntry ReadEntry(NpgsqlDataReader reader) {
             KillItemEntry entry = new KillItemEntry();
 
-            entry.ItemID = reader.GetString("item_id");
+            entry.ItemID = reader.GetInt32("item_id");
             entry.Kills = reader.GetInt32("kills");
             entry.HeadshotKills = reader.GetInt32("headshots");
             entry.Users = reader.GetInt32("users");

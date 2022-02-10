@@ -385,7 +385,7 @@ namespace watchtower.Services.Repositories.Implementations {
                 .Take(12).ToList();
 
             foreach (KillItemEntry itemIter in items) {
-                PsItem? item = await _ItemRepository.GetByID(int.Parse(itemIter.ItemID));
+                PsItem? item = await _ItemRepository.GetByID(itemIter.ItemID);
 
                 WeaponKillEntry entry = new WeaponKillEntry() {
                     ItemID = itemIter.ItemID,

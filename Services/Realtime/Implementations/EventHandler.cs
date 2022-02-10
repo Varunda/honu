@@ -647,7 +647,7 @@ namespace watchtower.Realtime {
                 KilledLoadoutID = loadoutID,
                 KilledTeamID = factionID,
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime,
-                WeaponID = payload.GetString("attacker_weapon_id", "0"),
+                WeaponID = payload.GetInt32("attacker_weapon_id", 0),
                 WorldID = payload.GetWorldID(),
                 ZoneID = payload.GetZoneID(),
                 AttackerFireModeID = payload.GetInt32("attacker_fire_mode_id", 0),

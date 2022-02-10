@@ -91,7 +91,7 @@ namespace watchtower.Controllers {
                 }
             }
 
-            Dictionary<string, PsItem?> items = new Dictionary<string, PsItem?>();
+            Dictionary<int, PsItem?> items = new Dictionary<int, PsItem?>();
 
             foreach (KillEvent ev in events) {
                 ExpandedKillEvent ex = new ExpandedKillEvent();
@@ -99,7 +99,7 @@ namespace watchtower.Controllers {
                 ex.Event = ev;
 
                 if (items.ContainsKey(ev.WeaponID) == false) {
-                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(int.Parse(ev.WeaponID)));
+                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(ev.WeaponID));
                 }
 
                 chars.TryGetValue(ev.AttackerCharacterID, out PsCharacter? attacker);
@@ -141,7 +141,7 @@ namespace watchtower.Controllers {
 
             List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, 120);
 
-            Dictionary<string, CharacterWeaponKillEntry> entries = new Dictionary<string, CharacterWeaponKillEntry>();
+            Dictionary<int, CharacterWeaponKillEntry> entries = new Dictionary<int, CharacterWeaponKillEntry>();
 
             foreach (KillEvent ev in kills) {
                 // Skip character deaths or TKs
@@ -150,7 +150,7 @@ namespace watchtower.Controllers {
                 }
 
                 if (entries.TryGetValue(ev.WeaponID, out CharacterWeaponKillEntry? entry) == false) {
-                    PsItem? item = await _ItemRepository.GetByID(int.Parse(ev.WeaponID));
+                    PsItem? item = await _ItemRepository.GetByID(ev.WeaponID);
 
                     entry = new CharacterWeaponKillEntry() {
                         WeaponID = ev.WeaponID,

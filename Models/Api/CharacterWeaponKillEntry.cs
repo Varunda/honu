@@ -10,7 +10,7 @@ namespace watchtower.Models.Api {
         /// <summary>
         ///     ID of the item
         /// </summary>
-        public string WeaponID { get; set; } = "";
+        public int WeaponID { get; set; }
 
         /// <summary>
         ///     Name of the item

@@ -11,7 +11,7 @@ namespace watchtower.Models {
 
     public class WeaponKillEntry {
 
-        public string ItemID { get; set; } = "";
+        public int ItemID { get; set; }
 
         public string ItemName { get; set; } = "";
 

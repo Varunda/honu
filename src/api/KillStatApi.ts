@@ -6,7 +6,7 @@ import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsItem, ItemApi } from "api/ItemApi";
 
 export class CharacterWeaponKillEntry {
-    public weaponID: string = "";
+    public weaponID: number = 0;
     public weaponName: string = "";
     public kills: number = 0;
     public headshotKills: number = 0;
@@ -28,7 +28,7 @@ export class KillEvent {
     public killedTeamID: number = 0;
     public worldID: number = 0;
     public zoneID: number = 0;
-    public weaponID: string = "";
+    public weaponID: number = 0;
     public isHeadshot: boolean = false;
     public revivedEventID: number = 0;
     public timestamp: Date = new Date();
