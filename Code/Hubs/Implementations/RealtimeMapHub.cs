@@ -26,7 +26,7 @@ namespace watchtower.Code.Hubs.Implementations {
         public async Task Initalize(short worldID, uint zoneID) {
             string groupID = $"RealtimeMap.{worldID}.{zoneID}";
 
-            _Logger.LogInformation($"{Context.ConnectionId} is subscribing to {groupID}");
+            //_Logger.LogInformation($"{Context.ConnectionId} is subscribing to {groupID}");
 
             if (_GroupMembership.TryGetValue(Context.ConnectionId, out string? previousGroup) == true) {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, previousGroup!);

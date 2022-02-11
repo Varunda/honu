@@ -132,7 +132,7 @@
 
                 settings: {
                     worldID: 1 as number | null,
-                    zoneID: 6 as number | null,
+                    zoneID: 2 as number | null,
                     thickness: 10 as number
                 },
 
