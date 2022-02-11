@@ -111,7 +111,7 @@ namespace watchtower.Services.Hosted {
                     PsCharacter? censusChar = entry.CensusCharacter;
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(entry.CharacterID);
 
-                    if (_Random.Next(101) >= 99) {
+                    if (_Random.Next(1001) >= 995) {
                         entry.Print = true;
                     }
 

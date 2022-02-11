@@ -41,35 +41,29 @@ namespace watchtower.Services.Census {
 
             List<PsMap> regions = new List<PsMap>();
 
-            try {
-                IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JToken> result = await query.GetListAsync();
 
-                foreach (JToken zone in result) {
-                    uint zoneID = zone.GetUInt32("ZoneId");
+            foreach (JToken zone in result) {
+                uint zoneID = zone.GetUInt32("ZoneId");
 
-                    //_Logger.LogDebug($"Zone data of {zoneID} => {zone}");
+                //_Logger.LogDebug($"Zone data of {zoneID} => {zone}");
 
-                    JToken? row = zone.SelectToken("Regions")?.SelectToken("Row");
+                JToken? row = zone.SelectToken("Regions")?.SelectToken("Row");
 
-                    if (row != null) {
-                        foreach (JToken entry in row) {
-                            JToken? data = entry.SelectToken("RowData");
-                            if (data != null) {
-                                PsMap region = _Parse(data);
-                                region.ZoneID = zoneID;
-                                regions.Add(region);
-                            } else {
-                                _Logger.LogWarning($"Missing RowData from {entry}");
-                            }
+                if (row != null) {
+                    foreach (JToken entry in row) {
+                        JToken? data = entry.SelectToken("RowData");
+                        if (data != null) {
+                            PsMap region = _Parse(data);
+                            region.ZoneID = zoneID;
+                            regions.Add(region);
+                        } else {
+                            _Logger.LogWarning($"Missing RowData from {entry}");
                         }
-                    } else {
-                        _Logger.LogWarning($"Missing Regions?.Row?");
                     }
+                } else {
+                    _Logger.LogWarning($"Missing Regions?.Row?");
                 }
-            } catch (TaskCanceledException) {
-                _Logger.LogInformation($"Cancelled task for getting regions for {worldID} [{string.Join(", ", zoneIDs)}]");
-            } catch (Exception ex) {
-                _Logger.LogError(ex, "Failed to get regions for {worldID} [{zoneID}]", worldID, string.Join(", ", zoneIDs));
             }
 
             return regions;
@@ -90,29 +84,23 @@ namespace watchtower.Services.Census {
 
             List<PsMap> regions = new List<PsMap>();
 
-            try {
-                JToken? result = await query.GetAsync();
+            JToken? result = await query.GetAsync();
 
-                if (result != null) {
-                    JToken? row = result.SelectToken("Regions")?.SelectToken("Row");
+            if (result != null) {
+                JToken? row = result.SelectToken("Regions")?.SelectToken("Row");
 
-                    if (row != null) {
-                        foreach (JToken entry in row) {
-                            JToken? data = entry.SelectToken("RowData");
-                            if (data != null) {
-                                PsMap region = _Parse(data);
-                                region.ZoneID = zoneID; // Yeah we do a bit of cheating here
-                                regions.Add(region);
-                            }
+                if (row != null) {
+                    foreach (JToken entry in row) {
+                        JToken? data = entry.SelectToken("RowData");
+                        if (data != null) {
+                            PsMap region = _Parse(data);
+                            region.ZoneID = zoneID; // Yeah we do a bit of cheating here
+                            regions.Add(region);
                         }
-                    } else {
-                        _Logger.LogWarning($"Missing Regions?.Row?");
                     }
+                } else {
+                    _Logger.LogWarning($"Missing Regions?.Row?");
                 }
-            } catch (TaskCanceledException) {
-                _Logger.LogInformation($"Cancelled task for getting regions for {worldID} {zoneID}");
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"Failed to get regions for {worldID} {zoneID}");
             }
 
             return regions;
@@ -127,17 +115,11 @@ namespace watchtower.Services.Census {
 
             List<PsMapHex> hexes = new List<PsMapHex>();
 
-            try {
-                IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JToken> result = await query.GetListAsync();
 
-                foreach (JToken token in result) {
-                    PsMapHex hex = _ParseHex(token);
-                    hexes.Add(hex);
-                }
-            } catch (TaskCanceledException) {
-
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"Failed to get all map hexes");
+            foreach (JToken token in result) {
+                PsMapHex hex = _ParseHex(token);
+                hexes.Add(hex);
             }
 
             return hexes;
@@ -159,27 +141,23 @@ namespace watchtower.Services.Census {
                 hexes.Add(hex);
             }
 
-            try {
-                do {
-                    string patch = File.ReadAllText(LINK_PATCH_FILE);
-                    JToken json = JToken.Parse(patch);
+            do {
+                string patch = File.ReadAllText(LINK_PATCH_FILE);
+                JToken json = JToken.Parse(patch);
 
-                    JToken? facilityLinkList = json.SelectToken("facility_link_list");
-                    if (facilityLinkList == null) {
-                        _Logger.LogWarning($"Missing 'facility_link_list' from patch file in {LINK_PATCH_FILE}");
-                        break;
-                    }
+                JToken? facilityLinkList = json.SelectToken("facility_link_list");
+                if (facilityLinkList == null) {
+                    _Logger.LogWarning($"Missing 'facility_link_list' from patch file in {LINK_PATCH_FILE}");
+                    break;
+                }
 
-                    IEnumerable<JToken> arr = facilityLinkList.Children();
-                    _Logger.LogInformation($"Have {arr.Count()} entries to patch into facility_link");
-                    foreach (JToken token in arr) {
-                        PsFacilityLink hex = _ParseLink(token);
-                        hexes.Add(hex);
-                    }
-                } while (false);
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"failed to patch collection facility_link from patch file {LINK_PATCH_FILE}");
-            }
+                IEnumerable<JToken> arr = facilityLinkList.Children();
+                _Logger.LogInformation($"Have {arr.Count()} entries to patch into facility_link");
+                foreach (JToken token in arr) {
+                    PsFacilityLink hex = _ParseLink(token);
+                    hexes.Add(hex);
+                }
+            } while (false);
 
             return hexes;
         }

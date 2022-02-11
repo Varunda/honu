@@ -90,6 +90,12 @@ namespace watchtower.Services.Hosted.Startup {
             }
         }
 
+        /// <summary>
+        ///     Get the maps of a world, with retry if needed
+        /// </summary>
+        /// <param name="worldID">ID of the world to get the zones of</param>
+        /// <param name="tries">How many tries</param>
+        /// <returns></returns>
         private async Task<List<PsMap>> GetMaps(short worldID, int tries = 3) {
             List<PsMap> maps;
 
@@ -99,8 +105,9 @@ namespace watchtower.Services.Hosted.Startup {
                 _Logger.LogWarning($"Got timeout, trying {tries} more times");
                 if (tries > 0) {
                     return await GetMaps(worldID, tries - 1);
+                } else {
+                    throw;
                 }
-                throw;
             }
 
             return maps;

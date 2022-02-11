@@ -36,6 +36,13 @@ namespace watchtower.Code.ExtensionMethods {
             return (decimal?) reader.GetFloat(field);
         }
 
+        public static short? GetNullableInt16(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return reader.GetInt16(field);
+        }
+
         public static int? GetNullableInt32(this NpgsqlDataReader reader, string field) {
             if (reader.IsDBNull(field)) {
                 return null;

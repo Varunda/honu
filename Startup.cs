@@ -183,6 +183,7 @@ namespace watchtower {
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<DirectiveCollectionsPopulator>();
             services.AddHostedService<ObjectiveCollectionsPopulator>();
+            services.AddHostedService<AlertLoadStartupService>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();

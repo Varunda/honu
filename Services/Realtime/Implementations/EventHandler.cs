@@ -35,6 +35,7 @@ namespace watchtower.Realtime {
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
+        private readonly AlertDbStore _AlertDb;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -63,7 +64,7 @@ namespace watchtower.Realtime {
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
-            IHubContext<RealtimeMapHub> mapHub) {
+            IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb) {
 
             _Logger = logger;
 
@@ -76,6 +77,7 @@ namespace watchtower.Realtime {
             _BattleRankDb = rankDb ?? throw new ArgumentNullException(nameof(rankDb));
             _FacilityPlayerDb = fpDb ?? throw new ArgumentNullException(nameof(fpDb));
             _VehicleDestroyDb = vehicleDestroyDb ?? throw new ArgumentNullException(nameof(vehicleDestroyDb));
+            _AlertDb = alertDb ?? throw new ArgumentNullException(nameof(alertDb));
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -512,13 +514,14 @@ namespace watchtower.Realtime {
             }
         }
 
-        private void _ProcessMetagameEvent(JToken payload) {
+        private async Task _ProcessMetagameEvent(JToken payload) {
             short worldID = payload.GetWorldID();
             uint zoneID = payload.GetZoneID();
             string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
             int metagameEventID = payload.GetInt32("metagame_event_id", 0);
+            DateTime timestamp = payload.CensusTimestamp("timestamp");
 
-            //_Logger.LogDebug($"metagame event payload: {payload}");
+            _Logger.LogDebug($"metagame event payload: {payload}");
 
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
@@ -532,7 +535,7 @@ namespace watchtower.Realtime {
                 }
 
                 if (metagameEventName == "started") {
-                    state.AlertStart = DateTime.UtcNow;
+                    state.AlertStart = timestamp;
 
                     TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
                     if (duration == null) {
@@ -540,6 +543,7 @@ namespace watchtower.Realtime {
                     } else {
                         state.AlertEnd = state.AlertStart + duration;
                     }
+
                 } else if (metagameEventName == "ended") {
                     state.AlertStart = null;
 
@@ -550,32 +554,84 @@ namespace watchtower.Realtime {
                         // Ensure census has times to update
                         await Task.Delay(5000);
 
-                        short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
+                        /*
+                        //short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
+                        //short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
+                        //short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
+                        //short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
                         short? indarOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Indar);
-                        short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
                         short? hossinOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Hossin);
-                        short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
                         short? amerishOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Amerish);
-                        short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
                         short? esamirOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Esamir);
+                        short? oshurOwner = _MapRepository.GetZoneMapOwner(worldID, Zone.Oshur);
+                        */
 
-                        if (indarOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
-                        if (hossinOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
-                        if (amerishOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
-                        if (esamirOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
+                        string s = $"ALERT ended in {worldID}, current owners:\n";
 
-                        _Logger.LogDebug($"ALERT ended in {worldID}, current owners:"
-                            + $"\nIndar: {indarOwner}/{indarOwner2}"
-                            + $"\nHossin: {hossinOwner}/{hossinOwner2}"
-                            + $"\nAmerish: {amerishOwner}/{amerishOwner2}"
-                            + $"\nEsamir: {esamirOwner}/{esamirOwner2}"
-                        );
+                        foreach (uint zoneID in Zone.All) {
+                            short? owner = _MapRepository.GetZoneMapOwner(worldID, zoneID);
+
+                            s += $"{zoneID} => {owner}\n";
+
+                            if (owner == null) {
+                                ZoneStateStore.Get().UnlockZone(worldID, zoneID);
+                            }
+                        }
+
+                        _Logger.LogDebug(s);
+
+                        /*
+                        if (indarOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
+                        if (hossinOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
+                        if (amerishOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
+                        if (esamirOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
+                        if (oshurOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Oshur); }
+                        */
+
                     }).Start();
                 }
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
-            //_Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}");
+            _Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}/{metagameEventID}");
+
+            if (metagameEventName == "started") {
+                TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
+                PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
+
+                PsAlert alert = new PsAlert();
+                alert.Timestamp = timestamp;
+                alert.ZoneID = zoneID;
+                alert.WorldID = worldID;
+                alert.AlertID = metagameEventID;
+                alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
+                alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
+
+                try {
+                    alert.ID = await _AlertDb.Insert(alert);
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, $"Failed to insert alert in {worldID} in zone {zoneID}");
+                }
+            } else if (metagameEventName == "ended") {
+                List<PsAlert> alerts = AlertStore.Get().GetAlerts();
+
+                PsAlert? toRemove = null;
+                foreach (PsAlert alert in alerts) {
+                    if (alert.ZoneID == zoneID && alert.WorldID == worldID) {
+                        _Logger.LogInformation($"Alert {alert.ID} finished on world {worldID} in zone {zoneID}");
+                        toRemove = alert;
+                        break;
+                    }
+                }
+
+                if (toRemove != null) {
+                    AlertStore.Get().RemoveByID(toRemove.ID);
+                } else {
+                    _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}");
+                }
+            } else {
+                _Logger.LogError($"Unchecked value of {nameof(metagameEventName)} '{metagameEventName}'");
+            }
         }
 
         private void _ProcessContinentUnlock(JToken payload) {

@@ -63,6 +63,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<HonuAccountDbStore>();
             services.AddSingleton<HonuAccountAccessLogDbStore>();
             services.AddSingleton<VehicleDestroyDbStore>();
+            services.AddSingleton<AlertDbStore>();
         }
 
     }
