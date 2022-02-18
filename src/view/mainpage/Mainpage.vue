@@ -151,11 +151,11 @@
                     this.worlds.set(datum.worldID, datum);
                 }
 
-                this.cobalt = this.worlds.get(10) || null;
+                this.cobalt = this.worlds.get(13) || null;
                 this.connery = this.worlds.get(1) || null;
                 this.emerald = this.worlds.get(17) || null;
                 this.jaeger = this.worlds.get(19) || null;
-                this.miller = this.worlds.get(13) || null;
+                this.miller = this.worlds.get(10) || null;
                 this.soltech = this.worlds.get(40) || null;
             });
 
