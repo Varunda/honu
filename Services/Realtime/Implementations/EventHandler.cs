@@ -97,12 +97,12 @@ namespace watchtower.Realtime {
 
         public async Task Process(JToken ev) {
             if (_Recent.Contains(ev)) {
-                _Logger.LogInformation($"Skipping duplicate event {ev}");
+                _Logger.LogError($"Skipping duplicate event {ev}");
                 return;
             }
 
             _Recent.Add(ev);
-            if (_Recent.Count > 10) {
+            if (_Recent.Count > 50) {
                 _Recent.RemoveAt(0);
             }
 

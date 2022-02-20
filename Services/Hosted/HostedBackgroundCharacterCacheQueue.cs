@@ -58,15 +58,12 @@ namespace watchtower.Services.Hosted {
                             });
 
                             tracked.OutfitID = character.OutfitID;
+                            tracked.FactionID = character.FactionID;
 
-                            /*
                             // Prevent the TeamID field from being overriden whenever a character is cached
                             if (tracked.FactionID != Faction.NS) {
                                 tracked.TeamID = character.FactionID;
                             }
-
-                            tracked.TeamID = character.FactionID;
-                            */
                         }
                     }
 

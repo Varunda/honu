@@ -210,6 +210,7 @@ namespace watchtower {
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
 
+            // Needed to Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownProxies.Add(IPAddress.Parse("64.227.19.86"));
