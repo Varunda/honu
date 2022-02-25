@@ -274,7 +274,7 @@ namespace watchtower.Realtime {
                         PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
                         PsItem? attackerItem = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 
-                        string msg = $"A bus has been blown up at {ev.Timestamp:u} in {ev.ZoneID}\n";
+                        string msg = $"A bus has been blown up at {ev.Timestamp:u} in {ev.WorldID}\n";
                         msg += $"Attacker: {attacker?.GetDisplayName() ?? $"<missing {ev.AttackerCharacterID}>"}. Faction: {Faction.GetName(ev.AttackerFactionID)}, Team: {Faction.GetName(ev.AttackerTeamID)}\n";
                         msg += $"Weapon: {attackerItem?.Name} ({ev.AttackerWeaponID})\n";
 
