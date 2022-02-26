@@ -708,7 +708,7 @@
 
                 this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
                     metric,
-                    3, // knife
+                    3, // pistol
                     (metadata) => metadata.timeAs
                 ));
             },
@@ -845,8 +845,8 @@
                 return metric;
             },
 
-            generateWeaponCategoryKills: function(metric: WinterMetric, itemTypeID: number, perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
-                const map: Map<string, WinterEntry > = new Map();
+            generateWeaponCategoryKills: function(metric: WinterMetric, itemCategoryID: number, perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
+                const map: Map<string, WinterEntry> = new Map();
 
                 for (const kill of this.report.kills) {
                     const item: PsItem | null = this.report.items.get(kill.weaponID) || null;
@@ -854,7 +854,7 @@
                         continue;
                     }
 
-                    if (item.typeID != itemTypeID) {
+                    if (item.categoryID != itemCategoryID) {
                         continue;
                     }
 
