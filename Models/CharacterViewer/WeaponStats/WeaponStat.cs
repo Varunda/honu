@@ -13,7 +13,7 @@ namespace watchtower.Models.CharacterViewer.WeaponStats {
 
         public string ItemID { get; set; } = "";
 
-        public string VehicleID { get; set; } = "";
+        public int VehicleID { get; set; }
 
         public int Value { get; set; }
 

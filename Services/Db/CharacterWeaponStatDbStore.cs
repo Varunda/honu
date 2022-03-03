@@ -173,7 +173,25 @@ namespace watchtower.Services.Db {
         }
 
         public async Task UpsertMany(string characterID, List<WeaponStatEntry> entries) {
+            if (entries.Count == 0) {
+                return;
+            }
+
             List<string> existingIDs = entries.Select(iter => iter.WeaponID).ToList();
+            List<int> vehicleIDs = entries.Select(iter => iter.VehicleID).Distinct().ToList();
+
+            /*
+                item_id IN ('0', {string.Join(",", existingIDs.Select(iter => $"'{iter}'"))})
+                OR vehicle_id IN (0, {string.Join(",", vehicleIDs.Select(iter => iter))})
+            */
+
+            string GetDeleteEntry(WeaponStatEntry entry) {
+                if (entry.WeaponID != "0") {
+                    return $"(item_id = '{entry.WeaponID}')";
+                }
+
+                return $"(item_id = '0' AND vehicle_id = {entry.VehicleID})";
+            }
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
@@ -181,12 +199,18 @@ namespace watchtower.Services.Db {
 
                 DELETE FROM weapon_stats
                     WHERE character_id = @CharacterID
-                        AND item_id IN ({string.Join(",", existingIDs.Select(iter => $"'{iter}'"))});
+                        AND (
+                            {string.Join(" \nOR ", entries.Select(iter => GetDeleteEntry(iter)))}
+                        );
 
                 INSERT INTO weapon_stats (
-                    character_id, item_id, kills, deaths, shots, shots_hit, headshots, vehicle_kills, seconds_with, kd, kpm, acc, hsr, vkpm
+                    character_id, item_id, vehicle_id,
+                    kills, deaths,
+                    shots, shots_hit, headshots, vehicle_kills, seconds_with,
+                    kd, kpm, acc, hsr, vkpm
                 ) VALUES    
-                    {string.Join(",", entries.Select((iter, index) => $"(@CharacterID, @ItemID_{index}, @Kills_{index}, @Deaths_{index}, "
+                    {string.Join(",", entries.Select((iter, index) => $"(@CharacterID, @ItemID_{index}, @VehicleID_{index}, "
+                        + $"@Kills_{index}, @Deaths_{index}, "
                         + $"@Shots_{index}, @ShotsHit_{index}, @Headshots_{index}, @VehicleKills_{index}, @SecondsWith_{index}, "
                         + $"@KD_{index}, @KPM_{index}, @Accuracy_{index}, @HeadshotRatio_{index}, @VKPM_{index})\n"
                     ))}
@@ -195,8 +219,17 @@ namespace watchtower.Services.Db {
                 COMMIT;
             ");
 
-            cmd.AddParameter("ExistingIDs", existingIDs);
             cmd.AddParameter("CharacterID", characterID);
+
+            /*
+            if (entries.Count < 200) {
+                string s = $"";
+                foreach (WeaponStatEntry entry in entries) {
+                    s += $"{entry.WeaponID}:{entry.VehicleID}\n";
+                }
+                _Logger.LogDebug(s);
+            }
+            */
 
             for (int i = 0; i < entries.Count; ++i) {
                 WeaponStatEntry entry = entries[i];
@@ -208,6 +241,7 @@ namespace watchtower.Services.Db {
                 decimal vkpm = entry.VehicleKills / (Math.Max(1m, entry.SecondsWith) / 60m);
 
                 cmd.AddParameter($"ItemID_{i}", entry.WeaponID);
+                cmd.AddParameter($"VehicleID_{i}", entry.VehicleID);
                 cmd.AddParameter($"Kills_{i}", entry.Kills);
                 cmd.AddParameter($"Deaths_{i}", entry.Deaths);
                 cmd.AddParameter($"Shots_{i}", entry.Shots);
@@ -222,7 +256,11 @@ namespace watchtower.Services.Db {
                 cmd.AddParameter($"VKPM_{i}", vkpm);
             }
 
-            //_Logger.LogDebug(cmd.Print());
+            /*
+            if (entries.Count < 200) {
+                _Logger.LogDebug(cmd.Print());
+            }
+            */
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -233,6 +271,7 @@ namespace watchtower.Services.Db {
 
             entry.CharacterID = reader.GetString("character_id");
             entry.WeaponID = reader.GetString("item_id");
+            entry.VehicleID = reader.GetInt32("vehicle_id");
             entry.Kills = reader.GetInt32("kills");
             entry.Deaths = reader.GetInt32("deaths");
             entry.Shots = reader.GetInt32("shots");

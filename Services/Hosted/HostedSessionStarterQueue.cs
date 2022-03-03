@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Models.Queues;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
@@ -26,10 +27,10 @@ namespace watchtower.Services.Hosted {
         private readonly ILogger<HostedSessionStarterQueue> _Logger;
         private readonly SessionStarterQueue _Queue;
 
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
 
         public HostedSessionStarterQueue(ILogger<HostedSessionStarterQueue> logger,
-            SessionStarterQueue queue, ISessionDbStore sessionDb) {
+            SessionStarterQueue queue, SessionDbStore sessionDb) {
 
             _Logger = logger;
 
@@ -42,9 +43,9 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-                    TrackedPlayer player = await _Queue.Dequeue(stoppingToken);
+                    CharacterSessionStartQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
-                    await _SessionDb.Start(player, player.LastLogin ?? DateTime.UtcNow);
+                    await _SessionDb.Start(entry.CharacterID, entry.LastEvent);
 
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error starting session in the background");

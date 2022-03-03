@@ -27,7 +27,7 @@ namespace watchtower.Commands {
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _Outfitrepository;
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly CharacterHistoryStatCollection _HistoryCollection;
         private readonly ICharacterHistoryStatRepository _HistoryStatRepository;
@@ -50,7 +50,7 @@ namespace watchtower.Commands {
 
             _CharacterRepository = services.GetRequiredService<CharacterRepository>();
             _Outfitrepository = services.GetRequiredService<OutfitRepository>();
-            _SessionDb = services.GetRequiredService<ISessionDbStore>();
+            _SessionDb = services.GetRequiredService<SessionDbStore>();
             _GeneratorStore = services.GetRequiredService<ICharacterStatGeneratorStore>();
             _HistoryCollection = services.GetRequiredService<CharacterHistoryStatCollection>();
             _HistoryStatRepository = services.GetRequiredService<ICharacterHistoryStatRepository>();

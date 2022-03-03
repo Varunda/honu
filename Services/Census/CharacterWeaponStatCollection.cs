@@ -46,12 +46,15 @@ namespace watchtower.Services.Census {
             Dictionary<string, WeaponStatEntry> entries = new Dictionary<string, WeaponStatEntry>();
 
             foreach (WeaponStat stat in weaponStats) {
-                if (entries.TryGetValue(stat.ItemID, out WeaponStatEntry? entry) == false) {
+                string key = $"{stat.ItemID}:{stat.VehicleID}";
+
+                if (entries.TryGetValue(key, out WeaponStatEntry? entry) == false) {
                     entry = new WeaponStatEntry {
                         CharacterID = charID,
-                        WeaponID = stat.ItemID
+                        WeaponID = stat.ItemID,
+                        VehicleID = stat.VehicleID
                     };
-                    entries.Add(stat.ItemID, entry);
+                    entries.Add(key, entry);
                 }
 
                 if (stat.StatName == "weapon_play_time") {
@@ -72,16 +75,19 @@ namespace watchtower.Services.Census {
             //entry.VehicleKillsPerMinute = entry.VehicleKills / (Math.Max(1m, entry.SecondsWith) / 60m);
 
             foreach (WeaponStatByFactionEntry stat in byFaction) {
+                string key = $"{stat.ItemID}:{stat.VehicleID}";
+
                 // There are legit cases where the _by_faction stats may contain a value while characters_weapon_stat would not,
                 //      such as getting a kill with a weapon of a different faction. For example, 5428990295173600849 is an NC
                 //      character, and has a kill with the ML-7
-                if (entries.TryGetValue(stat.ItemID, out WeaponStatEntry? entry) == false) {
+                if (entries.TryGetValue(key, out WeaponStatEntry? entry) == false) {
                     //_Logger.LogError($"Missing weapon_stats for: {stat.ItemID}, from {JToken.FromObject(stat)}");
                     entry = new WeaponStatEntry {
                         CharacterID = charID,
-                        WeaponID = stat.ItemID
+                        WeaponID = stat.ItemID,
+                        VehicleID = stat.VehicleID
                     };
-                    entries.Add(stat.ItemID, entry);
+                    entries.Add(key, entry);
                 }
 
                 if (stat.StatName == "weapon_kills") {
@@ -114,7 +120,7 @@ namespace watchtower.Services.Census {
             query.Where("stat_name").Equals("weapon_play_time");
             query.SetLimit(10000);
             query.SetLanguage(CensusLanguage.English);
-            query.ShowFields("character_id", "stat_name", "item_id", "value");
+            query.ShowFields("character_id", "stat_name", "item_id", "value", "vehicle_id");
 
             //_Logger.LogTrace($"characters_weapon_stat: {query.GetUri()}");
 
@@ -172,7 +178,7 @@ namespace watchtower.Services.Census {
                 CharacterID = token.GetString("character_id", "0"),
                 StatName = token.GetString("stat_name", ""),
                 ItemID = token.GetString("item_id", "0"),
-                VehicleID = token.GetString("vehicle_id", "0"),
+                VehicleID = token.GetInt32("vehicle_id", 0),
                 Value = token.GetInt32("value", 0)
             };
 
@@ -190,7 +196,7 @@ namespace watchtower.Services.Census {
                 CharacterID = token.GetString("character_id", "0"),
                 StatName = token.GetString("stat_name", ""),
                 ItemID = token.GetString("item_id", ""),
-                VehicleID = token.GetString("vehicle_id", "0"),
+                VehicleID = token.GetInt32("vehicle_id", 0),
                 ValueVS = int.Parse(token.Value<string?>("value_vs") ?? "0"),
                 ValueNC = int.Parse(token.Value<string?>("value_nc") ?? "0"),
                 ValueTR = int.Parse(token.Value<string?>("value_tr") ?? "0"),

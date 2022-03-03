@@ -11,6 +11,8 @@ namespace watchtower.Models.CharacterViewer.WeaponStats {
 
         public string CharacterID { get; set; } = "";
 
+        public int VehicleID { get; set; }
+
         public int Kills { get; set; }
 
         public int Deaths { get; set; }

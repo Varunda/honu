@@ -24,7 +24,7 @@ namespace watchtower.Commands {
         private readonly CharacterCollection _Characters;
         private readonly IExpEventDbStore _ExpEventDb;
         private readonly IKillEventDbStore _KillEventDb;
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
 
         public StoreCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<StoreCommand>>();
@@ -32,7 +32,7 @@ namespace watchtower.Commands {
             _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
             _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
             _Characters = services.GetRequiredService<CharacterCollection>();
-            _SessionDb = services.GetRequiredService<ISessionDbStore>();
+            _SessionDb = services.GetRequiredService<SessionDbStore>();
         }
 
         public async Task Exp(short factionID, int id1, int id2) {

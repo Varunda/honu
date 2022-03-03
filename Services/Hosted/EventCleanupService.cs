@@ -27,10 +27,10 @@ namespace watchtower.Services {
         private readonly ILogger<EventCleanupService> _Logger;
 
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
 
         public EventCleanupService(ILogger<EventCleanupService> logger,
-            IServiceHealthMonitor healthMon, ISessionDbStore sessionDb) { 
+            IServiceHealthMonitor healthMon, SessionDbStore sessionDb) { 
 
             _Logger = logger;
 
@@ -64,7 +64,7 @@ namespace watchtower.Services {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
                                 //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
-                                _ = _SessionDb.End(entry.Value, DateTime.UtcNow);
+                                _ = _SessionDb.End(entry.Value.ID, DateTime.UtcNow);
                             }
                         }
                     }

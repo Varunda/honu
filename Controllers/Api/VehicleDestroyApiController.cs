@@ -20,14 +20,14 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<VehicleDestroyApiController> _Logger;
 
         private VehicleDestroyDbStore _VehicleDestroyDb;
-        private ISessionDbStore _SessionDb;
+        private SessionDbStore _SessionDb;
 
         private readonly Services.Repositories.CharacterRepository _CharacterRepository;
         private readonly VehicleRepository _VehicleRepository;
         private readonly ItemRepository _ItemRepository;
 
         public VehicleDestroyApiController(ILogger<VehicleDestroyApiController> logger,
-            VehicleDestroyDbStore vehicleDestroyDb, ISessionDbStore sessionDb,
+            VehicleDestroyDbStore vehicleDestroyDb, SessionDbStore sessionDb,
             Services.Repositories.CharacterRepository charRepo, VehicleRepository vehRepo,
             ItemRepository itemRepo) {
 
