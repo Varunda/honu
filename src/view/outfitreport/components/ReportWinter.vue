@@ -81,9 +81,9 @@
                 <h4>{{category.name}}</h4>
 
                 <div class="d-flex flex-row">
-                    <winter-card v-for="metric in category.metrics" :key="metric.name"
-                        :card="metric" :show-fun-name="ShowFunNames" :size="size">
-                    </winter-card>
+                    <template v-for="metric in category.metrics" :key="metric.name">
+                        <winter-card v-if="metric.entries.length > 0" :card="metric" :show-fun-name="ShowFunNames" :size="size"></winter-card>
+                    </template>
                 </div>
             </div>
         `,
@@ -172,6 +172,8 @@
 
                 this.makeSpawns();
                 this.makeSundySpawns();
+                this.makeSundiesPlaced();
+                this.makeSpawnsPerSundy();
                 this.makeRouterSpawns();
                 this.makeRoutersPlaced();
                 this.makeSpawnsPerRouter();
@@ -399,6 +401,45 @@
                 this.catSpawns.metrics.push(metric);
             },
 
+            makeSundiesPlaced: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Sunderers placed";
+                metric.funName = "Bus stop builder";
+                metric.description = "Most sunderers deployed (per hour)";
+
+                const map: Map<string, Set<string>> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (ev.experienceID != Experience.SUNDERER_SPAWN_BONUS) {
+                        continue;
+                    }
+
+                    if (map.has(ev.sourceID) == false) {
+                        map.set(ev.sourceID, new Set());
+                    }
+
+                    const set: Set<string> = map.get(ev.sourceID)!;
+                    set.add(ev.otherID);
+                }
+
+                const metrics: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.value = iter[1].size;
+                        entry.name = this.getCharacterName(iter[0]);
+
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            entry.display = `${entry.value} (${(entry.value / metadata.timeAs * 60 * 60).toFixed(2)})`;
+                        }
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = metrics;
+                this.catSpawns.metrics.push(metric);
+            },
+
             makeSpawnsPerRouter: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Spawns per router";
@@ -409,6 +450,55 @@
 
                 for (const ev of this.report.experience) {
                     if (ev.experienceID != Experience.GENERIC_NPC_SPAWN) {
+                        continue;
+                    }
+
+                    if (map.has(ev.sourceID) == false) {
+                        map.set(ev.sourceID, new Map());
+                    }
+
+                    const charMap: Map<string, number> = map.get(ev.sourceID)!;
+
+                    if (charMap.has(ev.otherID) == false) {
+                        charMap.set(ev.otherID, 0);
+                    }
+
+                    charMap.set(ev.otherID, (charMap.get(ev.otherID) || 0) + 1);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.name = this.getCharacterName(entry.characterID);
+
+                        let routers: number = iter[1].size;
+                        let count: number = 0;
+
+                        Array.from(iter[1].entries()).map(aa => {
+                            count += aa[1];
+                        });
+
+                        entry.value = count / Math.max(1, routers);
+                        entry.display = `${entry.value.toFixed(2)} (${routers})`;
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = entries;
+                this.catSpawns.metrics.push(metric);
+            },
+
+            makeSpawnsPerSundy: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Spawns per bus";
+                metric.funName = "Bus stops made";
+                metric.description = "Spawns per sundy (# placed)";
+
+                const map: Map<string, Map<string, number>> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (ev.experienceID != Experience.SUNDERER_SPAWN_BONUS) {
                         continue;
                     }
 
