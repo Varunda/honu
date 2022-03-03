@@ -188,6 +188,7 @@
                 this.makeC4Kills();
                 this.makeKnifeKills();
                 this.makePistolKills();
+                this.makeLauncherKills();
 
                 this.makeAverageLifetime();
             },
@@ -709,6 +710,19 @@
                 this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
                     metric,
                     3, // pistol
+                    (metadata) => metadata.timeAs
+                ));
+            },
+
+            makeLauncherKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Launcher kills";
+                metric.funName = "NASA engineer";
+                metric.description = "Most launcher kills";
+
+                this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
+                    metric,
+                    13, // pistol
                     (metadata) => metadata.timeAs
                 ));
             },
