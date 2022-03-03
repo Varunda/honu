@@ -1,6 +1,6 @@
 # Carl Watchtower
 
-Carl Watchtower (or carl-wt), is a Planetside 2 tracker that shows the top players in each faction certain categories. You can also view a breakdown of their actions, such as seeing what weapons a player is using, who a medic is reviving, or what types of spawns someone is providing
+Honu is a Planetside 2 website that shows the top players in each faction certain categories. You can also view a breakdown of their actions, such as seeing what weapons a player is using, who a medic is reviving, or what types of spawns someone is providing
 
 ## Other realtime tracking webites
 
@@ -11,13 +11,13 @@ Carl Watchtower (or carl-wt), is a Planetside 2 tracker that shows the top playe
 
 ## General Info
 
-carl-wt is a .NET Core 5 server that runs on Windows 10 and Linux
+honu is a .NET 6 server that runs on Windows 10 and Linux
 
 ### Technologies used
 
 Tech | Use
 --- | ---
-.NET Core 5 | backbone for everything
+.NET 6 | backbone for everything
 ASP.NET Core MVC | routing
 SignalR | WebSocket connections for realtime updates
 VueJS | frontend framework
@@ -27,16 +27,16 @@ PostgreSQL | database
 
 ## Setup
 
-1. download Carl Watchtower
-    - `git clone https://github.com/varunda/carl-wt.git`
+1. download honu
+    - `git clone https://github.com/varunda/honu.git`
 1. download and install PostgreSQL 13.3 or higher
     - earlier versions probably work but I haven't tested them
 1. setup a `ps2` database for carl-wt to create all the tables for
     - Linux:
         - log into user that has permissions in the default psql server 
-            - `> sudo -iu postgres` 
+            - `$ sudo -iu postgres` 
         - start a psql client
-            - `> psql`
+            - `$ psql`
         - create ps2 database
             - `postgres=# CREATE DATABASE ps2;`
         - ensure it exists
@@ -74,7 +74,7 @@ If you want to change database options, you can either add a new object in `apps
 
 ## Running
 
-carl-wt is really a collection of programs that run under the same process. Each program, or hosted service, handles a different part of creating the world data. Some hosted services run once then return, others act as a queue processor, while others run period taks. Some services can be interacted with by inputting commands to the server
+honu is really a collection of programs that run under the same process. Each program, or hosted service, handles a different part of creating the world data. Some hosted services run once then return, others act as a queue processor, while others run period taks. Some services can be interacted with by inputting commands to the server
 
 ### Services
 
@@ -96,9 +96,9 @@ Queue | Continiously processes a list of things to do
 
 ### Commands
 
-carl-wt can be interacted with in the console by typing commands. It is a bit jank currently. If text is output while you're typing a command, the input text will be split. There is no command history or auto-complete.
+honu can be interacted with in the console by typing commands. It is a bit jank currently. If text is output while you're typing a command, the input text will be split. There is no command history or auto-complete.
 
-Commands are processed in `/Code/Commands`, and can aid in running carl-wt. To list all commands available, use `.list`. To safely close carl-wt, use `.close`. Closing carl-wt thru SIGTERM can be done (such as ^C), but can prevent some non-essential cleanup processes from running.
+Commands are processed in `/Code/Commands`, and can aid in running honu. To list all commands available, use `.list`. To safely close honu, use `.close`. Closing honu thru SIGTERM can be done (such as ^C), but can prevent some non-essential cleanup processes from running (such as ending current sessions).
 
 #### Common commands
 
