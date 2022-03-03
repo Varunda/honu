@@ -274,11 +274,12 @@ namespace watchtower.Realtime {
                         PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
                         PsItem? attackerItem = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 
-                        string msg = $"A bus has been blown up at {ev.Timestamp:u} in {ev.WorldID}\n";
-                        msg += $"Attacker: {attacker?.GetDisplayName() ?? $"<missing {ev.AttackerCharacterID}>"}. Faction: {Faction.GetName(ev.AttackerFactionID)}, Team: {Faction.GetName(ev.AttackerTeamID)}\n";
-                        msg += $"Weapon: {attackerItem?.Name} ({ev.AttackerWeaponID})\n";
+                        string zonename = Zone.GetName(ev.ZoneID);
+                        string msg = $"A bus has been blown up at **{ev.Timestamp:u}** on **{Zone.GetName(ev.ZoneID)}\n**";
+                        msg += $"Attacker: **{attacker?.GetDisplayName() ?? $"<missing {ev.AttackerCharacterID}>"}**. Faction: **{Faction.GetName(ev.AttackerFactionID)}**, Team: **{Faction.GetName(ev.AttackerTeamID)}\n**";
+                        msg += $"Weapon: **{attackerItem?.Name} ({ev.AttackerWeaponID})\n**";
 
-                        msg += $"Owner: {killed?.GetDisplayName() ?? $"<missing {ev.KilledCharacterID}>"}. Faction {Faction.GetName(ev.KilledFactionID)}, Team: {Faction.GetName(ev.KilledTeamID)}\n";
+                        msg += $"Owner: **{killed?.GetDisplayName() ?? $"<missing {ev.KilledCharacterID}>"}**. Faction **{Faction.GetName(ev.KilledFactionID)}**, Team: **{Faction.GetName(ev.KilledTeamID)}\n**";
 
                         if (bus != null) {
                             msg += $"Owner EXP: {owner?.GetDisplayName() ?? $"<missing {bus.OwnerID}>"}\n";
