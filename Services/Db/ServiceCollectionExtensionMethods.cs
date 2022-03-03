@@ -19,7 +19,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<ItemDbStore>();
             services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();
-            services.AddSingleton<ISessionDbStore, SessionDbStore>();
+            services.AddSingleton<SessionDbStore, SessionDbStore>();
             services.AddSingleton<FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
             services.AddSingleton<IMapDbStore, MapDbStore>();

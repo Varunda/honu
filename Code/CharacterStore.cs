@@ -13,6 +13,22 @@ namespace watchtower.Models {
 
         public ConcurrentDictionary<string, TrackedPlayer> Players = new ConcurrentDictionary<string, TrackedPlayer>();
 
+        public TrackedPlayer? GetByCharacterID(string charID) {
+            TrackedPlayer? player;
+
+            lock (Players) {
+                Players.TryGetValue(charID, out player);
+            }
+
+            return player;
+        }
+
+        public void SetByCharacterID(string charID, TrackedPlayer player) {
+            lock (Players) {
+                Players[charID] = player;
+            }
+        }
+
     }
 
 }

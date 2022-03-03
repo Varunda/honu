@@ -17,11 +17,11 @@ namespace watchtower.Services.Repositories {
         private readonly OutfitCollection _OutfitCensus;
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
 
         public ReportRepository(ILogger<ReportRepository> logger,
             OutfitCollection outfitCensus, CharacterRepository charRepo,
-            OutfitRepository outfitRepo, ISessionDbStore sessionDb) {
+            OutfitRepository outfitRepo, SessionDbStore sessionDb) {
 
             _Logger = logger;
             _OutfitCensus = outfitCensus;

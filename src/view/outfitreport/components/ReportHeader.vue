@@ -81,7 +81,7 @@
 
             copy: function() {
                 try {
-                    navigator.clipboard.writeText(this.reportUrl);
+                    navigator.clipboard.writeText(location.href);
                 } catch (err: any) {
                     console.error(err);
                 }

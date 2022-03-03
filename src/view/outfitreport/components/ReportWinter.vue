@@ -29,6 +29,10 @@
                     Spawns
                 </button>
 
+                <button type="button" class="btn btn-small border" :class="[ show.weaponTypes ? 'btn-primary' : 'btn-secondary' ]" @click="show.weaponTypes = !show.weaponTypes">
+                    Weapon types
+                </button>
+
                 <button type="button" class="btn btn-small border" :class="[ show.vehicleKills ? 'btn-primary' : 'btn-secondary' ]" @click="show.vehicleKills = !show.vehicleKills">
                     Vehicle kills
                 </button>
@@ -43,6 +47,7 @@
             <winter-section v-if="show.kills" :category="catKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.support" :category="catSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.weaponTypes" :category="catWeaponTypes" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
         </div>
@@ -57,9 +62,9 @@
     import WinterCard from "./winter/WinterCard.vue";
 
     import { PsCharacter } from "api/CharacterApi";
-    import { Experience } from "api/ExpStatApi";
+    import { Experience, ExpEvent } from "api/ExpStatApi";
     import { KillEvent } from "api/KillStatApi";
-    import { ExpEvent } from "api/ExpStatApi";
+    import { PsItem } from "api/ItemApi";
 
     import TimeUtils from "util/Time";
     import LoadoutUtils from "util/Loadout";
@@ -76,9 +81,9 @@
                 <h4>{{category.name}}</h4>
 
                 <div class="d-flex flex-row">
-                    <winter-card v-for="metric in category.metrics" :key="metric.name"
-                        :card="metric" :show-fun-name="ShowFunNames" :size="size">
-                    </winter-card>
+                    <template v-for="metric in category.metrics" :key="metric.name">
+                        <winter-card v-if="metric.entries.length > 0" :card="metric" :show-fun-name="ShowFunNames" :size="size"></winter-card>
+                    </template>
                 </div>
             </div>
         `,
@@ -128,6 +133,7 @@
                     support: true as boolean,
                     spawns: true as boolean,
                     vehicleKills: true as boolean,
+                    weaponTypes: true as boolean,
                     misc: true as boolean
                 },
 
@@ -135,6 +141,7 @@
                     new WinterCategory("Kills") as WinterCategory,
                     new WinterCategory("Support") as WinterCategory,
                     new WinterCategory("Spawns") as WinterCategory,
+                    new WinterCategory("Weapon types") as WinterCategory,
                     new WinterCategory("Vehicle kills") as WinterCategory,
                     new WinterCategory("Misc") as WinterCategory,
                 ] as WinterCategory[],
@@ -165,6 +172,8 @@
 
                 this.makeSpawns();
                 this.makeSundySpawns();
+                this.makeSundiesPlaced();
+                this.makeSpawnsPerSundy();
                 this.makeRouterSpawns();
                 this.makeRoutersPlaced();
                 this.makeSpawnsPerRouter();
@@ -178,6 +187,11 @@
                 this.makeLiberatorKills();
 
                 this.makeMostUniqueWeapons();
+                this.makeC4Kills();
+                this.makeKnifeKills();
+                this.makePistolKills();
+                this.makeLauncherKills();
+
                 this.makeAverageLifetime();
             },
 
@@ -329,7 +343,7 @@
 
                 this.catSpawns.metrics.push(this.generateExperience(
                     metric,
-                    [ Experience.GENERIC_NPC_SPAWN ],
+                    [Experience.GENERIC_NPC_SPAWN],
                     (metadata) => metadata.timeAs)
                 );
             },
@@ -387,6 +401,45 @@
                 this.catSpawns.metrics.push(metric);
             },
 
+            makeSundiesPlaced: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Sunderers placed";
+                metric.funName = "Bus stop builder";
+                metric.description = "Most sunderers deployed (per hour)";
+
+                const map: Map<string, Set<string>> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (ev.experienceID != Experience.SUNDERER_SPAWN_BONUS) {
+                        continue;
+                    }
+
+                    if (map.has(ev.sourceID) == false) {
+                        map.set(ev.sourceID, new Set());
+                    }
+
+                    const set: Set<string> = map.get(ev.sourceID)!;
+                    set.add(ev.otherID);
+                }
+
+                const metrics: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.value = iter[1].size;
+                        entry.name = this.getCharacterName(iter[0]);
+
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            entry.display = `${entry.value} (${(entry.value / metadata.timeAs * 60 * 60).toFixed(2)})`;
+                        }
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = metrics;
+                this.catSpawns.metrics.push(metric);
+            },
+
             makeSpawnsPerRouter: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Spawns per router";
@@ -397,6 +450,55 @@
 
                 for (const ev of this.report.experience) {
                     if (ev.experienceID != Experience.GENERIC_NPC_SPAWN) {
+                        continue;
+                    }
+
+                    if (map.has(ev.sourceID) == false) {
+                        map.set(ev.sourceID, new Map());
+                    }
+
+                    const charMap: Map<string, number> = map.get(ev.sourceID)!;
+
+                    if (charMap.has(ev.otherID) == false) {
+                        charMap.set(ev.otherID, 0);
+                    }
+
+                    charMap.set(ev.otherID, (charMap.get(ev.otherID) || 0) + 1);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.name = this.getCharacterName(entry.characterID);
+
+                        let routers: number = iter[1].size;
+                        let count: number = 0;
+
+                        Array.from(iter[1].entries()).map(aa => {
+                            count += aa[1];
+                        });
+
+                        entry.value = count / Math.max(1, routers);
+                        entry.display = `${entry.value.toFixed(2)} (${routers})`;
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = entries;
+                this.catSpawns.metrics.push(metric);
+            },
+
+            makeSpawnsPerSundy: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Spawns per bus";
+                metric.funName = "Bus stops made";
+                metric.description = "Spawns per sundy (# placed)";
+
+                const map: Map<string, Map<string, number>> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (ev.experienceID != Experience.SUNDERER_SPAWN_BONUS) {
                         continue;
                     }
 
@@ -633,7 +735,7 @@
                 metric.funName = "Diverse skillset";
                 metric.description = "Most amount of unique weapons";
 
-                const map: Map<string, Set<string>> = new Map();
+                const map: Map<string, Set<number>> = new Map();
 
                 for (const kill of this.report.kills) {
                     const charID: string = kill.attackerCharacterID;
@@ -642,7 +744,7 @@
                         map.set(charID, new Set());
                     }
 
-                    const set: Set<string> = map.get(charID)!;
+                    const set: Set<number> = map.get(charID)!;
                     set.add(kill.weaponID);
 
                     map.set(charID, set);
@@ -661,6 +763,58 @@
                 metric.entries = entries;
 
                 this.catMisc.metrics.push(metric);
+            },
+
+            makeC4Kills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "C4 kills";
+                metric.funName = "Explosive tendencies";
+                metric.description = "Most C4 kills";
+
+                this.catWeaponTypes.metrics.push(this.generateWeaponKills(
+                    metric,
+                    [432, 800623, 6009782], // c4, aurax c4, christmax c4
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeKnifeKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Knife kills";
+                metric.funName = "Slasher";
+                metric.description = "Most knife kills";
+
+                this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
+                    metric,
+                    2, // knife
+                    (metadata) => metadata.timeAs
+                ));
+            },
+
+            makePistolKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Pistol kills";
+                metric.funName = "The cowboy";
+                metric.description = "Most pistol kills";
+
+                this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
+                    metric,
+                    3, // pistol
+                    (metadata) => metadata.timeAs
+                ));
+            },
+
+            makeLauncherKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Launcher kills";
+                metric.funName = "NASA engineer";
+                metric.description = "Most launcher kills";
+
+                this.catWeaponTypes.metrics.push(this.generateWeaponCategoryKills(
+                    metric,
+                    13, // pistol
+                    (metadata) => metadata.timeAs
+                ));
             },
 
             makeAverageLifetime: function(): void {
@@ -757,6 +911,87 @@
                 return metric;
             },
 
+            generateWeaponKills: function(metric: WinterMetric, weaponIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
+                const map: Map<string, WinterEntry> = new Map();
+
+                for (const kill of this.report.kills) {
+                    if (weaponIDs.indexOf(kill.weaponID) == -1) {
+                        continue;
+                    }
+
+                    if (map.has(kill.attackerCharacterID) == false) {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = kill.attackerCharacterID;
+                        entry.name = this.getCharacterName(entry.characterID);
+                        entry.value = 0;
+
+                        map.set(entry.characterID, entry);
+                    }
+
+                    const entry: WinterEntry = map.get(kill.attackerCharacterID)!;
+                    ++entry.value;
+                    map.set(kill.attackerCharacterID, entry);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.values());
+                if (perMinuteSelector != null) {
+                    for (const entry of entries) {
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            const minutes: number = perMinuteSelector(metadata);
+                            entry.display = `${entry.value} (${(entry.value / Math.max(1, minutes) * 60).toFixed(2)})`;
+                        }
+                    }
+                }
+
+                metric.entries = entries.sort((a, b) => b.value - a.value);
+
+                return metric;
+            },
+
+            generateWeaponCategoryKills: function(metric: WinterMetric, itemCategoryID: number, perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
+                const map: Map<string, WinterEntry> = new Map();
+
+                for (const kill of this.report.kills) {
+                    const item: PsItem | null = this.report.items.get(kill.weaponID) || null;
+                    if (item == null) {
+                        continue;
+                    }
+
+                    if (item.categoryID != itemCategoryID) {
+                        continue;
+                    }
+
+                    if (map.has(kill.attackerCharacterID) == false) {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = kill.attackerCharacterID;
+                        entry.name = this.getCharacterName(entry.characterID);
+                        entry.value = 0;
+
+                        map.set(entry.characterID, entry);
+                    }
+
+                    const entry: WinterEntry = map.get(kill.attackerCharacterID)!;
+                    ++entry.value;
+                    map.set(kill.attackerCharacterID, entry);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.values());
+                if (perMinuteSelector != null) {
+                    for (const entry of entries) {
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            const minutes: number = perMinuteSelector(metadata);
+                            entry.display = `${entry.value} (${(entry.value / Math.max(1, minutes) * 60).toFixed(2)})`;
+                        }
+                    }
+                }
+
+                metric.entries = entries.sort((a, b) => b.value - a.value);
+
+                return metric;
+            },
+
             getCharacterName(charID: string): string {
                 const character: PsCharacter | null = this.report.characters.get(charID) || null;
                 return character != null ? `${character.outfitID != null ? `[${character.outfitTag}] ` : ""}${character.name}` : `<missing ${charID}>`;
@@ -773,11 +1008,14 @@
             catSpawns: function(): WinterCategory {
                 return this.categories[2];
             },
-            catVehicleKills: function(): WinterCategory {
+            catWeaponTypes: function(): WinterCategory {
                 return this.categories[3];
             },
-            catMisc: function(): WinterCategory {
+            catVehicleKills: function(): WinterCategory {
                 return this.categories[4];
+            },
+            catMisc: function(): WinterCategory {
+                return this.categories[5];
             },
         },
 

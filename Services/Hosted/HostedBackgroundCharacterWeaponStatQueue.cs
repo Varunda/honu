@@ -220,9 +220,13 @@ namespace watchtower.Services.Hosted {
                         */
                         if (weaponStats.Count > 0) {
                             try {
+                                //List<WeaponStatEntry> before = await _WeaponStatDb.GetByCharacterID(entry.CharacterID);
                                 await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
+                                //List<WeaponStatEntry> after = await _WeaponStatDb.GetByCharacterID(entry.CharacterID);
+
+                                //_Logger.LogDebug($"{entry.CharacterID}/{censusChar.Name} before = {before.Count}, after = {after.Count}");
                             } catch (Exception ex) {
-                                _Logger.LogError($"Error updating character weapon stat data for {entry.CharacterID}");
+                                _Logger.LogError(ex, $"Error updating character weapon stat data for {entry.CharacterID}");
                             }
                         }
                         stoppingToken.ThrowIfCancellationRequested();

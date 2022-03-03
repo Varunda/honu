@@ -22,12 +22,12 @@ namespace watchtower.Controllers.Api {
 
         private readonly ILogger<SessionApiController> _Logger;
 
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
 
         public SessionApiController(ILogger<SessionApiController> logger,
-            ISessionDbStore sessionDb, CharacterRepository charRepo,
+            SessionDbStore sessionDb, CharacterRepository charRepo,
             OutfitRepository outfitRepo) {
 
             _Logger = logger;

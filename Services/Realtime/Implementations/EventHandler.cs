@@ -30,7 +30,7 @@ namespace watchtower.Realtime {
 
         private readonly IKillEventDbStore _KillEventDb;
         private readonly IExpEventDbStore _ExpEventDb;
-        private readonly ISessionDbStore _SessionDb;
+        private readonly SessionDbStore _SessionDb;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
@@ -57,7 +57,7 @@ namespace watchtower.Realtime {
         public EventHandler(ILogger<EventHandler> logger,
             IKillEventDbStore killEventDb, IExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
-            ISessionDbStore sessionDb, SessionStarterQueue sessionQueue,
+            SessionDbStore sessionDb, SessionStarterQueue sessionQueue,
             DiscordMessageQueue msgQueue, MapCollection mapColl,
             FacilityControlDbStore controlDb, CharacterUpdateQueue weaponQueue,
             IBattleRankDbStore rankDb, LogoutUpdateBuffer logoutQueue,
@@ -195,7 +195,10 @@ namespace watchtower.Realtime {
                 });
 
                 if (attacker.Online == false) {
-                    _SessionQueue.Queue(attacker);
+                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                        CharacterID = attacker.ID,
+                        LastEvent = ev.Timestamp
+                    });
                 }
 
                 _CacheQueue.Queue(attacker.ID);
@@ -222,7 +225,10 @@ namespace watchtower.Realtime {
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
                 if (killed.Online == false && attacker.ID != killed.ID) {
-                    _SessionQueue.Queue(attacker);
+                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                        CharacterID = killed.ID,
+                        LastEvent = ev.Timestamp
+                    });
                 }
 
                 killed.ZoneID = ev.ZoneID;
@@ -274,11 +280,9 @@ namespace watchtower.Realtime {
                         PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
                         PsItem? attackerItem = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 
-                        string zonename = Zone.GetName(ev.ZoneID);
                         string msg = $"A bus has been blown up at **{ev.Timestamp:u}** on **{Zone.GetName(ev.ZoneID)}\n**";
                         msg += $"Attacker: **{attacker?.GetDisplayName() ?? $"<missing {ev.AttackerCharacterID}>"}**. Faction: **{Faction.GetName(ev.AttackerFactionID)}**, Team: **{Faction.GetName(ev.AttackerTeamID)}\n**";
                         msg += $"Weapon: **{attackerItem?.Name} ({ev.AttackerWeaponID})\n**";
-
                         msg += $"Owner: **{killed?.GetDisplayName() ?? $"<missing {ev.KilledCharacterID}>"}**. Faction **{Faction.GetName(ev.KilledFactionID)}**, Team: **{Faction.GetName(ev.KilledTeamID)}\n**";
 
                         if (bus != null) {
@@ -441,7 +445,6 @@ namespace watchtower.Realtime {
             string? charID = payload.Value<string?>("character_id");
             if (charID != null) {
                 _CacheQueue.Queue(charID);
-                TrackedPlayer p;
 
                 DateTime timestamp = payload.CensusTimestamp("timestamp");
                 short worldID = payload.GetWorldID();
@@ -452,6 +455,7 @@ namespace watchtower.Realtime {
                     });
                 }
 
+                TrackedPlayer p;
                 lock (CharacterStore.Get().Players) {
                     // The FactionID and TeamID are updated as part of caching the character
                     p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
@@ -466,7 +470,7 @@ namespace watchtower.Realtime {
                     p.LastLogin = DateTime.UtcNow;
                 }
 
-                await _SessionDb.Start(p, timestamp);
+                await _SessionDb.Start(p.ID, timestamp);
 
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             }
@@ -505,7 +509,7 @@ namespace watchtower.Realtime {
                         _WeaponQueue.Queue(charID);
                     }
 
-                    await _SessionDb.End(p, timestamp);
+                    await _SessionDb.End(p.ID, timestamp);
 
                     // Reset team of the NSO player as they're now offline
                     if (p.FactionID == Faction.NS) {
@@ -727,7 +731,10 @@ namespace watchtower.Realtime {
                 });
 
                 if (attacker.Online == false) {
-                    _SessionQueue.Queue(attacker);
+                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                        CharacterID = attacker.ID,
+                        LastEvent = ev.Timestamp
+                    });
                 }
 
                 _CacheQueue.Queue(attacker.ID);
@@ -756,10 +763,14 @@ namespace watchtower.Realtime {
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
                 if (killed.Online == false && attacker.ID != killed.ID) {
-                    _SessionQueue.Queue(attacker);
+                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                        CharacterID = killed.ID,
+                        LastEvent = ev.Timestamp
+                    });
                 }
 
                 killed.ZoneID = zoneID;
+
                 if (killed.FactionID == Faction.UNKNOWN) {
                     killed.FactionID = factionID;
                     killed.TeamID = ev.KilledTeamID;
@@ -823,7 +834,10 @@ namespace watchtower.Realtime {
                 });
 
                 if (p.Online == false) {
-                    _SessionQueue.Queue(p);
+                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                        CharacterID = p.ID,
+                        LastEvent = ev.Timestamp
+                    });
                 }
 
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

@@ -112,6 +112,7 @@
 
     class ClassStats {
         public kills: number = 0;
+        public vehicleKills: number = 0;
         public deaths: number = 0;
         public count: number = 0;
         public timeAs: number = 0;
