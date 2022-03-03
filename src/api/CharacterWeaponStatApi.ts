@@ -28,6 +28,7 @@ export class WeaponStatEntry {
 export class CharacterWeaponStatEntry {
 	public characterID: string = "";
 	public itemID: string = "";
+	public vehicleID: number = 0;
 	public item: PsItem | null = null;
 
 	public itemName: string = "";
@@ -72,6 +73,7 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 		return {
 			characterID: elem.characterID,
 			itemID: elem.itemID,
+			vehicleID: elem.vehicleID,
 			item: { ...elem.item },
 			itemName: (elem.item) ? elem.item.name : `<missing ${elem.itemID}>`,
 			kills: elem.stat.kills,

@@ -13,7 +13,13 @@ namespace watchtower.Services.Db.Patches {
             using NpgsqlConnection conn = helper.Connection();
             using NpgsqlCommand cmd = await helper.Command(conn, @"
                 ALTER TABLE weapon_stats
+                    DROP CONSTRAINT IF EXISTS weapon_stats_pkey;
+
+                ALTER TABLE weapon_stats
                     ADD COLUMN IF NOT EXISTS vehicle_id int NOT NULL DEFAULT 0;
+                    
+                ALTER TABLE weapon_stats
+                    ADD PRIMARY KEY (character_id, vehicle_id, item_id);
             ");
 
             await cmd.ExecuteNonQueryAsync();
