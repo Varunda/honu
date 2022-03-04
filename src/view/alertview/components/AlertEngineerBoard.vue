@@ -11,7 +11,7 @@
             </a-header>
 
             <a-filter field="characterName" type="string" method="input"
-                :conditions="[ 'equals' ]">
+                :conditions="[ 'contains' ]">
             </a-filter>
 
             <a-body v-slot="entry">
