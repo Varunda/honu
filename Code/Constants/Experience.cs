@@ -75,6 +75,10 @@ namespace watchtower.Constants {
             return expId == RESUPPLY || expId == SQUAD_RESUPPLY;
         }
 
+        public static bool IsMaxRepair(int expId) {
+            return expId == MAX_REPAIR || expId == SQUAD_MAX_REPAIR;
+        }
+
         public static bool IsShieldRepair(int expId) {
             return expId == SHIELD_REPAIR || expId == SQUAD_SHIELD_REPAIR;
         }

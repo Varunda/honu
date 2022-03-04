@@ -28,8 +28,8 @@ namespace watchtower.Realtime {
 
         private readonly ILogger<EventHandler> _Logger;
 
-        private readonly IKillEventDbStore _KillEventDb;
-        private readonly IExpEventDbStore _ExpEventDb;
+        private readonly KillEventDbStore _KillEventDb;
+        private readonly ExpEventDbStore _ExpEventDb;
         private readonly SessionDbStore _SessionDb;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
@@ -55,7 +55,7 @@ namespace watchtower.Realtime {
         private readonly IHubContext<RealtimeMapHub> _MapHub;
 
         public EventHandler(ILogger<EventHandler> logger,
-            IKillEventDbStore killEventDb, IExpEventDbStore expDb,
+            KillEventDbStore killEventDb, ExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
             SessionDbStore sessionDb, SessionStarterQueue sessionQueue,
             DiscordMessageQueue msgQueue, MapCollection mapColl,

@@ -10,9 +10,9 @@ using watchtower.Constants;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class ExpEventDbStore : IDataReader<ExpDbEntry>, IExpEventDbStore {
+    public class ExpEventDbStore : IDataReader<ExpDbEntry> {
 
         private readonly ILogger<ExpEventDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -28,6 +28,13 @@ namespace watchtower.Services.Db.Implementations {
             _ExpDataReader = expReader ?? throw new ArgumentNullException(nameof(expReader));
         }
 
+        /// <summary>
+        ///     Insert a new <see cref="ExpEvent"/>, returning the ID of the row created
+        /// </summary>
+        /// <param name="ev">Parameters used to insert the event</param>
+        /// <returns>
+        ///     The ID of the event that was just inserted into the table
+        /// </returns>
         public async Task<long> Insert(ExpEvent ev) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -67,6 +74,13 @@ namespace watchtower.Services.Db.Implementations {
             }
         }
 
+        /// <summary>
+        ///     Get the top players who have performed an action specified in <paramref name="parameters"/>
+        /// </summary>
+        /// <param name="parameters">Parameters used to performed the action</param>
+        /// <returns>
+        ///     The top players who have met the parameters passed in <paramref name="parameters"/>
+        /// </returns>
         public async Task<List<ExpDbEntry>> GetEntries(ExpEntryOptions parameters) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -92,6 +106,13 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
+        /// <summary>
+        ///     Get the outfits who have performed an action specified in <paramref name="options"/>
+        /// </summary>
+        /// <param name="options">Options to filter the entries returned</param>
+        /// <returns>
+        ///     A list of outfits who have met the parameters passed in <paramref name="options"/>
+        /// </returns>
         public async Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -186,6 +207,38 @@ namespace watchtower.Services.Db.Implementations {
             return events;
         }
 
+        /// <summary>
+        ///     Get the exp events that occured between a time period, optionally limiting to a zone and world
+        /// </summary>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <param name="zoneID">Optional, zone ID to limit the kills by</param>
+        /// <param name="worldID">Optional, world ID to limit the kills by</param>
+        /// <returns>
+        ///     All <see cref="ExpEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
+        ///     and/or <paramref name="worldID"/> is given, the event will match those options given
+        /// </returns>
+        public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    FROM wt_exp
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                    {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
+                    {(worldID != null ? " AND world_id = @WorldID " : "")}
+            ");
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+            cmd.AddParameter("ZoneID", zoneID);
+            cmd.AddParameter("WorldID", worldID);
+
+            List<ExpEvent> evs = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
         public override ExpDbEntry ReadEntry(NpgsqlDataReader reader) {
             ExpDbEntry entry = new ExpDbEntry();
 
@@ -196,4 +249,15 @@ namespace watchtower.Services.Db.Implementations {
         }
 
     }
+
+    public static class IExpEventDbStoreExtensionMethods {
+
+        public static Task<List<ExpEvent>> GetRecentByCharacterID(this ExpEventDbStore db, string characterID, int interval) {
+            DateTime start = DateTime.UtcNow - TimeSpan.FromSeconds(interval * 60);
+            return db.GetByCharacterID(characterID, start, DateTime.UtcNow);
+
+        }
+
+    }
+
 }

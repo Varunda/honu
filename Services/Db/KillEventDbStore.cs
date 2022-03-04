@@ -10,9 +10,12 @@ using watchtower.Constants;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class KillEventDbStore : IKillEventDbStore {
+    /// <summary>
+    ///     Service to interact with the kill table in the DB
+    /// </summary>
+    public class KillEventDbStore {
 
         private readonly ILogger<KillEventDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -37,6 +40,13 @@ namespace watchtower.Services.Db.Implementations {
             _KillItemEntryReader = itemReader ?? throw new ArgumentNullException(nameof(itemReader));
         }
 
+        /// <summary>
+        ///     Insert a new <see cref="KillEvent"/>
+        /// </summary>
+        /// <param name="ev">Event to be inserted</param>
+        /// <returns>
+        ///     The ID of the <see cref="KillEvent"/> that was just created
+        /// </returns>
         public async Task<long> Insert(KillEvent ev) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -82,6 +92,11 @@ namespace watchtower.Services.Db.Implementations {
             }
         }
 
+        /// <summary>
+        ///     Update <see cref="KillEvent.RevivedEventID"/>
+        /// </summary>
+        /// <param name="charID">Character ID that was revived</param>
+        /// <param name="revivedEventID">ID of the exp event that the revive came from</param>
         public async Task SetRevivedID(string charID, long revivedEventID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -103,6 +118,11 @@ namespace watchtower.Services.Db.Implementations {
             await conn.CloseAsync();
         }
 
+        /// <summary>
+        ///     Get the top 8 killers from the parameters given
+        /// </summary>
+        /// <param name="options">Options used to generate the data</param>
+        /// <returns></returns>
         public async Task<List<KillDbEntry>> GetTopKillers(KillDbOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -161,6 +181,11 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
+        /// <summary>
+        ///     Get the top killers in an outfit
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public async Task<List<KillDbOutfitEntry>> GetTopOutfitKillers(KillDbOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -199,6 +224,11 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
+        /// <summary>
+        ///     Get the top weapons used 
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public async Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -226,6 +256,13 @@ namespace watchtower.Services.Db.Implementations {
             return entries;
         }
 
+        /// <summary>
+        ///     Get all the kills and deaths of a character between a period
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public async Task<List<KillEvent>> GetKillsByCharacterID(string charID, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -245,6 +282,13 @@ namespace watchtower.Services.Db.Implementations {
             return evs;
         }
 
+        /// <summary>
+        ///     Get all kills and deaths of a set of characters
+        /// </summary>
+        /// <param name="IDs"></param>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        /// <returns></returns>
         public async Task<List<KillEvent>> GetKillsByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -264,6 +308,12 @@ namespace watchtower.Services.Db.Implementations {
             return evs;
         }
 
+        /// <summary>
+        ///     Get the 
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="interval"></param>
+        /// <returns></returns>
         public async Task<List<KillEvent>> GetRecentKillsByCharacterID(string charID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -282,6 +332,12 @@ namespace watchtower.Services.Db.Implementations {
             return evs;
         }
 
+        /// <summary>
+        ///     Get all kills of an outfit
+        /// </summary>
+        /// <param name="outfitID"></param>
+        /// <param name="interval"></param>
+        /// <returns></returns>
         public async Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -301,5 +357,38 @@ namespace watchtower.Services.Db.Implementations {
             return evs;
         }
 
+        /// <summary>
+        ///     Get the kills that occured between a time period, optionally limiting to a zone and world
+        /// </summary>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <param name="zoneID">Optional, zone ID to limit the kills by</param>
+        /// <param name="worldID">Optional, world ID to limit the kills by</param>
+        /// <returns>
+        ///     All <see cref="KillEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
+        ///     and/or <paramref name="worldID"/> is given, the event will match those options given
+        /// </returns>
+        public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    FROM wt_kills
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                    {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
+                    {(worldID != null ? " AND world_id = @WorldID " : "")}
+            ");
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+            cmd.AddParameter("ZoneID", zoneID);
+            cmd.AddParameter("WorldID", worldID);
+
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
     }
+
 }

@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models;
+using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
@@ -9,6 +10,7 @@ using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Census.Readers;
 using watchtower.Services.Db.Implementations;
+using watchtower.Services.Db.Readers.Alert;
 using watchtower.Services.Db.Readers.PSB;
 
 namespace watchtower.Services.Db.Readers {
@@ -59,7 +61,10 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<HonuAccount>, HonuAccountReader>();
             services.AddSingleton<IDataReader<VehicleDestroyEvent>, VehicleDestroyEventReader>();
             services.AddSingleton<IDataReader<PsVehicle>, VehicleDataReader>();
+
             services.AddSingleton<IDataReader<PsAlert>, AlertReader>();
+            services.AddSingleton<IDataReader<AlertParticipant>, AlertParticipantReader>();
+            services.AddSingleton<IDataReader<AlertParticipantDataEntry>, AlertParticipantDataReader>();
         }
 
     }

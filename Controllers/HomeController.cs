@@ -100,5 +100,13 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult AlertViewer() {
+            return View();
+        }
+
+        public IActionResult Alerts() {
+            return View("AlertList");
+        }
+
     }
 }

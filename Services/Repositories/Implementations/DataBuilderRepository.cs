@@ -19,8 +19,8 @@ namespace watchtower.Services.Repositories.Implementations {
     public class DataBuilderRepository : IDataBuilderRepository {
 
         private readonly ILogger<DataBuilderRepository> _Logger;
-        private readonly IKillEventDbStore _KillEventDb;
-        private readonly IExpEventDbStore _ExpEventDb;
+        private readonly KillEventDbStore _KillEventDb;
+        private readonly ExpEventDbStore _ExpEventDb;
         private readonly IWorldTotalDbStore _WorldTotalDb;
 
         private readonly Repositories.CharacterRepository _CharacterRepository;
@@ -31,7 +31,7 @@ namespace watchtower.Services.Repositories.Implementations {
 
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             CharacterCacheQueue charQueue,
-            IKillEventDbStore killDb, IExpEventDbStore expDb,
+            KillEventDbStore killDb, ExpEventDbStore expDb,
             Repositories.CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo) {
 

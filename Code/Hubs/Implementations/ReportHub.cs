@@ -29,8 +29,8 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly CharacterRepository _CharacterRepository;
         private readonly CharacterDbStore _CharacterDb;
         private readonly ItemRepository _ItemRepository;
-        private readonly IKillEventDbStore _KillDb;
-        private readonly IExpEventDbStore _ExpDb;
+        private readonly KillEventDbStore _KillDb;
+        private readonly ExpEventDbStore _ExpDb;
         private readonly SessionDbStore _SessionDb;
         private readonly ReportDbStore _ReportDb;
         private readonly FacilityControlDbStore _ControlDb;
@@ -42,7 +42,7 @@ namespace watchtower.Code.Hubs.Implementations {
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             OutfitCollection outfitCensus, SessionDbStore sessionDb,
-            IKillEventDbStore killDb, IExpEventDbStore expDb,
+            KillEventDbStore killDb, ExpEventDbStore expDb,
             ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,

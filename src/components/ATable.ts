@@ -740,7 +740,7 @@ export const ATable = Vue.extend({
                     }
                 },
                 filter.source?.map((iter: any) => {
-                    return createElement("option", { domProps: { value: iter.value } }, iter.key);
+                    return createElement("option", { domProps: { value: iter.key } }, iter.value);
                 })
             );
         },
