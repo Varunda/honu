@@ -35,6 +35,11 @@ namespace watchtower.Models.Census {
         public int AlertID { get; set; }
 
         /// <summary>
+        ///     Incremental ID 
+        /// </summary>
+        public int InstanceID { get; set; }
+
+        /// <summary>
         ///     Who won the alert, null if alert hasn't concluded
         /// </summary>
         public short? VictorFactionID { get; set; }

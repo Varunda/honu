@@ -28,7 +28,6 @@ export class ExpandedAlertParticipants {
     public entries: AlertParticipantDataEntry[] = [];
     public characters: Map<string, PsCharacter> = new Map();
     public outfits: Map<string, PsOutfit> = new Map();
-    public sessions: Session[] = [];
 }
 
 export class FlattendParticipantDataEntry {
@@ -58,8 +57,6 @@ export class FlattendParticipantDataEntry {
     public spawns: number = 0;
     public spawnsPerMinute: number = 0;
 
-    public sessions: Session[] = [];
-
     public kpm: number = 0;
     public kd: number = 0;
 }
@@ -88,8 +85,6 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
         for (const o of outfits) {
             expanded.outfits.set(o.id, o);
         }
-
-        expanded.sessions = elem.sessions.map((iter: any) => SessionApi.parse(iter));
 
         return expanded;
     }
@@ -123,10 +118,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                     repairsPerMinute: entry.repairs / Math.max(1, entry.secondsOnline) * 60,
                     resuppliesPerMinute: entry.resupplies / Math.max(1, entry.secondsOnline) * 60,
                     spawnsPerMinute: entry.spawns / Math.max(1, entry.secondsOnline) * 60,
-
-                    sessions: expanded.data.sessions.filter(iter => iter.characterID == entry.characterID)
                 };
-
 
                 entries.push(flat);
             }

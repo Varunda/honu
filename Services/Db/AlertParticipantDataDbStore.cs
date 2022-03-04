@@ -69,6 +69,7 @@ namespace watchtower.Services.Db {
         ///     Get the participant data of an alert
         /// </summary>
         /// <param name="alertID">ID of the alert</param>
+        /// <param name="cancel">Cancel token</param>
         /// <returns>
         ///     All <see cref="AlertParticipantDataEntry"/>s with <see cref="AlertParticipantDataEntry.AlertID"/> of <paramref name="alertID"/>
         /// </returns>

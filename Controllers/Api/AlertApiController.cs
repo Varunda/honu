@@ -86,10 +86,6 @@ namespace watchtower.Controllers.Api {
         ///     If the resulting <see cref="ExpandedAlertParticipants"/> will NOT have <see cref="ExpandedAlertParticipants.Outfits"/> fill in. 
         ///     Useful for services that use Honu API, but not the frontend
         /// </param>
-        /// <param name="excludeSessions">
-        ///     If the resulting <see cref="ExpandedAlertParticipants"/> will NOT have <see cref="ExpandedAlertParticipants.Sessions"/> fill in. 
-        ///     Useful for services that use Honu API, but not the frontend
-        /// </param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedAlertParticipants"/> for the alert requested, 
         ///     optionally including data that may be useful to the requester. The requester can request to not
@@ -105,8 +101,7 @@ namespace watchtower.Controllers.Api {
         public async Task<ApiResponse<ExpandedAlertParticipants>> GetParticipants(
                 long alertID,
                 [FromQuery] bool excludeCharacters = false,
-                [FromQuery] bool excludeOutfits = false,
-                [FromQuery] bool excludeSessions = false
+                [FromQuery] bool excludeOutfits = false
             ) {
 
             PsAlert? alert = await _AlertDb.GetByID(alertID);
@@ -134,23 +129,6 @@ namespace watchtower.Controllers.Api {
                 List<string> outfitIDs = entries.Where(iter => iter.OutfitID != null).Select(iter => iter.OutfitID!).Distinct().ToList(); // force is safe
                 List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(outfitIDs);
                 block.Outfits = outfits;
-            }
-
-            if (excludeSessions == false) {
-                List<Session> sessions = await _SessionDb.GetByRange(alert.Timestamp, alert.Timestamp + TimeSpan.FromSeconds(alert.Duration));
-
-                HashSet<string> validCharacterIds = new HashSet<string>();
-                foreach (AlertParticipantDataEntry entry in entries) {
-                    validCharacterIds.Add(entry.CharacterID);
-                }
-
-                foreach (Session session in sessions) {
-                    if (validCharacterIds.Contains(session.CharacterID) == false) {
-                        continue;
-                    }
-
-                    block.Sessions.Add(session);
-                }
             }
 
             return ApiOk(block);

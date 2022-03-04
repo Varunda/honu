@@ -72,6 +72,16 @@
 
             <a-col>
                 <a-header>
+                    <b>Players</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.participants | locale}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
                     <b>View</b>
                 </a-header>
 

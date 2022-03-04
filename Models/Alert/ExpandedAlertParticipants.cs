@@ -12,7 +12,5 @@ namespace watchtower.Models.Alert {
 
         public List<PsOutfit> Outfits { get; set; } = new List<PsOutfit>();
 
-        public List<Session> Sessions { get; set; } = new List<Session>();
-
     }
 }

@@ -143,8 +143,9 @@ namespace watchtower.Services.Repositories {
             long toDb = 0;
             int inDb = 0;
             int inExpired = 0;
+            List<PsCharacter> db = new List<PsCharacter>();
             if (found < total) {
-                List<PsCharacter> db = await _Db.GetByIDs(IDs);
+                db = await _Db.GetByIDs(IDs);
 
                 foreach (PsCharacter c in db) {
                     if (fast == true) {
@@ -191,6 +192,20 @@ namespace watchtower.Services.Repositories {
                 _Logger.LogTrace($"Took {toCensus}ms to load from census");
             }
 
+            // If a character in the DB was ignored because it had expired, but Honu still doesn't have the character at this point, load it anyways
+            int inDbRescue = 0;
+            if (found < total) {
+                foreach (string id in IDs.ToList()) {
+                    PsCharacter? c = db.FirstOrDefault(iter => iter.ID == id);
+                    if (c != null) {
+                        ++inDbRescue;
+                        chars.Add(c);
+                        IDs.Remove(c.ID);
+                        ++found;
+                    }
+                }
+            }
+
             foreach (PsCharacter c in chars) {
                 string cacheKey = string.Format(CACHE_KEY_ID, c.ID);
                 _Cache.Set(cacheKey, c, new MemoryCacheEntryOptions() {
@@ -198,8 +213,8 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} characters. "
-                + $"In cache: {inCache} in {toCache}ms, db: {inDb} in {toDb}ms, census: {inCensus} in {toCensus}ms, left: {IDs.Count}");
+            _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
+                + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescuse: {inDbRescue}, left: {IDs.Count}");
 
             return chars;
         }

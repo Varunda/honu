@@ -38,6 +38,9 @@ namespace watchtower.Services.Db.Patches {
 
                 ALTER TABLE alerts
                     ADD COLUMN IF NOT EXISTS participants int NOT NULL DEFAULT 0;
+
+                ALTER TABLE alerts
+                    ADD COLUMN IF NOT EXISTS instance_id int NOT NULL DEFAULT 0;
             ");
 
             await cmd.ExecuteNonQueryAsync();

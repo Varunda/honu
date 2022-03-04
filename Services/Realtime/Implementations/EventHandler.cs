@@ -609,6 +609,7 @@ namespace watchtower.Realtime {
                 alert.ZoneID = zoneID;
                 alert.WorldID = worldID;
                 alert.AlertID = metagameEventID;
+                alert.InstanceID = payload.GetInt32("instance_id", 0);
                 alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
                 alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
 

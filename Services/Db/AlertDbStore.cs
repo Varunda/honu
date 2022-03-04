@@ -186,9 +186,9 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO alerts (
-                    timestamp, duration, zone_id, world_id, alert_id, victor_faction_id, warpgate_vs, warpgate_nc, warpgate_tr, zone_facility_count, count_vs, count_nc, count_tr
+                    timestamp, duration, zone_id, world_id, alert_id, victor_faction_id, warpgate_vs, warpgate_nc, warpgate_tr, zone_facility_count, count_vs, count_nc, count_tr, instance_id
                 ) VALUES (
-                    @Timestamp, @Duration, @ZoneID, @WorldID, @AlertID, null, @WarpgateVS, @WarpgateNC, @WarpgateTR , @ZoneFacilityCount, null, null, null
+                    @Timestamp, @Duration, @ZoneID, @WorldID, @AlertID, null, @WarpgateVS, @WarpgateNC, @WarpgateTR , @ZoneFacilityCount, null, null, null, @InstanceID
                 ) RETURNING id;
             ");
 
@@ -201,6 +201,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WarpgateNC", alert.WarpgateNC);
             cmd.AddParameter("WarpgateTR", alert.WarpgateTR);
             cmd.AddParameter("ZoneFacilityCount", alert.ZoneFacilityCount);
+            cmd.AddParameter("InstanceID", alert.InstanceID);
 
             long ID = await cmd.ExecuteInt64(CancellationToken.None);
 
