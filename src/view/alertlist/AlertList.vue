@@ -69,6 +69,16 @@
                     {{entry.worldID | world}}
                 </a-body>
             </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>View</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <a :href="/"
+                </a-body>
+            </a-col>
         </a-table>
     </div>
 </template>

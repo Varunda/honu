@@ -100,8 +100,8 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public IActionResult AlertViewer() {
-            return View();
+        public IActionResult Alert(long alertID) {
+            return View("AlertViewer");
         }
 
         public IActionResult Alerts() {

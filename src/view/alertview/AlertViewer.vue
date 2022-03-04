@@ -77,12 +77,22 @@
         },
 
         mounted: function(): void {
-            this.loadAlertData();
+            this.parseAlertIDFromUrl();
+            if (this.alertID > 0) {
+                this.loadAlertData();
+            }
         },
 
         methods: {
             parseAlertIDFromUrl: function(): void {
-                this.alertID = 1;
+                const parts: string[] = location.pathname.split("/").filter(iter => iter.length > 0);
+
+                const alertID: number = Number.parseInt(parts[1]);
+                if (Number.isNaN(alertID)) {
+                    console.error(`failed to parse ${parts[1]} into a valid interger`);
+                } else {
+                    this.alertID = alertID;
+                }
             },
 
             loadAlertData: async function(): Promise<void> {

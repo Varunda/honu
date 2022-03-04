@@ -294,6 +294,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "alertview",
+                    pattern: "/alert/{*.}",
+                    defaults: new { controller = "Home", action = "Alert" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "worlddata",
                     pattern: "/view/{*.}",
                     defaults: new { controller = "Home", action = "Index" }
