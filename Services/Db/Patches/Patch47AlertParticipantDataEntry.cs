@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Services.Db.Patches {
 
+    [Patch]
     public class Patch47AlertParticipantDataEntry : IDbPatch {
 
         public int MinVersion => 47;
