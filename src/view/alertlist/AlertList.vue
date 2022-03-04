@@ -10,7 +10,7 @@
             </li>
         </honu-menu>
 
-        <a-table :entries="alerts" display-type="table" :show-filters="true" row-padding="compact">
+        <a-table :entries="alerts" display-type="table" :show-filters="true" row-padding="compact" default-sort-order="desc" default-sort-field="timestamp">
 
             <a-col>
                 <a-header>
