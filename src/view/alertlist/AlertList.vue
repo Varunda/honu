@@ -23,7 +23,7 @@
             </a-col>
 
             <a-col>
-                <a-header>
+                <a-header sort-field="timestamp">
                     <b>Start</b>
                 </a-header>
 
