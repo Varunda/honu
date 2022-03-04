@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Alert;
@@ -120,7 +121,7 @@ namespace watchtower.Controllers.Api {
 
             ExpandedAlertParticipants block = new ExpandedAlertParticipants();
 
-            List<AlertParticipantDataEntry> entries = await _ParticipantDataRepository.GetByAlert(alert);
+            List<AlertParticipantDataEntry> entries = await _ParticipantDataRepository.GetByAlert(alert, CancellationToken.None);
             block.Entries = entries;
 
             if (excludeCharacters == false) {

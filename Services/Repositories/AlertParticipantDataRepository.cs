@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Constants;
 using watchtower.Models.Alert;
@@ -41,8 +42,8 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="alert"></param>
         /// <returns></returns>
-        public async Task<List<AlertParticipantDataEntry>> GetByAlert(PsAlert alert) {
-            List<AlertParticipantDataEntry> entries = await _ParticipantDataDb.GetByAlertID(alert.ID);
+        public async Task<List<AlertParticipantDataEntry>> GetByAlert(PsAlert alert, CancellationToken cancel) {
+            List<AlertParticipantDataEntry> entries = await _ParticipantDataDb.GetByAlertID(alert.ID, cancel);
 
             if (entries.Count == 0) {
                 entries = await GenerateAndInsertByAlert(alert);
@@ -51,14 +52,14 @@ namespace watchtower.Services.Repositories {
             return entries;
         }
 
-        public async Task<List<AlertParticipantDataEntry>> GetByAlert(long alertID) {
+        public async Task<List<AlertParticipantDataEntry>> GetByAlert(long alertID, CancellationToken cancel) {
             PsAlert? alert = await _AlertDb.GetByID(alertID);
 
             if (alert == null) {
                 return new List<AlertParticipantDataEntry>();
             }
 
-            return await GetByAlert(alert);
+            return await GetByAlert(alert, cancel);
         }
 
         /// <summary>

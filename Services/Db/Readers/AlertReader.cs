@@ -24,6 +24,7 @@ namespace watchtower.Services.Db.Readers {
             alert.CountVS = reader.GetNullableInt32("count_vs");
             alert.CountNC = reader.GetNullableInt32("count_nc");
             alert.CountTR = reader.GetNullableInt32("count_tr");
+            alert.Participants = reader.GetInt32("participants");
 
             return alert;
         }

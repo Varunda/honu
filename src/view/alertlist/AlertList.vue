@@ -76,7 +76,9 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <a :href="/"
+                    <a :href="'/alert/' + entry.id" class="btn btn-sm btn-primary">
+                        View
+                    </a>
                 </a-body>
             </a-col>
         </a-table>

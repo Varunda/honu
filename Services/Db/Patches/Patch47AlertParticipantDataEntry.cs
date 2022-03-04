@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Services.Db.Patches {
 
-    public class Alert47AlertParticipantDataEntry : IDbPatch {
+    public class Patch47AlertParticipantDataEntry : IDbPatch {
 
         public int MinVersion => 47;
         public string Name => "create alert_participant_data";
@@ -34,6 +34,9 @@ namespace watchtower.Services.Db.Patches {
                 CREATE INDEX IF NOT EXISTS idx_alert_participant_data_alert_id ON alert_participant_data (alert_id);
 
                 CREATE UNIQUE INDEX IF NOT EXISTS unq_alert_participant_data_character_alert ON alert_participant_data (alert_id, character_id);
+
+                ALTER TABLE alerts
+                    ADD COLUMN IF NOT EXISTS participants int NOT NULL DEFAULT 0;
             ");
 
             await cmd.ExecuteNonQueryAsync();

@@ -62,5 +62,7 @@ namespace watchtower.Models.Census {
 
         public int? CountTR { get; set; }
 
+        public int Participants { get; set; } = 0;
+
     }
 }

@@ -72,7 +72,7 @@ namespace watchtower.Services.Db {
         /// <returns>
         ///     All <see cref="AlertParticipantDataEntry"/>s with <see cref="AlertParticipantDataEntry.AlertID"/> of <paramref name="alertID"/>
         /// </returns>
-        public async Task<List<AlertParticipantDataEntry>> GetByAlertID(long alertID) {
+        public async Task<List<AlertParticipantDataEntry>> GetByAlertID(long alertID, CancellationToken cancel) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
@@ -82,7 +82,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("AlertID", alertID);
 
-            List<AlertParticipantDataEntry> entries = await _Reader.ReadList(cmd);
+            List<AlertParticipantDataEntry> entries = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return entries;

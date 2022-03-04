@@ -207,10 +207,6 @@ namespace watchtower.Services.Db {
             return ID;
         }
 
-        public async Task<long> InsertParticipantData(AlertParticipantDataEntry entry) {
-            return 0;
-        }
-
         /// <summary>
         ///     Update the parameters that are only known after an alert has ended
         /// </summary>
@@ -223,7 +219,8 @@ namespace watchtower.Services.Db {
                     SET victor_faction_id = @VictorFactionID,
                         count_vs = @CountVS,
                         count_nc = @CountNC,
-                        count_tr = @CountTR
+                        count_tr = @CountTR,
+                        participants = @Players
                     WHERE id = @ID;
             ");
 
@@ -232,6 +229,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CountVS", parameters.CountVS);
             cmd.AddParameter("CountNC", parameters.CountNC);
             cmd.AddParameter("CountTR", parameters.CountTR);
+            cmd.AddParameter("Players", parameters.Participants);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

@@ -206,6 +206,7 @@ namespace watchtower {
                 services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
                 services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
+                services.AddHostedService<AlertParticipantBuilder>();
                 //services.AddHostedService<CharacterDatesFixerStartupService>();
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
