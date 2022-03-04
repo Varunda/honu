@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -27,23 +28,29 @@ namespace watchtower.Services.Hosted.Startup {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            List<PsAlert> alerts = await _AlertDb.GetAll();
-            alerts.Reverse();
+            try {
+                List<PsAlert> alerts = await _AlertDb.GetAll();
+                alerts.Reverse();
 
-            _Logger.LogDebug($"Loaded {alerts.Count} alerts");
+                _Logger.LogDebug($"Loaded {alerts.Count} alerts");
 
-            foreach (PsAlert alert in alerts) {
-                if (alert.Participants > 0) {
-                    continue;
+                foreach (PsAlert alert in alerts) {
+                    /*
+                    if (alert.Participants > 0) {
+                        continue;
+                    }
+                    */
+
+                    Stopwatch timer = Stopwatch.StartNew();
+                    List<AlertParticipantDataEntry> existingData = await _DataRepository.GetByAlert(alert, stoppingToken);
+
+                    alert.Participants = existingData.Count;
+                    await _AlertDb.UpdateByID(alert.ID, alert);
+
+                    _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to load alert {alert.ID}");
                 }
-
-                Stopwatch timer = Stopwatch.StartNew();
-                List<AlertParticipantDataEntry> existingData = await _DataRepository.GetByAlert(alert, stoppingToken);
-
-                alert.Participants = existingData.Count;
-                await _AlertDb.UpdateByID(alert.ID, alert);
-
-                _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to load alert {alert.ID}");
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"error in alert participation builder");
             }
         }
 

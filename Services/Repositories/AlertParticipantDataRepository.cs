@@ -201,7 +201,7 @@ namespace watchtower.Services.Repositories {
 
                 List<TimestampZoneEvent> sorted = events.OrderBy(iter => iter.Timestamp).ToList();
                 if (sorted.Count < 2) {
-                    _Logger.LogWarning($"{entry.CharacterID} has no events???");
+                    //_Logger.LogWarning($"{entry.CharacterID} has no events???");
                     continue;
                 }
 
