@@ -101,7 +101,6 @@ namespace watchtower.Services.Repositories {
 
                 AlertParticipantDataEntry entry = new AlertParticipantDataEntry();
                 entry.CharacterID = part.CharacterID;
-                entry.SecondsOnline = part.SecondsOnline;
                 entry.AlertID = alert.ID;
 
                 data.Add(entry.CharacterID, entry);
@@ -200,7 +199,7 @@ namespace watchtower.Services.Repositories {
                 }
 
                 List<TimestampZoneEvent> sorted = events.OrderBy(iter => iter.Timestamp).ToList();
-                if (sorted.Count < 2) {
+                if (sorted.Count <= 0) {
                     //_Logger.LogWarning($"{entry.CharacterID} has no events???");
                     continue;
                 }

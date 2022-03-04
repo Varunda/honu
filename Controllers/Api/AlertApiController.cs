@@ -75,6 +75,50 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get an alert by it's instance ID, which is unique per world
+        /// </summary>
+        /// <param name="instanceID">Instance ID</param>
+        /// <param name="worldID">World the instance ID is from</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="PsAlert"/> with <see cref="PsAlert.InstanceID"/> of <paramref name="instanceID"/>,
+        ///     and <see cref="PsAlert.WorldID"/> of <paramref name="worldID"/>
+        /// </response>
+        /// <response code="204">
+        ///     No <see cref="PsAlert"/> exists with those parameters
+        /// </response>
+        [HttpGet("{worldID}/{instanceID}")]
+        public async Task<ApiResponse<PsAlert>> GetByInstanceID(int instanceID, short worldID) {
+            PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
+
+            if (alert == null) {
+                return ApiNoContent<PsAlert>();
+            }
+
+            return ApiOk(alert);
+        }
+
+        /// <summary>
+        ///     Get the participant data for an alert, as well as data that would be useful in displaying this data, such as the characters relevant
+        /// </summary>
+        /// <remarks>
+        ///     See <see cref="GetParticipants(long, bool, bool)"/> for more information
+        /// </remarks>
+        [HttpGet("{worldID}/{instanceID}/participants")]
+        public async Task<ApiResponse<ExpandedAlertParticipants>> GetParticipantsByInstanceID(int instanceID, short worldID,
+                [FromQuery] bool excludeCharacters = false,
+                [FromQuery] bool excludeOutfits = false
+            ) {
+
+            PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
+
+            if (alert == null) {
+                return ApiNotFound<ExpandedAlertParticipants>($"{nameof(PsAlert)} {worldID}-{instanceID}");
+            }
+
+            return await GetParticipants(alert.ID, excludeCharacters, excludeOutfits);
+        }
+
+        /// <summary>
         ///     Get the participant data for an alert, as well as data that would be useful in displaying this data, such as the characters relevant
         /// </summary>
         /// <param name="alertID">ID of the alert</param>

@@ -10,10 +10,5 @@
         /// </summary>
         public string CharacterID { get; set; } = "";
 
-        /// <summary>
-        ///     How many seconds the character was online
-        /// </summary>
-        public int SecondsOnline { get; set; }
-
     }
 }

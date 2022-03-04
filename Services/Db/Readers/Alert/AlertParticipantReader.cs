@@ -10,7 +10,6 @@ namespace watchtower.Services.Db.Readers.Alert {
             AlertParticipant part = new AlertParticipant();
 
             part.CharacterID = reader.GetString("character_id");
-            part.SecondsOnline = reader.GetInt32("seconds_online");
 
             return part;
         }

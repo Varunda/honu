@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Alert;
@@ -30,11 +31,18 @@ namespace watchtower.Services.Hosted.Startup {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             try {
                 List<PsAlert> alerts = await _AlertDb.GetAll();
-                alerts.Reverse();
+                alerts = alerts.OrderByDescending(iter => iter.ID).ToList();
 
                 _Logger.LogDebug($"Loaded {alerts.Count} alerts");
 
                 foreach (PsAlert alert in alerts) {
+
+                    DateTime alertEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
+                    if (DateTime.UtcNow <= alertEnd) {
+                        _Logger.LogInformation($"Not generating info for {alert.ID}, finishes at {alertEnd:u}");
+                        continue;
+                    }
+
                     /*
                     if (alert.Participants > 0) {
                         continue;

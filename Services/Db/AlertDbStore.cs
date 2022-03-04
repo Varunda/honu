@@ -70,6 +70,34 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Get an alert by it's instance ID, which is unique per world
+        /// </summary>
+        /// <param name="instanceID">Instance ID</param>
+        /// <param name="worldID">World ID</param>
+        /// <returns>
+        ///     The <see cref="PsAlert"/> with <see cref="PsAlert.InstanceID"/> of <paramref name="instanceID"/>,
+        ///     and <see cref="PsAlert.WorldID"/> of <paramref name="instanceID"/>, 
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
+        public async Task<PsAlert?> GetByInstanceID(int instanceID, short worldID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM alerts
+                    WHERE world_id = @WorldID
+                        AND instance_id = @InstanceID;
+            ");
+
+            cmd.AddParameter("InstanceID", instanceID);
+            cmd.AddParameter("WorldID", worldID);
+
+            PsAlert? alert = await _Reader.ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return alert;
+        }
+
+        /// <summary>
         ///     Get the alerts that haven't been finished
         /// </summary>
         /// <returns></returns>
@@ -131,21 +159,11 @@ namespace watchtower.Services.Db {
                         GROUP BY killed_character_id
                 )
                 SELECT
-                    character_id,
-                    (SELECT LEAST(5400, 
-                            CAST(EXTRACT('epoch' FROM SUM(
-                                COALESCE(s.finish, @AlertEnd) - GREATEST(@AlertStart, s.start)
-                            )) AS integer)
-                        )
-                        FROM wt_session s 
-                        WHERE s.character_id = c.character_id
-                            AND (s.finish IS NULL
-                                OR (s.finish BETWEEN @AlertStart AND @AlertEnd)
-                            )
-                    ) AS seconds_online
+                    character_id
                 FROM 
                     characters c;
             ");
+            cmd.CommandTimeout = 300;
 
             cmd.AddParameter("AlertStart", alert.Timestamp);
             cmd.AddParameter("AlertEnd", alert.Timestamp + TimeSpan.FromSeconds(alert.Duration));
