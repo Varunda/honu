@@ -28,7 +28,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    {{entry.timestamp}}
+                    {{entry.timestamp | moment}}
                 </a-body>
             </a-col>
 

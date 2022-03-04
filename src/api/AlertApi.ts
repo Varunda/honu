@@ -26,8 +26,8 @@ export class AlertApi extends ApiWrapper<PsAlert> {
 
     public static readEntry(elem: any): PsAlert {
         return {
-            timestamp: new Date(elem.timestamp),
-            ...elem
+            ...elem,
+            timestamp: new Date(elem.timestamp)
         };
     }
 
