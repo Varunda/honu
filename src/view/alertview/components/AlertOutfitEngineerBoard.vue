@@ -2,7 +2,7 @@
     <a-table
         :entries="outfits"
         :show-filters="true"
-        default-sort-field="revives" default-sort-order="desc"
+        default-sort-field="resupplies" default-sort-order="desc"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="outfitDisplay">
@@ -36,13 +36,13 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="revives">
+        <a-col sort-field="resupplies">
             <a-header>
-                <b>Revives</b>
+                <b>Resupplies</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives}}
+                {{entry.resupplies}}
             </a-body>
         </a-col>
 
@@ -52,27 +52,27 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives / Math.max(1, entry.medicPlaytime) * 60 | locale}}
+                {{entry.resupplies / Math.max(1, entry.engineerPlaytime) * 60 | locale(2)}}
             </a-body>
         </a-col>
 
-        <a-col sort-field="heals">
+        <a-col sort-field="repairs">
             <a-header>
-                <b>Heals</b>
+                <b>MAX repairs</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals}}
+                {{entry.repairs}}
             </a-body>
         </a-col>
 
         <a-col>
             <a-header>
-                <b>HPM</b>
+                <b>MRPM</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals / Math.max(1, entry.medicPlaytime) * 60 | locale(2)}}
+                {{entry.repairs / Math.max(1, entry.engineerPlaytime) * 60 | locale}}
             </a-body>
         </a-col>
     </a-table>

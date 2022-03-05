@@ -93,6 +93,10 @@
                 <div class="col-6">
                     <alert-engineer-board :participants="participants"></alert-engineer-board>
                 </div>
+
+                <div class="col-6">
+                    <alert-outfit-engineer-board :outfits="outfits"></alert-outfit-engineer-board>
+                </div>
             </div>
         </div>
 
@@ -129,6 +133,7 @@
     import AlertMedicBoard from "./components/AlertMedicBoard.vue";
     import AlertOutfitMedicBoard from "./components/AlertOutfitMedicBoard.vue";
     import AlertEngineerBoard from "./components/AlertEngineerBoard.vue";
+    import AlertOutfitEngineerBoard from "./components/AlertOutfitEngineerBoard.vue";
 
     class OutfitDataEntry {
         public outfitID: string = "";
@@ -317,7 +322,7 @@
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Busy,
             AlertGeneral,
-            AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard
+            AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard
         }
     });
     export default AlertViewer;

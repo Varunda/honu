@@ -38,16 +38,6 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="kills">
-            <a-header>
-                <b>Kills</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.kills}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="revives">
             <a-header>
                 <b>Revives</b>
