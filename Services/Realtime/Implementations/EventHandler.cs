@@ -36,6 +36,7 @@ namespace watchtower.Realtime {
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
         private readonly AlertDbStore _AlertDb;
+        private readonly AlertParticipantDataRepository _ParticipantDataRepository;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -64,7 +65,8 @@ namespace watchtower.Realtime {
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
-            IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb) {
+            IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
+            AlertParticipantDataRepository participantDataRepository) {
 
             _Logger = logger;
 
@@ -93,6 +95,7 @@ namespace watchtower.Realtime {
             _FacilityRepository = facRepo ?? throw new ArgumentNullException(nameof(facRepo));
 
             _MapHub = mapHub;
+            _ParticipantDataRepository = participantDataRepository;
         }
 
         public async Task Process(JToken ev) {
@@ -632,6 +635,8 @@ namespace watchtower.Realtime {
 
                 if (toRemove != null) {
                     AlertStore.Get().RemoveByID(toRemove.ID);
+                    _ = _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
+                    _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data");
                 } else {
                     _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}");
                 }

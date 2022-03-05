@@ -38,6 +38,7 @@ export class FlattendParticipantDataEntry {
 
     public outfitID: string | null = null;
     public outfitTag: string | null = null;
+    public outfitName: string | null = null;
     public secondsOnline: number = 0;
 
     public kills: number = 0;
@@ -109,6 +110,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                     characterName: character?.name ?? `<missing ${entry.characterID}>`,
                     factionID: character?.factionID ?? -1,
                     outfitTag: outfit?.tag ?? null,
+                    outfitName: outfit?.name ?? null,
 
                     kpm: entry.kills / Math.max(1, entry.secondsOnline) * 60,
                     kd: entry.kills / Math.max(1, entry.deaths),

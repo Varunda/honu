@@ -121,6 +121,10 @@
             }
         },
 
+        created: function(): void {
+            document.title = `Honu / Alerts`;
+        },
+
         mounted: function(): void {
             this.bindAlerts();
         },
