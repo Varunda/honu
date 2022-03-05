@@ -325,6 +325,10 @@ export const ATable = Vue.extend({
                 console.log(`<a-table> 0 entries, showing no data row`);
                 rows.push(this.renderNoDataRow(createElement));
             } else {
+                if (this.paging.size > 10 && this.paginate == true) {
+                    rows.push(this.renderPages(createElement));
+                }
+
                 rows.push(createElement("tbody", {},
                     this.displayedEntries.map(iter => {
                         return this.renderDataRow(createElement, iter);

@@ -296,7 +296,7 @@ namespace watchtower {
 
                 endpoints.MapControllerRoute(
                     name: "alertview",
-                    pattern: "/alert/{*.}",
+                    pattern: "/alert/{alertID}",
                     defaults: new { controller = "Home", action = "Alert" }
                 );
 

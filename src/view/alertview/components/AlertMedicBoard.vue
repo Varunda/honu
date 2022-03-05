@@ -2,7 +2,7 @@
     <a-table
         :entries="entries"
         :show-filters="true"
-        default-sort-field="heals" default-sort-order="desc"
+        default-sort-field="revives" default-sort-order="desc"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="characterName">
@@ -38,23 +38,13 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="heals">
+        <a-col sort-field="kills">
             <a-header>
-                <b>Heals</b>
+                <b>Kills</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="healsPerMinute">
-            <a-header>
-                <b>Heals per minute</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.healsPerMinute | locale(2)}}
+                {{entry.kills}}
             </a-body>
         </a-col>
 
@@ -70,11 +60,31 @@
 
         <a-col sort-field="revivesPerMinute">
             <a-header>
-                <b>Revives per minute</b>
+                <b>RPM</b>
             </a-header>
 
             <a-body v-slot="entry">
                 {{entry.revivesPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="heals">
+            <a-header>
+                <b>Heals</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.heals}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="healsPerMinute">
+            <a-header>
+                <b>HPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.healsPerMinute | locale(2)}}
             </a-body>
         </a-col>
 

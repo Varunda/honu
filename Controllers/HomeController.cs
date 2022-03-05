@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using watchtower.Models.Census;
 using watchtower.Services;
+using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
@@ -14,13 +15,15 @@ namespace watchtower.Controllers {
     public class HomeController : Controller {
 
         private readonly CharacterRepository _CharacterRepository;
+        private readonly AlertDbStore _AlertDb;
         private readonly CharacterUpdateQueue _Queue;
 
         public HomeController(CharacterRepository charRepo,
-            CharacterUpdateQueue queue) {
+            CharacterUpdateQueue queue, AlertDbStore alertDb) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;
+            _AlertDb = alertDb;
         }
 
         public IActionResult Index() {
@@ -100,7 +103,24 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public IActionResult Alert(long alertID) {
+        public async Task<IActionResult> Alert(string alertID) {
+            if (alertID.Contains('-')) {
+                string[] parts = alertID.Split('-');
+
+                if (parts.Length == 2) {
+                    bool validWorld = short.TryParse(parts[0], out short worldID);
+                    bool validInstance = int.TryParse(parts[1], out int instanceID);
+
+                    if (validWorld == true && validInstance == true) {
+                        PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
+
+                        if (alert != null) {
+                            return Redirect($"/alert/{alert.ID}");
+                        }
+                    }
+                }
+            }
+
             return View("AlertViewer");
         }
 

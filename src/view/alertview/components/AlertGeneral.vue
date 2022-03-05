@@ -33,14 +33,12 @@
         },
 
         computed: {
-
             alertEnd: function(): Date {
                 const ms: number = this.alert.timestamp.getTime();
                 const endms: number = ms + (this.alert.duration * 1000);
 
                 return new Date(endms);
             }
-
         },
 
         components: {

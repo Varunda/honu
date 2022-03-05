@@ -52,7 +52,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals / entry.medicPlaytime * 60 | locale(2)}}
+                {{entry.heals / Math.max(1, entry.medicPlaytime) * 60 | locale(2)}}
             </a-body>
         </a-col>
 
@@ -72,7 +72,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives / entry.medicPlaytime * 60 | locale}}
+                {{entry.revives / Math.max(1, entry.medicPlaytime) * 60 | locale}}
             </a-body>
         </a-col>
     </a-table>
