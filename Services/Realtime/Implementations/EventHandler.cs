@@ -14,6 +14,7 @@ using watchtower.Code.Hubs;
 using watchtower.Code.Hubs.Implementations;
 using watchtower.Constants;
 using watchtower.Models;
+using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Models.Queues;
@@ -635,8 +636,15 @@ namespace watchtower.Realtime {
 
                 if (toRemove != null) {
                     AlertStore.Get().RemoveByID(toRemove.ID);
-                    _ = _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
-                    _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data");
+
+                    new Thread(async () => {
+                        _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
+                        List<AlertParticipantDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
+
+                        toRemove.Participants = parts.Count;
+                        await _AlertDb.UpdateByID(toRemove.ID, toRemove);
+                        _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
+                    }).Start();
                 } else {
                     _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}");
                 }

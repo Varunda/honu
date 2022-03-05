@@ -32,6 +32,12 @@
 
             <div v-else-if="alert.state == 'loaded'">
                 <alert-general :alert="alert.data"></alert-general>
+
+                <h4 v-if="error.notFinished == true" class="text-warning text-center">
+                    Alert has not finished, stats have not been generated yet
+                    <br />
+                    Come back after {{alert.data.end | moment}}
+                </h4>
             </div>
 
             <div v-else-if="alert.state == 'error'" class="text-danger">
@@ -41,7 +47,6 @@
             <div v-else class="text-danger">
                 Unchecked state of alert: {{alert.state}}
             </div>
-
         </div>
 
         <div v-if="participants.state == 'idle'"></div>
@@ -165,6 +170,10 @@
                 outfitMap: new Map() as Map<string, OutfitDataEntry>,
                 outfits: Loadable.idle() as Loading<OutfitDataEntry[]>,
 
+                error: {
+                    notFinished: false as boolean
+                },
+
                 alert: Loadable.idle() as Loading<PsAlert>,
                 participants: Loadable.idle() as Loading<FlattendParticipantDataEntry[]> 
             }
@@ -178,7 +187,6 @@
             this.parseAlertIDFromUrl();
             if (this.alertID > 0) {
                 this.loadAlert();
-                this.loadAlertData();
             }
         },
 
@@ -200,6 +208,12 @@
 
                 if (this.alert.state == "loaded") {
                     document.title = `Honu / Alert / ${this.alert.data.worldID}-${this.alert.data.instanceID}`;
+
+                    if (new Date() < this.alert.data.end) {
+                        this.error.notFinished = true;
+                    } else {
+                        this.loadAlertData();
+                    }
                 }
             },
 

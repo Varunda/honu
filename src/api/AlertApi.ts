@@ -4,11 +4,14 @@ import ApiWrapper from "api/ApiWrapper";
 export class PsAlert {
     public id: number = 0;
     public timestamp: Date = new Date();
+    public end: Date = new Date();
     public duration: number = 0;
     public zoneID: number = 0;
     public worldID: number = 0;
     public alertID: number = 0;
     public victorFactionID: number | null = null;
+    public instanceID: number = 0;
+    public displayID: string = "";
 
     public warpgateVS: number = 0;
     public warpgateNC: number = 0;
@@ -25,10 +28,20 @@ export class AlertApi extends ApiWrapper<PsAlert> {
     public static get(): AlertApi { return AlertApi._instance; }
 
     public static readEntry(elem: any): PsAlert {
-        return {
+        const alert: PsAlert = {
             ...elem,
+            end: new Date(),
             timestamp: new Date(elem.timestamp)
         };
+
+        const start: number = alert.timestamp.getTime();
+        const endms: number = start + (alert.duration * 1000);
+
+        alert.end = new Date(endms);
+
+        alert.displayID = `${alert.worldID}-${alert.instanceID}`;
+
+        return alert;
     }
 
     public static async getByID(alertID: number): Promise<Loading<PsAlert>> {

@@ -97,6 +97,9 @@ export const ATable = Vue.extend({
         PageSizes: { type: Array as PropType<number[]>, required: false },
 
         DefaultPageSize: { type: Number, required: false },
+
+        // Will the pages also be shown above the data?
+        ShowTopPages: { type: Boolean, required: false, default: false }
     },
 
     data: function() {
@@ -325,7 +328,7 @@ export const ATable = Vue.extend({
                 console.log(`<a-table> 0 entries, showing no data row`);
                 rows.push(this.renderNoDataRow(createElement));
             } else {
-                if (this.paging.size > 10 && this.paginate == true) {
+                if (this.ShowTopPages == true && this.paging.size > 10 && this.paginate == true) {
                     rows.push(this.renderPages(createElement));
                 }
 

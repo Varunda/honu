@@ -267,7 +267,6 @@ namespace watchtower.Services.Db {
         ///     A task for when the task is complete
         /// </returns>
         public async Task End(string charID, DateTime when) {
-
             TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
             if (player == null) {
                 _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
@@ -275,7 +274,7 @@ namespace watchtower.Services.Db {
             }
 
             if (player.Online == false) {
-                _Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
+                //_Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
                 return;
             }
 

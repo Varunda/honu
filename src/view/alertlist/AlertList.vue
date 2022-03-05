@@ -17,8 +17,12 @@
                     <b>ID</b>
                 </a-header>
 
+                <a-filter field="displayID" type="string" method="input"
+                    :conditions="[ 'contains' ]">
+                </a-filter>
+
                 <a-body v-slot="entry">
-                    {{entry.id}}
+                    {{entry.displayID}}
                 </a-body>
             </a-col>
 
@@ -76,7 +80,12 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    {{entry.participants | locale}}
+                    <span v-if="new Date() < entry.end">
+                        --
+                    </span>
+                    <span v-else>
+                        {{entry.participants | locale}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -86,7 +95,10 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <a :href="'/alert/' + entry.id" class="btn btn-sm btn-primary">
+                    <span v-if="new Date() < entry.end" class="text-warning">
+                        In progress
+                    </span>
+                    <a v-else :href="'/alert/' + entry.id">
                         View
                     </a>
                 </a-body>
@@ -106,6 +118,7 @@
 
     import "filters/ZoneNameFilter";
     import "filters/WorldNameFilter";
+    import "filters/LocaleFilter";
     import "MomentFilter";
 
     import ZoneUtils from "util/Zone";

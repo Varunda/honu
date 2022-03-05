@@ -161,6 +161,7 @@ namespace watchtower.Services.Repositories {
                             ++found;
                         } else {
                             _Queue.Queue(c.ID);
+                            _CacheQueue.Queue(c.ID);
                             ++inExpired;
                         }
                     }
@@ -214,7 +215,7 @@ namespace watchtower.Services.Repositories {
             }
 
             _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
-                + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescuse: {inDbRescue}, left: {IDs.Count}");
+                + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
 
             return chars;
         }
