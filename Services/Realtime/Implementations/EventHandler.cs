@@ -646,7 +646,7 @@ namespace watchtower.Realtime {
                         _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
                     }).Start();
                 } else {
-                    _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}");
+                    _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}\nCurrent alerts: {string.Join(", ", alerts.Select(iter => $"{iter.WorldID}.{iter.ZoneID}"))}");
                 }
             } else {
                 _Logger.LogError($"Unchecked value of {nameof(metagameEventName)} '{metagameEventName}'");
