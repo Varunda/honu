@@ -14,7 +14,12 @@
             <li class="nav-item h1 p-0">
                 Alert
                 <span v-if="alert.state == 'loaded'">
-                    {{alert.data.worldID}}-{{alert.data.instanceID}}
+                    <span v-if="alert.data.name.length > 0">
+                        {{alert.name}}
+                    </span>
+                    <span v-else>
+                        {{alert.data.worldID}}-{{alert.data.instanceID}}
+                    </span>
                 </span>
             </li>
         </honu-menu>
@@ -223,7 +228,7 @@
                 this.alert = await AlertApi.getByID(this.alertID);
 
                 if (this.alert.state == "loaded") {
-                    document.title = `Honu / Alert / ${this.alert.data.worldID}-${this.alert.data.instanceID}`;
+                    document.title = `Honu / Alert / ${this.alert.data.displayID}`;
 
                     if (new Date() < this.alert.data.end) {
                         this.error.notFinished = true;

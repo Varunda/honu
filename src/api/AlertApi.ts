@@ -11,6 +11,7 @@ export class PsAlert {
     public alertID: number = 0;
     public victorFactionID: number | null = null;
     public instanceID: number = 0;
+    public name: string = "";
     public displayID: string = "";
 
     public warpgateVS: number = 0;
@@ -39,7 +40,11 @@ export class AlertApi extends ApiWrapper<PsAlert> {
 
         alert.end = new Date(endms);
 
-        alert.displayID = `${alert.worldID}-${alert.instanceID}`;
+        if (alert.name.length == 0) {
+            alert.displayID = `${alert.worldID}-${alert.instanceID}`;
+        } else {
+            alert.displayID = alert.name;
+        }
 
         return alert;
     }

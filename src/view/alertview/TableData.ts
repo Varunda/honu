@@ -65,10 +65,10 @@ export class TableData {
 
     public static getEngineerData(data: FlattendParticipantDataEntry[]): EngineerTableData[] {
         return data.filter(iter => {
-            const profile: AlertPlayerProfileData | undefined = iter.profiles.find(iter => iter.profileID == 4);
+            const profile: AlertPlayerProfileData | undefined = iter.profiles.find(iter => iter.profileID == 5);
             return profile != undefined && profile.timeAs >= 60;
         }).map(iter => {
-            const profile: AlertPlayerProfileData = iter.profiles.find(iter => iter.profileID == 4)!; // must exist cause of check above
+            const profile: AlertPlayerProfileData = iter.profiles.find(iter => iter.profileID == 5)!; // must exist cause of check above
 
             return {
                 id: iter.characterID,
