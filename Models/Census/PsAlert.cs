@@ -40,6 +40,11 @@ namespace watchtower.Models.Census {
         public int InstanceID { get; set; }
 
         /// <summary>
+        ///     Name of the alert
+        /// </summary>
+        public string Name { get; set; } = "";
+
+        /// <summary>
         ///     Who won the alert, null if alert hasn't concluded
         /// </summary>
         public short? VictorFactionID { get; set; }

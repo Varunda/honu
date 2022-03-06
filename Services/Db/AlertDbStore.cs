@@ -204,9 +204,9 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO alerts (
-                    timestamp, duration, zone_id, world_id, alert_id, victor_faction_id, warpgate_vs, warpgate_nc, warpgate_tr, zone_facility_count, count_vs, count_nc, count_tr, instance_id
+                    timestamp, duration, zone_id, world_id, alert_id, victor_faction_id, warpgate_vs, warpgate_nc, warpgate_tr, zone_facility_count, count_vs, count_nc, count_tr, instance_id, name
                 ) VALUES (
-                    @Timestamp, @Duration, @ZoneID, @WorldID, @AlertID, null, @WarpgateVS, @WarpgateNC, @WarpgateTR , @ZoneFacilityCount, null, null, null, @InstanceID
+                    @Timestamp, @Duration, @ZoneID, @WorldID, @AlertID, null, @WarpgateVS, @WarpgateNC, @WarpgateTR , @ZoneFacilityCount, null, null, null, @InstanceID, @Name
                 ) RETURNING id;
             ");
 
@@ -220,6 +220,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WarpgateTR", alert.WarpgateTR);
             cmd.AddParameter("ZoneFacilityCount", alert.ZoneFacilityCount);
             cmd.AddParameter("InstanceID", alert.InstanceID);
+            cmd.AddParameter("Name", alert.Name);
 
             long ID = await cmd.ExecuteInt64(CancellationToken.None);
 
@@ -239,7 +240,8 @@ namespace watchtower.Services.Db {
                         count_vs = @CountVS,
                         count_nc = @CountNC,
                         count_tr = @CountTR,
-                        participants = @Players
+                        participants = @Players,
+                        name = @Name
                     WHERE id = @ID;
             ");
 
@@ -249,6 +251,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CountNC", parameters.CountNC);
             cmd.AddParameter("CountTR", parameters.CountTR);
             cmd.AddParameter("Players", parameters.Participants);
+            cmd.AddParameter("Name", parameters.Name);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

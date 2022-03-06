@@ -49,5 +49,22 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation($"Done rebuilding participant data for alert {alertID}");
         }
 
+        public async Task Create(string name, string start, int duration, short worldID, uint zoneID) {
+            if (DateTime.TryParse(start, out DateTime startDate) == false) {
+                _Logger.LogWarning($"Failed to parse {start} to a valid DateTime");
+            }
+
+            PsAlert alert = new PsAlert();
+            alert.Name = name;
+            alert.Timestamp = startDate;
+            alert.WorldID = worldID;
+            alert.ZoneID = zoneID;
+            alert.Duration = duration;
+
+            alert.ID = await _AlertRepository.Insert(alert);
+
+            _Logger.LogInformation($"Created alert {alert.ID}/{alert.Name}");
+        }
+
     }
 }
