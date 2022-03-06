@@ -76,11 +76,11 @@
                     <h2 class="wt-header">Medic</h2>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12">
                     <alert-medic-board :participants="participants"></alert-medic-board>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12">
                     <alert-outfit-medic-board :outfits="outfits"></alert-outfit-medic-board>
                 </div>
             </div>
@@ -90,11 +90,11 @@
                     <h2 class="wt-header">Engineer</h2>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12">
                     <alert-engineer-board :participants="participants"></alert-engineer-board>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12">
                     <alert-outfit-engineer-board :outfits="outfits"></alert-outfit-engineer-board>
                 </div>
             </div>
@@ -114,7 +114,7 @@
     import Vue from "vue";
     import { Loading, Loadable } from "Loading";
 
-    import { AlertParticipantApi, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+    import { AlertParticipantApi, FlattendParticipantDataEntry, AlertPlayerProfileData } from "api/AlertParticipantApi";
     import { PsAlert, AlertApi } from "api/AlertApi";
 
     import "filters/LocaleFilter";
@@ -149,18 +149,29 @@
         public deaths: number = 0;
         public vehicleKills: number = 0;
         public spawns: number = 0;
-
         public kpm: number = 0;
         public kd: number = 0;
 
-        public medicPlaytime: number = 0;
-        public heals: number = 0;
-        public revives: number = 0;
-        public shieldRepairs: number = 0;
+        public medicKills: number = 0;
+        public medicDeaths: number = 0;
+        public medicTimeAs: number = 0;
+        public medicKPM: number = 0;
+        public medicKD: number = 0;
+        public medicHeals: number = 0;
+        public medicRevives: number = 0;
+        public medicHealsPerMinute: number = 0;
+        public medicRevivesPerMinute: number = 0;
+        public medicKRD: number = 0;
 
-        public engineerPlaytime: number = 0;
-        public resupplies: number = 0;
-        public repairs: number = 0;
+        public engKills: number = 0;
+        public engDeaths: number = 0;
+        public engTimeAs: number = 0;
+        public engKPM: number = 0;
+        public engKD: number = 0;
+        public engResupplies: number = 0;
+        public engRepairs: number = 0;
+        public engResuppliesPerMinute: number = 0;
+        public engRepairsPerMinute: number = 0;
     }
 
     export const AlertViewer = Vue.extend({
@@ -270,17 +281,22 @@
                     outfitEntry.vehicleKills += entry.vehicleKills;
                     outfitEntry.secondsOnline += entry.secondsOnline;
 
-                    if (entry.heals > 10 || entry.revives > 10 || entry.shieldRepairs > 10) {
-                        outfitEntry.heals += entry.heals;
-                        outfitEntry.revives += entry.revives;
-                        outfitEntry.shieldRepairs += entry.shieldRepairs;
-                        outfitEntry.medicPlaytime += entry.secondsOnline;
+                    const medicProfile: AlertPlayerProfileData | undefined = entry.profiles.find(iter => iter.profileID == 4);
+                    if (medicProfile != undefined && medicProfile.timeAs > 60) {
+                        outfitEntry.medicKills += medicProfile.kills;
+                        outfitEntry.medicDeaths += medicProfile.deaths;
+                        outfitEntry.medicTimeAs += medicProfile.timeAs;
+                        outfitEntry.medicHeals += entry.heals;
+                        outfitEntry.medicRevives += entry.revives;
                     }
 
-                    if (entry.repairs > 10 || entry.resupplies > 10) {
-                        outfitEntry.repairs += entry.repairs;
-                        outfitEntry.resupplies += entry.resupplies;
-                        outfitEntry.engineerPlaytime += entry.secondsOnline;
+                    const engProfile: AlertPlayerProfileData | undefined = entry.profiles.find(iter => iter.profileID == 5);
+                    if (engProfile != undefined && engProfile.timeAs > 60) {
+                        outfitEntry.engKills += engProfile.kills;
+                        outfitEntry.engDeaths += engProfile.deaths;
+                        outfitEntry.engTimeAs += engProfile.timeAs;
+                        outfitEntry.engResupplies += entry.resupplies;
+                        outfitEntry.engRepairs += entry.repairs;
                     }
 
                     ++outfitEntry.members;
@@ -290,19 +306,39 @@
                     }
                 }
 
+                /*
+                    public medicKPM: number = 0;
+                    public medicKD: number = 0;
+                    public medicHealsPerMinute: number = 0;
+                    public medicRevivesPerMinute: number = 0;
+                    public medicKRD: number = 0;
+
+                    public engKPM: number = 0;
+                    public engKD: number = 0;
+                    public engResuppliesPerMinute: number = 0;
+                    public engRepairsPerMinute: number = 0;
+                 */
+
                 const outfits: OutfitDataEntry[] = Array.from(this.outfitMap.values()).filter(iter => iter.members >= 5);
                 for (const outfit of outfits) {
                     outfit.kd = outfit.kills / Math.max(1, outfit.deaths);
                     outfit.kpm = outfit.kills / Math.max(1, outfit.secondsOnline) * 60;
+                    outfit.medicKD = outfit.medicKills / Math.max(1, outfit.medicDeaths);
+                    outfit.medicKPM = outfit.medicKills / Math.max(1, outfit.medicTimeAs) * 60;
+                    outfit.medicKRD = (outfit.medicKills + outfit.medicRevives) / Math.max(1, outfit.medicDeaths);
+                    outfit.medicHealsPerMinute = outfit.medicHeals / Math.max(1, outfit.medicTimeAs) * 60;
+                    outfit.medicRevivesPerMinute = outfit.medicRevives / Math.max(1, outfit.medicTimeAs) * 60;
+                    outfit.engKD = outfit.engKills / Math.max(1, outfit.engDeaths);
+                    outfit.engKPM = outfit.engKills / Math.max(1, outfit.engTimeAs) * 60;
+                    outfit.engResuppliesPerMinute = outfit.engResupplies / Math.max(1, outfit.engTimeAs) * 60;
+                    outfit.engRepairsPerMinute = outfit.engRepairs / Math.max(1, outfit.engTimeAs) * 60;
                 }
 
                 this.outfits = Loadable.loaded(outfits);
             },
-
         },
 
         computed: {
-
             sources: function() {
                 return {
                     factions: [

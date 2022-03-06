@@ -8,7 +8,9 @@ namespace watchtower.Models.Alert {
 
         public List<AlertPlayerDataEntry> Entries { get; set; } = new List<AlertPlayerDataEntry>();
 
-        public List<PsCharacter> Characters { get; set; } = new List<PsCharacter>();
+        public List<AlertPlayerProfileData> ProfileData { get; set; } = new List<AlertPlayerProfileData>();
+
+        public List<MinimalCharacter> Characters { get; set; } = new List<MinimalCharacter>();
 
         public List<PsOutfit> Outfits { get; set; } = new List<PsOutfit>();
 

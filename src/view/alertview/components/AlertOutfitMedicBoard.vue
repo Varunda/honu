@@ -2,7 +2,7 @@
     <a-table
         :entries="outfits"
         :show-filters="true"
-        default-sort-field="revives" default-sort-order="desc" default-page-size="25"
+        default-sort-field="medicRevives" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="outfitDisplay">
@@ -36,33 +36,83 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="revives">
+        <a-col sort-field="medicKills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicKills}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicKPM">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicKPM | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicRevives">
             <a-header>
                 <b>Revives</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives}}
+                {{entry.medicRevives}}
             </a-body>
         </a-col>
 
-        <a-col>
+        <a-col sort-field="medicRevivesPerMinute">
             <a-header>
                 <b>RPM</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives / Math.max(1, entry.medicPlaytime) * 60 | locale}}
+                {{entry.medicRevivesPerMinute | locale(2)}}
             </a-body>
         </a-col>
 
-        <a-col sort-field="heals">
+        <a-col>
+            <a-header>
+                <b>Deaths</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicDeaths | locale}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicKD">
+            <a-header>
+                <b>K/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicKD | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicKRD">
+            <a-header>
+                <b>K+R/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicKRD | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicHeals">
             <a-header>
                 <b>Heals</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals}}
+                {{entry.medicHeals}}
             </a-body>
         </a-col>
 
@@ -72,7 +122,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals / Math.max(1, entry.medicPlaytime) * 60 | locale(2)}}
+                {{entry.medicHealsPerMinute | locale(2)}}
             </a-body>
         </a-col>
     </a-table>

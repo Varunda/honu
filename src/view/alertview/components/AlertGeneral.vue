@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <h1 class="text-center">
-            Alert {{alert.worldID}}-{{alert.instanceID}} on {{alert.zoneID | zone}} on {{alert.worldID | world}}
+            Alert {{alert.worldID}}-{{alert.instanceID}} on {{alert.zoneID | zone}} on {{alert.worldID | world}} with {{alert.participants | locale}} players
         </h1>
 
         <h3 class="text-center">

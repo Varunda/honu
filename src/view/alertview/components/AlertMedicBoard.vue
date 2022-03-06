@@ -2,7 +2,7 @@
     <a-table
         :entries="entries"
         :show-filters="true"
-        default-sort-field="revives" default-sort-order="desc" default-page-size="25"
+        default-sort-field="revives" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="characterName">
@@ -15,11 +15,11 @@
             </a-filter>
 
             <a-body v-slot="entry">
-                <a :href="'/c/' + entry.characterID" :style="{ color: getFactionColor(entry.factionID) }">
+                <a :href="'/c/' + entry.id" :style="{ color: getFactionColor(entry.factionID) }">
                     <span v-if="entry.outfitID != null">
                         [{{entry.outfitTag}}]
                     </span>
-                    {{entry.characterName}}
+                    {{entry.name}}
                 </a>
             </a-body>
         </a-col>
@@ -35,6 +35,26 @@
 
             <a-body v-slot="entry">
                 {{entry.factionID | faction}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="kills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.kills}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="kpm">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.kpm | locale(2)}}
             </a-body>
         </a-col>
 
@@ -55,6 +75,36 @@
 
             <a-body v-slot="entry">
                 {{entry.revivesPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="deaths">
+            <a-header>
+                <b>Deaths</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.deaths}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="kd">
+            <a-header>
+                <b>K/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.kd | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="krd">
+            <a-header>
+                <b>K+R/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.krd | locale(2)}}
             </a-body>
         </a-col>
 
@@ -84,7 +134,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.secondsOnline | mduration}}
+                {{entry.timeAs | mduration}}
             </a-body>
         </a-col>
 
@@ -95,7 +145,8 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
-    import { AlertParticipantApi, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+    import { AlertParticipantApi, AlertPlayerProfileData, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+    import { MedicTableData, TableData } from "../TableData";
 
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
@@ -123,12 +174,12 @@
         },
 
         computed: {
-            entries: function(): Loading<FlattendParticipantDataEntry[]> {
+            entries: function(): Loading<MedicTableData[]> {
                 if (this.participants.state != "loaded") {
-                    return this.participants;
+                    return Loadable.rewrap<FlattendParticipantDataEntry[], MedicTableData[]>(this.participants);
                 }
 
-                return Loadable.loaded(this.participants.data.filter(iter => iter.heals > 0 || iter.revives > 0 || iter.shieldRepairs > 0));
+                return Loadable.loaded(TableData.getMedicData(this.participants.data));
             },
 
             sources: function() {

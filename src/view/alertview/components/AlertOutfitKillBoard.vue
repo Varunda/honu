@@ -1,7 +1,7 @@
 ﻿<template>
     <a-table
         :entries="outfits"
-        :show-filters="true"
+        :show-filters="true" :default-page-size="25"
         default-sort-field="kpm" default-sort-order="desc"
         display-type="table" row-padding="compact">
 

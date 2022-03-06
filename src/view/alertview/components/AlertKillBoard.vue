@@ -1,7 +1,7 @@
 ﻿<template>
     <a-table
         :entries="participants"
-        :show-filters="true"
+        :show-filters="true" :default-page-size="25"
         default-sort-field="kills" default-sort-order="desc"
         display-type="table" row-padding="compact">
 
@@ -58,7 +58,7 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="deaths">
+        <a-col>
             <a-header>
                 <b>Deaths</b>
             </a-header>
@@ -98,6 +98,7 @@
 
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
+    import "filters/FixedFilter";
     import "MomentFilter";
 
     import ColorUtils from "util/Color";

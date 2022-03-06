@@ -19,7 +19,14 @@ export class PsCharacter {
 	public dateCreated: Date = new Date();
 	public dateLastLogin: Date = new Date();
 	public dateLastSave: Date = new Date();
+}
 
+export class MinimalCharacter {
+	public id: string = "";
+	public outfitID: string | null = null;
+	public outfitTag: string | null = null;
+	public name: string = "";
+	public factionID: number = 0;
 }
 
 export class CharacterApi extends ApiWrapper<PsCharacter> {
@@ -35,6 +42,12 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 			dateLastSave: new Date(elem.dateLastSave)
 		}
 	}
+
+	public static parseMinimal(elem: any): MinimalCharacter {
+		return {
+			...elem
+		};
+    }
 
 	public static async getByID(charID: string): Promise<Loading<PsCharacter>> {
 		return CharacterApi.get().readSingle(`/api/character/${charID}`, CharacterApi.parse);

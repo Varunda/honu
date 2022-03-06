@@ -11,13 +11,13 @@ namespace watchtower.Services.Db {
     /// <summary>
     ///     Service to interact with the alert_participant_data table
     /// </summary>
-    public class AlertParticipantDataDbStore {
+    public class AlertPlayerDataDbStore {
 
-        private readonly ILogger<AlertParticipantDataDbStore> _Logger;
+        private readonly ILogger<AlertPlayerDataDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
         private readonly IDataReader<AlertPlayerDataEntry> _Reader;
 
-        public AlertParticipantDataDbStore(ILogger<AlertParticipantDataDbStore> logger, IDbHelper dbHelper,
+        public AlertPlayerDataDbStore(ILogger<AlertPlayerDataDbStore> logger, IDbHelper dbHelper,
             IDataReader<AlertPlayerDataEntry> reader) {
 
             _Logger = logger;

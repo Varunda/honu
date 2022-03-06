@@ -43,11 +43,9 @@ namespace watchtower.Services.Hosted.Startup {
                         continue;
                     }
 
-                    /*
                     if (alert.Participants > 0) {
                         continue;
                     }
-                    */
 
                     Stopwatch timer = Stopwatch.StartNew();
                     List<AlertPlayerDataEntry> existingData = await _DataRepository.GetByAlert(alert, stoppingToken);

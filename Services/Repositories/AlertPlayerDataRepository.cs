@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models.Alert;
 using watchtower.Models.Census;
@@ -18,6 +20,7 @@ namespace watchtower.Services.Repositories {
         private class TimestampZoneEvent {
             public DateTime Timestamp;
             public uint ZoneID;
+            public short LoadoutID;
             public string Type = "";
         }
 
@@ -27,12 +30,13 @@ namespace watchtower.Services.Repositories {
         private readonly ExpEventDbStore _ExpDb;
         private readonly AlertDbStore _AlertDb;
         private readonly SessionDbStore _SessionDb;
-        private readonly AlertParticipantDataDbStore _ParticipantDataDb;
+        private readonly AlertPlayerDataDbStore _ParticipantDataDb;
+        private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
 
         public AlertPlayerDataRepository(ILogger<AlertPlayerDataRepository> logger,
                 KillEventDbStore killDb, ExpEventDbStore expDb,
                 AlertDbStore alertDb, SessionDbStore sessionDb,
-                AlertParticipantDataDbStore participantDataDb) {
+                AlertPlayerDataDbStore participantDataDb, AlertPlayerProfileDataDbStore profileDataDb) {
 
             _Logger = logger;
             _KillDb = killDb;
@@ -41,6 +45,7 @@ namespace watchtower.Services.Repositories {
             _SessionDb = sessionDb;
             _ParticipantDataDb = participantDataDb;
             _ParticipantDataDb = participantDataDb;
+            _ProfileDataDb = profileDataDb;
         }
 
         /// <summary>
@@ -84,12 +89,14 @@ namespace watchtower.Services.Repositories {
             DateTime start = alert.Timestamp;
             DateTime end = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
 
+            // Events not in the alert's zone are there to get when a player joins/leaves the zone
             List<KillEvent> kills = await _KillDb.GetByRange(start, end, null, alert.WorldID);
             List<ExpEvent> exp = await _ExpDb.GetByRange(start, end, null, alert.WorldID);
             List<AlertPlayer> parts = await _AlertDb.GetParticipants(alert);
 
             Dictionary<string, AlertPlayerDataEntry> data = new Dictionary<string, AlertPlayerDataEntry>();
             Dictionary<string, List<TimestampZoneEvent>> timestampedEvents = new Dictionary<string, List<TimestampZoneEvent>>();
+            Dictionary<string, List<AlertPlayerProfileData>> profileData = new Dictionary<string, List<AlertPlayerProfileData>>();
 
             List<string> duplicateDataEntries = new List<string>();
 
@@ -112,34 +119,77 @@ namespace watchtower.Services.Repositories {
                 _Logger.LogWarning($"{duplicateDataEntries.Count} duplicate entries found, skipping those");
             }
 
+            AlertPlayerProfileData GetProfileData(string charID, short loadoutID) {
+                if (profileData.TryGetValue(charID, out List<AlertPlayerProfileData>? data) == false) {
+                    data = new List<AlertPlayerProfileData>();
+
+                    profileData.Add(charID, data);
+                }
+
+                data = profileData[charID];
+
+                foreach (AlertPlayerProfileData iter in data) {
+                    if (iter.ProfileID == Profile.GetProfileID(loadoutID)) {
+                        return iter;
+                    }
+                }
+
+                AlertPlayerProfileData profile = new AlertPlayerProfileData();
+                profile.CharacterID = charID;
+                profile.ProfileID = Profile.GetProfileID(loadoutID) ?? throw new ArgumentException($"Unchecked loadoutID {loadoutID}");
+                profile.AlertID = alert.ID;
+
+                data.Add(profile);
+
+                return profile;
+            }
+
+            int zeroCount = 0;
+
             foreach (KillEvent ev in kills) {
                 if (ev.KilledTeamID == ev.AttackerTeamID) { // Skip TKs
                     continue;
                 }
-                if (ev.ZoneID != alert.ZoneID) { // Skip kills not in the alert's zone
-                    continue;
-                }
-
-                if (data.TryGetValue(ev.AttackerCharacterID, out AlertPlayerDataEntry? attacker) == true) {
-                    ++attacker.Kills;
-                }
-
-                if (ev.RevivedEventID == null) {
-                    if (data.TryGetValue(ev.KilledCharacterID, out AlertPlayerDataEntry? killed) == true) {
-                        ++killed.Deaths;
-                    }
-                }
 
                 if (timestampedEvents.TryGetValue(ev.AttackerCharacterID, out List<TimestampZoneEvent>? events) == true) {
-                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, Type = "event" });
+                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, LoadoutID = ev.AttackerLoadoutID, Type = "event" });
                     timestampedEvents[ev.AttackerCharacterID] = events;
                 }
 
                 if (timestampedEvents.TryGetValue(ev.KilledCharacterID, out events) == true) {
-                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, Type = "event" });
+                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, LoadoutID = ev.KilledLoadoutID, Type = "event" });
                     timestampedEvents[ev.KilledCharacterID] = events;
                 }
+
+                if (ev.ZoneID != alert.ZoneID) { // Skip kills not in the alert's zone
+                    continue;
+                }
+
+                if (ev.AttackerCharacterID != "0" && data.TryGetValue(ev.AttackerCharacterID, out AlertPlayerDataEntry? attacker) == true) {
+                    ++attacker.Kills;
+
+                    if (ev.AttackerLoadoutID == 0) {
+                        ++zeroCount;
+                        //_Logger.LogDebug($"{JToken.FromObject(ev)}");
+                    } else {
+                        AlertPlayerProfileData profile = GetProfileData(ev.AttackerCharacterID, ev.AttackerLoadoutID);
+                        ++profile.Kills;
+                    }
+                }
+
+                if (ev.KilledCharacterID != "0" && ev.RevivedEventID == null) {
+                    if (data.TryGetValue(ev.KilledCharacterID, out AlertPlayerDataEntry? killed) == true) {
+                        ++killed.Deaths;
+
+                        if (ev.KilledLoadoutID != 0) {
+                            AlertPlayerProfileData profile = GetProfileData(ev.KilledCharacterID, ev.KilledLoadoutID);
+                            ++profile.Deaths;
+                        }
+                    }
+                }
             }
+
+            _Logger.LogDebug($"zeroCount: {zeroCount}");
 
             foreach (ExpEvent ev in exp) {
                 if (ev.ZoneID != alert.ZoneID) { // Skip events not in the alert's zone
@@ -153,6 +203,11 @@ namespace watchtower.Services.Repositories {
 
                     if (Experience.IsVehicleKill(expID)) {
                         ++source.VehicleKills;
+
+                        if (ev.LoadoutID != 0) {
+                            AlertPlayerProfileData profile = GetProfileData(ev.SourceID, ev.LoadoutID);
+                            ++profile.VehicleKills;
+                        }
                     } else if (Experience.IsHeal(expID)) {
                         ++source.Heals;
                     } else if (Experience.IsRevive(expID)) {
@@ -169,7 +224,7 @@ namespace watchtower.Services.Repositories {
                 }
 
                 if (timestampedEvents.TryGetValue(ev.SourceID, out List<TimestampZoneEvent>? events) == true) {
-                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, Type = "event" });
+                    events.Add(new TimestampZoneEvent() { Timestamp = ev.Timestamp, ZoneID = ev.ZoneID, LoadoutID = ev.LoadoutID, Type = "event" });
                     timestampedEvents[ev.SourceID] = events;
                 }
             }
@@ -211,7 +266,13 @@ namespace watchtower.Services.Repositories {
                 foreach (TimestampZoneEvent ev in sorted.Skip(1)) {
                     if (ev.Type != "logout") {
                         if (prev.ZoneID == alert.ZoneID && ev.ZoneID == alert.ZoneID) {
-                            seconds += (ev.Timestamp - prev.Timestamp).TotalSeconds;
+                            double sec = (ev.Timestamp - prev.Timestamp).TotalSeconds;
+                            seconds += sec;
+
+                            if (ev.LoadoutID != 0) {
+                                AlertPlayerProfileData profile = GetProfileData(part.CharacterID, ev.LoadoutID);
+                                profile.TimeAs += (int)sec;
+                            }
                         }
                     }
                     prev = ev;
@@ -231,6 +292,12 @@ namespace watchtower.Services.Repositories {
 
             foreach (AlertPlayerDataEntry entry in entries) {
                 entry.ID = await _ParticipantDataDb.Insert(entry);
+
+                if (profileData.TryGetValue(entry.CharacterID, out List<AlertPlayerProfileData>? profiles) == true) {
+                    foreach (AlertPlayerProfileData profile in profiles) {
+                        profile.ID = await _ProfileDataDb.Insert(alert.ID, profile);
+                    }
+                }
             }
 
             return entries;

@@ -2,7 +2,7 @@
     <a-table
         :entries="outfits"
         :show-filters="true"
-        default-sort-field="resupplies" default-sort-order="desc" default-page-size="25"
+        default-sort-field="engResupplies" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="outfitDisplay">
@@ -36,13 +36,53 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="resupplies">
+        <a-col sort-field="engKills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engKills}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engKPM">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engKPM | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engDeaths">
+            <a-header>
+                <b>Deaths</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engDeaths}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engKD">
+            <a-header>
+                <b>K/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engKD | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engResupplies">
             <a-header>
                 <b>Resupplies</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.resupplies}}
+                {{entry.engResupplies}}
             </a-body>
         </a-col>
 
@@ -52,7 +92,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.resupplies / Math.max(1, entry.engineerPlaytime) * 60 | locale(2)}}
+                {{entry.engResuppliesPerMinute | locale(2)}}
             </a-body>
         </a-col>
 
@@ -62,7 +102,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.repairs}}
+                {{entry.engRepairs}}
             </a-body>
         </a-col>
 
@@ -72,7 +112,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.repairs / Math.max(1, entry.engineerPlaytime) * 60 | locale}}
+                {{entry.engRepairsPerMinute | locale(2)}}
             </a-body>
         </a-col>
     </a-table>
@@ -91,7 +131,7 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
 
-    export const AlertOutfitMedicBoard = Vue.extend({
+    export const AlertOutfitEngineerBoard = Vue.extend({
         props: {
             outfits: { type: Object, required: true }
         },
@@ -127,5 +167,5 @@
             InfoHover
         }
     });
-    export default AlertOutfitMedicBoard;
+    export default AlertOutfitEngineerBoard;
 </script>

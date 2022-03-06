@@ -1,9 +1,7 @@
 ﻿import { Loading, Loadable } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
-import { CharacterApi, PsCharacter } from "api/CharacterApi";
+import { CharacterApi, MinimalCharacter, PsCharacter } from "api/CharacterApi";
 import { OutfitApi, PsOutfit } from "api/OutfitApi";
-import { Session, SessionApi } from "api/SessionApi";
-import { Alert } from "bootstrap";
 
 export class AlertParticipantDataEntry {
     public id: number = 0;
@@ -26,12 +24,25 @@ export class AlertParticipantDataEntry {
 
 export class ExpandedAlertParticipants {
     public entries: AlertParticipantDataEntry[] = [];
-    public characters: Map<string, PsCharacter> = new Map();
+    public profiles: AlertPlayerProfileData[] = [];
+    public characters: Map<string, MinimalCharacter> = new Map();
     public outfits: Map<string, PsOutfit> = new Map();
+}
+
+export class AlertPlayerProfileData {
+    public id: number = 0;
+    public alertID: number = 0;
+    public characterID: string = "";
+    public profileID: number = 0;
+    public kills: number = 0;
+    public deaths: number = 0;
+    public vehicleKills: number = 0;
+    public timeAs: number = 0;
 }
 
 export class FlattendParticipantDataEntry {
     public entry: AlertParticipantDataEntry = new AlertParticipantDataEntry();
+
     public characterID: string = "";
     public characterName: string = "";
     public factionID: number = 0;
@@ -60,6 +71,8 @@ export class FlattendParticipantDataEntry {
 
     public kpm: number = 0;
     public kd: number = 0;
+
+    public profiles: AlertPlayerProfileData[] = [];
 }
 
 export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
@@ -72,12 +85,19 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
         };
     }
 
+    public static readProfile(elem: any): AlertPlayerProfileData {
+        return {
+            ...elem
+        };
+    }
+
     public static readExpanded(elem: any): ExpandedAlertParticipants {
         const expanded: ExpandedAlertParticipants = new ExpandedAlertParticipants();
 
         expanded.entries = elem.entries.map((iter: any) => AlertParticipantApi.readEntry(iter));
+        expanded.profiles = elem.profileData.map((iter: any) => AlertParticipantApi.readProfile(iter));
 
-        const characters: PsCharacter[] = elem.characters.map((iter: any) => CharacterApi.parse(iter));
+        const characters: MinimalCharacter[] = elem.characters.map((iter: any) => CharacterApi.parseMinimal(iter));
         for (const c of characters) {
             expanded.characters.set(c.id, c);
         }
@@ -101,7 +121,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                     continue;
                 }
 
-                const character: PsCharacter | null = expanded.data.characters.get(entry.characterID) || null;
+                const character: MinimalCharacter | null = expanded.data.characters.get(entry.characterID) || null;
                 const outfit: PsOutfit | null = (entry.outfitID == null) ? null : expanded.data.outfits.get(entry.outfitID) || null;
 
                 const flat: FlattendParticipantDataEntry = {
@@ -111,6 +131,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                     factionID: character?.factionID ?? -1,
                     outfitTag: outfit?.tag ?? null,
                     outfitName: outfit?.name ?? null,
+                    profiles: expanded.data.profiles.filter(iter => iter.characterID == entry.characterID),
 
                     kpm: entry.kills / Math.max(1, entry.secondsOnline) * 60,
                     kd: entry.kills / Math.max(1, entry.deaths),
@@ -127,8 +148,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
 
             return Loadable.loaded(entries);
         } else {
-            throw `aasdflakjdf`;
-            return expanded as any;
+            return Loadable.rewrap<ExpandedAlertParticipants, FlattendParticipantDataEntry[]>(expanded);
         }
     }
 

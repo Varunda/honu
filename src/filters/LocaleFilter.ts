@@ -7,6 +7,7 @@ function locale(value: number | string, digits?: number): string {
 	} else {
 		val = value;
 	}
+
 	return val.toLocaleString(undefined, {
 		minimumFractionDigits: digits ? digits : (Number.isInteger(val)) ? 0 : 2,
 		maximumFractionDigits: digits ? digits : (Number.isInteger(val)) ? 0 : 2

@@ -25,11 +25,13 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly SessionDbStore _SessionDb;
+        private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
 
         public AlertApiController(ILogger<AlertApiController> logger,
                 AlertPlayerDataRepository participantDataRepository, AlertDbStore alertDb,
                 CharacterRepository characterRepository,
-                OutfitRepository outfitRepository, SessionDbStore sessionDb) {
+                OutfitRepository outfitRepository, SessionDbStore sessionDb,
+                AlertPlayerProfileDataDbStore profileDataDb) {
 
             _Logger = logger;
 
@@ -38,6 +40,7 @@ namespace watchtower.Controllers.Api {
             _CharacterRepository = characterRepository;
             _OutfitRepository = outfitRepository;
             _SessionDb = sessionDb;
+            _ProfileDataDb = profileDataDb;
         }
 
         /// <summary>
@@ -163,10 +166,14 @@ namespace watchtower.Controllers.Api {
             List<AlertPlayerDataEntry> entries = await _ParticipantDataRepository.GetByAlert(alert, CancellationToken.None);
             block.Entries = entries;
 
+            block.ProfileData = await _ProfileDataDb.GetByAlertID(alert.ID);
+
             if (excludeCharacters == false) {
                 List<string> charIDs = entries.Select(iter => iter.CharacterID).Distinct().ToList();
                 List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs);
-                block.Characters = characters;
+                block.Characters = characters.Select(iter => new MinimalCharacter() {
+                    ID = iter.ID, OutfitID = iter.OutfitID, OutfitTag = iter.OutfitTag, Name = iter.Name, FactionID = iter.FactionID
+                }).ToList();
             }
 
             if (excludeOutfits == false) {
