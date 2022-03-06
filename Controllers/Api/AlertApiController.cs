@@ -21,13 +21,13 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<AlertApiController> _Logger;
 
         private readonly AlertDbStore _AlertDb;
-        private readonly AlertParticipantDataRepository _ParticipantDataRepository;
+        private readonly AlertPlayerDataRepository _ParticipantDataRepository;
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly SessionDbStore _SessionDb;
 
         public AlertApiController(ILogger<AlertApiController> logger,
-                AlertParticipantDataRepository participantDataRepository, AlertDbStore alertDb,
+                AlertPlayerDataRepository participantDataRepository, AlertDbStore alertDb,
                 CharacterRepository characterRepository,
                 OutfitRepository outfitRepository, SessionDbStore sessionDb) {
 
@@ -104,7 +104,7 @@ namespace watchtower.Controllers.Api {
         ///     See <see cref="GetParticipants(long, bool, bool)"/> for more information
         /// </remarks>
         [HttpGet("{worldID}/{instanceID}/participants")]
-        public async Task<ApiResponse<ExpandedAlertParticipants>> GetParticipantsByInstanceID(int instanceID, short worldID,
+        public async Task<ApiResponse<ExpandedAlertPlayers>> GetParticipantsByInstanceID(int instanceID, short worldID,
                 [FromQuery] bool excludeCharacters = false,
                 [FromQuery] bool excludeOutfits = false
             ) {
@@ -112,7 +112,7 @@ namespace watchtower.Controllers.Api {
             PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
 
             if (alert == null) {
-                return ApiNotFound<ExpandedAlertParticipants>($"{nameof(PsAlert)} {worldID}-{instanceID}");
+                return ApiNotFound<ExpandedAlertPlayers>($"{nameof(PsAlert)} {worldID}-{instanceID}");
             }
 
             return await GetParticipants(alert.ID, excludeCharacters, excludeOutfits);
@@ -123,15 +123,15 @@ namespace watchtower.Controllers.Api {
         /// </summary>
         /// <param name="alertID">ID of the alert</param>
         /// <param name="excludeCharacters">
-        ///     If the resulting <see cref="ExpandedAlertParticipants"/> will NOT have <see cref="ExpandedAlertParticipants.Characters"/> fill in. 
+        ///     If the resulting <see cref="ExpandedAlertPlayers"/> will NOT have <see cref="ExpandedAlertPlayers.Characters"/> fill in. 
         ///     Useful for services that use Honu API, but not the frontend
         /// </param>
         /// <param name="excludeOutfits">
-        ///     If the resulting <see cref="ExpandedAlertParticipants"/> will NOT have <see cref="ExpandedAlertParticipants.Outfits"/> fill in. 
+        ///     If the resulting <see cref="ExpandedAlertPlayers"/> will NOT have <see cref="ExpandedAlertPlayers.Outfits"/> fill in. 
         ///     Useful for services that use Honu API, but not the frontend
         /// </param>
         /// <response code="200">
-        ///     The response will contain the <see cref="ExpandedAlertParticipants"/> for the alert requested, 
+        ///     The response will contain the <see cref="ExpandedAlertPlayers"/> for the alert requested, 
         ///     optionally including data that may be useful to the requester. The requester can request to not
         ///     recieve this data, by using <paramref name="excludeCharacters"/> and co
         /// </response>
@@ -142,7 +142,7 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/> exists
         /// </response>
         [HttpGet("{alertID}/participants")]
-        public async Task<ApiResponse<ExpandedAlertParticipants>> GetParticipants(
+        public async Task<ApiResponse<ExpandedAlertPlayers>> GetParticipants(
                 long alertID,
                 [FromQuery] bool excludeCharacters = false,
                 [FromQuery] bool excludeOutfits = false
@@ -150,17 +150,17 @@ namespace watchtower.Controllers.Api {
 
             PsAlert? alert = await _AlertDb.GetByID(alertID);
             if (alert == null) {
-                return ApiNotFound<ExpandedAlertParticipants>($"{nameof(PsAlert)} {alertID}");
+                return ApiNotFound<ExpandedAlertPlayers>($"{nameof(PsAlert)} {alertID}");
             }
 
             DateTime alertEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
             if (DateTime.UtcNow < alertEnd) {
-                return ApiBadRequest<ExpandedAlertParticipants>($"{nameof(PsAlert)} {alertID} has not finished ({alertEnd:u})");
+                return ApiBadRequest<ExpandedAlertPlayers>($"{nameof(PsAlert)} {alertID} has not finished ({alertEnd:u})");
             }
 
-            ExpandedAlertParticipants block = new ExpandedAlertParticipants();
+            ExpandedAlertPlayers block = new ExpandedAlertPlayers();
 
-            List<AlertParticipantDataEntry> entries = await _ParticipantDataRepository.GetByAlert(alert, CancellationToken.None);
+            List<AlertPlayerDataEntry> entries = await _ParticipantDataRepository.GetByAlert(alert, CancellationToken.None);
             block.Entries = entries;
 
             if (excludeCharacters == false) {

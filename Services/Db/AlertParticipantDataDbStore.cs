@@ -15,10 +15,10 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<AlertParticipantDataDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
-        private readonly IDataReader<AlertParticipantDataEntry> _Reader;
+        private readonly IDataReader<AlertPlayerDataEntry> _Reader;
 
         public AlertParticipantDataDbStore(ILogger<AlertParticipantDataDbStore> logger, IDbHelper dbHelper,
-            IDataReader<AlertParticipantDataEntry> reader) {
+            IDataReader<AlertPlayerDataEntry> reader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
@@ -26,11 +26,11 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Insert a new <see cref="AlertParticipantDataEntry"/>, returning the ID inserted
+        ///     Insert a new <see cref="AlertPlayerDataEntry"/>, returning the ID inserted
         /// </summary>
         /// <param name="entry">Parameters used to insert the data</param>
         /// <returns>The ID of the database table row just inserted</returns>
-        public async Task<long> Insert(AlertParticipantDataEntry entry) {
+        public async Task<long> Insert(AlertPlayerDataEntry entry) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO alert_participant_data (
@@ -71,9 +71,9 @@ namespace watchtower.Services.Db {
         /// <param name="alertID">ID of the alert</param>
         /// <param name="cancel">Cancel token</param>
         /// <returns>
-        ///     All <see cref="AlertParticipantDataEntry"/>s with <see cref="AlertParticipantDataEntry.AlertID"/> of <paramref name="alertID"/>
+        ///     All <see cref="AlertPlayerDataEntry"/>s with <see cref="AlertPlayerDataEntry.AlertID"/> of <paramref name="alertID"/>
         /// </returns>
-        public async Task<List<AlertParticipantDataEntry>> GetByAlertID(long alertID, CancellationToken cancel) {
+        public async Task<List<AlertPlayerDataEntry>> GetByAlertID(long alertID, CancellationToken cancel) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
@@ -83,7 +83,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("AlertID", alertID);
 
-            List<AlertParticipantDataEntry> entries = await _Reader.ReadList(cmd, cancel);
+            List<AlertPlayerDataEntry> entries = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return entries;

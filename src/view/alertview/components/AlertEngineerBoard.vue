@@ -2,7 +2,7 @@
     <a-table
         :entries="entries"
         :show-filters="true"
-        default-sort-field="resupplies" default-sort-order="desc"
+        default-sort-field="resupplies" default-sort-order="desc" default-page-size="25"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="characterName">

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +16,15 @@ namespace watchtower.Controllers {
     public class HomeController : Controller {
 
         private readonly CharacterRepository _CharacterRepository;
-        private readonly AlertDbStore _AlertDb;
+        private readonly AlertRepository _AlertRepository;
         private readonly CharacterUpdateQueue _Queue;
 
         public HomeController(CharacterRepository charRepo,
-            CharacterUpdateQueue queue, AlertDbStore alertDb) {
+            CharacterUpdateQueue queue, AlertRepository alertRepository) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;
-            _AlertDb = alertDb;
+            _AlertRepository = alertRepository;
         }
 
         public IActionResult Index() {
@@ -103,21 +104,32 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public async Task<IActionResult> Alert(string alertID) {
+        public async Task<IActionResult> Alert(string alertID, string? outfitID) {
+            if (outfitID == "") {
+                outfitID = null;
+            }
+
+            PsAlert? alert = null;
+
             if (alertID.Contains('-')) {
-                string[] parts = alertID.Split('-');
+                try {
+                    alert = await _AlertRepository.GetByInstanceID(alertID);
+                } catch (FormatException) {
+                    alert = null;
+                }
 
-                if (parts.Length == 2) {
-                    bool validWorld = short.TryParse(parts[0], out short worldID);
-                    bool validInstance = int.TryParse(parts[1], out int instanceID);
+                if (alert != null && outfitID == null) {
+                    return Redirect($"/alert/{alert.ID}");
+                }
 
-                    if (validWorld == true && validInstance == true) {
-                        PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
+                if (alert != null && outfitID != null) {
+                    DateTimeOffset start = new DateTimeOffset(alert.Timestamp);
+                    DateTimeOffset end = new DateTimeOffset(alert.Timestamp + TimeSpan.FromSeconds(alert.Duration));
 
-                        if (alert != null) {
-                            return Redirect($"/alert/{alert.ID}");
-                        }
-                    }
+                    string gen = $"{start.ToUnixTimeSeconds()},{end.ToUnixTimeSeconds()};o{outfitID};";
+                    string url = Convert.ToBase64String(Encoding.ASCII.GetBytes(gen));
+
+                    return Redirect($"/report/{url}");
                 }
             }
 

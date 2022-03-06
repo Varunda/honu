@@ -17,11 +17,11 @@ namespace watchtower.Services.Hosted.Startup {
 
         private readonly ILogger<AlertParticipantBuilder> _Logger;
 
-        private readonly AlertParticipantDataRepository _DataRepository;
+        private readonly AlertPlayerDataRepository _DataRepository;
         private readonly AlertDbStore _AlertDb;
 
         public AlertParticipantBuilder(ILogger<AlertParticipantBuilder> logger,
-            AlertParticipantDataRepository dataRepository, AlertDbStore alertDb) {
+            AlertPlayerDataRepository dataRepository, AlertDbStore alertDb) {
 
             _Logger = logger;
             _DataRepository = dataRepository;
@@ -50,7 +50,7 @@ namespace watchtower.Services.Hosted.Startup {
                     */
 
                     Stopwatch timer = Stopwatch.StartNew();
-                    List<AlertParticipantDataEntry> existingData = await _DataRepository.GetByAlert(alert, stoppingToken);
+                    List<AlertPlayerDataEntry> existingData = await _DataRepository.GetByAlert(alert, stoppingToken);
 
                     alert.Participants = existingData.Count;
                     await _AlertDb.UpdateByID(alert.ID, alert);

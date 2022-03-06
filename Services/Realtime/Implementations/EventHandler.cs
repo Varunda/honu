@@ -37,7 +37,7 @@ namespace watchtower.Realtime {
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
         private readonly AlertDbStore _AlertDb;
-        private readonly AlertParticipantDataRepository _ParticipantDataRepository;
+        private readonly AlertPlayerDataRepository _ParticipantDataRepository;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -67,7 +67,7 @@ namespace watchtower.Realtime {
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
-            AlertParticipantDataRepository participantDataRepository) {
+            AlertPlayerDataRepository participantDataRepository) {
 
             _Logger = logger;
 
@@ -639,7 +639,7 @@ namespace watchtower.Realtime {
 
                     new Thread(async () => {
                         _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
-                        List<AlertParticipantDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
+                        List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
 
                         toRemove.Participants = parts.Count;
                         await _AlertDb.UpdateByID(toRemove.ID, toRemove);

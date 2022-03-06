@@ -13,12 +13,12 @@ namespace watchtower.Code.Commands {
     public class AlertCommand {
 
         private readonly ILogger<AlertCommand> _Logger;
-        private readonly AlertParticipantDataRepository _DataRepository;
+        private readonly AlertPlayerDataRepository _DataRepository;
         private readonly AlertParticipantDataDbStore _DataDb;
 
         public AlertCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<AlertCommand>>();
-            _DataRepository = services.GetRequiredService<AlertParticipantDataRepository>();
+            _DataRepository = services.GetRequiredService<AlertPlayerDataRepository>();
             _DataDb = services.GetRequiredService<AlertParticipantDataDbStore>();
         }
 

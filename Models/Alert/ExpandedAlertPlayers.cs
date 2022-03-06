@@ -4,9 +4,9 @@ using watchtower.Models.Db;
 
 namespace watchtower.Models.Alert {
 
-    public class ExpandedAlertParticipants {
+    public class ExpandedAlertPlayers {
 
-        public List<AlertParticipantDataEntry> Entries { get; set; } = new List<AlertParticipantDataEntry>();
+        public List<AlertPlayerDataEntry> Entries { get; set; } = new List<AlertPlayerDataEntry>();
 
         public List<PsCharacter> Characters { get; set; } = new List<PsCharacter>();
 

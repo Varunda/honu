@@ -11,13 +11,12 @@
         </honu-menu>
 
         <a-table :entries="alerts" display-type="table" :show-filters="true" row-padding="compact" default-sort-order="desc" default-sort-field="timestamp">
-
             <a-col>
                 <a-header>
                     <b>ID</b>
                 </a-header>
 
-                <a-filter field="displayID" type="string" method="input"
+                <a-filter field="displayID" type="string" method="input" max-width="8ch"
                     :conditions="[ 'contains' ]">
                 </a-filter>
 
@@ -33,6 +32,16 @@
 
                 <a-body v-slot="entry">
                     {{entry.timestamp | moment}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header sort-field="end">
+                    <b>End</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.end | moment}}
                 </a-body>
             </a-col>
 

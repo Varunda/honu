@@ -3,7 +3,7 @@
     /// <summary>
     ///     Represents data about someone who participated in an alert
     /// </summary>
-    public class AlertParticipant {
+    public class AlertPlayer {
 
         /// <summary>
         ///     ID of the character

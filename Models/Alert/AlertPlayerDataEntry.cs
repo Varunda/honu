@@ -2,7 +2,7 @@
 
 namespace watchtower.Models.Alert {
 
-    public class AlertParticipantDataEntry {
+    public class AlertPlayerDataEntry {
 
         // Generic
         

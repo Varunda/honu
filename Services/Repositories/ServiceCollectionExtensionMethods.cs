@@ -53,7 +53,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<WorldOverviewRepository>();
             services.AddSingleton<FacilityRepository>();
 
-            services.AddSingleton<AlertParticipantDataRepository>();
+            services.AddSingleton<AlertPlayerDataRepository>();
+            services.AddSingleton<AlertRepository>();
         }
 
     }

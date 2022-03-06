@@ -13,15 +13,15 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services.Repositories {
 
-    public class AlertParticipantDataRepository {
+    public class AlertPlayerDataRepository {
 
         private class TimestampZoneEvent {
             public DateTime Timestamp;
             public uint ZoneID;
-            public string Type;
+            public string Type = "";
         }
 
-        private readonly ILogger<AlertParticipantDataRepository> _Logger;
+        private readonly ILogger<AlertPlayerDataRepository> _Logger;
 
         private readonly KillEventDbStore _KillDb;
         private readonly ExpEventDbStore _ExpDb;
@@ -29,7 +29,7 @@ namespace watchtower.Services.Repositories {
         private readonly SessionDbStore _SessionDb;
         private readonly AlertParticipantDataDbStore _ParticipantDataDb;
 
-        public AlertParticipantDataRepository(ILogger<AlertParticipantDataRepository> logger,
+        public AlertPlayerDataRepository(ILogger<AlertPlayerDataRepository> logger,
                 KillEventDbStore killDb, ExpEventDbStore expDb,
                 AlertDbStore alertDb, SessionDbStore sessionDb,
                 AlertParticipantDataDbStore participantDataDb) {
@@ -49,8 +49,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="alert">Alert to get the participation data of, generating it if necessary</param>
         /// <param name="cancel">Cancel token</param>
         /// <returns></returns>
-        public async Task<List<AlertParticipantDataEntry>> GetByAlert(PsAlert alert, CancellationToken cancel) {
-            List<AlertParticipantDataEntry> entries = await _ParticipantDataDb.GetByAlertID(alert.ID, cancel);
+        public async Task<List<AlertPlayerDataEntry>> GetByAlert(PsAlert alert, CancellationToken cancel) {
+            List<AlertPlayerDataEntry> entries = await _ParticipantDataDb.GetByAlertID(alert.ID, cancel);
 
             if (entries.Count == 0) {
                 entries = await GenerateAndInsertByAlert(alert);
@@ -65,11 +65,11 @@ namespace watchtower.Services.Repositories {
         /// <param name="alertID">ID of the alert</param>
         /// <param name="cancel">Cancel token</param>
         /// <returns></returns>
-        public async Task<List<AlertParticipantDataEntry>> GetByAlert(long alertID, CancellationToken cancel) {
+        public async Task<List<AlertPlayerDataEntry>> GetByAlert(long alertID, CancellationToken cancel) {
             PsAlert? alert = await _AlertDb.GetByID(alertID);
 
             if (alert == null) {
-                return new List<AlertParticipantDataEntry>();
+                return new List<AlertPlayerDataEntry>();
             }
 
             return await GetByAlert(alert, cancel);
@@ -80,26 +80,26 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="alert"></param>
         /// <returns></returns>
-        private async Task<List<AlertParticipantDataEntry>> GenerateAndInsertByAlert(PsAlert alert) {
+        private async Task<List<AlertPlayerDataEntry>> GenerateAndInsertByAlert(PsAlert alert) {
             DateTime start = alert.Timestamp;
             DateTime end = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
 
             List<KillEvent> kills = await _KillDb.GetByRange(start, end, null, alert.WorldID);
             List<ExpEvent> exp = await _ExpDb.GetByRange(start, end, null, alert.WorldID);
-            List<AlertParticipant> parts = await _AlertDb.GetParticipants(alert);
+            List<AlertPlayer> parts = await _AlertDb.GetParticipants(alert);
 
-            Dictionary<string, AlertParticipantDataEntry> data = new Dictionary<string, AlertParticipantDataEntry>();
+            Dictionary<string, AlertPlayerDataEntry> data = new Dictionary<string, AlertPlayerDataEntry>();
             Dictionary<string, List<TimestampZoneEvent>> timestampedEvents = new Dictionary<string, List<TimestampZoneEvent>>();
 
             List<string> duplicateDataEntries = new List<string>();
 
-            foreach (AlertParticipant part in parts) {
+            foreach (AlertPlayer part in parts) {
                 if (data.ContainsKey(part.CharacterID) == true) {
                     duplicateDataEntries.Add(part.CharacterID);
                     continue;
                 }
 
-                AlertParticipantDataEntry entry = new AlertParticipantDataEntry();
+                AlertPlayerDataEntry entry = new AlertPlayerDataEntry();
                 entry.CharacterID = part.CharacterID;
                 entry.AlertID = alert.ID;
 
@@ -120,12 +120,12 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
-                if (data.TryGetValue(ev.AttackerCharacterID, out AlertParticipantDataEntry? attacker) == true) {
+                if (data.TryGetValue(ev.AttackerCharacterID, out AlertPlayerDataEntry? attacker) == true) {
                     ++attacker.Kills;
                 }
 
                 if (ev.RevivedEventID == null) {
-                    if (data.TryGetValue(ev.KilledCharacterID, out AlertParticipantDataEntry? killed) == true) {
+                    if (data.TryGetValue(ev.KilledCharacterID, out AlertPlayerDataEntry? killed) == true) {
                         ++killed.Deaths;
                     }
                 }
@@ -146,7 +146,7 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
-                if (data.TryGetValue(ev.SourceID, out AlertParticipantDataEntry? source) == false) {
+                if (data.TryGetValue(ev.SourceID, out AlertPlayerDataEntry? source) == false) {
                     _Logger.LogWarning($"Missing source {ev.SourceID}");
                 } else {
                     int expID = ev.ExperienceID;
@@ -176,7 +176,7 @@ namespace watchtower.Services.Repositories {
 
             List<Session> sessions = await _SessionDb.GetByRange(start, end);
             foreach (Session s in sessions) {
-                if (data.TryGetValue(s.CharacterID, out AlertParticipantDataEntry? entry) == true) {
+                if (data.TryGetValue(s.CharacterID, out AlertPlayerDataEntry? entry) == true) {
                     entry.OutfitID = s.OutfitID;
 
                     if (timestampedEvents.TryGetValue(s.CharacterID, out List<TimestampZoneEvent>? events) == true) {
@@ -190,11 +190,11 @@ namespace watchtower.Services.Repositories {
             }
 
             // Get how long each participant was in the zone for
-            foreach (AlertParticipant part in parts) {
+            foreach (AlertPlayer part in parts) {
                 if (timestampedEvents.TryGetValue(part.CharacterID, out List<TimestampZoneEvent>? events) == false) {
                     continue;
                 }
-                if (data.TryGetValue(part.CharacterID, out AlertParticipantDataEntry? entry) == false) {
+                if (data.TryGetValue(part.CharacterID, out AlertPlayerDataEntry? entry) == false) {
                     continue;
                 }
 
@@ -227,9 +227,9 @@ namespace watchtower.Services.Repositories {
                 //_Logger.LogInformation($"Have {sorted.Count} entries to find time on continent, {seconds} seconds");
             }
 
-            List<AlertParticipantDataEntry> entries = data.Values.ToList();
+            List<AlertPlayerDataEntry> entries = data.Values.ToList();
 
-            foreach (AlertParticipantDataEntry entry in entries) {
+            foreach (AlertPlayerDataEntry entry in entries) {
                 entry.ID = await _ParticipantDataDb.Insert(entry);
             }
 
