@@ -617,6 +617,8 @@ namespace watchtower.Realtime {
                 alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
                 alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
 
+                AlertStore.Get().AddAlert(alert);
+
                 try {
                     alert.ID = await _AlertDb.Insert(alert);
                 } catch (Exception ex) {
