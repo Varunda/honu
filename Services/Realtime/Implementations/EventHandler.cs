@@ -792,7 +792,7 @@ namespace watchtower.Realtime {
                     killed.TeamID = ev.KilledTeamID;
                 }
 
-                if (attacker.FactionID == Faction.NS) {
+                if (killed.FactionID == Faction.NS) {
                     ev.KilledTeamID = killed.TeamID;
                 }
 

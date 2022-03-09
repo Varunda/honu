@@ -189,9 +189,9 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateKills(report.Kills);
 
                 report.Deaths = killDeaths.Where(iter => {
-                    return iter.KilledTeamID == report.TeamID 
+                    return (iter.KilledTeamID == report.TeamID || iter.KilledTeamID == 4)
                         && report.Players.Contains(iter.KilledCharacterID)
-                        && iter.KilledTeamID != iter.AttackerTeamID 
+                        && (iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4)
                         && iter.RevivedEventID == null;
                 }).ToList();
                 await Clients.Caller.UpdateDeaths(report.Deaths);
