@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
@@ -26,6 +27,49 @@ namespace watchtower.Services.Db {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
+        }
+
+        public async Task<List<Session>> GetUnfixed(CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE needs_fix = true
+                    LIMIT 100;
+            ");
+
+            List<Session> sessions = await ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
+        public async Task<long> GetUnfixedCount() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT COUNT(*)
+                    FROM wt_session
+                    WHERE needs_fix = true;
+            ");
+
+            long count = await cmd.ExecuteInt64(CancellationToken.None);
+            await conn.CloseAsync();
+
+            return count;
+        }
+
+        public async Task SetFixed(long sessionID, CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_session
+                    SET needs_fix = false
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", sessionID);
+
+            await cmd.ExecuteNonQueryAsync(cancel);
+            await conn.CloseAsync();
         }
 
         /// <summary>

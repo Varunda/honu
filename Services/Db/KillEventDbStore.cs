@@ -119,6 +119,27 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Update the <see cref="KillEvent.KilledTeamID"/> of a kill event
+        /// </summary>
+        /// <param name="eventID">ID of the kill event</param>
+        /// <param name="newTeamID"></param>
+        /// <returns></returns>
+        public async Task UpdateKilledTeamID(long eventID, short newTeamID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_kills
+                    SET killed_team_id = @TeamID
+                    WHERE ID = @ID;
+            ");
+
+            cmd.AddParameter("ID", eventID);
+            cmd.AddParameter("TeamID", newTeamID);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
+        /// <summary>
         ///     Get the top 8 killers from the parameters given
         /// </summary>
         /// <param name="options">Options used to generate the data</param>

@@ -211,6 +211,8 @@ namespace watchtower {
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
 
+            services.AddHostedService<KilledTeamIDFixerService>();
+
             // Needed to Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
