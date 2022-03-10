@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
@@ -31,8 +32,15 @@ namespace watchtower.Services.Hosted.Startup {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
             _Logger.LogInformation($"{SERVICE_NAME}> started");
 
-            long count = await _SessionDb.GetUnfixedCount();
+            long count;
             long completed = 0;
+
+            try {
+                count = await _SessionDb.GetUnfixedCount();
+            } catch (Exception ex) {
+                _Logger.LogError(ex, "failed to get unfixed session count");
+                return;
+            }
 
             _Logger.LogInformation($"{SERVICE_NAME}> have {count} sessions to go");
 
@@ -41,14 +49,19 @@ namespace watchtower.Services.Hosted.Startup {
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     List<Session> sessions = await _SessionDb.GetUnfixed(stoppingToken);
+                    long toSessions = timer.ElapsedMilliseconds;
 
                     foreach (Session s in sessions) {
                         //_Logger.LogDebug($"Fixing session {s.ID}, from {s.Start} to {s.End}");
 
+                        Stopwatch timer2 = Stopwatch.StartNew();
                         List<KillEvent> events = await _KillDb.GetKillsByCharacterID(s.CharacterID, s.Start, s.End ?? DateTime.UtcNow);
+                        if (Logging.KillerTeamIDFixer == true) {
+                            _Logger.LogTrace($"Took {timer2.ElapsedMilliseconds}ms to load {events.Count} for {s.CharacterID}");
+                        }
 
                         List<KillEvent> kills = events.Where(iter => iter.AttackerCharacterID == s.CharacterID).ToList();
-                        List<KillEvent> deaths = events.Where(iter => iter.KilledCharacterID == s.CharacterID).ToList();
+                        //List<KillEvent> deaths = events.Where(iter => iter.KilledCharacterID == s.CharacterID).ToList();
 
                         if (kills.Count == 0) {
                             //_Logger.LogDebug($"{SERVICE_NAME}> no kill events to use, have {deaths.Count} deaths");
@@ -61,7 +74,7 @@ namespace watchtower.Services.Hosted.Startup {
                                     //_Logger.LogInformation($"{SERVICE_NAME}> {s.ID} new team_id {lastTeamID}");
                                 }
 
-                                if (ev.KilledCharacterID == s.CharacterID && lastTeamID != -1) {
+                                if (ev.KilledCharacterID == s.CharacterID && lastTeamID != -1 && (ev.KilledTeamID == 4 || ev.KilledTeamID == -1)) {
                                     ev.KilledTeamID = lastTeamID;
                                     await _KillDb.UpdateKilledTeamID(ev.ID, ev.KilledTeamID);
                                 }

@@ -26,6 +26,11 @@ namespace watchtower.Services.Repositories {
             _Cache = cache;
         }
 
+        /// <summary>
+        ///     Get the world population of now based on the world ID
+        /// </summary>
+        /// <param name="worldID">ID of the world to get the current population of</param>
+        /// <returns></returns>
         public WorldPopulation GetByWorldID(short worldID) {
             string cacheKey = string.Format(CACHE_KEY, worldID);
 
@@ -56,8 +61,10 @@ namespace watchtower.Services.Repositories {
                     pop.NsOther = Count(iter => iter.Value.WorldID == worldID && iter.Value.FactionID == Faction.NS && iter.Value.TeamID == Faction.NS && iter.Value.Online == true);
                 }
 
+                /*
                 _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to build world data for world ID {worldID}, "
                     + $"caching for {CACHE_DURATION} seconds (until {pop.CachedUntil:u})");
+                */
 
                 _Cache.Set(cacheKey, pop, new MemoryCacheEntryOptions() {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(CACHE_DURATION)

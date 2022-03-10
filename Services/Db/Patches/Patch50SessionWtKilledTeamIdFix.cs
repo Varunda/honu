@@ -19,8 +19,11 @@ namespace watchtower.Services.Db.Patches {
 
                 UPDATE wt_session
                     SET needs_fix = true
-                    WHERE character_id IN (SELECT id FROM wt_character WHERE wt_character.faction_id = 4);
+                    WHERE needs_fix = false
+                        AND character_id IN (SELECT id FROM wt_character WHERE wt_character.faction_id = 4);
             ");
+
+            cmd.CommandTimeout = 300;
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
