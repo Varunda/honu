@@ -54,35 +54,39 @@ namespace watchtower.Services.Hosted.Startup {
                     foreach (Session s in sessions) {
                         //_Logger.LogDebug($"Fixing session {s.ID}, from {s.Start} to {s.End}");
 
-                        Stopwatch timer2 = Stopwatch.StartNew();
-                        List<KillEvent> events = await _KillDb.GetKillsByCharacterID(s.CharacterID, s.Start, s.End ?? DateTime.UtcNow);
-                        if (Logging.KillerTeamIDFixer == true) {
-                            _Logger.LogTrace($"Took {timer2.ElapsedMilliseconds}ms to load {events.Count} for {s.CharacterID}");
-                        }
+                        try {
+                            Stopwatch timer2 = Stopwatch.StartNew();
+                            List<KillEvent> events = await _KillDb.GetKillsByCharacterID(s.CharacterID, s.Start, s.End ?? DateTime.UtcNow);
+                            if (Logging.KillerTeamIDFixer == true) {
+                                _Logger.LogTrace($"Took {timer2.ElapsedMilliseconds}ms to load {events.Count} for {s.CharacterID}");
+                            }
 
-                        List<KillEvent> kills = events.Where(iter => iter.AttackerCharacterID == s.CharacterID).ToList();
-                        //List<KillEvent> deaths = events.Where(iter => iter.KilledCharacterID == s.CharacterID).ToList();
+                            List<KillEvent> kills = events.Where(iter => iter.AttackerCharacterID == s.CharacterID).ToList();
+                            //List<KillEvent> deaths = events.Where(iter => iter.KilledCharacterID == s.CharacterID).ToList();
 
-                        if (kills.Count == 0) {
-                            //_Logger.LogDebug($"{SERVICE_NAME}> no kill events to use, have {deaths.Count} deaths");
-                        } else {
-                            short lastTeamID = kills[0].AttackerTeamID;
+                            if (kills.Count == 0) {
+                                //_Logger.LogDebug($"{SERVICE_NAME}> no kill events to use, have {deaths.Count} deaths");
+                            } else {
+                                short lastTeamID = kills[0].AttackerTeamID;
 
-                            foreach (KillEvent ev in events) {
-                                if (ev.AttackerCharacterID == s.CharacterID && lastTeamID != ev.AttackerTeamID) {
-                                    lastTeamID = ev.AttackerTeamID;
-                                    //_Logger.LogInformation($"{SERVICE_NAME}> {s.ID} new team_id {lastTeamID}");
-                                }
+                                foreach (KillEvent ev in events) {
+                                    if (ev.AttackerCharacterID == s.CharacterID && lastTeamID != ev.AttackerTeamID) {
+                                        lastTeamID = ev.AttackerTeamID;
+                                        //_Logger.LogInformation($"{SERVICE_NAME}> {s.ID} new team_id {lastTeamID}");
+                                    }
 
-                                if (ev.KilledCharacterID == s.CharacterID && lastTeamID != -1 && (ev.KilledTeamID == 4 || ev.KilledTeamID == -1)) {
-                                    ev.KilledTeamID = lastTeamID;
-                                    await _KillDb.UpdateKilledTeamID(ev.ID, ev.KilledTeamID);
+                                    if (ev.KilledCharacterID == s.CharacterID && lastTeamID != -1 && (ev.KilledTeamID == 4 || ev.KilledTeamID == -1)) {
+                                        ev.KilledTeamID = lastTeamID;
+                                        await _KillDb.UpdateKilledTeamID(ev.ID, ev.KilledTeamID);
+                                    }
                                 }
                             }
-                        }
 
-                        await _SessionDb.SetFixed(s.ID, stoppingToken);
-                        ++completed;
+                            await _SessionDb.SetFixed(s.ID, stoppingToken);
+                            ++completed;
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"failed to update session {s.ID}, for {s.CharacterID}, from {s.Start:u} to {(s.End ?? DateTime.UtcNow):u}");
+                        }
                     }
 
                     if (completed % 1000 == 0) {
