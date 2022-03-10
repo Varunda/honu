@@ -71,7 +71,7 @@ namespace watchtower.Services.Hosted.Startup {
                             _Logger.LogWarning($"Timeout when getting kills/deaths for {s.ID} {s.Start:u} {s.End ?? DateTime.UtcNow:u}");
                         }
                         if (Logging.KillerTeamIDFixer == true) {
-                            _Logger.LogTrace($"Took {timer2.ElapsedMilliseconds}ms to load {events.Count} for {s.CharacterID}");
+                            _Logger.LogTrace($"Took {timer2.ElapsedMilliseconds}ms to load {events.Count} for {s.CharacterID} {completed}/{count}");
                         }
 
                         List<KillEvent> kills = events.Where(iter => iter.AttackerCharacterID == s.CharacterID).ToList();
