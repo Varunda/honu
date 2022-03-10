@@ -297,10 +297,15 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
 
-            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
-            await conn.CloseAsync();
-
-            return evs;
+            try {
+                List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+                return evs;
+            } catch (Exception ex) {
+                _Logger.LogError(cmd.Print());
+                throw;
+            } finally {
+                await conn.CloseAsync();
+            }
         }
 
         /// <summary>
