@@ -46,12 +46,21 @@ namespace watchtower.Services.Hosted.Startup {
 
             Stopwatch timer = Stopwatch.StartNew();
 
+            HashSet<long> badSessions = new HashSet<long>();
+
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     List<Session> sessions = await _SessionDb.GetUnfixed(stoppingToken);
                     long toSessions = timer.ElapsedMilliseconds;
 
+                    if (sessions.Count == 0) {
+                        break;
+                    }
+
                     foreach (Session s in sessions) {
+                        if (badSessions.Contains(s.ID)) {
+                            continue;
+                        }
                         //_Logger.LogDebug($"Fixing session {s.ID}, from {s.Start} to {s.End}");
 
                         try {
@@ -86,6 +95,7 @@ namespace watchtower.Services.Hosted.Startup {
                             ++completed;
                         } catch (Exception ex) {
                             _Logger.LogError(ex, $"failed to update session {s.ID}, for {s.CharacterID}, from {s.Start:u} to {(s.End ?? DateTime.UtcNow):u}");
+                            badSessions.Add(s.ID);
                         }
                     }
 
