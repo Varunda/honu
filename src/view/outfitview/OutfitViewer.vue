@@ -22,10 +22,6 @@
             </li>
         </honu-menu>
 
-        <h3 class="text-warning text-center">
-            work in progress
-        </h3>
-
         <hr class="border" />
 
         <div v-if="outfit.state == 'loading'">
