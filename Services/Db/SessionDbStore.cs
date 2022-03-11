@@ -35,6 +35,7 @@ namespace watchtower.Services.Db {
                 SELECT *
                     FROM wt_session
                     WHERE needs_fix = true
+                    ORDER BY start DESC
                     LIMIT 100;
             ");
 
