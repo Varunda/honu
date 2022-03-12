@@ -9,6 +9,7 @@
 
     import ColorUtils from "util/Color";
     import * as moment from "moment";
+import TimeUtils from "../../../util/Time";
 
     export const ChartHistoryStat = Vue.extend({
         props: {
@@ -67,25 +68,30 @@
                     },
                     options: {
                         animation: {
-                            onComplete: function() {
-                                const chart = this.ctx;
-                                chart.textAlign = "center";
-                                chart.textBaseline = "bottom";
-                                chart.font = `16px ${(Chart.defaults.font as any).family}`;
+                            onComplete: (ev) => {
+                                const chart = ev.chart;
+                                const ctx = chart.ctx;
+                                ctx.textAlign = "center";
+                                ctx.textBaseline = "bottom";
+                                ctx.font = `16px ${(Chart.defaults.font as any).family}`;
 
-                                this.data.datasets.forEach((dataset, i) => {
-                                    const meta = this.getDatasetMeta(i);
+                                chart.data.datasets.forEach((dataset, i) => {
+                                    const meta = chart.getDatasetMeta(i);
 
                                     meta.data.forEach((bar, index) => {
                                         const data = dataset.data[index];
 
                                         let display: string = data?.toString() ?? ``;
                                         if (typeof (data) == "number") {
-                                            display = data.toFixed(2);
+                                            if (this.IsTime) {
+                                                display = TimeUtils.duration(data);
+                                            } else {
+                                                display = data.toFixed(2);
+                                            }
                                         }
 
-                                        chart.fillStyle = "#fff";
-                                        chart.fillText(display, bar.x, bar.y - 2);
+                                        ctx.fillStyle = "#fff";
+                                        ctx.fillText(display, bar.x, bar.y - 2);
                                     });
                                 });
                             }
