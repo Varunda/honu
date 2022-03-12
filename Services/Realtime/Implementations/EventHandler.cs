@@ -375,14 +375,7 @@ namespace watchtower.Realtime {
                     }
 
                     Stopwatch timer = Stopwatch.StartNew();
-                    UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
-                    UnstableState stat2 = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
-                    if (state != stat2) {
-                        //_Logger.LogError($"Unstable state for {ev.WorldID} {ev.ZoneID} is different, {state} != {stat2}");
-                    }
-                    if (timer.ElapsedMilliseconds > 1000) {
-                        //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
-                    }
+                    UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
                     timer.Stop();
 
                     ev.UnstableState = state;
@@ -563,18 +556,6 @@ namespace watchtower.Realtime {
                         // Ensure census has times to update
                         await Task.Delay(5000);
 
-                        /*
-                        //short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
-                        //short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
-                        //short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
-                        //short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
-                        short? indarOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Indar);
-                        short? hossinOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Hossin);
-                        short? amerishOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Amerish);
-                        short? esamirOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Esamir);
-                        short? oshurOwner = _MapRepository.GetZoneMapOwner(worldID, Zone.Oshur);
-                        */
-
                         string s = $"ALERT ended in {worldID}, current owners:\n";
 
                         foreach (uint zoneID in Zone.All) {
@@ -588,15 +569,6 @@ namespace watchtower.Realtime {
                         }
 
                         _Logger.LogDebug(s);
-
-                        /*
-                        if (indarOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
-                        if (hossinOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
-                        if (amerishOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
-                        if (esamirOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
-                        if (oshurOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Oshur); }
-                        */
-
                     }).Start();
                 }
 
@@ -616,6 +588,32 @@ namespace watchtower.Realtime {
                 alert.InstanceID = payload.GetInt32("instance_id", 0);
                 alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
                 alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
+
+                if (zone != null) {
+                    List<PsFacility> facs = (await _FacilityRepository.GetAll())
+                        .Where(iter => iter.ZoneID == alert.ZoneID)
+                        .Where(iter => iter.TypeID == 7) // 7 = warpgate
+                        .ToList();
+
+                    _Logger.LogDebug($"Found {facs.Count} warpgates in {alert.ZoneID}, finding owners");
+
+                    foreach (PsFacility fac in facs) {
+                        PsFacilityOwner? owner = zone.GetFacilityOwner(fac.FacilityID);
+                        if (owner != null) {
+                            if (owner.Owner == Faction.VS) {
+                                alert.WarpgateVS = owner.FacilityID;
+                            } else if (owner.Owner == Faction.NC) {
+                                alert.WarpgateNC = owner.FacilityID;
+                            } else if (owner.Owner == Faction.TR) {
+                                alert.WarpgateTR = owner.FacilityID;
+                            } else {
+                                _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: facility {fac.FacilityID} was unowned by 1|2|3, current owner: {owner.Owner}");
+                            }
+                        } else {
+                            _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: failed to get owner of {fac.FacilityID}, zone missing facility");
+                        }
+                    }
+                }
 
                 AlertStore.Get().AddAlert(alert);
 
@@ -638,6 +636,36 @@ namespace watchtower.Realtime {
 
                 if (toRemove != null) {
                     AlertStore.Get().RemoveByID(toRemove.ID);
+
+                    decimal countVS = payload.GetDecimal("faction_vs", 0m);
+                    decimal countNC = payload.GetDecimal("faction_nc", 0m);
+                    decimal countTR = payload.GetDecimal("faction_tr", 0m);
+
+                    decimal winnerCount = 0;
+                    short factionID = 0;
+
+                    if (countVS > winnerCount) {
+                        winnerCount = countVS;
+                        factionID = Faction.VS;
+                    }
+                    if (countNC > winnerCount) {
+                        winnerCount = countNC;
+                        factionID = Faction.NC;
+                    } 
+                    if (countTR > winnerCount) {
+                        winnerCount = countTR;
+                        factionID = Faction.TR;
+                    }
+
+                    if ((countVS == countNC && (factionID == Faction.VS || factionID == Faction.NC)) // VS and NC tied
+                        || (countVS == countTR && (factionID == Faction.VS || factionID == Faction.TR)) // VS and TR tied
+                        || (countNC == countTR && (factionID == Faction.NC || factionID == Faction.TR)) // NC and TR tied
+                        ) {
+
+                        factionID = 0;
+                    }
+
+                    toRemove.VictorFactionID = factionID;
 
                     new Thread(async () => {
                         _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");

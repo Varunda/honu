@@ -51,6 +51,10 @@ namespace watchtower.Code.ExtensionMethods {
             return token.Value<bool?>(name) ?? fallback;
         }
 
+        public static decimal GetDecimal(this JToken token, string name, decimal fallback) {
+            return token.Value<decimal?>(name) ?? fallback;
+        }
+
         public static DateTime CensusTimestamp(this JToken token, string name) {
             return DateTimeOffset.FromUnixTimeSeconds(token.Value<int?>(name) ?? throw new ArgumentNullException(nameof(name))).UtcDateTime;
         }
