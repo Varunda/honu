@@ -62,6 +62,23 @@
         </div>
 
         <div v-else-if="participants.state == 'loaded'">
+
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="wt-header">Faction stats</h2>
+                </div>
+
+                <div class="col-4">
+                    <alert-faction-stats :data="vsStats"></alert-faction-stats>
+                </div>
+                <div class="col-4">
+                    <alert-faction-stats :data="ncStats"></alert-faction-stats>
+                </div>
+                <div class="col-4">
+                    <alert-faction-stats :data="trStats"></alert-faction-stats>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-12">
                     <h2 class="wt-header">Kills</h2>
@@ -132,6 +149,7 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import Busy from "components/Busy.vue";
 
+    import AlertFactionStats from "./components/AlertFactionStats.vue";
     import AlertGeneral from "./components/AlertGeneral.vue";
     import AlertKillBoard from "./components/AlertKillBoard.vue";
     import AlertOutfitKillBoard from "./components/AlertOutfitKillBoard.vue";
@@ -160,6 +178,7 @@
         public medicKills: number = 0;
         public medicDeaths: number = 0;
         public medicTimeAs: number = 0;
+        public medicPlayers: number = 0;
         public medicKPM: number = 0;
         public medicKD: number = 0;
         public medicHeals: number = 0;
@@ -171,6 +190,7 @@
         public engKills: number = 0;
         public engDeaths: number = 0;
         public engTimeAs: number = 0;
+        public engPlayers: number = 0;
         public engKPM: number = 0;
         public engKD: number = 0;
         public engResupplies: number = 0;
@@ -196,12 +216,20 @@
                 },
 
                 alert: Loadable.idle() as Loading<PsAlert>,
-                participants: Loadable.idle() as Loading<FlattendParticipantDataEntry[]> 
+                participants: Loadable.idle() as Loading<FlattendParticipantDataEntry[]>,
+
+                vsStats: new OutfitDataEntry() as OutfitDataEntry,
+                ncStats: new OutfitDataEntry() as OutfitDataEntry,
+                trStats: new OutfitDataEntry() as OutfitDataEntry,
             }
         },
 
         created: function(): void {
             document.title = `Honu / Alert / <loading...>`;
+
+            this.vsStats.factionID = 1;
+            this.ncStats.factionID = 2;
+            this.trStats.factionID = 3;
         },
 
         mounted: function(): void {
@@ -244,6 +272,7 @@
 
                 if (this.participants.state == "loaded") {
                     this.makeOutfitData();
+                    this.makeFactionData();
                 }
             },
 
@@ -293,6 +322,7 @@
                         outfitEntry.medicTimeAs += medicProfile.timeAs;
                         outfitEntry.medicHeals += entry.heals;
                         outfitEntry.medicRevives += entry.revives;
+                        outfitEntry.medicPlayers += 1;
                     }
 
                     const engProfile: AlertPlayerProfileData | undefined = entry.profiles.find(iter => iter.profileID == 5);
@@ -302,6 +332,7 @@
                         outfitEntry.engTimeAs += engProfile.timeAs;
                         outfitEntry.engResupplies += entry.resupplies;
                         outfitEntry.engRepairs += entry.repairs;
+                        outfitEntry.engPlayers += 1;
                     }
 
                     ++outfitEntry.members;
@@ -310,19 +341,6 @@
                         outfitEntry.factionID = entry.factionID;
                     }
                 }
-
-                /*
-                    public medicKPM: number = 0;
-                    public medicKD: number = 0;
-                    public medicHealsPerMinute: number = 0;
-                    public medicRevivesPerMinute: number = 0;
-                    public medicKRD: number = 0;
-
-                    public engKPM: number = 0;
-                    public engKD: number = 0;
-                    public engResuppliesPerMinute: number = 0;
-                    public engRepairsPerMinute: number = 0;
-                 */
 
                 const outfits: OutfitDataEntry[] = Array.from(this.outfitMap.values()).filter(iter => iter.members >= 5);
                 for (const outfit of outfits) {
@@ -340,6 +358,64 @@
                 }
 
                 this.outfits = Loadable.loaded(outfits);
+            },
+
+            makeFactionData: function(): void {
+                this.vsStats = new OutfitDataEntry();
+                this.vsStats.factionID = 1;
+                this.ncStats = new OutfitDataEntry();
+                this.ncStats.factionID = 2;
+                this.trStats = new OutfitDataEntry();
+                this.trStats.factionID = 3;
+
+                if (this.participants.state != "loaded") {
+                    console.warn(`cannot make faction data: participants is not loaded`);
+                    return;
+                }
+
+                for (const player of this.participants.data) {
+                    let stats: OutfitDataEntry | undefined = undefined;
+
+                    if (player.factionID == 1) {
+                        stats = this.vsStats;
+                    } else if (player.factionID == 2) {
+                        stats = this.ncStats;
+                    } else if (player.factionID == 3) {
+                        stats = this.trStats;
+                    }
+
+                    if (stats == undefined) {
+                        continue;
+                    }
+
+                    stats.kills += player.kills;
+                    stats.deaths += player.deaths;
+                    stats.spawns += player.spawns;
+                    stats.vehicleKills += player.vehicleKills;
+                    stats.secondsOnline += player.secondsOnline;
+
+                    const medicProfile: AlertPlayerProfileData | undefined = player.profiles.find(iter => iter.profileID == 4);
+                    if (medicProfile != undefined && medicProfile.timeAs > 60) {
+                        stats.medicKills += medicProfile.kills;
+                        stats.medicDeaths += medicProfile.deaths;
+                        stats.medicTimeAs += medicProfile.timeAs;
+                        stats.medicHeals += player.heals;
+                        stats.medicRevives += player.revives;
+                        stats.medicPlayers += 1;
+                    }
+
+                    const engProfile: AlertPlayerProfileData | undefined = player.profiles.find(iter => iter.profileID == 5);
+                    if (engProfile != undefined && engProfile.timeAs > 60) {
+                        stats.engKills += engProfile.kills;
+                        stats.engDeaths += engProfile.deaths;
+                        stats.engTimeAs += engProfile.timeAs;
+                        stats.engResupplies += player.resupplies;
+                        stats.engRepairs += player.repairs;
+                        stats.engPlayers += 1;
+                    }
+
+                    ++stats.members;
+                }
             },
         },
 
@@ -362,6 +438,7 @@
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Busy,
+            AlertFactionStats,
             AlertGeneral,
             AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard
         }
