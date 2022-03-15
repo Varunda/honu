@@ -100,8 +100,20 @@ namespace watchtower.Realtime {
         }
 
         public async Task Process(JToken ev) {
+            // The default == for tokens seems like it's by reference, not value. Since the order of the keys in the JSON
+            //      object is fixed and hasn't changed in the last 7 months, this is safe.
+            // If the order of keys changes, this method of detecting duplicate events will have to change, as it relies
+            //      on the key order being the same for duplicate events
+            //
+            // For example:
+            //      { id: 1, value: "howdy" }
+            //      { value: "howdy", id: 1 }
+            //  
+            //      The strings for these JTokens would be different, but they represent the same object. The current duplicate
+            //      event checking would not handle this correctly
+            //
             if (_Recent.Contains(ev.ToString())) {
-                _Logger.LogError($"Skipping duplicate event {ev}");
+                //_Logger.LogError($"Skipping duplicate event {ev}");
                 return;
             }
 
