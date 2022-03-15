@@ -189,7 +189,7 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            _Logger.LogDebug($"zeroCount: {zeroCount}");
+            //_Logger.LogDebug($"zeroCount: {zeroCount}");
 
             foreach (ExpEvent ev in exp) {
                 if (ev.ZoneID != alert.ZoneID) { // Skip events not in the alert's zone

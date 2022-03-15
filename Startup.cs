@@ -43,6 +43,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using watchtower.Models.PSB;
 
 //using honu_census;
 
@@ -141,6 +142,7 @@ namespace watchtower {
 
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
+            services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();
