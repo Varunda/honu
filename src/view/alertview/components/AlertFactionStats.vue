@@ -12,6 +12,7 @@
             <td><b>Players</b></td>
             <td>
                 {{data.members | locale}}
+                <info-hover text="This is not an overpop indicator. This is how many players played over the course of the alert"></info-hover>
             </td>
         </tr>
 

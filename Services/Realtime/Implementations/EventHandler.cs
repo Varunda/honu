@@ -52,7 +52,7 @@ namespace watchtower.Realtime {
         private readonly MapRepository _MapRepository;
         private readonly FacilityRepository _FacilityRepository;
 
-        private readonly List<JToken> _Recent;
+        private readonly List<string> _Recent;
 
         private readonly IHubContext<RealtimeMapHub> _MapHub;
 
@@ -71,7 +71,7 @@ namespace watchtower.Realtime {
 
             _Logger = logger;
 
-            _Recent = new List<JToken>();
+            _Recent = new List<string>();
 
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
@@ -100,12 +100,12 @@ namespace watchtower.Realtime {
         }
 
         public async Task Process(JToken ev) {
-            if (_Recent.Contains(ev)) {
+            if (_Recent.Contains(ev.ToString())) {
                 _Logger.LogError($"Skipping duplicate event {ev}");
                 return;
             }
 
-            _Recent.Add(ev);
+            _Recent.Add(ev.ToString());
             if (_Recent.Count > 50) {
                 _Recent.RemoveAt(0);
             }
@@ -144,7 +144,7 @@ namespace watchtower.Realtime {
                 } else if (eventName == "BattleRankUp") {
                     await _ProcessBattleRankUp(payloadToken);
                 } else if (eventName == "MetagameEvent") {
-                    _ProcessMetagameEvent(payloadToken);
+                    await _ProcessMetagameEvent(payloadToken);
                 } else if (eventName == "VehicleDestroy") {
                     await _ProcessVehicleDestroy(payloadToken);
                 } else {
