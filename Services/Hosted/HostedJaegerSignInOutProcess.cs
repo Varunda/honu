@@ -93,7 +93,7 @@ namespace watchtower.Services.Hosted {
                             string part = $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
 
                             if (msg.Length + part.Length + "```".Length >= messageLimit) {
-                                _DiscordQueue.Queue(msg);
+                                _DiscordQueue.Queue(msg + "```");
                                 msg = "```diff\n";
                             }
 
@@ -110,7 +110,7 @@ namespace watchtower.Services.Hosted {
                             string part = $"-[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
 
                             if (msg.Length + part.Length + "```".Length >= messageLimit) {
-                                _DiscordQueue.Queue(msg);
+                                _DiscordQueue.Queue(msg + "```");
                                 msg = "```diff\n";
                             }
 
