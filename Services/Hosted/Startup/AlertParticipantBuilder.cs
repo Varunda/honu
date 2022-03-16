@@ -53,7 +53,7 @@ namespace watchtower.Services.Hosted.Startup {
                     alert.Participants = existingData.Count;
                     await _AlertDb.UpdateByID(alert.ID, alert);
 
-                    _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to load alert {alert.ID}");
+                    _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to load alert {alert.ID} on {alert.WorldID} in zone {alert.ZoneID}");
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"error in alert participation builder");

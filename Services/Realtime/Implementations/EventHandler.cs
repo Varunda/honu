@@ -679,6 +679,27 @@ namespace watchtower.Realtime {
 
                     toRemove.VictorFactionID = factionID;
 
+                    PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
+                    if (zone != null) {
+                        int factionVS = zone.GetFacilities().Where(iter => iter.Owner == Faction.VS).Count();
+                        int factionNC = zone.GetFacilities().Where(iter => iter.Owner == Faction.NC).Count();
+                        int factionTR = zone.GetFacilities().Where(iter => iter.Owner == Faction.TR).Count();
+
+                        decimal scoreVS = decimal.Round(toRemove.ZoneFacilityCount * countVS / 100);
+                        decimal scoreNC = decimal.Round(toRemove.ZoneFacilityCount * countNC / 100);
+                        decimal scoreTR = decimal.Round(toRemove.ZoneFacilityCount * countTR / 100);
+
+                        /*
+                        _Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
+                        _Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
+                        _Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
+                        */
+
+                        toRemove.CountVS = (int)scoreVS;
+                        toRemove.CountNC = (int)scoreNC;
+                        toRemove.CountTR = (int)scoreTR;
+                    }
+
                     new Thread(async () => {
                         _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
                         List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);

@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Db;
 
@@ -28,6 +30,22 @@ namespace watchtower.Services.Hosted.Startup {
 
             foreach (PsAlert alert in unfinished) {
                 AlertStore.Get().AddAlert(alert);
+
+                lock (ZoneStateStore.Get().Zones) {
+                    ZoneState? state = ZoneStateStore.Get().GetZone(alert.WorldID, alert.ZoneID);
+                    if (state == null) {
+                        state = new ZoneState() {
+                            ZoneID = alert.ZoneID,
+                            WorldID = alert.WorldID,
+                            IsOpened = true
+                        };
+                    }
+
+                    state.AlertStart = alert.Timestamp;
+                    state.AlertEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
+
+                    ZoneStateStore.Get().SetZone(alert.WorldID, alert.ZoneID, state);
+                }
             }
         }
 
