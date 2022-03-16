@@ -143,6 +143,11 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                     spawnsPerMinute: entry.spawns / Math.max(1, entry.secondsOnline) * 60,
                 };
 
+                // Ignore resupply bots
+                if (flat.repairs == 0 && flat.resupplies > 1000 && flat.kills == 0) {
+                    continue;
+                }
+
                 entries.push(flat);
             }
 
