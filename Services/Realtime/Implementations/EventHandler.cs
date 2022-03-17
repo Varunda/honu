@@ -698,6 +698,8 @@ namespace watchtower.Realtime {
                         toRemove.CountVS = (int)scoreVS;
                         toRemove.CountNC = (int)scoreNC;
                         toRemove.CountTR = (int)scoreTR;
+                    } else {
+                        _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}, missing zone");
                     }
 
                     new Thread(async () => {
