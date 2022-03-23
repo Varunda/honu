@@ -20,6 +20,7 @@ namespace watchtower.Realtime {
             Experience.RESUPPLY, Experience.SQUAD_RESUPPLY,
             Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR,
             Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR,
+            Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY,
 
             Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
             Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
@@ -49,6 +50,12 @@ namespace watchtower.Realtime {
             CensusRealtimeEventQueue queue) {
 
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
+            foreach (int expId in Experience.VehicleRepairEvents) {
+                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
+            foreach (int expId in Experience.SquadVehicleRepairEvents) {
+                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
             _Subscription.EventNames = _Subscription.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")

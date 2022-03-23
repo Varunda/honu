@@ -243,7 +243,11 @@
                 this.lastSearch = this.charName.toLowerCase();
                 this.characters = Loadable.loading();
 
-                CharacterApi.searchByName(this.lastSearch).then((data: Loading<PsCharacter[]>) => {
+                if (this.lastSearch.length < 4) {
+                    return;
+                }
+
+                CharacterApi.searchByName(this.lastSearch, false).then((data: Loading<PsCharacter[]>) => {
                     if (data.state == "loaded") {
                         this.setCharacters(data.data);
                     } else {

@@ -252,9 +252,10 @@ namespace watchtower.Services.Repositories {
         /// <summary>
         ///     Search for characters that have a partial match to a name
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name">Name to search</param>
+        /// <param name="timeoutCensus">If the census request will be timed out or not</param>
         /// <returns></returns>
-        public async Task<List<PsCharacter>> SearchByName(string name) {
+        public async Task<List<PsCharacter>> SearchByName(string name, bool timeoutCensus = true) {
             List<PsCharacter> all = new List<PsCharacter>();
 
             Stopwatch timer = Stopwatch.StartNew();
@@ -269,7 +270,7 @@ namespace watchtower.Services.Repositories {
 
             // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
             Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name, CancellationToken.None));
-            bool censusCancelled = wrapper.Wait(TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS)) == false;
+            bool censusCancelled = wrapper.Wait((timeoutCensus == true) ? TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS) : TimeSpan.FromSeconds(60)) == false;
             if (censusCancelled == false) {
                 census = wrapper.Result;
             } else {

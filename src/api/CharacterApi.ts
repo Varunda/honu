@@ -57,8 +57,8 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 		return CharacterApi.get().readList(`/api/characters/name/${name}`, CharacterApi.parse);
 	}
 
-	public static async searchByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/characters/search/${name}`, CharacterApi.parse);
+	public static async searchByName(name: string, censusTimeout: boolean = true): Promise<Loading<PsCharacter[]>> {
+		return CharacterApi.get().readList(`/api/characters/search/${name}?censusTimeout=${censusTimeout}`, CharacterApi.parse);
 	}
 
 }
