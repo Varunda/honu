@@ -125,10 +125,10 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO weapon_stats (
-                    character_id, item_id, kills, deaths, shots, shots_hit, headshots, vehicle_kills, seconds_with, kd, kpm, acc, hsr, vkpm
+                    character_id, item_id, vehicle_id, kills, deaths, shots, shots_hit, headshots, vehicle_kills, seconds_with, kd, kpm, acc, hsr, vkpm
                 ) VALUES (
-                    @CharID, @ItemID, @Kills, @Deaths, @Shots, @ShotsHit, @Headshots, @VehicleKills, @SecondsWith, @KD, @KPM, @ACC, @HSR, @VKPM
-                ) ON CONFLICT (character_id, item_id) DO
+                    @CharID, @ItemID, @VehicleID, @Kills, @Deaths, @Shots, @ShotsHit, @Headshots, @VehicleKills, @SecondsWith, @KD, @KPM, @ACC, @HSR, @VKPM
+                ) ON CONFLICT (character_id, item_id, vehicle_id) DO
                     UPDATE SET kills = @Kills,
                         deaths = @Deaths,
                         shots = @Shots,
@@ -145,6 +145,7 @@ namespace watchtower.Services.Db {
                     WHERE
                         weapon_stats.character_id = @CharID
                         AND weapon_stats.item_id = @ItemID
+                        AND weapon_stats.vehicle_id = @VehicleID;
             ");
 
             decimal kd = entry.Kills / Math.Max(1m, entry.Deaths);
@@ -155,6 +156,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("CharID", entry.CharacterID);
             cmd.AddParameter("ItemID", entry.WeaponID);
+            cmd.AddParameter("VehicleID", entry.VehicleID);
             cmd.AddParameter("Kills", entry.Kills);
             cmd.AddParameter("Deaths", entry.Deaths);
             cmd.AddParameter("Shots", entry.Shots);
