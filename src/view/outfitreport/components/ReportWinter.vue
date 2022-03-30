@@ -17,29 +17,33 @@
             </button>
 
             <span class="btn-group">
-                <button type="button" class="btn btn-small border" :class="[ show.kills ? 'btn-primary' : 'btn-secondary' ]" @click="show.kills = !show.kills">
+                <toggle-button v-model="show.kills">
                     Kills
-                </button>
+                </toggle-button>
 
-                <button type="button" class="btn btn-small border" :class="[ show.support ? 'btn-primary' : 'btn-secondary' ]" @click="show.support = !show.support">
+                <toggle-button v-model="show.support">
                     Support
-                </button>
+                </toggle-button>
 
-                <button type="button" class="btn btn-small border" :class="[ show.spawns ? 'btn-primary' : 'btn-secondary' ]" @click="show.spawns = !show.spawns">
+                <toggle-button v-model="show.spawns">
                     Spawns
-                </button>
+                </toggle-button>
 
-                <button type="button" class="btn btn-small border" :class="[ show.weaponTypes ? 'btn-primary' : 'btn-secondary' ]" @click="show.weaponTypes = !show.weaponTypes">
+                <toggle-button v-model="show.weaponTypes">
                     Weapon types
-                </button>
+                </toggle-button>
 
-                <button type="button" class="btn btn-small border" :class="[ show.vehicleKills ? 'btn-primary' : 'btn-secondary' ]" @click="show.vehicleKills = !show.vehicleKills">
+                <toggle-button v-model="show.vehicleKills">
                     Vehicle kills
-                </button>
+                </toggle-button>
 
-                <button type="button" class="btn btn-small border" :class="[ show.misc ? 'btn-primary' : 'btn-secondary' ]" @click="show.misc = !show.misc">
+                <toggle-button v-model="show.vehicleSupport">
+                    Vehicle support
+                </toggle-button>
+
+                <toggle-button v-model="show.misc">
                     Misc
-                </button>
+                </toggle-button>
             </span>
         </h2>
 
@@ -49,6 +53,7 @@
             <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.weaponTypes" :category="catWeaponTypes" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.vehicleSupport" :category="catVehicleSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
         </div>
 
@@ -58,6 +63,8 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import Report, { PlayerMetadata } from "../Report";
+
+    import ToggleButton from "components/ToggleButton";
 
     import WinterCard from "./winter/WinterCard.vue";
 
@@ -133,6 +140,7 @@
                     support: true as boolean,
                     spawns: true as boolean,
                     vehicleKills: true as boolean,
+                    vehicleSupport: true as boolean,
                     weaponTypes: true as boolean,
                     misc: true as boolean
                 },
@@ -143,6 +151,7 @@
                     new WinterCategory("Spawns") as WinterCategory,
                     new WinterCategory("Weapon types") as WinterCategory,
                     new WinterCategory("Vehicle kills") as WinterCategory,
+                    new WinterCategory("Vehicle support") as WinterCategory,
                     new WinterCategory("Misc") as WinterCategory,
                 ] as WinterCategory[],
 
@@ -185,6 +194,9 @@
                 this.makeMBTKills();
                 this.makeESFKills();
                 this.makeLiberatorKills();
+
+                this.makeVehicleRepair();
+                this.makeVehicleResupply();
 
                 this.makeMostUniqueWeapons();
                 this.makeC4Kills();
@@ -872,6 +884,32 @@
                 this.catMisc.metrics.push(metric);
             },
 
+            makeVehicleRepair: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Vehicle repairs";
+                metric.funName = "Road mechanic";
+                metric.description = "Most vehicle repairs";
+
+                this.catVehicleSupport.metrics.push(this.generateExperience(
+                    metric,
+                    [...Experience.VehicleRepairs, ...Experience.SquadVehicleRepairs],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeVehicleResupply: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Vehicle resupplies";
+                metric.funName = "Vehicle resupplies";
+                metric.description = "Most vehicle resupplies";
+
+                this.catVehicleSupport.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
             generateExperience: function(metric: WinterMetric, expIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -1014,14 +1052,18 @@
             catVehicleKills: function(): WinterCategory {
                 return this.categories[4];
             },
-            catMisc: function(): WinterCategory {
+            catVehicleSupport: function(): WinterCategory {
                 return this.categories[5];
+            },
+            catMisc: function(): WinterCategory {
+                return this.categories[6];
             },
         },
 
         components: {
             WinterCard,
-            WinterSection
+            WinterSection,
+            ToggleButton
         }
     });
 

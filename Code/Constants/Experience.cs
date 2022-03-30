@@ -147,6 +147,10 @@ namespace watchtower.Constants {
             return expId == SHIELD_REPAIR || expId == SQUAD_SHIELD_REPAIR;
         }
 
+        public static bool IsVehicleResupply(int expId) {
+            return expId == VEHICLE_RESUPPLY || expId == SQUAD_VEHICLE_RESUPPLY;
+        }
+
         public static bool OtherIDIsCharacterID(int expID) {
             return IsHeal(expID) || IsRevive(expID) || IsResupply(expID) || IsShieldRepair(expID);
         }
