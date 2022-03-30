@@ -26,8 +26,6 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly MapCollection _MapCollection;
         private readonly IMapDbStore _MapDb;
 
-        private const string PATCH_FILE = "./census-patches/map_region.json";
-
         public FacilityPopulatorStartupService(ILogger<FacilityPopulatorStartupService> logger,
             FacilityCollection facCollection, IFacilityDbStore facDb,
             MapCollection mapColl, IMapDbStore mapDb) {
