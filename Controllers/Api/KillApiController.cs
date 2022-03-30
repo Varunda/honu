@@ -154,7 +154,7 @@ namespace watchtower.Controllers {
 
                     entry = new CharacterWeaponKillEntry() {
                         WeaponID = ev.WeaponID,
-                        WeaponName = item?.Name ?? $"<missing {ev.WeaponID}>"
+                        WeaponName = (ev.WeaponID == 0) ? "No weapon" : (item?.Name ?? $"<missing {ev.WeaponID}>")
                     };
                 }
 

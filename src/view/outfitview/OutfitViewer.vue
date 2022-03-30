@@ -346,6 +346,12 @@
                     document.title = `Honu / Outfit / ${this.outfit.data.name}`;
                     this.leader = Loadable.loading();
                     this.leader = await CharacterApi.getByID(this.outfit.data.leaderID);
+
+                    if (this.outfit.data.tag != null) {
+                        const url = new URL(location.href);
+                        url.searchParams.set("tag", this.outfit.data.tag);
+                        history.replaceState({ path: url.href }, "", url.href);
+                    }
                 } else {
                     document.title = `Honu / Outfit / <not found>`;
                 }
