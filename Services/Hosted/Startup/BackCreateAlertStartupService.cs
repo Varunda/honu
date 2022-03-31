@@ -60,7 +60,7 @@ namespace watchtower.Services.Hosted.Startup {
                     int instanceID = iter.GetRequiredInt32("instance_id");
 
                     if (await _AlertDb.GetByInstanceID(instanceID, worldID) != null) {
-                        _Logger.LogTrace($"{SERVICE_NAME}> Skipping alert already added {worldID}-{instanceID}");
+                        //_Logger.LogTrace($"{SERVICE_NAME}> Skipping alert already added {worldID}-{instanceID}");
                         ++skipped;
                         continue;
                     }
