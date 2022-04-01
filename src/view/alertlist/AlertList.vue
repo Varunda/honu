@@ -162,22 +162,22 @@
             sources: function() {
                 return {
                     zone: [
-                        { key: null, value: "All" },
-                        { key: ZoneUtils.Indar, value: "Indar" },
-                        { key: ZoneUtils.Hossin, value: "Hossin" },
-                        { key: ZoneUtils.Amerish, value: "Amerish" },
-                        { key: ZoneUtils.Esamir, value: "Esamir" },
-                        { key: ZoneUtils.Oshur, value: "Oshur" },
+                        { key: "All", value: "All" },
+                        { key: "Indar", value: ZoneUtils.Indar },
+                        { key: "Hossin", value: ZoneUtils.Hossin },
+                        { key: "Amerish", value: ZoneUtils.Amerish },
+                        { key: "Esamir", value: ZoneUtils.Esamir },
+                        { key: "Oshur", value: ZoneUtils.Oshur },
                     ],
 
                     world: [
-                        { key: null, value: "All" },
-                        { key: 1, value: "Connery" },
-                        { key: 10, value: "Miller" },
-                        { key: 13, value: "Cobalt" },
-                        { key: 17, value: "Emerald" },
-                        { key: 19, value: "Jaeger" },
-                        { key: 40, value: "SolTech" },
+                        { key: "All", value: null },
+                        { key: "Connery", value: 10 },
+                        { key: "Cobalt", value: 13 },
+                        { key: "Emerald", value: 17 },
+                        { key: "Miller", value: 10 },
+                        { key: "Jaeger", value: 19 },
+                        { key: "SolTech", value: 40 },
                     ]
                 }
             }

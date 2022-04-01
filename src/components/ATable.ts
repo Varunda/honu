@@ -104,6 +104,8 @@ export const ATable = Vue.extend({
 
     data: function() {
         return {
+            ID: Math.floor(Math.random() * 100000),
+
             nodes: {
                 columns: [] as VNode[],
                 headers: [] as Header[]
@@ -747,7 +749,11 @@ export const ATable = Vue.extend({
                     }
                 },
                 filter.source?.map((iter: any) => {
-                    return createElement("option", { domProps: { value: iter.key } }, iter.value);
+                    if (typeof (iter.key) != "string") {
+                        throw `Expected to find string for ${iter.key}, got type ${typeof(iter.key)} instead!`;
+                    }
+
+                    return createElement("option", { domProps: { value: iter.value } }, iter.key);
                 })
             );
         },

@@ -185,11 +185,11 @@
             sources: function() {
                 return {
                     factions: [
-                        { key: null, value: "All" },
-                        { key: 1, value: "VS" },
-                        { key: 2, value: "NC" },
-                        { key: 3, value: "TR" },
-                        { key: 4, value: "NS" },
+                        { key: "All", value: null },
+                        { key: "VS", value: 1 },
+                        { key: "NC", value: 2 },
+                        { key: "TR", value: 3 },
+                        { key: "NS", value: 4 },
                     ]
                 }
             }
