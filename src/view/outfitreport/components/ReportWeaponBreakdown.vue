@@ -5,7 +5,11 @@
         </h2>
 
         <div id="report-weapon-breakdown" class="collapse show">
-            <h4>Weapon kills</h4>
+            <h4>
+                Weapon kills
+                <info-hover text="What weapons the tracked players used during the time period"></info-hover>
+            </h4>
+
             <div class="d-flex">
                 <table class="table table-sm flex-grow-1 flex-basis-0">
                     <tr class="table-secondary">
@@ -41,7 +45,11 @@
                 </div>
             </div>
 
-            <h4>Weapon deaths</h4>
+            <h4>
+                Weapon deaths
+                <info-hover text="What weapons tracked characters died to"></info-hover>
+            </h4>
+
             <div class="d-flex">
                 <table class="table table-sm flex-grow-1 flex-basis-0">
                     <tr class="table-secondary">
@@ -91,6 +99,8 @@
 
     import { Block, BlockEntry } from "./charts/common";
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
+
+    import InfoHover from "components/InfoHover.vue";
 
     class WeaponEntry {
         public itemID: number = 0;
@@ -146,10 +156,10 @@
                 map.set(0, noWeapon);
 
                 for (const kill of events) {
-                    if (map.has(Number.parseInt(kill.weaponID)) == false) {
+                    if (map.has(kill.weaponID) == false) {
                         const entry: WeaponEntry = new WeaponEntry();
 
-                        entry.itemID = Number.parseInt(kill.weaponID);
+                        entry.itemID = kill.weaponID;
                         entry.itemName = this.report.items.get(entry.itemID)?.name ?? `<missing ${kill.weaponID}>`;
                         entry.kills = 0;
                         entry.headshotKills = 0;
@@ -157,7 +167,7 @@
                         map.set(entry.itemID, entry);
                     }
 
-                    const entry: WeaponEntry = map.get(Number.parseInt(kill.weaponID))!;
+                    const entry: WeaponEntry = map.get(kill.weaponID)!;
                     ++entry.kills;
                     if (kill.isHeadshot == true) {
                         ++entry.headshotKills;
@@ -176,7 +186,8 @@
         },
 
         components: {
-            ChartBlockPieChart
+            ChartBlockPieChart,
+            InfoHover
         }
     });
 
