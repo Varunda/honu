@@ -14,5 +14,9 @@ namespace watchtower.Code.Commands {
             Logging.KillerTeamIDFixer = !Logging.KillerTeamIDFixer;
         }
 
+        public void EventProcess() {
+            Logging.EventProcess = !Logging.EventProcess;
+        }
+
     }
 }

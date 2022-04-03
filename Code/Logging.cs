@@ -4,5 +4,7 @@
 
         public static bool KillerTeamIDFixer = false;
 
+        public static bool EventProcess = false;
+
     }
 }
