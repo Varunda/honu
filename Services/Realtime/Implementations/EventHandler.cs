@@ -872,12 +872,16 @@ namespace watchtower.Realtime {
         private async Task _ProcessExperience(JToken payload) {
             //_Logger.LogInformation($"Processing exp: {payload}");
 
+
             string? charID = payload.Value<string?>("character_id");
             if (charID == null) {
                 return;
             }
 
+            Stopwatch timer = Stopwatch.StartNew();
+
             _CacheQueue.Queue(charID);
+            long queueMs = timer.ElapsedMilliseconds; timer.Restart();
 
             int expId = payload.GetInt32("experience_id", -1);
             short loadoutId = payload.GetInt16("loadout_id", -1);
@@ -887,6 +891,8 @@ namespace watchtower.Realtime {
             string otherID = payload.GetString("other_id", "0");
 
             short factionID = Loadout.GetFaction(loadoutId);
+
+            long readValuesMs = timer.ElapsedMilliseconds; timer.Restart();
 
             ExpEvent ev = new ExpEvent() {
                 SourceID = charID,
@@ -899,6 +905,8 @@ namespace watchtower.Realtime {
                 WorldID = worldID,
                 ZoneID = zoneID
             };
+
+            long createEventMs = timer.ElapsedMilliseconds; timer.Restart();
 
             TrackedPlayer? otherPlayer = null;
 
@@ -954,11 +962,17 @@ namespace watchtower.Realtime {
                 }
             }
 
+            long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
+
             long ID = await _ExpEventDb.Insert(ev);
+
+            long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
             if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
                 await _KillEventDb.SetRevivedID(ev.OtherID, ID);
             }
+
+            long reviveMs = timer.ElapsedMilliseconds; timer.Restart();
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
             if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) && otherPlayer != null && otherPlayer.LatestDeath != null) {
@@ -1001,9 +1015,15 @@ namespace watchtower.Realtime {
 
             if (expId == Experience.VKILL_SUNDY && worldID == World.Jaeger) {
             //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
-
                 RecentSundererDestroyExpStore.Get().Add(ev);
             }
+
+            long total = queueMs + readValuesMs + createEventMs + processCharMs + dbInsertMs + reviveMs;
+
+            if (total > 100 && Logging.EventProcess == true) {
+                _Logger.LogDebug($"Total: {total}\nQueue: {queueMs}, Read: {readValuesMs}, create: {createEventMs}, process: {processCharMs}, DB {dbInsertMs}, revive {reviveMs}");
+            }
+
         }
 
     }
