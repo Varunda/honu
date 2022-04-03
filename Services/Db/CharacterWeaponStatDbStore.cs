@@ -64,26 +64,23 @@ namespace watchtower.Services.Db {
         public async Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> worlds, List<short> factions, int minKills = 1159) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
-                WITH top AS (
-                    SELECT *
-                        FROM weapon_stats
-                        WHERE item_id = @ItemID
-                            AND kills > @MinKills
-                        ORDER BY {column} DESC
-                        LIMIT 100
-                )
-                SELECT *
-                    FROM top ws
-                        INNER JOIN wt_character c ON ws.character_id = c.id
-                    WHERE item_id = @ItemID
+                SELECT weapon_stats.*
+                    FROM weapon_stats
+                        {(worlds.Count > 0 || factions.Count > 0 ? "INNER JOIN wt_character c ON c.id = weapon_stats.character_id" : "")}
+                    WHERE weapon_stats.item_id = @ItemID
+                        AND kills > @MinKills
                         {(worlds.Count > 0 ? "AND c.world_id = ANY(@WorldID) " : "")}
                         {(factions.Count > 0 ? "AND c.faction_id = ANY(@FactionID) " : "")}
+                    ORDER BY {column} DESC
+                    LIMIT 100;
             ");
 
             cmd.AddParameter("ItemID", itemID);
             cmd.AddParameter("WorldID", worlds.Count == 0 ? null : worlds);
             cmd.AddParameter("FactionID", factions.Count == 0 ? null : factions);
             cmd.AddParameter("MinKills", minKills);
+
+            //_Logger.LogDebug(cmd.Print());
 
             List<WeaponStatEntry> entry = await ReadList(cmd);
             await conn.CloseAsync();

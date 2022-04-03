@@ -155,6 +155,7 @@
                 this.resupplies = this.makeBlock([Experience.RESUPPLY, Experience.SQUAD_RESUPPLY]);
                 this.repairs = this.makeBlock([Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR]);
                 this.assists = this.makeBlock([Experience.ASSIST]);
+
                 this.makeVehicleRepair();
             },
 

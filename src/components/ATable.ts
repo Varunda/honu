@@ -343,11 +343,20 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loaded(this.displayedEntries));
         } else if (this.entries.state == "error") {
-            rows.push(createElement("div",
+            rows.push(createElement("tr",
                 {
-                    staticClass: "list-group-item list-group-item-danger"
+                    staticClass: "table-danger"
                 },
-                [`Error loading data from source: ${this.entries.message}`]
+                [
+                    createElement("td", {
+                            attrs: {
+                                "colspan": `${this.nodes.columns.length}`
+                            }
+                        },
+                        [`Error loading data from source: ${this.entries.message}`]
+                    )
+
+                ]
             ));
 
             this.$emit("rerender", Loadable.error(this.entries.message));

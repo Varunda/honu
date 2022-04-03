@@ -86,15 +86,21 @@ namespace watchtower.Controllers.Api {
         ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
         /// </remarks>
         /// <param name="itemID">ID of the item</param>
+        /// <param name="worldIDs">Array of what servers the top will be limited to</param>
+        /// <param name="factionIDs">Array of what factions the top will be limited to</param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
         ///     with the top KD of the item passed
         /// </response>
         [HttpGet("{itemID}/top/kd")]
-        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, new List<short>(), new List<short>());
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKD(string itemID,
+            [FromQuery] List<short> worldIDs,
+            [FromQuery] List<short> factionIDs) {
+
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, worldIDs, factionIDs);
+            _Logger.LogTrace($"Got {entries.Count} entries for {itemID}");
             if (entries.Count < 50) {
-                entries = await _StatDb.GetTopKD(itemID, new(), new(), 50);
+                entries = await _StatDb.GetTopKD(itemID, worldIDs, factionIDs, 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
@@ -113,15 +119,20 @@ namespace watchtower.Controllers.Api {
         ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
         /// </remarks>
         /// <param name="itemID">ID of the item</param>
+        /// <param name="worldIDs">Array of what servers the top will be limited to</param>
+        /// <param name="factionIDs">Array of what factions the top will be limited to</param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
         ///     with the top KPM of the item passed
         /// </response>
         [HttpGet("{itemID}/top/kpm")]
-        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetTopKPM(itemID, new List<short>(), new List<short>());
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKpm(string itemID,
+            [FromQuery] List<short> worldIDs,
+            [FromQuery] List<short> factionIDs) {
+
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKPM(itemID, worldIDs, factionIDs);
             if (entries.Count < 50) {
-                entries = await _StatDb.GetTopKPM(itemID, new(), new(), 50);
+                entries = await _StatDb.GetTopKPM(itemID, worldIDs, factionIDs, 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
@@ -140,15 +151,19 @@ namespace watchtower.Controllers.Api {
         ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
         /// </remarks>
         /// <param name="itemID">ID of the item</param>
+        /// <param name="worldIDs">Array of what servers the top will be limited to</param>
+        /// <param name="factionIDs">Array of what factions the top will be limited to</param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
         ///     with the top accuracy of the item passed
         /// </response>
         [HttpGet("{itemID}/top/accuracy")]
-        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopAcc(string itemID,
+            [FromQuery] List<short> worldIDs,
+            [FromQuery] List<short> factionIDs) {
             List<WeaponStatEntry> entries = await _StatDb.GetTopAccuracy(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
-                entries = await _StatDb.GetTopAccuracy(itemID, new(), new(), 50);
+                entries = await _StatDb.GetTopAccuracy(itemID, worldIDs, factionIDs, 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
@@ -167,15 +182,20 @@ namespace watchtower.Controllers.Api {
         ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
         /// </remarks>
         /// <param name="itemID">ID of the item</param>
+        /// <param name="worldIDs">Array of what servers the top will be limited to</param>
+        /// <param name="factionIDs">Array of what factions the top will be limited to</param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
         ///     with the top headshot ratio of the item passed
         /// </response>
         [HttpGet("{itemID}/top/hsr")]
-        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID) {
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopHsr(string itemID,
+            [FromQuery] List<short> worldIDs,
+            [FromQuery] List<short> factionIDs) {
+
             List<WeaponStatEntry> entries = await _StatDb.GetTopHeadshotRatio(itemID, new List<short>(), new List<short>());
             if (entries.Count < 50) {
-                entries = await _StatDb.GetTopHeadshotRatio(itemID, new(), new(), 50);
+                entries = await _StatDb.GetTopHeadshotRatio(itemID, worldIDs, factionIDs, 50);
             }
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
@@ -190,13 +210,18 @@ namespace watchtower.Controllers.Api {
         ///     in the game, it is possible to have weapon stats for a weapon that isn't in Census 
         /// </remarks>
         /// <param name="itemID">ID of the item</param>
+        /// <param name="worldIDs">Array of what servers the top will be limited to</param>
+        /// <param name="factionIDs">Array of what factions the top will be limited to</param>
         /// <response code="200">
         ///     The response will contain the <see cref="ExpandedWeaponStatEntry"/>s for the characters
         ///     with the most amount of kills with the item
         /// </response>
         [HttpGet("{itemID}/top/kills")]
-        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKills(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetTopKills(itemID, new List<short>(), new List<short>());
+        public async Task<ApiResponse<List<ExpandedWeaponStatEntry>>> GetTopKills(string itemID,
+            [FromQuery] List<short> worldIDs,
+            [FromQuery] List<short> factionIDs) {
+
+            List<WeaponStatEntry> entries = await _StatDb.GetTopKills(itemID, worldIDs, factionIDs);
             List<ExpandedWeaponStatEntry> expanded = await GetExpanded(entries);
 
             return ApiOk(expanded);
