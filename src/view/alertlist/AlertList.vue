@@ -172,7 +172,7 @@
 
                     world: [
                         { key: "All", value: null },
-                        { key: "Connery", value: 10 },
+                        { key: "Connery", value: 1 },
                         { key: "Cobalt", value: 13 },
                         { key: "Emerald", value: 17 },
                         { key: "Miller", value: 10 },

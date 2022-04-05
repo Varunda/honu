@@ -104,6 +104,14 @@ export const MenuLedger = Vue.extend({
     components: { Fragment }
 });
 
+export const MenuAlerts = Vue.extend({
+    template: `
+        <li>
+            <a class="dropdown-item" href="/alerts">Alerts</a>
+        </li>
+    `
+});
+
 export const MenuDropdown = Vue.extend({
     template: `
         <li class="nav-item dropdown">
@@ -112,6 +120,7 @@ export const MenuDropdown = Vue.extend({
                 <slot>
                     <menu-homepage></menu-homepage>
                     <menu-realtime></menu-realtime>
+                    <menu-alerts></menu-alerts>
                     <menu-characters></menu-characters>
                     <menu-outfits></menu-outfits>
                     <menu-ledger></menu-ledger>
@@ -122,6 +131,6 @@ export const MenuDropdown = Vue.extend({
     `,
 
     components: {
-        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuItems
+        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuItems, MenuAlerts
     }
 });
