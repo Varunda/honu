@@ -62,6 +62,25 @@
         </div>
 
         <div v-else-if="participants.state == 'loaded'">
+            <div class="row mb-3">
+                <div class="col-12">
+                    <hr class="border" />
+                    <h4 class="text-center">Territory control</h4>
+                    <!--
+                    <h2 class="wt-header">Victor</h2>
+                    -->
+                </div>
+
+                <div v-if="alert.state == 'idle'"></div>
+
+                <div v-else-if="alert.state == 'loading'" class="col-12">
+                    <busy class="honu-busy"></busy>
+                </div>
+
+                <div v-if="alert.state == 'loaded' && alert.data.victorFactionID != -1" class="col-12">
+                    <alert-winner :alert="alert.data"></alert-winner>
+                </div>
+            </div>
 
             <div class="row">
                 <div class="col-12">
@@ -69,13 +88,13 @@
                 </div>
 
                 <div class="col-4">
-                    <alert-faction-stats :data="vsStats"></alert-faction-stats>
+                    <alert-faction-stats :alert="alert.data" :data="vsStats"></alert-faction-stats>
                 </div>
                 <div class="col-4">
-                    <alert-faction-stats :data="ncStats"></alert-faction-stats>
+                    <alert-faction-stats :alert="alert.data" :data="ncStats"></alert-faction-stats>
                 </div>
                 <div class="col-4">
-                    <alert-faction-stats :data="trStats"></alert-faction-stats>
+                    <alert-faction-stats :alert="alert.data" :data="trStats"></alert-faction-stats>
                 </div>
             </div>
 
@@ -157,6 +176,7 @@
     import AlertOutfitMedicBoard from "./components/AlertOutfitMedicBoard.vue";
     import AlertEngineerBoard from "./components/AlertEngineerBoard.vue";
     import AlertOutfitEngineerBoard from "./components/AlertOutfitEngineerBoard.vue";
+    import AlertWinner from "./components/AlertWinner.vue";
 
     class OutfitDataEntry {
         public outfitID: string = "";
@@ -164,6 +184,7 @@
         public outfitName: string = "";
         public outfitDisplay: string = "";
         public factionID: number = 0;
+        public facilityCount: number = 0;
 
         public secondsOnline: number = 0;
         public members: number = 0;
@@ -207,7 +228,7 @@
 
         data: function() {
             return {
-                alertID: 1 as number,
+                alertID: 0 as number,
 
                 outfitMap: new Map() as Map<string, OutfitDataEntry>,
                 outfits: Loadable.idle() as Loading<OutfitDataEntry[]>,
@@ -443,6 +464,12 @@
 
                     ++stats.members;
                 }
+
+                if (this.alert.state == "loaded") {
+                    this.vsStats.facilityCount = this.alert.data.countVS || 0;
+                    this.ncStats.facilityCount = this.alert.data.countNC || 0;
+                    this.trStats.facilityCount = this.alert.data.countTR || 0;
+                }
             },
         },
 
@@ -465,6 +492,7 @@
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Busy,
+            AlertWinner,
             AlertFactionStats,
             AlertGeneral,
             AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard

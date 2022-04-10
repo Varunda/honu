@@ -9,6 +9,14 @@
         </tr>
 
         <tr>
+            <td><b>Facilities</b></td>
+            <td>
+                {{data.facilityCount}}
+                ({{data.facilityCount / alert.zoneFacilityCount * 100 | locale(0)}}%)
+            </td>
+        </tr>
+
+        <tr>
             <td><b>Players</b></td>
             <td>
                 {{data.members | locale}}
@@ -102,7 +110,8 @@
 </template>
 
 <script lang="ts">
-    import Vue from "vue";
+    import Vue, { PropType } from "vue";
+    import { PsAlert } from "api/AlertApi";
 
     import InfoHover from "components/InfoHover.vue";
 
@@ -113,6 +122,7 @@
 
     export const AlertFactionStats = Vue.extend({
         props: {
+            alert: { type: Object as PropType<PsAlert>, required: true },
             data: { type: Object, required: true }
         },
 
