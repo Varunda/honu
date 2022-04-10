@@ -169,6 +169,7 @@
         public members: number = 0;
 
         public kills: number = 0;
+        public killScore: number = 0;
         public deaths: number = 0;
         public vehicleKills: number = 0;
         public spawns: number = 0;
@@ -291,6 +292,10 @@
 
                 this.outfits = Loadable.loading();
 
+                let vsKills: number = 0;
+                let ncKills: number = 0;
+                let trKills: number = 0;
+
                 for (const entry of this.participants.data) {
                     if (entry.outfitID == null) {
                         continue;
@@ -314,6 +319,14 @@
                     outfitEntry.spawns += entry.spawns;
                     outfitEntry.vehicleKills += entry.vehicleKills;
                     outfitEntry.secondsOnline += entry.secondsOnline;
+
+                    if (outfitEntry.factionID == 1) {
+                        vsKills += entry.kills;
+                    } else if (outfitEntry.factionID == 2) {
+                        ncKills += entry.kills;
+                    } else if (outfitEntry.factionID == 3) {
+                        trKills += entry.kills;
+                    }
 
                     const medicProfile: AlertPlayerProfileData | undefined = entry.profiles.find(iter => iter.profileID == 4);
                     if (medicProfile != undefined && medicProfile.timeAs > 60) {
@@ -355,6 +368,20 @@
                     outfit.engKPM = outfit.engKills / Math.max(1, outfit.engTimeAs) * 60;
                     outfit.engResuppliesPerMinute = outfit.engResupplies / Math.max(1, outfit.engTimeAs) * 60;
                     outfit.engRepairsPerMinute = outfit.engRepairs / Math.max(1, outfit.engTimeAs) * 60;
+
+                    let factionKills = vsKills;
+                    if (outfit.factionID == 1) {
+                        factionKills = vsKills;
+                    } else if (outfit.factionID == 2) {
+                        factionKills = ncKills;
+                    } else if (outfit.factionID == 3) {
+                        factionKills = trKills;
+                    } else {
+                        throw `Unhandled faction ID ${outfit.factionID}`;
+                    }
+
+                    //outfit.killScore = outfit.kills / factionKills / outfit.members * 100;
+                    outfit.killScore = outfit.kills / factionKills / outfit.members * 100;
                 }
 
                 this.outfits = Loadable.loaded(outfits);

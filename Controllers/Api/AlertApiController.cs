@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -151,10 +152,14 @@ namespace watchtower.Controllers.Api {
                 [FromQuery] bool excludeOutfits = false
             ) {
 
+            Stopwatch timer = Stopwatch.StartNew();
+
             PsAlert? alert = await _AlertDb.GetByID(alertID);
             if (alert == null) {
                 return ApiNotFound<ExpandedAlertPlayers>($"{nameof(PsAlert)} {alertID}");
             }
+
+            long alertLoad = timer.ElapsedMilliseconds; timer.Restart();
 
             DateTime alertEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
             if (DateTime.UtcNow < alertEnd) {
@@ -168,6 +173,8 @@ namespace watchtower.Controllers.Api {
 
             block.ProfileData = await _ProfileDataDb.GetByAlertID(alert.ID);
 
+            long dataLoad = timer.ElapsedMilliseconds; timer.Restart();
+
             if (excludeCharacters == false) {
                 List<string> charIDs = entries.Select(iter => iter.CharacterID).Distinct().ToList();
                 List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs);
@@ -176,11 +183,17 @@ namespace watchtower.Controllers.Api {
                 }).ToList();
             }
 
+            long characterLoad = timer.ElapsedMilliseconds; timer.Restart();
+
             if (excludeOutfits == false) {
                 List<string> outfitIDs = entries.Where(iter => iter.OutfitID != null).Select(iter => iter.OutfitID!).Distinct().ToList(); // force is safe
                 List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(outfitIDs);
                 block.Outfits = outfits;
             }
+
+            long outfitLoad = timer.ElapsedMilliseconds; timer.Restart();
+
+            _Logger.LogDebug($"Loading alert {alert.ID}/{alert.WorldID}-{alert.InstanceID}: Alert: {alertLoad}ms, data: {dataLoad}ms, characters: {characterLoad}ms, outfits: {outfitLoad}ms");
 
             return ApiOk(block);
         }

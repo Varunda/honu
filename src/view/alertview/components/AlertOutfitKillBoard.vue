@@ -2,7 +2,7 @@
     <a-table
         :entries="outfits"
         :show-filters="true" :default-page-size="25"
-        default-sort-field="kpm" default-sort-order="desc"
+        default-sort-field="killScore" default-sort-order="desc"
         display-type="table" row-padding="compact">
 
         <a-col sort-field="outfitDisplay">
@@ -40,6 +40,17 @@
 
             <a-body v-slot="entry">
                 {{entry.factionID | faction}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="killScore">
+            <a-header>
+                <b>Kill %</b>
+                <info-hover text="Percent of kills this outfit had for its faction per faction"></info-hover>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.killScore | locale(2)}}%
             </a-body>
         </a-col>
 
