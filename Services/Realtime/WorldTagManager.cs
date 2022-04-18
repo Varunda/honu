@@ -67,7 +67,8 @@ namespace watchtower.Services.Realtime {
             }
 
             // Not doing anything timer
-            if (target.LastKill - ev.Timestamp > TimeSpan.FromMinutes(5)) {
+            if ((ev.Timestamp - target.LastKill) > TimeSpan.FromMinutes(5)) {
+            //if ((ev.Timestamp - target.LastKill) > TimeSpan.FromSeconds(30)) {
                 target.LastKill = ev.Timestamp;
                 target.WasKilled = false;
                 await _TagDb.Insert(target);
