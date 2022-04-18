@@ -44,6 +44,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using watchtower.Models.PSB;
+using watchtower.Services.Realtime;
 
 //using honu_census;
 
@@ -153,6 +154,7 @@ namespace watchtower {
             services.AddSingleton<CommandBus, CommandBus>();
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
+            services.AddSingleton<WorldTagManager>();
 
             // Queues
             services.AddSingleton<CensusRealtimeEventQueue>();

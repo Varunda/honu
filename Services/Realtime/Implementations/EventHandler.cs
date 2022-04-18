@@ -21,6 +21,7 @@ using watchtower.Models.Queues;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
+using watchtower.Services.Realtime;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Realtime {
@@ -52,9 +53,10 @@ namespace watchtower.Realtime {
         private readonly MapRepository _MapRepository;
         private readonly FacilityRepository _FacilityRepository;
 
-        private readonly List<string> _Recent;
-
         private readonly IHubContext<RealtimeMapHub> _MapHub;
+        private readonly WorldTagManager _TagManager;
+
+        private readonly List<string> _Recent;
 
         public EventHandler(ILogger<EventHandler> logger,
             KillEventDbStore killEventDb, ExpEventDbStore expDb,
@@ -67,7 +69,7 @@ namespace watchtower.Realtime {
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
-            AlertPlayerDataRepository participantDataRepository) {
+            AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager) {
 
             _Logger = logger;
 
@@ -97,6 +99,7 @@ namespace watchtower.Realtime {
 
             _MapHub = mapHub;
             _ParticipantDataRepository = participantDataRepository;
+            _TagManager = tagManager;
         }
 
         public async Task Process(JToken ev) {
@@ -867,11 +870,12 @@ namespace watchtower.Realtime {
             }
 
             await _KillEventDb.Insert(ev);
+
+            await _TagManager.OnKillHandler(ev);
         }
 
         private async Task _ProcessExperience(JToken payload) {
             //_Logger.LogInformation($"Processing exp: {payload}");
-
 
             string? charID = payload.Value<string?>("character_id");
             if (charID == null) {

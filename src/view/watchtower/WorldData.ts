@@ -1,4 +1,6 @@
 ﻿
+import { WorldTagEntry } from "api/WorldTagApi";
+
 export class BlockEntry {
 	public id: string = "";
 	public name: string = "";
@@ -126,4 +128,5 @@ export class WorldData {
 	public topSpawns: SpawnEntries = new SpawnEntries();
 	public factionFocus: FactionFocus = new FactionFocus();
 	public onlineCount: number = 0;
+	public tagEntries: WorldTagEntry[] = [];
 }

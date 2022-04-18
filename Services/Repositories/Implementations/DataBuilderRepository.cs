@@ -13,6 +13,7 @@ using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
+using watchtower.Services.Realtime;
 
 namespace watchtower.Services.Repositories.Implementations {
 
@@ -23,17 +24,20 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly ExpEventDbStore _ExpEventDb;
         private readonly IWorldTotalDbStore _WorldTotalDb;
 
-        private readonly Repositories.CharacterRepository _CharacterRepository;
+        private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly ItemRepository _ItemRepository;
 
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
+        private readonly WorldTagManager _TagManager;
+
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             CharacterCacheQueue charQueue,
             KillEventDbStore killDb, ExpEventDbStore expDb,
-            Repositories.CharacterRepository charRepo, OutfitRepository outfitRepo,
-            IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo) {
+            CharacterRepository charRepo, OutfitRepository outfitRepo,
+            IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo,
+            WorldTagManager tagManager) {
 
             _Logger = logger;
 
@@ -46,6 +50,7 @@ namespace watchtower.Services.Repositories.Implementations {
             _ItemRepository = itemRepo ?? throw new ArgumentNullException(nameof(itemRepo));
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));
+            _TagManager = tagManager;
         }
 
         public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
@@ -321,6 +326,8 @@ namespace watchtower.Services.Repositories.Implementations {
             }
 
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;
+
+            data.TagEntries = _TagManager.GetRecent(data.WorldID);
 
             time.Stop();
 

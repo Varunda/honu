@@ -69,6 +69,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<AlertDbStore>();
             services.AddSingleton<AlertPlayerDataDbStore>();
             services.AddSingleton<AlertPlayerProfileDataDbStore>();
+
+            services.AddSingleton<WorldTagDbStore>();
         }
 
     }

@@ -66,6 +66,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<AlertPlayer>, AlertPlayerReader>();
             services.AddSingleton<IDataReader<AlertPlayerDataEntry>, AlertPlayerDataReader>();
             services.AddSingleton<IDataReader<AlertPlayerProfileData>, AlertPlayerProfileDataReader>();
+
+            services.AddSingleton<IDataReader<WorldTagEntry>, WorldTagEntryReader>();
         }
 
     }

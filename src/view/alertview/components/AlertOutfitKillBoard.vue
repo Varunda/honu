@@ -45,8 +45,8 @@
 
         <a-col sort-field="killScore">
             <a-header>
-                <b>Kill %</b>
-                <info-hover text="Percent of kills this outfit had for its faction per faction"></info-hover>
+                <b>K%/P</b>
+                <info-hover text="(Kills of outfit) / (Kills of faction) / (Outfit members who participated) * 100"></info-hover>
             </a-header>
 
             <a-body v-slot="entry">
