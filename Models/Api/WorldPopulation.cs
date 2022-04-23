@@ -66,7 +66,8 @@ namespace watchtower.Models.Api {
         public int Ns_tr { get; set; }
 
         /// <summary>
-        ///     How many NS we don't know the count of
+        ///     How many NS haven't done anything to be assigned a team yet. This is a tracking issue,
+        ///     not a limitation of the ps2 API
         /// </summary>
         public int NsOther { get; set; }
 
