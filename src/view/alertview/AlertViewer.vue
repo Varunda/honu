@@ -98,6 +98,22 @@
                 </div>
             </div>
 
+            <!--
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="wt-header">Capture and Defense</h2>
+                </div>
+
+                <div class="col-6">
+
+                </div>
+
+                <div class="col-6">
+                    <alert-control-events v-if="control.state == 'loaded'" :control="control.data"></alert-control-events>
+                </div>
+            </div>
+            -->
+
             <div class="row">
                 <div class="col-12">
                     <h2 class="wt-header">Kills</h2>
@@ -157,6 +173,7 @@
 
     import { AlertParticipantApi, FlattendParticipantDataEntry, AlertPlayerProfileData } from "api/AlertParticipantApi";
     import { PsAlert, AlertApi } from "api/AlertApi";
+    import { ExpandedFacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
 
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
@@ -177,6 +194,7 @@
     import AlertEngineerBoard from "./components/AlertEngineerBoard.vue";
     import AlertOutfitEngineerBoard from "./components/AlertOutfitEngineerBoard.vue";
     import AlertWinner from "./components/AlertWinner.vue";
+    import AlertControlEvents from "./components/AlertControlEvents.vue";
 
     class OutfitDataEntry {
         public outfitID: string = "";
@@ -239,6 +257,7 @@
 
                 alert: Loadable.idle() as Loading<PsAlert>,
                 participants: Loadable.idle() as Loading<FlattendParticipantDataEntry[]>,
+                control: Loadable.idle() as Loading<ExpandedFacilityControlEvent[]>,
 
                 vsStats: new OutfitDataEntry() as OutfitDataEntry,
                 ncStats: new OutfitDataEntry() as OutfitDataEntry,
@@ -284,6 +303,7 @@
                         this.error.notFinished = true;
                     } else {
                         this.loadAlertData();
+                        this.loadControlEvents();
                     }
                 }
             },
@@ -296,6 +316,11 @@
                     this.makeOutfitData();
                     this.makeFactionData();
                 }
+            },
+
+            loadControlEvents: async function(): Promise<void> {
+                this.control = Loadable.loading();
+                this.control = await FacilityControlEventApi.getByAlertID(this.alertID);
             },
 
             getFactionColor: function(factionID: number): string {
@@ -397,6 +422,8 @@
                         factionKills = ncKills;
                     } else if (outfit.factionID == 3) {
                         factionKills = trKills;
+                    } else if (outfit.factionID == 4) {
+                        continue;
                     } else {
                         throw `Unhandled faction ID ${outfit.factionID}`;
                     }
@@ -493,6 +520,7 @@
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Busy,
             AlertWinner,
+            AlertControlEvents,
             AlertFactionStats,
             AlertGeneral,
             AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard

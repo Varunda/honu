@@ -8,8 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Alert;
+using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
+using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -27,12 +29,15 @@ namespace watchtower.Controllers.Api {
         private readonly OutfitRepository _OutfitRepository;
         private readonly SessionDbStore _SessionDb;
         private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
+        private readonly FacilityControlDbStore _ControlDb;
+        private readonly FacilityRepository _FacilityRepository;
 
         public AlertApiController(ILogger<AlertApiController> logger,
                 AlertPlayerDataRepository participantDataRepository, AlertDbStore alertDb,
                 CharacterRepository characterRepository,
                 OutfitRepository outfitRepository, SessionDbStore sessionDb,
-                AlertPlayerProfileDataDbStore profileDataDb) {
+                AlertPlayerProfileDataDbStore profileDataDb, FacilityControlDbStore controlDb,
+                FacilityRepository facilityRepository) {
 
             _Logger = logger;
 
@@ -42,6 +47,8 @@ namespace watchtower.Controllers.Api {
             _OutfitRepository = outfitRepository;
             _SessionDb = sessionDb;
             _ProfileDataDb = profileDataDb;
+            _ControlDb = controlDb;
+            _FacilityRepository = facilityRepository;
         }
 
         /// <summary>
@@ -177,7 +184,7 @@ namespace watchtower.Controllers.Api {
 
             if (excludeCharacters == false) {
                 List<string> charIDs = entries.Select(iter => iter.CharacterID).Distinct().ToList();
-                List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs);
+                List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs, fast: true);
                 block.Characters = characters.Select(iter => new MinimalCharacter() {
                     ID = iter.ID, OutfitID = iter.OutfitID, OutfitTag = iter.OutfitTag, Name = iter.Name, FactionID = iter.FactionID
                 }).ToList();
@@ -196,6 +203,46 @@ namespace watchtower.Controllers.Api {
             _Logger.LogDebug($"Loading alert {alert.ID}/{alert.WorldID}-{alert.InstanceID}: Alert: {alertLoad}ms, data: {dataLoad}ms, characters: {characterLoad}ms, outfits: {outfitLoad}ms");
 
             return ApiOk(block);
+        }
+
+        /// <summary>
+        ///     Get the facility control events (capture and defend) of an alert
+        /// </summary>
+        /// <param name="alertID">ID of the alert</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="FacilityControlDbEntry"/>s that took place during the alert
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/> exists
+        /// </response>
+        [HttpGet("{alertID}/control")]
+        public async Task<ApiResponse<List<ExpandedFacilityControlEvent>>> GetControlEvents(long alertID) {
+            PsAlert? alert = await _AlertDb.GetByID(alertID);
+            if (alert == null) {
+                return ApiNotFound<List<ExpandedFacilityControlEvent>>($"{nameof(PsAlert)} {alertID}");
+            }
+
+            List<FacilityControlEvent> controls = await _ControlDb.GetEvents(new FacilityControlOptions() {
+                PeriodStart = alert.Timestamp,
+                PeriodEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration),
+                WorldIDs = new List<short>() { alert.WorldID },
+                PlayerThreshold = 0,
+                UnstableState = null,
+                ZoneID = alert.ZoneID
+            });
+
+            List<ExpandedFacilityControlEvent> ex = new List<ExpandedFacilityControlEvent>(controls.Count);
+
+            foreach (FacilityControlEvent ev in controls) {
+                ex.Add(new ExpandedFacilityControlEvent() {
+                    Event = ev,
+                    Outfit = (ev.NewFactionID != ev.OldFactionID && ev.OutfitID != "0" && ev.OutfitID != null) ? await _OutfitRepository.GetByID(ev.OutfitID) : null,
+                    Facility = await _FacilityRepository.GetByID(ev.FacilityID)
+
+                });
+            }
+
+            return ApiOk(ex);
         }
 
     }
