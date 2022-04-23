@@ -138,8 +138,8 @@
 
             <a-table 
                 :entries="members"
-                default-sort-field="rankOrder"
-                default-sort-order="asc"
+                :show-filters="true"
+                default-sort-field="rankOrder" default-sort-order="asc"
                 display-type="table">
 
                 <a-col sort-field="online">
@@ -169,6 +169,10 @@
                     <a-header>
                         <b>Character</b>
                     </a-header>
+
+                    <a-filter field="name" method="input" type="string"
+                        :conditions="[ 'contains' ]">
+                    </a-filter>
 
                     <a-body v-slot="entry">
                         <a :href="'/c/' + entry.characterID">
