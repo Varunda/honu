@@ -31,7 +31,7 @@
                     return "#46C646";
                 }
 
-                return "#fff";
+                return "#ADD8E6";
             }
         }
     });
