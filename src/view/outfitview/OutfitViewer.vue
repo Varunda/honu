@@ -79,7 +79,7 @@
                 </tr>
             </table>
 
-            <table v-if="members.state == 'loaded'" class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
+            <table v-if="members.state == 'loaded'" class="table table-sm w-auto d-inline-block mr-2" style="vertical-align: top;">
                 <tr>
                     <td><b>Members</b></td>
                     <td>{{outfit.data.memberCount}}</td>
@@ -88,18 +88,6 @@
                 <tr>
                     <td><b>Online</b></td>
                     <td>{{onlineCount}}</td>
-                </tr>
-
-                <tr>
-                    <td>
-                        <b>Active</b>
-                        <info-hover text="30 days">
-                        </info-hover>
-                    </td>
-                    <td>
-                        {{active.length}}
-                        ({{active.length / members.data.length * 100 | locale(2)}}%)
-                    </td>
                 </tr>
 
                 <tr>
@@ -127,6 +115,32 @@
                 <tr>
                     <td><b>Recent SPM</b></td>
                     <td>{{recentSPM | locale(2)}}</td>
+                </tr>
+            </table>
+
+            <table v-if="members.state == 'loaded'" class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
+                <tr>
+                    <td><b>Active (30 days)</b></td>
+                    <td>
+                        {{active30d.length}}
+                        ({{active30d.length / members.data.length * 100 | locale(2)}}%)
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><b>Active (7 days)</b></td>
+                    <td>
+                        {{active7d.length}}
+                        ({{active7d.length / members.data.length * 100 | locale(2)}}%)
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><b>Active (24 hours)</b></td>
+                    <td>
+                        {{active24h.length}}
+                        ({{active24h.length / members.data.length * 100 | locale(2)}}%)
+                    </td>
                 </tr>
             </table>
         </div>
@@ -383,7 +397,7 @@
                 return this.members.data.filter(iter => iter.online == true).length;
             },
 
-            active: function(): FlatExpandedOutfitMember[] {
+            active30d: function(): FlatExpandedOutfitMember[] {
                 if (this.members.state != "loaded") {
                     return [];
                 }
@@ -396,12 +410,38 @@
                 });
             },
 
+            active24h: function(): FlatExpandedOutfitMember[] {
+                if (this.members.state != "loaded") {
+                    return [];
+                }
+
+                const now: number = new Date().getTime();
+
+                return this.members.data.filter(iter => {
+                    return iter.lastLogin != null
+                        && (now - iter.lastLogin.getTime()) <= (1000 * 60 * 60 * 24);
+                });
+            },
+
+            active7d: function(): FlatExpandedOutfitMember[] {
+                if (this.members.state != "loaded") {
+                    return [];
+                }
+
+                const now: number = new Date().getTime();
+
+                return this.members.data.filter(iter => {
+                    return iter.lastLogin != null
+                        && (now - iter.lastLogin.getTime()) <= (1000 * 60 * 60 * 24 * 7);
+                });
+            },
+
             recentKPM: function(): number {
                 if (this.members.state != "loaded") {
                     return -1;
                 }
 
-                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentKPM != null && iter.recentKPM > 0);
+                const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentKPM != null && iter.recentKPM > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentKPM!, 0);
 
                 return acc / set.length;
@@ -412,7 +452,7 @@
                     return -1;
                 }
 
-                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentKD != null && iter.recentKD > 0);
+                const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentKD != null && iter.recentKD > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentKD!, 0);
 
                 return acc / set.length;
@@ -423,7 +463,7 @@
                     return -1;
                 }
 
-                const set: FlatExpandedOutfitMember[] = this.active.filter(iter => iter.recentSPM != null && iter.recentSPM > 0);
+                const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentSPM != null && iter.recentSPM > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentSPM!, 0);
 
                 return acc / set.length;

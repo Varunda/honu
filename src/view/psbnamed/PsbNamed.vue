@@ -56,6 +56,17 @@
                         Show deleted accounts
                     </span>
                 </div>
+
+                <div>
+                    <button type="button" class="btn" :class="[ filter.warnings ? 'btn-primary' : 'btn-secondary' ]" @click="filter.warnings = !filter.warnings">
+                        <span v-if="filter.warnings">Y</span>
+                        <span v-else>N</span>
+                    </button>
+
+                    <span>
+                        Only show accounts with problems
+                    </span>
+                </div>
             </div>
 
             <div class="flex-grow-1">
@@ -420,7 +431,8 @@
                     missingCharacters: false as boolean,
                     mismatchFactions: false as boolean,
                     wrongWorlds: false as boolean,
-                    deleted: false as boolean
+                    deleted: false as boolean,
+                    warnings: false as boolean
                 },
 
                 create: {
@@ -556,6 +568,15 @@
                     });
                 }
 
+                if (this.filter.warnings == true) {
+                    data = data.filter(iter => {
+                        return iter.account.vsStatus != 1
+                            || iter.account.ncStatus != 1
+                            || iter.account.trStatus != 1
+                            || iter.account.nsStatus != 1;
+                    });
+                }
+
                 this.wrapped = Loadable.loaded(data);
             },
         },
@@ -579,13 +600,18 @@
             "filter.deleted": function(): void {
                 console.log(`PsbNamed> filter.deleted changed`);
                 this.updateFilters();
+            },
+
+            "filter.warnings": function(): void {
+                console.log(`PsbNamed> filter.warnings changed`);
+                this.updateFilters();
             }
 
         },
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
-                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false) {
+                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false || this.filter.warnings == true) {
                     return this.wrapped;
                 }
 
