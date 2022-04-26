@@ -59,6 +59,9 @@ namespace watchtower.Services.Repositories {
 
             if (entries.Count == 0) {
                 entries = await GenerateAndInsertByAlert(alert);
+
+                alert.Participants = entries.Count;
+                await _AlertDb.UpdateByID(alert.ID, alert);
             }
 
             return entries;
@@ -69,7 +72,10 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="alertID">ID of the alert</param>
         /// <param name="cancel">Cancel token</param>
-        /// <returns></returns>
+        /// <returns>
+        ///     The <see cref="AlertPlayerDataEntry"/> for the <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/>,
+        ///     or an empty list if the alert does not exist
+        /// </returns>
         public async Task<List<AlertPlayerDataEntry>> GetByAlert(long alertID, CancellationToken cancel) {
             PsAlert? alert = await _AlertDb.GetByID(alertID);
 
@@ -280,7 +286,7 @@ namespace watchtower.Services.Repositories {
                     prev = ev;
                 }
 
-                if (alert.ZoneID == 0 || prev.ZoneID == alert.ZoneID) {
+                if (alert.ZoneID != 0 && prev.ZoneID == alert.ZoneID) {
                     seconds += (end - prev.Timestamp).TotalSeconds;
                 }
 

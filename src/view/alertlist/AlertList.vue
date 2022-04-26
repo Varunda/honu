@@ -65,7 +65,12 @@
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.zoneID | zone}}
+                    <span v-if="entry.zoneID == 0">
+                        &lt;global&gt;
+                    </span>
+                    <span v-else>
+                        {{entry.zoneID | zone}}
+                    </span>
                 </a-body>
             </a-col>
 
@@ -163,6 +168,7 @@
                 return {
                     zone: [
                         { key: "All", value: "All" },
+                        { key: "Global", value: 0 },
                         { key: "Indar", value: ZoneUtils.Indar },
                         { key: "Hossin", value: ZoneUtils.Hossin },
                         { key: "Amerish", value: ZoneUtils.Amerish },

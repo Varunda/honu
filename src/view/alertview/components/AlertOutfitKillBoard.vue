@@ -20,12 +20,14 @@
                     {{entry.outfitDisplay}}
                 </a>
 
-                -
+                <span v-if="alert.duration <= 28800"> <!-- 8 hours, the max duration of an outfit report -->
+                    -
 
-                <a href="#" @click="openReport(entry.outfitID)">
-                    Report
-                    <span class="fas fa-external-link-alt"></span>
-                </a>
+                    <a href="#" @click="openReport(entry.outfitID)">
+                        Report
+                        <span class="fas fa-external-link-alt"></span>
+                    </a>
+                </span>
             </a-body>
         </a-col>
 

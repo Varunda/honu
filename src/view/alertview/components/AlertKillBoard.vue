@@ -10,7 +10,7 @@
                 <b>Character</b>
             </a-header>
 
-            <a-filter field="characterName" type="string" method="input"
+            <a-filter field="name" type="string" method="input"
                 :conditions="[ 'contains' ]">
             </a-filter>
 
