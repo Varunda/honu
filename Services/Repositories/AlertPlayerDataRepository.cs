@@ -115,6 +115,8 @@ namespace watchtower.Services.Repositories {
                 timestampedEvents.Add(entry.CharacterID, new List<TimestampZoneEvent>());
             }
 
+            _Logger.LogDebug($"For {alert.ID}/{alert.Name}, have {kills.Count} kills, {exp.Count} exp events and {parts.Count} players");
+
             if (duplicateDataEntries.Count > 0) {
                 _Logger.LogWarning($"{duplicateDataEntries.Count} duplicate entries found, skipping those");
             }
@@ -161,7 +163,7 @@ namespace watchtower.Services.Repositories {
                     timestampedEvents[ev.KilledCharacterID] = events;
                 }
 
-                if (ev.ZoneID != alert.ZoneID) { // Skip kills not in the alert's zone
+                if (alert.ZoneID != 0 && ev.ZoneID != alert.ZoneID) { // Skip kills not in the alert's zone
                     continue;
                 }
 
@@ -192,7 +194,7 @@ namespace watchtower.Services.Repositories {
             //_Logger.LogDebug($"zeroCount: {zeroCount}");
 
             foreach (ExpEvent ev in exp) {
-                if (ev.ZoneID != alert.ZoneID) { // Skip events not in the alert's zone
+                if (alert.ZoneID != 0 && ev.ZoneID != alert.ZoneID) { // Skip events not in the alert's zone
                     continue;
                 }
 
@@ -265,7 +267,7 @@ namespace watchtower.Services.Repositories {
 
                 foreach (TimestampZoneEvent ev in sorted.Skip(1)) {
                     if (ev.Type != "logout") {
-                        if (prev.ZoneID == alert.ZoneID && ev.ZoneID == alert.ZoneID) {
+                        if (alert.ZoneID == 0 || (prev.ZoneID == alert.ZoneID && ev.ZoneID == alert.ZoneID)) {
                             double sec = (ev.Timestamp - prev.Timestamp).TotalSeconds;
                             seconds += sec;
 
@@ -278,7 +280,7 @@ namespace watchtower.Services.Repositories {
                     prev = ev;
                 }
 
-                if (prev.ZoneID == alert.ZoneID) {
+                if (alert.ZoneID == 0 || prev.ZoneID == alert.ZoneID) {
                     seconds += (end - prev.Timestamp).TotalSeconds;
                 }
 

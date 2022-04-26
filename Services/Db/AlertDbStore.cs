@@ -138,13 +138,13 @@ namespace watchtower.Services.Db {
                 WITH kill_dataset AS (
                     SELECT *
                         FROM wt_kills
-                        WHERE zone_id = @ZoneID
+                        WHERE (zone_id = @ZoneID OR @ZoneID = 0)
                             AND world_id = @WorldID
                             AND timestamp BETWEEN @AlertStart AND @AlertEnd
                 ), exp_dataset AS (
                     SELECT *
                         FROM wt_exp
-                        WHERE zone_id = @ZoneID
+                        WHERE (zone_id = @ZoneID OR @ZoneID = 0)
                             AND world_id = @WorldID
                             AND timestamp BETWEEN @AlertStart AND @AlertEnd
                 ), characters AS (

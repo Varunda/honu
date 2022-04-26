@@ -62,7 +62,7 @@
         </div>
 
         <div v-else-if="participants.state == 'loaded'">
-            <div class="row mb-3">
+            <div class="row mb-3" v-if="alert.state == 'loaded' && alert.data.zoneID != 0">
                 <div class="col-12">
                     <hr class="border" />
                     <h4 class="text-center">Territory control</h4>
@@ -77,7 +77,7 @@
                     <busy class="honu-busy"></busy>
                 </div>
 
-                <div v-if="alert.state == 'loaded' && alert.data.victorFactionID != -1" class="col-12">
+                <div v-if="alert.state == 'loaded' && alert.data.victorFactionID != -1 && alert.data.zoneID != 0" class="col-12">
                     <alert-winner :alert="alert.data"></alert-winner>
                 </div>
             </div>

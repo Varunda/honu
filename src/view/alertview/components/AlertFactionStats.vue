@@ -8,7 +8,7 @@
             </td>
         </tr>
 
-        <tr>
+        <tr v-if="alert.zoneID != 0">
             <td><b>Facilities</b></td>
             <td>
                 {{data.facilityCount}}
@@ -43,10 +43,10 @@
         </tr>
 
         <tr>
-            <td><b>Vehicle kills</b></td>
+            <td><b>Vehicle kills (per hour)</b></td>
             <td>
                 {{data.vehicleKills | locale}}
-                ({{data.vehicleKills / data.secondsOnline * 60 | locale(2)}})
+                ({{data.vehicleKills / data.secondsOnline * 60 * 60 | locale(2)}})
             </td>
         </tr>
 

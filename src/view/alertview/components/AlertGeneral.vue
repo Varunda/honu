@@ -1,7 +1,14 @@
 ﻿<template>
     <div>
         <h1 class="text-center">
-            Alert {{alert.displayID}} on {{alert.zoneID | zone}} on {{alert.worldID | world}} with {{alert.participants | locale}} players
+            Alert {{alert.displayID}}
+            <span v-if="alert.zoneID != 0">
+                on {{alert.zoneID | zone}}
+            </span>
+            <span v-else>
+                on all continents
+            </span>
+            on {{alert.worldID | world}} with {{alert.participants | locale}} players
         </h1>
 
         <h3 class="text-center">
