@@ -105,6 +105,10 @@
                     datasets.shift(); // first element is the total
                 }
 
+                if (this.alert.zoneID == 0) {
+                    datasets.pop();
+                }
+
                 this.chart = new Chart((canvas as any).getContext("2d"), {
                     type: "line",
                     data: {
