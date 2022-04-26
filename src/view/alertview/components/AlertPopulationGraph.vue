@@ -118,6 +118,11 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                mode: "index"
+                            }
+                        }
                     }
                 });
             }
