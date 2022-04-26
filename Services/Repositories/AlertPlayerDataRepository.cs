@@ -18,13 +18,6 @@ namespace watchtower.Services.Repositories {
 
     public class AlertPlayerDataRepository {
 
-        private class TimestampZoneEvent {
-            public DateTime Timestamp;
-            public uint ZoneID;
-            public short LoadoutID;
-            public string Type = "";
-        }
-
         private readonly ILogger<AlertPlayerDataRepository> _Logger;
 
         private readonly KillEventDbStore _KillDb;

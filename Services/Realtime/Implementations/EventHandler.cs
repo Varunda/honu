@@ -208,7 +208,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = ev.AttackerFactionID,
-                    TeamID = (ev.AttackerFactionID == 4) ? Faction.UNKNOWN : ev.AttackerFactionID,
+                    TeamID = (ev.AttackerFactionID == 4) ? Faction.NS : ev.AttackerFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -235,7 +235,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = ev.KilledFactionID,
-                    TeamID = (ev.KilledFactionID == 4) ? Faction.UNKNOWN : ev.KilledFactionID,
+                    TeamID = (ev.KilledFactionID == 4) ? Faction.NS : ev.KilledFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -807,7 +807,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = attackerFactionID,
-                    TeamID = (attackerFactionID == 4) ? Faction.UNKNOWN : attackerFactionID,
+                    TeamID = (attackerFactionID == 4) ? Faction.NS : attackerFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -836,7 +836,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = factionID,
-                    TeamID = (factionID == 4) ? Faction.UNKNOWN : factionID,
+                    TeamID = (factionID == 4) ? Faction.NS : factionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });

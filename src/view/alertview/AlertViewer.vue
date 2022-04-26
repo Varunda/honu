@@ -98,6 +98,22 @@
                 </div>
             </div>
 
+            <div v-if="alert.state == 'loaded'" class="row">
+                <div class="col-12">
+                    <h2 class="wt-header">
+                        Population
+
+                        <toggle-button v-model="options.showPopTotal">
+                            Show total pop
+                        </toggle-button>
+                    </h2>
+                </div>
+
+                <div class="col-12">
+                    <alert-population-graph :alert="alert.data" :show-total="options.showPopTotal"></alert-population-graph>
+                </div>
+            </div>
+
             <!--
             <div class="row">
                 <div class="col-12">
@@ -184,6 +200,7 @@
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import Busy from "components/Busy.vue";
+    import ToggleButton from "components/ToggleButton";
 
     import AlertFactionStats from "./components/AlertFactionStats.vue";
     import AlertGeneral from "./components/AlertGeneral.vue";
@@ -195,6 +212,7 @@
     import AlertOutfitEngineerBoard from "./components/AlertOutfitEngineerBoard.vue";
     import AlertWinner from "./components/AlertWinner.vue";
     import AlertControlEvents from "./components/AlertControlEvents.vue";
+    import AlertPopulationGraph from "./components/AlertPopulationGraph.vue";
 
     class OutfitDataEntry {
         public outfitID: string = "";
@@ -253,6 +271,10 @@
 
                 error: {
                     notFinished: false as boolean
+                },
+
+                options: {
+                    showPopTotal: false as boolean
                 },
 
                 alert: Loadable.idle() as Loading<PsAlert>,
@@ -518,11 +540,12 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            Busy,
+            Busy, ToggleButton,
             AlertWinner,
             AlertControlEvents,
             AlertFactionStats,
             AlertGeneral,
+            AlertPopulationGraph,
             AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard
         }
     });

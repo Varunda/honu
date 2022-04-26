@@ -31,13 +31,14 @@ namespace watchtower.Controllers.Api {
         private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly FacilityRepository _FacilityRepository;
+        private readonly AlertPopulationRepository _AlertPopulationRepository;
 
         public AlertApiController(ILogger<AlertApiController> logger,
                 AlertPlayerDataRepository participantDataRepository, AlertDbStore alertDb,
                 CharacterRepository characterRepository,
                 OutfitRepository outfitRepository, SessionDbStore sessionDb,
                 AlertPlayerProfileDataDbStore profileDataDb, FacilityControlDbStore controlDb,
-                FacilityRepository facilityRepository) {
+                FacilityRepository facilityRepository, AlertPopulationRepository alertPopulationRepository) {
 
             _Logger = logger;
 
@@ -49,6 +50,7 @@ namespace watchtower.Controllers.Api {
             _ProfileDataDb = profileDataDb;
             _ControlDb = controlDb;
             _FacilityRepository = facilityRepository;
+            _AlertPopulationRepository = alertPopulationRepository;
         }
 
         /// <summary>
@@ -243,6 +245,18 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(ex);
+        }
+
+        [HttpGet("{alertID}/population")]
+        public async Task<ApiResponse<List<AlertPopulation>>> GetPopulation(long alertID) {
+            PsAlert? alert = await _AlertDb.GetByID(alertID);
+            if (alert == null) {
+                return ApiNotFound<List<AlertPopulation>>($"{nameof(PsAlert)} {alertID}");
+            }
+
+            List<AlertPopulation> pops = await _AlertPopulationRepository.GetByAlertID(alertID, CancellationToken.None);
+
+            return ApiOk(pops);
         }
 
     }
