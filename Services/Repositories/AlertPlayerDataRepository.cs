@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,6 +93,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="alert"></param>
         /// <returns></returns>
         private async Task<List<AlertPlayerDataEntry>> GenerateAndInsertByAlert(PsAlert alert) {
+            Stopwatch timer = Stopwatch.StartNew();
+
             DateTime start = alert.Timestamp;
             DateTime end = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
 
@@ -99,6 +102,9 @@ namespace watchtower.Services.Repositories {
             List<KillEvent> kills = await _KillDb.GetByRange(start, end, null, alert.WorldID);
             List<ExpEvent> exp = await _ExpDb.GetByRange(start, end, null, alert.WorldID);
             List<AlertPlayer> parts = await _AlertDb.GetParticipants(alert);
+            List<Session> sessions = await _SessionDb.GetByRange(start, end);
+
+            long loadData = timer.ElapsedMilliseconds;
 
             Dictionary<string, AlertPlayerDataEntry> data = new Dictionary<string, AlertPlayerDataEntry>();
             Dictionary<string, List<TimestampZoneEvent>> timestampedEvents = new Dictionary<string, List<TimestampZoneEvent>>();
@@ -121,7 +127,7 @@ namespace watchtower.Services.Repositories {
                 timestampedEvents.Add(entry.CharacterID, new List<TimestampZoneEvent>());
             }
 
-            _Logger.LogDebug($"For {alert.ID}/{alert.Name}, have {kills.Count} kills, {exp.Count} exp events and {parts.Count} players");
+            _Logger.LogDebug($"For {alert.ID}/{alert.Name}, took {loadData}ms; have {kills.Count} kills, {exp.Count} exp events, {parts.Count} players and {sessions.Count} sessions");
 
             if (duplicateDataEntries.Count > 0) {
                 _Logger.LogWarning($"{duplicateDataEntries.Count} duplicate entries found, skipping those");
@@ -237,7 +243,6 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            List<Session> sessions = await _SessionDb.GetByRange(start, end);
             foreach (Session s in sessions) {
                 if (data.TryGetValue(s.CharacterID, out AlertPlayerDataEntry? entry) == true) {
                     entry.OutfitID = s.OutfitID;
@@ -272,7 +277,7 @@ namespace watchtower.Services.Repositories {
                 double seconds = 0d;
 
                 foreach (TimestampZoneEvent ev in sorted.Skip(1)) {
-                    if (ev.Type != "logout") {
+                    if (ev.Type != "logout" && ev.Type != "login") {
                         if (alert.ZoneID == 0 || (prev.ZoneID == alert.ZoneID && ev.ZoneID == alert.ZoneID)) {
                             double sec = (ev.Timestamp - prev.Timestamp).TotalSeconds;
                             seconds += sec;
@@ -307,6 +312,8 @@ namespace watchtower.Services.Repositories {
                     }
                 }
             }
+
+            _Logger.LogDebug($"{alert.ID}/{alert.Name} took {timer.ElapsedMilliseconds}ms to build alert data");
 
             return entries;
         }
