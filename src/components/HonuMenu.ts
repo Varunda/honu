@@ -115,6 +115,7 @@ export const MenuDropdown = Vue.extend({
                     <menu-characters></menu-characters>
                     <menu-outfits></menu-outfits>
                     <menu-ledger></menu-ledger>
+                    <menu-realtimemap></menu-realtimemap>
                     <menu-items></menu-items>
                 </slot>
             </ul>
