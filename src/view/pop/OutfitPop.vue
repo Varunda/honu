@@ -16,11 +16,11 @@
             <div class="col-2">
                 <label>World</label>
                 <select class="form-control mb-2" v-model.number="worldID">
+                    <option :value="13">Cobalt</option>
                     <option :value="1">Connery</option>
-                    <option :value="10">Cobalt</option>
-                    <option :value="13">Miller</option>
                     <option :value="17">Emerald</option>
                     <option :value="19">Jaeger</option>
+                    <option :value="10">Miller</option>
                     <option :value="40">SolTech</option>
                 </select>
 
