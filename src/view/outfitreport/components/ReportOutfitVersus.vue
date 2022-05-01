@@ -27,6 +27,10 @@
                             <info-hover text="How many assists the tracked players got against players in this outfit"></info-hover>
                         </td>
                         <td>
+                            Players
+                            <info-hover text="How many unique players tracked members encountered against this outfit"></info-hover>
+                        </td>
+                        <td>
                             KD
                             <info-hover text="Kills/Deaths against this outfit. >1 means the tracked players got more kills than deaths from this outfit"></info-hover>
                         </td>
@@ -90,6 +94,10 @@
                         </td>
 
                         <td>
+                            {{outfit.uniquePlayers.length}}
+                        </td>
+
+                        <td>
                             {{outfit.kills / Math.max(1, outfit.deaths) | locale(2)}}
                         </td>
 
@@ -98,7 +106,7 @@
                         </td>
 
                         <td>
-                            {{outfit.headshotKills / outfit.kills * 100 | locale(2)}}%
+                            {{outfit.headshotKills / Math.max(1, outfit.kills) * 100 | locale(2)}}%
                         </td>
 
                         <td>
@@ -141,6 +149,7 @@
         public name: string = "";
         public tag: string | null = null;
         public factionID: number = 0;
+        public uniquePlayers: string[] = [];
 
         public generator: string = "";
 
@@ -150,8 +159,8 @@
         public headshotKills: number = 0;
         public headshotDeaths: number = 0;
 
-        public weapons: Map<string, number> = new Map();
-        public mostUsedWeaponID: string = "";
+        public weapons: Map<number, number> = new Map();
+        public mostUsedWeaponID: number = 0;
         public mostUsedWeapon: PsItem | null = null;
     }
 
@@ -196,6 +205,10 @@
                         if (kill.isHeadshot == true) {
                             ++v.headshotKills;
                         }
+
+                        if (v.uniquePlayers.indexOf(kill.killedCharacterID) == -1) {
+                            v.uniquePlayers.push(kill.killedCharacterID);
+                        }
                     }
                 }
 
@@ -207,6 +220,10 @@
                             ++v.headshotDeaths;
                         }
                         v.weapons.set(death.weaponID, (v.weapons.get(death.weaponID) ?? 0) + 1);
+
+                        if (v.uniquePlayers.indexOf(death.attackerCharacterID) == -1) {
+                            v.uniquePlayers.push(death.attackerCharacterID);
+                        }
                     }
                 }
 
@@ -230,12 +247,12 @@
                     .sort((a, b) => (b.kills + a.deaths) - (a.kills + a.deaths));
 
                 for (const value of this.versus) {
-                    const weapons: string[] = Array.from(value.weapons.entries())
+                    const weapons: number[] = Array.from(value.weapons.entries())
                         .sort((a, b) => b[1] - a[1])
                         .map(iter => iter[0]);
 
                     value.mostUsedWeaponID = weapons[0];
-                    value.mostUsedWeapon = this.report.items.get(Number.parseInt(weapons[0])) || null;
+                    value.mostUsedWeapon = this.report.items.get(weapons[0]) || null;
                 }
 
             },

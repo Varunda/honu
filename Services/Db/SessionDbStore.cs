@@ -259,7 +259,7 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     Start a new session of a tracked player
         /// </summary>
-        /// <param name="player">Player that will have a new session</param>
+        /// <param name="charID">ID of the character that is starting the session</param>
         /// <param name="when">When the session started</param>
         /// <returns>
         ///     A task for when the task is completed
@@ -306,7 +306,7 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     End an existing session of a tracked player
         /// </summary>
-        /// <param name="player">Player who's session is endign</param>
+        /// <param name="charID">ID of the character who's session is ending</param>
         /// <param name="when">When the session ended</param>
         /// <returns>
         ///     A task for when the task is complete
