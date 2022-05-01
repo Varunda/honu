@@ -32,6 +32,9 @@ namespace watchtower.Constants {
         public const int SQUAD_VEHICLE_SPAWN_BONUS = 355;
         public const int GENERIC_NPC_SPAWN = 1410;
 
+        public const int HARDLIGHT_COVER = 1393;
+        public const int DRAW_FIRE_AWARD = 1394;
+
         public const int VKILL_FLASH = 24;
         public const int VKILL_GALAXY = 60;
         public const int VKILL_LIBERATOR = 61;

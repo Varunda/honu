@@ -22,6 +22,8 @@ namespace watchtower.Realtime {
             Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR,
             Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY,
 
+            Experience.HARDLIGHT_COVER, Experience.DRAW_FIRE_AWARD,
+
             Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
             Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
 
