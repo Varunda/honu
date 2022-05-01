@@ -706,12 +706,16 @@ namespace watchtower.Realtime {
                     }
 
                     new Thread(async () => {
-                        _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
-                        List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
+                        try {
+                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
+                            List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
 
-                        toRemove.Participants = parts.Count;
-                        await _AlertDb.UpdateByID(toRemove.ID, toRemove);
-                        _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
+                            toRemove.Participants = parts.Count;
+                            await _AlertDb.UpdateByID(toRemove.ID, toRemove);
+                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"failed to create alert data for {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID}");
+                        }
                     }).Start();
                 } else {
                     _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}\nCurrent alerts: {string.Join(", ", alerts.Select(iter => $"{iter.WorldID}.{iter.ZoneID}"))}");
