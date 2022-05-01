@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch7FacilityControl : IDbPatch {
+    public class Patch07FacilityControl : IDbPatch {
 
         public int MinVersion => 7;
         public string Name => "Add facility control and player control tables";

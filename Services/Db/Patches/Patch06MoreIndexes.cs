@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch6MoreIndexes : IDbPatch {
+    public class Patch06MoreIndexes : IDbPatch {
 
         public int MinVersion => 6;
         public string Name => "Add more indexes";

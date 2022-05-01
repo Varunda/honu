@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch1CreateCollectorTables : IDbPatch {
+    public class Patch01CreateCollectorTables : IDbPatch {
 
         public int MinVersion => 1;
         public string Name => "Create collector tables";

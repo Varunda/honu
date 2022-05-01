@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch4AddItemTable : IDbPatch {
+    public class Patch04AddItemTable : IDbPatch {
 
         public int MinVersion => 4;
         public string Name => "Add wt_item";

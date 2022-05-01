@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch2UpdateWtExpTable : IDbPatch {
+    public class Patch02UpdateWtExpTable : IDbPatch {
 
         public int MinVersion => 2;
         public string Name => "Add source_team_id to wt_exp";

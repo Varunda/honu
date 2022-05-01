@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch3AddIndicesToKillExpTables : IDbPatch {
+    public class Patch03AddIndicesToKillExpTables : IDbPatch {
 
         public int MinVersion => 3;
         public string Name => "Add indices to wt_kill and wt_exp tables";

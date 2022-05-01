@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch5AddSessionTable : IDbPatch {
+    public class Patch05AddSessionTable : IDbPatch {
 
         public int MinVersion => 5;
         public string Name => "Add wt_session";

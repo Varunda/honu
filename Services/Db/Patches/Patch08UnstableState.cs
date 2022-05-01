@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch8UnstableState : IDbPatch {
+    public class Patch08UnstableState : IDbPatch {
 
         public int MinVersion => 8;
         public string Name => "Add zone_state to wt_ledger";
