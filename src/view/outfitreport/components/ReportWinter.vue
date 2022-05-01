@@ -65,6 +65,7 @@
     import Report, { PlayerMetadata } from "../Report";
 
     import ToggleButton from "components/ToggleButton";
+    import InfoHover from "components/InfoHover.vue";
 
     import WinterCard from "./winter/WinterCard.vue";
 
@@ -85,8 +86,6 @@
 
         template: `
             <div>
-                <h4>{{category.name}}</h4>
-
                 <div class="d-flex flex-row">
                     <template v-for="metric in category.metrics" :key="metric.name">
                         <winter-card v-if="metric.entries.length > 0" :card="metric" :show-fun-name="ShowFunNames" :size="size"></winter-card>
@@ -96,7 +95,7 @@
         `,
 
         components: {
-            WinterCard
+            WinterCard, InfoHover
         }
     });
 
@@ -105,6 +104,7 @@
         public funName: string = "";
         public description: string = "";
         public entries: WinterEntry[] = [];
+        public availableAfter: string | null = null;
     }
 
     class WinterCategory {
@@ -175,9 +175,10 @@
 
                 this.makeHeals();
                 this.makeRevives();
+                this.makeShieldRepairs();
                 this.makeResupplies();
                 this.makeMaxRepairs();
-                this.makeShieldRepairs();
+                this.makeHardlightAssists();
 
                 this.makeSpawns();
                 this.makeSundySpawns();
@@ -357,6 +358,16 @@
                 metric.description = "Most MAX repairs (per minute)";
 
                 this.catSupport.metrics.push(this.generateExperience(metric, [Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR], (metadata) => metadata.classes.engineer.timeAs));
+            },
+
+            makeHardlightAssists: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Hardlight Assists";
+                metric.funName = "Brick layer";
+                metric.description = "Most draw fire assists (per minute)";
+                metric.availableAfter = "2022-05-02";
+
+                this.catSupport.metrics.push(this.generateExperience(metric, [1393], (metadata) => metadata.classes.engineer.timeAs));
             },
 
             makeShieldRepairs: function(): void {
