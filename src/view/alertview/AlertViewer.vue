@@ -114,21 +114,21 @@
                 </div>
             </div>
 
-            <!--
-            <div class="row">
+            <div v-if="showControlComponent" class="row">
                 <div class="col-12">
-                    <h2 class="wt-header">Capture and Defense</h2>
+                    <h2 class="wt-header">Capture and Defense (Work in progress)</h2>
                 </div>
 
                 <div class="col-6">
-
+                    <span class="text-warning text-center align-middle">
+                        map soon
+                    </span>
                 </div>
 
                 <div class="col-6">
                     <alert-control-events v-if="control.state == 'loaded'" :control="control.data"></alert-control-events>
                 </div>
             </div>
-            -->
 
             <div class="row">
                 <div class="col-12">
@@ -268,6 +268,8 @@
 
                 outfitMap: new Map() as Map<string, OutfitDataEntry>,
                 outfits: Loadable.idle() as Loading<OutfitDataEntry[]>,
+
+                showControlComponent: true as boolean,
 
                 error: {
                     notFinished: false as boolean

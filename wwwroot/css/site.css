@@ -85,3 +85,16 @@
     max-height: 5rem;
     vertical-align: middle;
 }
+
+.table-sticky-header {
+    border-collapse: collapse;
+}
+
+.table-sticky-header thead tr th {
+    position: sticky;
+    top: 0;
+    border-bottom: 0;
+    border-top: 0;
+    background-color: #222;
+    box-shadow: inset 0px -2px #444;
+}
