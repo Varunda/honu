@@ -1,105 +1,74 @@
 ﻿<template>
-    <div>
-        <h2 class="wt-header d-flex">
-            <span class="flex-grow-1 mr-2" data-toggle="collapse" data-target="#report-control-breakdown">
-                Capture/Defenses participated in
-            </span>
+    <collapsible header-text="Capture/Defenses participated in">
+        <table class="table table-sm" style="table-layout: fixed;">
+            <tr class="table-secondary">
+                <th width="14%">Facility</th>
+                <th width="14%">Timestamp</th>
+                <th width="14%">Action</th>
+                <th width="14%">Outfit</th>
+                <th width="14%">Players</th>
+                <th width="30%"></th>
+            </tr>
 
-            <span>
-                <button class="btn btn-sm" @click="setShows(!showCaptures, showDefenses)" :class="[ showCaptures == true ? 'btn-success' : 'btn-secondary' ]">
-                    Captures
-                </button>
+            <tr v-for="control in entries">
+                <td>
+                    <div v-if="control.facility != null">
+                        <h4>
+                            {{control.facility.name}}
+                        </h4>
+                        {{control.facility.typeName}} on {{control.facility.zoneID | zone}}
+                    </div>
+                    <div v-else>
+                        &lt;missing facility {{control.control.facility_id}}&gt;
+                    </div>
+                </td>
 
-                <button class="btn btn-sm" @click="setShows(showCaptures, !showDefenses)" :class="[ showDefenses == true ? 'btn-info' : 'btn-secondary' ]">
-                    Defenses
-                </button>
+                <td>
+                    {{control.control.timestamp | moment}}
+                </td>
 
-                <button class="btn btn-sm" @click="updateOurOutfits(!showAllOutfits)" :class="[ showAllOutfits == true ? 'btn-primary' : 'btn-secondary' ]">
-                    <span v-if="showAllOutfits == true">
-                        Show only captures from your outfit
+                <td>
+                    <span v-if="control.control.oldFactionID == control.control.newFactionID">
+                        Defended
                     </span>
                     <span v-else>
-                        Show all captures
+                        Captured from {{control.control.oldFactionID | faction}}
                     </span>
-                </button>
+                </td>
 
-                <button class="btn" disabled="disabled">
-                    (Showing {{entries.length}} of {{report.control.length}} entries)
-                </button>
-            </span>
-        </h2>
-
-        <div id="report-control-breakdown" class="collapse show">
-            <table class="table table-sm" style="table-layout: fixed;">
-                <tr class="table-secondary">
-                    <th width="14%">Facility</th>
-                    <th width="14%">Timestamp</th>
-                    <th width="14%">Action</th>
-                    <th width="14%">Outfit</th>
-                    <th width="14%">Players</th>
-                    <th width="30%"></th>
-                </tr>
-
-                <tr v-for="control in entries">
-                    <td>
-                        <div v-if="control.facility != null">
-                            <h4>
-                                {{control.facility.name}}
-                            </h4>
-                            {{control.facility.typeName}} on {{control.facility.zoneID | zone}}
-                        </div>
-                        <div v-else>
-                            &lt;missing facility {{control.control.facility_id}}&gt;
-                        </div>
-                    </td>
-
-                    <td>
-                        {{control.control.timestamp | moment}}
-                    </td>
-
-                    <td>
-                        <span v-if="control.control.oldFactionID == control.control.newFactionID">
-                            Defended
-                        </span>
-                        <span v-else>
-                            Captured from {{control.control.oldFactionID | faction}}
-                        </span>
-                    </td>
-
-                    <td>
-                        <span v-if="control.control.oldFactionID != control.control.newFactionID">
-                            <span v-if="control.outfit == null">
-                                &lt;no outfit&gt;
-                            </span>
-
-                            <span v-else>
-                                <a :href="'/o/' + control.outfit.id">
-                                    <span v-if="control.outfit.tag != null">
-                                        [{{control.outfit.tag}}]
-                                    </span>
-                                    {{control.outfit.name}}
-                                </a>
-                            </span>
+                <td>
+                    <span v-if="control.control.oldFactionID != control.control.newFactionID">
+                        <span v-if="control.outfit == null">
+                            &lt;no outfit&gt;
                         </span>
 
                         <span v-else>
-                            --
+                            <a :href="'/o/' + control.outfit.id">
+                                <span v-if="control.outfit.tag != null">
+                                    [{{control.outfit.tag}}]
+                                </span>
+                                {{control.outfit.name}}
+                            </a>
                         </span>
-                    </td>
+                    </span>
 
-                    <td>
-                        {{control.players.length}}
-                    </td>
+                    <span v-else>
+                        --
+                    </span>
+                </td>
 
-                    <td>
-                        <div>
-                            <chart-block-pie-chart :data="control.block" :show-percent="true" style="max-height: 200px;"></chart-block-pie-chart>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
+                <td>
+                    {{control.players.length}}
+                </td>
+
+                <td>
+                    <div>
+                        <chart-block-pie-chart :data="control.block" :show-percent="true" style="max-height: 200px;"></chart-block-pie-chart>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </collapsible>
 </template>
 
 <script lang="ts">
@@ -114,6 +83,7 @@
 
     import { Block, BlockEntry } from "./charts/common";
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     import "filters/FactionNameFilter";
     import "filters/ZoneNameFilter";
@@ -240,7 +210,8 @@
         },
 
         components: {
-            ChartBlockPieChart
+            ChartBlockPieChart,
+            Collapsible
         }
     });
 

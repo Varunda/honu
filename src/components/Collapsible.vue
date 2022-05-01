@@ -1,8 +1,10 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header" data-toggle="collapse" :data-target="'#' + elementID">
+        <h2 class="wt-header d-flex" data-toggle="collapse" :data-target="'#' + elementID">
             <span :id="'icon-' + elementID" class="fas fa-caret-down"></span>
             {{HeaderText}}
+
+            <slot name="header"></slot>
         </h2>
 
         <div :id="elementID" class="collapse" :class="{ show: opened }">

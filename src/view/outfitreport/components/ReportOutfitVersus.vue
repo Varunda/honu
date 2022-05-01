@@ -1,133 +1,126 @@
 ﻿<template>
-    <div>
-        <h2 class="wt-header" data-toggle="collapse" data-target="#report-outfit-versus">
-            Outfit versus
-            <info-hover text="An outfit is only included if it is at least 1% of all kills & deaths"></info-hover>
-        </h2>
+    <collapsible header-text="Outfit Versus">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr class="table-secondary font-weight-bold">
+                    <td>Outfit</td>
+                    <td>
+                        Report link
+                        <info-hover text="Get a report for this outfit, at the same time"></info-hover>
+                    </td>
+                    <td>
+                        Kills
+                        <info-hover text="How many kills the tracked players got against players in this outfit"></info-hover>
+                    </td>
+                    <td>
+                        Deaths
+                        <info-hover text="How many deaths the tracked players had against players in this outfit"></info-hover>
+                    </td>
+                    <td>
+                        Assists
+                        <info-hover text="How many assists the tracked players got against players in this outfit"></info-hover>
+                    </td>
+                    <td>
+                        Players
+                        <info-hover text="How many unique players tracked members encountered against this outfit"></info-hover>
+                    </td>
+                    <td>
+                        KD
+                        <info-hover text="Kills/Deaths against this outfit. >1 means the tracked players got more kills than deaths from this outfit"></info-hover>
+                    </td>
+                    <td>
+                        KDA
+                        <info-hover text="Kills + Assists / Deaths"></info-hover>
+                    </td>
+                    <td>
+                        HSR% kills
+                        <info-hover text="What percent of kills came from headshots against this outfit"></info-hover>
+                    </td>
+                    <td>
+                        HSR% deaths
+                        <info-hover text="What percent of deaths came from headshots from this outfit"></info-hover>
+                    </td>
+                    <td>
+                        Most used weapon
+                        <info-hover text="What weapon in this outfit killed the most players in this report"></info-hover>
+                    </td>
+                </tr>
+            </thead>
 
-        <div id="report-outfit-versus" class="collapse show">
-            <table class="table table-sm table-hover">
-                <thead>
-                    <tr class="table-secondary font-weight-bold">
-                        <td>Outfit</td>
-                        <td>
-                            Report link
-                            <info-hover text="Get a report for this outfit, at the same time"></info-hover>
-                        </td>
-                        <td>
-                            Kills
-                            <info-hover text="How many kills the tracked players got against players in this outfit"></info-hover>
-                        </td>
-                        <td>
-                            Deaths
-                            <info-hover text="How many deaths the tracked players had against players in this outfit"></info-hover>
-                        </td>
-                        <td>
-                            Assists
-                            <info-hover text="How many assists the tracked players got against players in this outfit"></info-hover>
-                        </td>
-                        <td>
-                            Players
-                            <info-hover text="How many unique players tracked members encountered against this outfit"></info-hover>
-                        </td>
-                        <td>
-                            KD
-                            <info-hover text="Kills/Deaths against this outfit. >1 means the tracked players got more kills than deaths from this outfit"></info-hover>
-                        </td>
-                        <td>
-                            KDA
-                            <info-hover text="Kills + Assists / Deaths"></info-hover>
-                        </td>
-                        <td>
-                            HSR% kills
-                            <info-hover text="What percent of kills came from headshots against this outfit"></info-hover>
-                        </td>
-                        <td>
-                            HSR% deaths
-                            <info-hover text="What percent of deaths came from headshots from this outfit"></info-hover>
-                        </td>
-                        <td>
-                            Most used weapon
-                            <info-hover text="What weapon in this outfit killed the most players in this report"></info-hover>
-                        </td>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="outfit in versus">
-                        <td>
-                            <span v-if="outfit.id">
-                                <a :href="'/o/' + outfit.id">
-                                    [{{outfit.tag}}]
-                                    {{outfit.name}}
-
-                                    ({{outfit.factionID | faction}})
-                                </a>
-                            </span>
-                            <span v-else>
+            <tbody>
+                <tr v-for="outfit in versus">
+                    <td>
+                        <span v-if="outfit.id">
+                            <a :href="'/o/' + outfit.id">
+                                [{{outfit.tag}}]
                                 {{outfit.name}}
-                            </span>
-                        </td>
 
-                        <td>
-                            <span v-if="outfit.id">
-                                <a :href="'/report/' + outfit.generator">
-                                    View report
-                                </a>
+                                ({{outfit.factionID | faction}})
+                            </a>
+                        </span>
+                        <span v-else>
+                            {{outfit.name}}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span v-if="outfit.id">
+                            <a :href="'/report/' + outfit.generator">
+                                View report
+                            </a>
+                        </span>
+                        <span v-else>
+                            --
+                        </span>
+                    </td>
+
+                    <td>
+                        {{outfit.kills}}
+                        ({{outfit.kills / Math.max(1, kills) * 100 | locale(2)}}%)
+                    </td>
+                    <td>
+                        {{outfit.deaths}}
+                        ({{outfit.deaths / Math.max(1, deaths) * 100 | locale(2)}}%)
+                    </td>
+                    <td>
+                        {{outfit.assists}}
+                        ({{outfit.assists / Math.max(1, assists) * 100 | locale(2)}}%)
+                    </td>
+
+                    <td>
+                        {{outfit.uniquePlayers.length}}
+                    </td>
+
+                    <td>
+                        {{outfit.kills / Math.max(1, outfit.deaths) | locale(2)}}
+                    </td>
+
+                    <td>
+                        {{(outfit.kills + outfit.assists) / Math.max(1, outfit.deaths) | locale(2)}}
+                    </td>
+
+                    <td>
+                        {{outfit.headshotKills / Math.max(1, outfit.kills) * 100 | locale(2)}}%
+                    </td>
+
+                    <td>
+                        {{outfit.headshotDeaths / Math.max(1, outfit.deaths) * 100 | locale(2)}}%
+                    </td>
+
+                    <td>
+                        <a :href="'/i/' + outfit.mostUsedWeaponID">
+                            <span v-if="outfit.mostUsedWeapon != null">
+                                {{outfit.mostUsedWeapon.name}}
                             </span>
                             <span v-else>
-                                --
+                                &lt;missing {{outfit.mostUsedWeaponID}}&gt;
                             </span>
-                        </td>
-
-                        <td>
-                            {{outfit.kills}}
-                            ({{outfit.kills / Math.max(1, kills) * 100 | locale(2)}}%)
-                        </td>
-                        <td>
-                            {{outfit.deaths}}
-                            ({{outfit.deaths / Math.max(1, deaths) * 100 | locale(2)}}%)
-                        </td>
-                        <td>
-                            {{outfit.assists}}
-                            ({{outfit.assists / Math.max(1, assists) * 100 | locale(2)}}%)
-                        </td>
-
-                        <td>
-                            {{outfit.uniquePlayers.length}}
-                        </td>
-
-                        <td>
-                            {{outfit.kills / Math.max(1, outfit.deaths) | locale(2)}}
-                        </td>
-
-                        <td>
-                            {{(outfit.kills + outfit.assists) / Math.max(1, outfit.deaths) | locale(2)}}
-                        </td>
-
-                        <td>
-                            {{outfit.headshotKills / Math.max(1, outfit.kills) * 100 | locale(2)}}%
-                        </td>
-
-                        <td>
-                            {{outfit.headshotDeaths / Math.max(1, outfit.deaths) * 100 | locale(2)}}%
-                        </td>
-
-                        <td>
-                            <a :href="'/i/' + outfit.mostUsedWeaponID">
-                                <span v-if="outfit.mostUsedWeapon != null">
-                                    {{outfit.mostUsedWeapon.name}}
-                                </span>
-                                <span v-else>
-                                    &lt;missing {{outfit.mostUsedWeaponID}}&gt;
-                                </span>
-                            </a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </collapsible>
 </template>
 
 <script lang="ts">
@@ -135,6 +128,7 @@
     import Report from "../Report";
 
     import InfoHover from "components/InfoHover.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
@@ -301,7 +295,8 @@
         },
 
         components: {
-            InfoHover
+            InfoHover,
+            Collapsible
         }
     });
 

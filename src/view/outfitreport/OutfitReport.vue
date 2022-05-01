@@ -380,6 +380,8 @@
             <div v-else>
                 <report-header :report="report"></report-header>
 
+                <report-population :report="report"></report-population>
+
                 <report-class-breakdown :report="report"></report-class-breakdown>
 
                 <report-control-breakdown :report="report"></report-control-breakdown>
@@ -426,6 +428,7 @@
     import ReportWinter from "./components/ReportWinter.vue";
     import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
     import ReportHeader from "./components/ReportHeader.vue";
+    import ReportPopulation from "./components/ReportPopulation.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
@@ -911,6 +914,10 @@
             },
 
             onUpdateSessions: function(sessions: Session[]): void {
+                for (const session of sessions) {
+                    session.start = new Date(session.start);
+                    session.end = (session.end == null) ? null : new Date(session.end);
+                }
                 this.report.sessions = sessions;
                 this.log(`Loaded ${this.report.sessions.length} sessions`);
                 this.steps.sessions = true;
@@ -946,10 +953,9 @@
         },
 
         components: {
-            DateTimeInput,
-            InfoHover,
-            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader,
-            Busy,
+            DateTimeInput, InfoHover, Busy,
+            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown,
+            ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader, ReportPopulation,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
 

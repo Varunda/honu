@@ -1,53 +1,54 @@
 ﻿<template>
-    <div>
-        <h2 class="wt-header d-flex" style="align-items: center;">
-            <span class="flex-grow-1" data-toggle="collapse" data-target="#report-winter">
-                Winter Leaderboard
-            </span>
 
-            <select class="form-control flex-grow-0" v-model.number="settings.size" style="width: 12ch;">
-                <option :value="5">5</option>
-                <option :value="8">8</option>
-                <option :value="10">10</option>
-                <option :value="12">12</option>
-            </select>
+    <collapsible header-text="Winter Leaderboard">
+        <template v-slot:header>
+            <div style="display: inline-flex; flex-grow: 1; align-items: center;">
+                <div class="flex-grow-1"></div>
 
-            <button type="button" class="btn btn-small border" :class="[ settings.showFunNames == true ? 'btn-primary' : 'btn-secondary' ]" @click="settings.showFunNames = !settings.showFunNames">
-                Use fun names
-            </button>
+                <select class="form-control flex-grow-0 mr-2" v-model.number="settings.size" style="width: 12ch;" @click.stop>
+                    <option :value="5">5</option>
+                    <option :value="8">8</option>
+                    <option :value="10">10</option>
+                    <option :value="12">12</option>
+                </select>
 
-            <span class="btn-group">
-                <toggle-button v-model="show.kills">
-                    Kills
-                </toggle-button>
+                <button type="button" class="btn btn-small border mr-2" :class="[ settings.showFunNames == true ? 'btn-primary' : 'btn-secondary' ]" @click.stop="settings.showFunNames = !settings.showFunNames">
+                    Use fun names
+                </button>
 
-                <toggle-button v-model="show.support">
-                    Support
-                </toggle-button>
+                <span class="btn-group">
+                    <toggle-button v-model="show.kills">
+                        Kills
+                    </toggle-button>
 
-                <toggle-button v-model="show.spawns">
-                    Spawns
-                </toggle-button>
+                    <toggle-button v-model="show.support">
+                        Support
+                    </toggle-button>
 
-                <toggle-button v-model="show.weaponTypes">
-                    Weapon types
-                </toggle-button>
+                    <toggle-button v-model="show.spawns">
+                        Spawns
+                    </toggle-button>
 
-                <toggle-button v-model="show.vehicleKills">
-                    Vehicle kills
-                </toggle-button>
+                    <toggle-button v-model="show.weaponTypes">
+                        Weapon types
+                    </toggle-button>
 
-                <toggle-button v-model="show.vehicleSupport">
-                    Vehicle support
-                </toggle-button>
+                    <toggle-button v-model="show.vehicleKills">
+                        Vehicle kills
+                    </toggle-button>
 
-                <toggle-button v-model="show.misc">
-                    Misc
-                </toggle-button>
-            </span>
-        </h2>
+                    <toggle-button v-model="show.vehicleSupport">
+                        Vehicle support
+                    </toggle-button>
 
-        <div id="report-winter" class="collapse show">
+                    <toggle-button v-model="show.misc">
+                        Misc
+                    </toggle-button>
+                </span>
+            </div>
+        </template>
+
+        <template v-slot:default>
             <winter-section v-if="show.kills" :category="catKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.support" :category="catSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
@@ -55,9 +56,8 @@
             <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.vehicleSupport" :category="catVehicleSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
             <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-        </div>
-
-    </div>
+        </template>
+    </collapsible>
 </template>
 
 <script lang="ts">
@@ -66,6 +66,7 @@
 
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     import WinterCard from "./winter/WinterCard.vue";
 
@@ -1108,7 +1109,8 @@
         components: {
             WinterCard,
             WinterSection,
-            ToggleButton
+            ToggleButton,
+            Collapsible
         }
     });
 

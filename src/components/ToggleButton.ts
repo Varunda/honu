@@ -7,7 +7,7 @@ export const ToggleButton = Vue.extend({
     },
 
     template: `
-        <button type="button" :class="cssClasses" :style="cssStyles" @click="$emit('input', !value)">
+        <button type="button" :class="cssClasses" :style="cssStyles" @click.stop="$emit('input', !value)">
             <slot></slot>
         </button>
     `,

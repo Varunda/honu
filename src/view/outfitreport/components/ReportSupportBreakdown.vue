@@ -1,114 +1,107 @@
 ﻿<template>
-    <div>
-        <h2 class="wt-header" data-toggle="collapse" data-target="#report-support-breakdown">
-            Support breakdown
-        </h2>
-
-        <div id="report-support-breakdown" class="collapse show">
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        Heals
-                        <info-hover text="What outfits were healed by the tracked characters"></info-hover>
-                    </h4>
-                </div>
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        Revives
-                        <info-hover text="What outfits were revived by the tracked characters. The total is how many total revives the tracked players got"></info-hover>
-                    </h4>
-                </div>
+    <collapsible header-text="Support breakdown">
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    Heals
+                    <info-hover text="What outfits were healed by the tracked characters"></info-hover>
+                </h4>
             </div>
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-list :data="heals" left-title="Outfits" right-title="Healed"></chart-block-list>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-pie-chart :data="heals"
-                        :show-total="true" :show-percent="true">
-                    </chart-block-pie-chart>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-list :data="revives" left-title="Outfits" right-title="Revives"></chart-block-list>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-pie-chart :data="revives"
-                        :show-total="true" :show-percent="true">
-                    </chart-block-pie-chart>
-                </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    Revives
+                    <info-hover text="What outfits were revived by the tracked characters. The total is how many total revives the tracked players got"></info-hover>
+                </h4>
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-list :data="heals" left-title="Outfits" right-title="Healed"></chart-block-list>
             </div>
 
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        Resupplies
-                        <info-hover text="What outfits were resupplied by the tracked characters"></info-hover>
-                    </h4>
-                </div>
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        MAX repairs
-                        <info-hover text="What outfits were repaired by the tracked characters"></info-hover>
-                    </h4>
-                </div>
-            </div>
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-list :data="resupplies" left-title="Outfits" right-title="Resupplied"></chart-block-list>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-pie-chart :data="resupplies"
-                        :show-total="true" :show-percent="true">
-                    </chart-block-pie-chart>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-list :data="repairs" left-title="Outfits" right-title="MAX repairs"></chart-block-list>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-pie-chart :data="repairs"
-                        :show-total="true" :show-percent="true">
-                    </chart-block-pie-chart>
-                </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-pie-chart :data="heals"
+                    :show-total="true" :show-percent="true">
+                </chart-block-pie-chart>
             </div>
 
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        Vehicle repairs
-                        <info-hover text="What vehicles were repaired by the tracked characters"></info-hover>
-                    </h4>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <h4>
-                        &nbsp;
-                    </h4>
-                </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-list :data="revives" left-title="Outfits" right-title="Revives"></chart-block-list>
             </div>
-            <div class="d-flex">
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-list :data="vehicleRepairs" left-title="Vehicle" right-title="Repair ticks"></chart-block-list>
-                </div>
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-block-pie-chart :data="vehicleRepairs" :show-total="true" :show-percent="true"></chart-block-pie-chart>
-                </div>
 
-                <div class="flex-grow-1 flex-basis-0">
-                    &nbsp;
-                </div>
-                <div class="flex-grow-1 flex-basis-0">
-                    &nbsp;
-                </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-pie-chart :data="revives"
+                    :show-total="true" :show-percent="true">
+                </chart-block-pie-chart>
             </div>
         </div>
 
-    </div>
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    Resupplies
+                    <info-hover text="What outfits were resupplied by the tracked characters"></info-hover>
+                </h4>
+            </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    MAX repairs
+                    <info-hover text="What outfits were repaired by the tracked characters"></info-hover>
+                </h4>
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-list :data="resupplies" left-title="Outfits" right-title="Resupplied"></chart-block-list>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-pie-chart :data="resupplies"
+                    :show-total="true" :show-percent="true">
+                </chart-block-pie-chart>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-list :data="repairs" left-title="Outfits" right-title="MAX repairs"></chart-block-list>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-pie-chart :data="repairs"
+                    :show-total="true" :show-percent="true">
+                </chart-block-pie-chart>
+            </div>
+        </div>
+
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    Vehicle repairs
+                    <info-hover text="What vehicles were repaired by the tracked characters"></info-hover>
+                </h4>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                <h4>
+                    &nbsp;
+                </h4>
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-list :data="vehicleRepairs" left-title="Vehicle" right-title="Repair ticks"></chart-block-list>
+            </div>
+            <div class="flex-grow-1 flex-basis-0">
+                <chart-block-pie-chart :data="vehicleRepairs" :show-total="true" :show-percent="true"></chart-block-pie-chart>
+            </div>
+
+            <div class="flex-grow-1 flex-basis-0">
+                &nbsp;
+            </div>
+            <div class="flex-grow-1 flex-basis-0">
+                &nbsp;
+            </div>
+        </div>
+    </collapsible>
 </template>
 
 <script lang="ts">
@@ -124,6 +117,7 @@
     import { Block, BlockEntry } from "./charts/common";
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
     import ChartBlockList from "./charts/ChartBlockList.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     export const ReportSupportBreakdown = Vue.extend({
         props: {
@@ -264,7 +258,8 @@
         components: {
             ChartBlockPieChart,
             ChartBlockList,
-            InfoHover
+            InfoHover,
+            Collapsible
         }
     });
 
