@@ -62,6 +62,8 @@
     import Vue, { PropType } from "vue";
     import Report from "../Report";
 
+    import Collapsible from "components/Collapsible.vue";
+
     export const ReportHeader = Vue.extend({
         props: {
             report: { type: Object as PropType<Report>, required: true }
@@ -96,6 +98,10 @@
             generator64: function(): string {
                 return btoa(`#${this.report.id};`)
             }
+        },
+
+        components: {
+            Collapsible
         }
     });
 

@@ -14,16 +14,40 @@ namespace watchtower.Services.Queues {
     /// </summary>
     public class CharacterCacheQueue : BaseQueue<CharacterFetchQueueEntry> {
 
+        private readonly HashSet<string> _Pending = new HashSet<string>();
+
+        private readonly ConcurrentDictionary<string, DateTime> _CachedAt = new ();
+
         /// <summary>
         ///     Queue a new character for caching
         /// </summary>
         /// <param name="charID">ID of the character</param>
         public void Queue(string charID) {
+            if (_Pending.Contains(charID)) {
+                return;
+            }
+
             _Items.Enqueue(new CharacterFetchQueueEntry() {
                 CharacterID = charID,
                 Store = true
             });
+
+            lock (_Pending) {
+                _Pending.Add(charID);
+            }
+
             _Signal.Release();
+        }
+
+        public new async Task<CharacterFetchQueueEntry> Dequeue(CancellationToken cancel) {
+            await _Signal.WaitAsync(cancel);
+            _Items.TryDequeue(out CharacterFetchQueueEntry? entry);
+
+            lock (_Pending) {
+                _Pending.Remove(entry!.CharacterID);
+            }
+
+            return entry!;
         }
 
     }

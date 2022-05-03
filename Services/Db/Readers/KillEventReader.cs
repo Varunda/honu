@@ -15,6 +15,7 @@ namespace watchtower.Services.Db.Readers {
         public override KillEvent ReadEntry(NpgsqlDataReader reader) {
             KillEvent ev = new KillEvent();
 
+            ev.ID = reader.GetInt64("id");
             ev.AttackerCharacterID = reader.GetString("attacker_character_id");
             ev.AttackerLoadoutID = reader.GetInt16("attacker_loadout_id");
             ev.AttackerTeamID = reader.GetInt16("attacker_team_id");

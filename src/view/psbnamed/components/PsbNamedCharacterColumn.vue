@@ -6,10 +6,33 @@
 
         <div v-else>
             <h5>
-                {{character.name}}
+                <a :href="'/c/' + character.id">
+                    {{character.name}}
+                </a>
             </h5>
 
             <table class="table table-sm">
+                <tr>
+                    <th>Status</th>
+                    <td>
+                        <span v-if="status == 1">
+                            Ok
+                        </span>
+
+                        <span v-else-if="status == 2" class="text-warning">
+                            Does not exist
+                        </span>
+
+                        <span v-else-if="status == 3" class="text-danger">
+                            Deleted
+                        </span>
+
+                        <span v-else-if="status == 4" class="text-danger">
+                            Remade
+                        </span>
+                    </td>
+                </tr>
+
                 <tr>
                     <th>Outfit</th>
                     <td>
@@ -45,6 +68,13 @@
                     <th></th>
                     <td>
                         {{character.dateLastLogin | timeAgo}}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Created</th>
+                    <td>
+                        {{character.dateCreated | moment}}
                     </td>
                 </tr>
             </table>
@@ -135,7 +165,8 @@
 
     export const PsbNamedCharacterColumn = Vue.extend({
         props: {
-            character: { type: Object as PropType<PsCharacter | null>, required: false }
+            character: { type: Object as PropType<PsCharacter | null>, required: false },
+            status: { type: Number, required: true }
         },
 
         data: function() {

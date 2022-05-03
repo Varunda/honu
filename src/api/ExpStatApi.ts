@@ -45,12 +45,14 @@ export class Experience {
     public static REVIVE: number = 7;
     public static RESUPPLY: number = 34;
     public static SHIELD_REPAIR: number = 438;
+    public static VEHICLE_RESUPPLY: number = 240;
 
     public static SQUAD_HEAL: number = 51;
     public static SQUAD_REVIVE: number = 53;
     public static SQUAD_RESUPPLY: number = 55;
     public static SQUAD_MAX_REPAIR: number = 142;
     public static SQUAD_SHIELD_REPAIR: number = 439;
+    public static SQUAD_VEHICLE_RESUPPLY: number = 241;
     
 	public static SQUAD_SPAWN: number = 56;
 	public static GALAXY_SPAWN_BONUS: number = 201;
@@ -75,6 +77,69 @@ export class Experience {
 	public static VKILL_JAVELIN: number = 1480;
 	public static VKILL_CHIMERA: number = 1565;
 	public static VKILL_DERVISH: number = 1635;
+
+    public static REPAIR_FLASH: number = 31;
+    public static REPAIR_ENGI_TURRET: number = 88;
+    public static REPAIR_PHALANX: number = 89;
+    public static REPAIR_DROP_POD: number = 90;
+    public static REPAIR_GALAXY: number = 91;
+    public static REPAIR_LIBERATOR: number = 92;
+    public static REPAIR_LIGHTNING: number = 93;
+    public static REPAIR_MAGRIDER: number = 94;
+    public static REPAIR_MOSQUITO: number = 95;
+    public static REPAIR_PROWLER: number = 96;
+    public static REPAIR_REAVER: number = 97;
+    public static REPAIR_SCYTHE: number = 98;
+    public static REPAIR_SUNDERER: number = 99;
+    public static REPAIR_VANGUARD: number = 100;
+    public static REPAIR_HARASSER: number = 303;
+    public static REPAIR_VALKYRIE: number = 503;
+    public static REPAIR_ANT: number = 653;
+    public static REPAIR_HARDLIGHT_BARRIER: number = 1375;
+    public static REPAIR_COLOSSUS: number = 1451;
+    public static REPAIR_JAVELIN: number = 1482;
+    public static REPAIR_CHIMERA: number = 1571;
+    public static REPAIR_DERVISH: number = 1638;
+
+    public static SQUAD_REPAIR_FLASH: number = 28;
+    public static SQUAD_REPAIR_ENGI_TURRET: number = 129;
+    public static SQUAD_REPAIR_PHALANX: number = 130;
+    public static SQUAD_REPAIR_DROP_POD: number = 131;
+    public static SQUAD_REPAIR_GALAXY: number = 132;
+    public static SQUAD_REPAIR_LIBERATOR: number = 133;
+    public static SQUAD_REPAIR_LIGHTNING: number = 134;
+    public static SQUAD_REPAIR_MAGRIDER: number = 135;
+    public static SQUAD_REPAIR_MOSQUITO: number = 136;
+    public static SQUAD_REPAIR_PROWLER: number = 137;
+    public static SQUAD_REPAIR_REAVER: number = 138;
+    public static SQUAD_REPAIR_SCYTHE: number = 139;
+    public static SQUAD_REPAIR_SUNDERER: number = 140;
+    public static SQUAD_REPAIR_VANGUARD: number = 141;
+    public static SQUAD_REPAIR_HARASSER: number = 302;
+    public static SQUAD_REPAIR_VALKYRIE: number = 505;
+    public static SQUAD_REPAIR_ANT: number = 656;
+    public static SQUAD_REPAIR_HARDLIGHT_BARRIER: number = 1378;
+    public static SQUAD_REPAIR_COLOSSUS: number = 1452;
+    public static SQUAD_REPAIR_JAVELIN: number = 1481;
+    public static SQUAD_REPAIR_CHIMERA: number = 1571;
+    public static SQUAD_REPAIR_DERVISH: number = 1638;
+
+    public static VehicleRepairs: number[] = [
+        Experience.REPAIR_FLASH, Experience.REPAIR_ENGI_TURRET, Experience.REPAIR_PHALANX, Experience.REPAIR_DROP_POD, Experience.REPAIR_GALAXY,
+        Experience.REPAIR_LIBERATOR, Experience.REPAIR_LIGHTNING, Experience.REPAIR_MAGRIDER, Experience.REPAIR_MOSQUITO, Experience.REPAIR_PROWLER,
+        Experience.REPAIR_REAVER, Experience.REPAIR_SCYTHE, Experience.REPAIR_SUNDERER, Experience.REPAIR_VANGUARD, Experience.REPAIR_HARASSER,
+        Experience.REPAIR_VALKYRIE, Experience.REPAIR_ANT, Experience.REPAIR_COLOSSUS, Experience.REPAIR_JAVELIN,
+        Experience.REPAIR_CHIMERA, Experience.REPAIR_DERVISH
+    ];
+
+    public static SquadVehicleRepairs: number[] = [
+        Experience.SQUAD_REPAIR_FLASH, Experience.SQUAD_REPAIR_ENGI_TURRET, Experience.SQUAD_REPAIR_PHALANX, Experience.SQUAD_REPAIR_DROP_POD,
+        Experience.SQUAD_REPAIR_GALAXY, Experience.SQUAD_REPAIR_LIBERATOR, Experience.SQUAD_REPAIR_LIGHTNING, Experience.SQUAD_REPAIR_MAGRIDER,
+        Experience.SQUAD_REPAIR_MOSQUITO, Experience.SQUAD_REPAIR_PROWLER, Experience.SQUAD_REPAIR_REAVER, Experience.SQUAD_REPAIR_SCYTHE,
+        Experience.SQUAD_REPAIR_SUNDERER, Experience.SQUAD_REPAIR_VANGUARD, Experience.SQUAD_REPAIR_HARASSER, Experience.SQUAD_REPAIR_VALKYRIE,
+        Experience.SQUAD_REPAIR_ANT, Experience.SQUAD_REPAIR_COLOSSUS, Experience.SQUAD_REPAIR_JAVELIN,
+        Experience.SQUAD_REPAIR_CHIMERA, Experience.SQUAD_REPAIR_DERVISH
+    ];
 
     public static isAssist(expID: number): boolean {
         return expID == this.ASSIST || expID == this.SPAWN_ASSIST
@@ -117,6 +182,19 @@ export class Experience {
             || expID == this.VKILL_JAVELIN || expID == this.VKILL_CHIMERA
             || expID == this.VKILL_DERVISH;
     }
+
+    public static isVehicleRepair(expID: number): boolean {
+        return Experience.isNonSquadVehicleRepair(expID) || Experience.isSquadVehicleRepair(expID);
+    }
+
+    public static isNonSquadVehicleRepair(expID: number): boolean {
+        return Experience.VehicleRepairs.indexOf(expID) > -1;
+    }
+
+    public static isSquadVehicleRepair(expID: number): boolean {
+        return Experience.SquadVehicleRepairs.indexOf(expID) > -1;
+    }
+
 }
 
 export class ExpStatApi extends ApiWrapper<ExpEvent> {

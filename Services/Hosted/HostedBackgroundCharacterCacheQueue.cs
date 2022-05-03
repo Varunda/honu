@@ -72,10 +72,13 @@ namespace watchtower.Services.Hosted {
                     }
                 } catch (CensusServiceUnavailableException) {
                     _Logger.LogWarning($"Failed to get character from API, service unavailable");
+                    await Task.Delay(30 * 1000, stoppingToken);
                 } catch (CensusConnectionException) {
                     _Logger.LogWarning($"Failed to get character from API, connection exception");
+                    await Task.Delay(30 * 1000, stoppingToken);
                 } catch (CensusException) {
                     _Logger.LogWarning($"Failed to get character from API, general exception");
+                    await Task.Delay(30 * 1000, stoppingToken);
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Error while caching character");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {

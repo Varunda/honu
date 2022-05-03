@@ -64,9 +64,6 @@
             <h3 class="d-inline-block">
                 <small class="text-muted">Base capture/defend stats</small>
             </h3>
-            <div>
-                <a href="/ledger">View</a>
-            </div>
         </div>
 
         <hr class="border" />
@@ -77,9 +74,6 @@
                     Character Viewer
                 </a>
             </h1>
-            <div>
-                <a href="/character">View</a>
-            </div>
         </div>
 
         <hr class="border" />
@@ -89,7 +83,9 @@
                 Outfits
             </h1>
 
-            <div>
+            <h2 class="d-inline-block mr-2">
+                &bull;
+
                 <a href="/outfitfinder">
                     Search
                 </a>
@@ -105,6 +101,35 @@
                 <a href="/outfitpop">
                     Pop
                 </a>
+            </h2>
+        </div>
+
+        <hr class="border" />
+
+        <h1 class="d-inline-block mr-2">
+            <a href="/alerts">
+                Alerts
+            </a>
+        </h1>
+
+        <hr class="border" />
+
+        <h1 class="d-inline-block mr-2">
+            <a href="/realtimemap">
+                Real time map
+            </a>
+        </h1>
+
+        <hr class="border" />
+
+        <div>
+            <h1 class="d-inline-block mr-2">
+                <a href="/realtimemap">
+                    Real Time Map
+                </a>
+            </h1>
+            <div>
+                <a href="/realtimemap">View</a>
             </div>
         </div>
 

@@ -43,6 +43,8 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
+using watchtower.Models.PSB;
+using watchtower.Services.Realtime;
 
 //using honu_census;
 
@@ -141,6 +143,7 @@ namespace watchtower {
 
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
+            services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();
@@ -151,6 +154,7 @@ namespace watchtower {
             services.AddSingleton<CommandBus, CommandBus>();
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
+            services.AddSingleton<WorldTagManager>();
 
             // Queues
             services.AddSingleton<CensusRealtimeEventQueue>();
@@ -199,6 +203,7 @@ namespace watchtower {
 
             //services.AddHostedService<PsbNamedImportStartupService>();
             //services.AddHostedService<PsbNamedCheckerService>();
+            //services.AddHostedService<BackCreateAlertStartupService>();
 
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();
@@ -206,9 +211,16 @@ namespace watchtower {
                 services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
                 services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
+
+                if (Configuration.GetValue<bool>("StartupServices:AlertPlayer") != false) {
+                    services.AddHostedService<AlertParticipantBuilder>();
+                }
+
                 //services.AddHostedService<CharacterDatesFixerStartupService>();
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
+
+            services.AddHostedService<KilledTeamIDFixerService>();
 
             // Needed to Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
@@ -291,6 +303,12 @@ namespace watchtower {
                     name: "outfitreport",
                     pattern: "/report/{*.}",
                     defaults: new { controller = "Home", action = "Report" }
+                );
+
+                endpoints.MapControllerRoute(
+                    name: "alertview",
+                    pattern: "/alert/{alertID}/{outfitID}",
+                    defaults: new { controller = "Home", action = "Alert", outfitID = "" }
                 );
 
                 endpoints.MapControllerRoute(

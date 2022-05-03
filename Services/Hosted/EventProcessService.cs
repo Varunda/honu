@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Realtime;
 using watchtower.Services.Queues;
 
@@ -34,8 +35,8 @@ namespace watchtower.Services {
                 try {
                     timer.Restart();
                     await _Handler.Process(token);
-                    if (timer.ElapsedMilliseconds > 100) {
-                        //_Logger.LogWarning($"Took {timer.ElapsedMilliseconds}ms to process {token}");
+                    if (Logging.EventProcess == true && timer.ElapsedMilliseconds > 100) {
+                        _Logger.LogWarning($"Took {timer.ElapsedMilliseconds}ms to process {token}");
                     }
                 } catch (Exception ex) when (cancel.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "Failed to process {token}", token);

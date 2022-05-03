@@ -6,6 +6,7 @@
     import Vue, { PropType } from "vue";
     import Chart, { LegendItem } from "chart.js/auto/auto.esm";
 
+
     import ColorUtils from "util/Color";
     import { Block, BlockEntry } from "./common";
 

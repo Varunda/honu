@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
@@ -26,6 +27,50 @@ namespace watchtower.Services.Db {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
+        }
+
+        public async Task<List<Session>> GetUnfixed(CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE needs_fix = true
+                    ORDER BY start DESC
+                    LIMIT 100;
+            ");
+
+            List<Session> sessions = await ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
+        public async Task<long> GetUnfixedCount() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT COUNT(*)
+                    FROM wt_session
+                    WHERE needs_fix = true;
+            ");
+
+            long count = await cmd.ExecuteInt64(CancellationToken.None);
+            await conn.CloseAsync();
+
+            return count;
+        }
+
+        public async Task SetFixed(long sessionID, CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_session
+                    SET needs_fix = false
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", sessionID);
+
+            await cmd.ExecuteNonQueryAsync(cancel);
+            await conn.CloseAsync();
         }
 
         /// <summary>
@@ -214,7 +259,7 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     Start a new session of a tracked player
         /// </summary>
-        /// <param name="player">Player that will have a new session</param>
+        /// <param name="charID">ID of the character that is starting the session</param>
         /// <param name="when">When the session started</param>
         /// <returns>
         ///     A task for when the task is completed
@@ -261,13 +306,12 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     End an existing session of a tracked player
         /// </summary>
-        /// <param name="player">Player who's session is endign</param>
+        /// <param name="charID">ID of the character who's session is ending</param>
         /// <param name="when">When the session ended</param>
         /// <returns>
         ///     A task for when the task is complete
         /// </returns>
         public async Task End(string charID, DateTime when) {
-
             TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
             if (player == null) {
                 _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
@@ -275,7 +319,7 @@ namespace watchtower.Services.Db {
             }
 
             if (player.Online == false) {
-                _Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
+                //_Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
                 return;
             }
 

@@ -20,6 +20,9 @@ namespace watchtower.Realtime {
             Experience.RESUPPLY, Experience.SQUAD_RESUPPLY,
             Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR,
             Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR,
+            Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY,
+
+            Experience.HARDLIGHT_COVER, Experience.DRAW_FIRE_AWARD,
 
             Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
             Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
@@ -32,7 +35,9 @@ namespace watchtower.Realtime {
             Experience.VKILL_SUNDY, Experience.VKILL_PROWLER, Experience.VKILL_REAVER,
             Experience.VKILL_SCYTHE, Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER,
             Experience.VKILL_VALKYRIE, Experience.VKILL_ANT, Experience.VKILL_COLOSSUS,
-            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
+            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH,
+
+            554
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {
@@ -49,6 +54,12 @@ namespace watchtower.Realtime {
             CensusRealtimeEventQueue queue) {
 
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
+            foreach (int expId in Experience.VehicleRepairEvents) {
+                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
+            foreach (int expId in Experience.SquadVehicleRepairEvents) {
+                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
             _Subscription.EventNames = _Subscription.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")
@@ -81,12 +92,14 @@ namespace watchtower.Realtime {
             return Task.CompletedTask;
         }
 
-        public async Task OnStartAsync(CancellationToken cancel) {
+        public Task OnStartAsync(CancellationToken cancel) {
             try {
                 _ = _Stream.ConnectAsync();
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"Failed to start RealtimeMonitor");
             }
+
+            return Task.CompletedTask;
         }
 
         public Task OnShutdownAsync(CancellationToken cancel) {

@@ -29,8 +29,8 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly CharacterRepository _CharacterRepository;
         private readonly CharacterDbStore _CharacterDb;
         private readonly ItemRepository _ItemRepository;
-        private readonly IKillEventDbStore _KillDb;
-        private readonly IExpEventDbStore _ExpDb;
+        private readonly KillEventDbStore _KillDb;
+        private readonly ExpEventDbStore _ExpDb;
         private readonly SessionDbStore _SessionDb;
         private readonly ReportDbStore _ReportDb;
         private readonly FacilityControlDbStore _ControlDb;
@@ -42,7 +42,7 @@ namespace watchtower.Code.Hubs.Implementations {
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             OutfitCollection outfitCensus, SessionDbStore sessionDb,
-            IKillEventDbStore killDb, IExpEventDbStore expDb,
+            KillEventDbStore killDb, ExpEventDbStore expDb,
             ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,
@@ -189,9 +189,9 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateKills(report.Kills);
 
                 report.Deaths = killDeaths.Where(iter => {
-                    return iter.KilledTeamID == report.TeamID 
+                    return (iter.KilledTeamID == report.TeamID || iter.KilledTeamID == 4)
                         && report.Players.Contains(iter.KilledCharacterID)
-                        && iter.KilledTeamID != iter.AttackerTeamID 
+                        && (iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4)
                         && iter.RevivedEventID == null;
                 }).ToList();
                 await Clients.Caller.UpdateDeaths(report.Deaths);

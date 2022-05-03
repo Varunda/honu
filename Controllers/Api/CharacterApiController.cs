@@ -340,6 +340,7 @@ namespace watchtower.Controllers.Api {
         ///     The search that takes place is case-insensitive
         /// </remarks>
         /// <param name="name">Name of the character to search</param>
+        /// <param name="censusTimeout">If a timeout will occur when doing a Census search</param>
         /// <response code="200">
         ///     The response will contain a list of <see cref="PsCharacter"/> that contain the string <paramref name="name"/>
         ///     within <see cref="PsCharacter.Name"/>
@@ -348,12 +349,12 @@ namespace watchtower.Controllers.Api {
         ///     The parameter <paramref name="name"/> was less than 3 characters long
         /// </response>
         [HttpGet("characters/search/{name}")]
-        public async Task<ApiResponse<List<PsCharacter>>> SearchByName(string name) {
+        public async Task<ApiResponse<List<PsCharacter>>> SearchByName(string name, [FromQuery] bool censusTimeout = true) {
             if (name.Length < 3) {
                 return ApiBadRequest<List<PsCharacter>>($"The parameter {nameof(name)} cannot have a length less than 3 (was {name.Length})");
             }
 
-            List<PsCharacter> chars = await _CharacterRepository.SearchByName(name);
+            List<PsCharacter> chars = await _CharacterRepository.SearchByName(name, censusTimeout);
             return ApiOk(chars);
         }
 

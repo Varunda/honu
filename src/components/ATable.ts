@@ -97,10 +97,15 @@ export const ATable = Vue.extend({
         PageSizes: { type: Array as PropType<number[]>, required: false },
 
         DefaultPageSize: { type: Number, required: false },
+
+        // Will the pages also be shown above the data?
+        ShowTopPages: { type: Boolean, required: false, default: false }
     },
 
     data: function() {
         return {
+            ID: Math.floor(Math.random() * 100000),
+
             nodes: {
                 columns: [] as VNode[],
                 headers: [] as Header[]
@@ -325,6 +330,10 @@ export const ATable = Vue.extend({
                 console.log(`<a-table> 0 entries, showing no data row`);
                 rows.push(this.renderNoDataRow(createElement));
             } else {
+                if (this.ShowTopPages == true && this.paging.size > 10 && this.paginate == true) {
+                    rows.push(this.renderPages(createElement));
+                }
+
                 rows.push(createElement("tbody", {},
                     this.displayedEntries.map(iter => {
                         return this.renderDataRow(createElement, iter);
@@ -334,11 +343,20 @@ export const ATable = Vue.extend({
 
             this.$emit("rerender", Loadable.loaded(this.displayedEntries));
         } else if (this.entries.state == "error") {
-            rows.push(createElement("div",
+            rows.push(createElement("tr",
                 {
-                    staticClass: "list-group-item list-group-item-danger"
+                    staticClass: "table-danger"
                 },
-                [`Error loading data from source: ${this.entries.message}`]
+                [
+                    createElement("td", {
+                            attrs: {
+                                "colspan": `${this.nodes.columns.length}`
+                            }
+                        },
+                        [`Error loading data from source: ${this.entries.message}`]
+                    )
+
+                ]
             ));
 
             this.$emit("rerender", Loadable.error(this.entries.message));
@@ -740,6 +758,10 @@ export const ATable = Vue.extend({
                     }
                 },
                 filter.source?.map((iter: any) => {
+                    if (typeof (iter.key) != "string") {
+                        throw `Expected to find string for ${iter.key}, got type ${typeof(iter.key)} instead!`;
+                    }
+
                     return createElement("option", { domProps: { value: iter.value } }, iter.key);
                 })
             );

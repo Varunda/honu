@@ -142,5 +142,39 @@ namespace watchtower.Services.Db {
             throw new InvalidCastException($"Failed to cast {idObj} to a long");
         }
 
+        /// <summary>
+        ///     Get the control events that match the parameters
+        /// </summary>
+        /// <param name="parameters">Parameters used to get the control events</param>
+        /// <returns></returns>
+        public async Task<List<FacilityControlEvent>> GetEvents(FacilityControlOptions parameters) {
+            string periodStartWhere = parameters.PeriodStart == null ? "" : "AND timestamp >= @PeriodStart ";
+            string periodEndWhere = parameters.PeriodEnd == null ? "" : "AND timestamp <= @PeriodEnd ";
+            string zoneIDWhere = parameters.ZoneID == null ? "" : "AND zone_id = @ZoneID ";
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
+                SELECT *
+                    FROM wt_ledger
+                WHERE
+                    world_id = ANY(@Worlds)
+                    {periodStartWhere}
+                    {periodEndWhere}
+                    {zoneIDWhere}
+            ");
+
+            List<short> worldIDs = parameters.WorldIDs.Count == 0 ? new() { World.Connery, World.Cobalt, World.Emerald, World.Miller, World.SolTech } : parameters.WorldIDs;
+
+            cmd.AddParameter("ZoneID", parameters.ZoneID);
+            cmd.AddParameter("PeriodStart", parameters.PeriodStart);
+            cmd.AddParameter("PeriodEnd", parameters.PeriodEnd);
+            cmd.AddParameter("Worlds", worldIDs);
+
+            List<FacilityControlEvent> entries = await _ControlReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entries;
+        }
+
     }
 }

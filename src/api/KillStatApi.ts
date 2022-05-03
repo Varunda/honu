@@ -23,6 +23,7 @@ export class KillEvent {
     public attackerLoadoutID: number = 0;
     public attackerTeamID: number = 0;
     public attackerFireModeID: number = 0;
+    public attackerVehicleID: number = 0;
     public killedCharacterID: string = "";
     public killedLoadoutID: number = 0;
     public killedTeamID: number = 0;

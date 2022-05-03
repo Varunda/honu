@@ -55,6 +55,8 @@ namespace watchtower.Models {
         /// </summary>
         public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
+        public List<WorldTagEntry> TagEntries { get; set; } = new List<WorldTagEntry>();
+
     }
 
     public class FactionFocusEntry {
