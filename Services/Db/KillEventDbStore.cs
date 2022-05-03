@@ -183,7 +183,7 @@ namespace watchtower.Services.Db {
                         ))
                         FROM wt_session s 
                         WHERE s.character_id = top_killers.attacker_character_id
-                            AND s.team_id = @FactionID
+                            AND (s.team_id = @FactionID OR s.team_id = 4)
                             AND (s.finish IS NULL OR s.finish >= NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                     ) AS seconds_online
                 FROM
