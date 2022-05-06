@@ -25,7 +25,7 @@
         </div>
 
         <div class="flex-grow-1">
-            <div id="graph" class="w-100"></div>
+            <div id="graph" class="w-100 h-100"></div>
 
             <div v-if="selected != null" style="position: relative; right: 0;">
                 Selected
