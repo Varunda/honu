@@ -304,12 +304,13 @@ namespace watchtower.Controllers.Api {
         ///     The friends will be expanded, with the full PsCharacter information available
         /// </remarks>
         /// <param name="charID">ID of the character</param>
+        /// <param name="fast">Will Census be hit if the repo determins the DB data is outta date?</param>
         /// <response code="200">
         ///     The response will contain a list of the character's friends
         /// </response>
         [HttpGet("character/{charID}/friends")]
-        public async Task<ApiResponse<List<ExpandedCharacterFriend>>> GetFriends(string charID) {
-            List<CharacterFriend> friends = await _CharacterFriendRepository.GetByCharacterID(charID);
+        public async Task<ApiResponse<List<ExpandedCharacterFriend>>> GetFriends(string charID, [FromQuery] bool fast = false) {
+            List<CharacterFriend> friends = await _CharacterFriendRepository.GetByCharacterID(charID, fast);
 
             List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
 

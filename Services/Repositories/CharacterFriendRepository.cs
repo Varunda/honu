@@ -39,7 +39,7 @@ namespace watchtower.Services.Repositories {
         ///     Get the friends of a character by using both Census and the local DB
         /// </summary>
         /// <param name="charID">ID of the character</param>
-        public async Task<List<CharacterFriend>> GetByCharacterID(string charID) {
+        public async Task<List<CharacterFriend>> GetByCharacterID(string charID, bool fast = false) {
             string cacheKey = string.Format(CACHE_KEY, charID);
             if (_Cache.TryGetValue(cacheKey, out List<CharacterFriend> friends) == false) {
                 friends = await _Db.GetByCharacterID(charID);
@@ -49,7 +49,7 @@ namespace watchtower.Services.Repositories {
                 //
                 // TODO: Get the last login and compare to metadata???
                 bool fetchCensus = friends.Count == 0;
-                if (fetchCensus == false) {
+                if (fetchCensus == false && fast == false) {
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(charID);
                     fetchCensus = (metadata == null) || (DateTime.UtcNow - metadata.LastUpdated > TimeSpan.FromDays(1));
                 }

@@ -16,15 +16,19 @@
             "moment": [ "../node_modules/moment/moment" ],
             "chart.js/*": [ "../node_modules/chart.js/*" ],
             "chartjs-plugin-annotation": [ "../node_modules/chartjs-plugin-annotation" ],
+            "chartjs-plugin-datalabels": [ "../node_modules/chartjs-plugin" ],
             "axios": [ "../node_modules/axios/index" ],
             "loglevel": [ "../node_modules/loglevel/index" ],
             "signalR": [ "../node_modules/@microsoft/signalr/src/index" ],
             "@popperjs": [ "../node_modules/@popperjs/core/index" ],
             "flatpickr": [ "../node_modules/flatpickr/dist/typings" ],
             "node_modules/*": [ "../node_modules/*" ],
-						"vue-fragment": [ "../node_modules/vue-fragment/types" ],
-						"chartjs-plugin-datalabels": [ "../node_modules/chartjs-plugin" ],
-				    "*": [ "./*" ]
+            "vue-fragment": [ "../node_modules/vue-fragment/types" ],
+            "graphology": [ "../node_modules/graphology-types/index" ],
+            "graphology-layout-forceatlas2": [ "../node_modules/graphology-layout-forceatlas2/index" ],
+            "graphology-layout-forceatlas2-worker": [ "../node_modules/graphology-layout-forceatlas2/worker" ],
+            "sigma": [ "../node_modules/sigma/index" ],
+            "*": [ "./*" ]
         },
 
         "noImplicitAny": true,

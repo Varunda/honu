@@ -59,8 +59,8 @@ export class CharacterFriendApi extends ApiWrapper<CharacterFriend> {
         };
     }
 
-    public static getByCharacterID(charID: string): Promise<Loading<FlatExpandedCharacterFriend[]>> {
-        return CharacterFriendApi.get().readList(`/api/character/${charID}/friends`, CharacterFriendApi.parseFlat);
+    public static getByCharacterID(charID: string, fast: boolean = false): Promise<Loading<FlatExpandedCharacterFriend[]>> {
+        return CharacterFriendApi.get().readList(`/api/character/${charID}/friends?fast=${fast}`, CharacterFriendApi.parseFlat);
     }
 
 }

@@ -1,6 +1,6 @@
 ﻿<template>
     <div>
-        <hr class="border" />
+        <hr class="border" @click="openNetwork" />
 
         <div class="d-flex">
             <a-table
@@ -133,6 +133,10 @@
             loadFriends: async function(): Promise<void> {
                 this.friends = Loadable.loading();
                 this.friends = await CharacterFriendApi.getByCharacterID(this.character.id);
+            },
+
+            openNetwork: function(): void {
+                window.open(`/friendnetwork/${this.character.id}`, "_blank");
             }
         },
 

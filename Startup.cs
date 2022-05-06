@@ -324,6 +324,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "friendnetwork",
+                    pattern: "/friendnetwork/{*.}",
+                    defaults: new { controller = "Home", action = "FriendNetwork" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );

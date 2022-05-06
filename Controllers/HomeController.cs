@@ -140,5 +140,9 @@ namespace watchtower.Controllers {
             return View("AlertList");
         }
 
+        public IActionResult FriendNetwork(string charID) {
+            return View();
+        }
+
     }
 }
