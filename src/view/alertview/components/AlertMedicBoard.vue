@@ -128,7 +128,7 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="secondsOnline">
+        <a-col sort-field="timeAs">
             <a-header>
                 <b>Time online</b>
             </a-header>

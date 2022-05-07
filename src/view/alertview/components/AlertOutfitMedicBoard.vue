@@ -5,6 +5,8 @@
         default-sort-field="medicRevives" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
+            
+
         <a-col sort-field="outfitDisplay">
             <a-header>
                 <b>Outfit</b>

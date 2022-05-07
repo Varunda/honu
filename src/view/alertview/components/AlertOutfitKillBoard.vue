@@ -1,7 +1,7 @@
 ﻿<template>
     <a-table
-        :entries="outfits"
-        :show-filters="true" :default-page-size="25"
+        :entries="outfits" name="outfit-kill-board"
+        :show-filters="true" :default-page-size="25" :show-footer="true"
         default-sort-field="killScore" default-sort-order="desc"
         display-type="table" row-padding="compact">
 
@@ -20,7 +20,7 @@
                     {{entry.outfitDisplay}}
                 </a>
 
-                <span v-if="alert.duration <= 28800"> <!-- 8 hours, the max duration of an outfit report -->
+                <span v-if="alert.duration <= 28800">
                     -
 
                     <a href="#" @click="openReport(entry.outfitID)">
@@ -120,7 +120,7 @@
     import ColorUtils from "util/Color";
 
     import InfoHover from "components/InfoHover.vue";
-    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import ATable, { ACol, ABody, AFilter, AHeader, AFooter } from "components/ATable";
 
     import { PsAlert } from "api/AlertApi";
 
@@ -171,11 +171,30 @@
                         { key: "NS", value: 4 },
                     ]
                 }
+            }, 
+
+            total: function() {
+                return {
+                    kills: (this.outfits.state == "loaded") ? this.outfits.data.reduce((acc: number, iter: any) => acc += iter.kills, 0) : 0
+                }
+            },
+
+            disabled: function(): Loading<any> {
+                return Loadable.idle();
+            }
+        },
+
+        watch: {
+            outfits: {
+                deep: true,
+                handler: function(): void {
+                    console.log(`AlertOutfitKillBoard> outfits updated`);
+                }
             }
         },
 
         components: {
-            ATable, ACol, ABody, AFilter, AHeader,
+            ATable, ACol, ABody, AFilter, AHeader, AFooter,
             InfoHover
         }
     });

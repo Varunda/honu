@@ -456,6 +456,8 @@
                     outfit.killScore = outfit.kills / factionKills / outfit.members * 100;
                 }
 
+                console.log(`AlertViewer> Built outfits data`);
+
                 this.outfits = Loadable.loaded(outfits);
             },
 
@@ -536,7 +538,15 @@
                     ]
                 }
             }
+        },
 
+        watch: {
+            outfits: {
+                deep: true,
+                handler: function(): void {
+                    console.log(`AlertViewer> outfits updated`);
+                }
+            }
         },
 
         components: {
