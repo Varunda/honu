@@ -4,7 +4,7 @@
 import { Loading, Loadable } from "Loading";
 
 import Busy from "components/Busy.vue";
-import { PropType } from "../../node_modules/vue/types/umd";
+import { PropType } from "vue";
 
 const ValidFilterTypes: string[] = [ "string", "number", "date", "boolean" ];
 
@@ -49,6 +49,10 @@ interface Filter {
 
     width: string | undefined;
     vnode: VNode | undefined;
+};
+
+interface Footer {
+    children: VNode[] | undefined;
 };
 
 export type FilterKeyValue = {
@@ -99,7 +103,9 @@ export const ATable = Vue.extend({
         DefaultPageSize: { type: Number, required: false },
 
         // Will the pages also be shown above the data?
-        ShowTopPages: { type: Boolean, required: false, default: false }
+        ShowTopPages: { type: Boolean, required: false, default: false },
+
+        name: { type: String, required: false, default: null }
     },
 
     data: function() {
@@ -108,7 +114,8 @@ export const ATable = Vue.extend({
 
             nodes: {
                 columns: [] as VNode[],
-                headers: [] as Header[]
+                headers: [] as Header[],
+                footers: [] as Footer[]
             },
 
             sorting: {
@@ -293,9 +300,34 @@ export const ATable = Vue.extend({
                 this.filters.push(filter);
             }
         }
+
+        for (const column of this.nodes.columns) {
+            if (column.componentOptions?.children) {
+                // Finding the <a-footer> elements
+                const footerNodes: VNode[] = column.componentOptions.children
+                    .filter((iter: VNode) => iter.componentOptions?.tag == "a-footer");
+
+                // Ensure at most one exists for each column, cannot have multiple
+                if (footerNodes.length > 1) {
+                    throw "Cannot define multiple <a-header> elements in a single <a-col>";
+                }
+
+                const footer: Footer = {
+                    children: []
+                };
+
+                // A child <a-header> exists, use those options given
+                if (footerNodes.length == 1) {
+                    footer.children = footerNodes[0].componentOptions?.children ?? [];
+                }
+
+                this.nodes.footers.push(footer);
+            }
+        }
     },
 
     render: function(createElement: CreateElement): VNode {
+        this.log("render");
         let rows: VNode[] = [];
 
         if (this.ShowHeader == true) {
@@ -349,10 +381,10 @@ export const ATable = Vue.extend({
                 },
                 [
                     createElement("td", {
-                            attrs: {
-                                "colspan": `${this.nodes.columns.length}`
-                            }
-                        },
+                        attrs: {
+                            "colspan": `${this.nodes.columns.length}`
+                        }
+                    },
                         [`Error loading data from source: ${this.entries.message}`]
                     )
 
@@ -367,6 +399,10 @@ export const ATable = Vue.extend({
                 },
                 [`Unchecked state of entries: '${this.entries.state}'`]
             ));
+        }
+
+        if (this.ShowFooter == true) {
+            rows.push(this.renderFooter(createElement));
         }
 
         if (this.paginate == true) {
@@ -387,6 +423,14 @@ export const ATable = Vue.extend({
     },
 
     methods: {
+        log: function(msg: string): void {
+            if (this.name == null) {
+                return;
+            }
+
+            console.log(`<a-table:${this.name}> ${msg}`);
+        },
+
         createIcon: function(createElement: CreateElement, icon: string, style: string = "fas"): VNode {
             return createElement("span", { staticClass: `${style} fa-fw ${icon}` });
         },
@@ -625,6 +669,18 @@ export const ATable = Vue.extend({
 
 			// <tr> containing all the filter columns
 			return createElement("tr", filters);
+        },
+
+        renderFooter(createElement: CreateElement): VNode {
+            let footers: VNode[] = [];
+
+            for (const footer of this.nodes.footers) {
+                footers.push(createElement("td", [
+                    footer.children
+                ]));
+            }
+
+            return createElement("tr", footers);
         },
 
         createInputFilter(createElement: CreateElement, filter: Filter): VNode {
@@ -1228,13 +1284,16 @@ export const ATable = Vue.extend({
                 sortFunc = baseFunc;
             }
 
+            // ensure if the entries prop is shared between multiple components, that calling .sort() won't trigger
+            //      filteredEntries to be re-computed on the other components, which would then trigger a re-compute
+            //      on this instance of the componenent, which would then keep going until Vue said stop
+            const filtered: object[] = [...this.filteredEntries];
+
             if (this.paginate == true) {
-                return this.filteredEntries
-                    .sort(sortFunc)
+                return filtered.sort(sortFunc)
                     .slice(this.paging.page * this.paging.size, (this.paging.page + 1) * this.paging.size);
             } else {
-                return this.filteredEntries
-                    .sort(sortFunc);
+                return filtered.sort(sortFunc);
             }
         },
 
@@ -1277,6 +1336,10 @@ const AHeader = Vue.extend({
     template: `<div></div>`
 });
 
+const AFooter = Vue.extend({
+    template: `<div></div>`
+});
+
 const ABody = Vue.extend({
     template: `<div></div>`
 });
@@ -1296,4 +1359,4 @@ const AFilter = Vue.extend({
     template: `<div></div>`
 });
 
-export { ACol, AHeader, ABody, AFilter }
+export { ACol, AHeader, ABody, AFilter, AFooter }
