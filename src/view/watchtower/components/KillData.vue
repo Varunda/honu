@@ -69,7 +69,7 @@
     import { Loading } from "Loading";
 
     import FactionColors from "FactionColors";
-    import { StatModalData } from "../StatModalData";
+    import { PopperModalData } from "popper/PopperModalData";
     import { KillStatApi, CharacterWeaponKillEntry } from "api/KillStatApi";
 
     export const KillData = Vue.extend({
@@ -90,7 +90,7 @@
             },
 
             openCharacterWeaponKills: async function(event: any, charID: string): Promise<void> {
-                const modalData: StatModalData = new StatModalData();
+                const modalData: PopperModalData = new PopperModalData();
                 modalData.root = event.target;
                 modalData.title = "Weapon usage";
                 modalData.columnFields = [ "weaponName", "kills", "headshotRatio", "percent" ];
@@ -114,6 +114,7 @@
                         percent: `${(iter.kills / totalKills * 100).toFixed(2)}%`
                     }
                 });
+
                 modalData.loading = false;
 
                 EventBus.$emit("set-modal-data", modalData);

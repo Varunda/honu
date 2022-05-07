@@ -47,7 +47,7 @@ namespace watchtower.Controllers.Api {
         /// <response code="204">
         ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
         /// </response>
-        [HttpGet("{sessionID}")]
+        [HttpGet("{sessionID:long}")]
         public async Task<ApiResponse<Session>> GetByID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {
@@ -96,6 +96,22 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(expanded);
+        }
+
+        /// <summary>
+        ///     Get the sessions of a character that where online during the period given
+        /// </summary>
+        /// <param name="characterID">ID of the character</param>
+        /// <param name="start">When the period starts</param>
+        /// <param name="end">When the period ends</param>
+        /// <response code="200">
+        ///     A list of <see cref="Session"/>s for the character that were online between <paramref name="start"/> and <paramref name="end"/>
+        /// </response>
+        [HttpGet("character/{characterID}/period")]
+        public async Task<ApiResponse<List<Session>>> GetByCharacterIDAndPeriod(string characterID, [FromQuery] DateTime start, [FromQuery] DateTime end) {
+            List<Session> sessions = await _SessionDb.GetByRangeAndCharacterID(characterID, start, end);
+
+            return ApiOk(sessions);
         }
 
     }

@@ -1,4 +1,4 @@
-export class StatModalData {
+export class PopperModalData {
 
     /**
      * Is the tooltip data loading
@@ -19,6 +19,11 @@ export class StatModalData {
      * Fields within the array of data that will be displayed
      */
     public columnFields: string[] = [];
+
+    /**
+     * Custom renderers for each column if needed. If not needed, leave the map empty
+     */ 
+    public renderers: Map<string, (data: any) => string> = new Map();
 
     /**
      * Title of the tooltip

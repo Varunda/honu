@@ -42,7 +42,7 @@
 
     import EventBus from "EventBus";
 
-    import { StatModalData } from "../StatModalData";
+    import { PopperModalData } from "popper/PopperModalData";
     import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
 
     export const OutfitKillData = Vue.extend({
@@ -59,7 +59,7 @@
 
         methods: {
             openOutfitKillers: async function(event: any, outfitID: string): Promise<void> {
-                const modalData: StatModalData = new StatModalData();
+                const modalData: PopperModalData = new PopperModalData();
                 modalData.root = event.target;
                 modalData.title = "Outfit top killers";
                 modalData.columnFields = [ "characterName", "kills", "percent" ];

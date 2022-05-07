@@ -136,11 +136,11 @@
                 </div>
 
                 <div class="col-6">
-                    <alert-kill-board :participants="participants"></alert-kill-board>
+                    <alert-kill-board :alert="alert.data" :participants="participants"></alert-kill-board>
                 </div>
 
                 <div class="col-6">
-                    <alert-outfit-kill-board :outfits="outfits" :alert="alert.data"></alert-outfit-kill-board>
+                    <alert-outfit-kill-board :outfits="outfits" :alert="alert.data" :participants="participants"></alert-outfit-kill-board>
                 </div>
             </div>
 
@@ -180,6 +180,9 @@
         <div v-else class="text-danger">
             Unchecked state of participants: {{participants.state}}
         </div>
+
+        <popper-modal :value="modalData"></popper-modal>
+
     </div>
 </template>
 
@@ -196,11 +199,14 @@
     import "MomentFilter";
 
     import ColorUtils from "util/Color";
+    import EventBus from "EventBus";
+    import { PopperModalData } from "popper/PopperModalData";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import Busy from "components/Busy.vue";
     import ToggleButton from "components/ToggleButton";
+    import PopperModal from "components/PopperModal.vue";
 
     import AlertFactionStats from "./components/AlertFactionStats.vue";
     import AlertGeneral from "./components/AlertGeneral.vue";
@@ -270,6 +276,7 @@
                 outfits: Loadable.idle() as Loading<OutfitDataEntry[]>,
 
                 showControlComponent: true as boolean,
+                modalData: new PopperModalData() as PopperModalData,
 
                 error: {
                     notFinished: false as boolean
@@ -295,6 +302,10 @@
             this.vsStats.factionID = 1;
             this.ncStats.factionID = 2;
             this.trStats.factionID = 3;
+
+            EventBus.$on("set-modal-data", (modalData: PopperModalData) => {
+                this.modalData = modalData;
+            });
         },
 
         mounted: function(): void {
@@ -552,12 +563,8 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            Busy, ToggleButton,
-            AlertWinner,
-            AlertControlEvents,
-            AlertFactionStats,
-            AlertGeneral,
-            AlertPopulationGraph,
+            Busy, ToggleButton, PopperModal,
+            AlertWinner, AlertControlEvents, AlertFactionStats, AlertGeneral, AlertPopulationGraph,
             AlertKillBoard, AlertMedicBoard, AlertEngineerBoard, AlertOutfitKillBoard, AlertOutfitMedicBoard, AlertOutfitEngineerBoard
         }
     });

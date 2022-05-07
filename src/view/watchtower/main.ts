@@ -3,7 +3,7 @@ import Vue from "vue";
 import { createPopper, Instance } from "node_modules/@popperjs/core/lib/popper";
 
 import { WorldData } from "./WorldData";
-import { StatModalData } from "./StatModalData";
+import { PopperModalData } from "popper/PopperModalData";
 import { ExpStatApi } from "api/ExpStatApi";
 import { WorldTagApi } from "api/WorldTagApi";
 import FactionColors from "FactionColors";
@@ -71,7 +71,7 @@ const vm = new Vue({
 			}
 		});
 
-		EventBus.$on("set-modal-data", (modalData: StatModalData) => {
+		EventBus.$on("set-modal-data", (modalData: PopperModalData) => {
 			this.setModalData(modalData);
 		});
 	},
@@ -85,7 +85,7 @@ const vm = new Vue({
 
 		worldID: 0 as number,
 
-		modalData: new StatModalData() as StatModalData,
+		modalData: new PopperModalData() as PopperModalData,
 
 		popperInstance: null as Instance | null,
 
@@ -160,7 +160,7 @@ const vm = new Vue({
 			return FactionColors.getFactionColor(factionID);
 		},
 
-		setModalData: function (modalData: StatModalData): void {
+		setModalData: function (modalData: PopperModalData): void {
 			this.modalData = modalData;
 
 			if (this.modalData.root == null) {

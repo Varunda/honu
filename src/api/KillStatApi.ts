@@ -92,4 +92,8 @@ export class KillStatApi extends ApiWrapper<KillEvent> {
         return KillStatApi.get().readList(`/api/kills/session/${sessionID}`, KillStatApi.parseExpandedKillEvent);
     }
 
+    public static async getByRange(charID: string, start: Date, end: Date): Promise<Loading<ExpandedKillEvent[]>> {
+        return KillStatApi.get().readList(`/api/kills/character/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, KillStatApi.parseExpandedKillEvent);
+    }
+
 }

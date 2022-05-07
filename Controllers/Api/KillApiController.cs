@@ -228,5 +228,74 @@ namespace watchtower.Controllers {
             return Ok(list);
         }
 
+        /// <summary>
+        ///     Get the kills of a character between two times
+        /// </summary>
+        /// <param name="charID">ID of the character to get the kills of</param>
+        /// <param name="start">When the time period starts</param>
+        /// <param name="end">When the time period ends</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpandedKillEvent"/>s that occured for the character between the range given
+        /// </response>
+        /// <response code="400">
+        ///     One of the following validation errors occured:
+        ///     <ul>
+        ///         <li>
+        ///             <paramref name="start"/> came after <paramref name="end"/>     
+        ///         </li>
+        ///         <li>
+        ///             <paramref name="end"/> was more than 24 hours after <paramref name="start"/>
+        ///         </li>
+        ///     </ul>
+        /// </response>
+        [HttpGet("character/{charID}/period")]
+        public async Task<ApiResponse<List<ExpandedKillEvent>>> GetByCharacterIDAndRange(string charID, [FromQuery] DateTime start, [FromQuery] DateTime end) {
+            if (start >= end) {
+                return ApiBadRequest<List<ExpandedKillEvent>>($"{nameof(start)} must come before {nameof(end)}");
+            }
+
+            if (start - end > TimeSpan.FromDays(1)) {
+                return ApiBadRequest<List<ExpandedKillEvent>>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
+            }
+
+            List<KillEvent> events = await _KillDbStore.GetKillsByCharacterID(charID, start, end);
+            List<ExpandedKillEvent> ex = new List<ExpandedKillEvent>(events.Count);
+
+            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
+
+            List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
+            IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
+
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs);
+            foreach (PsCharacter c in characters) {
+                if (chars.ContainsKey(c.ID) == false) {
+                    chars.Add(c.ID, c);
+                }
+            }
+
+            Dictionary<int, PsItem?> items = new Dictionary<int, PsItem?>();
+
+            foreach (KillEvent ev in events) {
+                ExpandedKillEvent e = new ExpandedKillEvent();
+
+                e.Event = ev;
+
+                if (items.ContainsKey(ev.WeaponID) == false) {
+                    items.Add(ev.WeaponID, await _ItemRepository.GetByID(ev.WeaponID));
+                }
+
+                chars.TryGetValue(ev.AttackerCharacterID, out PsCharacter? attacker);
+                chars.TryGetValue(ev.KilledCharacterID, out PsCharacter? killed);
+
+                e.Attacker = attacker;
+                e.Killed = killed;
+                e.Item = items[ev.WeaponID];
+
+                ex.Add(e);
+            }
+
+            return ApiOk(ex);
+        }
+
     }
 }

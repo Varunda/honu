@@ -48,4 +48,8 @@ export class SessionApi extends ApiWrapper<Session> {
 		return SessionApi.get().readList(`/api/session/history/${unixSecondsEpoch}${(worldID != null ? `?worldID=${worldID}` : "")}`, SessionApi.parseExpanded);
     }
 
+	public static async getByCharacterIDAndPeriod(charID: string, start: Date, end: Date): Promise<Loading<Session[]>> {
+		return SessionApi.get().readList(`/api/session/character/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, SessionApi.parse);
+    }
+
 }

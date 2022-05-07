@@ -16,4 +16,8 @@ export default class TimeUtils {
         return `${dur.minutes().toString().padStart(2, "0")}m ${dur.seconds().toString().padStart(2, "0")}s`;
     }
 
+    public static format(date: Date, format: string = "YYYY-MM-DD hh:mmA"): string {
+        return moment(date).format(format);
+    }
+
 }

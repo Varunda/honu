@@ -44,7 +44,7 @@
     import { Loading, Loadable } from "Loading";
 
     import FactionColors from "FactionColors";
-    import { StatModalData } from "../StatModalData";
+    import { PopperModalData } from "popper/PopperModalData";
     import { CharacterExpSupportEntry } from "api/ExpStatApi";
 
     export const BlockView = Vue.extend({
@@ -74,7 +74,7 @@
 
             clickHandler: async function(event: any, charID: string): Promise<void> {
                 if (this.source) {
-                    const modalData: StatModalData = new StatModalData();
+                    const modalData: PopperModalData = new PopperModalData();
                     modalData.root = event.target;
                     modalData.title = this.sourceTitle;
                     modalData.columnFields = [ "characterName", "amount", "percent" ];
