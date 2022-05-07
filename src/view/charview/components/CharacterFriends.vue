@@ -13,6 +13,10 @@
                         <b>Character</b>
                     </a-header>
 
+                    <a-filter method="input" type="string" field="friendName"
+                        :conditions="[ 'contains' ]">
+                    </a-filter>
+
                     <a-body v-slot="entry">
                         <a :href="'/c/' + entry.friendID">
                             <span v-if="entry.friendName == null">
