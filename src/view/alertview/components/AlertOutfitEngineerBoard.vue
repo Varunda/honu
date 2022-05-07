@@ -86,7 +86,7 @@
             </a-body>
         </a-col>
 
-        <a-col>
+        <a-col sort-field="engResuppliesPerMinute">
             <a-header>
                 <b>RPM</b>
             </a-header>
@@ -96,7 +96,7 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="repairs">
+        <a-col sort-field="engRepairs">
             <a-header>
                 <b>MAX repairs</b>
             </a-header>
@@ -106,7 +106,7 @@
             </a-body>
         </a-col>
 
-        <a-col>
+        <a-col sort-field="engRepairsPerMinute">
             <a-header>
                 <b>MRPM</b>
             </a-header>
