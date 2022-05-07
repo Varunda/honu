@@ -24,11 +24,32 @@
             </toggle-button>
         </div>
 
-        <div class="flex-grow-1">
-            <div id="graph" class="w-100 h-100"></div>
+        <div v-if="loading == true">
+            <div class="progress mt-3" style="height: 3rem;">
+                <div class="progress-bar" :style="{ width: progressWidth }" style="height: 3rem;">
+                    <span style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.5rem;">
+                        Loading {{total}} characters
+                    </span>
+                </div>
+            </div>
+        </div>
 
-            <div v-if="selected != null" style="position: relative; right: 0;">
-                Selected
+        <div class="flex-grow-1">
+            <div id="graph" class="w-100 h-100" style="display: block;"></div>
+
+            <div v-if="selected != null" class="m-3 px-2 py-1" style="display: inline; position: absolute; right: 0; top: 50%; background-color: #222;">
+                <h3>
+                    <span v-if="selected.outfitID != null">
+                        [{{selected.outfitTag}}]
+                    </span>
+                    {{selected.name}}
+                </h3>
+
+                <a :href="'/c/' + selected.id">View character</a>
+
+                <a @click="makeGraph(selected.id)" href="#">
+                    View network
+                </a>
             </div>
         </div>
     </div>
@@ -59,6 +80,18 @@
         };
     }
 
+    function getPosition(characterID: string, width: number = 5) {
+        const charID: number = Number.parseInt(characterID);
+        if (Number.isNaN(charID)) {
+            return randomPosition(width);
+        }
+
+        return {
+            x: width * (charID % 139457 / 139457) - (width / 2),
+            y: width * (charID % 95173 / 95173) - (width / 2)
+        };
+    }
+
     type FriendNode = {
         characterID: string;
         depth: number;
@@ -82,6 +115,13 @@
 
                 root: null as PsCharacter | null,
                 selected: null as PsCharacter | null,
+
+                loading: false as boolean,
+                todo: 0 as number,
+                total: 0 as number,
+
+                friendMap: new Map() as Map<string, FlatExpandedCharacterFriend[]>,
+                maxFriends: 0 as number,
 
                 settings: {
                     sameWorld: true as boolean,
@@ -131,8 +171,9 @@
 
             processQueue: async function(depth: number): Promise<FlatExpandedCharacterFriend[]> {
                 if (this.graph == null) {
-                    throw `asdflkajsd;f`;
+                    throw `cannot process queue while graph is null`;
                 }
+
                 const friends: FlatExpandedCharacterFriend[] = [];
                 console.log(`FriendNetwork> have ${this.queue.length} entries in queue`);
 
@@ -141,14 +182,29 @@
 
                 while (this.queue.length > 0) {
                     ++i;
+                    --this.todo;
                     const iter: FriendNode | undefined = this.queue.shift();
                     if (iter == undefined) {
                         continue;
                     }
 
-                    const l: Loading<FlatExpandedCharacterFriend[]> = await CharacterFriendApi.getByCharacterID(iter.characterID, true);
+                    let l: Loading<FlatExpandedCharacterFriend[]>;
+                    if (this.friendMap.has(iter.characterID) == true) {
+                        l = Loadable.loaded(this.friendMap.get(iter.characterID)!);
+                    } else {
+                        l = await CharacterFriendApi.getByCharacterID(iter.characterID, true);
+
+                        if (l.state == "loaded") {
+                            this.friendMap.set(iter.characterID, l.data);
+                        }
+                    }
+
                     if (l.state != "loaded") {
                         continue;
+                    }
+
+                    if (this.maxFriends <= l.data.length) {
+                        this.maxFriends = l.data.length;
                     }
 
                     if (l.data.length < 10 && l.data.length > 5000) {
@@ -164,14 +220,16 @@
 
                         if (this.loaded.has(f.friendID) == false) {
                             this.graph.addNode(f.friendID, {
-                                ...randomPosition(this.graphWidth),
+                                ...getPosition(f.friendID, this.graphWidth),
                                 label: CharacterUtils.getDisplay({ name: f.friendName ?? `<missing ${f.friendID}>`, outfitTag: f.friendOutfitTag }),
                                 size: 3,
                                 color: ColorUtil.getFactionColor(f.friendFactionID ?? 0)
                             });
                         }
 
-                        this.graph.addEdge(iter.characterID, f.friendID);
+                        this.graph.addEdge(iter.characterID, f.friendID, {
+                            color: "#444444"
+                        });
 
                         friends.push(f);
                         this.loaded.add(f.friendID);
@@ -188,6 +246,15 @@
             },
 
             makeGraph: async function(rootCharacterID: string): Promise<void> {
+                this.loading = true;
+                this.total = 0;
+                this.todo = 0;
+                this.loaded = new Set<string>();
+                this.queue = [];
+                this.hovered = null;
+                this.selected = null;
+                this.maxFriends = 0;
+
                 const character: Loading<PsCharacter> = await CharacterApi.getByID(rootCharacterID);
                 if (character.state != "loaded") {
                     console.warn(`not here`);
@@ -219,15 +286,22 @@
                 });
 
                 await this.processQueue(1);
+                this.total = this.queue.length;
+                this.todo = this.queue.length + 1;
+
                 await this.processQueue(2);
 
+                this.graph.forEachNode((node, attr) => {
+                    if (node == this.root?.id) {
+                        attr.size = 10;
+                    } else if (this.friendMap.has(node) == true) {
+                        const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(node)!;
+
+                        attr.size = 1 + 10 * (friends.length / this.maxFriends);
+                    }
+                });
+
                 this.steps.friends = true;
-
-                console.log(`FriendNetwork> Starting forceAtlas2 iterations`);
-
-                this.steps.layout = true;
-
-                console.log(`FriendNetwork> forceAtlas2, rendering`);
 
                 const renderer = new Sigma(this.graph!, this.context, {
                     allowInvalidContainer: true
@@ -243,17 +317,25 @@
                 this.layout = new FA2Layout(this.graph, {
                     settings: {
                         gravity: 1,
+                        adjustSizes: true,
+                        barnesHutOptimize: true
                     },
-                    getEdgeWeight: "weight"
                 });
 
                 renderer.on("clickNode", (node) => {
                     if (this.hovered == node.node) {
                         this.neighbors = null;
                         this.hovered = null;
+                        this.selected = null;
                     } else {
                         this.neighbors = new Set(this.graph!.neighbors(node.node));
                         this.hovered = node.node;
+
+                        CharacterApi.getByID(node.node).then((data: Loading<PsCharacter>) => {
+                            if (data.state == "loaded" && this.hovered == data.data.id) {
+                                this.selected = data.data;
+                            }
+                        });
                     }
 
                     renderer.refresh();
@@ -287,6 +369,14 @@
                 renderer.setSetting("labelColor", { color: "#ffffff" });
 
                 console.log(`made graph`);
+
+                this.loading = false;
+            }
+        },
+
+        computed: {
+            progressWidth: function(): string {
+                return `${((this.total - this.todo) / Math.max(1, this.total)) * 100}%`;
             }
         },
 
