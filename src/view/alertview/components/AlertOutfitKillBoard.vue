@@ -99,7 +99,7 @@
         <a-col sort-field="members">
             <a-header>
                 <b>Members</b>
-                <info-hover text="How many members of the course of the alert participated"></info-hover>
+                <info-hover text="How many members over the course of the alert participated"></info-hover>
             </a-header>
 
             <a-body v-slot="entry">
