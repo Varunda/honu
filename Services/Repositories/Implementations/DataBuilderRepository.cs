@@ -154,7 +154,7 @@ namespace watchtower.Services.Repositories.Implementations {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.SHIELD_REPAIR, Experience.SHIELD_REPAIR };
+            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
             await Task.WhenAll(
                 GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerShieldRepair.Entries = t.Result),
                 GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitShieldRepair.Entries = t.Result),
