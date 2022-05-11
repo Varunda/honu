@@ -22,15 +22,15 @@ namespace watchtower.Commands {
         private readonly ILogger<StoreCommand> _Logger;
 
         private readonly CharacterCollection _Characters;
-        private readonly IExpEventDbStore _ExpEventDb;
-        private readonly IKillEventDbStore _KillEventDb;
+        private readonly ExpEventDbStore _ExpEventDb;
+        private readonly KillEventDbStore _KillEventDb;
         private readonly SessionDbStore _SessionDb;
 
         public StoreCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<StoreCommand>>();
 
-            _ExpEventDb = services.GetRequiredService<IExpEventDbStore>();
-            _KillEventDb = services.GetRequiredService<IKillEventDbStore>();
+            _ExpEventDb = services.GetRequiredService<ExpEventDbStore>();
+            _KillEventDb = services.GetRequiredService<KillEventDbStore>();
             _Characters = services.GetRequiredService<CharacterCollection>();
             _SessionDb = services.GetRequiredService<SessionDbStore>();
         }

@@ -66,6 +66,22 @@
 
                 <tr>
                     <td>
+                        Last API update
+                        <info-hover text="When this character was last updated in the API. Nothing after this is reflected"></info-hover>
+                    </td>
+                    <td>
+                        <span v-if="character.dateLastSave.getTime() > 0">
+                            {{character.dateLastSave | moment}}
+                            ({{character.dateLastSave | timeAgo}})
+                        </span>
+                        <span v-else>
+                            &lt;never&gt;
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
                         Honu update
                         <info-hover text="When Honu last performed a character update"></info-hover>
                     </td>

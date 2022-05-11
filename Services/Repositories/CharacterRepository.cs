@@ -143,8 +143,9 @@ namespace watchtower.Services.Repositories {
             long toDb = 0;
             int inDb = 0;
             int inExpired = 0;
+            List<PsCharacter> db = new List<PsCharacter>();
             if (found < total) {
-                List<PsCharacter> db = await _Db.GetByIDs(IDs);
+                db = await _Db.GetByIDs(IDs);
 
                 foreach (PsCharacter c in db) {
                     if (fast == true) {
@@ -160,6 +161,7 @@ namespace watchtower.Services.Repositories {
                             ++found;
                         } else {
                             _Queue.Queue(c.ID);
+                            _CacheQueue.Queue(c.ID);
                             ++inExpired;
                         }
                     }
@@ -191,6 +193,20 @@ namespace watchtower.Services.Repositories {
                 _Logger.LogTrace($"Took {toCensus}ms to load from census");
             }
 
+            // If a character in the DB was ignored because it had expired, but Honu still doesn't have the character at this point, load it anyways
+            int inDbRescue = 0;
+            if (found < total) {
+                foreach (string id in IDs.ToList()) {
+                    PsCharacter? c = db.FirstOrDefault(iter => iter.ID == id);
+                    if (c != null) {
+                        ++inDbRescue;
+                        chars.Add(c);
+                        IDs.Remove(c.ID);
+                        ++found;
+                    }
+                }
+            }
+
             foreach (PsCharacter c in chars) {
                 string cacheKey = string.Format(CACHE_KEY_ID, c.ID);
                 _Cache.Set(cacheKey, c, new MemoryCacheEntryOptions() {
@@ -198,8 +214,8 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} characters. "
-                + $"In cache: {inCache} in {toCache}ms, db: {inDb} in {toDb}ms, census: {inCensus} in {toCensus}ms, left: {IDs.Count}");
+            _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
+                + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
 
             return chars;
         }
@@ -236,9 +252,10 @@ namespace watchtower.Services.Repositories {
         /// <summary>
         ///     Search for characters that have a partial match to a name
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="name">Name to search</param>
+        /// <param name="timeoutCensus">If the census request will be timed out or not</param>
         /// <returns></returns>
-        public async Task<List<PsCharacter>> SearchByName(string name) {
+        public async Task<List<PsCharacter>> SearchByName(string name, bool timeoutCensus = true) {
             List<PsCharacter> all = new List<PsCharacter>();
 
             Stopwatch timer = Stopwatch.StartNew();
@@ -253,7 +270,7 @@ namespace watchtower.Services.Repositories {
 
             // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
             Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name, CancellationToken.None));
-            bool censusCancelled = wrapper.Wait(TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS)) == false;
+            bool censusCancelled = wrapper.Wait((timeoutCensus == true) ? TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS) : TimeSpan.FromSeconds(60)) == false;
             if (censusCancelled == false) {
                 census = wrapper.Result;
             } else {

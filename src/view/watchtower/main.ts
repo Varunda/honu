@@ -5,6 +5,7 @@ import { createPopper, Instance } from "node_modules/@popperjs/core/lib/popper";
 import { WorldData } from "./WorldData";
 import { StatModalData } from "./StatModalData";
 import { ExpStatApi } from "api/ExpStatApi";
+import { WorldTagApi } from "api/WorldTagApi";
 import FactionColors from "FactionColors";
 import EventBus from "EventBus";
 
@@ -14,6 +15,7 @@ import KillData from "./components/KillData.vue";
 import OutfitKillData from "./components/OutfitKillData.vue";
 import OutfitsOnline from "./components/OutfitsOnline.vue";
 import FactionFocus from "./components/FactionFocus.vue";
+import WorldTag from "./components/WorldTag.vue";
 
 import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 import ContinentMetadata from "components/ContinentMetadata.vue";
@@ -34,7 +36,9 @@ const vm = new Vue({
 			.build();
 
 		this.connection.on("UpdateData", (data: any) => {
+			data.tagEntries = data.tagEntries.map((iter: any) => WorldTagApi.readEntry(iter));
 			console.log(data);
+
 			this.worldData = data;
 			this.lastUpdate = new Date();
 		});
@@ -289,7 +293,8 @@ const vm = new Vue({
 		OutfitsOnline,
 		"WeaponKills": WeaponKillsView,
 		InfoHover,
-        HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+		HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+		WorldTag
 	}
 });
 (window as any).vm = vm;

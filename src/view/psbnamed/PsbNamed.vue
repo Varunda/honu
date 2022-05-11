@@ -56,6 +56,17 @@
                         Show deleted accounts
                     </span>
                 </div>
+
+                <div>
+                    <button type="button" class="btn" :class="[ filter.warnings ? 'btn-primary' : 'btn-secondary' ]" @click="filter.warnings = !filter.warnings">
+                        <span v-if="filter.warnings">Y</span>
+                        <span v-else>N</span>
+                    </button>
+
+                    <span>
+                        Only show accounts with problems
+                    </span>
+                </div>
             </div>
 
             <div class="flex-grow-1">
@@ -221,7 +232,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <psb-named-character-cell :id="entry.vsID"
+                    <psb-named-character-cell :id="entry.vsID" :status="entry.account.vsStatus"
                         :character="entry.vsCharacter" faction-id="1">
                     </psb-named-character-cell>
                 </a-body>
@@ -243,7 +254,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <psb-named-character-cell :id="entry.ncID"
+                    <psb-named-character-cell :id="entry.ncID" :status="entry.account.ncStatus"
                         :character="entry.ncCharacter" faction-id="2">
                     </psb-named-character-cell>
                 </a-body>
@@ -265,7 +276,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <psb-named-character-cell :id="entry.trID"
+                    <psb-named-character-cell :id="entry.trID" :status="entry.account.trStatus"
                         :character="entry.trCharacter" faction-id="3">
                     </psb-named-character-cell>
                 </a-body>
@@ -287,7 +298,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <psb-named-character-cell :id="entry.nsID"
+                    <psb-named-character-cell :id="entry.nsID" :status="entry.account.nsStatus"
                         :character="entry.nsCharacter" faction-id="4">
                     </psb-named-character-cell>
                 </a-body>
@@ -339,6 +350,7 @@
         props: {
             id: { type: String, required: false },
             character: { type: Object as PropType<PsCharacter | null>, required: false },
+            status: { type: Number, required: true },
             FactionId: { type: String, required: true }
         },
 
@@ -357,6 +369,18 @@
                 <span v-else>
                     <info-hover v-if="character.worldID != 19" icon="exclamation" 
                         class="text-warning" text="This character is on the wrong server">
+                    </info-hover>
+
+                    <info-hover v-if="status == 2" icon="exclamation"
+                        class="text-warning" text="This character does not exist">
+                    </info-hover>
+
+                    <info-hover v-else-if="status == 3" icon="exclamation"
+                        class="text-warning" text="This character has been deleted">
+                    </info-hover>
+
+                    <info-hover v-else-if="status == 4" icon="exclamation"
+                        class="text-warning" text="This character has been recreated">
                     </info-hover>
 
                     <a :href="'/c/' + id">
@@ -407,7 +431,8 @@
                     missingCharacters: false as boolean,
                     mismatchFactions: false as boolean,
                     wrongWorlds: false as boolean,
-                    deleted: false as boolean
+                    deleted: false as boolean,
+                    warnings: false as boolean
                 },
 
                 create: {
@@ -543,6 +568,15 @@
                     });
                 }
 
+                if (this.filter.warnings == true) {
+                    data = data.filter(iter => {
+                        return iter.account.vsStatus != 1
+                            || iter.account.ncStatus != 1
+                            || iter.account.trStatus != 1
+                            || iter.account.nsStatus != 1;
+                    });
+                }
+
                 this.wrapped = Loadable.loaded(data);
             },
         },
@@ -566,13 +600,18 @@
             "filter.deleted": function(): void {
                 console.log(`PsbNamed> filter.deleted changed`);
                 this.updateFilters();
+            },
+
+            "filter.warnings": function(): void {
+                console.log(`PsbNamed> filter.warnings changed`);
+                this.updateFilters();
             }
 
         },
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
-                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false) {
+                if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false || this.filter.warnings == true) {
                     return this.wrapped;
                 }
 

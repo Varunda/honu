@@ -19,7 +19,14 @@ export class PsCharacter {
 	public dateCreated: Date = new Date();
 	public dateLastLogin: Date = new Date();
 	public dateLastSave: Date = new Date();
+}
 
+export class MinimalCharacter {
+	public id: string = "";
+	public outfitID: string | null = null;
+	public outfitTag: string | null = null;
+	public name: string = "";
+	public factionID: number = 0;
 }
 
 export class CharacterApi extends ApiWrapper<PsCharacter> {
@@ -36,6 +43,12 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 		}
 	}
 
+	public static parseMinimal(elem: any): MinimalCharacter {
+		return {
+			...elem
+		};
+    }
+
 	public static async getByID(charID: string): Promise<Loading<PsCharacter>> {
 		return CharacterApi.get().readSingle(`/api/character/${charID}`, CharacterApi.parse);
 	}
@@ -44,8 +57,8 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 		return CharacterApi.get().readList(`/api/characters/name/${name}`, CharacterApi.parse);
 	}
 
-	public static async searchByName(name: string): Promise<Loading<PsCharacter[]>> {
-		return CharacterApi.get().readList(`/api/characters/search/${name}`, CharacterApi.parse);
+	public static async searchByName(name: string, censusTimeout: boolean = true): Promise<Loading<PsCharacter[]>> {
+		return CharacterApi.get().readList(`/api/characters/search/${name}?censusTimeout=${censusTimeout}`, CharacterApi.parse);
 	}
 
 }

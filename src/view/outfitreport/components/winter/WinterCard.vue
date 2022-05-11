@@ -3,6 +3,8 @@
         <div class="card-header">
             <h5>
                 {{ShowFunName ? card.funName : card.name}}
+
+                <info-hover v-if="card.availableAfter != null" :text="'Data not tracked before ' + card.availableAfter"></info-hover>
             </h5>
             <h6 class="mb-0">
                 {{card.description}}
@@ -23,11 +25,17 @@
 <script lang="ts">
     import Vue from "vue";
 
+    import InfoHover from "components/InfoHover.vue";
+
     export const WinterCard = Vue.extend({
         props: {
             card: { type: Object, required: true },
             ShowFunName: { type: Boolean, required: false, default: false },
             size: { type: Number, required: false, default: 5 }
+        },
+
+        components: {
+            InfoHover
         }
     });
     export default WinterCard;

@@ -35,6 +35,18 @@ namespace watchtower.Code.ExtensionMethods {
             return token.Value<short?>(name) ?? fallback;
         }
 
+        public static short GetRequiredInt16(this JToken token, string name) {
+            return token.Value<short?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}' from {token}");
+        }
+
+        public static DateTime GetRequiredDateTime(this JToken token, string name) {
+            string input = token.GetRequiredString(name);
+            if (DateTime.TryParse(input, out DateTime d) == false) {
+                throw new InvalidCastException($"Failed to parse {input} to a valid DateTime");
+            }
+            return d;
+        }
+
         public static short GetWorldID(this JToken token) {
             return token.GetInt16("world_id", -1);
         }
@@ -49,6 +61,10 @@ namespace watchtower.Code.ExtensionMethods {
 
         public static bool GetBoolean(this JToken token, string name, bool fallback) {
             return token.Value<bool?>(name) ?? fallback;
+        }
+
+        public static decimal GetDecimal(this JToken token, string name, decimal fallback) {
+            return token.Value<decimal?>(name) ?? fallback;
         }
 
         public static DateTime CensusTimestamp(this JToken token, string name) {

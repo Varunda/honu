@@ -1,17 +1,17 @@
 ﻿<template>
     <div>
         <div>
-            <button type="button" class="btn btn-secondary" @click="showDebug = !showDebug">
-                Show IDs
-            </button>
-
             <button type="button" class="btn btn-primary" @click="loadEntries">
                 Reload
             </button>
 
-            <button type="button" class="btn btn-secondary" @click="showImages = !showImages">
+            <toggle-button v-model="showDebug">
+                Show IDs
+            </toggle-button>
+
+            <toggle-button v-model="showImages">
                 Show images
-            </button>
+            </toggle-button>
 
             <toggle-button v-model="showNonWeapons">
                 Show non-weapons
@@ -19,6 +19,10 @@
 
             <toggle-button v-model="showExtraInfo">
                 Show extra info
+            </toggle-button>
+
+            <toggle-button v-model="showPercent">
+                Show percentiles
             </toggle-button>
         </div>
 
@@ -104,7 +108,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <percentile-cell :value="entry.kpmPercent"></percentile-cell>
+                    <percentile-cell v-show="showPercent" :value="entry.kpmPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -133,7 +137,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <percentile-cell :value="entry.kdPercent"></percentile-cell>
+                    <percentile-cell v-show="showPercent" :value="entry.kdPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -161,7 +165,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <percentile-cell :value="entry.accPercent"></percentile-cell>
+                    <percentile-cell v-show="showPercent" :value="entry.accPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -190,7 +194,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <percentile-cell :value="entry.hsrPercent"></percentile-cell>
+                    <percentile-cell v-show="showPercent" :value="entry.hsrPercent"></percentile-cell>
                 </a-body>
             </a-col>
 
@@ -236,7 +240,8 @@
                 showDebug: false as boolean,
                 showImages: true as boolean,
                 showNonWeapons: false as boolean,
-                showExtraInfo: false as boolean
+                showExtraInfo: false as boolean,
+                showPercent: true as boolean
             }
         },
 

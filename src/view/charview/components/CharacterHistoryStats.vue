@@ -26,7 +26,7 @@
             </toggle-button>
 
             <toggle-button v-model="show.kpm">
-                KPM
+                Kills per minute
             </toggle-button>
 
             <toggle-button v-model="show.spm">
@@ -71,7 +71,7 @@
         </chart-history-stat>
 
         <chart-history-stat v-if="show.time == true && time != null" class="border-bottom"
-            :data="data.time" :period="scale" :timestamp="time.lastUpdated" title="Time played">
+            :data="data.time" :period="scale" :is-time="true" :timestamp="time.lastUpdated" title="Time played">
         </chart-history-stat>
 
         <chart-history-stat v-if="show.kd == true && kills != null && deaths != null" class="border-bottom"

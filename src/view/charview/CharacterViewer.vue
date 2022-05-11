@@ -192,6 +192,10 @@
                     document.title = `Honu / Char / <not found>`;
                 } else if (this.character.state == "loaded") {
                     document.title = `Honu / Char / ${this.character.data.name}`;
+
+                    const url = new URL(location.href);
+                    url.searchParams.set("name", this.character.data.name);
+                    history.replaceState({ path: url.href }, "", url.href);
                 }
 
                 if (parts.length >= 4) {

@@ -95,6 +95,15 @@ export class PsbCharacterSet {
     public nsName: string | null = null;
 }
 
+export class PsbCharacterStatus {
+
+    public static ok: number = 1;
+    public static doesNotExist: number = 2;
+    public static deleted: number = 3;
+    public static remade: number = 4;
+
+}
+
 export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
     private static _instance: PsbNamedAccountApi = new PsbNamedAccountApi();
     public static get(): PsbNamedAccountApi { return PsbNamedAccountApi._instance; }

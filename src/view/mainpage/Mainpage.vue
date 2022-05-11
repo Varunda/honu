@@ -65,6 +65,7 @@
                 <small class="text-muted">Base capture/defend stats</small>
             </h3>
         </div>
+        </div>
 
         <hr class="border" />
 
@@ -101,24 +102,8 @@
                 <a href="/outfitpop">
                     Pop
                 </a>
-            </h2>
+            </div>
         </div>
-
-        <hr class="border" />
-
-        <h1 class="d-inline-block mr-2">
-            <a href="/alerts">
-                Alerts
-            </a>
-        </h1>
-
-        <hr class="border" />
-
-        <h1 class="d-inline-block mr-2">
-            <a href="/realtimemap">
-                Real time map
-            </a>
-        </h1>
 
         <hr class="border" />
 

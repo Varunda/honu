@@ -135,22 +135,22 @@
                     <div class="d-flex">
                         <div class="flex-grow-1 mr-2 pr-2 border-right">
                             <h4>VS</h4>
-                            <psb-named-character-column :character="account.vsCharacter"></psb-named-character-column>
+                            <psb-named-character-column :character="account.vsCharacter" :status="account.account.vsStatus"></psb-named-character-column>
                         </div>
 
                         <div class="flex-grow-1 mr-2 pr-2 border-right">
                             <h4>NC</h4>
-                            <psb-named-character-column :character="account.ncCharacter"></psb-named-character-column>
+                            <psb-named-character-column :character="account.ncCharacter" :status="account.account.ncStatus"></psb-named-character-column>
                         </div>
 
                         <div class="flex-grow-1 mr-2 pr-2 border-right">
                             <h4>TR</h4>
-                            <psb-named-character-column :character="account.trCharacter"></psb-named-character-column>
+                            <psb-named-character-column :character="account.trCharacter" :status="account.account.trStatus"></psb-named-character-column>
                         </div>
 
                         <div class="flex-grow-1">
                             <h4>NS / Do not use</h4>
-                            <psb-named-character-column :character="account.nsCharacter"></psb-named-character-column>
+                            <psb-named-character-column :character="account.nsCharacter" :status="account.account.nsStatus"></psb-named-character-column>
                         </div>
                     </div>
                 </div>

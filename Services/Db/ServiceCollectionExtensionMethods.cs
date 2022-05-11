@@ -12,11 +12,14 @@ namespace watchtower.Services.Db {
     public static class ServiceCollectionExtensionMethods {
 
         public static void AddHonuDatabasesServices(this IServiceCollection services) {
-            services.AddSingleton<OutfitDbStore>();
-            services.AddSingleton<IKillEventDbStore, KillEventDbStore>();
-            services.AddSingleton<IExpEventDbStore, ExpEventDbStore>();
             services.AddSingleton<CharacterDbStore>();
+            services.AddSingleton<OutfitDbStore>();
+
+            services.AddSingleton<KillEventDbStore>();
+            services.AddSingleton<ExpEventDbStore, ExpEventDbStore>();
+            services.AddSingleton<VehicleDestroyDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
+
             services.AddSingleton<ItemDbStore>();
             services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();
             services.AddSingleton<SessionDbStore, SessionDbStore>();
@@ -62,8 +65,13 @@ namespace watchtower.Services.Db {
             services.AddSingleton<PsbAccountNoteDbStore>();
             services.AddSingleton<HonuAccountDbStore>();
             services.AddSingleton<HonuAccountAccessLogDbStore>();
-            services.AddSingleton<VehicleDestroyDbStore>();
+
             services.AddSingleton<AlertDbStore>();
+            services.AddSingleton<AlertPlayerDataDbStore>();
+            services.AddSingleton<AlertPlayerProfileDataDbStore>();
+            services.AddSingleton<AlertPopulationDbStore>();
+
+            services.AddSingleton<WorldTagDbStore>();
         }
 
     }

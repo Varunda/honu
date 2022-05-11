@@ -38,7 +38,12 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    {{entry.factionID | faction}}
+                    <span v-if="entry.factionID == 0">
+                        All
+                    </span>
+                    <span v-else>
+                        {{entry.factionID | faction}}
+                    </span>
                 </a-body>
             </a-col>
 

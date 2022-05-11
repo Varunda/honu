@@ -30,11 +30,11 @@ namespace watchtower.Controllers {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
 
-        private readonly IExpEventDbStore _ExpDbStore;
+        private readonly ExpEventDbStore _ExpDbStore;
         private readonly SessionDbStore _SessionDb;
 
         public ExpApiController(ILogger<ExpApiController> logger,
-            CharacterRepository charRepo, IExpEventDbStore killDb,
+            CharacterRepository charRepo, ExpEventDbStore killDb,
             OutfitRepository outfitRepo, SessionDbStore sessionDb) {
 
             _Logger = logger;

@@ -5,6 +5,7 @@
             <div class="btn-group w-100 mb-3">
                 <toggle-button v-model="show.kills">Kills</toggle-button>
                 <toggle-button v-model="show.deaths">Deaths</toggle-button>
+                <toggle-button v-model="show.vehicleDestroy">Vehicle destroy</toggle-button>
                 <toggle-button v-model="show.assists">Assists</toggle-button>
                 <toggle-button v-model="show.revives">Revives</toggle-button>
                 <toggle-button v-model="show.heals">Heals</toggle-button>
@@ -30,7 +31,7 @@
                     <b>Type</b>
                 </a-header>
 
-                <a-filter method="dropdown" field="type" type="string"
+                <a-filter method="dropdown" field="type" type="string" :source="tableActionSource"
                     :conditions="[ 'equals' ]">
                 </a-filter>
 
@@ -148,7 +149,7 @@
 
                 show: {
                     kills: true as boolean,
-                    assists: true as boolean,
+                    assists: false as boolean,
                     deaths: true as boolean,
                     revives: true as boolean,
                     heals: false as boolean,
@@ -221,8 +222,8 @@
                             { html: `killed` },
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
                             { html: `using` },
-                            { html: (iter.event.weaponID == "0") ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
-                            this.createLogText("as a"),
+                            { html: (iter.event.weaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
+                            ((LoadoutUtils.isEngineer(iter.event.attackerLoadoutID) || LoadoutUtils.isInfiltrator(iter.event.attackerLoadoutID)) ? this.createLogText("as an") : this.createLogText("as a")),
                             this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
@@ -537,6 +538,19 @@
 
                     return false;
                 }));
+            },
+
+            tableActionSource: function() {
+                let options: any[] = [
+                    { key: "All", value: null }
+                ];
+
+                this.typeNames.forEach((value: string, key: string) => {
+                    // Confusing huh, this is correct tho. In an <a-table>, the key is what's displayed
+                    options.push({ key: value, value: key });
+                });
+
+                return options;
             }
         },
 

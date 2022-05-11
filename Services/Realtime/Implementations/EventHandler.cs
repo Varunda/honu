@@ -14,12 +14,14 @@ using watchtower.Code.Hubs;
 using watchtower.Code.Hubs.Implementations;
 using watchtower.Constants;
 using watchtower.Models;
+using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Models.Queues;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
+using watchtower.Services.Realtime;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Realtime {
@@ -28,14 +30,15 @@ namespace watchtower.Realtime {
 
         private readonly ILogger<EventHandler> _Logger;
 
-        private readonly IKillEventDbStore _KillEventDb;
-        private readonly IExpEventDbStore _ExpEventDb;
+        private readonly KillEventDbStore _KillEventDb;
+        private readonly ExpEventDbStore _ExpEventDb;
         private readonly SessionDbStore _SessionDb;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
         private readonly AlertDbStore _AlertDb;
+        private readonly AlertPlayerDataRepository _ParticipantDataRepository;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -50,12 +53,13 @@ namespace watchtower.Realtime {
         private readonly MapRepository _MapRepository;
         private readonly FacilityRepository _FacilityRepository;
 
-        private readonly List<JToken> _Recent;
-
         private readonly IHubContext<RealtimeMapHub> _MapHub;
+        private readonly WorldTagManager _TagManager;
+
+        private readonly List<string> _Recent;
 
         public EventHandler(ILogger<EventHandler> logger,
-            IKillEventDbStore killEventDb, IExpEventDbStore expDb,
+            KillEventDbStore killEventDb, ExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
             SessionDbStore sessionDb, SessionStarterQueue sessionQueue,
             DiscordMessageQueue msgQueue, MapCollection mapColl,
@@ -64,11 +68,12 @@ namespace watchtower.Realtime {
             FacilityPlayerControlDbStore fpDb, VehicleDestroyDbStore vehicleDestroyDb,
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
-            IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb) {
+            IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
+            AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager) {
 
             _Logger = logger;
 
-            _Recent = new List<JToken>();
+            _Recent = new List<string>();
 
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
@@ -93,15 +98,29 @@ namespace watchtower.Realtime {
             _FacilityRepository = facRepo ?? throw new ArgumentNullException(nameof(facRepo));
 
             _MapHub = mapHub;
+            _ParticipantDataRepository = participantDataRepository;
+            _TagManager = tagManager;
         }
 
         public async Task Process(JToken ev) {
-            if (_Recent.Contains(ev)) {
-                _Logger.LogError($"Skipping duplicate event {ev}");
+            // The default == for tokens seems like it's by reference, not value. Since the order of the keys in the JSON
+            //      object is fixed and hasn't changed in the last 7 months, this is safe.
+            // If the order of keys changes, this method of detecting duplicate events will have to change, as it relies
+            //      on the key order being the same for duplicate events
+            //
+            // For example:
+            //      { id: 1, value: "howdy" }
+            //      { value: "howdy", id: 1 }
+            //  
+            //      The strings for these JTokens would be different, but they represent the same object. The current duplicate
+            //      event checking would not handle this correctly
+            //
+            if (_Recent.Contains(ev.ToString())) {
+                //_Logger.LogError($"Skipping duplicate event {ev}");
                 return;
             }
 
-            _Recent.Add(ev);
+            _Recent.Add(ev.ToString());
             if (_Recent.Count > 50) {
                 _Recent.RemoveAt(0);
             }
@@ -140,7 +159,7 @@ namespace watchtower.Realtime {
                 } else if (eventName == "BattleRankUp") {
                     await _ProcessBattleRankUp(payloadToken);
                 } else if (eventName == "MetagameEvent") {
-                    _ProcessMetagameEvent(payloadToken);
+                    await _ProcessMetagameEvent(payloadToken);
                 } else if (eventName == "VehicleDestroy") {
                     await _ProcessVehicleDestroy(payloadToken);
                 } else {
@@ -189,7 +208,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = ev.AttackerFactionID,
-                    TeamID = (ev.AttackerFactionID == 4) ? Faction.UNKNOWN : ev.AttackerFactionID,
+                    TeamID = (ev.AttackerFactionID == 4) ? Faction.NS : ev.AttackerFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -216,7 +235,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = ev.KilledFactionID,
-                    TeamID = (ev.KilledFactionID == 4) ? Faction.UNKNOWN : ev.KilledFactionID,
+                    TeamID = (ev.KilledFactionID == 4) ? Faction.NS : ev.KilledFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -371,14 +390,7 @@ namespace watchtower.Realtime {
                     }
 
                     Stopwatch timer = Stopwatch.StartNew();
-                    UnstableState state = await _MapCensus.GetUnstableState(ev.WorldID, ev.ZoneID);
-                    UnstableState stat2 = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
-                    if (state != stat2) {
-                        //_Logger.LogError($"Unstable state for {ev.WorldID} {ev.ZoneID} is different, {state} != {stat2}");
-                    }
-                    if (timer.ElapsedMilliseconds > 1000) {
-                        //_Logger.LogTrace($"Took {timer.ElapsedMilliseconds}ms to get unstable state for {ev.WorldID}:{ev.ZoneID}");
-                    }
+                    UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
                     timer.Stop();
 
                     ev.UnstableState = state;
@@ -559,18 +571,6 @@ namespace watchtower.Realtime {
                         // Ensure census has times to update
                         await Task.Delay(5000);
 
-                        /*
-                        //short? indarOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Indar);
-                        //short? hossinOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Hossin);
-                        //short? amerishOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Amerish);
-                        //short? esamirOwner = await _MapCensus.GetZoneMapOwner(worldID, Zone.Esamir);
-                        short? indarOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Indar);
-                        short? hossinOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Hossin);
-                        short? amerishOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Amerish);
-                        short? esamirOwner2 = _MapRepository.GetZoneMapOwner(worldID, Zone.Esamir);
-                        short? oshurOwner = _MapRepository.GetZoneMapOwner(worldID, Zone.Oshur);
-                        */
-
                         string s = $"ALERT ended in {worldID}, current owners:\n";
 
                         foreach (uint zoneID in Zone.All) {
@@ -584,15 +584,6 @@ namespace watchtower.Realtime {
                         }
 
                         _Logger.LogDebug(s);
-
-                        /*
-                        if (indarOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Indar); }
-                        if (hossinOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Hossin); }
-                        if (amerishOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Amerish); }
-                        if (esamirOwner2 == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Esamir); }
-                        if (oshurOwner == null) { ZoneStateStore.Get().UnlockZone(worldID, Zone.Oshur); }
-                        */
-
                     }).Start();
                 }
 
@@ -609,8 +600,37 @@ namespace watchtower.Realtime {
                 alert.ZoneID = zoneID;
                 alert.WorldID = worldID;
                 alert.AlertID = metagameEventID;
+                alert.InstanceID = payload.GetInt32("instance_id", 0);
                 alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
                 alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
+
+                if (zone != null) {
+                    List<PsFacility> facs = (await _FacilityRepository.GetAll())
+                        .Where(iter => iter.ZoneID == alert.ZoneID)
+                        .Where(iter => iter.TypeID == 7) // 7 = warpgate
+                        .ToList();
+
+                    _Logger.LogDebug($"Found {facs.Count} warpgates in {alert.ZoneID}, finding owners");
+
+                    foreach (PsFacility fac in facs) {
+                        PsFacilityOwner? owner = zone.GetFacilityOwner(fac.FacilityID);
+                        if (owner != null) {
+                            if (owner.Owner == Faction.VS) {
+                                alert.WarpgateVS = owner.FacilityID;
+                            } else if (owner.Owner == Faction.NC) {
+                                alert.WarpgateNC = owner.FacilityID;
+                            } else if (owner.Owner == Faction.TR) {
+                                alert.WarpgateTR = owner.FacilityID;
+                            } else {
+                                _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: facility {fac.FacilityID} was unowned by 1|2|3, current owner: {owner.Owner}");
+                            }
+                        } else {
+                            _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: failed to get owner of {fac.FacilityID}, zone missing facility");
+                        }
+                    }
+                }
+
+                AlertStore.Get().AddAlert(alert);
 
                 try {
                     alert.ID = await _AlertDb.Insert(alert);
@@ -631,8 +651,74 @@ namespace watchtower.Realtime {
 
                 if (toRemove != null) {
                     AlertStore.Get().RemoveByID(toRemove.ID);
+
+                    decimal countVS = payload.GetDecimal("faction_vs", 0m);
+                    decimal countNC = payload.GetDecimal("faction_nc", 0m);
+                    decimal countTR = payload.GetDecimal("faction_tr", 0m);
+
+                    decimal winnerCount = 0;
+                    short factionID = 0;
+
+                    if (countVS > winnerCount) {
+                        winnerCount = countVS;
+                        factionID = Faction.VS;
+                    }
+                    if (countNC > winnerCount) {
+                        winnerCount = countNC;
+                        factionID = Faction.NC;
+                    } 
+                    if (countTR > winnerCount) {
+                        winnerCount = countTR;
+                        factionID = Faction.TR;
+                    }
+
+                    if ((countVS == countNC && (factionID == Faction.VS || factionID == Faction.NC)) // VS and NC tied
+                        || (countVS == countTR && (factionID == Faction.VS || factionID == Faction.TR)) // VS and TR tied
+                        || (countNC == countTR && (factionID == Faction.NC || factionID == Faction.TR)) // NC and TR tied
+                        ) {
+
+                        factionID = 0;
+                    }
+
+                    toRemove.VictorFactionID = factionID;
+
+                    PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
+                    if (zone != null) {
+                        int factionVS = zone.GetFacilities().Where(iter => iter.Owner == Faction.VS).Count();
+                        int factionNC = zone.GetFacilities().Where(iter => iter.Owner == Faction.NC).Count();
+                        int factionTR = zone.GetFacilities().Where(iter => iter.Owner == Faction.TR).Count();
+
+                        decimal scoreVS = decimal.Round(toRemove.ZoneFacilityCount * countVS / 100);
+                        decimal scoreNC = decimal.Round(toRemove.ZoneFacilityCount * countNC / 100);
+                        decimal scoreTR = decimal.Round(toRemove.ZoneFacilityCount * countTR / 100);
+
+                        /*
+                        _Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
+                        _Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
+                        _Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
+                        */
+
+                        toRemove.CountVS = (int)scoreVS;
+                        toRemove.CountNC = (int)scoreNC;
+                        toRemove.CountTR = (int)scoreTR;
+                    } else {
+                        _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}, missing zone");
+                    }
+
+                    new Thread(async () => {
+                        try {
+                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
+                            List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
+
+                            toRemove.Participants = parts.Count;
+                            await _AlertDb.UpdateByID(toRemove.ID, toRemove);
+                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"failed to create alert data for {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID}");
+                        }
+                    }).Start();
                 } else {
-                    _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}");
+                    _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}\nCurrent alerts: {string.Join(", ", alerts.Select(iter => $"{iter.WorldID}.{iter.ZoneID}"))}");
                 }
             } else {
                 _Logger.LogError($"Unchecked value of {nameof(metagameEventName)} '{metagameEventName}'");
@@ -725,7 +811,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = attackerFactionID,
-                    TeamID = (attackerFactionID == 4) ? Faction.UNKNOWN : attackerFactionID,
+                    TeamID = (attackerFactionID == 4) ? Faction.NS : attackerFactionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -754,7 +840,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = factionID,
-                    TeamID = (factionID == 4) ? Faction.UNKNOWN : factionID,
+                    TeamID = (factionID == 4) ? Faction.NS : factionID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -776,7 +862,7 @@ namespace watchtower.Realtime {
                     killed.TeamID = ev.KilledTeamID;
                 }
 
-                if (attacker.FactionID == Faction.NS) {
+                if (killed.FactionID == Faction.NS) {
                     ev.KilledTeamID = killed.TeamID;
                 }
 
@@ -788,6 +874,8 @@ namespace watchtower.Realtime {
             }
 
             await _KillEventDb.Insert(ev);
+
+            await _TagManager.OnKillHandler(ev);
         }
 
         private async Task _ProcessExperience(JToken payload) {
@@ -798,7 +886,10 @@ namespace watchtower.Realtime {
                 return;
             }
 
+            Stopwatch timer = Stopwatch.StartNew();
+
             _CacheQueue.Queue(charID);
+            long queueMs = timer.ElapsedMilliseconds; timer.Restart();
 
             int expId = payload.GetInt32("experience_id", -1);
             short loadoutId = payload.GetInt16("loadout_id", -1);
@@ -808,6 +899,8 @@ namespace watchtower.Realtime {
             string otherID = payload.GetString("other_id", "0");
 
             short factionID = Loadout.GetFaction(loadoutId);
+
+            long readValuesMs = timer.ElapsedMilliseconds; timer.Restart();
 
             ExpEvent ev = new ExpEvent() {
                 SourceID = charID,
@@ -820,6 +913,8 @@ namespace watchtower.Realtime {
                 WorldID = worldID,
                 ZoneID = zoneID
             };
+
+            long createEventMs = timer.ElapsedMilliseconds; timer.Restart();
 
             TrackedPlayer? otherPlayer = null;
 
@@ -875,11 +970,17 @@ namespace watchtower.Realtime {
                 }
             }
 
+            long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
+
             long ID = await _ExpEventDb.Insert(ev);
+
+            long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
             if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
                 await _KillEventDb.SetRevivedID(ev.OtherID, ID);
             }
+
+            long reviveMs = timer.ElapsedMilliseconds; timer.Restart();
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
             if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) && otherPlayer != null && otherPlayer.LatestDeath != null) {
@@ -922,9 +1023,15 @@ namespace watchtower.Realtime {
 
             if (expId == Experience.VKILL_SUNDY && worldID == World.Jaeger) {
             //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
-
                 RecentSundererDestroyExpStore.Get().Add(ev);
             }
+
+            long total = queueMs + readValuesMs + createEventMs + processCharMs + dbInsertMs + reviveMs;
+
+            if (total > 100 && Logging.EventProcess == true) {
+                _Logger.LogDebug($"Total: {total}\nQueue: {queueMs}, Read: {readValuesMs}, create: {createEventMs}, process: {processCharMs}, DB {dbInsertMs}, revive {reviveMs}");
+            }
+
         }
 
     }

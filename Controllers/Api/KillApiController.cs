@@ -28,11 +28,11 @@ namespace watchtower.Controllers {
         private readonly ItemRepository _ItemRepository;
         private readonly OutfitRepository _OutfitRepository;
 
-        private readonly IKillEventDbStore _KillDbStore;
+        private readonly KillEventDbStore _KillDbStore;
         private readonly SessionDbStore _SessionDb;
 
         public KillApiController(ILogger<KillApiController> logger,
-            CharacterRepository charRepo, IKillEventDbStore killDb,
+            CharacterRepository charRepo, KillEventDbStore killDb,
             ItemRepository itemRepo, OutfitRepository outfitRepo,
             SessionDbStore sessionDb) {
 
@@ -154,7 +154,7 @@ namespace watchtower.Controllers {
 
                     entry = new CharacterWeaponKillEntry() {
                         WeaponID = ev.WeaponID,
-                        WeaponName = item?.Name ?? $"<missing {ev.WeaponID}>"
+                        WeaponName = (ev.WeaponID == 0) ? "No weapon" : (item?.Name ?? $"<missing {ev.WeaponID}>")
                     };
                 }
 

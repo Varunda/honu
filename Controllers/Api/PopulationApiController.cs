@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Db;
@@ -65,6 +66,30 @@ namespace watchtower.Controllers.Api {
         public ApiResponse<WorldPopulation> Get(short worldID) {
             WorldPopulation pop = _PopulationRepository.GetByWorldID(worldID);
             return ApiOk(pop);
+        }
+
+        /// <summary>
+        ///     Get the current world population of multiple worlds
+        /// </summary>
+        /// <param name="worldID">List of world IDs to include. If an invalid world ID is passed, it is not included in the response</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="WorldPopulation"/>s, one for each world ID passed that is a valid world.
+        ///     Entries that are not a valid world ID (as defined at <see cref="World.All"/>), will not be given an entry.
+        ///     If only invalid world IDs were passed (such as 30), the list will empty
+        /// </response>
+        [HttpGet("multiple")]
+        public ApiResponse<List<WorldPopulation>> GetMultiple([FromQuery] List<short> worldID) {
+            List<WorldPopulation> pops = new List<WorldPopulation>();
+
+            foreach (short id in worldID) {
+                if (World.All.Contains(id) == false) {
+                    continue;
+                }
+
+                pops.Add(_PopulationRepository.GetByWorldID(id));
+            }
+
+            return ApiOk(pops);
         }
 
     }

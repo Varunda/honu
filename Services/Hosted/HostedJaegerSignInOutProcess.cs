@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Discord;
+using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
@@ -24,19 +26,29 @@ namespace watchtower.Services.Hosted {
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
+        private readonly IOptions<JaegerNsaOptions> _Options;
+
         private const string SERVICE_NAME = "jaeger_signinout_process";
         private const int RUN_DELAY = 1000 * 60 * 5;
         //private const int RUN_DELAY = 1000 * 10 * 1;
 
+        private readonly List<string> _DevAccounts = new List<string>() {
+            "5428861140076767121", // njLive
+            "5428662532303167729", // PlaysWithSteeringWheel
+        };
+
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
-            DiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon) {
+            DiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon,
+            IOptions<JaegerNsaOptions> options) {
 
             _Logger = logger;
             _Queue = queue;
             _CharacterRepository = charRepo;
             _DiscordQueue = discordQueue;
             _ServiceHealthMonitor = healthMon;
+
+            _Options = options;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -54,6 +66,9 @@ namespace watchtower.Services.Hosted {
 
                     List<JaegerSigninoutEntry> signin = _Queue.GetSignIn();
                     List<JaegerSigninoutEntry> signout = _Queue.GetSignOut();
+
+                    int messageLimit = 2000;
+                    bool devSeen = false;
 
                     if (signin.Count + signout.Count > 0) {
                         HashSet<string> both = new(signin.Count + signout.Count);
@@ -76,19 +91,41 @@ namespace watchtower.Services.Hosted {
                         msg += $"\nLogins ({signin.Count}):\n";
                         foreach (JaegerSigninoutEntry s in signin) {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
-                            msg += $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
+                            string part = $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
+
+                            if (msg.Length + part.Length + "```".Length >= messageLimit) {
+                                _DiscordQueue.Queue(msg + "```");
+                                msg = "```diff\n";
+                            }
+
+                            msg += part;
+
+                            if (devSeen == false && _DevAccounts.Find(iter => iter == s.CharacterID) != null) {
+                                devSeen = true;
+                            }
                         }
 
                         msg += $"\nLogouts ({signout.Count}):\n";
                         foreach (JaegerSigninoutEntry s in signout) {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
-                            msg += $"-[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
+                            string part = $"-[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
+
+                            if (msg.Length + part.Length + "```".Length >= messageLimit) {
+                                _DiscordQueue.Queue(msg + "```");
+                                msg = "```diff\n";
+                            }
+
+                            msg += part;
                         }
 
                         msg += "```\n";
 
                         _DiscordQueue.Queue(msg);
                         _Queue.Clear();
+                    }
+
+                    if (devSeen == true && _Options.Value.AlertRoleID != null) {
+                        _DiscordQueue.Queue($"<@&{_Options.Value.AlertRoleID}> dev account has signed in");
                     }
 
                     entry.RunDuration = timer.ElapsedMilliseconds;
