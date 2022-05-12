@@ -65,7 +65,6 @@
                 <small class="text-muted">Base capture/defend stats</small>
             </h3>
         </div>
-        </div>
 
         <hr class="border" />
 
@@ -102,7 +101,7 @@
                 <a href="/outfitpop">
                     Pop
                 </a>
-            </div>
+            </h2>
         </div>
 
         <hr class="border" />
