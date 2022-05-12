@@ -254,7 +254,7 @@ namespace watchtower.Controllers {
                 return ApiBadRequest<List<ExpandedKillEvent>>($"{nameof(start)} must come before {nameof(end)}");
             }
 
-            if (start - end > TimeSpan.FromDays(1)) {
+            if (end - start > TimeSpan.FromDays(1)) {
                 return ApiBadRequest<List<ExpandedKillEvent>>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
             }
 

@@ -114,7 +114,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.heals}}
+                <a @click="openCharacter($event, entry.characterID)">
+                    {{entry.heals}}
+                </a>
             </a-body>
         </a-col>
 
@@ -145,7 +147,12 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
+    import { PopperModalData } from "popper/PopperModalData";
+    import EventBus from "EventBus";
+
     import { AlertParticipantApi, AlertPlayerProfileData, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+    import { ExpandedExpEvent, ExpStatApi, Experience } from "api/ExpStatApi";
+    import { PsAlert } from "api/AlertApi";
     import { MedicTableData, TableData } from "../TableData";
 
     import "filters/LocaleFilter";
@@ -153,11 +160,13 @@
     import "MomentFilter";
 
     import ColorUtils from "util/Color";
+    import CharacterUtil from "util/Character";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
 
     export const AlertMedicBoard = Vue.extend({
         props: {
+            alert: { type: Object as PropType<PsAlert>, required: true },
             participants: { type: Object as PropType<Loading<FlattendParticipantDataEntry[]>>, required: true }
         },
 
@@ -170,7 +179,47 @@
         methods: {
             getFactionColor: function(factionID: number): string {
                 return ColorUtils.getFactionColor(factionID) + " !important";
-            }
+            },
+
+            openCharacter: async function(event: any, characterID: string): Promise<void> {
+                if (this.participants.state != "loaded") {
+                    return;
+                }
+
+                const modalData: PopperModalData = new PopperModalData();
+                modalData.root = event.target;
+                modalData.title = "Player kills";
+                modalData.columnFields = [ "characterName", "amount", "percent" ];
+                modalData.columnNames = [ "Character", "Amount", "Percent" ];
+                modalData.loading = true;
+
+                EventBus.$emit("set-modal-data", modalData);
+
+                const expEvents: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(characterID, this.alert.timestamp, this.alert.end);
+                if (expEvents.state == "loaded") {
+                    const healEvents: ExpandedExpEvent[] = expEvents.data.filter(iter => {
+                        return iter.event.experienceID == Experience.HEAL || iter.event.experienceID == Experience.SQUAD_HEAL;
+                    });
+
+                    const healedCharacters: string[] = healEvents.map(iter => iter.event.otherID).filter((v, i, a) => a.indexOf(v) == i);
+
+                    modalData.data = healedCharacters.map((characterID: string) => {
+                        const charEvents: ExpandedExpEvent[] = healEvents.filter(iter => iter.event.otherID == characterID);
+                        if (charEvents.length == 0) {
+                            throw `how does ${characterID} have 0 heal events`;
+                        }
+
+                        return {
+                            characterName: charEvents[0].other != null ? CharacterUtil.getDisplay(charEvents[0].other) : `<missing ${charEvents[0].event.otherID}>`,
+                            amount: charEvents.length,
+                            percent: `${(charEvents.length / healEvents.length * 100).toFixed(2)}%`
+                        };
+                    }).sort((a, b) => b.amount - a.amount);
+                }
+
+                modalData.loading = false;
+                EventBus.$emit("set-modal-data", modalData);
+            },
         },
 
         computed: {

@@ -60,7 +60,9 @@ export default class ApiWrapper<T> {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
 			return Loadable.error(`internal server error: ${response.data}`);
-		}
+		} else if (response.status == 524) {
+			return Loadable.error(`timeout from cloudflare`);
+        }
 
 		if (response.status != 200) {
 			throw `unchecked status code ${response.status}: ${response.data}`;
@@ -81,6 +83,8 @@ export default class ApiWrapper<T> {
                 return Loadable.notFound(response.data);
             } else if (response.status == 500) {
                 return Loadable.error(`internal server error: ${response.data}`);
+            } else if (response.status == 524) {
+                return Loadable.error(`timeout from cloudflare`);
             }
 
             if (response.status != 200) {
@@ -99,7 +103,9 @@ export default class ApiWrapper<T> {
 				return Loadable.notFound(responseData);
 			} else if (responseCode == 500) {
 				return Loadable.error(`internal server error: ${responseData}`);
-            }
+			} else if (responseCode == 524) {
+				return Loadable.error(`timeout from cloudflare`);
+			}
 
 			throw `unchecked status code ${responseCode}: ${responseData}`;
         }
@@ -119,6 +125,8 @@ export default class ApiWrapper<T> {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
 			return Loadable.error(`internal server error: ${response.data}`);
+        } else if (response.status == 524) {
+            return Loadable.error(`timeout from cloudflare`);
 		}
 
 		if (response.status != 200) {

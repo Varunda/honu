@@ -153,7 +153,7 @@
                             end: iter.end == null ? "<in progress>" : TimeUtils.format(iter.end),
                             duration: TimeUtils.duration(((iter.end ?? new Date()).getTime() - iter.start.getTime()) / 1000)
                         }
-                    });
+                    }).sort((a, b) => a.session - b.session);
                 }
 
                 modalData.renderers.set("session", (data: any): string => {
@@ -203,7 +203,7 @@
                             headshotRatio: `${(headshotKills / itemKills.length * 100).toFixed(2)}%`,
                             percent: `${(itemKills.length / kills.length * 100).toFixed(2)}%`
                         }
-                    });
+                    }).sort((a, b) => b.kills - a.kills);
                 }
 
                 modalData.renderers.set("itemName", (data: any): string => {

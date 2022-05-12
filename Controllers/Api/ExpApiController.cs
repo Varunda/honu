@@ -45,6 +45,59 @@ namespace watchtower.Controllers {
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
         }
+        
+        /// <summary>
+        ///     Get the experience events a player got during a time period
+        /// </summary>
+        /// <param name="charID">ID of the character to get the events of</param>
+        /// <param name="start">When the time period to load started</param>
+        /// <param name="end">When the time period to load will end</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpandedExpEvent"/>s for each exp event that occured
+        ///     between <paramref name="start"/> and <paramref name="end"/> with a <see cref="ExpEvent.SourceID"/> of <paramref name="charID"/>
+        /// </response>
+        /// <resposne code="400">
+        ///     One of the following errors occured:
+        ///     <ul>
+        ///         <li>
+        ///             <paramref name="start"/> came before <paramref name="end"/>
+        ///         </li>
+        ///         <li>
+        ///             <paramref name="start"/> and <paramref name="end"/> have more than a 24 hour difference
+        ///         </li>
+        ///     </ul>
+        /// </resposne>
+        [HttpGet("{charID}/period")]
+        public async Task<ApiResponse<List<ExpandedExpEvent>>> GetByCharacterIDAndRange(string charID, [FromQuery] DateTime start, [FromQuery] DateTime end) {
+            if (end - start > TimeSpan.FromDays(1)) {
+                return ApiBadRequest<List<ExpandedExpEvent>>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
+            }
+            if (start >= end) {
+                return ApiBadRequest<List<ExpandedExpEvent>>($"{nameof(start)} must come before ${nameof(end)}");
+            }
+
+            List<ExpEvent> expEvents = await _ExpDbStore.GetByCharacterID(charID, start, end);
+
+            List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(expEvents.Count);
+
+            // 19 characters is a character ID, othere ones are NPC IDs
+            List<string> characterIDs = expEvents.Select(iter => iter.SourceID).ToList();
+            characterIDs.AddRange(expEvents.Where(iter => iter.OtherID.Length == 19).Select(iter => iter.OtherID).ToList());
+            characterIDs = characterIDs.Distinct().ToList();
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(characterIDs);
+
+            foreach (ExpEvent ev in expEvents) {
+                ExpandedExpEvent ex = new ExpandedExpEvent();
+                ex.Source = chars.FirstOrDefault(iter => iter.ID == ev.SourceID);
+                ex.Other = (ev.OtherID.Length == 19) ? chars.FirstOrDefault(iter => iter.ID == ev.OtherID) : null;
+                ex.Event = ev;
+
+                expanded.Add(ex);
+            }
+
+            return ApiOk(expanded);
+        }
 
         /// <summary>
         ///     Get the exp events done in a session
