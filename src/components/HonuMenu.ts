@@ -48,8 +48,8 @@ export const MenuRealtime = Vue.extend({
         <li class="dropdown-submenu">
             <span class="dropdown-item dropdown-toggle">Realtime</span>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/view/connery">Connery</a></li>
                 <li><a class="dropdown-item" href="/view/cobalt">Cobalt</a></li>
+                <li><a class="dropdown-item" href="/view/connery">Connery</a></li>
                 <li><a class="dropdown-item" href="/view/emerald">Emerald</a></li>
                 <li><a class="dropdown-item" href="/view/jaeger">Jaeger</a></li>
                 <li><a class="dropdown-item" href="/view/miller">Miller</a></li>
@@ -80,6 +80,16 @@ export const MenuOutfits = Vue.extend({
                 <li><a class="dropdown-item" href="/report">Report</a></li>
                 <li><a class="dropdown-item" href="/outfitpop">Population</a></li>
             </ul>
+        </li>
+    `,
+
+    components: { Fragment }
+});
+
+export const MenuRealTimeMap = Vue.extend({
+    template: `
+        <li>
+            <a class="dropdown-item" href="/realtimemap">Real Time Map</a>
         </li>
     `,
 
@@ -124,6 +134,7 @@ export const MenuDropdown = Vue.extend({
                     <menu-characters></menu-characters>
                     <menu-outfits></menu-outfits>
                     <menu-ledger></menu-ledger>
+                    <menu-real-time-map></menu-real-time-map>
                     <menu-items></menu-items>
                 </slot>
             </ul>
@@ -131,6 +142,10 @@ export const MenuDropdown = Vue.extend({
     `,
 
     components: {
+<<<<<<< HEAD
+        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuRealTimeMap, MenuItems
+=======
         MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuItems, MenuAlerts
+>>>>>>> 9c0a32538f47b4865602f235ad9aaebd473bbc92
     }
 });

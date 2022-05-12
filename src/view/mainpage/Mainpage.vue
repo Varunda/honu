@@ -65,6 +65,7 @@
                 <small class="text-muted">Base capture/defend stats</small>
             </h3>
         </div>
+        </div>
 
         <hr class="border" />
 
@@ -101,24 +102,8 @@
                 <a href="/outfitpop">
                     Pop
                 </a>
-            </h2>
+            </div>
         </div>
-
-        <hr class="border" />
-
-        <h1 class="d-inline-block mr-2">
-            <a href="/alerts">
-                Alerts
-            </a>
-        </h1>
-
-        <hr class="border" />
-
-        <h1 class="d-inline-block mr-2">
-            <a href="/realtimemap">
-                Real time map
-            </a>
-        </h1>
 
         <hr class="border" />
 
@@ -147,35 +132,25 @@
 
 <script lang="ts">
     import Vue from "vue";
-
     import * as sR from "signalR";
-
     import InfoHover from "components/InfoHover.vue";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
-
     import WorldOverview from "./components/WorldOverview.vue";
-
     export const Mainpage = Vue.extend({
         props: {
-
         },
-
-        created: function(): void {
+        created: function (): void {
             this.connection = new sR.HubConnectionBuilder()
                 .withUrl("/ws/overview")
                 .withAutomaticReconnect([5000, 10000, 20000, 20000])
                 .build();
-
             this.connection.on("UpdateData", (data: any) => {
                 console.log(data);
                 this.lastUpdate = new Date();
-
                 this.worlds.clear();
-
                 for (const datum of data) {
                     this.worlds.set(datum.worldID, datum);
                 }
-
                 this.cobalt = this.worlds.get(13) || null;
                 this.connery = this.worlds.get(1) || null;
                 this.emerald = this.worlds.get(17) || null;
@@ -183,26 +158,22 @@
                 this.miller = this.worlds.get(10) || null;
                 this.soltech = this.worlds.get(40) || null;
             });
-
             this.connection.start().then(() => {
                 this.socketState = "opened";
                 console.log(`connected`);
             }).catch(err => {
                 console.error(err);
             });
-
             this.connection.onreconnected(() => {
                 console.log(`reconnected`);
                 this.socketState = "opened";
             });
-
             this.connection.onclose((err?: Error) => {
                 this.socketState = "closed";
                 if (err) {
                     console.error("onclose: ", err);
                 }
             });
-
             this.connection.onreconnecting((err?: Error) => {
                 this.socketState = "reconnecting";
                 if (err) {
@@ -210,15 +181,12 @@
                 }
             });
         },
-
-        data: function() {
+        data: function () {
             return {
                 socketState: "unconnected" as string,
                 connection: null as sR.HubConnection | null,
                 lastUpdate: null as Date | null,
-
                 worlds: new Map() as Map<number, any>,
-
                 cobalt: null as any | null,
                 connery: null as any | null,
                 emerald: null as any | null,
@@ -227,7 +195,6 @@
                 soltech: null as any | null
             }
         },
-
         components: {
             WorldOverview,
             InfoHover,
