@@ -14,5 +14,7 @@ namespace watchtower.Realtime {
 
         Task Resubscribe();
 
+        Task Reconnect();
+
     }
 }

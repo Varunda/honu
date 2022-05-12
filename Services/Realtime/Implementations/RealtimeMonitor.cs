@@ -111,6 +111,10 @@ namespace watchtower.Realtime {
             return Task.CompletedTask;
         }
 
+        public async Task Reconnect() {
+            await _Stream.ReconnectAsync();
+        }
+
         private Task _OnConnectAsync(ReconnectionType type) {
             if (type == ReconnectionType.Initial) {
                 _Logger.LogInformation($"Stream connected");
