@@ -119,7 +119,7 @@ namespace watchtower.Realtime {
             if (type == ReconnectionType.Initial) {
                 _Logger.LogInformation($"Stream connected");
             } else {
-                _Logger.LogInformation($"{type}");
+                _Logger.LogInformation($"Stream reconnected: {type}");
             }
 
             _Stream.Subscribe(_Subscription);

@@ -39,6 +39,8 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
+                    await Task.Delay(1000 * 60 * 5, stoppingToken);
+
                     ServiceHealthEntry? healthEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
                     if (healthEntry == null) {
                         healthEntry = new ServiceHealthEntry() {
