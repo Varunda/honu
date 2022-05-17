@@ -45,6 +45,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 using watchtower.Models.PSB;
 using watchtower.Services.Realtime;
+using watchtower.Models.Health;
 
 //using honu_census;
 
@@ -143,6 +144,7 @@ namespace watchtower {
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
             services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
+            services.Configure<CensusRealtimeHealthOptions>(Configuration.GetSection("RealtimeHealth"));
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();

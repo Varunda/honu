@@ -6,8 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Services.Queues;
+using watchtower.Services.Repositories;
 using Websocket.Client;
 
 namespace watchtower.Realtime {
@@ -49,9 +51,13 @@ namespace watchtower.Realtime {
         private readonly ICensusStreamClient _Stream;
         private readonly CensusRealtimeEventQueue _Queue;
 
+        private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
+
+        private readonly System.Timers.Timer _HealthCheckTimer;
+
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger,
             ICensusStreamClient stream,
-            CensusRealtimeEventQueue queue) {
+            CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository) {
 
             _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
             foreach (int expId in Experience.VehicleRepairEvents) {
@@ -71,10 +77,38 @@ namespace watchtower.Realtime {
 
             _Stream = stream ?? throw new ArgumentNullException(nameof(stream));
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
+            _RealtimeHealthRepository = realtimeHealthRepository;
+
+            _HealthCheckTimer = new System.Timers.Timer();
+            _HealthCheckTimer.Interval = 1000;
+            _HealthCheckTimer.AutoReset = true;
+            _HealthCheckTimer.Elapsed += async (sender, e) => await _HealthCheckTimer_Elapsed(sender, e);
 
             _Stream.OnConnect(_OnConnectAsync)
                 .OnMessage(_OnMessageAsync)
                 .OnDisconnect(_OnDisconnectAsync);
+        }
+
+        private async Task _HealthCheckTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
+            try {
+                bool needResub = false;
+
+                if (_RealtimeHealthRepository.IsDeathHealthy() == false) {
+                    _Logger.LogWarning($"Death is unhealthy, reconnecting");
+                    needResub = true;
+                }
+
+                if (_RealtimeHealthRepository.IsExpHealthy() == false) {
+                    _Logger.LogWarning($"GainExperience is unhealthy, reconnecting");
+                    needResub = true;
+                }
+
+                if (needResub == true) {
+                    await Reconnect();
+                }
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"exception in health checker");
+            }
         }
 
         private Task _OnMessageAsync(string msg) {
@@ -85,6 +119,28 @@ namespace watchtower.Realtime {
             try {
                 JToken token = JToken.Parse(msg);
                 _Queue.Queue(token);
+
+                // Events are processed here, as there may be a queue of events. If the health tolerance of a world is 10 seconds,
+                //      but the processing is 10 seconds behind, the reconnect will trigger, even tho Honu is still receiving
+                //      events, but they are being processed slower than they are coming in
+                string? type = token.Value<string?>("type");
+                if (type == "serviceMessage") {
+                    //_Logger.LogTrace($"serviceMessage");
+                    JToken? payload = token.SelectToken("payload");
+                    if (payload == null) {
+                        return Task.CompletedTask;
+                    }
+
+                    //_Logger.LogTrace($"have payload");
+
+                    string? eventName = payload.Value<string?>("event_name");
+                    //_Logger.LogTrace($"event_name {eventName}");
+                    if (eventName == "Death") {
+                        _RealtimeHealthRepository.SetDeath(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
+                    } else if (eventName == "GainExperience") {
+                        _RealtimeHealthRepository.SetExp(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
+                    }
+                }
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to parse message: {json}", msg);
             }
@@ -95,6 +151,7 @@ namespace watchtower.Realtime {
         public Task OnStartAsync(CancellationToken cancel) {
             try {
                 _ = _Stream.ConnectAsync();
+                _HealthCheckTimer.Enabled = true;
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"Failed to start RealtimeMonitor");
             }
@@ -103,6 +160,7 @@ namespace watchtower.Realtime {
         }
 
         public Task OnShutdownAsync(CancellationToken cancel) {
+            _HealthCheckTimer.Enabled = false;
             return _Stream.DisconnectAsync();
         }
 
@@ -133,6 +191,7 @@ namespace watchtower.Realtime {
         }
 
         public void Dispose() {
+            _HealthCheckTimer.Dispose();
             _Stream?.Dispose();
         }
 

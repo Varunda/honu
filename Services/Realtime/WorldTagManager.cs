@@ -82,7 +82,7 @@ namespace watchtower.Services.Realtime {
             }
 
             if (ev.KilledCharacterID == target.CharacterID) {
-                _Logger.LogDebug($"{SERVICE_NAME}> World {ev.WorldID}, IT was killed by {ev.KilledCharacterID}, had {target.Kills} kills");
+                //_Logger.LogDebug($"{SERVICE_NAME}> World {ev.WorldID}, IT was killed by {ev.KilledCharacterID}, had {target.Kills} kills");
 
                 target.TargetKilled = ev.Timestamp;
                 target.WasKilled = true;

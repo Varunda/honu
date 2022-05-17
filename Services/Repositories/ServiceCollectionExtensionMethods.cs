@@ -56,6 +56,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<AlertPlayerDataRepository>();
             services.AddSingleton<AlertRepository>();
             services.AddSingleton<AlertPopulationRepository>();
+
+            services.AddSingleton<CensusRealtimeHealthRepository>();
         }
 
     }

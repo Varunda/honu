@@ -130,7 +130,7 @@ namespace watchtower.Services.Hosted {
 
                     entry.RunDuration = timer.ElapsedMilliseconds;
                     entry.LastRan = DateTime.UtcNow;
-                    entry.Message = $"{signin.Count} have signed in, ${signout.Count} have signed out";
+                    entry.Message = $"{signin.Count} have signed in, {signout.Count} have signed out";
                     _ServiceHealthMonitor.Set(SERVICE_NAME, entry);
 
                     await Task.Delay(RUN_DELAY, stoppingToken);
