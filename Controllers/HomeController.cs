@@ -144,5 +144,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Health() {
+            return View();
+        }
+
     }
 }

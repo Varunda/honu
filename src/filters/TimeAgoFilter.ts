@@ -23,5 +23,10 @@ Vue.filter("timeAgo", (date: Date): string => {
 	}
 
 	const mins = now.diff(m, "minutes") % 60;
-	return `${hours}h ${mins}m`;
+	if (mins > 0) {
+        return `${hours}h ${mins}m`;
+    }
+
+	const secs = now.diff(m, "seconds") % 60;
+	return `0m ${secs}s`;
 });

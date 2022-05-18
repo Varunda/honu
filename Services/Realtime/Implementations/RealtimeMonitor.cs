@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Services.Queues;
@@ -54,6 +55,8 @@ namespace watchtower.Realtime {
         private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
 
         private readonly System.Timers.Timer _HealthCheckTimer;
+
+        private readonly Random _Random = new Random();
 
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger,
             ICensusStreamClient stream,
@@ -120,26 +123,26 @@ namespace watchtower.Realtime {
                 JToken token = JToken.Parse(msg);
                 _Queue.Queue(token);
 
-                // Events are processed here, as there may be a queue of events. If the health tolerance of a world is 10 seconds,
-                //      but the processing is 10 seconds behind, the reconnect will trigger, even tho Honu is still receiving
-                //      events, but they are being processed slower than they are coming in
+                // The health of the realtime connection is monitored here, as events are not always guaranteed to be processed in realtime.
+                //      For example, if there are 20k events in the task queue, it's likely that processing those events is minutes behind
+                //      and if Honu checked the health in the event handler, it would incorrectly see the event is say 3 minutes old,
+                //      and reconnect when Honu already has a perfectly good connection.
+                // To fix this, the realtime health is updated here, as they're recieved by Honu
                 string? type = token.Value<string?>("type");
                 if (type == "serviceMessage") {
-                    //_Logger.LogTrace($"serviceMessage");
                     JToken? payload = token.SelectToken("payload");
                     if (payload == null) {
                         return Task.CompletedTask;
                     }
 
-                    //_Logger.LogTrace($"have payload");
-
                     string? eventName = payload.Value<string?>("event_name");
-                    //_Logger.LogTrace($"event_name {eventName}");
                     if (eventName == "Death") {
                         _RealtimeHealthRepository.SetDeath(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
                     } else if (eventName == "GainExperience") {
                         _RealtimeHealthRepository.SetExp(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
                     }
+                } else if (type == "heartbeat") {
+                    //_Logger.LogDebug($"{token}");
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, "Failed to parse message: {json}", msg);
@@ -149,6 +152,12 @@ namespace watchtower.Realtime {
         }
 
         public Task OnStartAsync(CancellationToken cancel) {
+            // Initalized all the worlds to now, useful if a world isn't sending any events on the first connect, we'd like to know that
+            foreach (short worldID in World.All) {
+                _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
+                _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
+            }
+
             try {
                 _ = _Stream.ConnectAsync();
                 _HealthCheckTimer.Enabled = true;

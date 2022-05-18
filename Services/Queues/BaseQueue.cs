@@ -13,6 +13,8 @@ namespace watchtower.Services.Queues {
 
         internal SemaphoreSlim _Signal = new SemaphoreSlim(0);
 
+        internal ConcurrentQueue<long> _ProcessTime = new ConcurrentQueue<long>();
+
         /// <summary>
         ///     Get the next item in the list. This will block until there is one available
         /// </summary>
@@ -42,6 +44,20 @@ namespace watchtower.Services.Queues {
         public void Queue(T entry) {
             _Items.Enqueue(entry);
             _Signal.Release();
+        }
+
+        public void AddProcessTime(long ms) {
+            _ProcessTime.Enqueue(ms);
+            while (_ProcessTime.Count > 100) {
+                _ = _ProcessTime.TryDequeue(out _);
+            }
+        }
+
+        public List<long> GetProcessTime() {
+            lock (_ProcessTime) {
+                List<long> ms = new List<long>(_ProcessTime);
+                return ms;
+            }
         }
 
         /// <summary>

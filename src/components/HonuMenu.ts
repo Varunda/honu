@@ -142,6 +142,6 @@ export const MenuDropdown = Vue.extend({
     `,
 
     components: {
-        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuRealTimeMap, MenuItems
+        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuRealTimeMap, MenuItems, MenuAlerts
     }
 });

@@ -3,6 +3,8 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Health;
@@ -13,8 +15,8 @@ namespace watchtower.Services.Repositories {
 
         private readonly ILogger<CensusRealtimeHealthRepository> _Logger;
 
-        private readonly ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
-        private readonly ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
+        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
+        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
 
         private readonly IOptions<CensusRealtimeHealthOptions> _HealthTolerances;
 
@@ -32,16 +34,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="timestamp">Timestamp of when the death event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public void SetDeath(short worldID, DateTime timestamp) {
-            lock (_Deaths) {
-                _Deaths.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
-                    LastEvent = timestamp,
-                    FailureCount = 0
-                }, (key, oldValue) => { 
-                    oldValue.FailureCount = 0;
-                    oldValue.LastEvent = timestamp;
-                    return oldValue;
-                });
-            }
+            SetMap(ref _Deaths, worldID, timestamp);
         }
 
         /// <summary>
@@ -51,16 +44,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="timestamp">Timestamp of when the exp event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public void SetExp(short worldID, DateTime timestamp) {
-            lock (_Exp) {
-                _Exp.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
-                    LastEvent = timestamp,
-                    FailureCount = 0
-                }, (key, oldValue) => { 
-                    oldValue.FailureCount = 0;
-                    oldValue.LastEvent = timestamp;
-                    return oldValue;
-                });
-            }
+            SetMap(ref _Exp, worldID, timestamp);
         }
 
         /// <summary>
@@ -71,6 +55,49 @@ namespace watchtower.Services.Repositories {
         ///     since the last Death event was received
         /// </remarks>
         public bool IsDeathHealthy() {
+            return IsDictHealth(ref _Deaths, "death");
+        }
+
+        /// <summary>
+        ///     Get if the realtime subscription is healthy according to the GainExperience events. See <see cref="IsDeathHealthy"/> for more info
+        /// </summary>
+        public bool IsExpHealthy() {
+            return IsDictHealth(ref _Exp, "exp");
+        }
+
+        public List<CensusRealtimeHealthEntry> GetDeathHealth() {
+            return _Deaths.Values.ToList();
+        }
+
+        public List<CensusRealtimeHealthEntry> GetExpHealth() {
+            return _Exp.Values.ToList();
+        }
+
+        /// <summary>
+        ///     Update one of the event health entries
+        /// </summary>
+        /// <param name="dict"></param>
+        /// <param name="worldID"></param>
+        /// <param name="timestamp"></param>
+        private void SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp) {
+            lock (dict) {
+                dict.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
+                    WorldID = worldID,
+                    LastEvent = timestamp,
+                    FailureCount = 0
+                }, (key, oldValue) => { 
+                    if (oldValue.FailureCount > 0) {
+                        _Logger.LogDebug($"World {oldValue.WorldID} got an event, resetting failure count");
+                    }
+
+                    oldValue.FailureCount = 0;
+                    oldValue.LastEvent = timestamp;
+                    return oldValue;
+                });
+            }
+        }
+
+        private bool IsDictHealth(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, string type) {
             //_Logger.LogTrace($"{JToken.FromObject(_HealthTolerances.Value)}");
 
             bool healthy = true;
@@ -81,73 +108,27 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
-                DateTime? lastUpdated = null;
-                lock (_Deaths) {
-                    if (_Deaths.TryGetValue(tolerance.WorldID, out CensusRealtimeHealthEntry? l) == true) {
-                        lastUpdated = l.LastEvent;
-                    }
-                }
-
-                if (lastUpdated == null) {
-                    //_Logger.LogTrace($"Skipping {tolerance.WorldID} cause it's never been updated yet");
+                if (dict.TryGetValue(tolerance.WorldID, out CensusRealtimeHealthEntry? entry) == false) {
                     continue;
                 }
 
-                int timeWithout = (int) Math.Floor((DateTime.UtcNow - lastUpdated.Value).TotalSeconds);
+                if (entry.LastEvent == null) {
+                    continue;
+                }
 
-                //_Logger.LogTrace($"World {tolerance.WorldID} went {timeWithout} seconds since a Death event");
+                // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
+                int threshold = tolerance.Tolerance.Value * Math.Min(10, entry.FailureCount + 1);
+                int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - entry.LastEvent.Value).TotalSeconds)); 
 
-                if (timeWithout > tolerance.Tolerance.Value) {
-                    int fails;
-                    // Assume the reconnection succeeded, bit of a fallback thing
-                    lock (_Deaths) {
-                        CensusRealtimeHealthEntry entry = _Deaths[tolerance.WorldID];
-                        entry.FailureCount = Math.Min(entry.FailureCount, 5);
-                        entry.LastEvent = (entry.LastEvent ?? DateTime.UtcNow) + TimeSpan.FromSeconds(10 * entry.FailureCount); // Some back off to be nice
-                        fails = ++entry.FailureCount;
-                    }
-                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in death events, {timeWithout} seconds old, tolerance {tolerance.Tolerance}, fails = {fails}");
+                //_Logger.LogTrace($"World {tolerance.WorldID} has gone {timeWithout} seconds without a {type} event, theshold is {threshold} seconds (has {entry.FailureCount} failures)");
+
+                if (timeWithout > threshold) {
+                    ++entry.FailureCount;
+
+                    dict[tolerance.WorldID] = entry;
                     healthy = false;
-                }
-            }
 
-            return healthy;
-        }
-
-        /// <summary>
-        ///     Get if the realtime subscription is healthy according to the GainExperience events. See <see cref="IsDeathHealthy"/> for more info
-        /// </summary>
-        public bool IsExpHealthy() {
-            bool healthy = true;
-
-            foreach (CensusRealtimeHealthTolerance tolerance in _HealthTolerances.Value.Exp) {
-                if (tolerance.Tolerance == null) {
-                    continue;
-                }
-
-                DateTime? lastUpdated = null;
-                lock (_Exp) {
-                    if (_Exp.TryGetValue(tolerance.WorldID, out CensusRealtimeHealthEntry? l) == true) {
-                        lastUpdated = l.LastEvent;
-                    }
-                }
-
-                if (lastUpdated == null) {
-                    continue;
-                }
-
-                int timeWithout = (int) Math.Floor((DateTime.UtcNow - lastUpdated.Value).TotalSeconds);
-
-                if (timeWithout > tolerance.Tolerance.Value) {
-                    int fails;
-                    lock (_Exp) {
-                        CensusRealtimeHealthEntry entry = _Exp[tolerance.WorldID];
-                        entry.FailureCount = Math.Min(entry.FailureCount, 5);
-                        entry.LastEvent = (entry.LastEvent ?? DateTime.UtcNow) + TimeSpan.FromSeconds(10 * entry.FailureCount); // Some back off to be nice
-                        fails = ++entry.FailureCount;
-                    }
-                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in exp events, {timeWithout} seconds old, tolerance {tolerance.Tolerance}, fails = {fails}");
-                    healthy = false;
+                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, {timeWithout} seconds old, tolerance {tolerance.Tolerance}, fails {entry.FailureCount}");
                 }
             }
 

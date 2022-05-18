@@ -47,6 +47,11 @@ namespace watchtower.Code.ExtensionMethods {
             return d;
         }
 
+        /// <summary>
+        ///     Get the 'world_id' field from a JToken, or -1 if it isn't in the token
+        /// </summary>
+        /// <param name="token">Extension instance</param>
+        /// <returns>The Int16 in the field named 'world_id', or -1 if that field doesn't exist</returns>
         public static short GetWorldID(this JToken token) {
             return token.GetInt16("world_id", -1);
         }

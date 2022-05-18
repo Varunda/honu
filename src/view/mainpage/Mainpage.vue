@@ -108,6 +108,16 @@
 
         <div>
             <h1 class="d-inline-block mr-2">
+                <a href="/alerts">
+                    Alerts
+                </a>
+            </h1>
+        </div>
+
+        <hr class="border" />
+
+        <div>
+            <h1 class="d-inline-block mr-2">
                 <a href="/realtimemap">
                     Real Time Map
                 </a>
