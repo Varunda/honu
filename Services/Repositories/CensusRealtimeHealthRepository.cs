@@ -117,7 +117,8 @@ namespace watchtower.Services.Repositories {
                 }
 
                 // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
-                int threshold = tolerance.Tolerance.Value * Math.Min(10, entry.FailureCount + 1);
+                int backoff = Math.Min(10, entry.FailureCount + 1);
+                int threshold = tolerance.Tolerance.Value * backoff;
 
                 int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
                 if (playerCount < 200) {
@@ -134,7 +135,7 @@ namespace watchtower.Services.Repositories {
                     dict[tolerance.WorldID] = entry;
                     healthy = false;
 
-                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, {timeWithout} seconds old, tolerance {tolerance.Tolerance}, fails {entry.FailureCount}");
+                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, {timeWithout} seconds old, tolerance {threshold}, backoff {backoff}, fails {entry.FailureCount}");
                 }
             }
 
