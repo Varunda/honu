@@ -116,8 +116,15 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
+
                 // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
                 int threshold = tolerance.Tolerance.Value * Math.Min(10, entry.FailureCount + 1);
+
+                int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
+                if (playerCount < 200) {
+                    threshold *= 2;
+                }
+
                 int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - entry.LastEvent.Value).TotalSeconds)); 
 
                 //_Logger.LogTrace($"World {tolerance.WorldID} has gone {timeWithout} seconds without a {type} event, theshold is {threshold} seconds (has {entry.FailureCount} failures)");

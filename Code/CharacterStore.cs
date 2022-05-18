@@ -29,6 +29,12 @@ namespace watchtower.Models {
             }
         }
 
+        public int GetWorldCount(short worldID) {
+            lock (Players) {
+                return Players.Where(iter => iter.Value.WorldID == worldID).Count();
+            }
+        }
+
     }
 
 }
