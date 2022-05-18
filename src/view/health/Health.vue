@@ -62,7 +62,7 @@
                     <th>Failure count</th>
                 </tr>
 
-                <tr v-for="entry in health.data.death">
+                <tr v-for="entry in health.data.exp">
                     <td>{{entry.worldID}} / {{entry.worldID | world}}</td>
                     <td>{{entry.lastEvent | timeAgo}}</td>
                     <td>{{entry.lastEvent | moment("YYYY-MM-DD hh:mm:ssA")}}</td>
