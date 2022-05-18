@@ -116,7 +116,6 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
-
                 // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
                 int threshold = tolerance.Tolerance.Value * Math.Min(10, entry.FailureCount + 1);
 

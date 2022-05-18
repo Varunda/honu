@@ -54,7 +54,7 @@ namespace watchtower.Services.Hosted {
 
                     _Logger.LogInformation($"{SERVICE_NAME}> Resubscribing census subscriptions");
 
-                    await _RealtimeMonitor.Reconnect();
+                    //await _RealtimeMonitor.Reconnect();
                     await _RealtimeMonitor.Resubscribe();
 
                     healthEntry.RunDuration = timer.ElapsedMilliseconds;
