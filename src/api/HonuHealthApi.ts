@@ -39,7 +39,7 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
         return {
             queues: elem.queues.map((iter: any) => HonuHealthApi.parseQueue(iter)),
             death: elem.death.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
-            exp: elem.death.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
+            exp: elem.exp.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
         };
     }
 
