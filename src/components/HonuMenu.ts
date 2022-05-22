@@ -86,10 +86,26 @@ export const MenuOutfits = Vue.extend({
     components: { Fragment }
 });
 
+export const MenuRealtimeNetwork = Vue.extend({
+    template: `
+        <li class="dropdown-submenu">
+            <span class="dropdown-item dropdown-toggle">Realtime Networks</span>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="/realtimenetwork/10">Cobalt</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/1">Connery</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/17">Emerald</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/19">Jaeger</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/13">Miller</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/40">SolTech</a></li>
+            </ul>
+        </li>
+    `
+});
+
 export const MenuRealTimeMap = Vue.extend({
     template: `
         <li>
-            <a class="dropdown-item" href="/realtimemap">Real Time Map</a>
+            <a class="dropdown-item" href="/realtimemap">Realtime Map</a>
         </li>
     `,
 
@@ -135,6 +151,7 @@ export const MenuDropdown = Vue.extend({
                     <menu-outfits></menu-outfits>
                     <menu-ledger></menu-ledger>
                     <menu-real-time-map></menu-real-time-map>
+                    <menu-realtime-network></menu-realtime-network>
                     <menu-items></menu-items>
                 </slot>
             </ul>
@@ -142,6 +159,6 @@ export const MenuDropdown = Vue.extend({
     `,
 
     components: {
-        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuRealTimeMap, MenuItems, MenuAlerts
+        MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger, MenuRealTimeMap, MenuItems, MenuAlerts, MenuRealtimeNetwork
     }
 });

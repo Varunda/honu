@@ -10,6 +10,14 @@
                     <li class="nav-item h1 p-0">
                         Realtime Network
                     </li>
+
+                    <template v-if="worldID != null">
+                        <menu-sep></menu-sep>
+
+                        <li class="nav-item h1 p-0">
+                            {{worldID | world}}
+                        </li>
+                    </template>
                 </honu-menu>
             </div>
 
@@ -192,6 +200,7 @@
     import "MomentFilter";
 
     import ColorUtil from "util/Color";
+    import WorldUtil from "util/World";
 
     function randomPosition(width: number = 5) {
         return {
@@ -305,6 +314,7 @@
                 const worldID: number = Number.parseInt(parts[1]);
                 if (worldID != NaN) {
                     this.worldID = worldID;
+                    document.title = `Honu / Realtime Network / ${WorldUtil.getWorldID(this.worldID)}`;
                     this.subscribe();
                 } else {
                     console.error(`Failed to parse ${parts[1]} to a valid int, got NaN`);
