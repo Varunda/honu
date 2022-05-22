@@ -91,11 +91,11 @@ export const MenuRealtimeNetwork = Vue.extend({
         <li class="dropdown-submenu">
             <span class="dropdown-item dropdown-toggle">Realtime Networks</span>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/realtimenetwork/10">Cobalt</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/13">Cobalt</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/1">Connery</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/17">Emerald</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/19">Jaeger</a></li>
-                <li><a class="dropdown-item" href="/realtimenetwork/13">Miller</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/10">Miller</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/40">SolTech</a></li>
             </ul>
         </li>
