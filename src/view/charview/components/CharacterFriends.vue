@@ -1,5 +1,8 @@
 ﻿<template>
     <div>
+
+        <a :href="'/friendnetwork/' + character.id" class="btn btn-primary">Friend network</a>
+
         <hr class="border" @click="openNetwork" />
 
         <div class="d-flex">

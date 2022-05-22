@@ -390,6 +390,10 @@ namespace watchtower.Services.Db {
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
         public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+            if (end <= start) {
+                throw new ArgumentException($"{nameof(start)} {start:u} must come before {nameof(end)} {end:u}");
+            }
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *

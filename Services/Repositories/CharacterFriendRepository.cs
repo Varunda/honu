@@ -20,12 +20,14 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterFriendDbStore _Db;
 
         private readonly CharacterMetadataDbStore _MetadataDb;
+        private readonly CharacterRepository _CharacterRepository;
 
         private const string CACHE_KEY = "CharacterFriends.{0}"; // {0} => Character ID
 
         public CharacterFriendRepository(ILogger<CharacterFriendRepository> logger,
             CharacterFriendCollection census, CharacterFriendDbStore db,
-            IMemoryCache cache, CharacterMetadataDbStore metadataDb) {
+            IMemoryCache cache, CharacterMetadataDbStore metadataDb,
+            CharacterRepository characterRepository) {
 
             _Logger = logger;
             _Cache = cache;
@@ -33,12 +35,14 @@ namespace watchtower.Services.Repositories {
             _Census = census ?? throw new ArgumentNullException(nameof(census));
             _Db = db ?? throw new ArgumentNullException(nameof(db));
             _MetadataDb = metadataDb;
+            _CharacterRepository = characterRepository;
         }
 
         /// <summary>
         ///     Get the friends of a character by using both Census and the local DB
         /// </summary>
         /// <param name="charID">ID of the character</param>
+        /// <param name="fast">Will only the DB be used, and no queries to Census be used?</param>
         public async Task<List<CharacterFriend>> GetByCharacterID(string charID, bool fast = false) {
             string cacheKey = string.Format(CACHE_KEY, charID);
             if (_Cache.TryGetValue(cacheKey, out List<CharacterFriend> friends) == false) {
@@ -51,7 +55,12 @@ namespace watchtower.Services.Repositories {
                 bool fetchCensus = friends.Count == 0;
                 if (fetchCensus == false && fast == false) {
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(charID);
-                    fetchCensus = (metadata == null) || (DateTime.UtcNow - metadata.LastUpdated > TimeSpan.FromDays(1));
+                    PsCharacter? c = await _CharacterRepository.GetByID(charID);
+                    if (metadata == null) {
+                        fetchCensus = true;
+                    } else if (c != null) {
+                        fetchCensus = c.DateLastSave > metadata.LastUpdated || c.DateLastLogin > metadata.LastUpdated;
+                    }
                 }
 
                 if (fetchCensus == true) {

@@ -100,6 +100,8 @@
         },
 
         created: function(): void {
+            document.title = `Honu / Health`;
+
             this.timerID = setInterval(async () => {
                 await this.updateHealth();
             }, 1000) as unknown as number;

@@ -10,25 +10,12 @@
             </li>
         </honu-menu>
 
-        <div class="btn-group w-100 flex-grow-0">
-            <button type="button" @click="startLayout" class="btn btn-success">
-                Start
-            </button>
-
-            <button type="button" @click="endLayout" class="btn btn-warning">
-                Stop layout
-            </button>
-
-            <toggle-button v-model="settings.sameWorld">
-                Limit to same server
-            </toggle-button>
-        </div>
-
         <div v-if="loading == true">
             <div class="progress mt-3" style="height: 3rem;">
                 <div class="progress-bar" :style="{ width: progressWidth }" style="height: 3rem;">
                     <span style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.5rem;">
-                        Loading {{total}} characters
+                        <busy class="honu-busy"></busy>
+                        Loading {{total - todo}}/{{total}} friend lists...
                     </span>
                 </div>
             </div>
@@ -51,6 +38,29 @@
                     View network
                 </a>
             </div>
+
+            <div class="m-3 px-2 pl-1" style="display: inline; position: absolute; left: 0; top: 50%; background-color: #222">
+                <div class="btn-group btn-group-vertical w-100">
+                    <button class="btn btn-success" @click="startLayout">
+                        Start layout
+                    </button>
+
+                    <button class="btn btn-warning" @click="endLayout">
+                        Stop layout
+                    </button>
+                </div>
+
+                <hr class="wt-header" />
+
+                <toggle-button v-model="settings.orbit" class="w-100 mb-2">
+                    Use "oubound attraction"
+                </toggle-button>
+
+                <toggle-button v-model="settings.strongGravity" class="w-100">
+                    Use "strong gravity"
+                </toggle-button>
+
+            </div>
         </div>
     </div>
 </template>
@@ -60,6 +70,7 @@
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ToggleButton from "components/ToggleButton";
+    import Busy from "components/Busy.vue";
 
     import Graph from "graphology";
     import Sigma from "sigma";
@@ -113,6 +124,8 @@
                 loaded: new Set() as Set<string>,
                 queue: [] as FriendNode[],
 
+                layoutRunning: false as boolean,
+
                 root: null as PsCharacter | null,
                 selected: null as PsCharacter | null,
 
@@ -125,6 +138,8 @@
 
                 settings: {
                     sameWorld: true as boolean,
+                    orbit: false as boolean,
+                    strongGravity: true as boolean
                 },
 
                 steps: {
@@ -136,6 +151,8 @@
         },
 
         mounted: function(): void {
+            document.title = `Honu / Friend Network`;
+
             const parts: string[] = location.pathname.split("/").slice(1);
             if (parts.length != 2) {
                 console.error(`Bad URL format: ${parts.join('/')}`);
@@ -153,8 +170,9 @@
         methods: {
             startLayout: function(): void {
                 if (this.layout != null) {
-                    console.log(`FriendNetwork> startting layout`);
+                    console.log(`FriendNetwork> starting layout`);
                     this.layout.start();
+                    this.layoutRunning = true;
                 } else {
                     console.log(`FriendNetwork> no layout to start`);
                 }
@@ -164,6 +182,7 @@
                 if (this.layout != null) {
                     console.log(`FriendNetwork> stopping layout`);
                     this.layout.stop();
+                    this.layoutRunning = false;
                 } else {
                     console.log(`FriendNetwork> no layout to stop`);
                 }
@@ -282,7 +301,8 @@
                 this.graph.addNode(this.queue[0].characterID, {
                     x: 0, y: 0,
                     label: CharacterUtils.getDisplay(character.data),
-                    size: 10, color: "gold"
+                    size: 10,
+                    color: "gold"
                 });
 
                 await this.processQueue(1);
@@ -297,7 +317,7 @@
                     } else if (this.friendMap.has(node) == true) {
                         const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(node)!;
 
-                        attr.size = 1 + 10 * (friends.length / this.maxFriends);
+                        attr.size = 5 + 10 * (friends.length / this.maxFriends);
                     }
                 });
 
@@ -309,18 +329,8 @@
 
                 this.steps.render = true;
 
-                if (this.layout != null) {
-                    this.layout.kill();
-                    this.layout = null;
-                }
-
-                this.layout = new FA2Layout(this.graph, {
-                    settings: {
-                        gravity: 1,
-                        adjustSizes: true,
-                        barnesHutOptimize: true
-                    },
-                });
+                this.setupLayout();
+                this.startLayout();
 
                 renderer.on("clickNode", (node) => {
                     if (this.hovered == node.node) {
@@ -371,6 +381,37 @@
                 console.log(`made graph`);
 
                 this.loading = false;
+            },
+
+            setupLayout: function(): void {
+                if (this.graph == null) {
+                    return;
+                }
+
+                let startAgain: boolean = false;
+
+                if (this.layout != null) {
+                    startAgain = this.layout.isRunning();
+
+                    this.endLayout();
+
+                    this.layout.kill();
+                    this.layout = null;
+                }
+
+                this.layout = new FA2Layout(this.graph, {
+                    settings: {
+                        gravity: 1,
+                        adjustSizes: true,
+                        barnesHutOptimize: true,
+                        strongGravityMode: this.settings.strongGravity,
+                        outboundAttractionDistribution: this.settings.orbit
+                    },
+                });
+
+                if (startAgain == true) {
+                    this.startLayout();
+                }
             }
         },
 
@@ -380,9 +421,20 @@
             }
         },
 
+        watch: {
+
+            settings: {
+                deep: true,
+                handler: function(): void {
+                    this.setupLayout();
+                }
+            }
+
+        },
+
         components: {
             HonuMenu, MenuSep, MenuHomepage, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            ToggleButton
+            ToggleButton, Busy
         }
     });
     export default FriendNetwork;

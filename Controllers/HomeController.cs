@@ -148,5 +148,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult RealtimeNetwork(short worldID) {
+            return View();
+        }
+
     }
 }

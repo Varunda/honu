@@ -331,6 +331,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "realtimenetwork",
+                    pattern: "/realtimenetwork/{*.}",
+                    defaults: new { controller = "Home", action = "RealtimeNetwork" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );
