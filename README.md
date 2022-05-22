@@ -1,6 +1,6 @@
 # Honu
 
-Honu is a Planetside 2 website that shows the top players in each faction certain categories. You can also view a breakdown of their actions, such as seeing what weapons a player is using, who a medic is reviving, or what types of spawns someone is providing
+[Honu](https://wt.honu.pw) is a Planetside 2 website that shows the top players in each faction certain categories. You can also view a breakdown of their actions, such as seeing what weapons a player is using, who a medic is reviving, or what types of spawns someone is providing
 
 ## Other realtime tracking webites
 
