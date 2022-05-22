@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +16,8 @@ namespace watchtower.Services.Repositories {
     public class RealtimeNetworkBuilder {
 
         private readonly ILogger<RealtimeNetworkBuilder> _Logger;
+        private readonly IMemoryCache _Cache;
+        private const string CACHE_KEY = "RealtimeNetwork.{0}"; // {0} => WorldID
 
         private readonly KillEventDbStore _KillDb;
         private readonly ExpEventDbStore _ExpDb;
@@ -23,17 +26,23 @@ namespace watchtower.Services.Repositories {
 
         private const int MINUTES_BACK = 5;
 
-        public RealtimeNetworkBuilder(ILogger<RealtimeNetworkBuilder> logger,
+        public RealtimeNetworkBuilder(ILogger<RealtimeNetworkBuilder> logger, IMemoryCache cache,
             KillEventDbStore killDb, ExpEventDbStore expDb,
             CharacterRepository characterRepository) {
 
             _Logger = logger;
+            _Cache = cache;
+
             _KillDb = killDb;
             _ExpDb = expDb;
             _CharacterRepository = characterRepository;
         }
 
         public async Task<RealtimeNetwork> Build(short worldID) {
+            if (_Cache.TryGetValue(string.Format(CACHE_KEY, worldID), out RealtimeNetwork? cached) == true) {
+                return cached!;
+            }
+
             DateTime startPeriod = DateTime.UtcNow - TimeSpan.FromMinutes(MINUTES_BACK);
 
             Stopwatch timer = Stopwatch.StartNew();
@@ -163,6 +172,10 @@ namespace watchtower.Services.Repositories {
             _Logger.LogDebug($"Took {overall.ElapsedMilliseconds}ms to build realtime network for {worldID} :: "
                 + $"Exp DB: {expEvents.Count} events/{expMs}ms, Kill DB: {killEvents.Count} events/{killMs}ms, "
                 + $"Exp process: {processExpMs}, Kill process: {processKillMs}, build: {buildMs} ");
+
+            _Cache.Set(string.Format(CACHE_KEY, worldID), network, new MemoryCacheEntryOptions() {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+            });
 
             return network;
         }
