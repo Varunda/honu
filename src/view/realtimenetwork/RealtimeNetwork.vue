@@ -1,38 +1,28 @@
 ﻿<template>
-    <div class="d-flex flex-column" style="height: 100vh;">
-        <div class="flex-grow-0">
-            <honu-menu>
-                <menu-dropdown></menu-dropdown>
-
-                <menu-sep></menu-sep>
-
-                <li class="nav-item h1 p-0">
-                    Realtime Network
-                </li>
-            </honu-menu>
-        </div>
-
-        <div class="flex-grow-1">
+    <div style="height: 100vh;">
+        <div class="position-fixed" style="z-index: 100;">
             <div>
-                <button class="btn btn-primary" @click="parseData">
-                    get
-                </button>
+                <honu-menu>
+                    <menu-dropdown></menu-dropdown>
 
-                <button class="btn btn-success" @click="startLayout">
-                    start
-                </button>
+                    <menu-sep></menu-sep>
 
-                <button class="btn btn-warning" @click="endLayout">
-                    stop
-                </button>
-
-                <toggle-button v-model="auto">
-                    auto
-                </toggle-button>
+                    <li class="nav-item h1 p-0">
+                        Realtime Network
+                    </li>
+                </honu-menu>
             </div>
 
-            <div id="graph" class="w-100 h-100" style="display: block;"></div>
+            <div>
+                <toggle-button v-model="auto" class="d-block">
+                    Toggle auto-update
+                </toggle-button>
+
+                <input v-model="filter" class="form-input" placeholder="Filter" />
+            </div>
         </div>
+
+        <div id="graph" class="w-100 h-100" style="display: block; z-index: -100;"></div>
     </div>
 </template>
 
@@ -57,6 +47,25 @@
     import ColorUtil from "util/Color";
     import CharacterUtils from "util/Character";
 
+    function randomPosition(width: number = 5) {
+        return {
+            x: 16 * (width * Math.random() - (width / 2)) / 9,
+            y: width * Math.random() - (width / 2)
+        };
+    }
+
+    function getPosition(characterID: string, width: number = 5) {
+        const charID: number = Number.parseInt(characterID);
+        if (Number.isNaN(charID)) {
+            return randomPosition(width);
+        }
+
+        return {
+            x: Math.max(width / 6, width * (charID % 139457 / 139457)) - (width / 2),
+            y: Math.max(width / 6, width * (charID % 95173 / 95173)) - (width / 2)
+        };
+    }
+
     export const RealtimeNetworkVue = Vue.extend({
         props: {
 
@@ -74,6 +83,10 @@
                 graphWidth: 5 as number,
                 layoutRunning: false as boolean,
 
+                allc: new Set() as Set<string>,
+
+                filter: "" as string,
+
                 auto: true as boolean,
 
                 intervalID: 0 as number,
@@ -83,9 +96,7 @@
                 worldID: null as number | null,
 
                 settings: {
-                    sameWorld: true as boolean,
-                    orbit: false as boolean,
-                    strongGravity: true as boolean
+
                 },
             }
         },
@@ -115,7 +126,7 @@
                 if (this.auto == true) {
                     await this.parseData();
                 }
-            }, 1000 * 10) as unknown as number;
+            }, 1000 * 3) as unknown as number;
         },
 
         methods: {
@@ -153,6 +164,15 @@
 
                 this.network = r.data;
 
+                this.allc.clear();
+                for (const player of this.network.players) {
+                    this.allc.add(player.characterID);
+
+                    for (const interaction of player.interactions) {
+                        this.allc.add(interaction.otherID);
+                    }
+                }
+
                 console.time("update nodes");
                 this.updateNodes();
                 console.timeEnd("update nodes");
@@ -171,7 +191,7 @@
 
                 // Remove nodes that are no longer in the network
                 this.graph.forEachNode((charID: string, _) => {
-                    if (this.network.players.findIndex(iter => iter.characterID == charID) == -1) {
+                    if (this.allc.has(charID) == false) {
                         //console.log(`dropping ${charID} as its not present in players`);
                         this.graph!.dropNode(charID);
                     }
@@ -179,14 +199,25 @@
 
                 // Find any node that is in the network, but not in the graph
                 for (const player of this.network.players) {
-                    if (this.graph.hasNode(player.characterID) == false) {
-                        this.graph.addNode(player.characterID, {
-                            x: Math.random(),
-                            y: Math.random(),
+                    this.graph.updateNode(player.characterID, (attr: any) => {
+                        return {
+                            x: attr.x || getPosition(player.characterID, this.graphWidth).x,
+                            y: attr.y || getPosition(player.characterID, this.graphWidth).y,
                             label: player.display,
-                            color: ColorUtil.getFactionColor(player.factionID ?? 0),
-                            size: player.interactions.length
-                        });
+                            color: attr.color || ColorUtil.getFactionColor(player.factionID ?? 0),
+                            size: 5 + player.interactions.length
+                        }
+                    });
+
+                    for (const inter of player.interactions) {
+                        if (this.graph.hasNode(inter.otherID) == false) {
+                            this.graph.addNode(inter.otherID, {
+                                ...getPosition(inter.otherID, this.graphWidth),
+                                label: inter.otherName,
+                                color: ColorUtil.getFactionColor(inter.factionID ?? 0),
+                                size: 5
+                            });
+                        }
                     }
                 }
             },
@@ -196,11 +227,16 @@
                     return console.warn(`Cannot update edges: graph is null`);
                 }
 
+                const map: Map<string, RealtimeNetworkPlayer> = new Map();
+                for (const p of this.network.players) {
+                    map.set(p.characterID, p);
+                }
+
                 // Find edges between nodes that are no longer present in the network, and remove them from the graph                
                 this.graph.forEachEdge((key: string, _) => {
                     const [charID, otherID] = key.split(".");
 
-                    const player: RealtimeNetworkPlayer | undefined = this.network.players.find(iter => iter.characterID == charID);
+                    const player: RealtimeNetworkPlayer | undefined = map.get(charID);
                     if (player != null) {
                         if (player.interactions.find(iter => iter.otherID == otherID) == undefined) {
                             this.graph!.dropEdge(key);
@@ -211,18 +247,10 @@
                 // Run thru each interaction in the network. If it exists, update the strength of the connection, else if it doesn't exist, create it
                 for (const player of this.network.players) {
                     for (const interaction of player.interactions) {
-                        if (this.graph.hasNode(interaction.otherID) == false) {
-                            this.graph.addNode(interaction.otherID, {
-                                x: Math.random(),
-                                y: Math.random(),
-                                label: interaction.otherID,
-                            });
-                        }
-
                         this.graph.updateEdge(player.characterID, interaction.otherID, (attr) => {
                             return {
                                 ...attr,
-                                weight: 5 * interaction.strength,
+                                weight: (0.3 + (3 * interaction.strength)) / 3,
                                 color: "#444444"
                             }
                         });
@@ -267,7 +295,9 @@
                         res.labelColor = "#000000";
                     }
 
-                    if (this.hovered != node && this.neighbors != null && this.neighbors.has(node) == false) {
+                    if (this.hovered != node && this.neighbors != null && this.neighbors.has(node) == false
+                        || (this.filter.length > 0 && data.label.indexOf(this.filter) == -1)) {
+
                         res.label = "";
                         res.color = "#222222";
                     }
@@ -312,7 +342,9 @@
                         gravity: 1,
                         adjustSizes: true,
                         barnesHutOptimize: true,
-                        //outboundAttractionDistribution: true,
+                        outboundAttractionDistribution: true,
+                        linLogMode: true,
+                        slowDown: 1
                     },
                 });
 

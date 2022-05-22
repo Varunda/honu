@@ -7,7 +7,7 @@ export const ToggleButton = Vue.extend({
     },
 
     template: `
-        <button type="button" :class="cssClasses" :style="cssStyles" @click="toggle($event)">
+        <button type="button" :class="cssClasses" :style="cssStyles" @click.stop="toggle($event)">
             <slot></slot>
         </button>
     `,
@@ -15,8 +15,6 @@ export const ToggleButton = Vue.extend({
     methods: {
         toggle: function(ev: Event): void {
             this.$emit("input", !this.value);
-
-            //ev.preventDefault();
         }
     },
 

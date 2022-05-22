@@ -16,6 +16,8 @@ export class RealtimeNetworkPlayer {
 
 export class RealtimeNetworkInteraction {
     public otherID: string = "";
+    public otherName: string = "";
+    public factionID: number = 0;
     public strength: number = 0;
 }
 

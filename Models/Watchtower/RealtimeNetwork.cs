@@ -31,7 +31,9 @@ namespace watchtower.Models.Watchtower {
 
         public string OtherName { get; set; } = "";
 
-        public decimal Strength { get; set; }
+        public short FactionID { get; set; }
+
+        public double Strength { get; set; }
 
     }
 

@@ -24,7 +24,7 @@ namespace watchtower.Services.Repositories {
 
         private readonly CharacterRepository _CharacterRepository;
 
-        private const int MINUTES_BACK = 5;
+        private const int MINUTES_BACK = 3;
 
         public RealtimeNetworkBuilder(ILogger<RealtimeNetworkBuilder> logger, IMemoryCache cache,
             KillEventDbStore killDb, ExpEventDbStore expDb,
@@ -54,16 +54,17 @@ namespace watchtower.Services.Repositories {
             List<KillEvent> killEvents = await _KillDb.GetByRange(startPeriod, DateTime.UtcNow, zoneID: null, worldID: worldID);
             long killMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            Dictionary<string, Dictionary<string, decimal>> data = new(); // <char id, <other id, strength>>
+            Dictionary<string, Dictionary<string, double>> data = new(); // <char id, <other id, strength>>
 
-            void IncreaseStrength(string charID, string otherID, DateTime when, decimal amount) {
+            void IncreaseStrength(string charID, string otherID, DateTime when, double amount) {
                 // Scale based on how long ago the event took place
-                decimal secondsAgo = (decimal) (DateTime.UtcNow - when).TotalSeconds;
-                decimal scaleFactor = 1m - (secondsAgo / (MINUTES_BACK * 60m));
+                double secondsAgo = (double) (DateTime.UtcNow - when).TotalSeconds;
+                double scaleFactor = Math.Pow(1d - (secondsAgo / (MINUTES_BACK * 60d)), 10d);
+                //double scaleFactor = (0.5d) * (1d - (secondsAgo / (MINUTES_BACK * 60d)));
                 amount = scaleFactor * amount;
 
                 if (data.ContainsKey(charID) == false) {
-                    data.Add(charID, new Dictionary<string, decimal>());
+                    data.Add(charID, new Dictionary<string, double>());
                 }
 
                 if (data[charID].ContainsKey(otherID) == false) {
@@ -78,20 +79,24 @@ namespace watchtower.Services.Repositories {
                     continue;
                 }
 
-                decimal str = 0;
+                if (exp.OtherID == "0") {
+                    continue;
+                }
+
+                double str = 0;
 
                 if (Experience.IsHeal(exp.ExperienceID)) {
-                    str = 0.1m;
+                    str = 0.1d;
                 } else if (Experience.IsResupply(exp.ExperienceID)) {
-                    str = 0.05m;
+                    str = 0.05d;
                 } else if (Experience.IsRevive(exp.ExperienceID)) {
-                    str = 0.2m;
+                    str = 0.2d;
                 } else if (Experience.IsShieldRepair(exp.ExperienceID)) {
-                    str = 0.05m;
+                    str = 0.05d;
                 } else if (Experience.IsMaxRepair(exp.ExperienceID)) {
-                    str = 0.1m;
+                    str = 0.1d;
                 } else if (Experience.IsAssist(exp.ExperienceID)) {
-                    str = 0.25m;
+                    str = 0.25d;
                 }
 
                 if (str > 0) {
@@ -102,8 +107,12 @@ namespace watchtower.Services.Repositories {
             long processExpMs = timer.ElapsedMilliseconds; timer.Restart();
 
             foreach (KillEvent kill in killEvents) {
+                if (kill.AttackerCharacterID == "0" || kill.KilledCharacterID == "0") {
+                    continue;
+                }
+
                 if (kill.AttackerCharacterID != kill.KilledCharacterID) {
-                    IncreaseStrength(kill.AttackerCharacterID, kill.KilledCharacterID, kill.Timestamp, 0.5m);
+                    IncreaseStrength(kill.AttackerCharacterID, kill.KilledCharacterID, kill.Timestamp, 0.5d);
                 }
             }
 
@@ -113,22 +122,19 @@ namespace watchtower.Services.Repositories {
             network.WorldID = worldID;
             network.Timestamp = DateTime.UtcNow;
 
-            foreach (KeyValuePair<string, Dictionary<string, decimal>> iter in data) {
+            foreach (KeyValuePair<string, Dictionary<string, double>> iter in data) {
                 //_Logger.LogDebug($"{iter.Key} has interacted with {iter.Value.Count} characters");
-
-                // Skip characters who aren't interacting with lots of people
-                if (iter.Value.Count < 2) {
-                    continue;
-                }
 
                 List<RealtimeNetworkInteraction> interactions = new List<RealtimeNetworkInteraction>();
 
-                foreach (KeyValuePair<string, decimal> playerIter in iter.Value) {
+                foreach (KeyValuePair<string, double> playerIter in iter.Value) {
                     //_Logger.LogTrace($"{iter.Key} has interacted with {playerIter.Key} with a strength of {playerIter.Value}");
 
-                    if (playerIter.Value < 0.1m) {
+                    /*
+                    if (playerIter.Value < 0.025d) {
                         continue;
                     }
+                    */
 
                     interactions.Add(new RealtimeNetworkInteraction() {
                         OtherID = playerIter.Key,
@@ -137,7 +143,7 @@ namespace watchtower.Services.Repositories {
                 }
 
                 // Not enough interesting interactions
-                if (interactions.Count < 2) {
+                if (interactions.Count < 1) {
                     continue;
                 }
 
@@ -147,24 +153,32 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            List<string> charIDs = network.Players.Select(iter => iter.CharacterID).ToList();
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs);
+            HashSet<string> charIDs = new HashSet<string>();
+
+            foreach (RealtimeNetworkPlayer player in network.Players) {
+                charIDs.Add(player.CharacterID);
+
+                foreach (RealtimeNetworkInteraction inter in player.Interactions) {
+                    charIDs.Add(inter.OtherID);
+                }
+            }
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList());
+            //Dictionary<string, PsCharacter> chars
 
             foreach (RealtimeNetworkPlayer player in network.Players) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == player.CharacterID);
 
-                if (c == null) {
-                    player.Display = $"<missing {player.CharacterID}>";
-                } else {
-                    player.Display = $"{c.Name}";
-                    if (c.OutfitID != null) {
-                        player.Display = $"[{c.OutfitTag}] " + player.Display;
-                    }
+                player.Display = c?.GetDisplayName() ?? $"<missing {player.CharacterID}>";
+                player.FactionID = c?.FactionID ?? 0;
 
-                    player.FactionID = c.FactionID;
+                foreach (RealtimeNetworkInteraction inter in player.Interactions) {
+                    PsCharacter? other = chars.FirstOrDefault(iter => iter.ID == inter.OtherID);
+                    inter.OtherName = other?.GetDisplayName() ?? $"<missing {inter.OtherID}";
+                    inter.FactionID = other?.FactionID ?? 0;
                 }
 
-                player.Interactions = player.Interactions.OrderBy(iter => iter.Strength).Take(10).ToList();
+                //player.Interactions = player.Interactions.OrderBy(iter => iter.Strength).Take(10).ToList();
             }
 
             long buildMs = timer.ElapsedMilliseconds; timer.Stop();
@@ -174,7 +188,7 @@ namespace watchtower.Services.Repositories {
                 + $"Exp process: {processExpMs}, Kill process: {processKillMs}, build: {buildMs} ");
 
             _Cache.Set(string.Format(CACHE_KEY, worldID), network, new MemoryCacheEntryOptions() {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3)
             });
 
             return network;
