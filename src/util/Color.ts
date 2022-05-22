@@ -119,7 +119,7 @@ export default class ColorUtils {
      * @param rgb
      */
     public static rgbToString(rgb: RGB): string {
-        return `rgb(${rgb.red}, ${rgb.green}, ${rgb.blue}`;
+        return `rgb(${rgb.red}, ${rgb.green}, ${rgb.blue})`;
     }
 
     /**

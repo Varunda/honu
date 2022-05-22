@@ -5,7 +5,9 @@ namespace watchtower.Models.Watchtower {
 
     public class RealtimeNetwork {
 
-        public short WorldID { get; set; }
+        public short? WorldID { get; set; }
+
+        public uint? ZoneID { get; set; }
 
         public DateTime Timestamp { get; set; }
 

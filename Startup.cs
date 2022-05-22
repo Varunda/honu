@@ -189,6 +189,8 @@ namespace watchtower {
             services.AddHostedService<DirectiveCollectionsPopulator>();
             services.AddHostedService<ObjectiveCollectionsPopulator>();
             services.AddHostedService<AlertLoadStartupService>();
+            services.AddHostedService<RealtimeNetworkBroadcastService>();
+            services.AddHostedService<RealtimeNetworkBuilderService>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -345,6 +347,7 @@ namespace watchtower {
                 endpoints.MapHub<WorldOverviewHub>("/ws/overview");
                 endpoints.MapHub<ReportHub>("/ws/report");
                 endpoints.MapHub<RealtimeMapHub>("/ws/realtime-map");
+                endpoints.MapHub<RealtimeNetworkHub>("/ws/realtime-network");
 
                 endpoints.MapSwagger();
             });

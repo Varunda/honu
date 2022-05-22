@@ -38,28 +38,43 @@ namespace watchtower.Services.Repositories {
             _CharacterRepository = characterRepository;
         }
 
-        public async Task<RealtimeNetwork> Build(short worldID) {
-            if (_Cache.TryGetValue(string.Format(CACHE_KEY, worldID), out RealtimeNetwork? cached) == true) {
-                return cached!;
+        /// <summary>
+        ///     Create a <see cref="RealtimeNetwork"/> based on the parameters
+        /// </summary>
+        /// <remarks>
+        ///     A network is build based on the interactions between players. An interaction is either a exp event, or a kill event.
+        ///     Exp events are worth a different amount of "strength", depending on how I think they're worth. For example, a revive
+        ///         is worth a lot more than a resupply, as someone has to be physically near them to get the revive. In the case of
+        ///         of a resupply, there is no way to know for sure how close those players are
+        /// </remarks>
+        /// <param name="start">When to start the range of events used to build the network</param>
+        /// <param name="end">When to end the range of events used to build the network</param>
+        /// <param name="zoneID">Optional zone ID to filter the events to</param>
+        /// <param name="worldID">Optional world ID to filter the events to</param>
+        public async Task<RealtimeNetwork> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+            if (start > end) {
+                throw new ArgumentException($"{nameof(start)} {start:u} cannot come after {nameof(end)} {end:u}");
             }
-
-            DateTime startPeriod = DateTime.UtcNow - TimeSpan.FromMinutes(MINUTES_BACK);
 
             Stopwatch timer = Stopwatch.StartNew();
             Stopwatch overall = Stopwatch.StartNew();
 
-            List<ExpEvent> expEvents = await _ExpDb.GetByRange(startPeriod, DateTime.UtcNow, zoneID: null, worldID: worldID);
+            List<ExpEvent> expEvents = await _ExpDb.GetByRange(start, end, zoneID: zoneID, worldID: worldID);
             long expMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            List<KillEvent> killEvents = await _KillDb.GetByRange(startPeriod, DateTime.UtcNow, zoneID: null, worldID: worldID);
+            List<KillEvent> killEvents = await _KillDb.GetByRange(start, end, zoneID: zoneID, worldID: worldID);
             long killMs = timer.ElapsedMilliseconds; timer.Restart();
 
+            // dict used to build the map. The key is a character ID of the character who initiated the event (source),
+            //      the value is another dict that represents all the interactions the source has made with the character
+            // The value dict has the key of the character ID of the character who received the event (target), and the strength
+            //      of the interactions made
             Dictionary<string, Dictionary<string, double>> data = new(); // <char id, <other id, strength>>
 
             void IncreaseStrength(string charID, string otherID, DateTime when, double amount) {
                 // Scale based on how long ago the event took place
                 double secondsAgo = (double) (DateTime.UtcNow - when).TotalSeconds;
-                double scaleFactor = Math.Pow(1d - (secondsAgo / (MINUTES_BACK * 60d)), 10d);
+                double scaleFactor = Math.Pow(1d - (secondsAgo / (MINUTES_BACK * 60d)), 2d);
                 //double scaleFactor = (0.5d) * (1d - (secondsAgo / (MINUTES_BACK * 60d)));
                 amount = scaleFactor * amount;
 
@@ -75,7 +90,7 @@ namespace watchtower.Services.Repositories {
             }
 
             foreach (ExpEvent exp in expEvents) {
-                if (Experience.OtherIDIsCharacterID(exp.ExperienceID) == false) {
+                if (Experience.OtherIDIsCharacterID(exp.ExperienceID) == false) { // Can safely skip events where the other ID isn't a character (NPC ID for example)
                     continue;
                 }
 
@@ -86,17 +101,19 @@ namespace watchtower.Services.Repositories {
                 double str = 0;
 
                 if (Experience.IsHeal(exp.ExperienceID)) {
-                    str = 0.1d;
+                    str = 0.25d;
                 } else if (Experience.IsResupply(exp.ExperienceID)) {
                     str = 0.05d;
                 } else if (Experience.IsRevive(exp.ExperienceID)) {
-                    str = 0.2d;
+                    str = 0.5d;
                 } else if (Experience.IsShieldRepair(exp.ExperienceID)) {
                     str = 0.05d;
                 } else if (Experience.IsMaxRepair(exp.ExperienceID)) {
                     str = 0.1d;
                 } else if (Experience.IsAssist(exp.ExperienceID)) {
                     str = 0.25d;
+                } else {
+                    _Logger.LogTrace($"Exp event {exp.ExperienceID} has an other ID of {exp.OtherID}, but was not handled");
                 }
 
                 if (str > 0) {
@@ -120,30 +137,25 @@ namespace watchtower.Services.Repositories {
 
             RealtimeNetwork network = new RealtimeNetwork();
             network.WorldID = worldID;
-            network.Timestamp = DateTime.UtcNow;
+            network.ZoneID = zoneID;
+            network.Timestamp = end;
 
             foreach (KeyValuePair<string, Dictionary<string, double>> iter in data) {
-                //_Logger.LogDebug($"{iter.Key} has interacted with {iter.Value.Count} characters");
-
                 List<RealtimeNetworkInteraction> interactions = new List<RealtimeNetworkInteraction>();
 
                 foreach (KeyValuePair<string, double> playerIter in iter.Value) {
-                    //_Logger.LogTrace($"{iter.Key} has interacted with {playerIter.Key} with a strength of {playerIter.Value}");
-
-                    /*
-                    if (playerIter.Value < 0.025d) {
+                    //if (playerIter.Value < 0.025d) {
+                    if (playerIter.Value < 0.000001d) { // Threshold for how strong a connection has to be to include it
                         continue;
                     }
-                    */
 
                     interactions.Add(new RealtimeNetworkInteraction() {
                         OtherID = playerIter.Key,
-                        Strength = playerIter.Value
+                        Strength = Math.Min(200, playerIter.Value) // Cap the max strength at 200, I think that's a reasonable limit
                     });
                 }
 
-                // Not enough interesting interactions
-                if (interactions.Count < 1) {
+                if (interactions.Count < 1) { // If they've interacted with 0 other people, don't include them on the graph
                     continue;
                 }
 
@@ -153,8 +165,8 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
+            // Build a list of all the characters that need to be read from the character repo
             HashSet<string> charIDs = new HashSet<string>();
-
             foreach (RealtimeNetworkPlayer player in network.Players) {
                 charIDs.Add(player.CharacterID);
 
@@ -163,8 +175,7 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList());
-            //Dictionary<string, PsCharacter> chars
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), fast: true);
 
             foreach (RealtimeNetworkPlayer player in network.Players) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == player.CharacterID);
@@ -192,6 +203,14 @@ namespace watchtower.Services.Repositories {
             });
 
             return network;
+        }
+
+        public async Task<RealtimeNetwork> Build(short worldID) {
+            if (_Cache.TryGetValue(string.Format(CACHE_KEY, worldID), out RealtimeNetwork? cached) == true) {
+                return cached!;
+            }
+
+            return await GetByRange(DateTime.UtcNow - TimeSpan.FromMinutes(MINUTES_BACK), DateTime.UtcNow, null, worldID);
         }
 
     }

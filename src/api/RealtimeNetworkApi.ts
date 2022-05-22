@@ -46,8 +46,14 @@ export class RealtimeNetworkApi extends ApiWrapper<RealtimeNetwork> {
         };
     }
 
-    public static async getByWorldID(worldID: number): Promise<Loading<RealtimeNetwork>> {
-        return RealtimeNetworkApi.get().readSingle(`/api/realtime-network/${worldID}`, RealtimeNetworkApi.parse);
+    public static async getByWorldID(worldID: number, start: Date | null = null, end: Date | null = null, zoneID: number | null = null): Promise<Loading<RealtimeNetwork>> {
+        const params: URLSearchParams = new URLSearchParams();
+
+        if (start != null) { params.append("start", start.toISOString()); }
+        if (end != null) { params.append("end", end.toISOString()); }
+        if (zoneID != null) { params.append("zoneID", zoneID.toString()); }
+
+        return RealtimeNetworkApi.get().readSingle(`/api/realtime-network/${worldID}?${params.toString()}`, RealtimeNetworkApi.parse);
     }
 
 }
