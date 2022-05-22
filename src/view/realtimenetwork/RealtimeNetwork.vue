@@ -227,8 +227,8 @@
                 graph: null as Graph | null,
                 layout: null as FA2Layout | ForceSupvisor | null,
                 renderer: null as Sigma | null,
-                communities: null as any | null,
 
+                filter: "" as string,
                 hovered: null as string | null,
                 neighbors: null as Set<string> | null,
                 graphWidth: 5 as number,
@@ -238,29 +238,14 @@
                 rendersPerSecond: 0 as number,
                 lastRenderCountUpdate: new Date(),
 
-                selected: null as RealtimeNetworkPlayer | null,
-
-                allc: new Set() as Set<string>,
-
-                filter: "" as string,
-
                 auto: true as boolean,
 
-                intervalID: 0 as number,
-
                 network: new RealtimeNetwork() as RealtimeNetwork,
-
+                selected: null as RealtimeNetworkPlayer | null,
+                allc: new Set() as Set<string>,
                 worldID: null as number | null,
 
                 alertData: [] as RealtimeNetwork[],
-
-                metrics: {
-                    density: 0 as number,
-                    diameter: 0 as number,
-                    extent: 0 as number,
-                    modularity: 0 as number,
-                    simpleSize: 0 as number
-                },
 
                 settings: {
                     preferedLayout: "atlas" as "force" | "atlas"
@@ -275,10 +260,8 @@
                 .build();
 
             this.connection.on("UpdateNetwork", (data: any) => {
-                //data.tagEntries = data.tagEntries.map((iter: any) => WorldTagApi.readEntry(iter));
-                console.log(data);
-
                 if (this.auto == true) {
+                    console.log(data);
                     this.lastUpdate = new Date();
                     this.updateGraph(data);
                 }
@@ -380,6 +363,11 @@
                     return;
                 }
 
+                this.network = new RealtimeNetwork();
+                this.resetGraph();
+                this.auto = false;
+                this.setupLayout();
+
                 const now: number = (new Date()).getTime();
 
                 const duration: number = 1000 * 60 * 60 * 1;
@@ -401,11 +389,14 @@
                     }
                 }
 
+                this.setupLayout();
+
                 const intervalID = setInterval(() => {
                     const network: RealtimeNetwork | undefined = this.alertData.shift();
                     if (network == undefined) {
                         clearTimeout(intervalID);
                     } else {
+                        console.log(`RealtimeNetwork> ${this.alertData.length} left`);
                         this.updateGraph(network);
                     }
                 }, 10 * 1000);
@@ -546,6 +537,12 @@
                 if (this.context == null) {
                     console.error(`Cannot create graph, context is null`);
                     return;
+                }
+
+                if (this.layout != null) {
+                    this.endLayout();
+                    this.layout.kill();
+                    this.layout = null;
                 }
 
                 // @ts-ignore: It's not actually abstract and it works

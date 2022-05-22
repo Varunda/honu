@@ -73,7 +73,7 @@ namespace watchtower.Services.Repositories {
 
             void IncreaseStrength(string charID, string otherID, DateTime when, double amount) {
                 // Scale based on how long ago the event took place
-                double secondsAgo = (double) (DateTime.UtcNow - when).TotalSeconds;
+                double secondsAgo = (double) (end - when).TotalSeconds;
                 double scaleFactor = Math.Pow(1d - (secondsAgo / (MINUTES_BACK * 60d)), 2d);
                 //double scaleFactor = (0.5d) * (1d - (secondsAgo / (MINUTES_BACK * 60d)));
                 amount = scaleFactor * amount;
