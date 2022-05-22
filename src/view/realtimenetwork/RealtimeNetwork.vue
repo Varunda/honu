@@ -99,7 +99,7 @@
                     <div class="modal-body">
                         <p>
                             The realtime network is a graph that shows the interactions between characters as they happen in real time.
-                            This shows an approximation of the proximity of characters
+                            This shows an approximation of the proximity of characters, but <b>NOT</b> where they are located on a continent
                         </p>
 
                         <p>
