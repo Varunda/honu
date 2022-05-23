@@ -119,7 +119,7 @@ namespace watchtower.Services.Repositories {
             int total = IDs.Count;
             int found = 0;
 
-            _Logger.LogTrace($"Loading {total} characters");
+            //_Logger.LogTrace($"Loading {total} characters");
 
             Stopwatch timer = Stopwatch.StartNew();
             int inCache = 0;
@@ -138,7 +138,7 @@ namespace watchtower.Services.Repositories {
             long toCache = timer.ElapsedMilliseconds;
             timer.Restart();
 
-            _Logger.LogTrace($"Took {toCache}ms to load from cache");
+            //_Logger.LogTrace($"Took {toCache}ms to load from cache");
 
             long toDb = 0;
             int inDb = 0;
@@ -169,7 +169,7 @@ namespace watchtower.Services.Repositories {
                 toDb = timer.ElapsedMilliseconds;
                 timer.Restart();
 
-                _Logger.LogTrace($"Took {toDb}ms to load from db");
+                //_Logger.LogTrace($"Took {toDb}ms to load from db");
             }
 
             long toCensus = 0;
@@ -190,7 +190,7 @@ namespace watchtower.Services.Repositories {
                     }
                 }
                 toCensus = timer.ElapsedMilliseconds;
-                _Logger.LogTrace($"Took {toCensus}ms to load from census");
+                //_Logger.LogTrace($"Took {toCensus}ms to load from census");
             }
 
             // If a character in the DB was ignored because it had expired, but Honu still doesn't have the character at this point, load it anyways
@@ -214,8 +214,10 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
+            /*
             _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
                 + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
+            */
 
             return chars;
         }

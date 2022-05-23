@@ -44,7 +44,7 @@ namespace watchtower.Realtime {
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {
-            Worlds = new[] { "all" },
+            Worlds = World.All.Select(iter => $"{iter}").ToArray(),
             Characters = new[] { "all" },
         };
 

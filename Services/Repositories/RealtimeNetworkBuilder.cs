@@ -194,9 +194,11 @@ namespace watchtower.Services.Repositories {
 
             long buildMs = timer.ElapsedMilliseconds; timer.Stop();
 
+            /*
             _Logger.LogDebug($"Took {overall.ElapsedMilliseconds}ms to build realtime network for {worldID} :: "
                 + $"Exp DB: {expEvents.Count} events/{expMs}ms, Kill DB: {killEvents.Count} events/{killMs}ms, "
                 + $"Exp process: {processExpMs}, Kill process: {processKillMs}, build: {buildMs} ");
+            */
 
             _Cache.Set(string.Format(CACHE_KEY, worldID), network, new MemoryCacheEntryOptions() {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(3)

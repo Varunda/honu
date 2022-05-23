@@ -76,6 +76,9 @@
                 </h2>
 
                 <div class="input-grid-col2" style="grid-template-columns: 1fr min-content; row-gap: 0.5rem; justify-content: left;">
+                    <div>Character</div>
+                    <div>Interaction</div>
+
                     <template v-for="inter in selected.interactions">
                         <div class="input-cell">
                             <a :href="'/c/' + inter.otherID">
@@ -287,6 +290,7 @@
             this.connection.onreconnected(() => {
                 console.log(`reconnected`);
                 this.socketState = "opened";
+                this.subscribe();
             });
 
             this.connection.onclose((err?: Error) => {
