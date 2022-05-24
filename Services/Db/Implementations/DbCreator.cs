@@ -33,24 +33,20 @@ namespace watchtower.Services.Db.Implementations {
                 CREATE EXTENSION IF NOT EXISTS pg_trgm;
             ");
 
-            try {
-                _Logger.LogTrace($"Getting current DB version");
-                int version = await GetVersion();
-                _Logger.LogInformation($"Current DB version: {version}");
+            _Logger.LogTrace($"Getting current DB version");
+            int version = await GetVersion();
+            _Logger.LogInformation($"Current DB version: {version}");
 
-                List<IDbPatch> patches = GetPatches();
-                foreach (IDbPatch patch in patches) {
-                    _Logger.LogTrace($"Checking patch {patch.Name}/{patch.MinVersion}");
+            List<IDbPatch> patches = GetPatches();
+            foreach (IDbPatch patch in patches) {
+                _Logger.LogTrace($"Checking patch '{patch.Name}'/{patch.MinVersion}");
 
-                    if (version < patch.MinVersion) {
-                        _Logger.LogDebug($"Patch {patch.Name} min version {patch.MinVersion} lower than current version {version}");
-                        await patch.Execute(_DbHelper);
+                if (version < patch.MinVersion) {
+                    _Logger.LogDebug($"Patch '{patch.Name}' min version {patch.MinVersion} lower than current version {version}");
+                    await patch.Execute(_DbHelper);
 
-                        await UpdateVersion(patch.MinVersion);
-                    }
+                    await UpdateVersion(patch.MinVersion);
                 }
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"Failed to execute DbCreator");
             }
         }
 

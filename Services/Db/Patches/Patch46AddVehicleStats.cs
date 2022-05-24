@@ -22,6 +22,8 @@ namespace watchtower.Services.Db.Patches {
                     ADD PRIMARY KEY (character_id, vehicle_id, item_id);
             ");
 
+            cmd.CommandTimeout = 300;
+
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
         }
