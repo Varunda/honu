@@ -21,48 +21,66 @@
                 </honu-menu>
             </div>
 
-            <div style="max-width: 15vh;">
-                <button type="button" class="btn btn-primary w-100 mb-3" data-toggle="modal" data-target="#help-modal">
-                    What is this?
-                </button>
+            <div style="background-color: #222; display: inline-block">
+                <div id="graph-controls" class="collapse show border-right border-bottom pr-2">
+                    <button type="button" class="btn btn-primary w-100 mb-3" data-toggle="modal" data-target="#help-modal">
+                        What is this?
+                    </button>
 
-                <toggle-button v-model="auto" class="d-block w-100 mb-2">
-                    Toggle auto-update
-                </toggle-button>
+                    <toggle-button v-model="auto" class="d-block w-100 mb-2">
+                        Toggle auto-update
+                    </toggle-button>
 
-                <div class="mb-3">
-                    <label class="mb-0">Node filter</label>
-                    <input v-model="filter" class="form-control" placeholder="Filter" />
+                    <div class="mb-3">
+                        <label class="mb-0">Character search</label>
+                        <input v-model="filter" class="form-control" placeholder="Filter" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="mb-0">Allowed connections</label>
+                        <select v-model="settings.allowedConnections" class="form-control">
+                            <option value="all">All</option>
+                            <option value="ally">Ally</option>
+                            <option value="enemy">Enemy</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="mb-0">Layout method</label>
+                        <select v-model="settings.preferedLayout" class="form-control">
+                            <option value="recommended">Recommended</option>
+                            <option value="atlas">ForceAtlas2</option>
+                            <option value="force">Force</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-warning w-100 mb-3" @click="resetGraph">
+                        Reset graph
+                    </button>
+
+                    <div>
+                        <div>
+                            Socket state: {{socketState}}
+                        </div>
+
+                        <div>
+                            Last update: {{lastUpdate | moment("hh:mm:ss A")}}
+                        </div>
+
+                        <div>
+                            Nodes: {{allc.size}}
+                        </div>
+
+                        <div>
+                            Updates/sec: {{rendersPerSecond | locale(2)}}
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="mb-0">Layout method</label>
-                    <select v-model="settings.preferedLayout" class="form-control">
-                        <option value="atlas">ForceAtlas2</option>
-                        <option value="force">Force</option>
-                    </select>
-                </div>
-
-                <button type="button" class="btn btn-warning w-100 mb-3" @click="resetGraph">
-                    Reset graph
-                </button>
-
-                <div>
-                    <div>
-                        Socket state: {{socketState}}
-                    </div>
-
-                    <div>
-                        Last update: {{lastUpdate | moment("hh:mm:ss")}}
-                    </div>
-
-                    <div>
-                        Nodes: {{allc.size}}
-                    </div>
-
-                    <div>
-                        Updates/sec: {{rendersPerSecond | locale(2)}}
-                    </div>
+                <div class="position-absolute" style="bottom: -1px; transform: translateY(100%)">
+                    <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#graph-controls" title="Hide controls">
+                        <span class="fa-fw fas fa-arrows-alt-v"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -77,7 +95,10 @@
 
                 <div class="input-grid-col2" style="grid-template-columns: 1fr min-content; row-gap: 0.5rem; justify-content: left;">
                     <div>Character</div>
-                    <div>Interaction</div>
+                    <div>
+                        Weight
+                        <info-hover text="How strong a connection between the selected character and this one. This is a unit-less quantity"></info-hover>
+                    </div>
 
                     <template v-for="inter in selected.interactions">
                         <div class="input-cell">
@@ -149,7 +170,7 @@
 
                             <p>
                                 The color of an edge is will scale on the weight of a connection.
-                                A white edge is a heavy interaction, with darker edges reprsenting lighter connections
+                                A white edge is a strong connection, with lighter edges reprsenting weaker connections
                             </p>
                         </div>
 
@@ -157,15 +178,22 @@
                             <h4 class="wt-header">Controls</h4>
 
                             <p>
-                                <b>Auto update: </b>Will the graph auto-update periodically?
+                                <b>Auto update: </b>Will the graph update with new data periodically?
                             </p>
 
                             <p>
-                                <b>Node filter: </b>Filter the displayed nodes that match the input (case-insensitive)
+                                <b>Character search: </b>Filter the displayed nodes that match the input (case-insensitive)
                             </p>
 
                             <p>
-                                <b>Layout method: </b>What method will be used to move the nodes around and cluster them
+                                <b>Allowed connections: </b>What connections will be included in the graph? All is all connections.
+                                Ally is connections only between characters on the same faction, and enemy is connections
+                                only between characters on different factions
+                            </p>
+
+                            <p>
+                                <b>Layout method: </b>What method will be used to move the nodes around and cluster them.
+                                The recommended option will use Force for smaller node counts, and ForceAtlas2 for larger graphs
                             </p>
 
                             <p>
@@ -205,6 +233,9 @@
     import ColorUtil from "util/Color";
     import WorldUtil from "util/World";
 
+    /**
+     * Get a random {x, y} position that ranges from (-width/2, width/2)
+     */
     function randomPosition(width: number = 5) {
         return {
             x: 16 * (width * Math.random() - (width / 2)) / 9,
@@ -212,6 +243,9 @@
         };
     }
 
+    /**
+     * Get an {x, y} position based on the character ID that will be used for placement into the graph
+     */
     function getPosition(characterID: string, width: number = 5) {
         const charID: number = Number.parseInt(characterID);
         if (Number.isNaN(charID)) {
@@ -223,6 +257,12 @@
             y: Math.max(width / 6, width * (charID % 95173 / 95173)) - (width / 2)
         };
     }
+
+    /**
+     * How many nodes must be in the graph before the ForceAtlas2 layout method is recommended
+     *      instead of the Force layout method
+     */
+    const MIN_FORCEATLAS2_THRESHOLD: number = 300;
 
     export const RealtimeNetworkVue = Vue.extend({
         props: {
@@ -249,6 +289,7 @@
                 renderCount: 0 as number,
                 rendersPerSecond: 0 as number,
                 lastRenderCountUpdate: new Date(),
+                currentLayoutMethod: "atlas" as "atlas" | "force",
 
                 auto: true as boolean,
 
@@ -260,7 +301,8 @@
                 alertData: [] as RealtimeNetwork[],
 
                 settings: {
-                    preferedLayout: "atlas" as "force" | "atlas"
+                    preferedLayout: "recommended" as "recommended" | "force" | "atlas",
+                    allowedConnections: "all" as "all" | "ally" | "enemy"
                 },
             }
         },
@@ -429,6 +471,25 @@
                     }
                 }
 
+                // If using the recommended layout, check the number of nodes for which method produces
+                //      "better" results. The -50 and +50 are to prevent swapping between the two
+                //      layout methods when the node count hovers around the threshold, creating a dead zone
+                if (this.settings.preferedLayout == "recommended") {
+                    const forceThreshold: number = MIN_FORCEATLAS2_THRESHOLD - 50;
+                    const atlasThreshold: number = MIN_FORCEATLAS2_THRESHOLD + 50;
+                    const nodeCount: number = this.allc.size;
+
+                    if (nodeCount > atlasThreshold && this.currentLayoutMethod == "force") {
+                        this.currentLayoutMethod = "atlas";
+                        this.setupLayout();
+                        console.log(`RealtimeNetwork> Swapping to ForceAtlas2 layout`);
+                    } else if (nodeCount < forceThreshold && this.currentLayoutMethod == "atlas") {
+                        this.currentLayoutMethod = "force";
+                        this.setupLayout();
+                        console.log(`RealtimeNetwork> Swapping to Force layout`);
+                    }
+                }
+
                 console.time("update nodes");
                 this.updateNodes();
                 console.timeEnd("update nodes");
@@ -525,6 +586,13 @@
                 // Run thru each interaction in the network. If it exists, update the strength of the connection, else if it doesn't exist, create it
                 for (const player of this.network.players) {
                     for (const interaction of player.interactions) {
+                        if (this.settings.allowedConnections == "enemy" && player.factionID == interaction.factionID) {
+                            continue;
+                        }
+                        if (this.settings.allowedConnections == "ally" && player.factionID != interaction.factionID) {
+                            continue;
+                        }
+
                         // Key is supplied instead of the auto-default so we can remove the edge later if needed
                         this.graph.updateEdgeWithKey(`${player.characterID}.${interaction.otherID}`, player.characterID, interaction.otherID, (attr) => {
                             if (interaction.strength > max) { max = interaction.strength; }
@@ -642,18 +710,17 @@
                     this.layout = null;
                 }
 
-                if (this.settings.preferedLayout == "atlas") {
+                if (this.currentLayoutMethod == "atlas") {
                     this.layout = new FA2Layout(this.graph, {
                         settings: {
                             gravity: 1,
-                            adjustSizes: true,
                             barnesHutOptimize: true,
                             outboundAttractionDistribution: true,
                             linLogMode: true,
                             slowDown: 1
                         },
                     });
-                } else if (this.settings.preferedLayout == "force") {
+                } else if (this.currentLayoutMethod == "force") {
                     this.layout = new ForceSupvisor(this.graph, {
                         settings: {
                             attraction: 0.001,
@@ -662,7 +729,7 @@
                         }
                     });
                 } else {
-                    console.error(`Unknown prefered layout: ${this.settings.preferedLayout}`);
+                    console.error(`Unknown layout method: ${this.currentLayoutMethod}`);
                 }
 
                 if (startAgain == true) {
@@ -683,7 +750,17 @@
 
         watch: {
             "settings.preferedLayout": function(): void {
+                if (this.settings.preferedLayout == "atlas") {
+                    this.currentLayoutMethod = "atlas";
+                } else if (this.settings.preferedLayout == "force") {
+                    this.currentLayoutMethod = "force";
+                }
+
                 this.setupLayout();
+            },
+
+            "settings.allowedConnections": function(): void {
+                this.resetGraph();
             }
         },
 
