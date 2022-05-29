@@ -6,32 +6,47 @@
             <menu-sep></menu-sep>
 
             <li class="nav-item h1 p-0">
-                Health dashboard
+                Health
             </li>
         </honu-menu>
+
+        <div>
+            <h3 class="d-inline">
+                Latest update -
+                <span v-if="latestUpdate != null">
+                    {{latestUpdate | moment("YYYY-MM-DD hh:mm:ss A")}}
+                    ::
+                    {{latestUpdate | timeAgo}}
+                </span>
+            </h3>
+        </div>
 
         <div v-if="health.state == 'loaded'">
             <h1 class="wt-header border-0">Queues</h1>
 
-            <table class="table">
-                <tr class="table-secondary">
-                    <th>Queue</th>
-                    <th>Length</th>
-                    <th>Average process time</th>
-                </tr>
+            <table class="table table-striped">
+                <thead>
+                    <tr class="table-secondary">
+                        <th>Queue</th>
+                        <th>Length</th>
+                        <th>Average process time</th>
+                    </tr>
+                </thead>
 
-                <tr v-for="queue in health.data.queues">
-                    <td>{{queue.queueName}}</td>
-                    <td>{{queue.count}}</td>
-                    <td>
-                        <span v-if="queue.average">
-                            {{queue.average}}ms
-                        </span>
-                        <span v-else>
-                            not tracked
-                        </span>
-                    </td>
-                </tr>
+                <tbody>
+                    <tr v-for="queue in health.data.queues">
+                        <td>{{queue.queueName}}</td>
+                        <td>{{queue.count}}</td>
+                        <td>
+                            <span v-if="queue.average">
+                                {{queue.average}}ms
+                            </span>
+                            <span v-else>
+                                not tracked
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>    
             </table>
 
             <h1 class="wt-header border-0">Realtime - Death</h1>
@@ -94,6 +109,7 @@
         data: function() {
             return {
                 health: Loadable.idle() as Loading<HonuHealth>,
+                latestUpdate: null as | Date | null,
 
                 timerID: undefined as number | undefined
             }
@@ -105,11 +121,21 @@
             this.timerID = setInterval(async () => {
                 await this.updateHealth();
             }, 1000) as unknown as number;
+
+            // Force an update in a separate interval from the API update to ensure the time ago
+            //      displays are updated. This is useful if you have a poor connection, or nothing
+            //      is getting updated for another reason
+            setInterval(() => {
+                this.$forceUpdate();
+            }, 1000);
         },
 
         methods: {
             updateHealth: async function(): Promise<void> {
                 this.health = await HonuHealthApi.getHealth();
+                if (this.health.state == "loaded") {
+                    this.latestUpdate = new Date();
+                }
             }
         },
 
