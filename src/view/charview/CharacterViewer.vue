@@ -131,7 +131,7 @@
                 character: Loadable.idle() as Loading<PsCharacter>,
                 metadata: Loadable.idle() as Loading<CharacterMetadata>,
 
-                selectedTab: "weapons" as string,
+                selectedTab: "overview" as string,
                 selectedComponent: "CharacterWeaponStats" as string
             }
         },
@@ -164,7 +164,12 @@
                     throw `Unhandled tab selected '${lower}'`;
                 }
 
-                history.pushState({}, "", `/c/${this.charID}/${lower}`);
+                const url = new URL(location.href);
+                if (this.character.state == "loaded") {
+                    url.searchParams.set("name", this.character.data.name);
+                }
+
+                history.pushState({ path: url.href }, "", `/c/${this.charID}/${lower}?${url.searchParams.toString()}`);
             },
 
             loadCharacterID: async function(): Promise<void> {
