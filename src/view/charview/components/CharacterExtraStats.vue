@@ -15,8 +15,8 @@
                     <info-hover :text="set.description"></info-hover>
                 </h2>
 
-                <div class="d-flex">
-                    <div v-for="stat in set.stats" class="card flex-grow-0 mr-3">
+                <div class="d-flex flex-wrap">
+                    <div v-for="stat in set.stats" class="card flex-grow-0 mr-3 mb-2">
                         <div class="card-body">
                             <h5 class="card-title">
                                 {{stat.name}}
