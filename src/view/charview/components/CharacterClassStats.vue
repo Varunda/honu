@@ -13,7 +13,10 @@
         </tr>
 
         <tr>
-            <td><b>Infil</b></td>
+            <td>
+                <census-image :image-id="imageIDs.Infil_128" style="max-height: 2rem;"></census-image>
+                <b>Infil</b>
+            </td>
             <td>
                 {{timeAs.infil | mduration}}
                 ({{timeAs.infil / totalTime * 100 | locale}}%)
@@ -30,7 +33,10 @@
         </tr>
 
         <tr>
-            <td><b>Light Assault</b></td>
+            <td>
+                <census-image :image-id="imageIDs.LightAssault_64" style="max-height: 2rem;"></census-image>
+                <b>Light Assault</b>
+            </td>
             <td>
                 {{timeAs.lightAssault | mduration}}
                 ({{timeAs.lightAssault / totalTime * 100 | locale}}%)
@@ -47,7 +53,10 @@
         </tr>
 
         <tr>
-            <td><b>Medic</b></td>
+            <td>
+                <census-image :image-id="imageIDs.Medic_64" style="max-height: 2rem;"></census-image>
+                <b>Medic</b>
+            </td>
             <td>
                 {{timeAs.medic | mduration}}
                 ({{timeAs.medic / totalTime * 100 | locale}}%)
@@ -64,7 +73,10 @@
         </tr>
 
         <tr>
-            <td><b>Engineer</b></td>
+            <td>
+                <census-image :image-id="imageIDs.Engi_64" style="max-height: 2rem;"></census-image>
+                <b>Engineer</b>
+            </td>
             <td>
                 {{timeAs.engineer | mduration}}
                 ({{timeAs.engineer / totalTime * 100 | locale}}%)
@@ -81,7 +93,10 @@
         </tr>
 
         <tr>
-            <td><b>Heavy Assault</b></td>
+            <td>
+                <census-image :image-id="imageIDs.Heavy_64" style="max-height: 2rem;"></census-image>
+                <b>Heavy Assault</b>
+            </td>
             <td>
                 {{timeAs.heavy | mduration}}
                 ({{timeAs.heavy / totalTime * 100 | locale}}%)
@@ -98,7 +113,10 @@
         </tr>
 
         <tr>
-            <td><b>MAX</b></td>
+            <td>
+                <census-image :image-id="imageIDs.Max_64" style="max-height: 2rem;"></census-image>
+                <b>MAX</b>
+            </td>
             <td>
                 {{timeAs.max | mduration}}
                 ({{timeAs.max / totalTime * 100 | locale}}%)
@@ -120,8 +138,11 @@
     import Vue, { PropType } from "vue";
 
     import InfoHover from "components/InfoHover.vue";
+    import CensusImage from "components/CensusImage";
 
     import { CharacterStat } from "api/CharacterStatApi";
+
+    import ImageUtil from "util/Image";
 
     class ClassStatSet {
         public infil: number = 0;
@@ -149,6 +170,8 @@
                 kills: new ClassStatSet() as ClassStatSet,
                 score: new ClassStatSet() as ClassStatSet,
                 timeAs: new ClassStatSet() as ClassStatSet,
+
+                imageIDs: { ...ImageUtil.Images },
 
                 infilUpdated: new Date() as Date,
                 lightAssaultUpdated: new Date() as Date,
@@ -238,7 +261,8 @@
         },
 
         components: {
-            InfoHover
+            InfoHover,
+            CensusImage
         }
     });
     export default CharacterClassStats;
