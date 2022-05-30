@@ -180,13 +180,13 @@ namespace watchtower.Services.Repositories {
             foreach (RealtimeNetworkPlayer player in network.Players) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == player.CharacterID);
 
-                player.Display = c?.GetDisplayName() ?? $"<missing {player.CharacterID}>";
                 player.FactionID = c?.FactionID ?? 0;
+                player.OutfitID = c?.OutfitID;
 
                 foreach (RealtimeNetworkInteraction inter in player.Interactions) {
                     PsCharacter? other = chars.FirstOrDefault(iter => iter.ID == inter.OtherID);
-                    inter.OtherName = other?.GetDisplayName() ?? $"<missing {inter.OtherID}";
                     inter.FactionID = other?.FactionID ?? 0;
+                    inter.OutfitID = other?.OutfitID;
                 }
 
                 //player.Interactions = player.Interactions.OrderBy(iter => iter.Strength).Take(10).ToList();

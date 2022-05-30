@@ -118,7 +118,7 @@ namespace watchtower.Services.Repositories {
 
                 // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
                 int backoff = Math.Min(10, entry.FailureCount + 1);
-                int threshold = tolerance.Tolerance.Value * backoff;
+                int threshold = (tolerance.Tolerance.Value * (entry.FailureCount + 1)) + (10 * Math.Min(3, entry.FailureCount));
 
                 int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
                 if (playerCount < 200) {

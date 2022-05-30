@@ -80,13 +80,13 @@ namespace watchtower.Services.Hosted.Startup {
 
                     timer.Stop();
                     _Logger.LogInformation($"Finished in {timer.ElapsedMilliseconds}ms");
-
-                    await Task.Delay(RUN_DELAY, stoppingToken);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"{SERVICE_NAME}> stopping");
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"Error in {SERVICE_NAME}");
                 }
+
+                await Task.Delay(RUN_DELAY, stoppingToken);
             }
         }
 

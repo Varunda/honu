@@ -74,6 +74,17 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get multiple outfits in one API call
+        /// </summary>
+        /// <param name="IDs">List of outfit IDs to get the outfits of</param>
+        [HttpGet("many")]
+        public async Task<ApiResponse<List<PsOutfit>>> GetByIDs([FromQuery] List<string> IDs) {
+            List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(IDs);
+
+            return ApiOk(outfits);
+        }
+
+        /// <summary>
         ///     Get all outfits that use the given tag (case insensitive)
         /// </summary>
         /// <remarks>

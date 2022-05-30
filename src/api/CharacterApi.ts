@@ -53,6 +53,15 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 		return CharacterApi.get().readSingle(`/api/character/${charID}`, CharacterApi.parse);
 	}
 
+	public static async getByIDs(charIDs: string[]): Promise<Loading<PsCharacter[]>> {
+		const params: URLSearchParams = new URLSearchParams();
+		for (const charID of charIDs) {
+			params.append("IDs", charID);
+		}
+
+		return CharacterApi.get().readList(`/api/character/many?${params.toString()}`, CharacterApi.parse);
+	}
+
 	public static async getByName(name: string): Promise<Loading<PsCharacter[]>> {
 		return CharacterApi.get().readList(`/api/characters/name/${name}`, CharacterApi.parse);
 	}

@@ -137,6 +137,15 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return OutfitApi.get().readSingle(`/api/outfit/${outfitID}`, OutfitApi.parse);
 	}
 
+	public static async getByIDs(outfitIDs: string[]): Promise<Loading<PsOutfit[]>> {
+		const params: URLSearchParams = new URLSearchParams();
+		for (const id of outfitIDs) {
+			params.append("IDs", id);
+		}
+
+		return OutfitApi.get().readList(`/api/outfit/many?${params.toString()}`, OutfitApi.parse);
+	}
+
 	public static async getByTag(tag: string): Promise<Loading<PsOutfit[]>> {
 		return OutfitApi.get().readList(`/api/outfit/tag/${tag}`, OutfitApi.parse);
 	}

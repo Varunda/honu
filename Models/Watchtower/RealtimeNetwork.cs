@@ -19,7 +19,7 @@ namespace watchtower.Models.Watchtower {
 
         public string CharacterID { get; set; } = "";
 
-        public string Display { get; set; } = "";
+        public string? OutfitID { get; set; } = null;
 
         public short FactionID { get; set; }
 
@@ -31,7 +31,7 @@ namespace watchtower.Models.Watchtower {
 
         public string OtherID { get; set; } = "";
 
-        public string OtherName { get; set; } = "";
+        public string? OutfitID { get; set; } = null;
 
         public short FactionID { get; set; }
 

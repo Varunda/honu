@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using watchtower.Models.Census;
 using watchtower.Models.Watchtower;
 using watchtower.Services.Repositories;
 
@@ -12,14 +13,19 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly ILogger<RealtimeNetworkHub> _Logger;
         private readonly RealtimeNetworkRepository _NetworkRepository;
+        private readonly OutfitRepository _OutfitRepository;
+        private readonly CharacterRepository _CharacterRepository;
 
         private readonly Dictionary<string, string> _GroupMembership = new Dictionary<string, string>(); // <connection id, group>
 
         public RealtimeNetworkHub(ILogger<RealtimeNetworkHub> logger,
-            RealtimeNetworkRepository networkRepository) {
+            RealtimeNetworkRepository networkRepository, OutfitRepository outfitRepo,
+            CharacterRepository charRepo) {
 
             _Logger = logger;
             _NetworkRepository = networkRepository;
+            _OutfitRepository = outfitRepo;
+            _CharacterRepository = charRepo;
         }
 
         public async Task Initalize(short worldID) {

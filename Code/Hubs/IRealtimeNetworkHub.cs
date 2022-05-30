@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using watchtower.Models.Census;
 using watchtower.Models.Watchtower;
 
 namespace watchtower.Code.Hubs {
@@ -11,6 +13,10 @@ namespace watchtower.Code.Hubs {
         /// <param name="network"></param>
         /// <returns></returns>
         Task UpdateNetwork(RealtimeNetwork network);
+
+        Task SendCharacters(List<PsCharacter> chars);
+
+        Task SendOutfits(List<PsOutfit> outfits);
 
     }
 }

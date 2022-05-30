@@ -224,14 +224,17 @@
     import ForceSupvisor from "node_modules/graphology-layout-force/worker";
 
     import { RealtimeNetwork, RealtimeNetworkApi, RealtimeNetworkPlayer } from "api/RealtimeNetworkApi";
+    import { PsCharacter } from "api/CharacterApi";
 
     import * as sR from "signalR";
+    import RealtimeNetworkSocket from "./RealtimeNetworkSocket";
 
     import "filters/LocaleFilter";
     import "MomentFilter";
 
     import ColorUtil from "util/Color";
     import WorldUtil from "util/World";
+    import CharacterUtil from "util/Character";
 
     /**
      * Get a random {x, y} position that ranges from (-width/2, width/2)
@@ -271,8 +274,9 @@
 
         data: function() {
             return {
+                socket: new RealtimeNetworkSocket() as RealtimeNetworkSocket,
+
                 connection: null as sR.HubConnection | null,
-                socketState: "" as string,
                 lastUpdate: null as Date | null,
 
                 context: null as HTMLElement | null,
@@ -308,46 +312,25 @@
         },
 
         created: function(): void {
-            this.connection = new sR.HubConnectionBuilder()
-                .withUrl("/ws/realtime-network")
-                .withAutomaticReconnect([5000, 10000, 20000, 20000])
-                .build();
+            this.socket.onUpdateNetwork = (data: RealtimeNetwork): void => {
+                console.log(data);
+                this.lastUpdate = new Date();
+                this.updateGraph(data);
+            };
 
-            this.connection.on("UpdateNetwork", (data: any) => {
-                if (this.auto == true) {
-                    console.log(data);
-                    this.lastUpdate = new Date();
-                    this.updateGraph(data);
+            this.socket.onCharacterLoaded = (character: PsCharacter): void => {
+                if (this.graph != null) {
+                    console.log(`RealtimeNetwork> ${character.id}/${character.name} loaded`);
+                    this.graph.updateNode(character.id, (attr: any) => {
+                        let label: string = CharacterUtil.getDisplay(character);
+
+                        return {
+                            ...attr,
+                            label: label,
+                        }
+                    });
                 }
-            });
-
-            this.connection.start().then(() => {
-                this.socketState = "opened";
-                console.log(`connected`);
-                this.subscribe();
-            }).catch(err => {
-                console.error(err);
-            });
-
-            this.connection.onreconnected(() => {
-                console.log(`reconnected`);
-                this.socketState = "opened";
-                this.subscribe();
-            });
-
-            this.connection.onclose((err?: Error) => {
-                this.socketState = "closed";
-                if (err) {
-                    console.error("onclose: ", err);
-                }
-            });
-
-            this.connection.onreconnecting((err?: Error) => {
-                this.socketState = "reconnecting";
-                if (err) {
-                    console.error("onreconnecting: ", err);
-                }
-            });
+            };
         },
 
         mounted: function(): void {
@@ -361,7 +344,7 @@
                 if (worldID != NaN) {
                     this.worldID = worldID;
                     document.title = `Honu / Realtime Network / ${WorldUtil.getWorldID(this.worldID)}`;
-                    this.subscribe();
+                    this.socket.connect(this.worldID);
                 } else {
                     console.error(`Failed to parse ${parts[1]} to a valid int, got NaN`);
                 }
@@ -382,18 +365,6 @@
         },
 
         methods: {
-            subscribe: function(): void {
-                if (this.worldID == null) { return console.warn(`cannot connect to socket: worldID is null`); }
-                if (this.connection == null) { return console.warn(`cannot connect to socket: connection is null`); }
-                if (this.connection.state != sR.HubConnectionState.Connected) { return console.warn(`cannot connect to socket: state is no 'Connected': ${this.connection.state}`); }
-
-                this.connection.invoke("Initalize", this.worldID).then(() => {
-                    console.log(`RealtimeNetwork> subscribed`);
-                }).catch((err: any) => {
-                    console.error(`RealtimeNetwork> Error subscribing to realtime network for ${this.worldID}: ${err}`);
-                });
-            },
-
             startLayout: function(): void {
                 if (this.layout != null) {
                     console.log(`RealtimeNetwork> starting layout`);
@@ -458,7 +429,7 @@
                 }, 10 * 1000);
             },
 
-            updateGraph: function(data: RealtimeNetwork): void {
+            updateGraph: async function(data: RealtimeNetwork): Promise<void> {
                 this.network = data;
 
                 // Find all character IDs that are in the network, either as a player, or only as an interaction
@@ -466,8 +437,17 @@
                 for (const player of this.network.players) {
                     this.allc.add(player.characterID);
 
+                    this.socket.cacheCharacter(player.characterID);
+                    if (player.outfitID != null) {
+                        this.socket.cacheOutfit(player.outfitID);
+                    }
+
                     for (const interaction of player.interactions) {
                         this.allc.add(interaction.otherID);
+                        this.socket.cacheCharacter(interaction.otherID);
+                        if (interaction.outfitID != null) {
+                            this.socket.cacheOutfit(interaction.outfitID);
+                        }
                     }
                 }
 
@@ -491,7 +471,7 @@
                 }
 
                 console.time("update nodes");
-                this.updateNodes();
+                await this.updateNodes();
                 console.timeEnd("update nodes");
 
                 console.time("update edges");
@@ -516,7 +496,7 @@
                 this.updateGraph(r.data);
             },
 
-            updateNodes: function(): void {
+            updateNodes: async function(): Promise<void> {
                 if (this.graph == null) {
                     return console.warn(`Cannot update nodes: graph is null`);
                 }
@@ -533,24 +513,45 @@
                     this.graph.updateNode(player.characterID, (attr: any) => {
                         const totalStrength: number = player.interactions.reduce((acc, iter) => acc += iter.strength, 0);
 
+                        let label: string = attr.label;
+                        if (!label || label == "loading...") {
+                            const c: PsCharacter | null = this.socket.getCharacter(player.characterID);
+                            if (c == null) {
+                                label = `loading...`;
+                            } else {
+                                label = CharacterUtil.getDisplay(c);
+                            }
+                        }
+
                         return {
                             x: attr.x || getPosition(player.characterID, this.graphWidth).x,
                             y: attr.y || getPosition(player.characterID, this.graphWidth).y,
-                            label: player.display,
+                            label: label,
                             color: attr.color || ColorUtil.getFactionColor(player.factionID ?? 0),
                             size: Math.min(20, 5 + 5 * totalStrength)
                         }
                     });
 
                     for (const inter of player.interactions) {
-                        if (this.graph.hasNode(inter.otherID) == false) {
-                            this.graph.addNode(inter.otherID, {
-                                ...getPosition(inter.otherID, this.graphWidth),
-                                label: inter.otherName,
-                                color: ColorUtil.getFactionColor(inter.factionID ?? 0),
-                                size: 5
-                            });
-                        }
+                        this.graph.updateNode(inter.otherID, (attr: any) => {
+                            let label: string = attr.label;
+                            if (!label || label == "loading...") {
+                                const c: PsCharacter | null = this.socket.getCharacter(inter.otherID);
+                                if (c == null) {
+                                    label = `loading...`;
+                                } else {
+                                    label = CharacterUtil.getDisplay(c);
+                                }
+                            }
+
+                            return {
+                                x: attr.x || getPosition(inter.otherID, this.graphWidth).x,
+                                y: attr.y || getPosition(inter.otherID, this.graphWidth).y,
+                                label: label,
+                                color: attr.color || ColorUtil.getFactionColor(inter.factionID ?? 0),
+                                size: attr.size || 5
+                            }
+                        });
                     }
                 }
             },
@@ -761,6 +762,12 @@
 
             "settings.allowedConnections": function(): void {
                 this.resetGraph();
+            }
+        },
+
+        computed: {
+            socketState: function(): string {
+                return this.socket.socketState;
             }
         },
 

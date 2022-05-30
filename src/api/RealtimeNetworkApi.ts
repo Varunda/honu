@@ -9,14 +9,14 @@ export class RealtimeNetwork {
 
 export class RealtimeNetworkPlayer {
     public characterID: string = "";
-    public display: string = "";
+    public outfitID: string | null = null;
     public factionID: number = 0;
     public interactions: RealtimeNetworkInteraction[] = [];
 }
 
 export class RealtimeNetworkInteraction {
     public otherID: string = "";
-    public otherName: string = "";
+    public outfitID: string | null = null;
     public factionID: number = 0;
     public strength: number = 0;
 }
