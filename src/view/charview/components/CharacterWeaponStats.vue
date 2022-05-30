@@ -1,6 +1,6 @@
 ﻿<template>
     <div>
-        <div>
+        <div class="mb-2">
             <button type="button" class="btn btn-primary" @click="loadEntries">
                 Reload
             </button>
@@ -15,10 +15,12 @@
 
             <toggle-button v-model="showNonWeapons">
                 Show non-weapons
+                <info-hover text="Show all item stats, not just weapons. This will include items such as medkits and spawn beacons" class="px-1"></info-hover>
             </toggle-button>
 
             <toggle-button v-model="showExtraInfo">
                 Show extra info
+                <info-hover text="Show the raw values used to calculate each column. For example, show the number of shots and the number of shots hit, instead of just accuracy" class="px-1"></info-hover>
             </toggle-button>
 
             <toggle-button v-model="showPercent">

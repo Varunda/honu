@@ -132,7 +132,7 @@
                 metadata: Loadable.idle() as Loading<CharacterMetadata>,
 
                 selectedTab: "overview" as string,
-                selectedComponent: "CharacterWeaponStats" as string
+                selectedComponent: "CharacterOverview" as string
             }
         },
 
