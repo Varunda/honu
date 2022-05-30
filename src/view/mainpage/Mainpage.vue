@@ -57,19 +57,6 @@
 
         <div>
             <h1 class="d-inline-block mr-2">
-                <a href="/ledger">
-                    Ledger
-                </a>
-            </h1>
-            <h3 class="d-inline-block">
-                <small class="text-muted">Base capture/defend stats</small>
-            </h3>
-        </div>
-
-        <hr class="border" />
-
-        <div>
-            <h1 class="d-inline-block mr-2">
                 <a href="/character">
                     Character Viewer
                 </a>
@@ -118,13 +105,23 @@
 
         <div>
             <h1 class="d-inline-block mr-2">
-                <a href="/realtimemap">
-                    Real Time Map
+                <a href="/ledger">
+                    Ledger
                 </a>
             </h1>
-            <div>
-                <a href="/realtimemap">View</a>
-            </div>
+            <h3 class="d-inline-block">
+                <small class="text-muted">Base capture/defend stats</small>
+            </h3>
+        </div>
+
+        <hr class="border" />
+
+        <div>
+            <h1 class="d-inline-block mr-2">
+                <a href="/realtimemap">
+                    Realtime Map
+                </a>
+            </h1>
         </div>
 
         <hr class="border" />
