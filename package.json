@@ -13,7 +13,6 @@
     "chartjs-plugin-annotation": "^1.0.2",
     "chartjs-plugin-datalabels": "^2.0.0",
     "clean-webpack-plugin": "^1.0.1",
-    "cytoscape": "^3.21.1",
     "graphology": "^0.24.1",
     "graphology-communities-louvain": "^2.0.1",
     "graphology-layout-force": "^0.2.4",
