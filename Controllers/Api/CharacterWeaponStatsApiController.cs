@@ -30,14 +30,15 @@ namespace watchtower.Controllers.Api {
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly CharacterWeaponStatDbStore _StatDb;
+        private readonly VehicleRepository _VehicleRepository;
 
         private readonly WeaponPercentileCacheQueue _PercentileQueue;
 
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
             ICharacterWeaponStatRepository charWeaponRepo, CharacterRepository charRepo,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
-            WeaponPercentileCacheQueue percentQueue,
-            CharacterWeaponStatDbStore statDb) {
+            WeaponPercentileCacheQueue percentQueue, CharacterWeaponStatDbStore statDb,
+            VehicleRepository vehicleRepository) {
 
             _Logger = logger;
 
@@ -48,6 +49,7 @@ namespace watchtower.Controllers.Api {
             _StatDb = statDb;
 
             _PercentileQueue = percentQueue ?? throw new ArgumentNullException(nameof(percentQueue));
+            _VehicleRepository = vehicleRepository;
         }
 
         /// <summary>
@@ -82,6 +84,7 @@ namespace watchtower.Controllers.Api {
                 stat.Stat = entry;
                 stat.ItemID = entry.WeaponID;
                 stat.Item = await _ItemRepository.GetByID(int.Parse(stat.ItemID));
+                stat.Vehicle = await _VehicleRepository.GetByID(entry.VehicleID);
 
                 // Ignore boring stuff like a helmet
                 if (stat.Item != null && stat.Item.TypeID != 26) {

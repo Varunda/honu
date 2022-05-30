@@ -248,7 +248,6 @@
         },
 
         beforeMount: function(): void {
-            console.log(`char id is ${this.character.id}`);
             this.loadEntries();
         },
 

@@ -4,6 +4,7 @@ import ApiWrapper from "api/ApiWrapper";
 
 import { PsItem } from "api/ItemApi";
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
+import { PsVehicle } from "api/VehicleApi";
 
 export class WeaponStatEntry {
 	public weaponID: string = "";
@@ -30,6 +31,7 @@ export class CharacterWeaponStatEntry {
 	public itemID: string = "";
 	public vehicleID: number = 0;
 	public item: PsItem | null = null;
+	public vehicle: PsVehicle | null = null;
 
 	public itemName: string = "";
 
@@ -73,8 +75,9 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 		return {
 			characterID: elem.characterID,
 			itemID: elem.itemID,
-			vehicleID: elem.vehicleID,
-			item: { ...elem.item },
+			vehicleID: elem.stat.vehicleID,
+			vehicle: (elem.vehicle == null) ? null : { ...elem.vehicle },
+			item: (elem.item == null) ? null : { ...elem.item },
 			itemName: (elem.item) ? elem.item.name : `<missing ${elem.itemID}>`,
 			kills: elem.stat.kills,
 			deaths: elem.stat.deaths,

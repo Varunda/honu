@@ -59,6 +59,11 @@
                         Weapon stats
                     </a>
                 </li>
+                <li class="nav-item" @click="selectTab('vehicle')">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'vehicle' }">
+                        Vehicle stats
+                    </a>
+                </li>
                 <li class="nav-item" @click="selectTab('sessions')">
                     <a class="nav-link" :class="{ 'text-success': selectedTab != 'sessions' }">
                         Sessions
@@ -119,6 +124,7 @@
     import CharacterFriends from "./components/CharacterFriends.vue";
     import CharacterDirectives from "./components/CharacterDirectives.vue";
     import CharacterExtraStats from "./components/CharacterExtraStats.vue";
+    import CharacterVehicleStats from "./components/CharacterVehicleStats.vue";
 
     export const CharacterViewer = Vue.extend({
         beforeMount: function(): void {
@@ -160,6 +166,8 @@
                     this.selectedComponent = "CharacterDirectives";
                 } else if (lower == "extra") {
                     this.selectedComponent = "CharacterExtraStats";
+                } else if (lower == "vehicle") {
+                    this.selectedComponent = "CharacterVehicleStats";
                 } else {
                     throw `Unhandled tab selected '${lower}'`;
                 }
@@ -221,6 +229,7 @@
             CharacterFriends,
             CharacterDirectives,
             CharacterExtraStats,
+            CharacterVehicleStats,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });
