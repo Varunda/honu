@@ -105,11 +105,11 @@ namespace watchtower.Services.Hosted.Startup {
                 List<PsItem> dbItems = await _ItemDb.GetAll();
 
                 _Logger.LogDebug($"Item: got {censusItems.Count} from Census, have {dbItems.Count} in DB");
-                if (censusItems.Count > dbItems.Count) {
+                //if (censusItems.Count > dbItems.Count) {
                     foreach (PsItem item in censusItems) {
                         await _ItemDb.Upsert(item);
                     }
-                }
+                //}
 
                 List<PsVehicle> censusVehs = await _VehicleCensus.GetAll();
                 List<PsVehicle> dbVehs = await _VehicleDb.GetAll();
