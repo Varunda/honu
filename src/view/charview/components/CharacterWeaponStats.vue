@@ -51,7 +51,7 @@
                             :style="getWeaponNameStyle(entry) ">
                         </div>
 
-                        <census-image v-if="showImages == true && entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
+                        <census-image v-if="showImages == true && entry.item != null && entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
                             style="position: absolute; text-align: center; height: 100%; right: 0;" class="mr-1">
                         </census-image>
 
