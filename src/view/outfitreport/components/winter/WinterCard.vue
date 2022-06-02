@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="card mr-3 mb-3 bg-transparent border" style="max-width: min(20%, 390px)">
+    <div class="card mr-3 mb-3 bg-transparent border">
         <div class="card-header">
             <h5>
                 {{ShowFunName ? card.funName : card.name}}
