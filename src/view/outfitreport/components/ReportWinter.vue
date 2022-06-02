@@ -87,7 +87,7 @@
 
         template: `
             <div>
-                <div class="d-flex flex-row">
+                <div class="d-flex flex-row flex-wrap">
                     <template v-for="metric in category.metrics" :key="metric.name">
                         <winter-card v-if="metric.entries.length > 0" :card="metric" :show-fun-name="ShowFunNames" :size="size"></winter-card>
                     </template>
