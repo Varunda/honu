@@ -150,11 +150,11 @@
                 </div>
 
                 <div class="col-12">
-                    <alert-medic-board :participants="participants"></alert-medic-board>
+                    <alert-medic-board :participants="participants" :alert="alert.data"></alert-medic-board>
                 </div>
 
                 <div class="col-12">
-                    <alert-outfit-medic-board :outfits="outfits"></alert-outfit-medic-board>
+                    <alert-outfit-medic-board :outfits="outfits" :alert="alert.data"></alert-outfit-medic-board>
                 </div>
             </div>
 
@@ -164,11 +164,11 @@
                 </div>
 
                 <div class="col-12">
-                    <alert-engineer-board :participants="participants"></alert-engineer-board>
+                    <alert-engineer-board :participants="participants" :alert="alert.data"></alert-engineer-board>
                 </div>
 
                 <div class="col-12">
-                    <alert-outfit-engineer-board :outfits="outfits"></alert-outfit-engineer-board>
+                    <alert-outfit-engineer-board :outfits="outfits" :alert="alert.data"></alert-outfit-engineer-board>
                 </div>
             </div>
         </div>

@@ -61,6 +61,8 @@ namespace watchtower.Services.Repositories {
 
             services.AddSingleton<RealtimeNetworkBuilder>();
             services.AddSingleton<RealtimeNetworkRepository>();
+
+            services.AddSingleton<BadHealthRepository>();
         }
 
     }

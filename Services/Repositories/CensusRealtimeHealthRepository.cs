@@ -15,16 +15,20 @@ namespace watchtower.Services.Repositories {
 
         private readonly ILogger<CensusRealtimeHealthRepository> _Logger;
 
+        private readonly BadHealthRepository _BadHealthRepository;
+
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
 
         private readonly IOptions<CensusRealtimeHealthOptions> _HealthTolerances;
 
         public CensusRealtimeHealthRepository(ILogger<CensusRealtimeHealthRepository> logger,
-            IOptions<CensusRealtimeHealthOptions> healthTolerances) {
+            IOptions<CensusRealtimeHealthOptions> healthTolerances, BadHealthRepository badHealthRepository) {
 
             _Logger = logger;
+
             _HealthTolerances = healthTolerances;
+            _BadHealthRepository = badHealthRepository;
         }
 
         /// <summary>
@@ -34,7 +38,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="timestamp">Timestamp of when the death event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public void SetDeath(short worldID, DateTime timestamp) {
-            SetMap(ref _Deaths, worldID, timestamp);
+            SetMap(ref _Deaths, worldID, timestamp, "death");
         }
 
         /// <summary>
@@ -44,7 +48,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="timestamp">Timestamp of when the exp event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public void SetExp(short worldID, DateTime timestamp) {
-            SetMap(ref _Exp, worldID, timestamp);
+            SetMap(ref _Exp, worldID, timestamp, "exp");
         }
 
         /// <summary>
@@ -79,7 +83,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="dict"></param>
         /// <param name="worldID"></param>
         /// <param name="timestamp"></param>
-        private void SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp) {
+        /// <param name="what"></param>
+        private void SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp, string what) {
             lock (dict) {
                 dict.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
                     WorldID = worldID,
@@ -87,6 +92,15 @@ namespace watchtower.Services.Repositories {
                     FailureCount = 0
                 }, (key, oldValue) => { 
                     if (oldValue.FailureCount > 0) {
+                        if (oldValue.LastEvent != null) {
+                            int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - oldValue.LastEvent.Value).TotalSeconds)); 
+
+                            _BadHealthRepository.Insert(new BadHealthEntry() {
+                                When = timestamp,
+                                What = $"World {worldID}/{World.GetName(worldID)}'s {what} stream was {timeWithout}s without an event, failed {oldValue.FailureCount} times before successful reconnect"
+                            });
+                        }
+
                         _Logger.LogDebug($"World {oldValue.WorldID} got an event, resetting failure count");
                     }
 
@@ -101,6 +115,8 @@ namespace watchtower.Services.Repositories {
             //_Logger.LogTrace($"{JToken.FromObject(_HealthTolerances.Value)}");
 
             bool healthy = true;
+
+            string what = "";
 
             foreach (CensusRealtimeHealthTolerance tolerance in _HealthTolerances.Value.Death) {
                 if (tolerance.Tolerance == null) {
@@ -136,6 +152,7 @@ namespace watchtower.Services.Repositories {
                     healthy = false;
 
                     _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, {timeWithout} seconds old, tolerance {threshold}, backoff {backoff}, fails {entry.FailureCount}");
+                    what += $"{tolerance.WorldID}/{World.GetName(tolerance.WorldID)} has gone {timeWithout} seconds";
                 }
             }
 

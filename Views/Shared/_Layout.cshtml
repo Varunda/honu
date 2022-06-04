@@ -21,23 +21,16 @@
 
     <meta property="og:url" content="https://wt.honu.pw" />
     <meta property="theme-color" content="#BF40BF" data-react-helmet="true" />
-
 </head>
-<body>
 
+<body>
     <div style="position: fixed; top: 0; right: 0; z-index: 1080;" id="toaster"></div>
 
     <script>
         $(".toast").toast("show");
     </script>
 
-    <!--
-    <div class="text-center text-danger my-2">
-        Honu cannot currently connect to the Planetside 2 API. There is either an issue with my server hoster, or DBG broke their DNS nameservers. ETA of fix is 2022-02-10
-    </div>
-    -->
-
-    <div class="container-fluid">
+    <div>
         <main role="main">
             @RenderBody()
         </main>

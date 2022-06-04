@@ -5,6 +5,7 @@ export class HonuHealth {
     public queues: ServiceQueueCount[] = [];
     public death: CensusRealtimeHealthEntry[] = [];
     public exp: CensusRealtimeHealthEntry[] = [];
+    public realtimeHealthFailures: BadHealthEntry[] = [];
 }
 
 export class ServiceQueueCount {
@@ -16,6 +17,11 @@ export class CensusRealtimeHealthEntry {
     public worldID: number = 0;
     public lastEvent: Date = new Date();
     public failureCount: number = 0;
+}
+
+export class BadHealthEntry {
+    public when: Date = new Date();
+    public what: string = "";
 }
 
 export class HonuHealthApi extends ApiWrapper<HonuHealth> {
@@ -35,11 +41,19 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
         };
     }
 
+    public static parseBadHealth(elem: any): BadHealthEntry {
+        return {
+            ...elem,
+            when: new Date(elem.when)
+        };
+    }
+
     public static parse(elem: any): HonuHealth {
         return {
             queues: elem.queues.map((iter: any) => HonuHealthApi.parseQueue(iter)),
             death: elem.death.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
             exp: elem.exp.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
+            realtimeHealthFailures: elem.realtimeHealthFailures.map((iter: any) => HonuHealthApi.parseBadHealth(iter))
         };
     }
 

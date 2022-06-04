@@ -104,11 +104,20 @@ namespace watchtower.Services.Hosted.Startup {
                 List<PsItem> censusItems = await _ItemCensus.GetAll();
                 List<PsItem> dbItems = await _ItemDb.GetAll();
 
+                Dictionary<int, PsItem> dbdb = new Dictionary<int, PsItem>();
+                foreach (PsItem i in dbItems) {
+                    dbdb[i.ID] = i;
+                }
+
                 _Logger.LogDebug($"Item: got {censusItems.Count} from Census, have {dbItems.Count} in DB");
                 //if (censusItems.Count > dbItems.Count) {
-                    foreach (PsItem item in censusItems) {
-                        await _ItemDb.Upsert(item);
+                foreach (PsItem item in censusItems) {
+                    _ = dbdb.TryGetValue(item.ID, out PsItem? db);
+                    if (db == null) {
+                        _Logger.LogDebug($"NEW >> item from Census {item.Name}");
                     }
+                    await _ItemDb.Upsert(item);
+                }
                 //}
 
                 List<PsVehicle> censusVehs = await _VehicleCensus.GetAll();

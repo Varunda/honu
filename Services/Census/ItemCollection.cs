@@ -55,14 +55,14 @@ namespace watchtower.Services.Census {
                         PsItem? item = _Reader.ReadEntry(token);
                         if (item != null) {
                             items.Add(item);
+                        } else {
+                            _Logger.LogWarning($"got null item from {token}");
                         }
                         //_Logger.LogDebug($"Parsed facility: {fac.Name} => {JToken.FromObject(fac)}");
                     }
-
-                    _Logger.LogInformation($"Found {arr.Count()} entries in map_region_list object");
                 } while (false);
             } catch (Exception ex) {
-                _Logger.LogError(ex, "failed to patch map_region");
+                _Logger.LogError(ex, "failed to patch item");
             }
 
             return items;
