@@ -38,33 +38,15 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="kills">
-            <a-header>
-                <b>Kills</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.kills}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="kpm">
-            <a-header>
-                <b>KPM</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.kpm | locale(2)}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="revives">
             <a-header>
                 <b>Revives</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.revives}}
+                <a @click="openCharacterRevives($event, entry.id)">
+                    {{entry.revives}}
+                </a>
             </a-body>
         </a-col>
 
@@ -75,6 +57,50 @@
 
             <a-body v-slot="entry">
                 {{entry.revivesPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="heals">
+            <a-header>
+                <b>Heals</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openCharacterHeals($event, entry.id)">
+                    {{entry.heals}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="healsPerMinute">
+            <a-header>
+                <b>HPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.healsPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="kills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openCharacterKills($event, entry.id)">
+                    {{entry.kills}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="kpm">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.kpm | locale(2)}}
             </a-body>
         </a-col>
 
@@ -108,35 +134,15 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="heals">
-            <a-header>
-                <b>Heals</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                <a @click="openCharacter($event, entry.characterID)">
-                    {{entry.heals}}
-                </a>
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="healsPerMinute">
-            <a-header>
-                <b>HPM</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.healsPerMinute | locale(2)}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="timeAs">
             <a-header>
                 <b>Time online</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.timeAs | mduration}}
+                <a @click="openCharacterSessions($event, entry.id)">
+                    {{entry.timeAs | mduration}}
+                </a>
             </a-body>
         </a-col>
 
@@ -147,11 +153,7 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
-    import { PopperModalData } from "popper/PopperModalData";
-    import EventBus from "EventBus";
-
     import { AlertParticipantApi, AlertPlayerProfileData, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
-    import { ExpandedExpEvent, ExpStatApi, Experience } from "api/ExpStatApi";
     import { PsAlert } from "api/AlertApi";
     import { MedicTableData, TableData } from "../TableData";
 
@@ -163,6 +165,7 @@
     import CharacterUtil from "util/Character";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import TableDataSource from "../TableDataSource";
 
     export const AlertMedicBoard = Vue.extend({
         props: {
@@ -181,45 +184,21 @@
                 return ColorUtils.getFactionColor(factionID) + " !important";
             },
 
-            openCharacter: async function(event: any, characterID: string): Promise<void> {
-                if (this.participants.state != "loaded") {
-                    return;
-                }
-
-                const modalData: PopperModalData = new PopperModalData();
-                modalData.root = event.target;
-                modalData.title = "Player kills";
-                modalData.columnFields = [ "characterName", "amount", "percent" ];
-                modalData.columnNames = [ "Character", "Amount", "Percent" ];
-                modalData.loading = true;
-
-                EventBus.$emit("set-modal-data", modalData);
-
-                const expEvents: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(characterID, this.alert.timestamp, this.alert.end);
-                if (expEvents.state == "loaded") {
-                    const healEvents: ExpandedExpEvent[] = expEvents.data.filter(iter => {
-                        return iter.event.experienceID == Experience.HEAL || iter.event.experienceID == Experience.SQUAD_HEAL;
-                    });
-
-                    const healedCharacters: string[] = healEvents.map(iter => iter.event.otherID).filter((v, i, a) => a.indexOf(v) == i);
-
-                    modalData.data = healedCharacters.map((characterID: string) => {
-                        const charEvents: ExpandedExpEvent[] = healEvents.filter(iter => iter.event.otherID == characterID);
-                        if (charEvents.length == 0) {
-                            throw `how does ${characterID} have 0 heal events`;
-                        }
-
-                        return {
-                            characterName: charEvents[0].other != null ? CharacterUtil.getDisplay(charEvents[0].other) : `<missing ${charEvents[0].event.otherID}>`,
-                            amount: charEvents.length,
-                            percent: `${(charEvents.length / healEvents.length * 100).toFixed(2)}%`
-                        };
-                    }).sort((a, b) => b.amount - a.amount);
-                }
-
-                modalData.loading = false;
-                EventBus.$emit("set-modal-data", modalData);
+            openCharacterHeals: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterHeals(event, this.alert, characterID);
             },
+
+            openCharacterRevives: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterRevives(event, this.alert, characterID);
+            },
+
+            openCharacterKills: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterKills(event, this.alert, characterID);
+            },
+
+            openCharacterSessions: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterSessions(event, this.alert, characterID);
+            }
         },
 
         computed: {

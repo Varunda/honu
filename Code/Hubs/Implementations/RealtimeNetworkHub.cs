@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.Watchtower;
@@ -32,7 +33,19 @@ namespace watchtower.Code.Hubs.Implementations {
             try {
                 string groupID = $"RealtimeNetwork.{worldID}";
 
-                _Logger.LogInformation($"{Context.ConnectionId} is subscribing to {groupID}");
+                /*
+                IPAddress? ip = Context.GetHttpContext()?.Connection.RemoteIpAddress;
+                Microsoft.Extensions.Primitives.StringValues? realIP = Context.GetHttpContext()?.Request.Headers["X-Real-IP"];
+
+                string h = "";
+                if (Context.GetHttpContext() != null) {
+                    foreach (KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> iter in Context.GetHttpContext()!.Request.Headers) {
+                        h += $"{iter.Key} = {iter.Value}\n";
+                    }
+                }
+
+                _Logger.LogInformation($"{ip?.ToString()} {realIP} {Context.ConnectionId} is subscribing to {groupID}\n{h}");
+                */
 
                 if (_GroupMembership.TryGetValue(Context.ConnectionId, out string? previousGroup) == true) {
                     await Groups.RemoveFromGroupAsync(Context.ConnectionId, previousGroup!);

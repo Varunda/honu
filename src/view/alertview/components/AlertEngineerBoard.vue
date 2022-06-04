@@ -38,13 +38,59 @@
             </a-body>
         </a-col>
 
+        <a-col sort-field="resupplies">
+            <a-header>
+                <b>Resupplies</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openCharacterResupplies($event, entry.id)">
+                    {{entry.resupplies}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="resuppliesPerMinute">
+            <a-header>
+                <b>Resupplies per minute</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.resuppliesPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="repairs">
+            <a-header>
+                <b>Repairs</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openCharacterRepairs($event, entry.id)">
+                    {{entry.repairs}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="repairsPerMinute">
+            <a-header>
+                <b>Repairs per minute</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.repairsPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
         <a-col sort-field="kills">
             <a-header>
                 <b>Kills</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.kills}}
+                <a @click="openCharacterKills($event, entry.id)">
+                    {{entry.kills}}
+                </a>
             </a-body>
         </a-col>
 
@@ -78,53 +124,15 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="resupplies">
-            <a-header>
-                <b>Resupplies</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.resupplies}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="resuppliesPerMinute">
-            <a-header>
-                <b>Resupplies per minute</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.resuppliesPerMinute | locale(2)}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="repairs">
-            <a-header>
-                <b>Repairs</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.repairs}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="repairsPerMinute">
-            <a-header>
-                <b>Repairs per minute</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.repairsPerMinute | locale(2)}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="timeAs">
             <a-header>
                 <b>Time online</b>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.timeAs | mduration}}
+                <a @click="openCharacterSessions($event, entry.id)">
+                    {{entry.timeAs | mduration}}
+                </a>
             </a-body>
         </a-col>
     </a-table>
@@ -135,7 +143,7 @@
     import { Loading, Loadable } from "Loading";
 
     import { AlertParticipantApi, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
-    import { EngineerTableData, TableData } from "../TableData";
+    import { PsAlert } from "api/AlertApi";
 
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
@@ -145,8 +153,12 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
 
+    import TableDataSource from "../TableDataSource";
+    import { EngineerTableData, TableData } from "../TableData";
+
     export const AlertEngineeringBoard = Vue.extend({
         props: {
+            alert: { type: Object as PropType<PsAlert>, required: true },
             participants: { type: Object as PropType<Loading<FlattendParticipantDataEntry[]>>, required: true }
         },
 
@@ -159,6 +171,22 @@
         methods: {
             getFactionColor: function(factionID: number): string {
                 return ColorUtils.getFactionColor(factionID) + " !important";
+            },
+
+            openCharacterResupplies: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterResupplies(event, this.alert, characterID);
+            },
+
+            openCharacterRepairs: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterRepairs(event, this.alert, characterID);
+            },
+
+            openCharacterKills: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterKills(event, this.alert, characterID);
+            },
+
+            openCharacterSessions: async function(event: any, characterID: string): Promise<void> {
+                await TableDataSource.openCharacterSessions(event, this.alert, characterID);
             }
         },
 

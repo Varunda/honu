@@ -44,7 +44,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.medicKills}}
+                <a @click="openOutfitMedicKills($event, entry.outfitID)">
+                    {{entry.medicKills}}
+                </a>
             </a-body>
         </a-col>
 
@@ -64,7 +66,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.medicRevives}}
+                <a @click="openOutfitMedicRevives($event, entry.outfitID)">
+                    {{entry.medicRevives}}
+                </a>
             </a-body>
         </a-col>
 
@@ -114,7 +118,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.medicHeals}}
+                <a @click="openOutfitMedicHeals($event, entry.outfitID)">
+                    {{entry.medicHeals}}
+                </a>
             </a-body>
         </a-col>
 
@@ -139,13 +145,20 @@
     import "filters/FactionNameFilter";
     import "MomentFilter";
 
+    import { PsAlert } from "api/AlertApi";
+    import { AlertParticipantApi, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+
     import ColorUtils from "util/Color";
+    import ProfileUtils from "util/Profile";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import TableDataSource from "../TableDataSource";
 
     export const AlertOutfitMedicBoard = Vue.extend({
         props: {
-            outfits: { type: Object, required: true }
+            outfits: { type: Object, required: true },
+            alert: { type: Object as PropType<PsAlert>, required: true },
+            participants: { type: Object as PropType<Loading<FlattendParticipantDataEntry[]>>, required: true }
         },
 
         data: function() {
@@ -157,7 +170,22 @@
         methods: {
             getFactionColor: function(factionID: number): string {
                 return ColorUtils.getFactionColor(factionID) + " !important";
-            }
+            },
+
+            openOutfitMedicKills: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitKillsByProfile(event, this.alert, this.participants.data, outfitID, ProfileUtils.MEDIC);
+            },
+
+            openOutfitMedicHeals: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitMedicHeals(event, this.alert, this.participants.data, outfitID);
+            },
+
+            openOutfitMedicRevives: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitMedicRevives(event, this.alert, this.participants.data, outfitID);
+            },
         },
 
         computed: {

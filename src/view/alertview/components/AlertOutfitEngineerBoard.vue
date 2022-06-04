@@ -42,7 +42,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.engKills}}
+                <a @click="openOutfitEngiKills($event, entry.outfitID)">
+                    {{entry.engKills}}
+                </a>
             </a-body>
         </a-col>
 
@@ -82,7 +84,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.engResupplies}}
+                <a @click="openOutfitEngiResupplies($event, entry.outfitID)">
+                    {{entry.engResupplies}}
+                </a>
             </a-body>
         </a-col>
 
@@ -102,7 +106,9 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.engRepairs}}
+                <a @click="openOutfitEngiRepairs($event, entry.outfitID)">
+                    {{entry.engRepairs}}
+                </a>
             </a-body>
         </a-col>
 
@@ -127,13 +133,20 @@
     import "filters/FactionNameFilter";
     import "MomentFilter";
 
+    import { PsAlert } from "api/AlertApi";
+    import { AlertParticipantApi, FlattendParticipantDataEntry } from "api/AlertParticipantApi";
+
     import ColorUtils from "util/Color";
+    import ProfileUtils from "util/Profile";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import TableDataSource from "../TableDataSource";
 
     export const AlertOutfitEngineerBoard = Vue.extend({
         props: {
-            outfits: { type: Object, required: true }
+            outfits: { type: Object, required: true },
+            alert: { type: Object as PropType<PsAlert>, required: true },
+            participants: { type: Object as PropType<Loading<FlattendParticipantDataEntry[]>>, required: true }
         },
 
         data: function() {
@@ -145,7 +158,22 @@
         methods: {
             getFactionColor: function(factionID: number): string {
                 return ColorUtils.getFactionColor(factionID) + " !important";
-            }
+            },
+
+            openOutfitEngiKills: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitKillsByProfile(event, this.alert, this.participants.data, outfitID, ProfileUtils.ENGINEER);
+            },
+
+            openOutfitEngiResupplies: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitEngiResupplies(event, this.alert, this.participants.data, outfitID);
+            },
+
+            openOutfitEngiRepairs: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitEngiRepairs(event, this.alert, this.participants.data, outfitID);
+            },
         },
 
         computed: {

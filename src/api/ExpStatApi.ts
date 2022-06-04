@@ -259,7 +259,7 @@ export class ExpStatApi extends ApiWrapper<ExpEvent> {
     }
 
     public static async getByCharacterIDAndRange(charID: string, start: Date, end: Date): Promise<Loading<ExpandedExpEvent[]>> {
-        return ExpStatApi.get().readList(`/api/exp/character/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, ExpStatApi.parseExpandedExpEntry);
+        return ExpStatApi.get().readList(`/api/exp/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, ExpStatApi.parseExpandedExpEntry);
     }
 
     public static async getCharacterHealEntries(charID: string): Promise<Loading<CharacterExpSupportEntry[]>> {

@@ -128,16 +128,15 @@
     import "MomentFilter";
 
     import ColorUtils from "util/Color";
-    import TimeUtils from "util/Time";
-    import CharacterUtils from "util/Character";
 
     import InfoHover from "components/InfoHover.vue";
     import ATable, { ACol, ABody, AFilter, AHeader, AFooter } from "components/ATable";
+    import TableDataSource from "../TableDataSource";
 
     export const AlertOutfitKillBoard = Vue.extend({
         props: {
-            alert: { type: Object as PropType<PsAlert>, required: true },
             outfits: { type: Object, required: true },
+            alert: { type: Object as PropType<PsAlert>, required: true },
             participants: { type: Object as PropType<Loading<FlattendParticipantDataEntry[]>>, required: true }
         },
 
@@ -152,42 +151,9 @@
                 return ColorUtils.getFactionColor(factionID) + " !important";
             },
 
-            openOutfit: async function(event: any, outfitID: string): Promise<void> {
-                if (this.participants.state != "loaded") {
-                    return;
-                }
-
-                const modalData: PopperModalData = new PopperModalData();
-                modalData.root = event.target;
-                modalData.title = "Player kills";
-                modalData.columnFields = [ "characterName", "killsDisplay", "kpm", "secondsOnline" ];
-                modalData.columnNames = [ "Name", "Kills", "KPM", "Time online" ];
-                modalData.loading = true;
-
-                EventBus.$emit("set-modal-data", modalData);
-
-                const players: FlattendParticipantDataEntry[] = this.participants.data.filter(iter => iter.outfitID == outfitID);
-
-                const totalKills: number = players.reduce((acc: number, iter) => acc += iter.kills, 0);
-
-                modalData.data = players.map(iter => {
-                    return {
-                        characterID: iter.characterID,
-                        characterName: CharacterUtils.getDisplay({ ...iter, name: iter.characterName }),
-                        kills: iter.kills,
-                        killsDisplay: `${iter.kills} (${(iter.kills / totalKills * 100).toFixed(2)}%)`,
-                        kpm: `${iter.kpm.toFixed(2)}`,
-                        secondsOnline: TimeUtils.duration(iter.secondsOnline)
-                    };
-                }).sort((a, b) => (b.kills - a.kills));
-
-                modalData.renderers.set("characterName", (data: any): string => {
-                    return `<a href="/c/${data.characterID}">${data.characterName}</a>`;
-                });
-
-                modalData.loading = false;
-
-                EventBus.$emit("set-modal-data", modalData);
+            openOutfit: function(event: any, outfitID: string): void {
+                if (this.participants.state != "loaded") { return; }
+                TableDataSource.openOutfitKills(event, this.alert, this.participants.data, outfitID);
             },
 
             openReport: function(outfitID: string): void {

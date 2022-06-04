@@ -214,10 +214,10 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            /*
-            _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
-                + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
-            */
+            if (toDb > 100 || toCensus > 100) {
+                _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
+                    + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
+            }
 
             return chars;
         }

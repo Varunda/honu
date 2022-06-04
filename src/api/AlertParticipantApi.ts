@@ -1,7 +1,10 @@
 ﻿import { Loading, Loadable } from "Loading";
+
 import ApiWrapper from "api/ApiWrapper";
 import { CharacterApi, MinimalCharacter, PsCharacter } from "api/CharacterApi";
 import { OutfitApi, PsOutfit } from "api/OutfitApi";
+
+import ProfileUtils from "util/Profile";
 
 export class AlertParticipantDataEntry {
     public id: number = 0;
@@ -124,6 +127,7 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
                 const character: MinimalCharacter | null = expanded.data.characters.get(entry.characterID) || null;
                 const outfit: PsOutfit | null = (entry.outfitID == null) ? null : expanded.data.outfits.get(entry.outfitID) || null;
 
+
                 const flat: FlattendParticipantDataEntry = {
                     ...entry,
                     entry: entry,
@@ -135,13 +139,29 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
 
                     kpm: entry.kills / Math.max(1, entry.secondsOnline) * 60,
                     kd: entry.kills / Math.max(1, entry.deaths),
+                    heals: entry.heals,
                     healsPerMinute: entry.heals / Math.max(1, entry.secondsOnline) * 60,
+                    revives: entry.revives,
                     revivesPerMinute: entry.revives / Math.max(1, entry.secondsOnline) * 60,
+                    shieldRepairs: entry.shieldRepairs,
                     shieldRepairsPerMinute: entry.shieldRepairs / Math.max(1, entry.secondsOnline) * 60,
+                    repairs: entry.repairs,
                     repairsPerMinute: entry.repairs / Math.max(1, entry.secondsOnline) * 60,
+                    resupplies: entry.resupplies,
                     resuppliesPerMinute: entry.resupplies / Math.max(1, entry.secondsOnline) * 60,
                     spawnsPerMinute: entry.spawns / Math.max(1, entry.secondsOnline) * 60,
                 };
+
+                const medicProfile: AlertPlayerProfileData | undefined = flat.profiles.find(iter => iter.profileID == ProfileUtils.MEDIC);
+                const medicTime = Math.max(1, medicProfile?.timeAs ?? 0) / 60;
+                flat.healsPerMinute = flat.heals / medicTime;
+                flat.revivesPerMinute = flat.revives / medicTime;
+                flat.shieldRepairsPerMinute = flat.shieldRepairs / medicTime;
+
+                const engiProfile: AlertPlayerProfileData | undefined = flat.profiles.find(iter => iter.profileID == ProfileUtils.ENGINEER);
+                const engiTime = Math.max(1, engiProfile?.timeAs ?? 0) / 60;
+                flat.resuppliesPerMinute = flat.resupplies / engiTime;
+                flat.repairsPerMinute = flat.repairs / engiTime;
 
                 // Ignore resupply bots
                 if (flat.repairs == 0 && flat.resupplies > 1000 && flat.kills == 0) {
