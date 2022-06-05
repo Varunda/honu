@@ -36,48 +36,6 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="engKills">
-            <a-header>
-                <b>Kills</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                <a @click="openOutfitEngiKills($event, entry.outfitID)">
-                    {{entry.engKills}}
-                </a>
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="engKPM">
-            <a-header>
-                <b>KPM</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.engKPM | locale(2)}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="engDeaths">
-            <a-header>
-                <b>Deaths</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.engDeaths}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="engKD">
-            <a-header>
-                <b>K/D</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.engKD | locale(2)}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="engResupplies">
             <a-header>
                 <b>Resupplies</b>
@@ -119,6 +77,48 @@
 
             <a-body v-slot="entry">
                 {{entry.engRepairsPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engKills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openOutfitEngiKills($event, entry.outfitID)">
+                    {{entry.engKills}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engKPM">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engKPM | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engDeaths">
+            <a-header>
+                <b>Deaths</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engDeaths}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="engKD">
+            <a-header>
+                <b>K/D</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.engKD | locale(2)}}
             </a-body>
         </a-col>
     </a-table>

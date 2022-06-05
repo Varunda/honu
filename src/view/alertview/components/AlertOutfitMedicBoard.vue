@@ -5,8 +5,6 @@
         default-sort-field="medicRevives" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
-            
-
         <a-col sort-field="outfitDisplay">
             <a-header>
                 <b>Outfit</b>
@@ -35,18 +33,6 @@
 
             <a-body v-slot="entry">
                 {{entry.factionID | faction}}
-            </a-body>
-        </a-col>
-
-        <a-col sort-field="medicKills">
-            <a-header>
-                <b>Kills</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                <a @click="openOutfitMedicKills($event, entry.outfitID)">
-                    {{entry.medicKills}}
-                </a>
             </a-body>
         </a-col>
 
@@ -82,6 +68,40 @@
             </a-body>
         </a-col>
 
+        <a-col sort-field="medicHeals">
+            <a-header>
+                <b>Heals</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openOutfitMedicHeals($event, entry.outfitID)">
+                    {{entry.medicHeals}}
+                </a>
+            </a-body>
+        </a-col>
+
+        <a-col>
+            <a-header>
+                <b>HPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicHealsPerMinute | locale(2)}}
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicKills">
+            <a-header>
+                <b>Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                <a @click="openOutfitMedicKills($event, entry.outfitID)">
+                    {{entry.medicKills}}
+                </a>
+            </a-body>
+        </a-col>
+
         <a-col>
             <a-header>
                 <b>Deaths</b>
@@ -112,27 +132,6 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="medicHeals">
-            <a-header>
-                <b>Heals</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                <a @click="openOutfitMedicHeals($event, entry.outfitID)">
-                    {{entry.medicHeals}}
-                </a>
-            </a-body>
-        </a-col>
-
-        <a-col>
-            <a-header>
-                <b>HPM</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.medicHealsPerMinute | locale(2)}}
-            </a-body>
-        </a-col>
     </a-table>
 </template>
 
