@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="container-fluid">
+    <div>
         <div class="d-flex align-items-center">
             <honu-menu class="flex-grow-1">
                 <menu-dropdown></menu-dropdown>
