@@ -73,7 +73,7 @@
                             <th>Time ago</th>
                             <th>Last event</th>
                             <th>
-                                Event count (per min)
+                                Event count (per sec)
                                 <info-hover text="How many events from this world since the last failure"></info-hover>
                             </th>
                             <th>Failed checks</th>
@@ -111,7 +111,7 @@
                             <th>Time ago</th>
                             <th>Last event</th>
                             <th>
-                                Event count (per min)
+                                Event count (per sec)
                                 <info-hover text="How many events from this world since the last failure"></info-hover>
                             </th>
                             <th>Failed checks</th>
