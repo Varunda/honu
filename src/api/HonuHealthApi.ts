@@ -16,7 +16,9 @@ export class ServiceQueueCount {
 export class CensusRealtimeHealthEntry {
     public worldID: number = 0;
     public lastEvent: Date = new Date();
+    public firstEvent: Date | null = null;
     public failureCount: number = 0;
+    public eventCount: number = 0;
 }
 
 export class BadHealthEntry {
@@ -37,6 +39,7 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
     public static parseRealtime(elem: any): CensusRealtimeHealthEntry {
         return {
             ...elem,
+            firstEvent: (elem.firstEvent == null) ? null : new Date(elem.firstEvent),
             lastEvent: new Date(elem.lastEvent)
         };
     }

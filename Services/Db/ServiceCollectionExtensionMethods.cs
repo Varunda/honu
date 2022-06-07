@@ -72,6 +72,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<AlertPopulationDbStore>();
 
             services.AddSingleton<WorldTagDbStore>();
+            services.AddSingleton<RealtimeReconnectDbStore>();
         }
 
     }

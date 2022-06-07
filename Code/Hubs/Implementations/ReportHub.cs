@@ -268,9 +268,14 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
                 await Clients.Caller.UpdateFacilities(report.Facilities);
 
-                _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
-                });
+                // Only cache a report if all possible events have been received from Census. If the report is cached
+                //      10 minutes before the period end, then those last 10 minutes wouldn't been included in
+                //      subsequent calls, and that data couldn't be looked at until 20 mins after the period end
+                if (report.PeriodEnd <= DateTime.UtcNow) {
+                    _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
+                        SlidingExpiration = TimeSpan.FromMinutes(30)
+                    });
+                }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"generic error in report generation. using generator string '{generator}'");
                 await Clients.Caller.SendError(ex.Message);

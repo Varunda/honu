@@ -66,15 +66,33 @@
                     <table class="table table-striped table-sm">
                         <tr class="table-secondary">
                             <th>World</th>
+                            <td>
+                                Stream start
+                                <info-hover text="When the last connection was made"></info-hover>
+                            </td>
                             <th>Time ago</th>
                             <th>Last event</th>
-                            <th>Failure count</th>
+                            <th>
+                                Event count (per min)
+                                <info-hover text="How many events from this world since the last failure"></info-hover>
+                            </th>
+                            <th>Failed checks</th>
                         </tr>
 
                         <tr v-for="entry in health.data.death">
                             <td>{{entry.worldID}} / {{entry.worldID | world}}</td>
+                            <td>{{entry.firstEvent | moment("YYYY-MM-DD hh:mm:ssA")}}</td>
                             <td>{{entry.lastEvent | timeAgo}}</td>
                             <td>{{entry.lastEvent | moment("YYYY-MM-DD hh:mm:ssA")}}</td>
+                            <td>
+                                {{entry.eventCount | locale}}
+                                <span v-if="entry.eventCount == 0">
+                                    (--)
+                                </span>
+                                <span v-else-if="entry.firstEvent != null">
+                                    ({{entry.eventCount / (entry.lastEvent.getTime() - entry.firstEvent.getTime()) * 1000 | locale(2)}})
+                                </span>
+                            </td>
                             <td>{{entry.failureCount}}</td>
                         </tr>
                     </table>
@@ -86,15 +104,33 @@
                     <table class="table table-striped table-sm">
                         <tr class="table-secondary">
                             <th>World</th>
+                            <td>
+                                Stream start
+                                <info-hover text="When the last connection was made"></info-hover>
+                            </td>
                             <th>Time ago</th>
                             <th>Last event</th>
-                            <th>Failure count</th>
+                            <th>
+                                Event count (per min)
+                                <info-hover text="How many events from this world since the last failure"></info-hover>
+                            </th>
+                            <th>Failed checks</th>
                         </tr>
 
                         <tr v-for="entry in health.data.exp">
                             <td>{{entry.worldID}} / {{entry.worldID | world}}</td>
+                            <td>{{entry.firstEvent | moment("YYYY-MM-DD hh:mm:ssA")}}</td>
                             <td>{{entry.lastEvent | timeAgo}}</td>
                             <td>{{entry.lastEvent | moment("YYYY-MM-DD hh:mm:ssA")}}</td>
+                            <td>
+                                {{entry.eventCount | locale}}
+                                <span v-if="entry.eventCount == 0">
+                                    (--)
+                                </span>
+                                <span v-else-if="entry.firstEvent != null">
+                                    ({{entry.eventCount / (entry.lastEvent.getTime() - entry.firstEvent.getTime()) * 1000 | locale(2)}})
+                                </span>
+                            </td>
                             <td>{{entry.failureCount}}</td>
                         </tr>
                     </table>
@@ -119,7 +155,7 @@
                     </div>
                 </div>
 
-                <div style="max-height: 20vh; overflow: auto">
+                <div style="max-height: max(300px, 20vh; overflow: auto;" class="mb-3">
                     <table class="table w-100 table-sticky-header table-sm table-striped">
                         <thead>
                             <tr class="table-secondary border-top-0">
@@ -138,7 +174,7 @@
                             </tr>
                             <tr v-for="fail in health.data.realtimeHealthFailures">
                                 <td>
-                                    {{fail.when | moment}}
+                                    {{fail.when | moment("YYYY-MM-DD hh:mm:ss A")}}
                                 </td>
 
                                 <td>
@@ -163,6 +199,7 @@
     import "MomentFilter";
     import "filters/TimeAgoFilter";
     import "filters/WorldNameFilter";
+    import "filters/LocaleFilter";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";

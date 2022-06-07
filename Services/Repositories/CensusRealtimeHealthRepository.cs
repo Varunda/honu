@@ -5,9 +5,11 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Health;
+using watchtower.Services.Db;
 
 namespace watchtower.Services.Repositories {
 
@@ -16,6 +18,7 @@ namespace watchtower.Services.Repositories {
         private readonly ILogger<CensusRealtimeHealthRepository> _Logger;
 
         private readonly BadHealthRepository _BadHealthRepository;
+        private readonly RealtimeReconnectDbStore _ReconnectDb;
 
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
@@ -23,12 +26,14 @@ namespace watchtower.Services.Repositories {
         private readonly IOptions<CensusRealtimeHealthOptions> _HealthTolerances;
 
         public CensusRealtimeHealthRepository(ILogger<CensusRealtimeHealthRepository> logger,
-            IOptions<CensusRealtimeHealthOptions> healthTolerances, BadHealthRepository badHealthRepository) {
+            IOptions<CensusRealtimeHealthOptions> healthTolerances, BadHealthRepository badHealthRepository,
+            RealtimeReconnectDbStore reconnectDb) {
 
             _Logger = logger;
 
             _HealthTolerances = healthTolerances;
             _BadHealthRepository = badHealthRepository;
+            _ReconnectDb = reconnectDb;
         }
 
         /// <summary>
@@ -88,24 +93,47 @@ namespace watchtower.Services.Repositories {
             lock (dict) {
                 dict.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
                     WorldID = worldID,
+                    FirstEvent = timestamp,
                     LastEvent = timestamp,
-                    FailureCount = 0
+                    FailureCount = 0,
+                    EventCount = 0
                 }, (key, oldValue) => { 
                     if (oldValue.FailureCount > 0) {
                         if (oldValue.LastEvent != null) {
                             int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - oldValue.LastEvent.Value).TotalSeconds)); 
 
+                            RealtimeReconnectEntry entry = new RealtimeReconnectEntry() {
+                                WorldID = oldValue.WorldID,
+                                Duration = timeWithout,
+                                EventCount = oldValue.EventCount,
+                                FailedCount = oldValue.FailureCount,
+                                StreamType = what,
+                                Timestamp = DateTime.UtcNow
+                            };
+
                             _BadHealthRepository.Insert(new BadHealthEntry() {
                                 When = timestamp,
-                                What = $"World {worldID}/{World.GetName(worldID)}'s {what} stream was {timeWithout}s without an event, failed {oldValue.FailureCount} times before successful reconnect"
+                                What = $"World {worldID}/{World.GetName(worldID)}'s {what} stream was {timeWithout}s without an event, failed {oldValue.FailureCount} times before reconnect, had {entry.EventCount} events on the stream"
                             });
+
+                            new Thread(async () => {
+                                try {
+                                    await _ReconnectDb.Insert(entry, CancellationToken.None);
+                                } catch (Exception ex) {
+                                    _Logger.LogError(ex, $"error in background thread inserting the {nameof(RealtimeReconnectEntry)}");
+                                }
+                            }).Start();
                         }
+
+                        oldValue.EventCount = 0;
+                        oldValue.FirstEvent = timestamp;
 
                         _Logger.LogDebug($"World {oldValue.WorldID} got an event, resetting failure count");
                     }
 
                     oldValue.FailureCount = 0;
                     oldValue.LastEvent = timestamp;
+                    ++oldValue.EventCount;
                     return oldValue;
                 });
             }
