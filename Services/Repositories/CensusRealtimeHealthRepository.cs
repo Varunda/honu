@@ -165,7 +165,9 @@ namespace watchtower.Services.Repositories {
                 int threshold = (tolerance.Tolerance.Value * (entry.FailureCount + 1)) + (10 * Math.Min(3, entry.FailureCount));
 
                 int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
-                if (playerCount < 200) {
+                if (playerCount < 100) {
+                    threshold *= 4;
+                } else if (playerCount < 200) {
                     threshold *= 2;
                 }
 
