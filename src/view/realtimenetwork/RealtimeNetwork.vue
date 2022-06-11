@@ -27,6 +27,10 @@
                         What is this?
                     </button>
 
+                    <toggle-button v-model="settings.outfit" class="d-block w-100 mb-2">
+                        Group outfits
+                    </toggle-button>
+
                     <toggle-button v-model="auto" class="d-block w-100 mb-2">
                         Toggle auto-update
                     </toggle-button>
@@ -305,6 +309,7 @@
                 alertData: [] as RealtimeNetwork[],
 
                 settings: {
+                    outfit: false as boolean,
                     preferedLayout: "recommended" as "recommended" | "force" | "atlas",
                     allowedConnections: "all" as "all" | "ally" | "enemy"
                 },

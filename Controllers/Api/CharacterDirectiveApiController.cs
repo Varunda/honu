@@ -140,7 +140,7 @@ namespace watchtower.Controllers.Api {
                         CharacterObjective = charDirObjectives.FirstOrDefault(obj => obj.DirectiveID == dir.ID),
                     };
 
-                    PsObjective? obj = await GetObjective(dir.ObjectiveSetID);
+                    PsObjective? obj = dir.ObjectiveSetID == null ? null : await GetObjective(dir.ObjectiveSetID.Value);
 
                     // Skip weapons not for the faction of the character
                     // 66 = Achievement, which can have an item attached to it

@@ -15,13 +15,12 @@ namespace watchtower.Services.Census {
 
     public class DirectiveTreeCategoryCollection : BaseStaticCollection<DirectiveTreeCategory> {
 
-        private readonly ILogger<DirectiveTreeCategoryCollection> _Logger;
-
         public DirectiveTreeCategoryCollection(ILogger<DirectiveTreeCategoryCollection> logger,
             ICensusQueryFactory census, ICensusReader<DirectiveTreeCategory> reader)
-            : base("directive_tree_category", census, reader) {
+            : base(logger, "directive_tree_category", census, reader) {
 
-            _Logger = logger;
+            _PatchFile = "./census-patches/directive_tree_category.json";
+            _KeyFunc = (entry) => $"{entry.ID}";
         }
 
     }

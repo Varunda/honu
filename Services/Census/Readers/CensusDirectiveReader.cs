@@ -16,7 +16,7 @@ namespace watchtower.Services.Census.Readers {
             dir.ID = token.GetRequiredInt32("directive_id");
             dir.TreeID = token.GetInt32("directive_tree_id", 0);
             dir.TierID = token.GetInt32("directive_tier_id", 0);
-            dir.ObjectiveSetID = token.GetInt32("objective_set_id", 0);
+            dir.ObjectiveSetID = token.Value<int?>("objective_set_id");
             dir.Name = token.SelectToken("name")?.GetString("en", "<missing name>") ?? "<missing name>";
             dir.Description = token.SelectToken("description")?.GetString("en", "<missing description>") ?? "<missing description>";
             dir.ImageSetID = token.GetInt32("image_set_id", 0);

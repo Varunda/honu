@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,13 +16,15 @@ namespace watchtower.Services.Census {
 
     public class DirectiveTierCollection : BaseStaticCollection<DirectiveTier> {
 
-        private readonly ILogger<DirectiveTierCollection> _Logger;
-
-        public DirectiveTierCollection(ILogger<DirectiveTierCollection> logger,
+        public DirectiveTierCollection(ILogger<DirectiveTierCollection> logger, ILoggerFactory fac,
             ICensusQueryFactory census, ICensusReader<DirectiveTier> reader)
-            : base ("directive_tier", census, reader) {
+            : base (logger, "directive_tier", census, reader) {
 
-            _Logger = logger;
+            _PatchFile = "./census-patches/directive_tier.json";
+            _KeyFunc = (entry) => $"{entry.TreeID}:{entry.TierID}";
+            _CopyFunc = (oldEntry, newEntry) => {
+                newEntry.RewardSetID = oldEntry.RewardSetID;
+            };
         }
 
     }

@@ -10,7 +10,7 @@ using watchtower.Models.Census;
 
 namespace watchtower.Services.Db {
 
-    public class DirectiveTierDbStore {
+    public class DirectiveTierDbStore : IStaticDbStore<DirectiveTier> {
 
         private readonly ILogger<DirectiveTierDbStore> _Logger;
         private readonly IDbHelper _DbHelper;

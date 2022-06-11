@@ -17,12 +17,12 @@ namespace watchtower.Services.Census {
     /// </summary>
     public class ItemCollection : BaseStaticCollection<PsItem> {
 
-        private readonly ILogger<ItemCollection> _Logger;
+        //private readonly ILogger<ItemCollection> _Logger;
         private const string PATCH_FILE = "./census-patches/items.json";
 
         public ItemCollection(ILogger<ItemCollection> logger,
             ICensusQueryFactory census, ICensusReader<PsItem> reader)
-            : base("item", census, reader) {
+            : base(logger, "item", census, reader) {
 
             _Logger = logger;
         }

@@ -12,8 +12,8 @@
             </info-hover>
         </h5>
 
-        <div v-if="objectiveGoal != null" class="progress" style="height: 2rem; font-size: 14pt;">
-            <span class="" style="position: absolute; line-height: 2rem; padding-left: 0.5rem">
+        <div class="progress" style="height: 2rem; font-size: 14pt;">
+            <span v-if="objectiveGoal != null" class="" style="position: absolute; line-height: 2rem; padding-left: 0.5rem">
                 <span v-if="entry.entry != null && entry.entry.completionDate != null">
                     {{objectiveGoal}}
                 </span>
@@ -22,6 +22,10 @@
                 </span>
 
                 / {{objectiveGoal}}
+            </span>
+
+            <span v-else-if="entry.entry == null || entry.entry.completionDate == null" style="position: absolute; line-height: 2rem; padding-left: 0.5rem; font-size: 10pt;" class="text-muted">
+                Unknown objective, cannot load progress
             </span>
 
             <div v-if="entry.entry == null" class="progress-bar">

@@ -1,4 +1,5 @@
 ﻿using DaybreakGames.Census;
+using Microsoft.Extensions.Logging;
 using watchtower.Models.Census;
 
 namespace watchtower.Services.Census {
@@ -8,8 +9,9 @@ namespace watchtower.Services.Census {
     /// </summary>
     public class AchievementCollection : BaseStaticCollection<Achievement> {
 
-        public AchievementCollection(ICensusQueryFactory census, ICensusReader<Achievement> reader)
-            : base("achievement", census, reader) {
+        public AchievementCollection(ILogger<AchievementCollection> logger, 
+            ICensusQueryFactory census, ICensusReader<Achievement> reader)
+            : base(logger, "achievement", census, reader) {
         }
 
     }
