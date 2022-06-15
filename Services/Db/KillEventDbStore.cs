@@ -231,7 +231,8 @@ namespace watchtower.Services.Db {
                     (SELECT COUNT(DISTINCT(attacker_character_id)) FROM evs c WHERE c.attacker_outfit_id = outfits.attacker_outfit_id) AS members
                     FROM outfits
                         JOIN wt_outfit ON outfits.attacker_outfit_id = wt_outfit.id
-                    WHERE wt_outfit.faction_id = @FactionID
+                    WHERE 
+                        (wt_outfit.faction_id = @FactionID OR wt_outfit.faction_id = 4)
                     ORDER BY kills DESC;
             ");
 

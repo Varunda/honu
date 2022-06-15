@@ -28,11 +28,7 @@
                 Unknown objective, cannot load progress
             </span>
 
-            <div v-if="entry.entry == null" class="progress-bar">
-
-            </div>
-
-            <div v-else-if="objectiveGoal != null && entry.entry.completionDate == null" class="progress-bar"
+            <div v-if="entry.entry == null || (objectiveGoal != null && entry.entry.completionDate == null)" class="progress-bar"
                 :style="{ 'width': objectivePercent + '%' }">
             </div>
 

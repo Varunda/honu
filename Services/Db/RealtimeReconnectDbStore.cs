@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -12,12 +13,14 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<RealtimeReconnectDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
+        private readonly IDataReader<RealtimeReconnectEntry> _Reader;
 
         public RealtimeReconnectDbStore(ILogger<RealtimeReconnectDbStore> logger,
-            IDbHelper dbHelper) {
+            IDbHelper dbHelper, IDataReader<RealtimeReconnectEntry> reader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
+            _Reader = reader;
         }
 
         /// <summary>
@@ -48,6 +51,36 @@ namespace watchtower.Services.Db {
 
             await cmd.ExecuteNonQueryAsync(cancel);
             await conn.CloseAsync();
+        }
+
+        /// <summary>
+        ///     Get the entries for a world within an interval
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <returns>
+        ///     A list of <see cref="RealtimeReconnectEntry"/>s with <see cref="RealtimeReconnectEntry.WorldID"/> of <paramref name="worldID"/>,
+        ///     and a <see cref="RealtimeReconnectEntry.Timestamp"/> between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
+        public async Task<List<RealtimeReconnectEntry>> GetByInterval(short worldID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM realtime_reconnect
+                    WHERE
+                        world_id = @WorldID
+                        AND timestamp BETWEEN @PeriodStart AND @PeriodEnd;
+            ");
+
+            cmd.AddParameter("WorldID", worldID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<RealtimeReconnectEntry> entries = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entries;
         }
 
     }

@@ -31,13 +31,16 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
         private readonly WorldTagManager _TagManager;
+        private readonly RealtimeReconnectDbStore _ReconnectDb;
+        private readonly CensusRealtimeHealthRepository _HealthRepository;
 
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             CharacterCacheQueue charQueue,
             KillEventDbStore killDb, ExpEventDbStore expDb,
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo,
-            WorldTagManager tagManager) {
+            WorldTagManager tagManager, RealtimeReconnectDbStore reconnectDb,
+            CensusRealtimeHealthRepository healthRepository) {
 
             _Logger = logger;
 
@@ -51,6 +54,8 @@ namespace watchtower.Services.Repositories.Implementations {
 
             _CharacterCacheQueue = charQueue ?? throw new ArgumentNullException(nameof(charQueue));
             _TagManager = tagManager;
+            _ReconnectDb = reconnectDb;
+            _HealthRepository = healthRepository;
         }
 
         public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
@@ -328,6 +333,9 @@ namespace watchtower.Services.Repositories.Implementations {
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;
 
             data.TagEntries = _TagManager.GetRecent(data.WorldID);
+            data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(120), DateTime.UtcNow);
+            data.RealtimeHealth = _HealthRepository.GetDeathHealth().Where(iter => iter.WorldID == data.WorldID).ToList();
+            data.RealtimeHealth.AddRange(_HealthRepository.GetExpHealth().Where(iter => iter.WorldID == data.WorldID));
 
             time.Stop();
 

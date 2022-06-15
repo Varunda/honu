@@ -5,6 +5,7 @@ using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.Health;
 using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
@@ -69,6 +70,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<AlertPopulation>, AlertPopulationDataReader>();
 
             services.AddSingleton<IDataReader<WorldTagEntry>, WorldTagEntryReader>();
+
+            services.AddSingleton<IDataReader<RealtimeReconnectEntry>, RealtimeReconnectReader>();
         }
 
     }

@@ -79,6 +79,30 @@
     </div>
 
     <div v-if="worldData != null" class="wt-grid-container" style="display: grid;">
+        <div class="grid-health-warning">
+            <div v-if="streamFailureCount > 0" class="alert alert-danger text-center h5">
+                The health check on the realtime event stream for this server has failed {{streamFailureCount}} times!
+                <br />
+                Honu is currently attempting to reconnect, but all events from this server will be missing
+
+                <div class="h6">
+                    Last event received was at {{streamMostRecentEvent | moment("YYYY-MM-DD hh:mm:ssA")}}
+                </div>
+            </div>
+
+            <div v-if="badStreams.length > 0" class="alert alert-warning text-center h5">
+                <div>
+                    Honu reconnected to the API due to a bad realtime event stream from this server, this has caused:
+                </div>
+
+                <ul class="d-inline-block text-left mb-0">
+                    <li v-for="stream in badStreams">
+                        {{stream.secondsMissed | tduration}} of {{stream.streamType}} events to be missed
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <div class="grid-continent-population">
             <h4>
                 {{worldID | world}}

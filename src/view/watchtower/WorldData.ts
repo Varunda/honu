@@ -1,5 +1,6 @@
-﻿
-import { WorldTagEntry } from "api/WorldTagApi";
+﻿import { WorldTagEntry } from "api/WorldTagApi";
+import { CensusRealtimeHealthEntry } from "api/HonuHealthApi";
+import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
 
 export class BlockEntry {
 	public id: string = "";
@@ -129,4 +130,7 @@ export class WorldData {
 	public factionFocus: FactionFocus = new FactionFocus();
 	public onlineCount: number = 0;
 	public tagEntries: WorldTagEntry[] = [];
+	public realtimeHealth: CensusRealtimeHealthEntry[] = [];
+	public reconnects: RealtimeReconnectEntry[] = [];
+
 }

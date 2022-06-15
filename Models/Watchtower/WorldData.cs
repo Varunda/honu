@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Health;
 
 namespace watchtower.Models {
 
@@ -56,6 +57,16 @@ namespace watchtower.Models {
         public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
         public List<WorldTagEntry> TagEntries { get; set; } = new List<WorldTagEntry>();
+
+        /// <summary>
+        ///     List of all reconnects that have occured within the time period
+        /// </summary>
+        public List<RealtimeReconnectEntry> Reconnects { get; set; } = new List<RealtimeReconnectEntry>();
+
+        /// <summary>
+        ///     Health entries of the streams
+        /// </summary>
+        public List<CensusRealtimeHealthEntry> RealtimeHealth { get; set; } = new();
 
     }
 

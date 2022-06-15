@@ -22,6 +22,11 @@ import ContinentMetadata from "components/ContinentMetadata.vue";
 import InfoHover from "components/InfoHover.vue";
 import "MomentFilter";
 
+type StreamFailure = {
+	streamType: "death" | "exp";
+	secondsMissed: number;
+}
+
 const vm = new Vue({
 	el: "#app",
 
@@ -35,8 +40,15 @@ const vm = new Vue({
 			.withAutomaticReconnect([5000, 10000, 20000, 20000])
 			.build();
 
-		this.connection.on("UpdateData", (data: any) => {
+		this.connection.on("UpdateData", (data: WorldData) => {
 			data.tagEntries = data.tagEntries.map((iter: any) => WorldTagApi.readEntry(iter));
+			data.realtimeHealth.forEach((iter) => {
+				iter.lastEvent = new Date(iter.lastEvent + "Z");
+				iter.firstEvent = (iter.firstEvent == null) ? null : new Date(iter.firstEvent + "Z");
+			});
+			data.reconnects.forEach((iter) => {
+				iter.timestamp = new Date(iter.timestamp + "Z");
+			});
 			console.log(data);
 
 			this.worldData = data;
@@ -282,6 +294,43 @@ const vm = new Vue({
 				+ this.worldData.continentCount.oshur.ns
 				+ this.worldData.continentCount.other.ns;
 		},
+
+		badStreams: function(): StreamFailure[] {
+			const expCount: number = this.worldData.reconnects.filter(iter => iter.streamType == "exp").reduce((acc, i) => acc += i.duration, 0);
+
+			const arr: StreamFailure[] = [];
+
+			const deathCount: number = this.worldData.reconnects.filter(iter => iter.streamType == "death").reduce((acc, i) => acc += i.duration, 0);
+			if (deathCount > 0) {
+				arr.push({ streamType: "death", secondsMissed: deathCount });
+            }
+
+			if (expCount > 0) {
+				arr.push({ streamType: "exp", secondsMissed: expCount });
+            }
+
+			return arr;
+        },
+
+		streamFailureCount: function(): number {
+			return this.worldData.realtimeHealth.reduce((acc, i) => acc += i.failureCount, 0);
+        },
+
+		streamMostRecentEvent: function(): Date {
+			let minDate: Date = new Date();
+
+			for (const entry of this.worldData.realtimeHealth) {
+				if (entry.lastEvent != null && entry.lastEvent <= minDate) {
+					minDate = entry.lastEvent;
+                }
+			}
+
+			return minDate;
+        },
+
+		hasFailedStream: function(): boolean {
+			return this.worldData.realtimeHealth.find(iter => iter.failureCount > 0) != undefined;
+        }
 	},
 
 	components: {

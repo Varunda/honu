@@ -103,6 +103,25 @@ Vue.filter("mduration", (input: string | number): string => {
     return `${dur.minutes().toString().padStart(2, "0")}m ${dur.seconds().toString().padStart(2, "0")}s`;
 });
 
+Vue.filter("tduration", (input: string | number): string => {
+    const val: number = (typeof (input) == "string") ? Number.parseInt(input) : input;
+    if (Number.isNaN(val)) {
+        return `NaN ${val}`;
+    }
+
+    const dur: moment.Duration = moment.duration(val * 1000);
+
+    if (dur.asDays() >= 1) {
+        return `${Math.floor(dur.asDays())} days, ${dur.hours()} hours`;
+    }
+
+    if (dur.asHours() >= 1) {
+        return `${dur.hours()} hours, ${dur.minutes()} minutes`;
+    }
+
+    return `${dur.minutes()} minutes, ${dur.seconds()} seconds`;
+});
+
 Vue.filter("til", (time: Date) => {
     return moment(time).fromNow();
 });
