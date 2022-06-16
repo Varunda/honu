@@ -148,8 +148,9 @@ namespace watchtower.Code.Hubs.Implementations {
                 report.Players = report.CharacterIDs;
 
                 HashSet<string> trackedOutfitIDs = new HashSet<string>();
+                List<PsCharacter> playerChars = await _CharacterDb.GetByIDs(report.Players);
                 foreach (string charID in report.Players) {
-                    PsCharacter? c = await _CharacterRepository.GetByID(charID);
+                    PsCharacter? c = playerChars.FirstOrDefault(iter => iter.ID == charID);
                     if (c != null) {
                         report.TrackedCharacters.Add(c);
                         if (c.OutfitID != null) {
@@ -158,8 +159,9 @@ namespace watchtower.Code.Hubs.Implementations {
                     }
                 }
 
+                List<PsOutfit> initialOutfits = await _OutfitRepository.GetByIDs(trackedOutfitIDs.ToList());
                 foreach (string outfitID in trackedOutfitIDs) {
-                    PsOutfit? o = await _OutfitRepository.GetByID(outfitID);
+                    PsOutfit? o = initialOutfits.FirstOrDefault(iter => iter.ID == outfitID);
                     if (o != null) {
                         report.TrackedOutfits.Add(o);
                     }
@@ -252,7 +254,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 await Clients.Caller.UpdateItems(report.Items);
 
-                report.Characters = await GetCharacters(chars.ToList());
+                report.Characters = await _CharacterRepository.GetByIDs(chars.ToList());
                 await Clients.Caller.UpdateCharacters(report.Characters);
 
                 foreach (PsCharacter c in report.Characters) {
@@ -279,7 +281,6 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
 
                 if (worldID != null) {
-                    _Logger.LogDebug($"Getting reconnects on {worldID} between {report.PeriodStart:u} - {report.PeriodEnd:u}");
                     List<RealtimeReconnectEntry> reconnects = await _ReconnectDb.GetByInterval(worldID.Value, report.PeriodStart, report.PeriodEnd);
                     report.Reconnects = reconnects;
                     await Clients.Caller.UpdateReconnects(reconnects);
@@ -297,35 +298,6 @@ namespace watchtower.Code.Hubs.Implementations {
                 _Logger.LogError(ex, $"generic error in report generation. using generator string '{generator}'");
                 await Clients.Caller.SendError(ex.Message);
             }
-        }
-
-        private async Task<List<PsCharacter>> GetCharacters(List<string> IDs) {
-            return await _CharacterRepository.GetByIDs(IDs, true);
-            /*
-            List<PsCharacter> chars =  await _CharacterDb.GetByIDs(IDs);
-
-            HashSet<string> found = new HashSet<string>();
-            foreach (PsCharacter c in chars) {
-                found.Add(c.ID);
-            }
-
-            List<string> left = new List<string>();
-            foreach (string charID in IDs) {
-                if (found.Contains(charID) == false) {
-                    left.Add(charID);
-                }
-            }
-            _Logger.LogTrace($"Found {found.Count}/{chars.Count} characters from DB, getting {left.Count} from repo");
-
-            foreach (string charID in left) {
-                PsCharacter? c = await _CharacterRepository.GetByID(charID);
-                if (c != null) {
-                    chars.Add(c);
-                }
-            }
-
-            return chars;
-            */
         }
 
     }
