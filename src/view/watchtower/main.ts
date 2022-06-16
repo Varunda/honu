@@ -43,8 +43,8 @@ const vm = new Vue({
 		this.connection.on("UpdateData", (data: WorldData) => {
 			data.tagEntries = data.tagEntries.map((iter: any) => WorldTagApi.readEntry(iter));
 			data.realtimeHealth.forEach((iter) => {
-				iter.lastEvent = new Date(iter.lastEvent + "Z");
-				iter.firstEvent = (iter.firstEvent == null) ? null : new Date(iter.firstEvent + "Z");
+				iter.lastEvent = new Date(iter.lastEvent);
+				iter.firstEvent = (iter.firstEvent == null) ? null : new Date(iter.firstEvent);
 			});
 			data.reconnects.forEach((iter) => {
 				iter.timestamp = new Date(iter.timestamp + "Z");
