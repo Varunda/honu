@@ -70,6 +70,10 @@
             <div>
                 <h2 class="wt-header mb-1">
                     Realtime Reconnects
+
+                    <toggle-button v-model="settings.showGraph">
+                        Show graph
+                    </toggle-button>
                 </h2>
 
                 <div class="mb-2">
@@ -84,7 +88,7 @@
                     </div>
                 </div>
 
-                <reconnect-graph :reconnects="health.data.reconnects"></reconnect-graph>
+                <reconnect-graph v-if="settings.showGraph" :reconnects="health.data.reconnects"></reconnect-graph>
 
                 <div style="max-height: max(300px, 20vh); overflow: auto;" class="mb-3">
                     <table class="table w-100 table-sticky-header table-sm table-striped">
@@ -140,6 +144,7 @@
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
+    import ToggleButton from "components/ToggleButton";
     import StreamHealthTable from "./StreamHealthTable.vue";
     import ReconnectGraph from "./ReconnectGraph.vue";
 
@@ -158,7 +163,11 @@
                 health: Loadable.idle() as Loading<HonuHealth>,
                 latestUpdate: null as | Date | null,
 
-                timerID: undefined as number | undefined
+                timerID: undefined as number | undefined,
+
+                settings: {
+                    showGraph: true as boolean
+                }
             }
         },
 
@@ -237,7 +246,7 @@
 
         components: {
             HonuMenu, MenuSep, MenuHomepage, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            InfoHover,
+            InfoHover, ToggleButton,
             StreamHealthTable,
             ReconnectGraph
         }
