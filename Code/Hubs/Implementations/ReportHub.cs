@@ -10,6 +10,7 @@ using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.Health;
 using watchtower.Models.Report;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -36,6 +37,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly FacilityControlDbStore _ControlDb;
         private readonly FacilityPlayerControlDbStore _PlayerControlDb;
         private readonly IFacilityDbStore _FacilityDb;
+        private readonly RealtimeReconnectDbStore _ReconnectDb;
 
         private readonly ReportRepository _ReportRepository;
 
@@ -46,7 +48,7 @@ namespace watchtower.Code.Hubs.Implementations {
             ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,
-            ReportRepository reportRepo) {
+            ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb) {
 
             _Logger = logger;
             _Cache = cache;
@@ -64,6 +66,7 @@ namespace watchtower.Code.Hubs.Implementations {
             _PlayerControlDb = playerControlDb;
             _FacilityDb = facDb;
             _ReportRepository = reportRepo;
+            _ReconnectDb = reconnectDb;
         }
 
         public async Task GenerateReport(string generator) {
@@ -107,6 +110,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateControls(report.Control);
                 await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
                 await Clients.Caller.UpdateFacilities(report.Facilities);
+                await Clients.Caller.UpdateReconnects(report.Reconnects);
 
                 return;
             }
@@ -268,6 +272,19 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
                 await Clients.Caller.UpdateFacilities(report.Facilities);
 
+                short? worldID = null;
+                foreach (PsCharacter c in report.Characters) {
+                    worldID = c.WorldID;
+                    break;
+                }
+
+                if (worldID != null) {
+                    _Logger.LogDebug($"Getting reconnects on {worldID} between {report.PeriodStart:u} - {report.PeriodEnd:u}");
+                    List<RealtimeReconnectEntry> reconnects = await _ReconnectDb.GetByInterval(worldID.Value, report.PeriodStart, report.PeriodEnd);
+                    report.Reconnects = reconnects;
+                    await Clients.Caller.UpdateReconnects(reconnects);
+                }
+
                 // Only cache a report if all possible events have been received from Census. If the report is cached
                 //      10 minutes before the period end, then those last 10 minutes wouldn't been included in
                 //      subsequent calls, and that data couldn't be looked at until 20 mins after the period end
@@ -283,6 +300,8 @@ namespace watchtower.Code.Hubs.Implementations {
         }
 
         private async Task<List<PsCharacter>> GetCharacters(List<string> IDs) {
+            return await _CharacterRepository.GetByIDs(IDs, true);
+            /*
             List<PsCharacter> chars =  await _CharacterDb.GetByIDs(IDs);
 
             HashSet<string> found = new HashSet<string>();
@@ -306,6 +325,7 @@ namespace watchtower.Code.Hubs.Implementations {
             }
 
             return chars;
+            */
         }
 
     }

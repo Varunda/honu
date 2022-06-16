@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.Health;
 
 namespace watchtower.Models.Report {
 
@@ -90,6 +91,8 @@ namespace watchtower.Models.Report {
         ///     All sessions that the tracked players had during the time frame
         /// </summary>
         public List<Session> Sessions { get; set; } = new List<Session>();
+
+        public List<RealtimeReconnectEntry> Reconnects { get; set; } = new();
 
     }
 

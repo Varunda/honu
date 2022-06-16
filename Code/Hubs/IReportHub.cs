@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.Health;
 using watchtower.Models.Report;
 
 namespace watchtower.Code.Hubs {
@@ -68,6 +69,8 @@ namespace watchtower.Code.Hubs {
         Task UpdatePlayerControls(List<PlayerControlEvent> events);
 
         Task UpdateFacilities(List<PsFacility> facilities);
+
+        Task UpdateReconnects(List<RealtimeReconnectEntry> entries);
 
         /// <summary>
         ///     Sent when an error occurs while generating the report. It is expected the client closes the connection after

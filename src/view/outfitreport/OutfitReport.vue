@@ -363,6 +363,11 @@
                     <td>{{steps.facility}}</td>
                 </tr>
 
+                <tr :class="[ !steps.reconnects ? 'table-warning' : 'table-success' ]">
+                    <td>Getting realtime reconnects</td>
+                    <td>{{steps.reconnects}}</td>
+                </tr>
+
                 <tr v-if="isDone == true" class="table-success">
                     <td colspan="2">
                         All done!
@@ -372,7 +377,6 @@
         </div>
 
         <div v-if="isDone == true">
-
             <div v-if="report.sessions.length == 0" class="text-center text-danger">
                 No activity recorded during selected time period
             </div>
@@ -414,6 +418,7 @@
     import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
     import { PlayerControlEvent, PlayerControlEventApi } from "api/PlayerControlEventApi";
     import { PsFacility, MapApi } from "api/MapApi";
+    import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
 
     import Report, { PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
@@ -489,6 +494,7 @@
                     control: false as boolean,
                     playerControl: false as boolean,
                     facility: false as boolean,
+                    reconnects: false as boolean
                 },
 
                 connection: null as sR.HubConnection | null,
@@ -707,6 +713,7 @@
                 this.connection.on("UpdateControls", this.onUpdateControls);
                 this.connection.on("UpdatePlayerControls", this.onUpdatePlayerControls);
                 this.connection.on("UpdateFacilities", this.onUpdateFacilities);
+                this.connection.on("UpdateReconnects", this.onUpdateReconnect);
 
                 this.connection.start().then(() => {
                     if (this.makeOnConnection == true && this.generator != "") {
@@ -921,6 +928,15 @@
                 this.report.sessions = sessions;
                 this.log(`Loaded ${this.report.sessions.length} sessions`);
                 this.steps.sessions = true;
+            },
+
+            onUpdateReconnect: function(entries: RealtimeReconnectEntry[]): void {
+                for (const entry of entries) {
+                    entry.timestamp = new Date(entry.timestamp);
+                }
+                this.report.reconnects = entries;
+                this.log(`Loaded ${this.report.reconnects.length} reconnects`);
+                this.steps.reconnects = true;
             }
         },
 

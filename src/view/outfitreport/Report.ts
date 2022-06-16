@@ -7,6 +7,7 @@ import { Session } from "api/SessionApi";
 import { FacilityControlEvent } from "api/FacilityControlEventApi";
 import { PlayerControlEvent } from "api/PlayerControlEventApi";
 import { PsFacility } from "api/MapApi";
+import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
 
 import LoadoutUtils from "util/Loadout";
 
@@ -17,6 +18,7 @@ export default class Report {
 	public periodStart: Date = new Date();
 	public periodEnd: Date = new Date();
 	public teamID: number = 0;
+	public reconnects: RealtimeReconnectEntry[] = [];
 
 	/**
 	 * IDs of the characters that were used to generate the report

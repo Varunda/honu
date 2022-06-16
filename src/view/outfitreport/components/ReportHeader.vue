@@ -1,5 +1,17 @@
 ﻿<template>
     <div>
+        <div v-if="badStreams.length > 0" class="alert alert-warning text-center h5">
+            <div>
+                Honu reconnected to the Planetside 2 API due to a bad realtime event stream during this report, this caused:
+            </div>
+
+            <ul class="d-inline-block text-left mb-0">
+                <li v-for="stream in badStreams">
+                    {{stream.secondsMissed | tduration}} of {{stream.streamType}} events to be missed
+                </li>
+            </ul>
+        </div>
+
         <h2 class="wt-header" data-toggle="collapseeeeeeeeeee" data-target="#report-header">
             Outfit report
         </h2>
@@ -97,6 +109,23 @@
 
             generator64: function(): string {
                 return btoa(`#${this.report.id};`)
+            },
+
+            badStreams: function(): any[] {
+                const expCount: number = this.report.reconnects.filter(iter => iter.streamType == "exp").reduce((acc, i) => acc += i.duration, 0);
+
+                const arr: any[] = [];
+
+                const deathCount: number = this.report.reconnects.filter(iter => iter.streamType == "death").reduce((acc, i) => acc += i.duration, 0);
+                if (deathCount > 0) {
+                    arr.push({ streamType: "death", secondsMissed: deathCount });
+                }
+
+                if (expCount > 0) {
+                    arr.push({ streamType: "exp", secondsMissed: expCount });
+                }
+
+                return arr;
             }
         },
 
