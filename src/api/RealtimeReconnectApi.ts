@@ -1,5 +1,4 @@
-﻿
-export class RealtimeReconnectEntry {
+﻿export class RealtimeReconnectEntry {
 
     /**
      * Unique ID
@@ -35,5 +34,16 @@ export class RealtimeReconnectEntry {
      * How many events on this stream were received before failure
      */
     public eventCount: number = 0;
+
+}
+
+export class RealtimeReconnectApi {
+
+    public static parse(elem: any): RealtimeReconnectEntry {
+        return {
+            ...elem,
+            timestamp: new Date(elem.timestamp)
+        };
+    }
 
 }

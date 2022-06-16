@@ -1,10 +1,13 @@
 ﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
+import { RealtimeReconnectApi, RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
+
 export class HonuHealth {
     public queues: ServiceQueueCount[] = [];
     public death: CensusRealtimeHealthEntry[] = [];
     public exp: CensusRealtimeHealthEntry[] = [];
+    public reconnects: RealtimeReconnectEntry[] = [];
     public realtimeHealthFailures: BadHealthEntry[] = [];
 }
 
@@ -56,7 +59,8 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
             queues: elem.queues.map((iter: any) => HonuHealthApi.parseQueue(iter)),
             death: elem.death.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
             exp: elem.exp.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
-            realtimeHealthFailures: elem.realtimeHealthFailures.map((iter: any) => HonuHealthApi.parseBadHealth(iter))
+            realtimeHealthFailures: elem.realtimeHealthFailures.map((iter: any) => HonuHealthApi.parseBadHealth(iter)),
+            reconnects: elem.reconnects.map((iter: any) => RealtimeReconnectApi.parse(iter))
         };
     }
 

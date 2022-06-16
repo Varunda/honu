@@ -3,11 +3,13 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Health;
+using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
@@ -22,6 +24,7 @@ namespace watchtower.Controllers.Api {
 
         private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
         private readonly BadHealthRepository _BadHealthRepository;
+        private readonly RealtimeReconnectDbStore _ReconnectDb;
 
         private readonly CharacterCacheQueue _CharacterCache;
         private readonly SessionStarterQueue _SessionQueue;
@@ -34,7 +37,8 @@ namespace watchtower.Controllers.Api {
             CensusRealtimeHealthRepository realtimeHealthRepository, CharacterCacheQueue characterCache,
             SessionStarterQueue sessionQueue, CharacterUpdateQueue weaponQueue,
             CensusRealtimeEventQueue taskQueue, WeaponPercentileCacheQueue percentileQueue,
-            DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository) {
+            DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
+            RealtimeReconnectDbStore reconnectDb) {
 
             _Logger = logger;
             _Cache = cache;
@@ -48,6 +52,7 @@ namespace watchtower.Controllers.Api {
             _TaskQueue = taskQueue;
             _PercentileQueue = percentileQueue;
             _DiscordQueue = discordQueue;
+            _ReconnectDb = reconnectDb;
         }
 
         /// <summary>
@@ -61,12 +66,14 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a <see cref="HonuHealth"/> that represents the health of Honu at the time of being called
         /// </response>
         [HttpGet]
-        public ApiResponse<HonuHealth> GetRealtimeHealth() {
+        public async Task<ApiResponse<HonuHealth>> GetRealtimeHealth() {
             if (_Cache.TryGetValue("Honu.Health", out HonuHealth health) == false) {
                 health = new HonuHealth();
                 health.Death = _RealtimeHealthRepository.GetDeathHealth();
                 health.Exp = _RealtimeHealthRepository.GetExpHealth();
-                health.RealtimeHealthFailures = _BadHealthRepository.GetRecent();
+
+                health.Reconnects = (await _ReconnectDb.GetAllByInterval(DateTime.UtcNow - TimeSpan.FromDays(1), DateTime.UtcNow))
+                    .OrderByDescending(iter => iter.Timestamp).ToList();
 
                 ServiceQueueCount c = new() { QueueName = "character_cache_queue", Count = _CharacterCache.Count() };
                 ServiceQueueCount session = new() { QueueName = "session_start_queue", Count = _SessionQueue.Count() };
@@ -75,7 +82,7 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount percentile = new() { QueueName = "weapon_percentile_cache_queue", Count = _PercentileQueue.Count() };
                 ServiceQueueCount discord = new() { QueueName = "discord_message_queue", Count = _DiscordQueue.Count() };
 
-                health.Queues = new() {
+                health.Queues = new List<ServiceQueueCount>() {
                     c, session, weapon,
                     task, percentile, discord
                 };

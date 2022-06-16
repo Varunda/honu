@@ -24,6 +24,11 @@ namespace watchtower.Models.Health {
         public List<BadHealthEntry> RealtimeHealthFailures { get; set; } = new List<BadHealthEntry>();
 
         /// <summary>
+        ///     Reconnects in the last 24 hours
+        /// </summary>
+        public List<RealtimeReconnectEntry> Reconnects { get; set; } = new List<RealtimeReconnectEntry>();
+
+        /// <summary>
         ///     Information about the hosted queues in Honu
         /// </summary>
         public List<ServiceQueueCount> Queues { get; set; } = new List<ServiceQueueCount>();

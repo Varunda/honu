@@ -83,5 +83,28 @@ namespace watchtower.Services.Db {
             return entries;
         }
 
+        /// <summary>
+        ///     Get all <see cref="RealtimeReconnectEntry"/>s within a period, not just by the world ID
+        /// </summary>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <returns></returns>
+        public async Task<List<RealtimeReconnectEntry>> GetAllByInterval(DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM realtime_reconnect
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd;
+            ");
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<RealtimeReconnectEntry> entries = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return entries;
+        }
+
     }
 }
