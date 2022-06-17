@@ -165,6 +165,16 @@ namespace watchtower.Realtime {
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
+            } else if (type == "heartbeat") {
+                _Logger.LogInformation($"Heartbeat: {ev}");
+            } else if (type == "connectionStateChanged") {
+                _Logger.LogInformation($"connectionStateChanged: {ev}");
+            } else if (type == "serviceStateChanged") {
+                _Logger.LogInformation($"serviceStateChanged: {ev}");
+            } else if (type == "") {
+                _Logger.LogInformation($": {ev}");
+            } else {
+                _Logger.LogWarning($"Unchecked message type: '{type}'");
             }
         }
 

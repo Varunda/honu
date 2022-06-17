@@ -29,9 +29,14 @@ namespace watchtower.Models {
             }
         }
 
+        /// <summary>
+        ///     Get how many characters are currently online
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <returns></returns>
         public int GetWorldCount(short worldID) {
             lock (Players) {
-                return Players.Where(iter => iter.Value.WorldID == worldID).Count();
+                return Players.Where(iter => iter.Value.WorldID == worldID && iter.Value.Online == true).Count();
             }
         }
 

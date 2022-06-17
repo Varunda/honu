@@ -46,6 +46,7 @@ using System.Net;
 using watchtower.Models.PSB;
 using watchtower.Services.Realtime;
 using watchtower.Models.Health;
+using watchtower.Models.Alert;
 
 //using honu_census;
 
@@ -145,6 +146,7 @@ namespace watchtower {
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
             services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
             services.Configure<CensusRealtimeHealthOptions>(Configuration.GetSection("RealtimeHealth"));
+            services.Configure<DailyAlertOptions>(Configuration.GetSection("DailyAlert"));
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();
@@ -197,6 +199,7 @@ namespace watchtower {
             services.AddHostedService<EventProcessService>();
             services.AddHostedService<HostedSessionStarterQueue>();
             services.AddHostedService<HostedJaegerSignInOutProcess>();
+            services.AddHostedService<HostedDailyAlertCreator>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();
