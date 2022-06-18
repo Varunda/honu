@@ -11,6 +11,8 @@
             </select>
 
             <toggle-button v-model="settings.showServers">Show servers</toggle-button>
+
+            <toggle-button v-model="settings.showSeconds">Show seconds</toggle-button>
         </div>
 
         <canvas :id="'reconnect-graph-' + ID" style="height: 240px; max-height: 40vh;" class="mb-2"></canvas>
@@ -75,7 +77,8 @@
 
                 settings: {
                     intervalSize: 15 as number,
-                    showServers: true as boolean
+                    showServers: true as boolean,
+                    showSeconds: false as boolean
                 }
             }
         },
@@ -107,16 +110,30 @@
 
                     //console.log(`${i} ${new Date(intervalStart).toISOString()} - ${new Date(intervalEnd).toISOString()} = ${interval.length}`);
 
-                    this.data.push({
-                        timestamp: new Date(intervalStart),
-                        total: interval.length,
-                        connery: interval.filter(iter => iter.worldID == WorldUtils.Connery).length,
-                        cobalt: interval.filter(iter => iter.worldID == WorldUtils.Cobalt).length,
-                        emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).length,
-                        jaeger: interval.filter(iter => iter.worldID == WorldUtils.Jaeger).length,
-                        miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).length,
-                        soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).length,
-                    });
+                    if (this.settings.showSeconds == true) {
+                        this.data.push({
+                            timestamp: new Date(intervalStart),
+                            total: interval.reduce((acc, i) => acc += i.duration, 0),
+                            connery: interval.filter(iter => iter.worldID == WorldUtils.Connery).reduce((acc, i) => acc += i.duration, 0),
+                            cobalt: interval.filter(iter => iter.worldID == WorldUtils.Cobalt).reduce((acc, i) => acc += i.duration, 0),
+                            emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).reduce((acc, i) => acc += i.duration, 0),
+                            jaeger: interval.filter(iter => iter.worldID == WorldUtils.Jaeger).reduce((acc, i) => acc += i.duration, 0),
+                            miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).reduce((acc, i) => acc += i.duration, 0),
+                            soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).reduce((acc, i) => acc += i.duration, 0)
+                        });
+                    } else {
+                        this.data.push({
+                            timestamp: new Date(intervalStart),
+                            total: interval.length,
+                            connery: interval.filter(iter => iter.worldID == WorldUtils.Connery).length,
+                            cobalt: interval.filter(iter => iter.worldID == WorldUtils.Cobalt).length,
+                            emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).length,
+                            jaeger: interval.filter(iter => iter.worldID == WorldUtils.Jaeger).length,
+                            miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).length,
+                            soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).length,
+                        });
+                    }
+
                 }
             },
 

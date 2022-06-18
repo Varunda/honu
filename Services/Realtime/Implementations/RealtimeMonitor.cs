@@ -17,6 +17,12 @@ namespace watchtower.Realtime {
 
     public class RealtimeMonitor : IDisposable, IRealtimeMonitor {
 
+        /// <summary>
+        ///     How many seconds minimum between reconnects. Prevents streams that are like 1 second outta sync from causing
+        ///     more reconnects than necessary
+        /// </summary>
+        private const int RECONNECT_MIN_SECONDS = 10;
+
         private readonly List<short> _Events = new List<short>() {
             Experience.HEAL, Experience.SQUAD_HEAL,
             Experience.REVIVE, Experience.SQUAD_REVIVE,
@@ -38,9 +44,7 @@ namespace watchtower.Realtime {
             Experience.VKILL_SUNDY, Experience.VKILL_PROWLER, Experience.VKILL_REAVER,
             Experience.VKILL_SCYTHE, Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER,
             Experience.VKILL_VALKYRIE, Experience.VKILL_ANT, Experience.VKILL_COLOSSUS,
-            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH,
-
-            554
+            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
         };
 
         private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {
@@ -56,7 +60,7 @@ namespace watchtower.Realtime {
 
         private readonly System.Timers.Timer _HealthCheckTimer;
 
-        private readonly Random _Random = new Random();
+        private DateTime? _LastReconnect = null;
 
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger,
             ICensusStreamClient stream,
@@ -107,7 +111,12 @@ namespace watchtower.Realtime {
                 }
 
                 if (needResub == true) {
-                    await Reconnect();
+                    if (_LastReconnect == null || (DateTime.UtcNow >= _LastReconnect + TimeSpan.FromSeconds(RECONNECT_MIN_SECONDS))) {
+                        _LastReconnect = DateTime.UtcNow;
+                        await Reconnect();
+                    } else {
+                        _Logger.LogInformation($"Not reconnecting, reconnected {DateTime.UtcNow - _LastReconnect} ago, needed {RECONNECT_MIN_SECONDS} seconds");
+                    }
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"exception in health checker");
@@ -180,6 +189,11 @@ namespace watchtower.Realtime {
 
         public async Task Reconnect() {
             await _Stream.ReconnectAsync();
+        }
+
+        public Task BlankSubscribe() {
+            //_Stream.Subscribe(new CensusStreamSubscription());
+            return Task.CompletedTask;
         }
 
         private Task _OnConnectAsync(ReconnectionType type) {

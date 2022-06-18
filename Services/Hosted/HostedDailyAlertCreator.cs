@@ -31,6 +31,10 @@ namespace watchtower.Services.Hosted {
                 DateTime w = when + span;
                 DateTime alertStart = w - TimeSpan.FromDays(1);
 
+                if (DateTime.UtcNow > w) {
+                    _Logger.LogDebug($"Making alert for {entry.WorldID}");
+                }
+
                 _Logger.LogDebug($"{entry.WorldID} will be generated over from {alertStart:u} to {w:u}");
             }
         }
