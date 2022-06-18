@@ -1,6 +1,6 @@
 ﻿<template>
     <table class="table table-sm">
-        <tr class="table-secondary">
+        <tr class="table-secondary th-border-top-0">
             <td>{{LeftTitle}}</td>
             <td>{{RightTitle}}</td>
         </tr>

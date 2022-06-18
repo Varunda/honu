@@ -7,6 +7,7 @@
     import * as moment from "moment";
 
     import Chart from "chart.js/auto/auto.esm";
+import TimeUtils from "../../../util/Time";
 
     interface Interval {
         value: number;
@@ -186,6 +187,13 @@
                             tooltip: {
                                 mode: "x",
                                 intersect: false,
+                                callbacks: {
+                                    title: function(context) {
+                                        const datum = context[0].dataset.data[context[0].dataIndex];
+                                        const seconds: string = (datum as any).x;
+                                        return TimeUtils.duration(Number.parseInt(seconds));
+                                    }
+                                }
                             }
                         }
                     }

@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
-        <table class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
-            <tr class="table-secondary">
+        <table class="table table-striped w-auto d-inline-block" style="vertical-align: top;">
+            <tr class="table-secondary th-border-top-0">
                 <th>Action</th>
                 <th>Amount</th>
                 <th>
@@ -101,15 +101,15 @@
             </tr>
         </table>
 
-        <table class="table table-sm w-auto d-inline-block ml-2" style="vertical-align: top">
-            <tr class="table-secondary">
+        <table class="table w-auto d-inline-block ml-2 border-top-0" style="vertical-align: top">
+            <tr class="table-secondary th-border-top-0">
                 <th><b>Class</b></th>
-                <td>Duration</td>
-                <td>%</td>
-                <td>Kills</td>
-                <td>Deaths</td>
-                <td>K/D</td>
-                <td>KPM</td>
+                <th>Duration</th>
+                <th>%</th>
+                <th>Kills</th>
+                <th>Deaths</th>
+                <th>K/D</th>
+                <th>KPM</th>
             </tr>
 
             <tr>
@@ -214,6 +214,7 @@
     import { Session } from "api/SessionApi";
 
     import Loadout from "util/Loadout";
+import TimeUtils from "../../../util/Time";
 
     interface LoadoutEvent {
         loadoutID: number;
@@ -259,7 +260,6 @@
         },
 
         methods: {
-
             togglePink: function(): void {
                 this.usePalePink = !this.usePalePink;
                 this.generateClassPlaytimeChart();
@@ -307,7 +307,36 @@
                             legend: {
                                 position: "right",
                                 labels: {
-                                    color: "#fff"
+                                    color: "#fff",
+                                    generateLabels: (chart: Chart) => {
+                                        const dataset = chart.data.datasets![0];
+                                        let sum: number = 0;
+                                        for (const datum of dataset.data!) {
+                                            if (typeof (datum) == "number") {
+                                                sum += datum;
+                                            }
+                                        }
+
+                                        return chart.data.labels?.map((label, index) => {
+                                            const datum = dataset.data![index];
+                                            if (typeof (datum) == "number") {
+                                                return {
+                                                    text: `${label as string} - ${TimeUtils.duration(datum)} (${(datum / sum * 100).toFixed(2)}%)`,
+                                                    datasetIndex: 0,
+                                                    fillStyle: this.backgroundColors[index]
+                                                }
+                                            }
+                                            throw `Invalid type of data '${typeof (datum)}': ${datum}`;
+                                        }) ?? [];
+                                    }
+                                },
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const datum = context.dataset.data[context.dataIndex];
+                                        return `${context.label} - ${TimeUtils.duration(datum)}`;
+                                    }
                                 }
                             }
                         },
@@ -403,6 +432,17 @@
 
             expAssists: function(): ExpandedExpEvent[] {
                 return this.exp.filter(iter => Experience.isAssist(iter.event.experienceID));
+            },
+
+            backgroundColors: function(): string[] {
+                return [
+                    "#666699", // infil
+                    "#0d239d", // LA
+                    "#cc0000", // medic
+                    "#009900", // engi
+                    (this.usePalePink) ? "#fcd5e7" : "#ff69b4", // heavy
+                    "#663300", // max
+                ];
             }
         },
 

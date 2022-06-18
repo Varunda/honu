@@ -33,6 +33,18 @@
         </div>
 
         <div v-else-if="session.state == 'loaded'">
+            <div v-if="badStreams.length > 0" class="alert alert-warning text-center h5">
+                <div>
+                    Honu reconnected to the Planetside 2 API due to a bad realtime event stream during this session, this caused:
+                </div>
+
+                <ul class="d-inline-block text-left mb-0">
+                    <li v-for="stream in badStreams">
+                        {{stream.secondsMissed | tduration}} of {{stream.streamType}} events to be missed
+                    </li>
+                </ul>
+            </div>
+
             <collapsible header-text="Session">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
@@ -256,6 +268,7 @@
     import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
+    import { RealtimeReconnectEntry, RealtimeReconnectApi } from "api/RealtimeReconnectApi";
 
     export const SessionViewer = Vue.extend({
         props: {
@@ -271,7 +284,9 @@
 
                 killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExpandedExpEvent[]>,
-                vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>
+                vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
+
+                reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>
             }
         },
 
@@ -316,6 +331,7 @@
 
                 if (this.session.state == "loaded") {
                     this.bindCharacter();
+                    this.bindReconnects();
                 }
             },
 
@@ -342,6 +358,16 @@
             bindVehicleDestroy: async function(): Promise<void> {
                 this.vehicleDestroy = Loadable.loading();
                 this.vehicleDestroy = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+            },
+
+            bindReconnects: async function(): Promise<void> {
+                if (this.session.state != "loaded") {
+                    this.reconnects = Loadable.idle();
+                    return;
+                }
+
+                this.reconnects = Loadable.loading();
+                this.reconnects = await RealtimeReconnectApi.getByInterval(this.session.data.start, this.session.data.end ?? new Date());
             }
 
         },
@@ -371,6 +397,27 @@
                 return this.killsOrDeaths.data.filter(iter => {
                     return iter.event.revivedEventID == null && iter.event.killedCharacterID == (this.session as any).data.characterID;
                 });
+            },
+
+            badStreams: function(): any[] {
+                if (this.reconnects.state != "loaded") {
+                    return [];
+                }
+
+                const expCount: number = this.reconnects.data.filter(iter => iter.streamType == "exp").reduce((acc, i) => acc += i.duration, 0);
+
+                const arr: any[] = [];
+
+                const deathCount: number = this.reconnects.data.filter(iter => iter.streamType == "death").reduce((acc, i) => acc += i.duration, 0);
+                if (deathCount > 0) {
+                    arr.push({ streamType: "death", secondsMissed: deathCount });
+                }
+
+                if (expCount > 0) {
+                    arr.push({ streamType: "exp", secondsMissed: expCount });
+                }
+
+                return arr;
             }
         },
 

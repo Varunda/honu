@@ -98,3 +98,7 @@
     background-color: #222;
     box-shadow: inset 0px -2px #444;
 }
+
+.th-border-top-0 > * {
+    border-top: 0 !important;
+}

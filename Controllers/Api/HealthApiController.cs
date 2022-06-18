@@ -95,5 +95,46 @@ namespace watchtower.Controllers.Api {
             return ApiOk(health);
         }
 
+        /// <summary>
+        ///     Get historical reconnect data, optionally filtering by world ID
+        /// </summary>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <param name="worldID">Optional ID of the world to filter the results to</param>
+        /// <response code="200">
+        ///     The response will contain all <see cref="RealtimeReconnectEntry"/>s that occured during the time period given
+        ///     from <paramref name="start"/> to <paramref name="end"/>
+        /// </response>
+        /// <response code="400">
+        ///     One of the following validation errors occured:
+        ///     <ul>
+        ///         <li>
+        ///             <paramref name="start"/> came after or at <paramref name="end"/>
+        ///         </li>
+        ///         <li>
+        ///             The time period between <paramref name="start"/> and <paramref name="end"/> was over 30 days
+        ///         </li>
+        ///     </ul>
+        /// </response>
+        [HttpGet("reconnects")]
+        public async Task<ApiResponse<List<RealtimeReconnectEntry>>> GetReconnects([FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] short? worldID) {
+            if (start >= end) {
+                return ApiBadRequest<List<RealtimeReconnectEntry>>($"{nameof(start)} cannot come after or at {nameof(end)}");
+            }
+
+            if (end - start >= TimeSpan.FromDays(31)) {
+                return ApiBadRequest<List<RealtimeReconnectEntry>>($"The time period can be at most 30 days, 23 hours, 59 minutes and 59 seconds");
+            }
+
+            List<RealtimeReconnectEntry> reconnects;
+            if (worldID == null) {
+                reconnects = await _ReconnectDb.GetAllByInterval(start, end);
+            } else {
+                reconnects = await _ReconnectDb.GetByInterval(worldID.Value, start, end);
+            }
+
+            return ApiOk(reconnects);
+        }
+
     }
 }

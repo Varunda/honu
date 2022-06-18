@@ -6,7 +6,7 @@
 
                 <table class="table table-sm w-auto d-inline-block" style="vertical-align: top;">
                     <thead>
-                        <tr class="table-secondary">
+                        <tr class="table-secondary th-border-top-0">
                             <th>Weapon</th>
                             <th>Kills</th>
                             <th>HS kills</th>
@@ -45,7 +45,7 @@
                             </td>
                         </tr>
 
-                        <tr class="table-secondary">
+                        <tr class="table-secondary th-border-top-0">
                             <td>
                                 <b>Total</b>
                             </td>
@@ -69,7 +69,7 @@
 
                 <table class="table table-sm">
                     <thead>
-                        <tr class="table-secondary">
+                        <tr class="table-secondary th-border-top-0">
                             <th>Outfit</th>
                             <th>Kills</th>
                             <th>Deaths</th>
@@ -167,7 +167,7 @@
                     this.chart = null;
                 }
 
-                const groupedEvents: Map<string, KillEvent[]> = this.groupedKillEvents;
+                const groupedEvents: Map<number, KillEvent[]> = this.groupedKillEvents;
 
                 const arr = Array.from(groupedEvents.entries()).sort((a, b) => b[1].length - a[1].length);
 
@@ -176,7 +176,7 @@
                     type: "pie",
                     data: {
                         labels: arr.map((iter) => {
-                            const weaponID: string = iter[0];
+                            const weaponID: number = iter[0];
                             const weaponName: string = `${this.groupedKillWeapons.get(weaponID)?.name ?? `<missing ${weaponID}>`}`;
                             return `${weaponName} - ${(iter[1].length / this.kills.length * 100).toFixed(2)}%`;
                         }),
@@ -255,15 +255,15 @@
         },
 
         computed: {
-            groupedKillEvents: function(): Map<string, KillEvent[]> {
+            groupedKillEvents: function(): Map<number, KillEvent[]> {
                 return this.kills.reduce(
-                    (entryMap: Map<string, KillEvent[]>, event: ExpandedKillEvent) => entryMap.set(event.event.weaponID, [...entryMap.get(event.event.weaponID) || [], event.event]),
+                    (entryMap: Map<number, KillEvent[]>, event: ExpandedKillEvent) => entryMap.set(event.event.weaponID, [...entryMap.get(event.event.weaponID) || [], event.event]),
                     new Map()
                 );
             },
 
-            groupedKillWeapons: function(): Map<string, PsItem> {
-                const map: Map<string, PsItem> = new Map();
+            groupedKillWeapons: function(): Map<number, PsItem> {
+                const map: Map<number, PsItem> = new Map();
                 for (const iter of this.kills) {
                     if (map.has(iter.event.weaponID) == false && iter.item != null) {
                         map.set(iter.event.weaponID, iter.item);

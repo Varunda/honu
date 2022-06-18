@@ -1,6 +1,6 @@
 ﻿<template>
     <table class="table table-sm">
-        <tr class="table-secondary">
+        <tr class="table-secondary th-border-top-0">
             <th>Target</th>
             <th>Amount</th>
             <th>%</th>
@@ -25,7 +25,7 @@
             <td>{{hiddenTotal / total * 100 | fixed | locale}}%</td>
         </tr>
 
-        <tr class="table-secondary">
+        <tr class="table-secondary th-border-top-0">
             <td>Total</td>
             <td colspan="2">{{total}}</td>
         </tr>
@@ -38,7 +38,6 @@
     import "filters/LocaleFilter";
 
     import Chart from "chart.js/auto/auto.esm";
-    import { randomRGB, rgbToString } from "util/Color";
 
     interface Entry {
         display: string;

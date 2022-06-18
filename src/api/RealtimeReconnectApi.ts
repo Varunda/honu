@@ -1,4 +1,7 @@
-﻿export class RealtimeReconnectEntry {
+﻿import ApiWrapper from "api/ApiWrapper";
+import { Loading } from "Loading";
+
+export class RealtimeReconnectEntry {
 
     /**
      * Unique ID
@@ -37,13 +40,27 @@
 
 }
 
-export class RealtimeReconnectApi {
+export class RealtimeReconnectApi extends ApiWrapper<RealtimeReconnectEntry> {
+
+    private static _instance: RealtimeReconnectApi = new RealtimeReconnectApi();
+    public static get(): RealtimeReconnectApi { return RealtimeReconnectApi._instance; }
 
     public static parse(elem: any): RealtimeReconnectEntry {
         return {
             ...elem,
             timestamp: new Date(elem.timestamp)
         };
+    }
+
+    public static getByInterval(start: Date, end: Date, worldID: number | null = null): Promise<Loading<RealtimeReconnectEntry[]>> {
+        const params: URLSearchParams = new URLSearchParams();
+        params.set("start", start.toISOString());
+        params.set("end", end.toISOString());
+        if (worldID != null) {
+            params.set("worldID", worldID.toString());
+        }
+
+        return RealtimeReconnectApi.get().readList(`/api/health/reconnects/?${params.toString()}`, RealtimeReconnectApi.parse);
     }
 
 }
