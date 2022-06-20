@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Realtime {
 
-    public interface IRealtimeMonitor {
+    public interface dead_IRealtimeMonitor {
 
         Task OnStartAsync(CancellationToken cancel);
 

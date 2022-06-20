@@ -75,10 +75,13 @@ namespace watchtower.Controllers.Api {
                 health.Reconnects = (await _ReconnectDb.GetAllByInterval(DateTime.UtcNow - TimeSpan.FromDays(1), DateTime.UtcNow))
                     .OrderByDescending(iter => iter.Timestamp).ToList();
 
+                List<long> weaponAve = _WeaponQueue.GetProcessTime();
+                List<long> taskAve = _TaskQueue.GetProcessTime();
+
                 ServiceQueueCount c = new() { QueueName = "character_cache_queue", Count = _CharacterCache.Count() };
                 ServiceQueueCount session = new() { QueueName = "session_start_queue", Count = _SessionQueue.Count() };
-                ServiceQueueCount weapon = new() { QueueName = "character_weapon_stat_queue", Count = _WeaponQueue.Count() };
-                ServiceQueueCount task = new() { QueueName = "task_queue", Count = _TaskQueue.Count(), Average = _TaskQueue.GetProcessTime().Average() };
+                ServiceQueueCount weapon = new() { QueueName = "character_weapon_stat_queue", Count = _WeaponQueue.Count(), Average = weaponAve.Count == 0 ? 0 : weaponAve.Average() };
+                ServiceQueueCount task = new() { QueueName = "task_queue", Count = _TaskQueue.Count(), Average = taskAve.Count == 0 ? 0 : taskAve.Average() };
                 ServiceQueueCount percentile = new() { QueueName = "weapon_percentile_cache_queue", Count = _PercentileQueue.Count() };
                 ServiceQueueCount discord = new() { QueueName = "discord_message_queue", Count = _DiscordQueue.Count() };
 

@@ -21,18 +21,25 @@ namespace watchtower.Commands {
     public class RealtimeCommand {
 
         private readonly ILogger<RealtimeCommand> _Logger;
-        private readonly IRealtimeMonitor _RealtimeMonitor;
+        private readonly RealtimeMonitor _RealtimeMonitor;
 
         public RealtimeCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<RealtimeCommand>>();
-            _RealtimeMonitor = services.GetRequiredService<IRealtimeMonitor>();
+            _RealtimeMonitor = services.GetRequiredService<RealtimeMonitor>();
         }
 
         public void Restart() {
             _Logger.LogInformation($"Resubscribing to realtime");
-            _RealtimeMonitor.Resubscribe();
+            _RealtimeMonitor.ResubscribeAll();
             _Logger.LogInformation($"Resubscribed to realtime");
         }
+
+        /*
+        public async Task Disconnect(string name) {
+            _Logger.LogInformation($"Disconnecting stream '{name}'");
+            await _RealtimeMonitor.DisconnectStream(name);
+        }
+        */
 
     }
 

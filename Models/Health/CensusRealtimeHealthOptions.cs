@@ -5,6 +5,11 @@ namespace watchtower.Models.Health {
     public class CensusRealtimeHealthOptions {
 
         /// <summary>
+        ///     Will both the Death and Exp streams be required to have failed to count as a failed world?
+        /// </summary>
+        public bool RequireFailureOnBoth = false;
+
+        /// <summary>
         ///     Tolerances for the realtime 'Death' event
         /// </summary>
         public List<CensusRealtimeHealthTolerance> Death { get; set; } = new List<CensusRealtimeHealthTolerance>();

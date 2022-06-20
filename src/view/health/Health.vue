@@ -41,7 +41,7 @@
                                 <td>{{queue.count}}</td>
                                 <td>
                                     <span v-if="queue.average">
-                                        {{queue.average}}ms
+                                        {{queue.average | locale(2)}}ms
                                     </span>
                                     <span v-else>
                                         not tracked

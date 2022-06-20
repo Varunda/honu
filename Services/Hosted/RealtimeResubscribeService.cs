@@ -22,11 +22,11 @@ namespace watchtower.Services.Hosted {
 
         private readonly ILogger<RealtimeResubcribeService> _Logger;
 
-        private readonly IRealtimeMonitor _RealtimeMonitor;
+        private readonly RealtimeMonitor _RealtimeMonitor;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         public RealtimeResubcribeService(ILogger<RealtimeResubcribeService> logger,
-            IRealtimeMonitor realtimeMonitor, IServiceHealthMonitor healthMon) {
+            RealtimeMonitor realtimeMonitor, IServiceHealthMonitor healthMon) {
 
             _Logger = logger;
 
@@ -55,7 +55,7 @@ namespace watchtower.Services.Hosted {
                     _Logger.LogInformation($"{SERVICE_NAME}> Resubscribing census subscriptions");
 
                     //await _RealtimeMonitor.Reconnect();
-                    await _RealtimeMonitor.Resubscribe();
+                    await _RealtimeMonitor.ResubscribeAll();
 
                     healthEntry.RunDuration = timer.ElapsedMilliseconds;
                     _ServiceHealthMonitor.Set(SERVICE_NAME, healthEntry);

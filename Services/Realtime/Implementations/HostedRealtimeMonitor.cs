@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace watchtower.Realtime {
     public class HostedRealtimeMonitor : IHostedService {
 
-        private readonly IRealtimeMonitor _Monitor;
+        private readonly RealtimeMonitor _Monitor;
 
-        public HostedRealtimeMonitor(IRealtimeMonitor mon) {
+        public HostedRealtimeMonitor(RealtimeMonitor mon) {
             _Monitor = mon;
         }
 

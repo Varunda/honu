@@ -8,7 +8,7 @@
                 {{entry.directive.id}}
             </span>
 
-            <info-hover :text="entry.description">
+            <info-hover v-if="entry.description && entry.description.length > 0" :text="entry.description">
             </info-hover>
         </h5>
 

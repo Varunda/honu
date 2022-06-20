@@ -1,7 +1,9 @@
 ﻿using DaybreakGames.Census.Stream;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,13 +11,14 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
+using watchtower.Models.Census;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 using Websocket.Client;
 
 namespace watchtower.Realtime {
 
-    public class RealtimeMonitor : IDisposable, IRealtimeMonitor {
+    public class RealtimeMonitor : IDisposable {
 
         /// <summary>
         ///     How many seconds minimum between reconnects. Prevents streams that are like 1 second outta sync from causing
@@ -47,42 +50,21 @@ namespace watchtower.Realtime {
             Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
         };
 
-        private CensusStreamSubscription _Subscription = new CensusStreamSubscription() {
-            Worlds = World.All.Select(iter => $"{iter}").ToArray(),
-            Characters = new[] { "all" },
-        };
-
         private readonly ILogger<RealtimeMonitor> _Logger;
-        private readonly ICensusStreamClient _Stream;
         private readonly CensusRealtimeEventQueue _Queue;
+        private readonly IServiceProvider _Services;
 
         private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
 
         private readonly System.Timers.Timer _HealthCheckTimer;
+        private readonly ConcurrentDictionary<string, RealtimeStream> _Streams = new();
 
-        private DateTime? _LastReconnect = null;
-
-        public RealtimeMonitor(ILogger<RealtimeMonitor> logger,
-            ICensusStreamClient stream,
-            CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository) {
-
-            _Subscription.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
-            foreach (int expId in Experience.VehicleRepairEvents) {
-                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
-            }
-            foreach (int expId in Experience.SquadVehicleRepairEvents) {
-                _Subscription.EventNames = _Subscription.EventNames.Append($"GainExperience_experience_id_{expId}");
-            }
-            _Subscription.EventNames = _Subscription.EventNames.Append("Death")
-                .Append("PlayerLogin").Append("PlayerLogout")
-                .Append("BattleRankUp")
-                .Append("VehicleDestroy")
-                .Append("FacilityControl").Append("PlayerFacilityCapture").Append("PlayerFacilityDefend")
-                .Append("ContinentLock").Append("ContinentUnlock").Append("MetagameEvent");
+        public RealtimeMonitor(ILogger<RealtimeMonitor> logger, IServiceProvider services,
+            CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository) { 
 
             _Logger = logger;
+            _Services = services;
 
-            _Stream = stream ?? throw new ArgumentNullException(nameof(stream));
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
             _RealtimeHealthRepository = realtimeHealthRepository;
 
@@ -90,32 +72,36 @@ namespace watchtower.Realtime {
             _HealthCheckTimer.Interval = 1000;
             _HealthCheckTimer.AutoReset = true;
             _HealthCheckTimer.Elapsed += async (sender, e) => await _HealthCheckTimer_Elapsed(sender, e);
-
-            _Stream.OnConnect(_OnConnectAsync)
-                .OnMessage(_OnMessageAsync)
-                .OnDisconnect(_OnDisconnectAsync);
         }
 
         private async Task _HealthCheckTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
             try {
-                bool needResub = false;
-
-                if (_RealtimeHealthRepository.IsDeathHealthy() == false) {
-                    _Logger.LogWarning($"Death is unhealthy, reconnecting");
-                    needResub = true;
+                List<short> unhealthyWorlds = _RealtimeHealthRepository.GetUnhealthyWorlds();
+                if (unhealthyWorlds.Count > 0) {
+                    _Logger.LogInformation($"Following worlds are unhealthy: {string.Join(", ", unhealthyWorlds)}");
                 }
 
-                if (_RealtimeHealthRepository.IsExpHealthy() == false) {
-                    _Logger.LogWarning($"GainExperience is unhealthy, reconnecting");
-                    needResub = true;
-                }
+                foreach (short worldID in unhealthyWorlds) {
+                    foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                        // Because Connery would be stream-1*, and Miller is stream-10*, not including the final -
+                        //      would cause potentially the wrong world to be found.
+                        // For example, if the iteration order happens to be stream-10-Miller, stream-1-Connery,
+                        //      then finding stream-1 (meant for Connery), would find stream-10-Miller first, which is wrong
+                        // To prevent this, the trailing - is included
+                        if (iter.Key.StartsWith($"stream-{worldID}-") == false) {
+                            continue;
+                        }
 
-                if (needResub == true) {
-                    if (_LastReconnect == null || (DateTime.UtcNow >= _LastReconnect + TimeSpan.FromSeconds(RECONNECT_MIN_SECONDS))) {
-                        _LastReconnect = DateTime.UtcNow;
-                        await Reconnect();
-                    } else {
-                        _Logger.LogInformation($"Not reconnecting, reconnected {DateTime.UtcNow - _LastReconnect} ago, needed {RECONNECT_MIN_SECONDS} seconds");
+                        TimeSpan diff = DateTime.UtcNow - iter.Value.LastConnect;
+                        if (diff <= TimeSpan.FromSeconds(RECONNECT_MIN_SECONDS)) {
+                            _Logger.LogDebug($"Not reconnecting {iter.Key}: reconnected {iter.Value.LastConnect - DateTime.UtcNow} ago, min of {RECONNECT_MIN_SECONDS}s");
+                            break;
+                        }
+
+                        await iter.Value.Client.ReconnectAsync();
+                        iter.Value.LastConnect = DateTime.UtcNow;
+                        _Logger.LogDebug($"reconnected '{iter.Key}' due to bad stream");
+                        break;
                     }
                 }
             } catch (Exception ex) {
@@ -124,10 +110,6 @@ namespace watchtower.Realtime {
         }
 
         private Task _OnMessageAsync(string msg) {
-            if (msg == null) {
-                return Task.CompletedTask;
-            }
-
             try {
                 JToken token = JToken.Parse(msg);
                 _Queue.Queue(token);
@@ -160,52 +142,65 @@ namespace watchtower.Realtime {
             return Task.CompletedTask;
         }
 
-        public Task OnStartAsync(CancellationToken cancel) {
+        public async Task OnStartAsync(CancellationToken cancel) {
             // Initalized all the worlds to now, useful if a world isn't sending any events on the first connect, we'd like to know that
             foreach (short worldID in World.All) {
                 _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
                 _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
+
+                RealtimeStream stream = CreateStream($"stream-{worldID}-{World.GetName(worldID)}", "asdf", "ps2");
+
+                CensusStreamSubscription sub = CreateSubscription(worldID);
+                stream.Subscriptions.Add(sub);
+
+                await stream.Client.ConnectAsync();
             }
 
-            try {
-                _ = _Stream.ConnectAsync();
-                _HealthCheckTimer.Enabled = true;
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"Failed to start RealtimeMonitor");
-            }
+            await ResubscribeAll();
 
-            return Task.CompletedTask;
+            _HealthCheckTimer.Enabled = true;
         }
 
-        public Task OnShutdownAsync(CancellationToken cancel) {
+        public async Task OnShutdownAsync(CancellationToken cancel) {
             _HealthCheckTimer.Enabled = false;
-            return _Stream.DisconnectAsync();
+            foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                await iter.Value.Client.DisconnectAsync();
+            }
         }
 
-        public Task Resubscribe() {
-            _Stream.Subscribe(_Subscription);
-            return Task.CompletedTask;
-        }
-
-        public async Task Reconnect() {
-            await _Stream.ReconnectAsync();
-        }
-
-        public Task BlankSubscribe() {
-            //_Stream.Subscribe(new CensusStreamSubscription());
-            return Task.CompletedTask;
-        }
-
-        private Task _OnConnectAsync(ReconnectionType type) {
-            if (type == ReconnectionType.Initial) {
-                _Logger.LogInformation($"Stream connected");
-            } else {
-                _Logger.LogInformation($"Stream reconnected: {type}");
+        /// <summary>
+        ///     Resubscribe all streams
+        /// </summary>
+        public Task ResubscribeAll() {
+            foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                foreach (CensusStreamSubscription sub in iter.Value.Subscriptions) {
+                    iter.Value.Client.Subscribe(sub);
+                }
             }
 
-            _Stream.Subscribe(_Subscription);
-
             return Task.CompletedTask;
+        }
+
+        public async Task DisconnectStream(string name) {
+            RealtimeStream? stream;
+            lock (_Streams) {
+                _Streams.TryGetValue(name, out stream);
+            }
+
+            if (stream != null) {
+                await stream.Client.DisconnectAsync();
+            }
+        }
+
+        /// <summary>
+        ///     Reconnect all stream
+        /// </summary>
+        public async Task Reconnect() {
+            // TODO: this'll cause problems if a reconnect and an insert happens at the same time
+            foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                await iter.Value.Client.ReconnectAsync();
+                iter.Value.LastConnect = DateTime.UtcNow;
+            }
         }
 
         private Task _OnDisconnectAsync(DisconnectionInfo info) {
@@ -214,8 +209,88 @@ namespace watchtower.Realtime {
         }
 
         public void Dispose() {
+            GC.SuppressFinalize(this); // idk what this does, but VisualStudio gives me a like hey do this so it's probably smart
             _HealthCheckTimer.Dispose();
-            _Stream?.Dispose();
+            foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                iter.Value.Dispose();
+            }
+        }
+
+        /// <summary>
+        ///     Create a single world subscription
+        /// </summary>
+        /// <param name="worldID">ID of the world the subscription will be for</param>
+        internal CensusStreamSubscription CreateSubscription(short worldID) {
+            CensusStreamSubscription sub = new CensusStreamSubscription() {
+                Worlds = new List<string>() { $"{worldID}" },
+                Characters = new[] { "all" },
+                LogicalAndCharactersWithWorlds = true
+            };
+
+            sub.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
+            foreach (int expId in Experience.VehicleRepairEvents) {
+                sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
+            foreach (int expId in Experience.SquadVehicleRepairEvents) {
+                sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
+            }
+            sub.EventNames = sub.EventNames.Append("Death")
+                .Append("PlayerLogin").Append("PlayerLogout")
+                .Append("BattleRankUp")
+                .Append("VehicleDestroy")
+                .Append("FacilityControl").Append("PlayerFacilityCapture").Append("PlayerFacilityDefend")
+                .Append("ContinentLock").Append("ContinentUnlock").Append("MetagameEvent");
+
+            return sub;
+        }
+
+        /// <summary>
+        ///     Create a new named stream, optionally using a specific service ID and platform
+        /// </summary>
+        /// <param name="name">Name of the stream. Must be unique</param>
+        /// <param name="serviceID">Service ID. If left null, the default value will be used</param>
+        /// <param name="platform">Platform to use, valid values are ps2|ps2ps4eu|ps2ps4us</param>
+        /// <returns>
+        ///     The newly created stream, with all callbacks setup. To actually start receiving events on it, you must call .ConnectAsync
+        /// </returns>
+        /// <exception cref="Exception">If a named stream matching <paramref name="name"/> already exists</exception>
+        internal RealtimeStream CreateStream(string name, string? serviceID, string? platform) {
+            lock (_Streams) {
+                if (_Streams.ContainsKey(name) == true) {
+                    throw new Exception($"cannot create another stream with name '{name}'");
+                }
+            }
+
+            ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
+            RealtimeStream wrapper = new RealtimeStream(name, stream);
+
+            _Logger.LogTrace($"Created new stream named '{name}', using platform {platform}");
+
+            if (serviceID != null) { stream.SetServiceId(serviceID); }
+            if (platform != null) { stream.SetServiceNamespace(platform); }
+
+            stream.OnConnect((type) => {
+                if (type == ReconnectionType.Initial) {
+                    _Logger.LogInformation($"Stream '{wrapper.Name}' connected");
+                } else {
+                    _Logger.LogInformation($"Stream '{wrapper.Name}' reconnected: {type}");
+                }
+
+                foreach (CensusStreamSubscription sub in wrapper.Subscriptions) {
+                    stream.Subscribe(sub);
+                }
+                wrapper.LastConnect = DateTime.UtcNow;
+
+                return Task.CompletedTask;
+            }).OnMessage(_OnMessageAsync).OnDisconnect(_OnDisconnectAsync);
+
+            lock (_Streams) {
+                if (_Streams.TryAdd(name, wrapper) == false) {
+                    _Logger.LogError($"failed to add '{name}' to _Streams, TryAdd returned false");
+                }
+            }
+
+            return wrapper;
         }
 
     }

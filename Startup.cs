@@ -152,7 +152,7 @@ namespace watchtower {
             services.AddSingleton<IDbHelper, DbHelper>();
             services.AddSingleton<IDbCreator, DefaultDbCreator>();
 
-            services.AddSingleton<IRealtimeMonitor, RealtimeMonitor>();
+            services.AddSingleton<RealtimeMonitor>();
             services.AddSingleton<IEventHandler, Realtime.EventHandler>();
             services.AddSingleton<CommandBus, CommandBus>();
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();

@@ -256,15 +256,6 @@ namespace watchtower.Services.Hosted {
                         long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        /*
-                        foreach (CharacterDirective dir in charDirs) {
-                            try {
-                                await _CharacterDirectiveDb.Upsert(entry.CharacterID, dir);
-                            } catch (Exception ex) {
-                                _Logger.LogError(ex, $"Error upserting character directives for {entry.CharacterID}");
-                            }
-                        }
-                        */
                         try {
                             await _CharacterDirectiveDb.UpsertMany(entry.CharacterID, charDirs);
                         } catch (Exception ex) {
@@ -320,6 +311,8 @@ namespace watchtower.Services.Hosted {
 
                             _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbSum}ms to update DB data");
                         }
+
+                        _Queue.AddProcessTime(censusTime + dbSum);
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

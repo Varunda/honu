@@ -74,6 +74,33 @@ namespace watchtower.Services.Repositories {
             return IsDictHealth(ref _Exp, "exp");
         }
 
+        public List<short> GetUnhealthyWorlds() {
+            List<short> unhealthyWorlds = GetUnhealthyDeath();
+            if (_HealthTolerances.Value.RequireFailureOnBoth == true) {
+                unhealthyWorlds = unhealthyWorlds.Intersect(GetUnhealthyExp()).ToList();
+            } else {
+                unhealthyWorlds = unhealthyWorlds.Union(GetUnhealthyExp()).ToList();
+            }
+
+            return unhealthyWorlds;
+        }
+
+        /// <summary>
+        ///     Get all worlds that currently have an unhealthy Death stream
+        /// </summary>
+        /// <remarks>
+        ///     A world is considered unhealthy if there have been more seconds than the tolerance in the options
+        ///     since the last Death event was received
+        /// </remarks>
+        /// <returns></returns>
+        public List<short> GetUnhealthyDeath() {
+            return GetUnhealthyDict("death", ref _Deaths, _HealthTolerances.Value.Death);
+        }
+
+        public List<short> GetUnhealthyExp() {
+            return GetUnhealthyDict("exp", ref _Exp, _HealthTolerances.Value.Exp);
+        }
+
         public List<CensusRealtimeHealthEntry> GetDeathHealth() {
             return _Deaths.Values.ToList();
         }
@@ -139,12 +166,59 @@ namespace watchtower.Services.Repositories {
             }
         }
 
+        private List<short> GetUnhealthyDict(string type, ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict,
+            List<CensusRealtimeHealthTolerance> tolerances) {
+
+            List<short> badWorlds = new List<short>();
+
+            foreach (CensusRealtimeHealthTolerance tolerance in tolerances) {
+                if (tolerance.Tolerance == null) {
+                    //_Logger.LogTrace($"Not checking {tolerance.WorldID} cause tolerance is null");
+                    continue;
+                }
+
+                if (dict.TryGetValue(tolerance.WorldID, out CensusRealtimeHealthEntry? entry) == false) {
+                    continue;
+                }
+
+                if (entry.LastEvent == null) {
+                    continue;
+                }
+
+                // Backoff based on the failure count. The more times Honu has failed to get a value, back off more and more
+                int backoff = Math.Min(10, entry.FailureCount + 1);
+                int threshold = (tolerance.Tolerance.Value * (entry.FailureCount + 1)) + (10 * Math.Min(3, entry.FailureCount));
+
+                int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
+                if (playerCount < 100) {
+                    threshold *= 4;
+                } else if (playerCount < 200) {
+                    threshold *= 2;
+                }
+
+                int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - entry.LastEvent.Value).TotalSeconds)); 
+
+                //_Logger.LogTrace($"World {tolerance.WorldID} has gone {timeWithout} seconds without a {type} event, theshold is {threshold} seconds (has {entry.FailureCount} failures)");
+
+                if (timeWithout > threshold) {
+                    ++entry.FailureCount;
+
+                    dict[tolerance.WorldID] = entry;
+
+                    badWorlds.Add(tolerance.WorldID);
+
+                    _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, "
+                        + $"{timeWithout} seconds old, threshold {threshold}, backoff {backoff}, fails {entry.FailureCount}, players {playerCount}");
+                }
+            }
+
+            return badWorlds;
+        }
+
         private bool IsDictHealth(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, string type) {
             //_Logger.LogTrace($"{JToken.FromObject(_HealthTolerances.Value)}");
 
             bool healthy = true;
-
-            string what = "";
 
             foreach (CensusRealtimeHealthTolerance tolerance in _HealthTolerances.Value.Death) {
                 if (tolerance.Tolerance == null) {
@@ -182,7 +256,6 @@ namespace watchtower.Services.Repositories {
                     healthy = false;
 
                     _Logger.LogWarning($"World {tolerance.WorldID}/{World.GetName(tolerance.WorldID)} is UNHEALTHY in {type} events, {timeWithout} seconds old, tolerance {threshold}, backoff {backoff}, fails {entry.FailureCount}");
-                    what += $"{tolerance.WorldID}/{World.GetName(tolerance.WorldID)} has gone {timeWithout} seconds";
                 }
             }
 

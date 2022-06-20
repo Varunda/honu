@@ -56,6 +56,9 @@ namespace watchtower.Models {
         /// </summary>
         public SpawnEntries TopSpawns { get; set; } = new SpawnEntries();
 
+        /// <summary>
+        ///     Game of tag stuff
+        /// </summary>
         public List<WorldTagEntry> TagEntries { get; set; } = new List<WorldTagEntry>();
 
         /// <summary>
@@ -157,8 +160,14 @@ namespace watchtower.Models {
         /// </summary>
         public Block OutfitVehicleKills { get; set; } = new Block();
 
+        /// <summary>
+        /// Top players for shield repairs for this faction
+        /// </summary>
         public Block PlayerShieldRepair { get; set; } = new Block();
 
+        /// <summary>
+        /// Top outfits for shield repairs for this faction
+        /// </summary>
         public Block OutfitShieldRepair { get; set; } = new Block();
 
         /// <summary>
@@ -171,6 +180,9 @@ namespace watchtower.Models {
         /// </summary>
         public OutfitsOnline Outfits { get; set; } = new OutfitsOnline();
 
+        /// <summary>
+        /// Faction focus based on Death events
+        /// </summary>
         public FactionFocusEntry FactionFocus { get; set; } = new FactionFocusEntry();
 
         /// <summary>
