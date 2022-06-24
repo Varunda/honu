@@ -119,7 +119,7 @@ namespace watchtower.Services.Hosted {
                         try {
                             censusChar = await _CharacterCensus.GetByID(entry.CharacterID);
                         } catch (CensusConnectionException) {
-                            _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, requeueing and retrying");
+                            _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, delaying 30 seconds, requeueing and retrying");
                             await Task.Delay(30 * 1000, stoppingToken);
                             _Queue.Queue(entry);
                             continue;
@@ -144,12 +144,12 @@ namespace watchtower.Services.Hosted {
                         ++metadata.NotFoundCount;
                     } else if (censusChar.DateLastLogin < metadata.LastUpdated && entry.Force == false) {
                         if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
-                            _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), skipping update");
+                            _Logger.LogTrace($"{entry.CharacterID}/{censusChar.Name} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), skipping update");
                         }
                         metadata.NotFoundCount = 0;
                     } else if (censusChar.DateLastLogin >= metadata.LastUpdated || entry.Force == true) {
                         if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
-                            _Logger.LogTrace($"{entry.CharacterID} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), PERFORMING UPDATE");
+                            _Logger.LogTrace($"{entry.CharacterID}/{censusChar.Name} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), PERFORMING UPDATE");
                         }
                         metadata.NotFoundCount = 0;
                         metadata.LastUpdated = DateTime.UtcNow;
@@ -213,18 +213,9 @@ namespace watchtower.Services.Hosted {
                             );
                         }
 
-                        /*
-                        foreach (WeaponStatEntry iter in weaponStats) {
-                            await _WeaponStatDb.Upsert(iter);
-                        }
-                        */
                         if (weaponStats.Count > 0) {
                             try {
-                                //List<WeaponStatEntry> before = await _WeaponStatDb.GetByCharacterID(entry.CharacterID);
                                 await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
-                                //List<WeaponStatEntry> after = await _WeaponStatDb.GetByCharacterID(entry.CharacterID);
-
-                                //_Logger.LogDebug($"{entry.CharacterID}/{censusChar.Name} before = {before.Count}, after = {after.Count}");
                             } catch (Exception ex) {
                                 _Logger.LogError(ex, $"Error updating character weapon stat data for {entry.CharacterID}");
                             }
@@ -297,7 +288,7 @@ namespace watchtower.Services.Hosted {
                         long dbSum = dbWeapon + dbHistory + dbItem + dbStats + dbFriends + dbCharDir + dbCharDirTree + dbCharDirTier + dbCharDirObj;
 
                         if (entry.Print == true) {
-                            _Logger.LogDebug($"{entry.CharacterID}> Took {dbSum}ms to update\n"
+                            _Logger.LogDebug($"{entry.CharacterID}/{censusChar.Name}> Took {dbSum}ms to update\n"
                                 + $"\tWeapon: {dbWeapon}ms\n"
                                 + $"\tHistory stats: {dbHistory}ms\n"
                                 + $"\tItem unlocks: {dbItem}ms\n"

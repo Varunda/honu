@@ -544,66 +544,73 @@ namespace watchtower.Realtime {
         private async Task _ProcessMetagameEvent(JToken payload) {
             short worldID = payload.GetWorldID();
             uint zoneID = payload.GetZoneID();
+            int instanceID = payload.GetInt32("instance_id", 0);
             string metagameEventName = payload.GetString("metagame_event_state_name", "missing");
             int metagameEventID = payload.GetInt32("metagame_event_id", 0);
             DateTime timestamp = payload.CensusTimestamp("timestamp");
 
             _Logger.LogDebug($"metagame event payload: {payload}");
 
-            lock (ZoneStateStore.Get().Zones) {
-                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+            if (MetagameEvent.IsAerialAnomaly(metagameEventID) == false) {
+                lock (ZoneStateStore.Get().Zones) {
+                    ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
 
-                if (state == null) {
-                    state = new ZoneState() {
-                        ZoneID = zoneID,
-                        WorldID = worldID,
-                        IsOpened = true
-                    };
-                }
-
-                if (metagameEventName == "started") {
-                    state.AlertStart = timestamp;
-
-                    TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
-                    if (duration == null) {
-                        _Logger.LogWarning($"Failed to find duration of metagame event {metagameEventID}\n{payload}");
-                    } else {
-                        state.AlertEnd = state.AlertStart + duration;
+                    if (state == null) {
+                        state = new ZoneState() {
+                            ZoneID = zoneID,
+                            WorldID = worldID,
+                            IsOpened = true
+                        };
                     }
 
-                } else if (metagameEventName == "ended") {
-                    state.AlertStart = null;
+                    if (metagameEventName == "started") {
+                        state.AlertStart = timestamp;
 
-                    // Continent unlock events are not sent. To check if a continent is open,
-                    //      we get the owner of each continent. If there is no owner, then 
-                    //      a continent must be open
-                    new Thread(async () => {
-                        // Ensure census has times to update
-                        await Task.Delay(5000);
-
-                        string s = $"ALERT ended in {worldID}, current owners:\n";
-
-                        foreach (uint zoneID in Zone.All) {
-                            short? owner = _MapRepository.GetZoneMapOwner(worldID, zoneID);
-
-                            s += $"{zoneID} => {owner}\n";
-
-                            if (owner == null) {
-                                ZoneStateStore.Get().UnlockZone(worldID, zoneID);
-                            }
+                        TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
+                        if (duration == null) {
+                            _Logger.LogWarning($"Failed to find duration of metagame event {metagameEventID}\n{payload}");
+                        } else {
+                            state.AlertEnd = state.AlertStart + duration;
                         }
+                    } else if (metagameEventName == "ended") {
+                        state.AlertStart = null;
 
-                        _Logger.LogDebug(s);
-                    }).Start();
+                        // Continent unlock events are not sent. To check if a continent is open,
+                        //      we get the owner of each continent. If there is no owner, then 
+                        //      a continent must be open
+                        new Thread(async () => {
+                            // Ensure census has times to update
+                            await Task.Delay(5000);
+
+                            string s = $"ALERT ended in {worldID}, current owners:\n";
+
+                            foreach (uint zoneID in Zone.All) {
+                                short? owner = _MapRepository.GetZoneMapOwner(worldID, zoneID);
+
+                                s += $"{zoneID} => {owner}\n";
+
+                                if (owner == null) {
+                                    ZoneStateStore.Get().UnlockZone(worldID, zoneID);
+                                }
+                            }
+
+                            _Logger.LogDebug(s);
+                        }).Start();
+                    }
+
+                    ZoneStateStore.Get().SetZone(worldID, zoneID, state);
                 }
-
-                ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
+
             _Logger.LogInformation($"METAGAME in world {worldID} zone {zoneID} metagame: {metagameEventName}/{metagameEventID}");
 
             if (metagameEventName == "started") {
                 TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
                 PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
+
+                if (duration == null) {
+                    _Logger.LogWarning($"Failed to find a duration for MetagameEvent {metagameEventID}");
+                }
 
                 PsAlert alert = new PsAlert();
                 alert.Timestamp = timestamp;
@@ -653,7 +660,12 @@ namespace watchtower.Realtime {
                 PsAlert? toRemove = null;
                 foreach (PsAlert alert in alerts) {
                     if (alert.ZoneID == zoneID && alert.WorldID == worldID) {
-                        _Logger.LogInformation($"Alert {alert.ID} finished on world {worldID} in zone {zoneID}");
+                        _Logger.LogInformation($"Metagame event {alert.ID}/{alert.Name} finished on world {worldID} in zone {zoneID}");
+                        toRemove = alert;
+                        break;
+                    }
+                    if (alert.InstanceID == instanceID && alert.WorldID == worldID) {
+                        _Logger.LogInformation($"Metagame event {alert.ID}/{alert.Name} finished on world {worldID} in zone {zoneID}");
                         toRemove = alert;
                         break;
                     }
@@ -692,27 +704,39 @@ namespace watchtower.Realtime {
 
                     toRemove.VictorFactionID = factionID;
 
-                    PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
-                    if (zone != null) {
-                        int factionVS = zone.GetFacilities().Where(iter => iter.Owner == Faction.VS).Count();
-                        int factionNC = zone.GetFacilities().Where(iter => iter.Owner == Faction.NC).Count();
-                        int factionTR = zone.GetFacilities().Where(iter => iter.Owner == Faction.TR).Count();
+                    // Aerial anomalies can end early, update the duration if needed
+                    if (MetagameEvent.IsAerialAnomaly(metagameEventID) == true) {
+                        TimeSpan duration = timestamp - toRemove.Timestamp;
+                        _Logger.LogDebug($"Aerial anomaly {toRemove.WorldID}-{toRemove.InstanceID} lasted {(int)duration.TotalSeconds} seconds");
 
-                        decimal scoreVS = decimal.Round(toRemove.ZoneFacilityCount * countVS / 100);
-                        decimal scoreNC = decimal.Round(toRemove.ZoneFacilityCount * countNC / 100);
-                        decimal scoreTR = decimal.Round(toRemove.ZoneFacilityCount * countTR / 100);
+                        toRemove.Duration = (int)duration.TotalSeconds;
+                        await _AlertDb.UpdateByID(toRemove.ID, toRemove);
+                    }
 
-                        /*
-                        _Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
-                        _Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
-                        _Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
-                        */
+                    // Get the count of each faction if it's not an aerial anomaly, a lockdown alert
+                    if (MetagameEvent.IsAerialAnomaly(metagameEventID) == false) {
+                        PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
+                        if (zone != null) {
+                            int factionVS = zone.GetFacilities().Where(iter => iter.Owner == Faction.VS).Count();
+                            int factionNC = zone.GetFacilities().Where(iter => iter.Owner == Faction.NC).Count();
+                            int factionTR = zone.GetFacilities().Where(iter => iter.Owner == Faction.TR).Count();
 
-                        toRemove.CountVS = (int)scoreVS;
-                        toRemove.CountNC = (int)scoreNC;
-                        toRemove.CountTR = (int)scoreTR;
-                    } else {
-                        _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}, missing zone");
+                            decimal scoreVS = decimal.Round(toRemove.ZoneFacilityCount * countVS / 100);
+                            decimal scoreNC = decimal.Round(toRemove.ZoneFacilityCount * countNC / 100);
+                            decimal scoreTR = decimal.Round(toRemove.ZoneFacilityCount * countTR / 100);
+
+                            /*
+                            _Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
+                            _Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
+                            _Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
+                            */
+
+                            toRemove.CountVS = (int)scoreVS;
+                            toRemove.CountNC = (int)scoreNC;
+                            toRemove.CountTR = (int)scoreTR;
+                        } else {
+                            _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}), missing zone");
+                        }
                     }
 
                     new Thread(async () => {

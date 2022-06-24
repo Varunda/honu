@@ -228,7 +228,16 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Update the parameters that are only known after an alert has ended
+        ///     Update an alert, only the following parameters are updated:
+        ///     <ul>
+        ///         <li><see cref="PsAlert.VictorFactionID"/></li>
+        ///         <li><see cref="PsAlert.CountVS"/></li>
+        ///         <li><see cref="PsAlert.CountNC"/></li>
+        ///         <li><see cref="PsAlert.CountTR"/></li>
+        ///         <li><see cref="PsAlert.Participants"/></li>
+        ///         <li><see cref="PsAlert.Name"/></li>
+        ///         <li><see cref="PsAlert.Duration"/></li>
+        ///     </ul>
         /// </summary>
         /// <param name="ID">ID of the alert to update</param>
         /// <param name="parameters">Parameters used to update</param>
@@ -241,7 +250,8 @@ namespace watchtower.Services.Db {
                         count_nc = @CountNC,
                         count_tr = @CountTR,
                         participants = @Players,
-                        name = @Name
+                        name = @Name,
+                        duration = @Duration
                     WHERE id = @ID;
             ");
 
@@ -252,6 +262,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CountTR", parameters.CountTR);
             cmd.AddParameter("Players", parameters.Participants);
             cmd.AddParameter("Name", parameters.Name);
+            cmd.AddParameter("Duration", parameters.Duration);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
