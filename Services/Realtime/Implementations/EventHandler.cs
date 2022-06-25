@@ -678,6 +678,11 @@ namespace watchtower.Realtime {
                     decimal countNC = payload.GetDecimal("faction_nc", 0m);
                     decimal countTR = payload.GetDecimal("faction_tr", 0m);
 
+                    toRemove.CountVS = (int)countVS;
+                    toRemove.CountNC = (int)countNC;
+                    toRemove.CountTR = (int)countTR;
+
+                    // Update the winner faction ID
                     decimal winnerCount = 0;
                     short factionID = 0;
 
@@ -734,6 +739,7 @@ namespace watchtower.Realtime {
                             toRemove.CountVS = (int)scoreVS;
                             toRemove.CountNC = (int)scoreNC;
                             toRemove.CountTR = (int)scoreTR;
+                            await _AlertDb.UpdateByID(toRemove.ID, toRemove);
                         } else {
                             _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}), missing zone");
                         }
