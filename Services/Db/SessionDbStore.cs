@@ -283,6 +283,13 @@ namespace watchtower.Services.Db {
                     SET finish = (@Timestamp - '1 second'::INTERVAL)
                     WHERE character_id = @CharacterID 
                         AND finish IS NULL;
+
+                INSERT INTO wt_session (
+                    character_id, start, finish, outfit_id, team_id
+                ) VALUES (
+                    @CharacterID, @Timestamp, null, null, -1
+                )
+                RETURNING wt_session.id;
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
@@ -300,17 +307,6 @@ namespace watchtower.Services.Db {
                 RETURNING wt_session.id;
             ";
             */
-
-            cmd.CommandText = @"
-                INSERT INTO wt_session (
-                    character_id, start, finish, outfit_id, team_id
-                ) VALUES (
-                    @CharacterID, @Timestamp, null, null, -1
-                )
-                RETURNING wt_session.id;
-            ";
-
-            //_Logger.LogDebug(cmd.Print());
 
             long sessionID = await cmd.ExecuteInt64(CancellationToken.None);
 
@@ -354,8 +350,9 @@ namespace watchtower.Services.Db {
                     ) AND finish IS NULL;
             ");
 
+            // In case where Honu has a session ID, it can avoid an index scan by
+            //      using the id instead of getting all the session IDs, then finding the max
             if (player.SessionID != null) {
-                _Logger.LogTrace($"can use session ID instead of ending explicitly {player.SessionID}");
                 cmd.CommandText = @"
                     UPDATE wt_session
                         SET finish = @Timestamp,
@@ -393,6 +390,8 @@ namespace watchtower.Services.Db {
         ///     A task for when the operation is complete
         /// </returns>
         public async Task EndAll() {
+            // When all sessions are ended, the team_id and outfit_id fields are left null.
+            //      By setting needs_fix, Honu will fix those on the next start up
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
