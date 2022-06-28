@@ -286,16 +286,14 @@ namespace watchtower.Services.Db {
 
                 INSERT INTO wt_session (
                     character_id, start, finish, outfit_id, team_id
-                ) VALUES (
-                    @CharacterID, @Timestamp, null, null, -1
-                )
+                ) SELECT @CharacterID, @Timestamp, null, c.outfit_id, c.faction_id
+                    FROM wt_character c
+                    WHERE c.id = @CharacterID
                 RETURNING wt_session.id;
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
             cmd.AddParameter("Timestamp", when);
-
-            await cmd.ExecuteNonQueryAsync();
 
             /*
             cmd.CommandText = @"
@@ -308,11 +306,15 @@ namespace watchtower.Services.Db {
             ";
             */
 
-            long sessionID = await cmd.ExecuteInt64(CancellationToken.None);
+            object? objID = await cmd.ExecuteScalarAsync();
+            if (objID != null) {
+                if (long.TryParse(objID.ToString(), out long sessionID) == false) {
+                    _Logger.LogWarning($"Failed to convert {objID} to a valid long");
+                }
+                player.SessionID = sessionID;
+            }
+            await conn.CloseAsync();
 
-            //await conn.CloseAsync();
-
-            player.SessionID = sessionID;
             player.Online = true;
             CharacterStore.Get().SetByCharacterID(charID, player);
         }
