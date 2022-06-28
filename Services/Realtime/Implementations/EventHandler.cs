@@ -1017,7 +1017,7 @@ namespace watchtower.Realtime {
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
             if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
-                await _KillEventDb.SetRevivedID(ev.OtherID, ID);
+                await _KillEventDb.SetRevivedID(ev.OtherID, ID, ev.Timestamp);
             }
 
             long reviveMs = timer.ElapsedMilliseconds; timer.Restart();

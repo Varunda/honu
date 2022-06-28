@@ -390,7 +390,7 @@ namespace watchtower.Services.Db {
         ///     A task for when the operation is complete
         /// </returns>
         public async Task EndAll() {
-            // When all sessions are ended, the team_id and outfit_id fields are left null.
+            // When all sessions are ended in this manner, the team_id and outfit_id fields are left null.
             //      By setting needs_fix, Honu will fix those on the next start up
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
