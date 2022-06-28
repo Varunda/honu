@@ -8,13 +8,14 @@
         "sourceMap": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+        "moduleResolution": "node",
 
         "baseUrl": "./src",
         "paths": {
             "vue": [ "../node_modules/vue/types/index" ],
             "vuex": [ "../node_modules/vuex/types/index" ],
             "moment": [ "../node_modules/moment/moment" ],
-            "chart.js/*": [ "../node_modules/chart.js/*" ],
+            // "chart.js/*": [ "../node_modules/chart.js/*" ],
             "chartjs-plugin-annotation": [ "../node_modules/chartjs-plugin-annotation" ],
             "chartjs-plugin-datalabels": [ "../node_modules/chartjs-plugin" ],
             "axios": [ "../node_modules/axios/index" ],

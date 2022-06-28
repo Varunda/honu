@@ -411,7 +411,7 @@
 
     import { KillEvent, KillStatApi } from "api/KillStatApi";
     import { ExpEvent, ExpStatApi } from "api/ExpStatApi";
-    import { PsItem } from "api/ItemApi";
+    import { ItemApi, PsItem } from "api/ItemApi";
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { Session } from "api/SessionApi";
@@ -439,6 +439,7 @@
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
+import { ItemCategory } from "../../api/ItemCategoryApi";
 
     type Message = {
         when: Date;
@@ -707,6 +708,7 @@
                 this.connection.on("UpdateDeaths", this.onUpdateDeaths);
                 this.connection.on("UpdateExp", this.onUpdateExp);
                 this.connection.on("UpdateItems", this.onUpdateItems);
+                this.connection.on("UpdateItemCategories", this.onUpdateItemCategories);
                 this.connection.on("UpdateOutfits", this.onUpdateOutfits);
                 this.connection.on("UpdateCharacters", this.onUpdateCharacters);
                 this.connection.on("UpdateSessions", this.onUpdateSessions);
@@ -902,6 +904,13 @@
                 }
                 this.log(`Loaded ${this.report.items.size} items`);
                 this.steps.items = true;
+            },
+
+            onUpdateItemCategories: function(cats: ItemCategory[]): void {
+                for (const cat of cats) {
+                    this.report.itemCategories.set(cat.id, cat);
+                }
+                this.log(`Loaded ${this.report.itemCategories.size} item categories`);
             },
 
             onUpdateCharacters: function(chars: PsCharacter[]): void {

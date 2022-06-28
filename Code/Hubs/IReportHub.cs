@@ -52,6 +52,8 @@ namespace watchtower.Code.Hubs {
         /// <param name="items">List of items to be included in the report</param>
         Task UpdateItems(List<PsItem> items);
 
+        Task UpdateItemCategories(List<ItemCategory> cats);
+
         /// <summary>
         ///     Sent when outfits have been populated
         /// </summary>

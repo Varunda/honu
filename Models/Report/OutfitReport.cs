@@ -77,6 +77,8 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<PsItem> Items { get; set; } = new List<PsItem>();
 
+        public List<ItemCategory> ItemCategories { get; set; } = new();
+
         /// <summary>
         ///     All characters that may show up in the report, used to save API calls
         /// </summary>
@@ -92,6 +94,9 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<Session> Sessions { get; set; } = new List<Session>();
 
+        /// <summary>
+        ///     All reconnects that happened on the server this report takes place on during the time frame
+        /// </summary>
         public List<RealtimeReconnectEntry> Reconnects { get; set; } = new();
 
     }

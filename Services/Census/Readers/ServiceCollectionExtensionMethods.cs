@@ -31,6 +31,8 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<PsOutfit>, CensusOutfitReader>();
             services.AddSingleton<ICensusReader<PsCharacter>, CensusCharacterReader>();
             services.AddSingleton<ICensusReader<PsVehicle>, CensusVehicleReader>();
+            services.AddSingleton<ICensusReader<ItemCategory>, CensusItemCategoryReader>();
+            services.AddSingleton<ICensusReader<ItemType>, CensusItemTypeReader>();
         }
 
     }

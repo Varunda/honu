@@ -37,6 +37,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly FacilityControlDbStore _ControlDb;
         private readonly FacilityPlayerControlDbStore _PlayerControlDb;
         private readonly IFacilityDbStore _FacilityDb;
+        private readonly ItemCategoryRepository _ItemCategoryRepository;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
 
         private readonly ReportRepository _ReportRepository;
@@ -48,7 +49,8 @@ namespace watchtower.Code.Hubs.Implementations {
             ItemRepository itemRepo, CharacterDbStore charDb,
             ReportDbStore reportDb, FacilityControlDbStore controlDb,
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,
-            ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb) {
+            ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb,
+            ItemCategoryRepository itemCategoryRepository) {
 
             _Logger = logger;
             _Cache = cache;
@@ -67,6 +69,7 @@ namespace watchtower.Code.Hubs.Implementations {
             _FacilityDb = facDb;
             _ReportRepository = reportRepo;
             _ReconnectDb = reconnectDb;
+            _ItemCategoryRepository = itemCategoryRepository;
         }
 
         public async Task GenerateReport(string generator) {
@@ -95,6 +98,9 @@ namespace watchtower.Code.Hubs.Implementations {
             }
 
             string cacheKey = string.Format(CACHE_KEY, generator);
+
+            List<ItemCategory> cats = await _ItemCategoryRepository.GetAll();
+            await Clients.Caller.UpdateItemCategories(cats);
 
             if (_Cache.TryGetValue(cacheKey, out report) == true) {
                 //_Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");

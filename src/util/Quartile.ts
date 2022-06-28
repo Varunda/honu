@@ -1,5 +1,5 @@
 
-export class Quartile {
+export default class Quartile {
     public min: number = 0;
     public q1: number = 0;
     public median: number = 0;
@@ -70,4 +70,3 @@ export class Quartile {
     }
 
 }
-(window as any).Quartile = Quartile;

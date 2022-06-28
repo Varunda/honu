@@ -82,7 +82,7 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
 
-    import { Quartile } from "util/Quartile";
+    import Quartile from "util/Quartile";
     import Percentile from "util/Percentile";
 
     import { Bucket } from "api/ItemApi";

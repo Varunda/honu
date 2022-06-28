@@ -1,7 +1,7 @@
 ﻿<template>
     <collapsible header-text="Class stats">
         <table class="table table-sm">
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th>Class</th>
                 <th>Kills</th>
                 <th>Time</th>
@@ -81,12 +81,50 @@
                 <td>{{max.count}}</td>
             </tr>
         </table>
+
+        <div class="row mb-2">
+            <div class="col-12 col-lg-2 border-right">
+                <h5>Infiltrator</h5>
+                <chart-box-whisker :data="infilKPM"></chart-box-whisker>
+                <chart-box-whisker :data="infilKD"></chart-box-whisker>
+            </div>
+
+            <div class="col-12 col-lg-2 border-right">
+                <h5>Light Assault</h5>
+                <chart-box-whisker :data="lightAssaultKPM"></chart-box-whisker>
+                <chart-box-whisker :data="lightAssaultKD"></chart-box-whisker>
+            </div>
+
+            <div class="col-12 col-lg-2 border-right">
+                <h5>Medic</h5>
+                <chart-box-whisker :data="medicKPM"></chart-box-whisker>
+                <chart-box-whisker :data="medicKD"></chart-box-whisker>
+            </div>
+
+            <div class="col-12 col-lg-2 border-right">
+                <h5>Engineer</h5>
+                <chart-box-whisker :data="engineerKPM"></chart-box-whisker>
+                <chart-box-whisker :data="engineerKD"></chart-box-whisker>
+            </div>
+
+            <div class="col-12 col-lg-2 border-right">
+                <h5>Heavy</h5>
+                <chart-box-whisker :data="heavyKPM"></chart-box-whisker>
+                <chart-box-whisker :data="heavyKD"></chart-box-whisker>
+            </div>
+
+            <div class="col-12 col-lg-2 border-right">
+                <h5>MAX</h5>
+                <chart-box-whisker :data="maxKPM"></chart-box-whisker>
+                <chart-box-whisker :data="maxKD"></chart-box-whisker>
+            </div>
+        </div>
     </collapsible>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report from "../Report";
+    import Report, { PlayerClassStats, PlayerMetadata } from "../Report";
 
     import Loadout from "util/Loadout";
 
@@ -94,6 +132,7 @@
     import "MomentFilter";
 
     import Collapsible from "components/Collapsible.vue";
+    import ChartBoxWhisker from "./charts/ChartBoxWhisker.vue";
 
     class ClassStats {
         public kills: number = 0;
@@ -203,10 +242,39 @@
             }
         },
 
+        computed: {
+            infilKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.infil); },
+            lightAssaultKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.lightAssault); },
+            medicKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.medic); },
+            engineerKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.engineer); },
+            heavyKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.heavy); },
+            maxKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.max); },
+
+            infilKD: function(): number[] { return classKds(this.report, (p) => p.classes.infil); },
+            lightAssaultKD: function(): number[] { return classKds(this.report, (p) => p.classes.lightAssault); },
+            medicKD: function(): number[] { return classKds(this.report, (p) => p.classes.medic); },
+            engineerKD: function(): number[] { return classKds(this.report, (p) => p.classes.engineer); },
+            heavyKD: function(): number[] { return classKds(this.report, (p) => p.classes.heavy); },
+            maxKD: function(): number[] { return classKds(this.report, (p) => p.classes.max); }
+        },
+
         components: {
-            Collapsible
+            Collapsible,
+            ChartBoxWhisker
         }
     });
+
+    function classKds(report: Report, selector: (_: PlayerMetadata) => PlayerClassStats): number[] {
+        return Array.from(report.playerMetadata.values())
+            .filter(iter => selector(iter).timeAs > 60 * 5)
+            .map(iter => selector(iter).kills / Math.max(1, selector(iter).deaths));
+    }
+
+    function classKpms(report: Report, selector: (_: PlayerMetadata) => PlayerClassStats): number[] {
+        return Array.from(report.playerMetadata.values())
+            .filter(iter => selector(iter).timeAs > 60 * 5)
+            .map(iter => selector(iter).kills / selector(iter).timeAs * 60);
+    }
 
     export default ReportClassBreakdown;
 </script>

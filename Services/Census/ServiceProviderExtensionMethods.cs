@@ -23,6 +23,10 @@ namespace watchtower.Services.Census {
             services.AddSingleton<ItemCollection>();
             services.AddSingleton<MapCollection>();
             services.AddSingleton<FacilityCollection>();
+            services.AddSingleton<IStaticCollection<ItemCategory>, ItemCategoryCollection>();
+            services.AddSingleton<ItemCategoryCollection>();
+            services.AddSingleton<IStaticCollection<ItemType>, ItemTypeCollection>();
+            services.AddSingleton<ItemTypeCollection>();
 
             // Directive collections
             services.AddSingleton<DirectiveCollection>();

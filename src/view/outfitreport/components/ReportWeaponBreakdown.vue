@@ -1,84 +1,52 @@
 ﻿<template>
     <collapsible header-text="Weapons">
-        <h4>
-            Weapon kills
-            <info-hover text="What weapons the tracked players used during the time period"></info-hover>
-        </h4>
 
-        <div class="d-flex">
-            <table class="table table-sm flex-grow-1 flex-basis-0">
-                <tr class="table-secondary">
-                    <td>Weapon</td>
-                    <td>Kills</td>
-                    <td>%</td>
-                    <td>HSR%</td>
-                </tr>
+        <div class="row">
+            <div class="col-12 col-xl-6">
+                <h4>
+                    Weapon kills
+                    <info-hover text="What weapons the tracked players got kills with during the time period"></info-hover>
+                </h4>
 
-                <tr v-for="weapon in kills.slice(0, sliceSize)">
-                    <td>
-                        <a :href="'/i/' + weapon.itemID">
-                            {{weapon.itemName}}
-                        </a>
-                    </td>
-                    <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
-                </tr>
+                <weapon-breakdown :entries="kills" :block="killsBlock"
+                    :link-item="true" :total="totalKills" :headshot-total="totalHeadshotKills">
+                </weapon-breakdown>
+            </div>
 
-                <tr class="table-dark">
-                    <td colspan="4">
-                        Unique weapon kills: {{kills.length}} over {{report.kills.length}}
-                        ({{report.kills.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.kills.length) * 100 | locale}}% HSR)
-                    </td>
-                </tr>
-            </table>
+            <div class="col-12 col-xl-6">
+                <h4>
+                    Weapon type kills
+                </h4>
 
-            <div class="flex-grow-1 flex-basis-0">
-                <chart-block-pie-chart :data="killsBlock"
-                    :show-percent="true" :show-total="true">
-                </chart-block-pie-chart>
+                <weapon-breakdown :entries="killTypes" :block="killTypesBlock" 
+                    :link-item="false" :total="totalKills" :headshot-total="totalHeadshotKills">
+                </weapon-breakdown>
             </div>
         </div>
 
-        <h4>
-            Weapon deaths
-            <info-hover text="What weapons tracked characters died to"></info-hover>
-        </h4>
+        <div class="row">
+            <div class="col-12 col-xl-6">
+                <h4>
+                    Weapon deaths
+                    <info-hover text="What weapons tracked characters died to"></info-hover>
+                </h4>
 
-        <div class="d-flex">
-            <table class="table table-sm flex-grow-1 flex-basis-0">
-                <tr class="table-secondary">
-                    <td>Weapon</td>
-                    <td>Deaths</td>
-                    <td>%</td>
-                    <td>HSR%</td>
-                </tr>
+                <weapon-breakdown :entries="deaths" :block="deathsBlock"
+                    :link-item="true" :total="totalDeaths" :headshot-total="totalHeadshotDeaths">
+                </weapon-breakdown>
+            </div>
 
-                <tr v-for="weapon in deaths.slice(0, sliceSize)">
-                    <td>
-                        <a :href="'/i/' + weapon.itemID">
-                            {{weapon.itemName}}
-                        </a>
-                    </td>
-                    <td>{{weapon.kills}}</td>
-                    <td>{{weapon.kills / Math.max(1, report.kills.length) * 100 | locale}}%</td>
-                    <td>{{weapon.headshotKills / Math.max(1, weapon.kills) * 100 | locale}}%</td>
-                </tr>
+            <div class="col-12 col-xl-6">
+                <h4>
+                    Weapon type deaths
+                </h4>
 
-                <tr class="table-dark">
-                    <td colspan="4">
-                        Unique weapon deaths: {{deaths.length}} over {{report.deaths.length}}
-                        ({{report.deaths.filter(iter => iter.isHeadshot == true).length / Math.max(1, report.deaths.length) * 100 | locale}}% HSR)
-                    </td>
-                </tr>
-            </table>
-
-            <div class="flex-grow-1 flex-basis-0">
-                <chart-block-pie-chart :data="deathsBlock"
-                    :show-percent="true" :show-total="true">
-                </chart-block-pie-chart>
+                <weapon-breakdown :entries="deathTypes" :block="deathTypesBlock"
+                    :link-item="false" :total="totalDeaths" :headshot-total="totalHeadshotDeaths">
+                </weapon-breakdown>
             </div>
         </div>
+
     </collapsible>
 </template>
 
@@ -87,20 +55,33 @@
     import Report from "../Report";
 
     import { KillEvent } from "api/KillStatApi";
+    import { PsItem } from "api/ItemApi";
+    import { ItemCategory } from "api/ItemCategoryApi";
 
     import "filters/LocaleFilter";
 
     import { Block, BlockEntry } from "./charts/common";
+    import { WeaponBreakdownEntry } from "./weapons/common";
+
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
+    import WeaponBreakdown from "./weapons/WeaponBreakdown.vue";
 
     import InfoHover from "components/InfoHover.vue";
     import Collapsible from "components/Collapsible.vue";
 
-    class WeaponEntry {
-        public itemID: number = 0;
-        public itemName: string = "";
-        public kills: number = 0;
-        public headshotKills: number = 0;
+    function breakdownToBlock(entries: WeaponBreakdownEntry[], total: number): Block {
+        const block: Block = new Block();
+
+        block.total = total;
+        block.entries = entries.map(iter => {
+            return {
+                name: iter.name,
+                count: iter.kills
+            };
+        });
+
+        return block;
+
     }
 
     export const ReportWeaponBreakdown = Vue.extend({
@@ -110,11 +91,15 @@
 
         data: function() {
             return {
-                kills: [] as WeaponEntry[],
-                deaths: [] as WeaponEntry[],
-
+                kills: [] as WeaponBreakdownEntry[],
+                killTypes: [] as WeaponBreakdownEntry[],
                 killsBlock: new Block() as Block,
+                killTypesBlock: new Block() as Block,
+
+                deaths: [] as WeaponBreakdownEntry[],
+                deathTypes: [] as WeaponBreakdownEntry[],
                 deathsBlock: new Block() as Block,
+                deathTypesBlock: new Block() as Block,
 
                 sliceSize: 10 as number
             }
@@ -122,59 +107,110 @@
 
         mounted: function(): void {
             this.kills = this.make(this.report.kills);
-            this.killsBlock.total = this.report.kills.length;
-            this.killsBlock.entries = this.kills.map(iter => {
-                return {
-                    name: iter.itemName,
-                    count: iter.kills
-                };
-            });
+            this.killsBlock = breakdownToBlock(this.kills, this.totalKills);
 
+            this.killTypes = this.makeType(this.report.kills);
+            this.killTypesBlock = breakdownToBlock(this.killTypes, this.totalKills);
 
             this.deaths = this.make(this.report.deaths);
-            this.deathsBlock.total = this.report.deaths.length;
-            this.deathsBlock.entries = this.deaths.map(iter => {
-                return {
-                    name: iter.itemName,
-                    count: iter.kills
-                };
-            });
+            this.deathsBlock = breakdownToBlock(this.deaths, this.totalDeaths);
+
+            this.deathTypes = this.makeType(this.report.deaths);
+            this.deathTypesBlock = breakdownToBlock(this.deathTypes, this.totalDeaths);
         },
 
         methods: {
-            make: function(events: KillEvent[]): WeaponEntry[] {
-                const map: Map<number, WeaponEntry> = new Map();
-
-                const noWeapon: WeaponEntry = new WeaponEntry();
-                noWeapon.itemName = "<no weapon>";
-                map.set(0, noWeapon);
+            makeType: function(events: KillEvent[]): WeaponBreakdownEntry[] {
+                const map: Map<number, WeaponBreakdownEntry> = new Map();
 
                 for (const kill of events) {
-                    if (map.has(kill.weaponID) == false) {
-                        const entry: WeaponEntry = new WeaponEntry();
+                    const item: PsItem | undefined = this.report.items.get(kill.weaponID);
+                    const typeID: number = item?.categoryID ?? 0;
+                    const cat: ItemCategory | undefined = this.report.itemCategories.get(typeID);
 
-                        entry.itemID = kill.weaponID;
-                        entry.itemName = this.report.items.get(entry.itemID)?.name ?? `<missing ${kill.weaponID}>`;
-                        entry.kills = 0;
-                        entry.headshotKills = 0;
+                    if (map.has(typeID) == false) {
+                        const entry: WeaponBreakdownEntry = {
+                            id: typeID,
+                            name: typeID == 0 ? "<unknown weapon>" : `${(cat?.name ?? `<missing ${typeID}>`)}`,
+                            kills: 0,
+                            headshotKills: 0
+                        };
 
-                        map.set(entry.itemID, entry);
+                        map.set(entry.id, entry);
                     }
 
-                    const entry: WeaponEntry = map.get(kill.weaponID)!;
+                    const entry: WeaponBreakdownEntry = map.get(typeID)!;
                     ++entry.kills;
                     if (kill.isHeadshot == true) {
                         ++entry.headshotKills;
                     }
 
-                    map.set(entry.itemID, entry);
+                    map.set(entry.id, entry);
                 }
 
                 return Array.from(map.values()).sort((a, b) => {
                     return b.kills - a.kills
                         || b.headshotKills - a.headshotKills
-                        || b.itemName.localeCompare(a.itemName);
-                });//.slice(0, this.sliceSize);
+                        || b.name.localeCompare(a.name);
+                });
+            },
+
+            make: function(events: KillEvent[]): WeaponBreakdownEntry[] {
+                const map: Map<number, WeaponBreakdownEntry> = new Map();
+
+                const noWeapon: WeaponBreakdownEntry = {
+                    id: 0,
+                    name: "<no weapon>",
+                    kills: 0,
+                    headshotKills: 0
+                };
+                map.set(0, noWeapon);
+
+                for (const kill of events) {
+                    if (map.has(kill.weaponID) == false) {
+                        const entry: WeaponBreakdownEntry = {
+                            id: kill.weaponID,
+                            name: this.report.items.get(kill.weaponID)?.name ?? `<missing ${kill.weaponID}>`,
+                            kills: 0,
+                            headshotKills: 0
+                        };
+
+                        map.set(entry.id, entry);
+                    }
+
+                    const entry: WeaponBreakdownEntry = map.get(kill.weaponID)!;
+                    ++entry.kills;
+                    if (kill.isHeadshot == true) {
+                        ++entry.headshotKills;
+                    }
+
+                    map.set(entry.id, entry);
+                }
+
+                return Array.from(map.values()).sort((a, b) => {
+                    return b.kills - a.kills
+                        || b.headshotKills - a.headshotKills
+                        || b.name.localeCompare(a.name);
+                });
+            }
+        },
+
+        computed: {
+
+            totalKills: function(): number {
+                return this.report.kills.length;
+            },
+
+            totalHeadshotKills: function(): number {
+                return this.report.kills.filter(iter => iter.isHeadshot == true).length;
+            },
+
+            totalDeaths: function(): number {
+                return this.report.deaths.length;
+            },
+
+            totalHeadshotDeaths: function(): number {
+                return this.report.deaths.filter(iter => iter.isHeadshot == true).length;
             }
 
         },
@@ -182,7 +218,8 @@
         components: {
             ChartBlockPieChart,
             InfoHover,
-            Collapsible
+            Collapsible,
+            WeaponBreakdown
         }
     });
 

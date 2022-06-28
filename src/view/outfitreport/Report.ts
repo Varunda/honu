@@ -7,7 +7,8 @@ import { Session } from "api/SessionApi";
 import { FacilityControlEvent } from "api/FacilityControlEventApi";
 import { PlayerControlEvent } from "api/PlayerControlEventApi";
 import { PsFacility } from "api/MapApi";
-import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
+import { RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
+import { ItemCategory } from "api/ItemCategoryApi";
 
 import LoadoutUtils from "util/Loadout";
 
@@ -36,6 +37,7 @@ export default class Report {
 	public playerControl: PlayerControlEvent[] = [];
 
 	public items: Map<number, PsItem> = new Map();
+	public itemCategories: Map<number, ItemCategory> = new Map();
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public facilities: Map<number, PsFacility> = new Map();

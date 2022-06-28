@@ -186,7 +186,7 @@
     import InfoHover from "components/InfoHover.vue";
 
     import ColorUtils, { RGB } from "util/Color";
-    import { Quartile } from "util/Quartile";
+    import Quartile from "util/Quartile";
     import ZoneUtils from "util/Zone";
 
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";

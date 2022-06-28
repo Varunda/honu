@@ -73,6 +73,11 @@ namespace watchtower.Services.Db {
 
             services.AddSingleton<WorldTagDbStore>();
             services.AddSingleton<RealtimeReconnectDbStore>();
+
+            services.AddSingleton<IStaticDbStore<ItemType>, ItemTypeDbStore>();
+            services.AddSingleton<ItemTypeDbStore>();
+            services.AddSingleton<IStaticDbStore<ItemCategory>, ItemCategoryDbStore>();
+            services.AddSingleton<ItemCategoryDbStore>();
         }
 
     }

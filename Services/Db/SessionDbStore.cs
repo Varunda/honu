@@ -265,7 +265,6 @@ namespace watchtower.Services.Db {
         ///     A task for when the task is completed
         /// </returns>
         public async Task Start(string charID, DateTime when) {
-
             TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
             if (player == null) {
                 _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
@@ -281,24 +280,43 @@ namespace watchtower.Services.Db {
             NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = NOW() at time zone 'utc'
+                    SET finish = (@Timestamp - '1 second'::INTERVAL)
                     WHERE character_id = @CharacterID 
                         AND finish IS NULL;
-                
-                INSERT INTO wt_session (
-                    character_id, start, finish, outfit_id, team_id
-                )
-                SELECT @CharacterID, @Timestamp, null, c.outfit_id, c.faction_id
-                    FROM wt_character c
-                    WHERE c.id = @CharacterID;
             ");
 
             cmd.AddParameter("CharacterID", player.ID);
             cmd.AddParameter("Timestamp", when);
 
             await cmd.ExecuteNonQueryAsync();
-            await conn.CloseAsync();
 
+            /*
+            cmd.CommandText = @"
+                INSERT INTO wt_session (
+                    character_id, start, finish, outfit_id, team_id
+                ) SELECT @CharacterID, @Timestamp, null, c.outfit_id, COALESCE(c.faction_id, -1)
+                    FROM wt_character c
+                    WHERE c.id = @CharacterID
+                RETURNING wt_session.id;
+            ";
+            */
+
+            cmd.CommandText = @"
+                INSERT INTO wt_session (
+                    character_id, start, finish, outfit_id, team_id
+                ) VALUES (
+                    @CharacterID, @Timestamp, null, null, -1
+                )
+                RETURNING wt_session.id;
+            ";
+
+            //_Logger.LogDebug(cmd.Print());
+
+            long sessionID = await cmd.ExecuteInt64(CancellationToken.None);
+
+            //await conn.CloseAsync();
+
+            player.SessionID = sessionID;
             player.Online = true;
             CharacterStore.Get().SetByCharacterID(charID, player);
         }
@@ -336,6 +354,17 @@ namespace watchtower.Services.Db {
                     ) AND finish IS NULL;
             ");
 
+            if (player.SessionID != null) {
+                _Logger.LogTrace($"can use session ID instead of ending explicitly {player.SessionID}");
+                cmd.CommandText = @"
+                    UPDATE wt_session
+                        SET finish = @Timestamp,
+                            team_id = @TeamID,
+                            outfit_id = @OutfitID
+                        WHERE id = @SessionID;
+                ";
+            }
+
             // Until I know where the -1 values are coming from, set it to saner value
             short teamID = player.TeamID;
             if (teamID == -1 || teamID == 0) {
@@ -346,8 +375,10 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("OutfitID", player.OutfitID);
             cmd.AddParameter("TeamID", teamID);
             cmd.AddParameter("Timestamp", when);
+            cmd.AddParameter("SessionID", player.SessionID);
 
             player.Online = false;
+            player.SessionID = null;
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -365,7 +396,8 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = NOW() at time zone 'utc'
+                    SET finish = NOW() at time zone 'utc',
+                        needs_fix = true 
                     WHERE finish IS NULL; 
             ");
 

@@ -45,6 +45,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ObjectiveSetRepository>();
             services.AddSingleton<IStaticRepository<PsVehicle>, VehicleRepository>();
             services.AddSingleton<VehicleRepository>();
+            services.AddSingleton<IStaticRepository<ItemCategory>, ItemCategoryRepository>();
+            services.AddSingleton<ItemCategoryRepository>();
 
             services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
             services.AddSingleton<AchievementRepository>();

@@ -6,10 +6,11 @@
   "dependencies": {
     "@microsoft/signalr": "^5.0.13",
     "@popperjs/core": "^2.9.2",
+    "@sgratzl/chartjs-chart-boxplot": "^3.8.0",
     "@types/cytoscape": "^3.19.4",
     "@types/leaflet": "^1.7.5",
     "axios": "^0.21.4",
-    "chart.js": "^3.6.2",
+    "chart.js": "^3.8.0",
     "chartjs-plugin-annotation": "^1.0.2",
     "chartjs-plugin-datalabels": "^2.0.0",
     "clean-webpack-plugin": "^1.0.1",

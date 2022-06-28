@@ -6,7 +6,7 @@ namespace watchtower.Services.Db.Patches {
     [Patch]
     public class Patch56RealtimeReconnectIndex : IDbPatch {
         public int MinVersion => 56;
-        public string Name => "";
+        public string Name => "realtime reconnect indexes";
 
         public async Task Execute(IDbHelper helper) {
             using NpgsqlConnection conn = helper.Connection();

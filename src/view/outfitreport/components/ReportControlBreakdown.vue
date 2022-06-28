@@ -1,13 +1,19 @@
 ﻿<template>
     <collapsible header-text="Capture/Defenses participated in">
         <table class="table table-sm" style="table-layout: fixed;">
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th width="14%">Facility</th>
                 <th width="14%">Timestamp</th>
                 <th width="14%">Action</th>
                 <th width="14%">Outfit</th>
                 <th width="14%">Players</th>
                 <th width="30%"></th>
+            </tr>
+
+            <tr v-if="entries.length == 0">
+                <td colspan="6">
+                    No data
+                </td>
             </tr>
 
             <tr v-for="control in entries">

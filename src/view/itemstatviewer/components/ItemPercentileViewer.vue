@@ -76,7 +76,7 @@
 
     import InfoHover from "components/InfoHover.vue";
 
-    import { Quartile } from "util/Quartile";
+    import Quartile from "util/Quartile";
     import Percentile from "util/Percentile";
     (window as any).Percentile = Percentile;
 
