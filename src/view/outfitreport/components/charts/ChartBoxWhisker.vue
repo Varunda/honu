@@ -2,15 +2,15 @@
     <div :id="'breakdown-box-' + ID + '-parent'">
         <canvas :id="'breakdown-box-' + ID"></canvas>
 
-        <table class="table table-sm border-top" :id="'breakdown-box-' + ID + '-quartile'">
-            <tr>
+        <table class="table table-sm" :id="'breakdown-box-' + ID + '-quartile'">
+            <tr class="table-secondary text-center th-border-top-0">
                 <th>Min</th>
                 <th>Q1</th>
                 <th>Median</th>
                 <th>Q3</th>
                 <th>Max</th>
             </tr>
-            <tr>
+            <tr class="text-center">
                 <td>{{quartile.min | locale(2)}}</td>
                 <td>{{quartile.q1 | locale(2)}}</td>
                 <td>{{quartile.median | locale(2)}}</td>
@@ -77,9 +77,10 @@
                         datasets: [{
                             label: "",
                             backgroundColor: "#6c6c6c",
-                            borderColor: "#8c8c8c",
+                            borderColor: "#ffffff",
+                            meanBackgroundColor: "#ffffff",
                             borderWidth: 2,
-                            data: [this.data],
+                            data: [this.data]
                         }]
                     },
                     options: {

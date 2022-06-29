@@ -1,6 +1,6 @@
 ﻿<template>
     <collapsible header-text="Class stats">
-        <table class="table table-sm">
+        <table class="table table-hover">
             <tr class="table-secondary th-border-top-0">
                 <th>Class</th>
                 <th>Kills</th>
@@ -11,78 +11,89 @@
                 <th>Players</th>
             </tr>
 
-            <tr>
-                <td>Total</td>
-                <td>{{all.kills}}</td>
-                <td>{{all.timeAs | mduration}}</td>
-                <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
-                <td>{{all.deaths}}</td>
-                <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
-                <td>{{all.count}}</td>
-            </tr>
+            <tbody>
+                <tr>
+                    <td>Total</td>
+                    <td>{{all.kills}}</td>
+                    <td>{{all.timeAs | mduration}}</td>
+                    <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{all.deaths}}</td>
+                    <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
+                    <td>{{all.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Infiltrator</td>
-                <td>{{infil.kills}}</td>
-                <td>{{infil.timeAs | mduration}}</td>
-                <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
-                <td>{{infil.deaths}}</td>
-                <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
-                <td>{{infil.count}}</td>
-            </tr>
+                <tr>
+                    <td>Infiltrator</td>
+                    <td>{{infil.kills}}</td>
+                    <td>{{infil.timeAs | mduration}}</td>
+                    <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{infil.deaths}}</td>
+                    <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
+                    <td>{{infil.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Light Assault</td>
-                <td>{{lightAssault.kills}}</td>
-                <td>{{lightAssault.timeAs | mduration}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
-                <td>{{lightAssault.deaths}}</td>
-                <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
-                <td>{{lightAssault.count}}</td>
-            </tr>
+                <tr>
+                    <td>Light Assault</td>
+                    <td>{{lightAssault.kills}}</td>
+                    <td>{{lightAssault.timeAs | mduration}}</td>
+                    <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{lightAssault.deaths}}</td>
+                    <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
+                    <td>{{lightAssault.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Medic</td>
-                <td>{{medic.kills}}</td>
-                <td>{{medic.timeAs | mduration}}</td>
-                <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
-                <td>{{medic.deaths}}</td>
-                <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
-                <td>{{medic.count}}</td>
-            </tr>
+                <tr>
+                    <td>Medic</td>
+                    <td>{{medic.kills}}</td>
+                    <td>{{medic.timeAs | mduration}}</td>
+                    <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{medic.deaths}}</td>
+                    <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
+                    <td>{{medic.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Engineer</td>
-                <td>{{engineer.kills}}</td>
-                <td>{{engineer.timeAs | mduration}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
-                <td>{{engineer.deaths}}</td>
-                <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
-                <td>{{engineer.count}}</td>
-            </tr>
+                <tr>
+                    <td>Engineer</td>
+                    <td>{{engineer.kills}}</td>
+                    <td>{{engineer.timeAs | mduration}}</td>
+                    <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{engineer.deaths}}</td>
+                    <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
+                    <td>{{engineer.count}}</td>
+                </tr>
 
-            <tr>
-                <td>Heavy</td>
-                <td>{{heavy.kills}}</td>
-                <td>{{heavy.timeAs | mduration}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
-                <td>{{heavy.deaths}}</td>
-                <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
-                <td>{{heavy.count}}</td>
-            </tr>
+                <tr>
+                    <td>Heavy</td>
+                    <td>{{heavy.kills}}</td>
+                    <td>{{heavy.timeAs | mduration}}</td>
+                    <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{heavy.deaths}}</td>
+                    <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
+                    <td>{{heavy.count}}</td>
+                </tr>
 
-            <tr>
-                <td>MAX</td>
-                <td>{{max.kills}}</td>
-                <td>{{max.timeAs | mduration}}</td>
-                <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
-                <td>{{max.deaths}}</td>
-                <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
-                <td>{{max.count}}</td>
-            </tr>
+                <tr>
+                    <td>MAX</td>
+                    <td>{{max.kills}}</td>
+                    <td>{{max.timeAs | mduration}}</td>
+                    <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{max.deaths}}</td>
+                    <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
+                    <td>{{max.count}}</td>
+                </tr>
+            </tbody>
         </table>
 
         <div class="row mb-2">
+            <div class="col-12 col-lg-2 border-right">
+                <h5>
+                    All
+                    <info-hover text="This are box whisker plots, which show the min, Q1/25%, Q2/median, Q3/75% and max of a dataset. The dot is the mean/average"></info-hover>
+                </h5>
+                <chart-box-whisker :data="allKPM"></chart-box-whisker>
+                <chart-box-whisker :data="allKD"></chart-box-whisker>
+            </div>
+
             <div class="col-12 col-lg-2 border-right">
                 <h5>Infiltrator</h5>
                 <chart-box-whisker :data="infilKPM"></chart-box-whisker>
@@ -112,12 +123,6 @@
                 <chart-box-whisker :data="heavyKPM"></chart-box-whisker>
                 <chart-box-whisker :data="heavyKD"></chart-box-whisker>
             </div>
-
-            <div class="col-12 col-lg-2 border-right">
-                <h5>MAX</h5>
-                <chart-box-whisker :data="maxKPM"></chart-box-whisker>
-                <chart-box-whisker :data="maxKD"></chart-box-whisker>
-            </div>
         </div>
     </collapsible>
 </template>
@@ -131,6 +136,7 @@
     import "filters/LocaleFilter";
     import "MomentFilter";
 
+    import InfoHover from "components/InfoHover.vue";
     import Collapsible from "components/Collapsible.vue";
     import ChartBoxWhisker from "./charts/ChartBoxWhisker.vue";
 
@@ -243,6 +249,7 @@
         },
 
         computed: {
+            allKPM: function(): number[] { return Array.from(this.report.playerMetadata.values()).filter(iter => iter.timeAs > 60 * 5).map(iter => iter.kills.length / iter.timeAs * 60); },
             infilKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.infil); },
             lightAssaultKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.lightAssault); },
             medicKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.medic); },
@@ -250,6 +257,7 @@
             heavyKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.heavy); },
             maxKPM: function(): number[] { return classKpms(this.report, (p) => p.classes.max); },
 
+            allKD: function(): number[] { return Array.from(this.report.playerMetadata.values()).filter(iter => iter.timeAs > 60 * 5).map(iter => iter.kills.length / Math.max(1, iter.deaths.length)); },
             infilKD: function(): number[] { return classKds(this.report, (p) => p.classes.infil); },
             lightAssaultKD: function(): number[] { return classKds(this.report, (p) => p.classes.lightAssault); },
             medicKD: function(): number[] { return classKds(this.report, (p) => p.classes.medic); },
@@ -260,7 +268,8 @@
 
         components: {
             Collapsible,
-            ChartBoxWhisker
+            ChartBoxWhisker,
+            InfoHover
         }
     });
 
