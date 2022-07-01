@@ -38,6 +38,7 @@
                         <td></td>
                     </tr>
                 </table>
+
             </div>
 
             <div v-if="isDone == true">
@@ -419,6 +420,7 @@
     import { PlayerControlEvent, PlayerControlEventApi } from "api/PlayerControlEventApi";
     import { PsFacility, MapApi } from "api/MapApi";
     import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
+    import { ItemCategory } from "api/ItemCategoryApi";
 
     import Report, { PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
@@ -439,7 +441,6 @@
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
-import { ItemCategory } from "../../api/ItemCategoryApi";
 
     type Message = {
         when: Date;
@@ -828,6 +829,18 @@ import { ItemCategory } from "../../api/ItemCategoryApi";
                 if (conf == true) {
                     location.href = "/report";
                 }
+            },
+
+            exportJson: function(): void {
+                const json: string = JSON.stringify(this.report);
+
+                const anchor = document.createElement("a");
+                anchor.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(json)}`);
+                anchor.setAttribute("download", "export.json");
+                document.body.appendChild(anchor);
+
+                anchor.click();
+                anchor.remove();
             },
 
             onSendError: function(err: string): void {

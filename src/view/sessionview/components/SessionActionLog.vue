@@ -253,15 +253,15 @@
                     let baseAmount: number | null = null;
 
                     switch (expID) {
-                        case Experience.HEAL: baseAmount = 10; break;
-                        case Experience.SQUAD_HEAL: baseAmount = 15; break;
+                        //case Experience.HEAL: baseAmount = 10; break;
+                        //case Experience.SQUAD_HEAL: baseAmount = 15; break;
                         case Experience.REVIVE: baseAmount = 75; break;
                         case Experience.SQUAD_REVIVE: baseAmount = 100; break;
-                        case Experience.SHIELD_REPAIR: baseAmount = 10; break;
-                        case Experience.SQUAD_SHIELD_REPAIR: baseAmount = 10; break;
+                        //case Experience.SHIELD_REPAIR: baseAmount = 10; break;
+                        //case Experience.SQUAD_SHIELD_REPAIR: baseAmount = 10; break;
 
-                        case Experience.MAX_REPAIR: baseAmount = 5; break;
-                        case Experience.SQUAD_MAX_REPAIR: baseAmount = 15; break;
+                        //case Experience.MAX_REPAIR: baseAmount = 5; break;
+                        //case Experience.SQUAD_MAX_REPAIR: baseAmount = 15; break;
                         case Experience.RESUPPLY: baseAmount = 10; break;
                         case Experience.SQUAD_RESUPPLY: baseAmount = 15; break;
 

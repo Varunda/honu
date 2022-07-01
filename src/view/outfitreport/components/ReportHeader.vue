@@ -12,8 +12,9 @@
             </ul>
         </div>
 
-        <h2 class="wt-header" data-toggle="collapseeeeeeeeeee" data-target="#report-header">
+        <h2 class="wt-header" data-toggle="collapse" data-target="#report-header">
             Outfit report
+            <a class="btn btn-primary" @click.stop="exportJson">Export json</a>
         </h2>
 
         <div id="report-header" class="collapse show text-center mb-3">
@@ -75,6 +76,7 @@
     import Report from "../Report";
 
     import Collapsible from "components/Collapsible.vue";
+import TimeUtils from "../../../util/Time";
 
     export const ReportHeader = Vue.extend({
         props: {
@@ -99,7 +101,21 @@
                 } catch (err: any) {
                     console.error(err);
                 }
-            }
+            },
+
+            exportJson: function(): void {
+                const json: string = JSON.stringify(this.report);
+
+                const name: string = TimeUtils.format(this.report.periodStart, "YYYY-MM-DDThh:mm");
+
+                const anchor = document.createElement("a");
+                anchor.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(json)}`);
+                anchor.setAttribute("download", `honu-report-${name}z.json`);
+                document.body.appendChild(anchor);
+
+                anchor.click();
+                anchor.remove();
+            },
         },
 
         computed: {
