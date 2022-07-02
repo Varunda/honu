@@ -31,6 +31,7 @@ namespace watchtower.Services.Db {
                 SELECT *
                     FROM {_TableName};
             ");
+            await cmd.PrepareAsync();
 
             List<T> entries = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
@@ -42,6 +43,8 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, "");
             SetupUpsertCommand(cmd, param);
+
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

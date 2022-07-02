@@ -17,7 +17,7 @@ namespace watchtower.Services.Db {
         private readonly IDbHelper _DbHelper;
 
         public CharacterDbStore(ILogger<CharacterDbStore> logger,
-                IDbHelper helper, CharacterCacheQueue queue) {
+                IDbHelper helper) {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
@@ -40,6 +40,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("@ID", charID);
+            await cmd.PrepareAsync();
 
             PsCharacter? c = await ReadSingle(cmd);
             await conn.CloseAsync();
@@ -65,6 +66,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("Name", name.ToLower());
+            await cmd.PrepareAsync();
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();
@@ -90,6 +92,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("IDs", IDs);
+            await cmd.PrepareAsync();
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();
@@ -135,6 +138,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("DateCreated", character.DateCreated);
             cmd.AddParameter("DateLastLogin", character.DateLastLogin);
             cmd.AddParameter("DateLastSave", character.DateLastSave);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -158,6 +162,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("Name", $"%{name.ToLower()}%");
+            await cmd.PrepareAsync();
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();
@@ -177,6 +182,7 @@ namespace watchtower.Services.Db {
                         LEFT JOIN wt_outfit o ON c.outfit_id = o.id
                     WHERE c.time_create IS NULL;
             ");
+            await cmd.PrepareAsync();
 
             List<PsCharacter> c = await ReadList(cmd);
             await conn.CloseAsync();

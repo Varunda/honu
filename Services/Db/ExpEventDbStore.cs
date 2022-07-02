@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
@@ -36,7 +37,38 @@ namespace watchtower.Services.Db {
         ///     The ID of the event that was just inserted into the table
         /// </returns>
         public async Task<long> Insert(ExpEvent ev) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            await using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
+            await conn.OpenAsync();
+            await using NpgsqlCommand cmd = new NpgsqlCommand(@"
+                INSERT INTO wt_exp (
+                    source_character_id, experience_id, source_loadout_id,
+                    source_faction_id, source_team_id,
+                    other_id,
+                    amount,
+                    world_id, zone_id,
+                    timestamp
+                ) VALUES (
+                    $1, $2, $3,
+                    $4, $5,
+                    $6,
+                    $7,
+                    $8, $9,
+                    $10
+                ) RETURNING id;
+            ", conn) {
+                Parameters = {
+                    new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
+                    new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
+                    new() { Value = ev.OtherID },
+                    new() { Value = ev.Amount },
+                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                    new() { Value = ev.Timestamp }
+                }
+            };
+
+            await cmd.PrepareAsync();
+
+            /*
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_exp (
                     source_character_id, experience_id, source_loadout_id, source_faction_id, source_team_id,
@@ -52,26 +84,11 @@ namespace watchtower.Services.Db {
                     @Timestamp
                 ) RETURNING id;
             ");
+            */
 
-            cmd.AddParameter("SourceCharacterID", ev.SourceID);
-            cmd.AddParameter("ExperienceID", ev.ExperienceID);
-            cmd.AddParameter("SourceLoadoutID", ev.LoadoutID);
-            cmd.AddParameter("SourceFactionID", Loadout.GetFaction(ev.LoadoutID));
-            cmd.AddParameter("SourceTeamID", ev.TeamID);
-            cmd.AddParameter("OtherID", ev.OtherID);
-            cmd.AddParameter("Amount", ev.Amount);
-            cmd.AddParameter("WorldID", ev.WorldID);
-            cmd.AddParameter("ZoneID", ev.ZoneID);
-            cmd.AddParameter("Timestamp", ev.Timestamp);
+            long ID = await cmd.ExecuteInt64(CancellationToken.None);
 
-            object? objID = await cmd.ExecuteScalarAsync();
-            await conn.CloseAsync();
-
-            if (objID != null && int.TryParse(objID.ToString(), out int ID) == true) {
-                return ID;
-            } else {
-                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
-            }
+            return ID;
         }
 
         /// <summary>
@@ -99,6 +116,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WorldID", parameters.WorldID);
             cmd.AddParameter("ExperienceIDs", parameters.ExperienceIDs);
             cmd.AddParameter("FactionID", parameters.FactionID);
+            await cmd.PrepareAsync();
 
             List<ExpDbEntry> entries = await ReadList(cmd);
             await conn.CloseAsync();
@@ -139,6 +157,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WorldID", options.WorldID);
             cmd.AddParameter("ExperienceIDs", options.ExperienceIDs);
             cmd.AddParameter("FactionID", options.FactionID);
+            await cmd.PrepareAsync();
 
             List<ExpDbEntry> entries = await ReadList(cmd);
             await conn.CloseAsync();
@@ -158,6 +177,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CharacterID", charID);
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
+            await cmd.PrepareAsync();
 
             List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
             await conn.CloseAsync();

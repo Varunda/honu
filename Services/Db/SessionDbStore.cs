@@ -294,17 +294,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("CharacterID", player.ID);
             cmd.AddParameter("Timestamp", when);
-
-            /*
-            cmd.CommandText = @"
-                INSERT INTO wt_session (
-                    character_id, start, finish, outfit_id, team_id
-                ) SELECT @CharacterID, @Timestamp, null, c.outfit_id, COALESCE(c.faction_id, -1)
-                    FROM wt_character c
-                    WHERE c.id = @CharacterID
-                RETURNING wt_session.id;
-            ";
-            */
+            await cmd.PrepareAsync();
 
             object? objID = await cmd.ExecuteScalarAsync();
             if (objID != null) {
@@ -339,7 +329,7 @@ namespace watchtower.Services.Db {
                 return;
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = @Timestamp,
@@ -375,6 +365,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("TeamID", teamID);
             cmd.AddParameter("Timestamp", when);
             cmd.AddParameter("SessionID", player.SessionID);
+            await cmd.PrepareAsync();
 
             player.Online = false;
             player.SessionID = null;

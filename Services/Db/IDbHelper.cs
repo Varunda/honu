@@ -13,7 +13,7 @@ namespace watchtower.Services.Db {
         /// Create a new connection to the database given in the db options
         /// </summary>
         /// <returns>A new connection to use</returns>
-        NpgsqlConnection Connection();
+        NpgsqlConnection Connection(bool enlist = true);
 
         /// <summary>
         /// Create a new command using the connection passed

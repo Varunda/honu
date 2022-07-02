@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
@@ -48,48 +49,44 @@ namespace watchtower.Services.Db {
         ///     The ID of the <see cref="KillEvent"/> that was just created
         /// </returns>
         public async Task<long> Insert(KillEvent ev) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+            await using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
+            await conn.OpenAsync();
+
+            await using NpgsqlCommand cmd = new NpgsqlCommand(@"
                 INSERT INTO wt_kills (
                     world_id, zone_id,
-                    attacker_character_id, attacker_loadout_id, attacker_fire_mode_id, attacker_vehicle_id, attacker_faction_id, attacker_team_id,
+                    attacker_character_id, attacker_loadout_id,
+                    attacker_fire_mode_id, attacker_vehicle_id,
+                    attacker_faction_id, attacker_team_id,
                     killed_character_id, killed_loadout_id, killed_faction_id, killed_team_id, revived_event_id,
                     weapon_id, is_headshot, timestamp
                 ) VALUES (
-                    @WorldID, @ZoneID,
-                    @AttackerCharacterID, @AttackerLoadoutID, @AttackerFireModeID, @AttackerVehicleID, @AttackerFactionID, @AttackerTeamID,
-                    @KilledCharacterID, @KilledLoadoutID, @KilledFactionID, @KilledTeamID, @RevivedEventID,
-                    @WeaponID, @IsHeadshot, @Timestamp
+                    $1, $2,
+                    $3, $4,
+                    $5, $6,
+                    $7, $8,
+                    $9, $10, $11, $12, null,
+                    $13, $14, $15
                 ) RETURNING id;
-            ");
+            ", conn) {
+                Parameters = {
+                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                    new() { Value = ev.AttackerCharacterID }, new() { Value = ev.AttackerLoadoutID },
+                    new() { Value = ev.AttackerFireModeID }, new() { Value = ev.AttackerVehicleID },
+                    new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) }, new() { Value = ev.AttackerTeamID },
+                    new() { Value = ev.KilledCharacterID },
+                    new() { Value = ev.KilledLoadoutID },
+                    new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
+                    new() { Value = ev.KilledTeamID },
+                    new() { Value = ev.WeaponID },
+                    new() { Value = ev.IsHeadshot },
+                    new() { Value = ev.Timestamp }
+                }
+            };
+            await cmd.PrepareAsync();
 
-            cmd.AddParameter("WorldID", ev.WorldID);
-            cmd.AddParameter("ZoneID", ev.ZoneID);
-            cmd.AddParameter("AttackerCharacterID", ev.AttackerCharacterID);
-            cmd.AddParameter("AttackerLoadoutID", ev.AttackerLoadoutID);
-            cmd.AddParameter("AttackerFireModeID", ev.AttackerFireModeID);
-            cmd.AddParameter("AttackerVehicleID", ev.AttackerVehicleID);
-            cmd.AddParameter("AttackerFactionID", Loadout.GetFaction(ev.AttackerLoadoutID));
-            cmd.AddParameter("AttackerTeamID", ev.AttackerTeamID);
-            cmd.AddParameter("KilledCharacterID", ev.KilledCharacterID);
-            cmd.AddParameter("KilledLoadoutID", ev.KilledLoadoutID);
-            cmd.AddParameter("KilledFactionID", Loadout.GetFaction(ev.KilledLoadoutID));
-            cmd.AddParameter("KilledTeamID", ev.KilledTeamID);
-            cmd.AddParameter("RevivedEventID", null);
-            cmd.AddParameter("WeaponID", ev.WeaponID);
-            cmd.AddParameter("IsHeadshot", ev.IsHeadshot);
-            cmd.AddParameter("Timestamp", ev.Timestamp);
-
-            //_Logger.LogTrace($"{ev.Timestamp.Kind} {ev.Timestamp}");
-
-            object? objID = await cmd.ExecuteScalarAsync();
-            await conn.CloseAsync();
-
-            if (objID != null && int.TryParse(objID.ToString(), out int ID) == true) {
-                return ID;
-            } else {
-                throw new Exception($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
-            }
+            long ID = await cmd.ExecuteInt64(CancellationToken.None);
+            return ID;
         }
 
         /// <summary>
@@ -115,6 +112,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("RevivedCharacterID", charID);
             cmd.AddParameter("RevivedEventID", revivedEventID);
             cmd.AddParameter("Timestamp", timestamp);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

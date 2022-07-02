@@ -47,6 +47,10 @@ using watchtower.Models.PSB;
 using watchtower.Services.Realtime;
 using watchtower.Models.Health;
 using watchtower.Models.Alert;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
+using Npgsql;
 
 //using honu_census;
 
@@ -226,7 +230,7 @@ namespace watchtower {
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
 
-            services.AddHostedService<KilledTeamIDFixerService>();
+            //services.AddHostedService<KilledTeamIDFixerService>();
 
             // Needed to Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
