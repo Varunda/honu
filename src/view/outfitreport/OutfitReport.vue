@@ -831,18 +831,6 @@
                 }
             },
 
-            exportJson: function(): void {
-                const json: string = JSON.stringify(this.report);
-
-                const anchor = document.createElement("a");
-                anchor.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(json)}`);
-                anchor.setAttribute("download", "export.json");
-                document.body.appendChild(anchor);
-
-                anchor.click();
-                anchor.remove();
-            },
-
             onSendError: function(err: string): void {
                 this.log("ERROR: " + err);
                 this.show.logs = true;

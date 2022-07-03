@@ -76,7 +76,7 @@
     import Report from "../Report";
 
     import Collapsible from "components/Collapsible.vue";
-import TimeUtils from "../../../util/Time";
+    import TimeUtils from "util/Time";
 
     export const ReportHeader = Vue.extend({
         props: {
@@ -104,7 +104,15 @@ import TimeUtils from "../../../util/Time";
             },
 
             exportJson: function(): void {
-                const json: string = JSON.stringify(this.report);
+                const json: string = JSON.stringify({
+                    ...this.report,
+                    characters: Array.from(this.report.characters.values()),
+                    outfits: Array.from(this.report.outfits.values()),
+                    items: Array.from(this.report.items.values()),
+                    itemCategories: Array.from(this.report.itemCategories.values()),
+                    facilities: Array.from(this.report.facilities.values()),
+                    playerMetadata: Array.from(this.report.playerMetadata.values())
+                });
 
                 const name: string = TimeUtils.format(this.report.periodStart, "YYYY-MM-DDThh:mm");
 
