@@ -10,7 +10,10 @@
             </li>
         </honu-menu>
 
-        <a-table :entries="alerts" display-type="table" :show-filters="true" row-padding="compact" default-sort-order="desc" default-sort-field="timestamp">
+        <a-table :entries="alerts" display-type="table" :show-filters="true" 
+            row-padding="normal"
+            default-sort-order="desc" default-sort-field="timestamp">
+
             <a-col>
                 <a-header>
                     <b>ID</b>
@@ -22,6 +25,21 @@
 
                 <a-body v-slot="entry">
                     {{entry.displayID}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Type</b>
+                </a-header>
+
+                <a-filter field="type" type="string" method="dropdown"
+                    :conditions="[ 'equals' ]">
+
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.type}}
                 </a-body>
             </a-col>
 
@@ -66,7 +84,8 @@
 
                 <a-body v-slot="entry">
                     <span v-if="entry.zoneID == 0">
-                        &lt;global&gt;
+                        Global
+                        <info-hover text="A fake alert that spans a whole day"></info-hover>
                     </span>
                     <span v-else>
                         {{entry.zoneID | zone}}
@@ -129,6 +148,7 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+    import InfoHover from "components/InfoHover.vue";
 
     import "filters/ZoneNameFilter";
     import "filters/WorldNameFilter";
@@ -187,12 +207,12 @@
                     ]
                 }
             }
-
         },
 
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            InfoHover
         }
     });
     export default AlertList;

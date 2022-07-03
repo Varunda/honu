@@ -3,6 +3,7 @@ import ApiWrapper from "api/ApiWrapper";
 
 export class PsAlert {
     public id: number = 0;
+    public type: string = "unset";
     public timestamp: Date = new Date();
     public end: Date = new Date();
     public duration: number = 0;
@@ -44,6 +45,16 @@ export class AlertApi extends ApiWrapper<PsAlert> {
             alert.displayID = `${alert.worldID}-${alert.instanceID}`;
         } else {
             alert.displayID = alert.name;
+        }
+
+        if (alert.alertID == 0 && alert.zoneID == 0) {
+            alert.type = "Daily";
+        } else if (alert.alertID == 0 && alert.zoneID != 0) {
+            alert.type = "Event";
+        } else if ([228, 229, 230, 231, 232].indexOf(alert.alertID) > -1) {
+            alert.type = "Aerial Anomaly";
+        } else {
+            alert.type = "Continent Lock";
         }
 
         return alert;

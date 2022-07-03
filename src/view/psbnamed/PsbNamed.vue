@@ -611,6 +611,10 @@
 
         computed: {
             filtered: function(): Loading<FlatPsbNamedAccount[]> {
+                if (this.accounts.state != "loaded") {
+                    return this.accounts;
+                }
+
                 if (this.filter.missingCharacters == true || this.filter.mismatchFactions == true || this.filter.wrongWorlds == true || this.filter.deleted == false || this.filter.warnings == true) {
                     return this.wrapped;
                 }

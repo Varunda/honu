@@ -27,6 +27,8 @@ namespace watchtower.Services.Repositories {
         private readonly AlertPlayerDataDbStore _ParticipantDataDb;
         private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
 
+        private Dictionary<long, Task<List<AlertPlayerDataEntry>>> _PendingCreate = new();
+
         public AlertPlayerDataRepository(ILogger<AlertPlayerDataRepository> logger,
                 KillEventDbStore killDb, ExpEventDbStore expDb,
                 AlertDbStore alertDb, SessionDbStore sessionDb,
@@ -45,14 +47,36 @@ namespace watchtower.Services.Repositories {
         /// <summary>
         ///     Get the participant data for an alert
         /// </summary>
+        /// <remarks>
+        ///     If this method is called multiple times for the same alert, 
+        ///     the Task that is used to generate the data is cached and returned,
+        ///     instead of generating the stats multiple times
+        /// </remarks>
         /// <param name="alert">Alert to get the participation data of, generating it if necessary</param>
         /// <param name="cancel">Cancel token</param>
         /// <returns></returns>
         public async Task<List<AlertPlayerDataEntry>> GetByAlert(PsAlert alert, CancellationToken cancel) {
+            Task<List<AlertPlayerDataEntry>>? pending = null;
+            lock (_PendingCreate) {
+                _ = _PendingCreate.TryGetValue(alert.ID, out pending);
+            }
+
+            if (pending != null) {
+                _Logger.LogDebug($"{alert.ID}/{alert.Name} is pending creation, returning the pending entry instead");
+                return await pending;
+            }
+
             List<AlertPlayerDataEntry> entries = await _ParticipantDataDb.GetByAlertID(alert.ID, cancel);
 
             if (entries.Count == 0) {
-                entries = await GenerateAndInsertByAlert(alert);
+                pending = GenerateAndInsertByAlert(alert);
+                lock (_PendingCreate) { _PendingCreate.TryAdd(alert.ID, pending); }
+
+                try {
+                    entries = await pending;
+                } finally {
+                    lock (_PendingCreate) { _PendingCreate.Remove(alert.ID); }
+                }
 
                 alert.Participants = entries.Count;
                 await _AlertDb.UpdateByID(alert.ID, alert);
