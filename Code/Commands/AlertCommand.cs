@@ -20,6 +20,8 @@ namespace watchtower.Code.Commands {
         private readonly AlertPlayerDataRepository _DataRepository;
         private readonly AlertPlayerDataDbStore _DataDb;
         private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
+        private readonly AlertPopulationDbStore _PopulationDb;
+        private readonly AlertPopulationRepository _PopulationRepository;
 
         public AlertCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<AlertCommand>>();
@@ -27,6 +29,8 @@ namespace watchtower.Code.Commands {
             _DataRepository = services.GetRequiredService<AlertPlayerDataRepository>();
             _DataDb = services.GetRequiredService<AlertPlayerDataDbStore>();
             _ProfileDataDb = services.GetRequiredService<AlertPlayerProfileDataDbStore>();
+            _PopulationDb = services.GetRequiredService<AlertPopulationDbStore>();
+            _PopulationRepository = services.GetRequiredService<AlertPopulationRepository>();
         }
 
         public async Task Rebuild(long alertID) {
@@ -42,11 +46,26 @@ namespace watchtower.Code.Commands {
             await _DataDb.DeleteByAlertID(alertID);
 
             List<AlertPlayerDataEntry> parts = await _DataRepository.GetByAlert(alertID, CancellationToken.None);
-            alert.Participants = parts.Count;
 
+            alert.Participants = parts.Count;
             await _AlertRepository.UpdateByID(alertID, alert);
 
             _Logger.LogInformation($"Done rebuilding participant data for alert {alertID}");
+        }
+
+        public async Task RebuildPop(long alertID) {
+            PsAlert? alert = await _AlertRepository.GetByID(alertID);
+            if (alert == null) {
+                _Logger.LogWarning($"Alert {alertID} doesn't exist");
+            }
+
+            _Logger.LogInformation($"Rebuilding population data for alert {alertID}...");
+
+            await _PopulationDb.DeleteByAlertID(alertID);
+
+            List<AlertPopulation> pop = await _PopulationRepository.GetByAlertID(alertID, CancellationToken.None);
+
+            _Logger.LogInformation($"Done rebuilding population data for alert {alertID}, have {pop.Count} entries");
         }
 
         public async Task Create(string name, string start, int duration, short worldID, uint zoneID) {

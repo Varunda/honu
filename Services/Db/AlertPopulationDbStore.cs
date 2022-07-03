@@ -78,5 +78,24 @@ namespace watchtower.Services.Db {
             return ID;
         }
 
+        /// <summary>
+        ///     Delete the alert population for an alert
+        /// </summary>
+        /// <param name="alertID">ID of the alert</param>
+        /// <returns></returns>
+        public async Task DeleteByAlertID(long alertID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                DELETE
+                    FROM alert_population
+                    WHERE alert_id = @AlertID;
+            ");
+
+            cmd.AddParameter("AlertID", alertID);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
     }
 }

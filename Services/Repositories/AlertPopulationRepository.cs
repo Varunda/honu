@@ -23,6 +23,8 @@ namespace watchtower.Services.Repositories {
         private readonly ExpEventDbStore _ExpDb;
         private readonly AlertDbStore _AlertDb;
 
+        private Dictionary<long, Task<List<AlertPopulation>>> _PendingCreate = new();
+
         public AlertPopulationRepository(ILogger<AlertPopulationRepository> logger,
             AlertPopulationDbStore db, AlertRepository alertRepository,
             SessionDbStore sessionDb, KillEventDbStore killDb,
@@ -49,6 +51,16 @@ namespace watchtower.Services.Repositories {
         ///     A list of <see cref="AlertPopulation"/> that represents the changing population of players over time
         /// </returns>
         public async Task<List<AlertPopulation>> GetByAlertID(long alertID, CancellationToken cancel) {
+            Task<List<AlertPopulation>>? pending = null;
+            lock (_PendingCreate) {
+                _ = _PendingCreate.TryGetValue(alertID, out pending);
+            }
+
+            if (pending != null) {
+                _Logger.LogDebug($"{alertID} is pending creation, returning the pending entry instead");
+                return await pending;
+            }
+
             List<AlertPopulation> pop = await _Db.GetByAlertID(alertID, cancel);
 
             if (pop.Count > 0) {
@@ -60,7 +72,13 @@ namespace watchtower.Services.Repositories {
                 return new List<AlertPopulation>();
             }
 
-            pop = await CreateAndInsertData(alert, cancel);
+            pending = CreateAndInsertData(alert, cancel);
+            lock (_PendingCreate) { _PendingCreate.TryAdd(alert.ID, pending); }
+            try {
+                pop = await pending;
+            } finally {
+                lock (_PendingCreate) { _PendingCreate.Remove(alert.ID); }
+            }
 
             return pop;
         }
