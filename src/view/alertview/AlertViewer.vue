@@ -66,9 +66,6 @@
                 <div class="col-12">
                     <hr class="border" />
                     <h4 class="text-center">Territory control</h4>
-                    <!--
-                    <h2 class="wt-header">Victor</h2>
-                    -->
                 </div>
 
                 <div v-if="alert.state == 'idle'"></div>
@@ -77,8 +74,11 @@
                     <busy class="honu-busy"></busy>
                 </div>
 
-                <div v-if="alert.state == 'loaded' && alert.data.victorFactionID != -1 && alert.data.zoneID != 0" class="col-12">
+                <div v-if="alert.state == 'loaded' && alert.data.victorFactionID != -1 && alert.data.zoneID != 0 && alert.data.countVS != null" class="col-12">
                     <alert-winner :alert="alert.data"></alert-winner>
+                </div>
+                <div v-else-if="alert.state == 'loaded'" class="col-12">
+                    Territory data not available
                 </div>
             </div>
 
@@ -87,13 +87,13 @@
                     <h2 class="wt-header">Faction stats</h2>
                 </div>
 
-                <div class="col-4">
+                <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="vsStats"></alert-faction-stats>
                 </div>
-                <div class="col-4">
+                <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="ncStats"></alert-faction-stats>
                 </div>
-                <div class="col-4">
+                <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="trStats"></alert-faction-stats>
                 </div>
             </div>
@@ -376,6 +376,7 @@
                 let vsKills: number = 0;
                 let ncKills: number = 0;
                 let trKills: number = 0;
+                let totalKills: number = 0;
 
                 for (const entry of this.participants.data) {
                     if (entry.outfitID == null) {
@@ -408,6 +409,7 @@
                     } else if (outfitEntry.factionID == 3) {
                         trKills += entry.kills;
                     }
+                    totalKills += entry.kills;
 
                     const medicProfile: AlertPlayerProfileData | undefined = entry.profiles.find(iter => iter.profileID == 4);
                     if (medicProfile != undefined && medicProfile.timeAs > 60) {
@@ -464,7 +466,7 @@
                     }
 
                     //outfit.killScore = outfit.kills / factionKills / outfit.members * 100;
-                    outfit.killScore = outfit.kills / factionKills / outfit.members * 100;
+                    outfit.killScore = outfit.kills / factionKills / outfit.members * (totalKills / 3);
                 }
 
                 console.log(`AlertViewer> Built outfits data`);

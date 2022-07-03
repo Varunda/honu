@@ -47,12 +47,13 @@
 
         <a-col sort-field="killScore">
             <a-header>
-                <b>K%/P</b>
-                <info-hover text="(Kills of outfit) / (Kills of faction) / (Outfit members who participated) * 100"></info-hover>
+                <b>nK/P</b>
+                <!--<info-hover text="(Kills of outfit) / (Kills of faction) / (Outfit members who participated) * 100"></info-hover>-->
+                <info-hover text="Kills per player normalized across factions: (Outfit kills) / (Faction kills) / (Members) * (All kills / 3)"></info-hover>
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.killScore | locale(2)}}%
+                {{entry.killScore | locale(2)}}
             </a-body>
         </a-col>
 

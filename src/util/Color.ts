@@ -7,10 +7,30 @@ export class RGB {
 
 export default class ColorUtils {
 
+    /*
 	public static VS: string = "#cf17cf";
 	public static NC: string = "#3f7fff";
 	public static TR: string = "#ea5e5e";
 	public static NS: string = "#cbcbcb";
+    */
+
+    /*
+	public static VS: string = "#8640a4";
+	public static NC: string = "#1a5dab";
+	public static TR: string = "#c33d2f";
+	public static NS: string = "#cbcbcb";
+    */
+
+	public static VS: string = "#ba60df";
+	public static NC: string = "#5194e7";
+	public static TR: string = "#f1615b";
+	public static NS: string = "#cbcbcb";
+
+	public static BG_VS: string = "#8640a4";
+	public static BG_NC: string = "#1a5dab";
+	public static BG_TR: string = "#c33d2f";
+	public static BG_NS: string = "#cbcbcb";
+
 
 	public static getFactionColor(factionID: number): string {
 		if (factionID == 1) {

@@ -36,16 +36,6 @@
             </a-body>
         </a-col>
 
-        <a-col sort-field="medicKPM">
-            <a-header>
-                <b>KPM</b>
-            </a-header>
-
-            <a-body v-slot="entry">
-                {{entry.medicKPM | locale(2)}}
-            </a-body>
-        </a-col>
-
         <a-col sort-field="medicRevives">
             <a-header>
                 <b>Revives</b>
@@ -99,6 +89,16 @@
                 <a @click="openOutfitMedicKills($event, entry.outfitID)">
                     {{entry.medicKills}}
                 </a>
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="medicKPM">
+            <a-header>
+                <b>KPM</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{entry.medicKPM | locale(2)}}
             </a-body>
         </a-col>
 

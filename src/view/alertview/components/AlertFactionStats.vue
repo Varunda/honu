@@ -8,7 +8,7 @@
             </td>
         </tr>
 
-        <tr v-if="alert.zoneID != 0">
+        <tr v-if="alert.zoneID != 0 && data.facilityCount > 0">
             <td><b>Facilities</b></td>
             <td>
                 {{data.facilityCount}}
@@ -50,14 +50,14 @@
             </td>
         </tr>
 
-        <tr class="text-center table-success">
-            <td colspan="2">
+        <tr class="text-center rounded" style="background-color: #009970;">
+            <td colspan="2" class="border-top-0" style="border-radius: 0.5rem; border: 0px solid transparent;">
                 <b>Medic</b>
                 <info-hover text="Only includes players who had at least one minute of playtime as a medic"></info-hover>
             </td>
         </tr>
 
-        <tr>
+        <tr class="th-border-top-0">
             <td><b>Players</b></td>
             <td>{{data.medicPlayers | locale}}</td>
         </tr>
@@ -78,14 +78,14 @@
             </td>
         </tr>
 
-        <tr class="text-center table-warning">
-            <td colspan="2">
+        <tr class="text-center rounded" style="background-color: #9f660c;">
+            <td colspan="2" class="border-top-0" style="border-radius: 0.5rem; border: 0px solid transparent;">
                 <b>Engineer</b>
                 <info-hover text="Only includes player who had at least one minute of playtime as an engineer"></info-hover>
             </td>
         </tr>
 
-        <tr>
+        <tr class="th-border-top-0">
             <td><b>Players</b></td>
             <td>{{data.engPlayers | locale}}</td>
         </tr>
@@ -138,7 +138,14 @@
 
         computed: {
             factionColor: function(): string {
-                return ColorUtils.getFactionColor(this.data.factionID);
+                if (this.data.factionID == 1) {
+                    return ColorUtils.BG_VS;
+                } else if (this.data.factionID == 2) {
+                    return ColorUtils.BG_NC;
+                } else if (this.data.factionID == 3) {
+                    return ColorUtils.BG_TR;
+                }
+                throw `Unchecked factionID '${this.data.factionID}'`;
             }
         },
 

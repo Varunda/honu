@@ -35,7 +35,6 @@
 
                 <a-filter field="type" type="string" method="dropdown"
                     :conditions="[ 'equals' ]">
-
                 </a-filter>
 
                 <a-body v-slot="entry">

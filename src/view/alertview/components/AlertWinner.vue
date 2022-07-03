@@ -107,10 +107,10 @@
 
             colors: function() {
                 return {
-                    vs: ColorUtils.VS,
-                    nc: ColorUtils.NC,
-                    tr: ColorUtils.TR,
-                    ns: ColorUtils.NS,
+                    vs: ColorUtils.BG_VS,
+                    nc: ColorUtils.BG_NC,
+                    tr: ColorUtils.BG_TR,
+                    ns: ColorUtils.BG_NS,
                 };
             }
         },
