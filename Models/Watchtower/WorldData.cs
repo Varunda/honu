@@ -71,6 +71,11 @@ namespace watchtower.Models {
         /// </summary>
         public List<CensusRealtimeHealthEntry> RealtimeHealth { get; set; } = new();
 
+        /// <summary>
+        ///     How many seconds behind Honu is when processing events
+        /// </summary>
+        public int ProcessLag { get; set; } = 0;
+
     }
 
     public class FactionFocusEntry {

@@ -10,5 +10,7 @@ namespace watchtower.Realtime {
 
         Task Process(JToken ev);
 
+        DateTime MostRecentProcess();
+
     }
 }

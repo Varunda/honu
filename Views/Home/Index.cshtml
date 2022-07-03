@@ -101,6 +101,14 @@
                     </li>
                 </ul>
             </div>
+
+            <div v-if="worldData.processLag > 30" class="alert alert-warning text-center h5">
+                Honu is currently {{worldData.processLag | mduration}} behind on events
+                <div class="h6 mt-2 mb-1">
+                    Honu is receiving events faster than it can process them. No data has been lost,
+                    but reporting will be behind
+                </div>
+            </div>
         </div>
 
         <div class="grid-continent-population">

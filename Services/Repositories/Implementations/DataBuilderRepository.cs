@@ -11,6 +11,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
+using watchtower.Realtime;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Realtime;
@@ -33,6 +34,7 @@ namespace watchtower.Services.Repositories.Implementations {
         private readonly WorldTagManager _TagManager;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
         private readonly CensusRealtimeHealthRepository _HealthRepository;
+        private readonly IEventHandler _EventHandler;
 
         public DataBuilderRepository(ILogger<DataBuilderRepository> logger,
             CharacterCacheQueue charQueue,
@@ -40,7 +42,7 @@ namespace watchtower.Services.Repositories.Implementations {
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo,
             WorldTagManager tagManager, RealtimeReconnectDbStore reconnectDb,
-            CensusRealtimeHealthRepository healthRepository) {
+            CensusRealtimeHealthRepository healthRepository, IEventHandler eventHandler) {
 
             _Logger = logger;
 
@@ -56,6 +58,7 @@ namespace watchtower.Services.Repositories.Implementations {
             _TagManager = tagManager;
             _ReconnectDb = reconnectDb;
             _HealthRepository = healthRepository;
+            _EventHandler = eventHandler;
         }
 
         public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
@@ -68,6 +71,7 @@ namespace watchtower.Services.Repositories.Implementations {
             data.WorldID = worldID;
             data.WorldName = World.GetName(worldID);
             data.ContinentCount = new ContinentCount();
+            data.ProcessLag = (int)(DateTime.UtcNow - _EventHandler.MostRecentProcess()).TotalSeconds;
 
             Dictionary<string, TrackedPlayer> players;
             lock (CharacterStore.Get().Players) {

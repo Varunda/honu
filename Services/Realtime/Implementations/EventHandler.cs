@@ -57,6 +57,7 @@ namespace watchtower.Realtime {
         private readonly WorldTagManager _TagManager;
 
         private readonly List<string> _Recent;
+        private DateTime _MostRecentProcess = DateTime.UtcNow;
 
         public EventHandler(ILogger<EventHandler> logger,
             KillEventDbStore killEventDb, ExpEventDbStore expDb,
@@ -102,6 +103,10 @@ namespace watchtower.Realtime {
             _TagManager = tagManager;
         }
 
+        public DateTime MostRecentProcess() {
+            return _MostRecentProcess;
+        }
+
         public async Task Process(JToken ev) {
             // The default == for tokens seems like it's by reference, not value. Since the order of the keys in the JSON
             //      object is fixed and hasn't changed in the last 7 months, this is safe.
@@ -132,6 +137,10 @@ namespace watchtower.Realtime {
                 if (payloadToken == null) {
                     _Logger.LogWarning($"Missing 'payload' from {ev}");
                     return;
+                }
+
+                if (payloadToken.Value<int?>("timestamp") != null) {
+                    _MostRecentProcess = payloadToken.CensusTimestamp("timestamp");
                 }
 
                 string? eventName = payloadToken.Value<string?>("event_name");
