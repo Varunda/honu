@@ -12,8 +12,10 @@ namespace watchtower.Services.Db {
         /// <summary>
         /// Create a new connection to the database given in the db options
         /// </summary>
+        /// <param name="task">Optional name to use about the application, defaults to 'honu'</param>
+        /// <param name="enlist">Will this connection enlist to the TransactionScope?</param>
         /// <returns>A new connection to use</returns>
-        NpgsqlConnection Connection(bool enlist = true);
+        NpgsqlConnection Connection(string? task = null, bool enlist = true);
 
         /// <summary>
         /// Create a new command using the connection passed

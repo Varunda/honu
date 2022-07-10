@@ -49,8 +49,78 @@ namespace watchtower.Services.Db {
         ///     The ID of the <see cref="KillEvent"/> that was just created
         /// </returns>
         public async Task<long> Insert(KillEvent ev) {
-            await using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
+            await using NpgsqlConnection conn = _DbHelper.Connection(task: "kill insert", enlist: false);
             await conn.OpenAsync();
+
+            string unformattedInsert = @"
+                INSERT INTO {0} (
+                    world_id, zone_id,
+                    attacker_character_id, attacker_loadout_id,
+                    attacker_fire_mode_id, attacker_vehicle_id,
+                    attacker_faction_id, attacker_team_id,
+                    killed_character_id, killed_loadout_id, killed_faction_id, killed_team_id, revived_event_id,
+                    weapon_id, is_headshot, timestamp
+                ) VALUES (
+                    $1, $2,
+                    $3, $4,
+                    $5, $6,
+                    $7, $8,
+                    $9, $10, $11, $12, null,
+                    $13, $14, $15
+                )
+            ";
+
+            /*
+            // Is there a way to save the Parameters and share it between the commands? 
+            await using NpgsqlBatch batch = new NpgsqlBatch(conn) {
+                BatchCommands = {
+                    new NpgsqlBatchCommand() {
+                        CommandText = string.Format(unformattedInsert, "wt_recent_kills") + ";",
+                        Parameters = {
+                            new() { Value = ev.WorldID },
+                            new() { Value = unchecked((int)ev.ZoneID) },
+                            new() { Value = ev.AttackerCharacterID },
+                            new() { Value = ev.AttackerLoadoutID },
+                            new() { Value = ev.AttackerFireModeID },
+                            new() { Value = ev.AttackerVehicleID },
+                            new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) },
+                            new() { Value = ev.AttackerTeamID },
+                            new() { Value = ev.KilledCharacterID },
+                            new() { Value = ev.KilledLoadoutID },
+                            new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
+                            new() { Value = ev.KilledTeamID },
+                            new() { Value = ev.WeaponID },
+                            new() { Value = ev.IsHeadshot },
+                            new() { Value = ev.Timestamp }
+                        }
+                    },
+
+                    new NpgsqlBatchCommand() {
+                        CommandText = string.Format(unformattedInsert, "wt_kills") + " RETURNING id;",
+                        Parameters = {
+                            new() { Value = ev.WorldID },
+                            new() { Value = unchecked((int)ev.ZoneID) },
+                            new() { Value = ev.AttackerCharacterID },
+                            new() { Value = ev.AttackerLoadoutID },
+                            new() { Value = ev.AttackerFireModeID },
+                            new() { Value = ev.AttackerVehicleID },
+                            new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) },
+                            new() { Value = ev.AttackerTeamID },
+                            new() { Value = ev.KilledCharacterID },
+                            new() { Value = ev.KilledLoadoutID },
+                            new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
+                            new() { Value = ev.KilledTeamID },
+                            new() { Value = ev.WeaponID },
+                            new() { Value = ev.IsHeadshot },
+                            new() { Value = ev.Timestamp }
+                        }
+                    }
+
+                }
+            };
+
+            await batch.PrepareAsync();
+            */
 
             await using NpgsqlCommand cmd = new NpgsqlCommand(@"
                 INSERT INTO wt_kills (
@@ -85,8 +155,45 @@ namespace watchtower.Services.Db {
             };
             await cmd.PrepareAsync();
 
+            object? IDobj = await cmd.ExecuteScalarAsync();
+            //object? IDobj = await batch.ExecuteScalarAsync();
+            if (IDobj == null) {
+                throw new NullReferenceException($"The scalar returned when inserting a kill was null");
+            }
+
+            long ID = (long)IDobj;
+
+            cmd.CommandText = @"
+                INSERT INTO wt_recent_kills (
+                    id, world_id, zone_id,
+                    attacker_character_id, attacker_loadout_id,
+                    attacker_fire_mode_id, attacker_vehicle_id,
+                    attacker_faction_id, attacker_team_id,
+                    killed_character_id, killed_loadout_id, killed_faction_id, killed_team_id, revived_event_id,
+                    weapon_id, is_headshot, timestamp
+                ) VALUES (
+                    $16, $1, $2,
+                    $3, $4,
+                    $5, $6,
+                    $7, $8,
+                    $9, $10, $11, $12, null,
+                    $13, $14, $15
+                ) RETURNING id;
+            ";
+
+            cmd.Parameters.Add(new() { Value = ID });
+            await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+
+            await conn.CloseAsync();
+
+            return ID;
+
+            /*
             long ID = await cmd.ExecuteInt64(CancellationToken.None);
             return ID;
+            */
         }
 
         /// <summary>
@@ -113,6 +220,25 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("RevivedEventID", revivedEventID);
             cmd.AddParameter("Timestamp", timestamp);
             await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
+        public async Task SetRevived(long deathID, long expID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            await using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_kills
+                    SET revived_event_id = @ExpID
+                    WHERE id = @DeathID;
+
+                UPDATE wt_recent_kills
+                    SET revived_event_id = @ExpID
+                    WHERE id = @DeathID;
+            ");
+
+            cmd.AddParameter("ExpID", expID);
+            cmd.AddParameter("DeathID", deathID);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -149,7 +275,7 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH top_killers AS (
                     SELECT attacker_character_id
-                        FROM wt_kills
+                        FROM wt_recent_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id = @FactionID
@@ -159,13 +285,13 @@ namespace watchtower.Services.Db {
                         LIMIT 8
                 ), evs AS (
                     SELECT ID, attacker_character_id, killed_character_id, revived_event_id, attacker_team_id, killed_team_id
-                        FROM wt_kills
+                        FROM wt_recent_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
                 ), exp as (
                     SELECT id, source_character_id
-                        FROM wt_exp 
+                        FROM wt_recent_exp 
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND source_team_id = @FactionID
@@ -212,7 +338,7 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
                     SELECT k.id, k.world_id, k.zone_id, c.outfit_id AS attacker_outfit_id, c2.outfit_id AS killed_outfit_id, revived_event_id, k.attacker_character_id, k.killed_character_id
-                        FROM wt_kills k
+                        FROM wt_recent_kills k
                             INNER JOIN wt_character c on k.attacker_character_id = c.id
                             INNER JOIN wt_character c2 on k.killed_character_id = c2.id
                         WHERE k.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
@@ -259,7 +385,7 @@ namespace watchtower.Services.Db {
                     COUNT(weapon_id) AS kills,
                     COUNT(weapon_id) FILTER (WHERE is_headshot = true) AS headshots,
                     COUNT(DISTINCT attacker_character_id) AS users
-                FROM wt_kills
+                FROM wt_recent_kills
                 WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                     AND world_id = @WorldID
                     AND attacker_team_id = @FactionID

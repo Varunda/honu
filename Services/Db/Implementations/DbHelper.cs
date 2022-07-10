@@ -36,13 +36,13 @@ namespace watchtower.Services.Db.Implementations {
         /// <returns>
         ///     A new <see cref="NpgsqlConnection"/>
         /// </returns>
-        public NpgsqlConnection Connection(bool enlist = true) {
+        public NpgsqlConnection Connection(string? task = null, bool enlist = true) {
             string connStr = $"Host={_DbOptions.ServerUrl};"
                 + $"Username={_DbOptions.Username};"
                 + $"Password={_DbOptions.Password};" 
                 + $"Database={_DbOptions.DatabaseName};"
                 + $"Include Error Detail=true;"
-                + $"ApplicationName=honu;"
+                + $"ApplicationName={task ?? "honu"};"
                 + $"Timezone=UTC";
 
             if (enlist == false) {

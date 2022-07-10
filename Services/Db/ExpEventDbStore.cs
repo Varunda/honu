@@ -37,8 +37,68 @@ namespace watchtower.Services.Db {
         ///     The ID of the event that was just inserted into the table
         /// </returns>
         public async Task<long> Insert(ExpEvent ev) {
-            await using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
+            await using NpgsqlConnection conn = _DbHelper.Connection(task: "exp insert", enlist: false);
             await conn.OpenAsync();
+
+            string unformatted = @"
+                INSERT INTO {0} (
+                    source_character_id, experience_id, source_loadout_id,
+                    source_faction_id, source_team_id,
+                    other_id,
+                    amount,
+                    world_id, zone_id,
+                    timestamp
+                ) VALUES (
+                    $1, $2, $3,
+                    $4, $5,
+                    $6,
+                    $7,
+                    $8, $9,
+                    $10
+                )
+            ";
+
+            // Is there a way to save the Parameters and share it between the commands? 
+            await using NpgsqlBatch batch = new NpgsqlBatch(conn) {
+                BatchCommands = {
+                    new NpgsqlBatchCommand() {
+                        CommandText = string.Format(unformatted, "wt_recent_exp") + ";",
+                        Parameters = {
+                            new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
+                            new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
+                            new() { Value = ev.OtherID },
+                            new() { Value = ev.Amount },
+                            new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                            new() { Value = ev.Timestamp }
+                        }
+                    },
+
+                    new NpgsqlBatchCommand() {
+                        CommandText = string.Format(unformatted, "wt_exp") + " RETURNING id;",
+                        Parameters = {
+                            new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
+                            new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
+                            new() { Value = ev.OtherID },
+                            new() { Value = ev.Amount },
+                            new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                            new() { Value = ev.Timestamp }
+                        }
+                    }
+
+                }
+            };
+
+            await batch.PrepareAsync();
+
+            object? IDobj = await batch.ExecuteScalarAsync();
+            await conn.CloseAsync();
+            if (IDobj == null) {
+                throw new NullReferenceException($"The scalar returned when inserting a kill was null");
+            }
+
+            return (long)IDobj;
+
+            /*
             await using NpgsqlCommand cmd = new NpgsqlCommand(@"
                 INSERT INTO wt_exp (
                     source_character_id, experience_id, source_loadout_id,
@@ -67,6 +127,7 @@ namespace watchtower.Services.Db {
             };
 
             await cmd.PrepareAsync();
+            */
 
             /*
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -86,9 +147,8 @@ namespace watchtower.Services.Db {
             ");
             */
 
-            long ID = await cmd.ExecuteInt64(CancellationToken.None);
-
-            return ID;
+            //long ID = await cmd.ExecuteInt64(CancellationToken.None);
+            //return ID;
         }
 
         /// <summary>
@@ -102,7 +162,7 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT source_character_id AS id, COUNT(source_character_id) AS count
-	                FROM wt_exp
+	                FROM wt_recent_exp
                     WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                         AND world_id = @WorldID
 		                AND experience_id = ANY(@ExperienceIDs)
@@ -136,7 +196,7 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
                     SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '') AS outfit_id
-                        FROM wt_exp e
+                        FROM wt_recent_exp e
                             JOIN wt_character c ON e.source_character_id = c.id
                         WHERE e.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND e.world_id = @WorldID
@@ -275,7 +335,6 @@ namespace watchtower.Services.Db {
         public static Task<List<ExpEvent>> GetRecentByCharacterID(this ExpEventDbStore db, string characterID, int interval) {
             DateTime start = DateTime.UtcNow - TimeSpan.FromSeconds(interval * 60);
             return db.GetByCharacterID(characterID, start, DateTime.UtcNow);
-
         }
 
     }

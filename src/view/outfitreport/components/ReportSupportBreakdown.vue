@@ -23,7 +23,7 @@
 
             <div class="col-12 col-xl-6">
                 <h4>
-                    Revies
+                    Revives
                     <info-hover text="What outfits were revived by the tracked characters. The total is how many total revives the tracked players got"></info-hover>
                 </h4>
 

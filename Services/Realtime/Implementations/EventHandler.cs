@@ -922,9 +922,9 @@ namespace watchtower.Realtime {
                 killed.LatestDeath = ev;
             }
 
-            await _KillEventDb.Insert(ev);
+            ev.ID = await _KillEventDb.Insert(ev);
 
-            await _TagManager.OnKillHandler(ev);
+            //await _TagManager.OnKillHandler(ev);
         }
 
         private async Task _ProcessExperience(JToken payload) {
@@ -1022,22 +1022,35 @@ namespace watchtower.Realtime {
             long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
 
             long ID = await _ExpEventDb.Insert(ev);
-
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
+            /*
             if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
                 await _KillEventDb.SetRevivedID(ev.OtherID, ID, ev.Timestamp);
             }
+            */
 
-            long reviveMs = timer.ElapsedMilliseconds; timer.Restart();
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
-            if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) && otherPlayer != null && otherPlayer.LatestDeath != null) {
-                if (ev.Timestamp - otherPlayer.LatestDeath.Timestamp > TimeSpan.FromSeconds(50)) {
+            if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
+                && otherPlayer != null && otherPlayer.LatestDeath != null) {
+
+                TimeSpan diff = ev.Timestamp - otherPlayer.LatestDeath.Timestamp;
+
+                if (diff > TimeSpan.FromSeconds(50)) {
+                    //_Logger.LogTrace($"death {otherPlayer.LatestDeath.ID} is too old {diff}");
                     otherPlayer.LatestDeath = null;
                 } else {
+                    //_Logger.LogTrace($"using death {otherPlayer.LatestDeath.ID} at {otherPlayer.LatestDeath.Timestamp:u}, exp ID {ID}, occured {diff} ago");
+                    await _KillEventDb.SetRevived(otherPlayer.LatestDeath.ID, ID);
                 }
+            } else if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
+                && (otherPlayer == null || otherPlayer.LatestDeath == null)) {
+
+                //_Logger.LogTrace($"no death for exp {ID}, missing other? {otherPlayer == null}, missing death? {otherPlayer?.LatestDeath == null}");
             }
+
+            long reviveMs = timer.ElapsedMilliseconds; timer.Restart();
 
             // Track the sundy and how many spawns it has
             if (expId == Experience.SUNDERER_SPAWN_BONUS && otherID != null && otherID != "0") {
