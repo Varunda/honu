@@ -54,6 +54,14 @@ namespace watchtower.Services.Hosted {
                                     new() { Value = DateTime.UtcNow - TimeSpan.FromHours(2) }
                                     //new() { Value = DateTime.UtcNow - TimeSpan.FromMinutes(1) }
                                 }
+                            },
+
+                            new NpgsqlBatchCommand() {
+                                CommandText = @"DELETE FROM wt_recent_exp WHERE timestamp <= $1;",
+                                Parameters = {
+                                    new() { Value = DateTime.UtcNow - TimeSpan.FromHours(2) }
+                                    //new() { Value = DateTime.UtcNow - TimeSpan.FromMinutes(1) }
+                                }
                             }
                         }
                     };

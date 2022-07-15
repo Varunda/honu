@@ -13,6 +13,8 @@
             <toggle-button v-model="settings.showServers">Show servers</toggle-button>
 
             <toggle-button v-model="settings.showSeconds">Show seconds</toggle-button>
+
+            <toggle-button v-model="settings.includeJaeger">Include Jaeger</toggle-button>
         </div>
 
         <canvas :id="'reconnect-graph-' + ID" style="height: 240px; max-height: 40vh;" class="mb-2"></canvas>
@@ -78,7 +80,8 @@
                 settings: {
                     intervalSize: 15 as number,
                     showServers: true as boolean,
-                    showSeconds: false as boolean
+                    showSeconds: false as boolean,
+                    includeJaeger: true as boolean
                 }
             }
         },
@@ -117,7 +120,7 @@
                             connery: interval.filter(iter => iter.worldID == WorldUtils.Connery).reduce((acc, i) => acc += i.duration, 0),
                             cobalt: interval.filter(iter => iter.worldID == WorldUtils.Cobalt).reduce((acc, i) => acc += i.duration, 0),
                             emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).reduce((acc, i) => acc += i.duration, 0),
-                            jaeger: interval.filter(iter => iter.worldID == WorldUtils.Jaeger).reduce((acc, i) => acc += i.duration, 0),
+                            jaeger: this.settings.includeJaeger == true ? interval.filter(iter => iter.worldID == WorldUtils.Jaeger).reduce((acc, i) => acc += i.duration, 0) : 0,
                             miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).reduce((acc, i) => acc += i.duration, 0),
                             soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).reduce((acc, i) => acc += i.duration, 0)
                         });
@@ -128,7 +131,7 @@
                             connery: interval.filter(iter => iter.worldID == WorldUtils.Connery).length,
                             cobalt: interval.filter(iter => iter.worldID == WorldUtils.Cobalt).length,
                             emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).length,
-                            jaeger: interval.filter(iter => iter.worldID == WorldUtils.Jaeger).length,
+                            jaeger: this.settings.includeJaeger == true ? interval.filter(iter => iter.worldID == WorldUtils.Jaeger).length : 0,
                             miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).length,
                             soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).length,
                         });
