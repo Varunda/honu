@@ -49,13 +49,13 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
                 WITH kills AS (
                     SELECT *
-                        FROM wt_kills
+                        FROM wt_recent_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
                 ), exp AS (
                     SELECT *
-                        FROM wt_exp
+                        FROM wt_recent_exp
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                 )
@@ -101,6 +101,7 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("Interval", options.Interval);
             cmd.AddParameter("WorldID", options.WorldID);
+	    await cmd.PrepareAsync();
 
             //_Logger.LogDebug($"TEXT:\n{cmd.CommandText}");
 
@@ -116,15 +117,10 @@ namespace watchtower.Services.Db.Implementations {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
                 WITH kills AS (
                     SELECT *
-                        FROM wt_kills
+                        FROM wt_recent_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
-                ), exp AS (
-                    SELECT *
-                        FROM wt_exp
-                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
-                            AND world_id = @WorldID
                 )
                 SELECT 'vs_kills' AS key, (SELECT COUNT(*) FROM kills WHERE kills.attacker_team_id = 1) AS value
                 UNION SELECT 'vs_deaths' AS key, (SELECT COUNT(*) FROM kills WHERE kills.killed_team_id = 1 AND kills.revived_event_id IS null) AS value
@@ -144,6 +140,7 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("Interval", options.Interval);
             cmd.AddParameter("WorldID", options.WorldID);
+	    await cmd.PrepareAsync();
 
             //_Logger.LogDebug($"TEXT:\n{cmd.CommandText}");
 
