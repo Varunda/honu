@@ -181,6 +181,7 @@ namespace watchtower.Services.Db {
                 ) RETURNING id;
             ";
 
+            // Use the parameters from the last cmd, which uses basically the same ones, but now we have the ID to copy
             cmd.Parameters.Add(new() { Value = ID });
             await cmd.PrepareAsync();
 
@@ -189,11 +190,6 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
 
             return ID;
-
-            /*
-            long ID = await cmd.ExecuteInt64(CancellationToken.None);
-            return ID;
-            */
         }
 
         /// <summary>
@@ -225,6 +221,12 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
         }
 
+        /// <summary>
+        ///     Set the <see cref="KillEvent.RevivedEventID"/>
+        /// </summary>
+        /// <param name="deathID">ID of the <see cref="KillEvent"/></param>
+        /// <param name="expID">ID of the <see cref="ExpEvent"/> that was the revive</param>
+        /// <returns></returns>
         public async Task SetRevived(long deathID, long expID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             await using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -239,6 +241,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("ExpID", expID);
             cmd.AddParameter("DeathID", deathID);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

@@ -88,8 +88,10 @@ namespace watchtower.Services.Hosted {
                     _ServiceHealthMonitor.Set(SERVICE_NAME, health);
 
                     await Task.Delay(1000 * 60, stoppingToken);
-                } catch (Exception ex) {
+                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"error in watchtower cleanup");
+                } catch (TaskCanceledException) when (stoppingToken.IsCancellationRequested == true) {
+                    _Logger.LogInformation($"{SERVICE_NAME}> stop requested");
                 }
             }
 

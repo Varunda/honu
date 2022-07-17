@@ -125,21 +125,3 @@ Vue.filter("tduration", (input: string | number): string => {
 Vue.filter("til", (time: Date) => {
     return moment(time).fromNow();
 });
-
-Vue.filter("world", (worldID: number) => {
-    if (worldID == 1) {
-        return "Connery";
-    } else if (worldID == 10) {
-        return "Miller";
-    } else if (worldID == 13) {
-        return "Cobalt";
-    } else if (worldID == 17) {
-        return "Emerald";
-    } else if (worldID == 19) {
-        return "Jaeger";
-    } else if (worldID == 40) {
-        return "SolTech";
-    }
-
-    return `Unknown ${worldID}`;
-});

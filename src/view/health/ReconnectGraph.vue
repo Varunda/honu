@@ -107,6 +107,9 @@
                     const intervalEnd: number = intervalStart + intervalSize;
 
                     const interval: RealtimeReconnectEntry[] = this.reconnects.filter((iter: RealtimeReconnectEntry) => {
+                        if (this.settings.includeJaeger == false && iter.worldID == WorldUtils.Jaeger) {
+                            return false;
+                        }
                         const timestamp: number = iter.timestamp.getTime() + intervalSize;
                         return timestamp >= intervalStart && timestamp <= intervalEnd;
                     });

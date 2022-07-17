@@ -181,26 +181,38 @@ namespace watchtower.Realtime {
             return Task.CompletedTask;
         }
 
-        public async Task DisconnectStream(string name) {
-            RealtimeStream? stream;
-            lock (_Streams) {
-                _Streams.TryGetValue(name, out stream);
-            }
-
-            if (stream != null) {
-                await stream.Client.DisconnectAsync();
-            }
-        }
-
         /// <summary>
         ///     Reconnect all stream
         /// </summary>
-        public async Task Reconnect() {
+        public async Task ReconnectAll() {
             // TODO: this'll cause problems if a reconnect and an insert happens at the same time
             foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
                 await iter.Value.Client.ReconnectAsync();
                 iter.Value.LastConnect = DateTime.UtcNow;
             }
+        }
+
+        /// <summary>
+        ///     Reconnect a specific stream. Case-sensitive
+        /// </summary>
+        /// <param name="name">Name of the stream to reconnect</param>
+        public async Task Reconnect(string name) {
+            // TODO: this'll cause problems if a reconnect and an insert happens at the same time
+            foreach (KeyValuePair<string, RealtimeStream> iter in _Streams) {
+                if (iter.Key != name) {
+                    continue;
+                }
+
+                await iter.Value.Client.ReconnectAsync();
+                iter.Value.LastConnect = DateTime.UtcNow;
+            }
+        }
+
+        /// <summary>
+        ///     Get the names of all streams
+        /// </summary>
+        public List<string> GetStreamNames() {
+            return _Streams.Keys.ToList();
         }
 
         private Task _OnDisconnectAsync(DisconnectionInfo info) {

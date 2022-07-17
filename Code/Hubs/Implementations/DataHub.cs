@@ -59,7 +59,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 Groups.RemoveFromGroupAsync(connID, "40")
             );
 
-            if (World.IsValidWorld(worldID)) {
+            if (World.IsTrackedWorld(worldID)) {
                 await Groups.AddToGroupAsync(connID, worldID.ToString());
 
                 lock (ConnectionStore.Get().Connections) {

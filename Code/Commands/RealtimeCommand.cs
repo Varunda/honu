@@ -28,18 +28,30 @@ namespace watchtower.Commands {
             _RealtimeMonitor = services.GetRequiredService<RealtimeMonitor>();
         }
 
-        public void Restart() {
-            _Logger.LogInformation($"Resubscribing to realtime");
+        public void ResubscribeAll() {
+            _Logger.LogInformation($"Resubscribing to realtime streams");
             _RealtimeMonitor.ResubscribeAll();
-            _Logger.LogInformation($"Resubscribed to realtime");
+            _Logger.LogInformation($"Resubscribed to realtime streams");
         }
 
-        /*
-        public async Task Disconnect(string name) {
-            _Logger.LogInformation($"Disconnecting stream '{name}'");
-            await _RealtimeMonitor.DisconnectStream(name);
+        public async Task ReconnectAll() {
+            _Logger.LogInformation($"Reconnecting all realtime streams");
+            await _RealtimeMonitor.ReconnectAll();
+            _Logger.LogInformation($"Reconnected to all realtime streams");
         }
-        */
+
+        public async Task Reconnect(string name) {
+            _Logger.LogInformation($"Reconnecting stream: '{name}'");
+            await _RealtimeMonitor.Reconnect(name);
+        }
+
+        public void List() {
+            List<string> streams = _RealtimeMonitor.GetStreamNames();
+            _Logger.LogInformation($"Realtime streams ({streams.Count}):");
+            foreach (string stream in streams) {
+                _Logger.LogInformation($"{stream}");
+            }
+        }
 
     }
 

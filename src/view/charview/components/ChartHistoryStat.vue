@@ -8,8 +8,8 @@
     import Chart from "chart.js/auto/auto.esm";
 
     import ColorUtils from "util/Color";
+    import TimeUtils from "util/Time";
     import * as moment from "moment";
-import TimeUtils from "../../../util/Time";
 
     export const ChartHistoryStat = Vue.extend({
         props: {
