@@ -144,7 +144,7 @@ namespace watchtower.Realtime {
 
         public async Task OnStartAsync(CancellationToken cancel) {
             // Initalized all the worlds to now, useful if a world isn't sending any events on the first connect, we'd like to know that
-            foreach (short worldID in World.All) {
+            foreach (short worldID in World.PcStreams) {
                 _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
                 _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
 

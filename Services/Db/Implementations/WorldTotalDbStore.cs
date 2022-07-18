@@ -101,7 +101,7 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("Interval", options.Interval);
             cmd.AddParameter("WorldID", options.WorldID);
-	    await cmd.PrepareAsync();
+	        await cmd.PrepareAsync();
 
             //_Logger.LogDebug($"TEXT:\n{cmd.CommandText}");
 
@@ -140,7 +140,7 @@ namespace watchtower.Services.Db.Implementations {
 
             cmd.AddParameter("Interval", options.Interval);
             cmd.AddParameter("WorldID", options.WorldID);
-	    await cmd.PrepareAsync();
+	        await cmd.PrepareAsync();
 
             //_Logger.LogDebug($"TEXT:\n{cmd.CommandText}");
 

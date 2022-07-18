@@ -20,6 +20,24 @@ namespace watchtower.Services.Db {
 
         private readonly IDataReader<ExpEvent> _ExpDataReader;
 
+        private const string unformatted = @"
+            INSERT INTO {0} (
+                source_character_id, experience_id, source_loadout_id,
+                source_faction_id, source_team_id,
+                other_id,
+                amount,
+                world_id, zone_id,
+                timestamp
+            ) VALUES (
+                $1, $2, $3,
+                $4, $5,
+                $6,
+                $7,
+                $8, $9,
+                $10
+            )
+        ";
+
         public ExpEventDbStore(ILogger<ExpEventDbStore> logger,
             IDbHelper dbHelper, IDataReader<ExpEvent> expReader) {
 
@@ -39,24 +57,6 @@ namespace watchtower.Services.Db {
         public async Task<long> Insert(ExpEvent ev) {
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "exp insert", enlist: false);
             await conn.OpenAsync();
-
-            string unformatted = @"
-                INSERT INTO {0} (
-                    source_character_id, experience_id, source_loadout_id,
-                    source_faction_id, source_team_id,
-                    other_id,
-                    amount,
-                    world_id, zone_id,
-                    timestamp
-                ) VALUES (
-                    $1, $2, $3,
-                    $4, $5,
-                    $6,
-                    $7,
-                    $8, $9,
-                    $10
-                )
-            ";
 
             // Is there a way to save the Parameters and share it between the commands? 
             await using NpgsqlBatch batch = new NpgsqlBatch(conn) {

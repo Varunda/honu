@@ -31,6 +31,23 @@ namespace watchtower.Code.Constants {
                 || worldID == Emerald || worldID == Jaeger || worldID == SolTech;
         }
 
+        /// <summary>
+        ///     List of worlds that pc realtime streams are made for
+        /// </summary>
+        public static List<short> PcStreams = new() {
+            Connery, Miller, Cobalt, Emerald, Jaeger, SolTech
+        };
+
+        /// <summary>
+        ///     List of worlds that ps4us streams are made for
+        /// </summary>
+        public static List<short> Ps4UsStreams = new() { Genudine };
+
+        /// <summary>
+        ///     List of worlds that ps4eu streams are made for
+        /// </summary>
+        public static List<short> Ps4EuStreams = new() { Ceres };
+
         public static List<short> All = new() {
             Connery, Helios, Miller, Cobalt, Emerald, Jaeger, SolTech, Apex, Briggs, Genudine, Ceres
         };

@@ -12,6 +12,7 @@ using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Hubs;
 using watchtower.Code.Hubs.Implementations;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Alert;
@@ -130,7 +131,10 @@ namespace watchtower.Realtime {
                 _Recent.RemoveAt(0);
             }
 
+            using var processTrace = HonuActivitySource.Root.StartActivity("EventProcess");
+
             string? type = ev.Value<string?>("type");
+            processTrace?.AddTag("type", type);
 
             if (type == "serviceMessage") {
                 JToken? payloadToken = ev.SelectToken("payload");
@@ -285,7 +289,9 @@ namespace watchtower.Realtime {
 
             //_Logger.LogDebug($"\n{payload.ToString(Newtonsoft.Json.Formatting.None)}\n=>\n{JToken.FromObject(ev).ToString(Newtonsoft.Json.Formatting.None)}");
 
-            await _VehicleDestroyDb.Insert(ev, CancellationToken.None);
+            if (World.IsTrackedWorld(ev.WorldID)) {
+                await _VehicleDestroyDb.Insert(ev, CancellationToken.None);
+            }
 
             if (ev.KilledVehicleID == Vehicle.SUNDERER && ev.WorldID == World.Jaeger) {
                 List<ExpEvent> possibleEvents = RecentSundererDestroyExpStore.Get().GetList();
@@ -377,7 +383,7 @@ namespace watchtower.Realtime {
             }
 
             // Set the map repository before we discard server events, such as a continent unlock, to keep the map repo in sync with live
-            if (ev.OldFactionID == 0 || ev.NewFactionID == 0) {
+            if (World.IsTrackedWorld(ev.WorldID) == false || ev.OldFactionID == 0 || ev.NewFactionID == 0) {
                 return;
             }
 
@@ -447,6 +453,10 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
+            if (World.IsTrackedWorld(ev.WorldID) == false) {
+                return;
+            }
+
             // Inserted into the DB after the facility control event is generated, and the ID is known
             lock (PlayerFacilityControlStore.Get().Events) {
                 PlayerFacilityControlStore.Get().Events.Add(ev);
@@ -464,6 +474,10 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
+            if (World.IsTrackedWorld(ev.WorldID) == false) {
+                return;
+            }
+
             // Inserted into the DB after the facility control event is generated, and the ID is known
             lock (PlayerFacilityControlStore.Get().Events) {
                 PlayerFacilityControlStore.Get().Events.Add(ev);
@@ -474,61 +488,68 @@ namespace watchtower.Realtime {
             //_Logger.LogTrace($"Processing login: {payload}");
 
             string? charID = payload.Value<string?>("character_id");
-            if (charID != null) {
-                _CacheQueue.Queue(charID);
-
-                DateTime timestamp = payload.CensusTimestamp("timestamp");
-                short worldID = payload.GetWorldID();
-                if (worldID == World.Jaeger) {
-                    _JaegerQueue.QueueSignIn(new JaegerSigninoutEntry() {
-                        CharacterID = charID,
-                        Timestamp = timestamp
-                    });
-                }
-
-                TrackedPlayer p;
-                lock (CharacterStore.Get().Players) {
-                    // The FactionID and TeamID are updated as part of caching the character
-                    p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
-                        ID = charID,
-                        WorldID = worldID,
-                        ZoneID = 0,
-                        FactionID = Faction.UNKNOWN,
-                        TeamID = Faction.UNKNOWN,
-                        Online = false
-                    });
-
-                    p.LastLogin = DateTime.UtcNow;
-                }
-
-                await _SessionDb.Start(p.ID, timestamp);
-
-                p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (charID == null) {
+                return;
             }
+
+            _CacheQueue.Queue(charID);
+
+            DateTime timestamp = payload.CensusTimestamp("timestamp");
+            short worldID = payload.GetWorldID();
+            if (worldID == World.Jaeger) {
+                _JaegerQueue.QueueSignIn(new JaegerSigninoutEntry() {
+                    CharacterID = charID,
+                    Timestamp = timestamp
+                });
+            }
+
+            TrackedPlayer p;
+            lock (CharacterStore.Get().Players) {
+                // The FactionID and TeamID are updated as part of caching the character
+                p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
+                    ID = charID,
+                    WorldID = worldID,
+                    ZoneID = 0,
+                    FactionID = Faction.UNKNOWN,
+                    TeamID = Faction.UNKNOWN,
+                    Online = false
+                });
+
+                p.LastLogin = DateTime.UtcNow;
+            }
+
+            if (World.IsTrackedWorld(worldID)) {
+                await _SessionDb.Start(p.ID, timestamp);
+            }
+
+            p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
         private async Task _ProcessPlayerLogout(JToken payload) {
             string? charID = payload.Value<string?>("character_id");
-            if (charID != null) {
-                _CacheQueue.Queue(charID);
-                //_WeaponQueue.Queue(charID);
+            if (charID == null) {
+                return;
+            }
 
-                DateTime timestamp = payload.CensusTimestamp("timestamp");
+            _CacheQueue.Queue(charID);
 
-                short worldID = payload.GetWorldID();
-                if (worldID == World.Jaeger) {
-                    _JaegerQueue.QueueSignOut(new JaegerSigninoutEntry() {
-                        CharacterID = charID,
-                        Timestamp = timestamp
-                    });
-                }
+            DateTime timestamp = payload.CensusTimestamp("timestamp");
 
-                TrackedPlayer? p;
-                lock (CharacterStore.Get().Players) {
-                    _ = CharacterStore.Get().Players.TryGetValue(charID, out p);
-                }
+            short worldID = payload.GetWorldID();
+            if (worldID == World.Jaeger) {
+                _JaegerQueue.QueueSignOut(new JaegerSigninoutEntry() {
+                    CharacterID = charID,
+                    Timestamp = timestamp
+                });
+            }
 
-                if (p != null) {
+            TrackedPlayer? p;
+            lock (CharacterStore.Get().Players) {
+                _ = CharacterStore.Get().Players.TryGetValue(charID, out p);
+            }
+
+            if (p != null) {
+                if (World.IsTrackedWorld(p.WorldID)) {
                     // Null if Honu was started when the character was online
                     if (p.LastLogin != null) {
                         // Intentionally discard, we do not care about the result of this
@@ -539,13 +560,12 @@ namespace watchtower.Realtime {
                     } else {
                         _WeaponQueue.Queue(charID);
                     }
-
                     await _SessionDb.End(p.ID, timestamp);
+                }
 
-                    // Reset team of the NSO player as they're now offline
-                    if (p.FactionID == Faction.NS) {
-                        p.TeamID = Faction.NS;
-                    }
+                // Reset team of the NSO player as they're now offline
+                if (p.FactionID == Faction.NS) {
+                    p.TeamID = Faction.NS;
                 }
             }
         }
@@ -658,10 +678,12 @@ namespace watchtower.Realtime {
 
                 AlertStore.Get().AddAlert(alert);
 
-                try {
-                    alert.ID = await _AlertDb.Insert(alert);
-                } catch (Exception ex) {
-                    _Logger.LogError(ex, $"Failed to insert alert in {worldID} in zone {zoneID}");
+                if (World.IsTrackedWorld(alert.WorldID)) {
+                    try {
+                        alert.ID = await _AlertDb.Insert(alert);
+                    } catch (Exception ex) {
+                        _Logger.LogError(ex, $"Failed to insert alert in {worldID} in zone {zoneID}");
+                    }
                 }
             } else if (metagameEventName == "ended") {
                 List<PsAlert> alerts = AlertStore.Get().GetAlerts();
@@ -678,6 +700,10 @@ namespace watchtower.Realtime {
                         toRemove = alert;
                         break;
                     }
+                }
+
+                if (toRemove != null && World.IsTrackedWorld(toRemove.WorldID) == false) {
+                    return;
                 }
 
                 if (toRemove != null) {
@@ -821,6 +847,8 @@ namespace watchtower.Realtime {
         }
 
         private async Task _ProcessDeath(JToken payload) {
+            using Activity? traceDeath = HonuActivitySource.Root.StartActivity("Death");
+
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
 
             uint zoneID = payload.GetZoneID();
@@ -831,9 +859,6 @@ namespace watchtower.Realtime {
 
             short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
             short factionID = Loadout.GetFaction(loadoutID);
-
-            _CacheQueue.Queue(charID);
-            _CacheQueue.Queue(attackerID);
 
             KillEvent ev = new KillEvent() {
                 AttackerCharacterID = attackerID,
@@ -850,6 +875,14 @@ namespace watchtower.Realtime {
                 AttackerVehicleID = payload.GetInt32("attacker_vehicle_id", 0),
                 IsHeadshot = (payload.Value<string?>("is_headshot") ?? "0") != "0"
             };
+
+            traceDeath?.AddTag("World", ev.WorldID);
+            traceDeath?.AddTag("Zone", ev.ZoneID);
+
+            if (World.IsTrackedWorld(ev.WorldID)) {
+                _CacheQueue.Queue(charID);
+                _CacheQueue.Queue(attackerID);
+            }
 
             //_Logger.LogTrace($"Processing death: {payload}");
 
@@ -922,7 +955,9 @@ namespace watchtower.Realtime {
                 killed.LatestDeath = ev;
             }
 
-            ev.ID = await _KillEventDb.Insert(ev);
+            if (World.IsTrackedWorld(ev.WorldID)) {
+                ev.ID = await _KillEventDb.Insert(ev);
+            }
 
             //await _TagManager.OnKillHandler(ev);
         }
@@ -1021,7 +1056,12 @@ namespace watchtower.Realtime {
 
             long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            long ID = await _ExpEventDb.Insert(ev);
+            long ID = 0;
+            if (World.IsTrackedWorld(ev.WorldID)) {
+                ID = await _ExpEventDb.Insert(ev);
+            } else {
+                _Logger.LogTrace($"not inserting exp event for world {ev.WorldID}");
+            }
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
             /*
@@ -1029,7 +1069,6 @@ namespace watchtower.Realtime {
                 await _KillEventDb.SetRevivedID(ev.OtherID, ID, ev.Timestamp);
             }
             */
-
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
             if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
@@ -1042,7 +1081,9 @@ namespace watchtower.Realtime {
                     otherPlayer.LatestDeath = null;
                 } else {
                     //_Logger.LogTrace($"using death {otherPlayer.LatestDeath.ID} at {otherPlayer.LatestDeath.Timestamp:u}, exp ID {ID}, occured {diff} ago");
-                    await _KillEventDb.SetRevived(otherPlayer.LatestDeath.ID, ID);
+                    if (World.IsTrackedWorld(ev.WorldID)) {
+                        await _KillEventDb.SetRevived(otherPlayer.LatestDeath.ID, ID);
+                    }
                 }
             } else if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
                 && (otherPlayer == null || otherPlayer.LatestDeath == null)) {

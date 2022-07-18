@@ -3,10 +3,12 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
@@ -50,77 +52,9 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<long> Insert(KillEvent ev) {
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "kill insert", enlist: false);
-            await conn.OpenAsync();
-
-            string unformattedInsert = @"
-                INSERT INTO {0} (
-                    world_id, zone_id,
-                    attacker_character_id, attacker_loadout_id,
-                    attacker_fire_mode_id, attacker_vehicle_id,
-                    attacker_faction_id, attacker_team_id,
-                    killed_character_id, killed_loadout_id, killed_faction_id, killed_team_id, revived_event_id,
-                    weapon_id, is_headshot, timestamp
-                ) VALUES (
-                    $1, $2,
-                    $3, $4,
-                    $5, $6,
-                    $7, $8,
-                    $9, $10, $11, $12, null,
-                    $13, $14, $15
-                )
-            ";
-
-            /*
-            // Is there a way to save the Parameters and share it between the commands? 
-            await using NpgsqlBatch batch = new NpgsqlBatch(conn) {
-                BatchCommands = {
-                    new NpgsqlBatchCommand() {
-                        CommandText = string.Format(unformattedInsert, "wt_recent_kills") + ";",
-                        Parameters = {
-                            new() { Value = ev.WorldID },
-                            new() { Value = unchecked((int)ev.ZoneID) },
-                            new() { Value = ev.AttackerCharacterID },
-                            new() { Value = ev.AttackerLoadoutID },
-                            new() { Value = ev.AttackerFireModeID },
-                            new() { Value = ev.AttackerVehicleID },
-                            new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) },
-                            new() { Value = ev.AttackerTeamID },
-                            new() { Value = ev.KilledCharacterID },
-                            new() { Value = ev.KilledLoadoutID },
-                            new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
-                            new() { Value = ev.KilledTeamID },
-                            new() { Value = ev.WeaponID },
-                            new() { Value = ev.IsHeadshot },
-                            new() { Value = ev.Timestamp }
-                        }
-                    },
-
-                    new NpgsqlBatchCommand() {
-                        CommandText = string.Format(unformattedInsert, "wt_kills") + " RETURNING id;",
-                        Parameters = {
-                            new() { Value = ev.WorldID },
-                            new() { Value = unchecked((int)ev.ZoneID) },
-                            new() { Value = ev.AttackerCharacterID },
-                            new() { Value = ev.AttackerLoadoutID },
-                            new() { Value = ev.AttackerFireModeID },
-                            new() { Value = ev.AttackerVehicleID },
-                            new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) },
-                            new() { Value = ev.AttackerTeamID },
-                            new() { Value = ev.KilledCharacterID },
-                            new() { Value = ev.KilledLoadoutID },
-                            new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
-                            new() { Value = ev.KilledTeamID },
-                            new() { Value = ev.WeaponID },
-                            new() { Value = ev.IsHeadshot },
-                            new() { Value = ev.Timestamp }
-                        }
-                    }
-
-                }
-            };
-
-            await batch.PrepareAsync();
-            */
+            using (Activity? connOpen = HonuActivitySource.Root.StartActivity("open conn")) {
+                await conn.OpenAsync();
+            }
 
             await using NpgsqlCommand cmd = new NpgsqlCommand(@"
                 INSERT INTO wt_kills (
@@ -153,9 +87,12 @@ namespace watchtower.Services.Db {
                     new() { Value = ev.Timestamp }
                 }
             };
-            await cmd.PrepareAsync();
 
+                await cmd.PrepareAsync();
+
+            Activity? allExe = HonuActivitySource.Root.StartActivity("insert into wt_kills");
             object? IDobj = await cmd.ExecuteScalarAsync();
+            allExe?.Stop();
             //object? IDobj = await batch.ExecuteScalarAsync();
             if (IDobj == null) {
                 throw new NullReferenceException($"The scalar returned when inserting a kill was null");
@@ -185,7 +122,9 @@ namespace watchtower.Services.Db {
             cmd.Parameters.Add(new() { Value = ID });
             await cmd.PrepareAsync();
 
+            Activity? recentExe = HonuActivitySource.Root.StartActivity("insert into wt_recent_kills");
             await cmd.ExecuteNonQueryAsync();
+            recentExe?.Stop();
 
             await conn.CloseAsync();
 

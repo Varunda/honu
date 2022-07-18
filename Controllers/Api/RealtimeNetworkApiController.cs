@@ -33,6 +33,8 @@ namespace watchtower.Controllers.Api {
                 }
             }
 
+            _Logger.LogDebug($"who goes there");
+
             RealtimeNetwork network = await _Builder.GetByRange((start ?? DateTime.UtcNow) - TimeSpan.FromMinutes(3), end ?? DateTime.UtcNow, zoneID, worldID);
 
             return ApiOk(network);

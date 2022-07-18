@@ -20,7 +20,10 @@ import WorldTag from "./components/WorldTag.vue";
 import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
 import ContinentMetadata from "components/ContinentMetadata.vue";
 import InfoHover from "components/InfoHover.vue";
+
 import "MomentFilter";
+import "filters/WorldNameFilter";
+import "filters/TilFilter";
 
 type StreamFailure = {
 	streamType: "death" | "exp";

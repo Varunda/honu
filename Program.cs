@@ -15,6 +15,7 @@ using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Services;
 
@@ -40,13 +41,15 @@ namespace watchtower {
             //      not after the server is done running
             _ = Task.Run(async () => {
                 try {
-                    /*
                     using TracerProvider trace = Sdk.CreateTracerProviderBuilder()
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
                         .AddNpgsql()
-                        .AddConsoleExporter()
+                        .AddJaegerExporter(config => {
+
+                        })
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
+                        .AddSource(HonuActivitySource.ActivitySourceName)
                         .Build();
-                    */
 
                     Stopwatch timer = Stopwatch.StartNew();
                     _Host = CreateHostBuilder(args).Build();

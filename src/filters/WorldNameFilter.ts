@@ -1,7 +1,6 @@
 ﻿import Vue from "vue";
 
 Vue.filter("world", (worldID: number): string => {
-	console.log(worldID);
 	if (worldID == 1) {
 		return "Connery";
 	} else if (worldID == 3) {
