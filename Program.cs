@@ -41,6 +41,7 @@ namespace watchtower {
             //      not after the server is done running
             _ = Task.Run(async () => {
                 try {
+                    /*
                     using TracerProvider trace = Sdk.CreateTracerProviderBuilder()
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
                         .AddNpgsql()
@@ -50,6 +51,7 @@ namespace watchtower {
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
                         .AddSource(HonuActivitySource.ActivitySourceName)
                         .Build();
+                    */
 
                     Stopwatch timer = Stopwatch.StartNew();
                     _Host = CreateHostBuilder(args).Build();
