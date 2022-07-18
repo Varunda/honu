@@ -886,6 +886,7 @@ namespace watchtower.Realtime {
 
             //_Logger.LogTrace($"Processing death: {payload}");
 
+            using Activity? processDeath = HonuActivitySource.Root.StartActivity("process CharacterStore");
             lock (CharacterStore.Get().Players) {
                 // The default value for Online must be false, else when a new TrackedPlayer is constructed,
                 //      the session will never start, as the handler already sees the character online,
@@ -954,6 +955,7 @@ namespace watchtower.Realtime {
                 killed.LatestEventTimestamp = nowSeconds;
                 killed.LatestDeath = ev;
             }
+            processDeath?.Stop();
 
             if (World.IsTrackedWorld(ev.WorldID)) {
                 ev.ID = await _KillEventDb.Insert(ev);
@@ -969,6 +971,8 @@ namespace watchtower.Realtime {
             if (charID == null) {
                 return;
             }
+
+            using Activity? rootExp = HonuActivitySource.Root.StartActivity("GainExperience");
 
             Stopwatch timer = Stopwatch.StartNew();
 
@@ -1002,6 +1006,7 @@ namespace watchtower.Realtime {
 
             TrackedPlayer? otherPlayer = null;
 
+            using Activity? processExp = HonuActivitySource.Root.StartActivity("process CharacterStore");
             lock (CharacterStore.Get().Players) {
                 // Default false for |Online| to ensure a session is started
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
@@ -1053,6 +1058,7 @@ namespace watchtower.Realtime {
                     ev.TeamID = p.TeamID;
                 }
             }
+            processExp?.Stop();
 
             long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
 
@@ -1063,12 +1069,6 @@ namespace watchtower.Realtime {
                 _Logger.LogTrace($"not inserting exp event for world {ev.WorldID}");
             }
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
-
-            /*
-            if (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE) {
-                await _KillEventDb.SetRevivedID(ev.OtherID, ID, ev.Timestamp);
-            }
-            */
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
             if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)

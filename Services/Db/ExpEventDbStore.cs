@@ -3,10 +3,12 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
@@ -56,7 +58,10 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<long> Insert(ExpEvent ev) {
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "exp insert", enlist: false);
+
+            using Activity? openConn = HonuActivitySource.Root.StartActivity("open conn");
             await conn.OpenAsync();
+            openConn?.Stop();
 
             // Is there a way to save the Parameters and share it between the commands? 
             await using NpgsqlBatch batch = new NpgsqlBatch(conn) {
@@ -84,12 +89,12 @@ namespace watchtower.Services.Db {
                             new() { Value = ev.Timestamp }
                         }
                     }
-
                 }
             };
 
             await batch.PrepareAsync();
 
+            using Activity? dbExec = HonuActivitySource.Root.StartActivity("insert into wt_exp//wt_recent_exp");
             object? IDobj = await batch.ExecuteScalarAsync();
             await conn.CloseAsync();
             if (IDobj == null) {
@@ -97,58 +102,6 @@ namespace watchtower.Services.Db {
             }
 
             return (long)IDobj;
-
-            /*
-            await using NpgsqlCommand cmd = new NpgsqlCommand(@"
-                INSERT INTO wt_exp (
-                    source_character_id, experience_id, source_loadout_id,
-                    source_faction_id, source_team_id,
-                    other_id,
-                    amount,
-                    world_id, zone_id,
-                    timestamp
-                ) VALUES (
-                    $1, $2, $3,
-                    $4, $5,
-                    $6,
-                    $7,
-                    $8, $9,
-                    $10
-                ) RETURNING id;
-            ", conn) {
-                Parameters = {
-                    new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
-                    new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
-                    new() { Value = ev.OtherID },
-                    new() { Value = ev.Amount },
-                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
-                    new() { Value = ev.Timestamp }
-                }
-            };
-
-            await cmd.PrepareAsync();
-            */
-
-            /*
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                INSERT INTO wt_exp (
-                    source_character_id, experience_id, source_loadout_id, source_faction_id, source_team_id,
-                    other_id,
-                    amount,
-                    world_id, zone_id,
-                    timestamp
-                ) VALUES (
-                    @SourceCharacterID, @ExperienceID, @SourceLoadoutID, @SourceFactionID, @SourceTeamID,
-                    @OtherID,
-                    @Amount,
-                    @WorldID, @ZoneID,
-                    @Timestamp
-                ) RETURNING id;
-            ");
-            */
-
-            //long ID = await cmd.ExecuteInt64(CancellationToken.None);
-            //return ID;
         }
 
         /// <summary>
