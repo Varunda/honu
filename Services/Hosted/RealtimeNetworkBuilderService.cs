@@ -71,26 +71,29 @@ namespace watchtower.Services.Hosted {
 
                     string msg = "";
 
-                    foreach (short worldID in World.All) {
-                        Stopwatch worldTime = Stopwatch.StartNew();
-                        RealtimeNetwork data = await _Builder.Build(worldID);
-                        msg += $"{worldID} {worldTime.ElapsedMilliseconds}ms; ";
-                        _Repository.Set(worldID, data);
+                    if (false) { // DateTime.UtcNow - _EventHandler.MostRecentProcess() > TimeSpan.FromMinutes(3)) {
+                        //msg = $"Realtime is behind {DateTime.UtcNow - _EventHandler.MostRecentProcess()}, not running network builder";
+                    } else {
+                        foreach (short worldID in World.All) {
+                            Stopwatch worldTime = Stopwatch.StartNew();
+                            RealtimeNetwork data = await _Builder.Build(worldID);
+                            msg += $"{worldID} {worldTime.ElapsedMilliseconds}ms; ";
+                            _Repository.Set(worldID, data);
 
-                        if (stoppingToken.IsCancellationRequested) {
-                            _Logger.LogDebug($"Stopping token sent, disabling early");
-                            entry.Enabled = false;
-                            break;
-                        }
+                            if (stoppingToken.IsCancellationRequested) {
+                                _Logger.LogDebug($"Stopping token sent, disabling early");
+                                entry.Enabled = false;
+                                break;
+                            }
 
-                        ServiceHealthEntry? iterEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
-                        if (iterEntry != null && iterEntry.Enabled == false) {
-                            _Logger.LogInformation($"{SERVICE_NAME} ended early");
-                            entry.Enabled = false;
-                            break;
+                            ServiceHealthEntry? iterEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                            if (iterEntry != null && iterEntry.Enabled == false) {
+                                _Logger.LogInformation($"{SERVICE_NAME} ended early");
+                                entry.Enabled = false;
+                                break;
+                            }
                         }
                     }
-
                     long elapsedTime = timer.ElapsedMilliseconds;
 
                     entry.RunDuration = elapsedTime;

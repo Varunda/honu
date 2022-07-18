@@ -299,10 +299,12 @@ namespace watchtower.Services.Db {
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
         public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+            bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM wt_exp
+                    FROM {(useAll ? "wt_exp" : "wt_recent_exp")}
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                     {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
                     {(worldID != null ? " AND world_id = @WorldID " : "")}
@@ -312,6 +314,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodEnd", end);
             cmd.AddParameter("ZoneID", zoneID);
             cmd.AddParameter("WorldID", worldID);
+            await cmd.PrepareAsync();
 
             List<ExpEvent> evs = await _ExpDataReader.ReadList(cmd);
             await conn.CloseAsync();

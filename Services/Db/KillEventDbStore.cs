@@ -463,10 +463,12 @@ namespace watchtower.Services.Db {
                 throw new ArgumentException($"{nameof(start)} {start:u} must come before {nameof(end)} {end:u}");
             }
 
+            bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM wt_kills
+                    FROM {(useAll ? "wt_kills" : "wt_recent_kills")}
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                     {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
                     {(worldID != null ? " AND world_id = @WorldID " : "")}
@@ -476,6 +478,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodEnd", end);
             cmd.AddParameter("ZoneID", zoneID);
             cmd.AddParameter("WorldID", worldID);
+            await cmd.PrepareAsync();
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
             await conn.CloseAsync();
