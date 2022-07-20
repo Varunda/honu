@@ -492,6 +492,8 @@ namespace watchtower.Realtime {
                 return;
             }
 
+            using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogin");
+
             _CacheQueue.Queue(charID);
 
             DateTime timestamp = payload.CensusTimestamp("timestamp");
@@ -519,7 +521,9 @@ namespace watchtower.Realtime {
             }
 
             if (World.IsTrackedWorld(worldID)) {
-                await _SessionDb.Start(p.ID, timestamp);
+                using (Activity? db = HonuActivitySource.Root.StartActivity("db")) {
+                    await _SessionDb.Start(p.ID, timestamp);
+                }
             }
 
             p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -530,6 +534,9 @@ namespace watchtower.Realtime {
             if (charID == null) {
                 return;
             }
+
+            using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogout");
+            logoutRoot?.AddTag("CharacterID", charID);
 
             _CacheQueue.Queue(charID);
 
@@ -560,7 +567,9 @@ namespace watchtower.Realtime {
                     } else {
                         _WeaponQueue.Queue(charID);
                     }
-                    await _SessionDb.End(p.ID, timestamp);
+                    using (Activity? db = HonuActivitySource.Root.StartActivity("db")) {
+                        await _SessionDb.End(p.ID, timestamp);
+                    }
                 }
 
                 // Reset team of the NSO player as they're now offline
@@ -958,7 +967,9 @@ namespace watchtower.Realtime {
             processDeath?.Stop();
 
             if (World.IsTrackedWorld(ev.WorldID)) {
+                using Activity? insertDeath = HonuActivitySource.Root.StartActivity("insert");
                 ev.ID = await _KillEventDb.Insert(ev);
+                insertDeath?.Stop();
             }
 
             //await _TagManager.OnKillHandler(ev);

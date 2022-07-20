@@ -8,9 +8,9 @@ using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 
-namespace watchtower.Services.Repositories.Implementations {
-    
-    public class CharacterItemRepository : ICharacterItemRepository {
+namespace watchtower.Services.Repositories {
+
+    public class CharacterItemRepository {
 
         private readonly ILogger<CharacterItemRepository> _Logger;
 
@@ -32,6 +32,11 @@ namespace watchtower.Services.Repositories.Implementations {
             _Cache = cache;
         }
 
+        /// <summary>
+        ///     Get the <see cref="CharacterItem"/>s of a charcter
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns></returns>
         public async Task<List<CharacterItem>> GetByID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 

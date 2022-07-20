@@ -22,8 +22,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<IDataBuilderRepository, DataBuilderRepository>();
             services.AddSingleton<MapRepository>();
             services.AddSingleton<ICharacterWeaponStatRepository, CharacterWeaponStatRepository>();
-            services.AddSingleton<ICharacterHistoryStatRepository, CharacterHistoryStatRepository>();
-            services.AddSingleton<ICharacterItemRepository, CharacterItemRepository>();
+            services.AddSingleton<CharacterHistoryStatRepository, CharacterHistoryStatRepository>();
+            services.AddSingleton<CharacterItemRepository, CharacterItemRepository>();
             services.AddSingleton<ICharacterStatRepository, CharacterStatRepository>();
             services.AddSingleton<WorldPopulationRepository, WorldPopulationRepository>();
             services.AddSingleton<CharacterFriendRepository>();

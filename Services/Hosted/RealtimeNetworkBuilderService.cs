@@ -23,6 +23,7 @@ using watchtower.Code.Hubs;
 using watchtower.Code.Constants;
 using watchtower.Code;
 using watchtower.Models.Watchtower;
+using watchtower.Realtime;
 
 namespace watchtower.Services.Hosted {
 
@@ -34,19 +35,21 @@ namespace watchtower.Services.Hosted {
 
         private readonly ILogger<RealtimeNetworkBuilderService> _Logger;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
+        private readonly IEventHandler _EventHandler;
 
         private readonly RealtimeNetworkBuilder _Builder;
         private readonly RealtimeNetworkRepository _Repository;
 
         public RealtimeNetworkBuilderService(ILogger<RealtimeNetworkBuilderService> logger,
             IServiceHealthMonitor serviceHealthMonitor, RealtimeNetworkBuilder builder,
-            RealtimeNetworkRepository repository) {
+            RealtimeNetworkRepository repository, IEventHandler eventHandler) {
 
             _Logger = logger;
 
             _ServiceHealthMonitor = serviceHealthMonitor;
             _Builder = builder;
             _Repository = repository;
+            _EventHandler = eventHandler;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -71,8 +74,8 @@ namespace watchtower.Services.Hosted {
 
                     string msg = "";
 
-                    if (false) { // DateTime.UtcNow - _EventHandler.MostRecentProcess() > TimeSpan.FromMinutes(3)) {
-                        //msg = $"Realtime is behind {DateTime.UtcNow - _EventHandler.MostRecentProcess()}, not running network builder";
+                    if (DateTime.UtcNow - _EventHandler.MostRecentProcess() > TimeSpan.FromMinutes(3)) {
+                        msg = $"Realtime is behind {DateTime.UtcNow - _EventHandler.MostRecentProcess()} (which is greater than 3m), not running network builder";
                     } else {
                         foreach (short worldID in World.All) {
                             Stopwatch worldTime = Stopwatch.StartNew();

@@ -404,6 +404,21 @@
                     return [];
                 }
 
+                const cutoff: Date = new Date(new Date().getTime() - (1000 * 60 * 60 * 2));
+
+                // Because the timestamp represents the end of an outage, and the duration can extend into before the current interval
+                //		it's possible that a 2 hour outage 1 hour ago will instead show at 2 hours. To prevent this, the duration of the
+                //		reconnect is adjusted to only include the period the realtime is for
+                for (const reconnect of this.reconnects.data) {
+                    const outageStart: Date = new Date(reconnect.timestamp.getTime() - (reconnect.duration * 1000));
+                    const startDiff: number = outageStart.getTime() - cutoff.getTime();
+                    const diff: number = -1 * Math.floor(startDiff / 1000);
+                    if (startDiff < 0) {
+                        //console.log(`outage at ${reconnect.timestamp.toISOString()} from a duration of ${reconnect.duration} - ${diff} = ${reconnect.duration - diff}`);
+                        reconnect.duration -= diff;
+                    }
+                }
+
                 const expCount: number = this.reconnects.data.filter(iter => iter.streamType == "exp").reduce((acc, i) => acc += i.duration, 0);
 
                 const arr: any[] = [];

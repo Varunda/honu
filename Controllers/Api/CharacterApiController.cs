@@ -28,9 +28,9 @@ namespace watchtower.Controllers.Api {
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
-        private readonly ICharacterHistoryStatRepository _HistoryRepository;
+        private readonly CharacterHistoryStatRepository _HistoryRepository;
         private readonly SessionDbStore _SessionDb;
-        private readonly ICharacterItemRepository _CharacterItemRepository;
+        private readonly CharacterItemRepository _CharacterItemRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly ICharacterStatRepository _StatRepository;
         private readonly CharacterMetadataDbStore _MetadataDb;
@@ -40,8 +40,8 @@ namespace watchtower.Controllers.Api {
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             CharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
-            ICharacterHistoryStatRepository histRepo, SessionDbStore sessionDb,
-            ICharacterItemRepository charItemRepo, ItemRepository itemRepo,
+            CharacterHistoryStatRepository histRepo, SessionDbStore sessionDb,
+            CharacterItemRepository charItemRepo, ItemRepository itemRepo,
             ICharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
             CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue) {
 

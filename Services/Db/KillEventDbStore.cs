@@ -93,7 +93,6 @@ namespace watchtower.Services.Db {
             Activity? allExe = HonuActivitySource.Root.StartActivity("insert into wt_kills");
             object? IDobj = await cmd.ExecuteScalarAsync();
             allExe?.Stop();
-            //object? IDobj = await batch.ExecuteScalarAsync();
             if (IDobj == null) {
                 throw new NullReferenceException($"The scalar returned when inserting a kill was null");
             }

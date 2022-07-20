@@ -179,10 +179,12 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
+            bool useRecent = (DateTime.UtcNow - start) >= TimeSpan.FromMinutes(120);
+
             using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM wt_exp
+                    FROM {(useRecent == true ? "wt_recent_exp" : "wt_exp")}
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = @CharacterID
             ");
@@ -199,10 +201,12 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            bool useRecent = (DateTime.UtcNow - start) >= TimeSpan.FromMinutes(120);
+
             using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM wt_exp
+                    FROM {(useRecent == true ? "wt_recent_exp" : "wt_exp")}
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = ANY(@IDs)
             ");
@@ -219,9 +223,9 @@ namespace watchtower.Services.Db {
 
         public async Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT wt_exp.*
-                    FROM wt_exp
+                    FROM wt_recent_exp
                         INNER JOIN wt_character ON wt_exp.source_character_id = wt_character.id
                     WHERE wt_exp.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                         AND wt_exp.world_id = @WorldID
