@@ -33,7 +33,7 @@ namespace watchtower.Commands {
         private readonly CharacterHistoryStatRepository _HistoryStatRepository;
         private readonly CharacterItemRepository _CharItemRepository;
         private readonly CharacterStatCollection _StatCollection;
-        private readonly ICharacterStatDbStore _StatDb;
+        private readonly CharacterStatDbStore _StatDb;
         private readonly CharacterFriendRepository _CharFriend;
         private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
         private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
@@ -56,7 +56,7 @@ namespace watchtower.Commands {
             _HistoryStatRepository = services.GetRequiredService<CharacterHistoryStatRepository>();
             _CharItemRepository = services.GetRequiredService<CharacterItemRepository>();
             _StatCollection = services.GetRequiredService<CharacterStatCollection>();
-            _StatDb = services.GetRequiredService<ICharacterStatDbStore>();
+            _StatDb = services.GetRequiredService<CharacterStatDbStore>();
             _CharFriend = services.GetRequiredService<CharacterFriendRepository>();
             _CharacterDirectiveCensus = services.GetRequiredService<CharacterDirectiveCollection>();
             _CharacterDirectiveTreeCensus = services.GetRequiredService<CharacterDirectiveTreeCollection>();

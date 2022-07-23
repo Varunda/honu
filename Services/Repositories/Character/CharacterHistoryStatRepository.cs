@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
-using watchtower.Services.Repositories.Implementations;
 
 namespace watchtower.Services.Repositories {
 
@@ -19,11 +18,11 @@ namespace watchtower.Services.Repositories {
         private const string CACHE_KEY = "CharacterHistoryStat.{0}"; // {0} => Char ID
 
         private readonly CharacterHistoryStatCollection _Census;
-        private readonly ICharacterHistoryStatDbStore _Db;
+        private readonly CharacterHistoryStatDbStore _Db;
 
         public CharacterHistoryStatRepository(ILogger<CharacterHistoryStatRepository> logger,
             IMemoryCache cache,
-            CharacterHistoryStatCollection census, ICharacterHistoryStatDbStore db) {
+            CharacterHistoryStatCollection census, CharacterHistoryStatDbStore db) {
 
             _Logger = logger;
             _Cache = cache;

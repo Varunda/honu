@@ -8,20 +8,20 @@ using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class CharacterStatRepository : ICharacterStatRepository {
+    public class CharacterStatRepository {
 
         private readonly ILogger<CharacterStatRepository> _Logger;
 
         private readonly CharacterStatCollection _Census;
-        private readonly ICharacterStatDbStore _Db;
+        private readonly CharacterStatDbStore _Db;
 
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY = "CharacterStat.{0}"; // {0} => Character stat
 
         public CharacterStatRepository(ILogger<CharacterStatRepository> logger,
-            CharacterStatCollection census, ICharacterStatDbStore db,
+            CharacterStatCollection census, CharacterStatDbStore db,
             IMemoryCache cache) {
 
             _Logger = logger;
@@ -31,6 +31,10 @@ namespace watchtower.Services.Repositories.Implementations {
             _Cache = cache;
         }
 
+        /// <summary>
+        ///     Get the <see cref="PsCharacterStat"/>s of a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
         public async Task<List<PsCharacterStat>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 

@@ -14,10 +14,10 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly ILogger<WorldDataHub> _Logger;
 
-        private readonly IWorldDataRepository _WorldDataRepository;
+        private readonly WorldDataRepository _WorldDataRepository;
 
         public WorldDataHub(ILogger<WorldDataHub> logger,
-            IWorldDataRepository dataRepo) {
+            WorldDataRepository dataRepo) {
 
             _Logger = logger;
 

@@ -15,13 +15,13 @@ namespace watchtower.Services.Repositories {
         private readonly ILogger<CharacterItemRepository> _Logger;
 
         private readonly CharacterItemCollection _Census;
-        private readonly ICharacterItemDbStore _Db;
+        private readonly CharacterItemDbStore _Db;
 
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY = "CharacterItems.CharacterID.{0}"; // {0} => Character ID
 
         public CharacterItemRepository(ILogger<CharacterItemRepository> logger,
-            CharacterItemCollection census, ICharacterItemDbStore db,
+            CharacterItemCollection census, CharacterItemDbStore db,
             IMemoryCache cache) {
 
             _Logger = logger;

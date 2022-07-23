@@ -2,11 +2,13 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Models.Queues;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -26,29 +28,29 @@ namespace watchtower.Controllers.Api {
 
         private readonly OutfitRepository _OutfitRepository;
         private readonly OutfitCollection _OutfitCollection;
-        private readonly ICharacterHistoryStatDbStore _CharacterHistoryStatDb;
+        private readonly CharacterHistoryStatDbStore _CharacterHistoryStatDb;
         private readonly OutfitDbStore _OutfitDb;
-        private readonly CharacterDbStore _CharacterDb;
+        private readonly CharacterRepository _CharacterRepository;
 
         private readonly CharacterUpdateQueue _CacheQueue;
         private readonly CharacterCacheQueue _CharacterQueue;
 
         public OutfitApiController(ILogger<OutfitApiController> logger,
             OutfitRepository outfitRepo, OutfitCollection outfitCollection,
-            CharacterDbStore charDb, ICharacterHistoryStatDbStore histDb,
+            CharacterHistoryStatDbStore histDb,
             CharacterUpdateQueue cacheQueue, OutfitDbStore outfitDb,
-            CharacterCacheQueue charQueue) {
+            CharacterCacheQueue charQueue, CharacterRepository characterRepository) {
 
             _Logger = logger;
 
             _OutfitRepository = outfitRepo ?? throw new ArgumentNullException(nameof(outfitRepo));
             _OutfitCollection = outfitCollection ?? throw new ArgumentNullException(nameof(outfitCollection));
-            _CharacterDb = charDb;
             _CharacterHistoryStatDb = histDb;
             _OutfitDb = outfitDb;
 
             _CacheQueue = cacheQueue;
             _CharacterQueue = charQueue;
+            _CharacterRepository = characterRepository;
         }
 
         /// <summary>
@@ -139,7 +141,10 @@ namespace watchtower.Controllers.Api {
                 return ApiNotFound<List<ExpandedOutfitMember>>($"{nameof(PsOutfit)} {outfitID}");
             }
 
+            Stopwatch timer = Stopwatch.StartNew();
+
             List<OutfitMember> members = await _OutfitCollection.GetMembers(outfitID);
+            long getMembersMs = timer.ElapsedMilliseconds; timer.Restart();
 
             List<string> characterIDs = members.Select(iter => iter.CharacterID).ToList();
 
@@ -147,7 +152,10 @@ namespace watchtower.Controllers.Api {
             //      instead of making thousands of small calls. The characters are then put into a map, cause trying
             //      to iterate thru that list for each character is n^2, and when you have 5k members,
             //      that's 25 million iterations, so instead make a lookup table
-            List<PsCharacter> listCharacters = await _CharacterDb.GetByIDs(characterIDs);
+            //List<PsCharacter> listCharacters = await _CharacterDb.GetByIDs(characterIDs);
+            List<PsCharacter> listCharacters = await _CharacterRepository.GetByIDs(characterIDs);
+            long loadCharsMs = timer.ElapsedMilliseconds; timer.Restart();
+
             Dictionary<string, PsCharacter> charMap = new Dictionary<string, PsCharacter>(members.Count); // lookup table
             foreach (PsCharacter c in listCharacters) {
                 if (c.DateLastLogin == DateTime.MinValue) {
@@ -157,11 +165,15 @@ namespace watchtower.Controllers.Api {
                 charMap.Add(c.ID, c);
             }
 
+            long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
+
             // Same thing but even more important. If you have 5k members, each with 10 stats, iterating thru them to find just the ones
             //      for the current character iterations =
             //      5k members * 10 stats = 50k
             //      5k members * 50k iterations = 250'000'000 iterations, no good
             List<PsCharacterHistoryStat> listStats = await _CharacterHistoryStatDb.GetByCharacterIDs(characterIDs);
+            long loadHistMs = timer.ElapsedMilliseconds; timer.Restart();
+
             Dictionary<string, List<PsCharacterHistoryStat>> statMap = new Dictionary<string, List<PsCharacterHistoryStat>>(members.Count);
             foreach (PsCharacterHistoryStat stat in listStats) {
                 if (statMap.ContainsKey(stat.CharacterID) == false) {
@@ -170,6 +182,7 @@ namespace watchtower.Controllers.Api {
 
                 statMap[stat.CharacterID].Add(stat);
             }
+            long processHistMs = timer.ElapsedMilliseconds; timer.Restart();
 
             List<ExpandedOutfitMember> expanded = new List<ExpandedOutfitMember>(members.Count);
 
@@ -210,7 +223,88 @@ namespace watchtower.Controllers.Api {
                 expanded.Add(ex);
             }
 
+            long processExMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            _Logger.LogInformation($"{outfitID}/{outfit.Name} get members: {getMembersMs} ({characterIDs.Count}), "
+                + $"load char db: {loadCharsMs}, process char ms: {processCharMs}, "
+                + $"load hist ms: {loadHistMs}, process hist ms: {processHistMs}, "
+                + $"process ex: {processExMs}");
+
             return ApiOk(expanded);
+        }
+
+        /// <summary>
+        ///     Get the activity statistics for an outfit, broken into 1 hour intervals
+        /// </summary>
+        /// <remarks>
+        ///     <paramref name="start"/> is truncated down to the start of the day.
+        ///         For example, 2022-07-01T23:59 would be truncated to 2022-07-01T00:00
+        ///         
+        ///     <paramref name="finish"/> is truncted up to the start of the following day.
+        ///         For example, 2022-07-02T00:01 would be truncated to 2022-07-03T00:00
+        ///         
+        ///     Because the outfit_id of a character is stored at the time of a session, this will include
+        ///         characters that have changed outfits, but at the time of the session were in the outfit
+        /// </remarks>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <param name="start">When the range to look at actvity starts</param>
+        /// <param name="finish">When the range to look at activity ends</param>
+        /// <response code="200">
+        ///     The response will return a list of <see cref="OutfitActivity"/>s that contains how
+        ///     many members in this outfit were online at a time
+        /// </response>
+        /// <response code="400">
+        ///     An invalid request was made. An invalid request can be caused by:
+        ///     <ul>
+        ///         <li>
+        ///             <paramref name="finish"/> came before <paramref name="start"/>
+        ///         </li>
+        ///         <li>
+        ///             <paramref name="start"/> and <paramref name="finish"/> were more than 30 days apart
+        ///         </li>
+        ///     </ul>
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsOutfit"/> with ID of <paramref name="outfitID"/> exists
+        /// </response>
+        [HttpGet("{outfitID}/activity")]
+        public async Task<ApiResponse<List<OutfitActivity>>> GetActivity(string outfitID,
+            [FromQuery] DateTime start, [FromQuery] DateTime finish) {
+
+            if (finish <= start) {
+                return ApiBadRequest<List<OutfitActivity>>($"{nameof(start)} must come before {nameof(finish)}");
+            }
+            if (finish - start >= TimeSpan.FromDays(31)) {
+                return ApiBadRequest<List<OutfitActivity>>($"{nameof(start)} and {nameof(finish)} cannot be more than 30 days apart. Are {finish - start} apart");
+            }
+
+            PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
+            if (outfit == null) {
+                return ApiNotFound<List<OutfitActivity>>($"{nameof(PsOutfit)} {outfitID}");
+            }
+
+            start = new DateTime(start.Ticks - start.Ticks % TimeSpan.TicksPerHour);
+            finish = new DateTime(finish.Ticks - finish.Ticks % TimeSpan.TicksPerHour).AddHours(1);
+
+            _Logger.LogInformation($"getting activity for {outfitID}/{outfit.Name} between {start:u} and {finish:u}");
+
+            List<OutfitActivityDbEntry> dbEntries = await _OutfitDb.GetActivity(outfitID, start, finish);
+
+            List<OutfitActivity> ret = new();
+
+            for (DateTime i = start; i < finish; i = i.AddHours(1)) {
+                OutfitActivity act = new();
+                act.OutfitID = outfitID;
+                act.Timestamp = i;
+                act.IntervalSeconds = 60 * 60;
+                act.Count = dbEntries.FirstOrDefault(iter => iter.Timestamp == i)?.Count ?? 0;
+
+                //_Logger.LogDebug($"{i:u} {act.Count}");
+
+                ret.Add(act);
+            }
+
+            return ApiOk(ret);
         }
 
     }

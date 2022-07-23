@@ -114,7 +114,10 @@ namespace watchtower.Services.Repositories {
         /// <param name="fast">If only characters from DB will be loaded, and any characters not in the DB will be queued for retrieval</param>
         /// <returns></returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, bool fast = false) {
-            List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
+            // Make a copy of the IDs as this list gets modified, and if the passed list is modified,
+            //      that could affect whatever is calling this method
+            List<string> localIDs = new List<string>(IDs);
+            List<PsCharacter> chars = new List<PsCharacter>(localIDs.Count);
 
             int total = IDs.Count;
             int found = 0;
@@ -123,13 +126,13 @@ namespace watchtower.Services.Repositories {
 
             Stopwatch timer = Stopwatch.StartNew();
             int inCache = 0;
-            foreach (string ID in IDs.ToList()) {
+            foreach (string ID in localIDs.ToList()) {
                 string cacheKey = string.Format(CACHE_KEY_ID, ID);
 
                 if (_Cache.TryGetValue(cacheKey, out PsCharacter? character) == true) {
                     if (character != null) {
                         chars.Add(character);
-                        IDs.Remove(ID);
+                        localIDs.Remove(ID);
                         ++inCache;
                         ++found;
                     }
@@ -145,17 +148,17 @@ namespace watchtower.Services.Repositories {
             int inExpired = 0;
             List<PsCharacter> db = new List<PsCharacter>();
             if (found < total) {
-                db = await _Db.GetByIDs(IDs);
+                db = await _Db.GetByIDs(localIDs);
 
                 foreach (PsCharacter c in db) {
                     if (fast == true) {
-                        IDs.Remove(c.ID);
+                        localIDs.Remove(c.ID);
                         chars.Add(c);
                         ++inDb;
                         ++found;
                     } else {
                         if (HasExpired(c) == false) {
-                            IDs.Remove(c.ID);
+                            localIDs.Remove(c.ID);
                             chars.Add(c);
                             ++inDb;
                             ++found;
@@ -176,16 +179,16 @@ namespace watchtower.Services.Repositories {
             int inCensus = 0;
             if (found < total) {
                 if (fast == false) {
-                    List<PsCharacter> census = await _Census.GetByIDs(IDs);
+                    List<PsCharacter> census = await _Census.GetByIDs(localIDs);
 
                     foreach (PsCharacter c in census) {
-                        IDs.Remove(c.ID);
+                        localIDs.Remove(c.ID);
                         chars.Add(c);
                         ++inCensus;
                         ++found;
                     }
                 } else {
-                    foreach (string ID in IDs) {
+                    foreach (string ID in localIDs) {
                         _CacheQueue.Queue(ID);
                     }
                 }
@@ -196,12 +199,12 @@ namespace watchtower.Services.Repositories {
             // If a character in the DB was ignored because it had expired, but Honu still doesn't have the character at this point, load it anyways
             int inDbRescue = 0;
             if (found < total) {
-                foreach (string id in IDs.ToList()) {
+                foreach (string id in localIDs.ToList()) {
                     PsCharacter? c = db.FirstOrDefault(iter => iter.ID == id);
                     if (c != null) {
                         ++inDbRescue;
                         chars.Add(c);
-                        IDs.Remove(c.ID);
+                        localIDs.Remove(c.ID);
                         ++found;
                     }
                 }
@@ -217,7 +220,7 @@ namespace watchtower.Services.Repositories {
             /*
             if (toDb > 100 || toCensus > 100) {
                 _Logger.LogDebug($"Found {chars.Count}/{total} characters. "
-                    + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {IDs.Count}");
+                    + $"In cache: {inCache} in {toCache}ms, db: {inDb} ({inExpired} expired) in {toDb}ms, census: {inCensus} in {toCensus}ms, rescue: {inDbRescue}, left: {localIDs.Count}");
             }
             */
 

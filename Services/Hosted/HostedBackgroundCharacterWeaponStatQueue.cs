@@ -32,11 +32,11 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterWeaponStatCollection _WeaponCensus;
         private readonly CharacterWeaponStatDbStore _WeaponStatDb;
         private readonly CharacterHistoryStatCollection _HistoryCensus;
-        private readonly ICharacterHistoryStatDbStore _HistoryDb;
+        private readonly CharacterHistoryStatDbStore _HistoryDb;
         private readonly CharacterItemCollection _ItemCensus;
-        private readonly ICharacterItemDbStore _ItemDb;
+        private readonly CharacterItemDbStore _ItemDb;
         private readonly CharacterStatCollection _StatCensus;
-        private readonly ICharacterStatDbStore _StatDb;
+        private readonly CharacterStatDbStore _StatDb;
         private readonly CharacterFriendCollection _FriendCensus;
         private readonly CharacterFriendDbStore _FriendDb;
         private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
@@ -59,9 +59,9 @@ namespace watchtower.Services.Hosted {
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
             CharacterUpdateQueue queue,
             CharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
-            ICharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
-            CharacterItemCollection itemCensus, ICharacterItemDbStore itemDb,
-            CharacterStatCollection statCensus, ICharacterStatDbStore statDb,
+            CharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
+            CharacterItemCollection itemCensus, CharacterItemDbStore itemDb,
+            CharacterStatCollection statCensus, CharacterStatDbStore statDb,
             CharacterMetadataDbStore metadataDb, CharacterCollection charColl,
             CharacterDbStore charDb, CharacterFriendCollection friendCensus,
             CharacterDirectiveCollection charDirCensus, CharacterDirectiveDbStore charDirDb,

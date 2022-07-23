@@ -54,6 +54,12 @@ export class FlatExpandedOutfitMember {
 	public recentSPM: number | null = null;
 }
 
+export class OutfitActivity {
+	public outfitID: string = "";
+	public timestamp: Date = new Date();
+	public count: number = 0;
+}
+
 export class OutfitApi extends ApiWrapper<PsOutfit> {
 	private static _instance: OutfitApi = new OutfitApi();
 	public static get(): OutfitApi { return OutfitApi._instance; }
@@ -129,6 +135,14 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return flat;
 	}
 
+	public static parseActivity(elem: any): OutfitActivity {
+		return {
+			outfitID: elem.outfitID,
+			timestamp: new Date(elem.timestamp),
+			count: elem.count
+		};
+    }
+
 	public static async searchByName(name: string): Promise<Loading<PsOutfit[]>> {
 		return OutfitApi.get().readList(`/api/outfit/search/${name}`, OutfitApi.parse);
     }
@@ -162,5 +176,9 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 
 		return Loadable.loaded(members.data.map(iter => OutfitApi.flattenExpandedOutfitMember(iter)));
 	}
+
+	public static async getActivity(outfitID: string, start: Date, end: Date): Promise<Loading<OutfitActivity[]>> {
+		return OutfitApi.get().readList(`/api/outfit/${outfitID}/activity?start=${start.toISOString()}&finish=${end.toISOString()}`, OutfitApi.parseActivity);
+    }
 
 }

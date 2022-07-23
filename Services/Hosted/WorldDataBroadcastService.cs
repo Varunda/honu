@@ -22,7 +22,7 @@ namespace watchtower.Services.Hosted {
         private readonly ILogger<WorldDataBroadcastService> _Logger;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
-        private readonly IWorldDataRepository _WorldDataRepository;
+        private readonly WorldDataRepository _WorldDataRepository;
 
         private readonly IHubContext<WorldDataHub, IWorldDataHub> _DataHub;
 
@@ -32,7 +32,7 @@ namespace watchtower.Services.Hosted {
 
         public WorldDataBroadcastService(ILogger<WorldDataBroadcastService> logger,
             IHubContext<WorldDataHub, IWorldDataHub> hub,
-            IWorldDataRepository worldDataRepo, IServiceHealthMonitor healthMon) {
+            WorldDataRepository worldDataRepo, IServiceHealthMonitor healthMon) {
 
             _Logger = logger;
             _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));

@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class CharacterStatDbStore : IDataReader<PsCharacterStat>, ICharacterStatDbStore {
+    public class CharacterStatDbStore : IDataReader<PsCharacterStat> {
 
         private readonly ILogger<CharacterStatDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -22,6 +22,11 @@ namespace watchtower.Services.Db.Implementations {
             _DbHelper = dbHelper;
         }
 
+        /// <summary>
+        ///     Get the character stats for a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns></returns>
         public async Task<List<PsCharacterStat>> GetByID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -38,6 +43,11 @@ namespace watchtower.Services.Db.Implementations {
             return stats;
         }
 
+        /// <summary>
+        ///     Set the character stats of a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="stats">List of stats the character has</param>
         public async Task Set(string charID, List<PsCharacterStat> stats) {
             if (stats.Count == 0) {
                 return;

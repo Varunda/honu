@@ -2,6 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models;
 using watchtower.Models.Alert;
+using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
@@ -74,6 +75,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<WorldTagEntry>, WorldTagEntryReader>();
 
             services.AddSingleton<IDataReader<RealtimeReconnectEntry>, RealtimeReconnectReader>();
+            services.AddSingleton<IDataReader<OutfitActivityDbEntry>, OutfitActivityDbEntryReader>();
         }
 
     }

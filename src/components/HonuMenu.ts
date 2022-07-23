@@ -1,7 +1,5 @@
 ﻿import Vue from "vue";
 
-import { Fragment } from "vue-fragment";
-
 export const HonuMenu = Vue.extend({
     template: `
         <nav class="navbar navbar-expand p-0">
@@ -12,8 +10,6 @@ export const HonuMenu = Vue.extend({
             </div>
         </nav>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuSep = Vue.extend({
@@ -26,13 +22,17 @@ export const MenuImage = Vue.extend({
     template: `
         <li class="nav-item">
             <a class="nav-link dropdown-toggle h1 p-0" href="/" data-toggle="dropdown">
-                <img src="/img/beans.png" style="height: 100%; width: 48px;" title="spill 'em" />
+                <img :src="'/img/logo' + this.ID + '.png'" style="height: 100%; width: 48px;" title="spill 'em" />
                 Honu
             </a>
         </li>
     `,
 
-    components: { Fragment }
+    data: function() {
+        return {
+            ID: 0 as number
+        }
+    },
 });
 
 export const MenuHomepage = Vue.extend({
@@ -57,8 +57,6 @@ export const MenuRealtime = Vue.extend({
             </ul>
         </li>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuCharacters = Vue.extend({
@@ -67,8 +65,6 @@ export const MenuCharacters = Vue.extend({
             <a class="dropdown-item" href="/character">Characters</a>
         </li>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuOutfits = Vue.extend({
@@ -82,8 +78,6 @@ export const MenuOutfits = Vue.extend({
             </ul>
         </li>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuRealtimeNetwork = Vue.extend({
@@ -108,8 +102,6 @@ export const MenuRealTimeMap = Vue.extend({
             <a class="dropdown-item" href="/realtimemap">Realtime Map</a>
         </li>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuItems = Vue.extend({
@@ -126,8 +118,6 @@ export const MenuLedger = Vue.extend({
             <a class="dropdown-item" href="/ledger">Ledger</a>
         </li>
     `,
-
-    components: { Fragment }
 });
 
 export const MenuAlerts = Vue.extend({

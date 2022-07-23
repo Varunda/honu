@@ -331,7 +331,6 @@
 
                 if (this.session.state == "loaded") {
                     this.bindCharacter();
-                    this.bindReconnects();
                 }
             },
 
@@ -343,6 +342,9 @@
 
                 this.character = Loadable.loading();
                 this.character = await CharacterApi.getByID(this.session.data.characterID);
+                if (this.character.state == "loaded") {
+                    this.bindReconnects();
+                }
             },
 
             bindExp: async function(): Promise<void> {
@@ -361,13 +363,16 @@
             },
 
             bindReconnects: async function(): Promise<void> {
-                if (this.session.state != "loaded") {
+                if (this.session.state != "loaded" || this.character.state != "loaded") {
                     this.reconnects = Loadable.idle();
                     return;
                 }
 
                 this.reconnects = Loadable.loading();
                 this.reconnects = await RealtimeReconnectApi.getByInterval(this.session.data.start, this.session.data.end ?? new Date());
+                if (this.reconnects.state == "loaded" && this.character.state == "loaded") {
+                    this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == this.character.data.worldID);
+                }
             }
 
         },

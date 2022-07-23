@@ -36,16 +36,16 @@ namespace watchtower.Services {
 
         private readonly ILogger<DataBuilderService> _Logger;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
-        private readonly IWorldDataRepository _WorldDataRepository;
+        private readonly WorldDataRepository _WorldDataRepository;
 
-        private readonly IDataBuilderRepository _DataBuilder;
+        private readonly DataBuilderRepository _DataBuilder;
 
         private List<short> _WorldIDs = new() {
             World.Connery, World.Cobalt, World.Emerald, World.Jaeger, World.Miller, World.SolTech
         };
 
         public DataBuilderService(ILogger<DataBuilderService> logger,
-            IDataBuilderRepository dataBuilder, IWorldDataRepository worldDataRepo,
+            DataBuilderRepository dataBuilder, WorldDataRepository worldDataRepo,
             IServiceHealthMonitor healthMon) {
 
             _Logger = logger;

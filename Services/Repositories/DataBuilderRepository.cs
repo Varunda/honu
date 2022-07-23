@@ -16,9 +16,9 @@ using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Realtime;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class DataBuilderRepository : IDataBuilderRepository {
+    public class DataBuilderRepository {
 
         private readonly ILogger<DataBuilderRepository> _Logger;
         private readonly KillEventDbStore _KillEventDb;
@@ -61,6 +61,11 @@ namespace watchtower.Services.Repositories.Implementations {
             _EventHandler = eventHandler;
         }
 
+        /// <summary>
+        ///     Build the <see cref="WorldData"/> for a specific world
+        /// </summary>
+        /// <param name="worldID">ID of the world to build the data for</param>
+        /// <param name="stoppingToken">Cancellation token</param>
         public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
             Stopwatch time = Stopwatch.StartNew();
 

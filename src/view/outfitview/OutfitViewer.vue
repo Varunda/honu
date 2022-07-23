@@ -145,11 +145,13 @@
             </table>
         </div>
 
-        <div>
-            <h2 class="wt-header">
-                Members
-            </h2>
+        <collapsible header-text="Activity">
+            <outfit-activity-graph :outfit-id="outfitID">
 
+            </outfit-activity-graph>
+        </collapsible>
+
+        <collapsible header-text="Members">
             <a-table 
                 :entries="members"
                 :show-filters="true"
@@ -269,9 +271,9 @@
                         <quick-number :data="entry.recentSPM"></quick-number>
                     </a-body>
                 </a-col>
-
             </a-table>
-        </div>
+
+        </collapsible>
 
     </div>
 </template>
@@ -290,9 +292,12 @@
     import { PsOutfit, OutfitApi, FlatExpandedOutfitMember } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
+    import OutfitActivityGraph from "./OutfitActivityGraph.vue";
+
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+    import Collapsible from "components/Collapsible.vue";
 
     const QuickNumber = Vue.extend({
         props: {
@@ -475,7 +480,9 @@
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
             QuickNumber,
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            Collapsible,
+            OutfitActivityGraph
         }
 
     });

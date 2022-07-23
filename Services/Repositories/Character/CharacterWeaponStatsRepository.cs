@@ -8,9 +8,9 @@ using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 
-namespace watchtower.Services.Repositories.Implementations {
+namespace watchtower.Services.Repositories {
 
-    public class CharacterWeaponStatRepository : ICharacterWeaponStatRepository {
+    public class CharacterWeaponStatRepository {
 
         private readonly ILogger<CharacterWeaponStatRepository> _Logger;
         private readonly IMemoryCache _Cache;
@@ -31,6 +31,13 @@ namespace watchtower.Services.Repositories.Implementations {
             _Db = db ?? throw new ArgumentNullException(nameof(db));
         }
 
+        /// <summary>
+        ///     Get the <see cref="WeaponStatEntry"/>s for a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns>
+        ///     A <see cref="WeaponStatEntry"/> with <see cref="WeaponStatEntry.CharacterID"/> of <paramref name="charID"/>
+        /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
@@ -52,6 +59,6 @@ namespace watchtower.Services.Repositories.Implementations {
 
             return entries;
         }
-
     }
+
 }

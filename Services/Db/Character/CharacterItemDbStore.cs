@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class CharacterItemDbStore : IDataReader<CharacterItem>, ICharacterItemDbStore {
+    public class CharacterItemDbStore : IDataReader<CharacterItem> {
 
         private readonly ILogger<CharacterItemDbStore> _Logger;
         private readonly IDbHelper _DbHelper;

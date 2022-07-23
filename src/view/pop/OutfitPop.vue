@@ -70,7 +70,7 @@
         },
 
         created: function(): void {
-            document.title = `Honu / PEEPERS`;
+            document.title = `Honu / Outfit Population`;
         },
 
         data: function() {

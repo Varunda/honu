@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 
@@ -20,13 +21,16 @@ namespace watchtower.Services.Db {
         private readonly IDbHelper _DbHelper;
 
         private readonly IDataReader<OutfitPopulation> _PopulationReader;
+        private readonly IDataReader<OutfitActivityDbEntry> _ActivityReader;
 
         public OutfitDbStore(ILogger<OutfitDbStore> logger,
-            IDbHelper dbHelper, IDataReader<OutfitPopulation> popReader) {
+            IDbHelper dbHelper, IDataReader<OutfitPopulation> popReader,
+            IDataReader<OutfitActivityDbEntry> activityReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
-            _PopulationReader = popReader ?? throw new ArgumentNullException(nameof(popReader));
+            _PopulationReader = popReader;
+            _ActivityReader = activityReader;
         }
 
         /// <summary>
@@ -46,6 +50,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("ID", outfitID);
+            await cmd.PrepareAsync();
 
             PsOutfit? outfit = await ReadSingle(cmd);
             await conn.CloseAsync();
@@ -210,6 +215,52 @@ namespace watchtower.Services.Db {
             return pop;
         }
 
+        /// <summary>
+        ///     Get how many unique characters had session starts within a time period, broken into intervals of hours or days
+        /// </summary>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <param name="start">Start period</param>
+        /// <param name="end">End period</param>
+        /// <returns>
+        ///     A list of <see cref="OutfitActivityDbEntry"/>s for the time range given.
+        ///     If there are 0 characters online during an interval within the period,
+        ///         instead of an entry with a count of 0 being returned, no row will be included.
+        /// </returns>
+        public async Task<List<OutfitActivityDbEntry>> GetActivity(string outfitID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            await using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT
+                    gs as timestamp,
+                    count(distinct(character_id)) as count
+                FROM
+                    wt_session s
+                INNER JOIN
+                    generate_series(@Start, @End, '1 hour') gs
+                        ON (
+                            (s.start BETWEEN gs AND gs + '1 hour'::INTERVAL)
+                            OR (s.finish BETWEEN gs AND gs + '1 hour'::INTERVAL)
+                            OR (start <= gs AND finish >= gs + '1 hour'::INTERVAL)
+                            OR (start >= gs AND finish <= gs + '1 hour'::INTERVAL)
+                        )
+                WHERE
+                    s.outfit_id = @OutfitID
+                GROUP BY 
+                    1
+                ;
+            ");
+
+            cmd.AddParameter("Start", start);
+            cmd.AddParameter("End", end);
+            cmd.AddParameter("OutfitID", outfitID);
+
+            cmd.CommandTimeout = 60;
+
+            List<OutfitActivityDbEntry> activity = await _ActivityReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return activity;
+        }
+
         public override PsOutfit ReadEntry(NpgsqlDataReader reader) {
             PsOutfit outfit = new PsOutfit();
 
@@ -224,5 +275,6 @@ namespace watchtower.Services.Db {
 
             return outfit;
         }
+
     }
 }

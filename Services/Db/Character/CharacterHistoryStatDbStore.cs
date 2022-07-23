@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
-namespace watchtower.Services.Db.Implementations {
+namespace watchtower.Services.Db {
 
-    public class CharacterHistoryStatDbStore : IDataReader<PsCharacterHistoryStat>, ICharacterHistoryStatDbStore {
+    public class CharacterHistoryStatDbStore : IDataReader<PsCharacterHistoryStat> {
 
         private readonly ILogger<CharacterHistoryStatDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
@@ -22,6 +22,14 @@ namespace watchtower.Services.Db.Implementations {
             _DbHelper = helper;
         }
 
+        /// <summary>
+        ///     Get all <see cref="PsCharacterHistoryStat"/>s for a character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns>
+        ///     All <see cref="PsCharacterHistoryStat"/>s with <see cref="PsCharacterHistoryStat.CharacterID"/> of <paramref name="charID"/>,
+        ///     or an empty list if no character exists
+        /// </returns>
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -38,6 +46,10 @@ namespace watchtower.Services.Db.Implementations {
             return stats;
         }
 
+        /// <summary>
+        ///     Get all <see cref="PsCharacterHistoryStat"/>s for all characters with ID passed in <paramref name="IDs"/>
+        /// </summary>
+        /// <param name="IDs">List of character IDs to be used</param>
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterIDs(List<string> IDs) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -54,193 +66,57 @@ namespace watchtower.Services.Db.Implementations {
             return stats;
         }
 
+        /// <summary>
+        ///     Update/Insert (upsert) a <see cref="PsCharacterHistoryStat"/> entry
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="type">What type this stat is for</param>
+        /// <param name="stat">Parameters of the stat used when upserting</param>
         public async Task Upsert(string charID, string type, PsCharacterHistoryStat stat) {
-            // grrrr.....
+            // i hate this
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_history_stat (
                     character_id, type, timestamp, all_time, one_life_max,
-                    day1,
-                    day2,
-                    day3,
-                    day4,
-                    day5,
-                    day6,
-                    day7,
-                    day8,
-                    day9,
-                    day10,
-                    day11,
-                    day12,
-                    day13,
-                    day14,
-                    day15,
-                    day16,
-                    day17,
-                    day18,
-                    day19,
-                    day20,
-                    day21,
-                    day22,
-                    day23,
-                    day24,
-                    day25,
-                    day26,
-                    day27,
-                    day28,
-                    day29,
-                    day30,
-                    day31,
+                    day1, day2, day3, day4, day5, day6, day7, day8, day9,
+                    day10, day11, day12, day13, day14, day15, day16, day17,
+                    day18, day19, day20, day21, day22, day23, day24, day25,
+                    day26, day27, day28, day29, day30, day31,
 
-                    week1,
-                    week2,
-                    week3,
-                    week4,
-                    week5,
-                    week6,
-                    week7,
-                    week8,
-                    week9,
-                    week10,
-                    week11,
-                    week12,
-                    week13,
+                    week1, week2, week3, week4, week5, week6, week7,
+                    week8, week9, week10, week11, week12, week13,
 
-                    month1,
-                    month2,
-                    month3,
-                    month4,
-                    month5,
-                    month6,
-                    month7,
-                    month8,
-                    month9,
-                    month10,
-                    month11,
-                    month12
+                    month1, month2, month3, month4, month5, month6,
+                    month7, month8, month9, month10, month11, month12
                 ) VALUES (
                     @CharacterID, @Type, @Timestamp, @AllTime, @OneLifeMax,
 
-                    @Day1,
-                    @Day2,
-                    @Day3,
-                    @Day4,
-                    @Day5,
-                    @Day6,
-                    @Day7,
-                    @Day8,
-                    @Day9,
-                    @Day10,
-                    @Day11,
-                    @Day12,
-                    @Day13,
-                    @Day14,
-                    @Day15,
-                    @Day16,
-                    @Day17,
-                    @Day18,
-                    @Day19,
-                    @Day20,
-                    @Day21,
-                    @Day22,
-                    @Day23,
-                    @Day24,
-                    @Day25,
-                    @Day26,
-                    @Day27,
-                    @Day28,
-                    @Day29,
-                    @Day30,
-                    @Day31,
+                    @Day1, @Day2, @Day3, @Day4, @Day5, @Day6, @Day7, @Day8, @Day9,
+                    @Day10, @Day11, @Day12, @Day13, @Day14, @Day15, @Day16, @Day17,
+                    @Day18, @Day19, @Day20, @Day21, @Day22, @Day23, @Day24, @Day25,
+                    @Day26, @Day27, @Day28, @Day29, @Day30, @Day31,
 
-                    @Week1,
-                    @Week2,
-                    @Week3,
-                    @Week4,
-                    @Week5,
-                    @Week6,
-                    @Week7,
-                    @Week8,
-                    @Week9,
-                    @Week10,
-                    @Week11,
-                    @Week12,
-                    @Week13,
+                    @Week1, @Week2, @Week3, @Week4, @Week5, @Week6, @Week7,
+                    @Week8, @Week9, @Week10, @Week11, @Week12, @Week13,
 
-                    @Month1,
-                    @Month2,
-                    @Month3,
-                    @Month4,
-                    @Month5,
-                    @Month6,
-                    @Month7,
-                    @Month8,
-                    @Month9,
-                    @Month10,
-                    @Month11,
-                    @Month12
+                    @Month1, @Month2, @Month3, @Month4, @Month5, @Month6,
+                    @Month7, @Month8, @Month9, @Month10, @Month11, @Month12
                 ) ON CONFLICT (character_id, type) DO 
                     UPDATE SET timestamp = @Timestamp,
                         all_time = @AllTime,
                         one_life_max = @OneLifeMax,
-                        day1 = @Day1,
-                        day2 = @Day2,
-                        day3 = @Day3,
-                        day4 = @Day4,
-                        day5 = @Day5,
-                        day6 = @Day6,
-                        day7 = @Day7,
-                        day8 = @Day8,
-                        day9 = @Day9,
-                        day10 = @Day10,
-                        day11 = @Day11,
-                        day12 = @Day12,
-                        day13 = @Day13,
-                        day14 = @Day14,
-                        day15 = @Day15,
-                        day16 = @Day16,
-                        day17 = @Day17,
-                        day18 = @Day18,
-                        day19 = @Day19,
-                        day20 = @Day20,
-                        day21 = @Day21,
-                        day22 = @Day22,
-                        day23 = @Day23,
-                        day24 = @Day24,
-                        day25 = @Day25,
-                        day26 = @Day26,
-                        day27 = @Day27,
-                        day28 = @Day28,
-                        day29 = @Day29,
-                        day30 = @Day30,
-                        day31 = @Day31,
 
-                        week1 = @Week1,
-                        week2 = @Week2,
-                        week3 = @Week3,
-                        week4 = @Week4,
-                        week5 = @Week5,
-                        week6 = @Week6,
-                        week7 = @Week7,
-                        week8 = @Week8,
-                        week9 = @Week9,
-                        week10 = @Week10,
-                        week11 = @Week11,
-                        week12 = @Week12,
-                        week13 = @Week13,
+                        day1 = @Day1, day2 = @Day2, day3 = @Day3, day4 = @Day4, day5 = @Day5, day6 = @Day6, day7 = @Day7,
+                        day8 = @Day8, day9 = @Day9, day10 = @Day10, day11 = @Day11, day12 = @Day12, day13 = @Day13,
+                        day14 = @Day14, day15 = @Day15, day16 = @Day16, day17 = @Day17, day18 = @Day18, day19 = @Day19,
+                        day20 = @Day20, day21 = @Day21, day22 = @Day22, day23 = @Day23, day24 = @Day24, day25 = @Day25,
+                        day26 = @Day26, day27 = @Day27, day28 = @Day28, day29 = @Day29, day30 = @Day30, day31 = @Day31,
 
-                        month1 = @Month1,
-                        month2 = @Month2,
-                        month3 = @Month3,
-                        month4 = @Month4,
-                        month5 = @Month5,
-                        month6 = @Month6,
-                        month7 = @Month7,
-                        month8 = @Month8,
-                        month9 = @Month9,
-                        month10 = @Month10,
-                        month11 = @Month11,
-                        month12 = @Month12;
+                        week1 = @Week1, week2 = @Week2, week3 = @Week3, week4 = @Week4, week5 = @Week5, week6 = @Week6,
+                        week7 = @Week7, week8 = @Week8, week9 = @Week9, week10 = @Week10, week11 = @Week11, week12 = @Week12, week13 = @Week13,
+
+                        month1 = @Month1, month2 = @Month2, month3 = @Month3, month4 = @Month4, month5 = @Month5, month6 = @Month6,
+                        month7 = @Month7, month8 = @Month8, month9 = @Month9, month10 = @Month10, month11 = @Month11, month12 = @Month12;
             ");
 
             cmd.AddParameter("CharacterID", charID);
@@ -382,5 +258,6 @@ namespace watchtower.Services.Db.Implementations {
 
             return stat;
         }
+
     }
 }
