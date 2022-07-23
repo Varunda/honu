@@ -1,19 +1,38 @@
 ﻿<template>
     <div>
-        <div v-if="activity.state == 'idle'"></div>
+        <div>
+            <div v-if="activity.state == 'idle'"></div>
+            <busy v-else-if="activity.state == 'loading'" class="honu-busy-lg"></busy>
 
-        <busy v-else-if="activity.state == 'loading'" class="honu-busy-lg"></busy>
+            <div v-else-if="activity.state == 'error'">
+                Error loading outfit activity:
+                <br />
+                {{activity.message}}
+            </div>
 
-        <div v-else-if="activity.state == 'error'">
-            Error loading outfit activity: {{activity.message}}
+            <canvas v-else-if="activity.state == 'loaded'" :id="'outfit-activity-graph-' + ID"
+                style="height: 240px; max-height: 40vh;" class="mb-2">
+            </canvas>
+
+            <div v-else>
+                Unchecked state of 'activity': '{{activity.state}}'
+            </div>
         </div>
 
-        <canvas v-else-if="activity.state == 'loaded'" :id="'outfit-activity-graph-' + ID" style="height: 240px; max-height: 40vh;" class="mb-2">
+        <div>
+            <div class="input-group d-inline-flex" style="width: unset;">
+                <date-time-input v-model="activityPeriod.finish" class="form-control d-inline-block" style="width: unset;"></date-time-input>
 
-        </canvas>
+                <span class="input-group-text input-group-addon">
+                    -
+                </span>
 
-        <div v-else>
-            Unchecked state of 'activity': '{{activity.state}}'
+                <date-time-input v-model="activityPeriod.start" class="form-control d-inline-block" style="width: unset;"></date-time-input>
+
+                <button type="button" class="btn btn-primary input-group-append" @click="loadBoth">
+                    Load
+                </button>
+            </div>
         </div>
     </div>
 </template>
@@ -26,11 +45,10 @@
 
     import Chart from "chart.js/auto/auto.esm";
 
-    import InfoHover from "components/InfoHover.vue";
-    import ToggleButton from "components/ToggleButton";
     import Busy from "components/Busy.vue";
+    import DateTimePicker from "components/DateTimePicker.vue";
+    import DateTimeInput from "components/DateTimeInput.vue";
 
-    import WorldUtils from "util/World";
     import TimeUtils from "util/Time";
 
     import "MomentFilter";
@@ -48,7 +66,16 @@
                 ID: Math.floor(Math.random() * 100000) as number,
                 activity: Loadable.idle() as Loading<OutfitActivity[]>,
                 chart: null as Chart | null,
+
+                activityPeriod: {
+                    start: new Date() as Date,
+                    finish: new Date() as Date
+                }
             }
+        },
+
+        created: function(): void {
+            this.activityPeriod.finish.setDate(this.activityPeriod.finish.getDate() - 7);
         },
 
         mounted: function(): void {
@@ -58,13 +85,14 @@
         },
 
         methods: {
-            loadActivity: async function(): Promise<void> {
-                const now: Date = new Date();
-                const weekAgo: Date = new Date();
-                weekAgo.setDate(weekAgo.getDate() - 7);
+            loadBoth: async function(): Promise<void> {
+                await this.loadActivity();
+                this.makeGraph();
+            },
 
+            loadActivity: async function(): Promise<void> {
                 this.activity = Loadable.loading();
-                this.activity = await OutfitApi.getActivity(this.OutfitId, weekAgo, now);
+                this.activity = await OutfitApi.getActivity(this.OutfitId, this.activityPeriod.finish, this.activityPeriod.start);
             },
 
             makeGraph: function(): void {
@@ -161,7 +189,8 @@
         },
 
         components: {
-            Busy
+            Busy,
+            DateTimeInput, DateTimePicker
         }
     });
 

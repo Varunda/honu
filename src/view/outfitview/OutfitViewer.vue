@@ -145,7 +145,7 @@
             </table>
         </div>
 
-        <collapsible header-text="Activity">
+        <collapsible header-text="Activity" class="mb-3">
             <outfit-activity-graph :outfit-id="outfitID">
 
             </outfit-activity-graph>
