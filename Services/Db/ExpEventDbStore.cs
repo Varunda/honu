@@ -179,12 +179,10 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
-            bool useRecent = (DateTime.UtcNow - start) >= TimeSpan.FromMinutes(120);
-
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM {(useRecent == true ? "wt_recent_exp" : "wt_exp")}
+                    FROM wt_exp
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = @CharacterID
             ");
@@ -201,12 +199,10 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
-            bool useRecent = (DateTime.UtcNow - start) >= TimeSpan.FromMinutes(120);
-
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    FROM {(useRecent == true ? "wt_recent_exp" : "wt_exp")}
+                    FROM wt_exp
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = ANY(@IDs)
             ");
