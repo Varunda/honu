@@ -78,12 +78,12 @@ namespace watchtower.Controllers.Api {
                 List<long> weaponAve = _WeaponQueue.GetProcessTime();
                 List<long> taskAve = _TaskQueue.GetProcessTime();
 
-                ServiceQueueCount c = new() { QueueName = "character_cache_queue", Count = _CharacterCache.Count() };
-                ServiceQueueCount session = new() { QueueName = "session_start_queue", Count = _SessionQueue.Count() };
-                ServiceQueueCount weapon = new() { QueueName = "character_weapon_stat_queue", Count = _WeaponQueue.Count(), Average = weaponAve.Count == 0 ? 0 : weaponAve.Average() };
-                ServiceQueueCount task = new() { QueueName = "task_queue", Count = _TaskQueue.Count(), Average = taskAve.Count == 0 ? 0 : taskAve.Average() };
-                ServiceQueueCount percentile = new() { QueueName = "weapon_percentile_cache_queue", Count = _PercentileQueue.Count() };
-                ServiceQueueCount discord = new() { QueueName = "discord_message_queue", Count = _DiscordQueue.Count() };
+                ServiceQueueCount c = _MakeCount("character_cache_queue", _CharacterCache);
+                ServiceQueueCount session = _MakeCount("session_start_queue", _SessionQueue);
+                ServiceQueueCount weapon = _MakeCount("character_weapon_stat_queue", _WeaponQueue);
+                ServiceQueueCount task = _MakeCount("task_queue", _TaskQueue);
+                ServiceQueueCount percentile = _MakeCount("weapon_percentile_cache_queue", _PercentileQueue);
+                ServiceQueueCount discord = _MakeCount("discord_message_queue", _DiscordQueue);
 
                 health.Queues = new List<ServiceQueueCount>() {
                     c, session, weapon,
@@ -96,6 +96,27 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(health);
+        }
+
+        private ServiceQueueCount _MakeCount(string name, IProcessQueue queue) {
+            ServiceQueueCount c = new() { QueueName = name, Count = queue.Count() };
+
+            List<long> times = queue.GetProcessTime();
+            if (times.Count > 0) {
+                c.Average = times.Average();
+                c.Min = times.Min();
+                c.Max = times.Max();
+
+                List<long> sorted = times.OrderBy(i => i).ToList();
+                int mid = sorted.Count / 2;
+                if (sorted.Count % 2 == 0) {
+                    c.Median = (sorted.ElementAt(mid - 1) + sorted.ElementAt(mid)) / 2;
+                } else {
+                    c.Median = sorted.ElementAt(mid);
+                }
+            }
+
+            return c;
         }
 
         /// <summary>

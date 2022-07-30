@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Db.Patches {
 
     [Patch]
-    public class Patch0CreateMetadataTable : IDbPatch {
+    public class Patch00CreateMetadataTable : IDbPatch {
 
         public async Task Execute(IDbHelper helper) {
             using NpgsqlConnection conn = helper.Connection();

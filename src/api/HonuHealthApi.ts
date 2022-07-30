@@ -14,6 +14,10 @@ export class HonuHealth {
 export class ServiceQueueCount {
     public queueName: string = "";
     public count: number = 0;
+    public average: number | null = null;
+    public min: number | null = null;
+    public max: number | null = null;
+    public median: number | null = null;
 }
 
 export class CensusRealtimeHealthEntry {

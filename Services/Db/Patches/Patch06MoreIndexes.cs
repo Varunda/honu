@@ -13,6 +13,18 @@ namespace watchtower.Services.Db.Patches {
         public string Name => "Add more indexes";
 
         public async Task Execute(IDbHelper helper) {
+            using NpgsqlConnection conn = helper.Connection();
+            using NpgsqlCommand cmd = await helper.Command(conn, @"
+                CREATE INDEX IF NOT EXISTS idx_wt_session_character_id ON wt_session(character_id);
+
+                CREATE INDEX IF NOT EXISTS idx_wt_outfit_faction_id ON wt_outfit(faction_id);
+
+                CREATE INDEX IF NOT EXISTS idx_wt_character_outfit_id ON wt_character(outfit_id);
+            ");
+
+            await cmd.ExecuteNonQueryAsync();
+
+            /*
             if (await helper.HasIndex("wt_session", "idx_wt_session_character_id") == false) {
                 using NpgsqlConnection conn = helper.Connection();
                 using NpgsqlCommand cmd = await helper.Command(conn, @"
@@ -36,6 +48,7 @@ namespace watchtower.Services.Db.Patches {
                 ");
                 await conn.CloseAsync();
             }
+            */
         }
 
     }

@@ -31,7 +31,10 @@
                             <tr class="table-secondary">
                                 <th>Queue</th>
                                 <th>Length</th>
-                                <th>Average process time</th>
+                                <th>Average</th>
+                                <th>Median</th>
+                                <th>Min</th>
+                                <th>Max</th>
                             </tr>
                         </thead>
 
@@ -39,12 +42,37 @@
                             <tr v-for="queue in health.data.queues">
                                 <td>{{queue.queueName}}</td>
                                 <td>{{queue.count}}</td>
+
                                 <td>
-                                    <span v-if="queue.average">
+                                    <span v-if="queue.average != null">
                                         {{queue.average | locale(2)}}ms
                                     </span>
                                     <span v-else>
-                                        not tracked
+                                        --
+                                    </span>
+                                </td>
+                                <td>
+                                    <span v-if="queue.median != null">
+                                        {{queue.median | locale(2)}}ms
+                                    </span>
+                                    <span v-else>
+                                        --
+                                    </span>
+                                </td>
+                                <td>
+                                    <span v-if="queue.min != null">
+                                        {{queue.min | locale(2)}}ms
+                                    </span>
+                                    <span v-else>
+                                        --
+                                    </span>
+                                </td>
+                                <td>
+                                    <span v-if="queue.max != null">
+                                        {{queue.max | locale(2)}}ms
+                                    </span>
+                                    <span v-else>
+                                        --
                                     </span>
                                 </td>
                             </tr>

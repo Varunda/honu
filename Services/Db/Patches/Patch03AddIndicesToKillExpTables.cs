@@ -10,9 +10,12 @@ namespace watchtower.Services.Db.Patches {
     public class Patch03AddIndicesToKillExpTables : IDbPatch {
 
         public int MinVersion => 3;
-        public string Name => "Add indices to wt_kill and wt_exp tables";
+        public string Name => "Add indices to wt_kill and wt_exp tables (defunct)";
 
-        public async Task Execute(IDbHelper helper) {
+        public Task Execute(IDbHelper helper) {
+            // This patch is defunct because patch 58 drops these indexes anyways
+            return Task.CompletedTask;
+            /*
             if (await helper.HasIndex("wt_kills", "idx_wt_kills_world_id") == false) {
                 using NpgsqlConnection conn = helper.Connection();
                 using NpgsqlCommand cmd = await helper.Command(conn, @"
@@ -30,6 +33,7 @@ namespace watchtower.Services.Db.Patches {
 
                 await cmd.ExecuteNonQueryAsync();
             }
+            */
         }
 
     }

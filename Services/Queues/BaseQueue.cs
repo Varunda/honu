@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Services.Queues {
 
-    public class BaseQueue<T> {
+    public class BaseQueue<T> : IProcessQueue {
         
         internal ConcurrentQueue<T> _Items = new ConcurrentQueue<T>();
 
