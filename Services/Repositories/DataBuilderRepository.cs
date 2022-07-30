@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Code.Constants;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -67,6 +68,10 @@ namespace watchtower.Services.Repositories {
         /// <param name="worldID">ID of the world to build the data for</param>
         /// <param name="stoppingToken">Cancellation token</param>
         public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
+
+            using var processTrace = HonuActivitySource.Root.StartActivity("Realtime Activity");
+            processTrace?.AddTag("worldID", worldID);
+
             Stopwatch time = Stopwatch.StartNew();
 
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -78,11 +83,13 @@ namespace watchtower.Services.Repositories {
             data.ContinentCount = new ContinentCount();
             data.ProcessLag = (int)(DateTime.UtcNow - _EventHandler.MostRecentProcess()).TotalSeconds;
 
+            using var copyPlayers = HonuActivitySource.Root.StartActivity("copy CharacterStore");
             Dictionary<string, TrackedPlayer> players;
             lock (CharacterStore.Get().Players) {
                 players = new Dictionary<string, TrackedPlayer>(CharacterStore.Get().Players);
             }
             players = players.Where(iter => iter.Value.WorldID == worldID).ToDictionary(key => key.Key, value => value.Value);
+            copyPlayers?.Stop();
 
             long timeToCopyPlayers = time.ElapsedMilliseconds;
 
@@ -95,106 +102,120 @@ namespace watchtower.Services.Repositories {
             ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = worldID, FactionID = Faction.NC };
             ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = worldID, FactionID = Faction.TR };
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerHeals.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitHeals.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerHeals.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitHeals.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerHeals.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitHeals.Entries = t.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("exp heals")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerHeals.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitHeals.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerHeals.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitHeals.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerHeals.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitHeals.Entries = t.Result)
+                );
+            }
             long timeToGetHealEntries = time.ElapsedMilliseconds;
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerRevives.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitRevives.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerRevives.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitRevives.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerRevives.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitRevives.Entries = t.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("exp revives")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerRevives.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitRevives.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerRevives.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitRevives.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerRevives.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitRevives.Entries = t.Result)
+                );
+            }
             long timeToGetReviveEntries = time.ElapsedMilliseconds;
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerResupplies.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitResupplies.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerResupplies.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitResupplies.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerResupplies.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitResupplies.Entries = t.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("exp resupplies")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerResupplies.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitResupplies.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerResupplies.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitResupplies.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerResupplies.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitResupplies.Entries = t.Result)
+                );
+            }
             long timeToGetResupplyEntries = time.ElapsedMilliseconds;
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() {
+            using (var interval = HonuActivitySource.Root.StartActivity("exp spawns")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() {
                 Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
                 Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN
             };
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerSpawns.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitSpawns.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerSpawns.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitSpawns.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerSpawns.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitSpawns.Entries = t.Result)
-            );
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerSpawns.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitSpawns.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerSpawns.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitSpawns.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerSpawns.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitSpawns.Entries = t.Result)
+                );
+            }
             long timeToGetSpawnEntries = time.ElapsedMilliseconds;
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = Experience.VehicleKillEvents;
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerVehicleKills.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitVehicleKills.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerVehicleKills.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitVehicleKills.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerVehicleKills.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitVehicleKills.Entries = t.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("exp vehicle kills")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = Experience.VehicleKillEvents;
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerVehicleKills.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitVehicleKills.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerVehicleKills.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitVehicleKills.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerVehicleKills.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitVehicleKills.Entries = t.Result)
+                );
+            }
             long timeToGetVehicleKills = time.ElapsedMilliseconds;
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
-            await Task.WhenAll(
-                GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerShieldRepair.Entries = t.Result),
-                GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitShieldRepair.Entries = t.Result),
-                GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerShieldRepair.Entries = t.Result),
-                GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitShieldRepair.Entries = t.Result),
-                GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerShieldRepair.Entries = t.Result),
-                GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitShieldRepair.Entries = t.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("exp shield repair")) {
+                ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
+                await Task.WhenAll(
+                    GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerShieldRepair.Entries = t.Result),
+                    GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitShieldRepair.Entries = t.Result),
+                    GetExpBlock(ncExpOptions).ContinueWith(t => data.NC.PlayerShieldRepair.Entries = t.Result),
+                    GetOutfitExpBlock(ncExpOptions).ContinueWith(t => data.NC.OutfitShieldRepair.Entries = t.Result),
+                    GetExpBlock(trExpOptions).ContinueWith(t => data.TR.PlayerShieldRepair.Entries = t.Result),
+                    GetOutfitExpBlock(trExpOptions).ContinueWith(t => data.TR.OutfitShieldRepair.Entries = t.Result)
+                );
+            }
 
-            KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
-            KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
-            KillDbOptions trKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.TR };
+            using (var interval = HonuActivitySource.Root.StartActivity("top killers")) {
+                KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
+                KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
+                KillDbOptions trKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.TR };
 
-            await Task.WhenAll(
-                GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
-                GetTopOutfitKillers(vsKillOptions).ContinueWith(t => data.VS.OutfitKills = t.Result),
-                GetTopWeapons(vsKillOptions).ContinueWith(t => data.VS.WeaponKills = t.Result),
+                await Task.WhenAll(
+                    GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
+                    GetTopOutfitKillers(vsKillOptions).ContinueWith(t => data.VS.OutfitKills = t.Result),
+                    GetTopWeapons(vsKillOptions).ContinueWith(t => data.VS.WeaponKills = t.Result),
 
-                GetTopKillers(ncKillOptions, players).ContinueWith(t => data.NC.PlayerKills.Entries = t.Result),
-                GetTopOutfitKillers(ncKillOptions).ContinueWith(t => data.NC.OutfitKills = t.Result),
-                GetTopWeapons(ncKillOptions).ContinueWith(t => data.NC.WeaponKills = t.Result),
+                    GetTopKillers(ncKillOptions, players).ContinueWith(t => data.NC.PlayerKills.Entries = t.Result),
+                    GetTopOutfitKillers(ncKillOptions).ContinueWith(t => data.NC.OutfitKills = t.Result),
+                    GetTopWeapons(ncKillOptions).ContinueWith(t => data.NC.WeaponKills = t.Result),
 
-                GetTopKillers(trKillOptions, players).ContinueWith(t => data.TR.PlayerKills.Entries = t.Result),
-                GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result),
-                GetTopWeapons(trKillOptions).ContinueWith(t => data.TR.WeaponKills = t.Result)
-            );
+                    GetTopKillers(trKillOptions, players).ContinueWith(t => data.TR.PlayerKills.Entries = t.Result),
+                    GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result),
+                    GetTopWeapons(trKillOptions).ContinueWith(t => data.TR.WeaponKills = t.Result)
+                );
+            }
 
             long timeToGetTopKills = time.ElapsedMilliseconds;
 
@@ -236,7 +257,9 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
+            using var getWorldTotal = HonuActivitySource.Root.StartActivity("world total");
             WorldTotal worldTotal = await _WorldTotalDb.Get(totalOptions);
+            getWorldTotal?.Stop();
 
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
@@ -289,11 +312,13 @@ namespace watchtower.Services.Repositories {
             data.TR.PlayerShieldRepair.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SHIELD_REPAIR);
             data.TR.OutfitShieldRepair.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SHIELD_REPAIR);
 
-            await Task.WhenAll(
-                GetOutfitsOnline(players, Faction.VS, worldID).ContinueWith(result => data.VS.Outfits = result.Result),
-                GetOutfitsOnline(players, Faction.NC, worldID).ContinueWith(result => data.NC.Outfits = result.Result),
-                GetOutfitsOnline(players, Faction.TR, worldID).ContinueWith(result => data.TR.Outfits = result.Result)
-            );
+            using (var interval = HonuActivitySource.Root.StartActivity("outfits online")) {
+                await Task.WhenAll(
+                    GetOutfitsOnline(players, Faction.VS, worldID).ContinueWith(result => data.VS.Outfits = result.Result),
+                    GetOutfitsOnline(players, Faction.NC, worldID).ContinueWith(result => data.NC.Outfits = result.Result),
+                    GetOutfitsOnline(players, Faction.TR, worldID).ContinueWith(result => data.TR.Outfits = result.Result)
+                );
+            }
 
             long timeToGetWorldTotals = time.ElapsedMilliseconds;
 
@@ -301,19 +326,21 @@ namespace watchtower.Services.Repositories {
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             WorldTotalOptions focusOptions = new WorldTotalOptions() { Interval = 5, WorldID = worldID };
-            WorldTotal focus = await _WorldTotalDb.GetFocus(focusOptions);
+            using (var interval = HonuActivitySource.Root.StartActivity("focus")) {
+                WorldTotal focus = await _WorldTotalDb.GetFocus(focusOptions);
 
-            data.VS.FactionFocus.NcKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS_NC);
-            data.VS.FactionFocus.TrKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS_TR);
-            data.VS.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS);
+                data.VS.FactionFocus.NcKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS_NC);
+                data.VS.FactionFocus.TrKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS_TR);
+                data.VS.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS);
 
-            data.NC.FactionFocus.VsKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS_VS);
-            data.NC.FactionFocus.TrKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS_TR);
-            data.NC.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS);
+                data.NC.FactionFocus.VsKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS_VS);
+                data.NC.FactionFocus.TrKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS_TR);
+                data.NC.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_NC_KILLS);
 
-            data.TR.FactionFocus.VsKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS_VS);
-            data.TR.FactionFocus.NcKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS_NC);
-            data.TR.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS);
+                data.TR.FactionFocus.VsKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS_VS);
+                data.TR.FactionFocus.NcKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS_NC);
+                data.TR.FactionFocus.TotalKills = focus.GetValue(WorldTotal.TOTAL_TR_KILLS);
+            }
 
             foreach (KeyValuePair<string, TrackedPlayer> entry in players) {
                 if (entry.Value.Online == true) {
@@ -341,10 +368,12 @@ namespace watchtower.Services.Repositories {
 
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;
 
-            data.TagEntries = _TagManager.GetRecent(data.WorldID);
-            data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(120), DateTime.UtcNow);
-            data.RealtimeHealth = _HealthRepository.GetDeathHealth().Where(iter => iter.WorldID == data.WorldID).ToList();
-            data.RealtimeHealth.AddRange(_HealthRepository.GetExpHealth().Where(iter => iter.WorldID == data.WorldID));
+            //data.TagEntries = _TagManager.GetRecent(data.WorldID);
+            using (var interval = HonuActivitySource.Root.StartActivity("health data")) {
+                data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(120), DateTime.UtcNow);
+                data.RealtimeHealth = _HealthRepository.GetDeathHealth().Where(iter => iter.WorldID == data.WorldID).ToList();
+                data.RealtimeHealth.AddRange(_HealthRepository.GetExpHealth().Where(iter => iter.WorldID == data.WorldID));
+            }
 
             time.Stop();
 

@@ -148,6 +148,7 @@ namespace watchtower.Realtime {
                 }
 
                 string? eventName = payloadToken.Value<string?>("event_name");
+                processTrace?.AddTag("eventName", eventName);
 
                 if (eventName == null) {
                     _Logger.LogWarning($"Missing 'event_name' from {ev}");
