@@ -721,9 +721,10 @@
                         settings: {
                             gravity: 1,
                             barnesHutOptimize: true,
-                            outboundAttractionDistribution: true,
+                            outboundAttractionDistribution: false,
                             linLogMode: true,
-                            slowDown: 1
+                            adjustSizes: true,
+                            slowDown: 10
                         },
                     });
                 } else if (this.currentLayoutMethod == "force") {
