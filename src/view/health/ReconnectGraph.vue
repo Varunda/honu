@@ -220,6 +220,7 @@
                                     callback: function(value) {
                                         return value;
                                     },
+                                    precision: 0
                                 },
                                 beginAtZero: true
                             }
