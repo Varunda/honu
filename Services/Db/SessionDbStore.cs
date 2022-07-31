@@ -368,6 +368,7 @@ namespace watchtower.Services.Db {
             await cmd.PrepareAsync();
 
             player.Online = false;
+            player.ZoneID = 0;
             player.SessionID = null;
 
             await cmd.ExecuteNonQueryAsync();
