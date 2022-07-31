@@ -1,6 +1,6 @@
 ﻿<template>
     <div>
-        <honu-menu class="flex-grow-1">
+        <honu-menu>
             <menu-dropdown></menu-dropdown>
 
             <menu-sep></menu-sep>
@@ -43,6 +43,15 @@
                         {{stream.secondsMissed | tduration}} of {{stream.streamType}} events to be missed
                     </li>
                 </ul>
+            </div>
+
+            <div v-if="showFullExp == false" class="alert alert-primary text-center h5" @click="showFullExp = true">
+                <div>
+                    This session was created before all exp events were tracked, and some data will be hidden.
+                </div>
+                <div class="mt-2">
+                    Click here to show the full exp data anyways
+                </div>
             </div>
 
             <collapsible header-text="Session">
@@ -167,7 +176,22 @@
                                 {{exp.state}}
                             </span>
                             <span v-if="exp.state == 'loaded'">
-                                ({{exp.data.length}})
+                                ({{exp.data.events.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            Full xp?
+                            <info-hover text="Before 2022-07-31, only specific exp events were tracked"></info-hover>
+                        </td>
+                        <td>
+                            <span v-if="showFullExp == true">
+                                Yes
+                            </span>
+                            <span v-else>
+                                No
                             </span>
                         </td>
                     </tr>
@@ -181,7 +205,7 @@
                 </div>
 
                 <session-viewer-general v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
-                    :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths">
+                    :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :full-exp="showFullExp">
                 </session-viewer-general>
             </collapsible>
 
@@ -192,8 +216,17 @@
                 </div>
 
                 <session-viewer-kills v-else-if="killsOrDeaths.state == 'loaded'"
-                    :kills="kills" :deaths="deaths" :session="session.data">
+                    :kills="kills" :deaths="deaths" :session="session.data" :full-exp="showFullExp">
                 </session-viewer-kills>
+            </collapsible>
+
+            <collapsible header-text="Experience breakdown">
+                <div v-if="exp.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp-breakdown>
             </collapsible>
 
             <collapsible header-text="Experience">
@@ -202,7 +235,7 @@
                     Loading...
                 </div>
 
-                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data"></session-viewer-exp>
+                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp>
             </collapsible>
 
             <collapsible header-text="Trends">
@@ -212,7 +245,7 @@
                 </div>
 
                 <session-viewer-trends v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data">
+                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :full-exp="showFullExp">
                 </session-viewer-trends>
             </collapsible>
 
@@ -223,7 +256,7 @@
                 </div>
 
                 <session-action-log v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded' && vehicleDestroy.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data">
+                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
                 </session-action-log>
             </collapsible>
 
@@ -234,7 +267,7 @@
                 </div>
 
                 <session-viewer-spawns v-else-if="exp.state == 'loaded'"
-                    :session="session.data" :exp="exp.data">
+                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
                 </session-viewer-spawns>
             </collapsible>
         </div>
@@ -257,6 +290,7 @@
     import SessionViewerTrends from "./components/SessionViewerTrends.vue";
     import SessionActionLog from "./components/SessionActionLog.vue";
     import SessionViewerSpawns from "./components/SessionViewerSpawns.vue";
+    import SessionViewerExpBreakdown from "./components/SessionViewerExpBreakdown.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
     import InfoHover from "components/InfoHover.vue";
@@ -264,7 +298,7 @@
     import Collapsible from "components/Collapsible.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
-    import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
     import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -279,11 +313,13 @@
             return {
                 sessionID: 0 as number,
 
+                showFullExp: false as boolean,
+
                 session: Loadable.idle() as Loading<Session>,
                 character: Loadable.idle() as Loading<PsCharacter>,
 
                 killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
-                exp: Loadable.idle() as Loading<ExpandedExpEvent[]>,
+                exp: Loadable.idle() as Loading<ExperienceBlock>,
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
 
                 reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>
@@ -330,6 +366,13 @@
                 this.session = await SessionApi.getBySessionID(this.sessionID);
 
                 if (this.session.state == "loaded") {
+                    const fullStart: Date = new Date("2022-07-31T00:00");
+                    this.showFullExp = this.session.data.start.getTime() > fullStart.getTime();
+
+                    if (this.showFullExp == true) {
+                        console.log(`SessionViewer> showing full EXP`);
+                    }
+
                     this.bindCharacter();
                 }
             },
@@ -442,7 +485,7 @@
         },
 
         components: {
-            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, 
+            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerExpBreakdown,
             ChartTimestamp,
             InfoHover,
             Busy,

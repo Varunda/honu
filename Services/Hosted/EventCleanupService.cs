@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Models;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Services {
 
@@ -27,15 +28,15 @@ namespace watchtower.Services {
         private readonly ILogger<EventCleanupService> _Logger;
 
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
-        private readonly SessionDbStore _SessionDb;
+        private readonly SessionRepository _SessionRepository;
 
         public EventCleanupService(ILogger<EventCleanupService> logger,
-            IServiceHealthMonitor healthMon, SessionDbStore sessionDb) { 
+            IServiceHealthMonitor healthMon, SessionRepository sessionRepository) {
 
             _Logger = logger;
 
             _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
-            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+            _SessionRepository = sessionRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -63,8 +64,8 @@ namespace watchtower.Services {
                     lock (CharacterStore.Get().Players) {
                         foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
                             if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
-                                //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
-                                _ = _SessionDb.End(entry.Value.ID, DateTime.UtcNow);
+                                _Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
+                                _ = _SessionRepository.End(entry.Value.ID, DateTime.UtcNow);
                             }
                         }
                     }

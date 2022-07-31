@@ -29,13 +29,15 @@ namespace watchtower.Controllers {
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
+        private readonly ExperienceTypeRepository _ExperienceTypeRepository;
 
         private readonly ExpEventDbStore _ExpDbStore;
         private readonly SessionDbStore _SessionDb;
 
         public ExpApiController(ILogger<ExpApiController> logger,
             CharacterRepository charRepo, ExpEventDbStore killDb,
-            OutfitRepository outfitRepo, SessionDbStore sessionDb) {
+            OutfitRepository outfitRepo, SessionDbStore sessionDb, 
+            ExperienceTypeRepository experienceTypeRepository) {
 
             _Logger = logger;
 
@@ -44,8 +46,9 @@ namespace watchtower.Controllers {
 
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+            _ExperienceTypeRepository = experienceTypeRepository;
         }
-        
+
         /// <summary>
         ///     Get the experience events a player got during a time period
         /// </summary>
@@ -99,6 +102,46 @@ namespace watchtower.Controllers {
             return ApiOk(expanded);
         }
 
+        [HttpGet("{charID}/period2")]
+        public async Task<ApiResponse<ExperienceBlock>> GetByCharacterIDAndRange2(string charID,
+            [FromQuery] DateTime start, [FromQuery] DateTime end) {
+
+            if (end - start > TimeSpan.FromDays(1)) {
+                return ApiBadRequest<ExperienceBlock>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
+            }
+            if (start >= end) {
+                return ApiBadRequest<ExperienceBlock>($"{nameof(start)} must come before ${nameof(end)}");
+            }
+
+            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, start, end);
+
+            ExperienceBlock block = new ExperienceBlock();
+            block.Events = events;
+            block.InputCharacters = new() { charID };
+            block.PeriodStart = start;
+            block.PeriodEnd = end;
+
+            HashSet<string> charIDs = new();
+            HashSet<int> expTypeIDs = new();
+            foreach (ExpEvent ev in events) {
+                charIDs.Add(ev.SourceID);
+                if (ev.OtherID.Length == 19) {
+                    charIDs.Add(ev.OtherID);
+                }
+
+                expTypeIDs.Add(ev.ExperienceID);
+            }
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), fast: true);
+            block.Characters = chars;
+
+            _Logger.LogTrace($"{string.Join(", ", expTypeIDs)}");
+            List<ExperienceType> types = (await _ExperienceTypeRepository.GetAll()).Where(iter => expTypeIDs.Contains(iter.ID)).ToList();
+            block.ExperienceTypes = types;
+
+            return ApiOk(block);
+        }
+
         /// <summary>
         ///     Get the exp events done in a session
         /// </summary>
@@ -123,6 +166,9 @@ namespace watchtower.Controllers {
                 return ApiNotFound<List<ExpandedExpEvent>>($"{nameof(Session)} {sessionID}");
             }
 
+            return await GetByCharacterIDAndRange(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+
+            /*
             List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
             List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(events.Count);
 
@@ -149,6 +195,46 @@ namespace watchtower.Controllers {
             }
 
             return ApiOk(expanded);
+            */
+        }
+
+        [HttpGet("sessions/{sessionID}")]
+        public async Task<ApiResponse<ExperienceBlock>> GetBySessionID2(long sessionID) {
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return ApiNotFound<ExperienceBlock>($"{nameof(Session)} {sessionID}");
+            }
+
+            return await GetByCharacterIDAndRange2(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+
+            /*
+            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+            List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(events.Count);
+
+            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
+
+            foreach (ExpEvent ev in events) {
+                ExpandedExpEvent ex = new ExpandedExpEvent();
+                ex.Event = ev;
+
+                if (chars.ContainsKey(ev.SourceID) == false) {
+                    chars.Add(ev.SourceID, await _CharacterRepository.GetByID(ev.SourceID));
+                }
+
+                ex.Source = chars[ev.SourceID];
+
+                if (ev.OtherID.Length == 19) {
+                    if (chars.ContainsKey(ev.OtherID) == false) {
+                        chars.Add(ev.OtherID, await _CharacterRepository.GetByID(ev.OtherID));
+                    }
+                    ex.Other = chars[ev.OtherID];
+                }
+
+                expanded.Add(ex);
+            }
+
+            return ApiOk(expanded);
+            */
         }
 
         /// <summary>

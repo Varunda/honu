@@ -23,6 +23,10 @@ namespace watchtower.Services.Queues {
         /// </summary>
         /// <param name="charID">ID of the character</param>
         public void Queue(string charID) {
+            if (charID == "0") {
+                return;
+            }
+
             if (_Pending.Contains(charID)) {
                 return;
             }

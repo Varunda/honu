@@ -11,6 +11,7 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
+using watchtower.Services.Queues;
 
 namespace watchtower.Services.Db {
 
@@ -21,12 +22,14 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<SessionDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
+        private readonly CharacterCacheQueue _CharacterCacheQueue;
 
         public SessionDbStore(ILogger<SessionDbStore> logger,
-                IDbHelper helper) {
+                IDbHelper helper, CharacterCacheQueue characterCacheQueue) {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
+            _CharacterCacheQueue = characterCacheQueue;
         }
 
         public async Task<List<Session>> GetUnfixed(CancellationToken cancel) {
@@ -71,32 +74,6 @@ namespace watchtower.Services.Db {
 
             await cmd.ExecuteNonQueryAsync(cancel);
             await conn.CloseAsync();
-        }
-
-        /// <summary>
-        ///     Get the sessions of a character that are within the interval from now
-        /// </summary>
-        /// <param name="charID">ID of the character</param>
-        /// <param name="interval">How many minutes back to go</param>
-        /// <returns>
-        ///     All <see cref="Session"/>s within the period given
-        /// </returns>
-        public async Task<List<Session>> GetByCharacterID(string charID, int interval) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM wt_session
-                    WHERE character_id = @CharacterID
-                        AND (finish IS NULL OR finish >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL))
-            ");
-
-            cmd.AddParameter("CharacterID", charID);
-            cmd.AddParameter("Interval", interval);
-
-            List<Session> sessions = await ReadList(cmd);
-            await conn.CloseAsync();
-
-            return sessions;
         }
 
         /// <summary>
@@ -257,27 +234,14 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Start a new session of a tracked player
+        ///     Insert a new <see cref="Session"/>
         /// </summary>
-        /// <param name="charID">ID of the character that is starting the session</param>
-        /// <param name="when">When the session started</param>
+        /// <param name="session">ID of the session</param>
         /// <returns>
-        ///     A task for when the task is completed
+        ///     The <see cref="Session.ID"/> of the row that was just inserted, or <c>null</c>
         /// </returns>
-        public async Task Start(string charID, DateTime when) {
-            TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
-            if (player == null) {
-                _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
-                return;
-            }
-
-            if (player.Online == true) {
-                //_Logger.LogWarning($"Not starting session for {player.ID}, logged in at {player.LastLogin}");
-                return;
-            }
-
-            // Insert the outfit_id and team_id based on what's in wt_character, and the TrackedPlayer might not have that data set yet
-            NpgsqlConnection conn = _DbHelper.Connection();
+        public async Task<long> Insert(Session session) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = (@Timestamp - '1 second'::INTERVAL)
@@ -286,113 +250,76 @@ namespace watchtower.Services.Db {
 
                 INSERT INTO wt_session (
                     character_id, start, finish, outfit_id, team_id
-                ) SELECT @CharacterID, @Timestamp, null, c.outfit_id, c.faction_id
-                    FROM wt_character c
-                    WHERE c.id = @CharacterID
-                RETURNING wt_session.id;
+                ) VALUES (
+                    @CharacterID, @Timestamp, null, @OutfitID, @TeamID
+                ) RETURNING id;
             ");
 
-            cmd.AddParameter("CharacterID", player.ID);
-            cmd.AddParameter("Timestamp", when);
+            cmd.AddParameter("CharacterID", session.CharacterID);
+            cmd.AddParameter("Timestamp", session.Start);
+            cmd.AddParameter("OutfitID", session.OutfitID);
+            cmd.AddParameter("TeamID", session.TeamID);
             await cmd.PrepareAsync();
 
-            object? objID = await cmd.ExecuteScalarAsync();
-            if (objID != null) {
-                if (long.TryParse(objID.ToString(), out long sessionID) == false) {
-                    _Logger.LogWarning($"Failed to convert {objID} to a valid long");
-                }
-                player.SessionID = sessionID;
-            }
-            await conn.CloseAsync();
+            long ID = await cmd.ExecuteInt64(CancellationToken.None);
 
-            player.Online = true;
-            CharacterStore.Get().SetByCharacterID(charID, player);
+            return ID;
         }
 
         /// <summary>
-        ///     End an existing session of a tracked player
+        ///     Set the <see cref="Session.End"/> of a session
         /// </summary>
-        /// <param name="charID">ID of the character who's session is ending</param>
-        /// <param name="when">When the session ended</param>
-        /// <returns>
-        ///     A task for when the task is complete
-        /// </returns>
-        public async Task End(string charID, DateTime when) {
-            TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
-            if (player == null) {
-                _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
-                return;
-            }
-
-            if (player.Online == false) {
-                //_Logger.LogWarning($"Player {player.ID} is already offline, might not have a session to end");
-                return;
-            }
-
-            using NpgsqlConnection conn = _DbHelper.Connection(enlist: false);
+        /// <param name="sessionID">ID of the session to update</param>
+        /// <param name="when">What value of <see cref="Session.End"/> will have</param>
+        public async Task SetSessionEndByID(long sessionID, DateTime when) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = @Timestamp,
-                        team_id = @TeamID,
-                        outfit_id = @OutfitID
-                    WHERE id = (
-                        SELECT MAX(id)
-                            FROM wt_session 
-                            WHERE character_id = @CharacterID
-                    ) AND finish IS NULL;
+                    SET finish = @Timestamp
+                    WHERE id = @ID;
             ");
 
-            // In case where Honu has a session ID, it can avoid an index scan by
-            //      using the id instead of getting all the session IDs, then finding the max
-            if (player.SessionID != null) {
-                cmd.CommandText = @"
-                    UPDATE wt_session
-                        SET finish = @Timestamp,
-                            team_id = @TeamID,
-                            outfit_id = @OutfitID
-                        WHERE id = @SessionID;
-                ";
-            }
-
-            // Until I know where the -1 values are coming from, set it to saner value
-            short teamID = player.TeamID;
-            if (teamID == -1 || teamID == 0) {
-                teamID = player.FactionID;
-            }
-
-            cmd.AddParameter("CharacterID", player.ID);
-            cmd.AddParameter("OutfitID", player.OutfitID);
-            cmd.AddParameter("TeamID", teamID);
+            cmd.AddParameter("ID", sessionID);
             cmd.AddParameter("Timestamp", when);
-            cmd.AddParameter("SessionID", player.SessionID);
             await cmd.PrepareAsync();
-
-            player.Online = false;
-            player.ZoneID = 0;
-            player.SessionID = null;
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
-
-            CharacterStore.Get().SetByCharacterID(charID, player);
         }
+
+        /*
+        public async Task SetOutfitAndTeamIdByID(long sessionID, string? outfitID, short teamID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_session
+                    SET outfit_id = @OutfitID,
+                        team_id = @TeamID
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", sessionID);
+            cmd.AddParameter("OutfitID", outfitID);
+            cmd.AddParameter("TeamID", teamID);
+            await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+        */
 
         /// <summary>
         ///     End all sessions currently opened in the DB
         /// </summary>
-        /// <returns>
-        ///     A task for when the operation is complete
-        /// </returns>
-        public async Task EndAll() {
-            // When all sessions are ended in this manner, the team_id and outfit_id fields are left null.
-            //      By setting needs_fix, Honu will fix those on the next start up
+        /// <param name="when">What the finish value will be set to</param>
+        public async Task EndAll(DateTime when) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
-                    SET finish = NOW() at time zone 'utc',
-                        needs_fix = true 
+                    SET finish = @Timestamp
                     WHERE finish IS NULL; 
             ");
+
+            cmd.AddParameter("Timestamp", when);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

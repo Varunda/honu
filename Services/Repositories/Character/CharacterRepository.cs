@@ -59,7 +59,13 @@ namespace watchtower.Services.Repositories {
         ///     is used if possible
         /// </summary>
         /// <param name="charID">ID of the character</param>
-        public async Task<PsCharacter?> GetByID(string charID) {
+        /// <param name="fast"></param>
+        /// <returns>
+        ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>,
+        ///     or <c>null</c> if it could not be found in the available data sources. If <paramref name="fast"/>
+        ///     is <c>true</c>, it is possible that it exists in Census, but not locally
+        /// </returns>
+        public async Task<PsCharacter?> GetByID(string charID, bool fast = false) {
             string key = string.Format(CACHE_KEY_ID, charID);
 
             // When Honu fails to get a character cause of a timeout, don't cache a potentially outdated
@@ -71,7 +77,8 @@ namespace watchtower.Services.Repositories {
 
                 // Only update the character if it's expired
                 // If the DateLastLogin is the MinValue, it means the column was null from the DB, and it needs to be pulled from census
-                if (character == null || HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue) {
+                // If fast is true, only use the DB to get the data
+                if (fast == false && (character == null || HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue)) {
                     try {
                         // If we have the character in DB, but not in Census, return it from DB
                         //      Useful if census is down, or a character has been deleted

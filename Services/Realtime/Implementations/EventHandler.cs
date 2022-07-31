@@ -33,7 +33,7 @@ namespace watchtower.Realtime {
 
         private readonly KillEventDbStore _KillEventDb;
         private readonly ExpEventDbStore _ExpEventDb;
-        private readonly SessionDbStore _SessionDb;
+        private readonly SessionRepository _SessionRepository;
         private readonly FacilityControlDbStore _ControlDb;
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
@@ -65,7 +65,7 @@ namespace watchtower.Realtime {
         public EventHandler(ILogger<EventHandler> logger,
             KillEventDbStore killEventDb, ExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
-            SessionDbStore sessionDb, SessionStarterQueue sessionQueue,
+            SessionStarterQueue sessionQueue, SessionRepository sessionRepository,
             DiscordMessageQueue msgQueue, MapCollection mapColl,
             FacilityControlDbStore controlDb, CharacterUpdateQueue weaponQueue,
             IBattleRankDbStore rankDb, LogoutUpdateBuffer logoutQueue,
@@ -74,7 +74,7 @@ namespace watchtower.Realtime {
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
             AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
-            ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb) {
+            ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb) { 
 
             _Logger = logger;
 
@@ -82,7 +82,6 @@ namespace watchtower.Realtime {
 
             _KillEventDb = killEventDb ?? throw new ArgumentNullException(nameof(killEventDb));
             _ExpEventDb = expDb ?? throw new ArgumentNullException(nameof(expDb));
-            _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _ControlDb = controlDb ?? throw new ArgumentNullException(nameof(controlDb));
             _BattleRankDb = rankDb ?? throw new ArgumentNullException(nameof(rankDb));
             _FacilityPlayerDb = fpDb ?? throw new ArgumentNullException(nameof(fpDb));
@@ -107,6 +106,7 @@ namespace watchtower.Realtime {
             _TagManager = tagManager;
             _ItemAddedDb = itemAddedDb;
             _AchievementEarnedDb = achievementEarnedDb;
+            _SessionRepository = sessionRepository;
         }
 
         public DateTime MostRecentProcess() {
@@ -158,7 +158,7 @@ namespace watchtower.Realtime {
                 if (eventName == null) {
                     _Logger.LogWarning($"Missing 'event_name' from {ev}");
                 } else if (eventName == "PlayerLogin") {
-                    await _ProcessPlayerLogin(payloadToken);
+                    _ProcessPlayerLogin(payloadToken);
                 } else if (eventName == "PlayerLogout") {
                     await _ProcessPlayerLogout(payloadToken);
                 } else if (eventName == "GainExperience") {
@@ -246,7 +246,7 @@ namespace watchtower.Realtime {
                     WorldID = ev.WorldID
                 });
 
-                if (attacker.Online == false) {
+                if (attacker.ID != "0" && attacker.Online == false) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = attacker.ID,
                         LastEvent = ev.Timestamp
@@ -276,7 +276,7 @@ namespace watchtower.Realtime {
                 _CacheQueue.Queue(killed.ID);
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
-                if (killed.Online == false && attacker.ID != killed.ID) {
+                if (killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = killed.ID,
                         LastEvent = ev.Timestamp
@@ -494,11 +494,11 @@ namespace watchtower.Realtime {
             }
         }
 
-        private async Task _ProcessPlayerLogin(JToken payload) {
+        private void _ProcessPlayerLogin(JToken payload) {
             //_Logger.LogTrace($"Processing login: {payload}");
 
             string? charID = payload.Value<string?>("character_id");
-            if (charID == null) {
+            if (charID == null || charID == "0") {
                 return;
             }
 
@@ -531,9 +531,10 @@ namespace watchtower.Realtime {
             }
 
             if (World.IsTrackedWorld(worldID)) {
-                using (Activity? db = HonuActivitySource.Root.StartActivity("db")) {
-                    await _SessionDb.Start(p.ID, timestamp);
-                }
+                _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                    CharacterID = p.ID,
+                    LastEvent = timestamp
+                });
             }
 
             p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -578,7 +579,7 @@ namespace watchtower.Realtime {
                         _WeaponQueue.Queue(charID);
                     }
                     using (Activity? db = HonuActivitySource.Root.StartActivity("db")) {
-                        await _SessionDb.End(p.ID, timestamp);
+                        await _SessionRepository.End(p.ID, timestamp);
                     }
                 }
 
@@ -868,12 +869,17 @@ namespace watchtower.Realtime {
         private async Task _ProcessDeath(JToken payload) {
             using Activity? traceDeath = HonuActivitySource.Root.StartActivity("Death");
 
-            int timestamp = payload.Value<int?>("timestamp") ?? 0;
-
-            uint zoneID = payload.GetZoneID();
             string attackerID = payload.Value<string?>("attacker_character_id") ?? "0";
-            short attackerLoadoutID = payload.Value<short?>("attacker_loadout_id") ?? -1;
             string charID = payload.Value<string?>("character_id") ?? "0";
+
+            if (attackerID == "0" && charID == "0") {
+                _Logger.LogTrace($"why does this exist? {payload}");
+                return;
+            }
+
+            int timestamp = payload.Value<int?>("timestamp") ?? 0;
+            uint zoneID = payload.GetZoneID();
+            short attackerLoadoutID = payload.Value<short?>("attacker_loadout_id") ?? -1;
             short loadoutID = payload.Value<short?>("character_loadout_id") ?? -1;
 
             short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
@@ -918,7 +924,7 @@ namespace watchtower.Realtime {
                     WorldID = ev.WorldID
                 });
 
-                if (attacker.Online == false) {
+                if (attacker.ID != "0" && attacker.Online == false) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = attacker.ID,
                         LastEvent = ev.Timestamp
@@ -950,7 +956,7 @@ namespace watchtower.Realtime {
                 _CacheQueue.Queue(killed.ID);
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
-                if (killed.Online == false && attacker.ID != killed.ID) {
+                if (killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = killed.ID,
                         LastEvent = ev.Timestamp
@@ -989,7 +995,7 @@ namespace watchtower.Realtime {
             //_Logger.LogInformation($"Processing exp: {payload}");
 
             string? charID = payload.Value<string?>("character_id");
-            if (charID == null) {
+            if (charID == null || charID == "0") {
                 return;
             }
 

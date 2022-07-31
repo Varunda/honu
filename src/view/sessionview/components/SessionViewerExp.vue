@@ -170,7 +170,7 @@
     import ChartEntryList from "./ChartEntryList.vue";
 
     import { Session } from "api/SessionApi";
-    import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
+    import { ExpandedExpEvent, Experience, ExperienceBlock, ExpEvent } from "api/ExpStatApi";
     import { PsCharacter } from "api/CharacterApi";
 
     interface Entry {
@@ -182,7 +182,8 @@
     export const SessionViewerExp = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true }
+            exp: { type: Object as PropType<ExperienceBlock>, required: true },
+            FullExp: { type: Boolean, required: true }
         },
 
         data: function() {
@@ -222,22 +223,21 @@
             },
 
             generateSpawnEntries: function(): void {
-                const sundy: Entry = { display: "Sundy", count: this.exp.filter(iter => iter.event.experienceID == Experience.SUNDERER_SPAWN_BONUS).length, link: null };
-                const router: Entry = { display: "Router", count: this.exp.filter(iter => iter.event.experienceID == Experience.GENERIC_NPC_SPAWN).length, link: null };
-                const squadSpawn: Entry = { display: "Squad spawn", count: this.exp.filter(iter => iter.event.experienceID == Experience.SQUAD_SPAWN).length, link: null };
-                const vehicleSpawn: Entry = { display: "Squad vehicle spawn", count: this.exp.filter(iter => iter.event.experienceID == Experience.SQUAD_VEHICLE_SPAWN_BONUS).length, link: null };
+                const sundy: Entry = { display: "Sundy", count: this.exp.events.filter(iter => iter.experienceID == Experience.SUNDERER_SPAWN_BONUS).length, link: null };
+                const router: Entry = { display: "Router", count: this.exp.events.filter(iter => iter.experienceID == Experience.GENERIC_NPC_SPAWN).length, link: null };
+                const squadSpawn: Entry = { display: "Squad spawn", count: this.exp.events.filter(iter => iter.experienceID == Experience.SQUAD_SPAWN).length, link: null };
+                const vehicleSpawn: Entry = { display: "Squad vehicle spawn", count: this.exp.events.filter(iter => iter.experienceID == Experience.SQUAD_VEHICLE_SPAWN_BONUS).length, link: null };
 
                 this.playerSpawns = [sundy, router, squadSpawn, vehicleSpawn];
             },
 
             generateVehicleKillEntries: function(): void {
-
-                const exp: ExpandedExpEvent[] = this.exp;
+                const exp: ExpEvent[] = this.exp.events;
 
                 function make(name: string, expID: number): Entry {
                     return {
                         display: name,
-                        count: exp.filter(iter => iter.event.experienceID == expID).length,
+                        count: exp.filter(iter => iter.experienceID == expID).length,
                         link: null
                     }
                 }
@@ -297,41 +297,42 @@
                 this.outfitShieldRepairs = set[0];
             },
 
-            generatePlayerAndOutfitExp(events: ExpandedExpEvent[]): [Entry[], Entry[]] {
+            generatePlayerAndOutfitExp(events: ExpEvent[]): [Entry[], Entry[]] {
                 const charMap: Map<string, Entry> = new Map();
                 const outfitMap: Map<string, Entry> = new Map();
 
                 for (const ev of events) {
-                    if (ev.other == null) {
+                    if (ev.otherID.length != 19) {
                         continue;
                     }
 
-                    const c: PsCharacter = ev.other;
+                    const c: PsCharacter | null = this.exp.characters.find(iter => iter.id == ev.otherID) || null;
 
-                    if (charMap.has(c.id) == false) {
-                        charMap.set(c.id, {
-                            display: `${(c.outfitID ? `[${c.outfitTag}] ` : "")}${c.name}`,
+                    if (charMap.has(ev.otherID) == false) {
+                        charMap.set(ev.otherID, {
+                            display: c == null ? `<missing ${ev.otherID}>` : `${(c.outfitID ? `[${c.outfitTag}] ` : "")}${c.name}`,
                             count: 0,
-                            link: `/c/${c.id}`
+                            link: `/c/${ev.otherID}`
                         });
                     }
-                    ++charMap.get(c.id)!.count;
+                    ++charMap.get(ev.otherID)!.count;
 
+                    if (c != null) {
+                        if (outfitMap.has(c.outfitID ?? "0") == false) {
+                            let entry: Entry = {
+                                display: "<no outfit>",
+                                count: 0,
+                                link: (c.outfitID == null) ? null : `/o/${c.outfitID}`
+                            };
 
-                    if (outfitMap.has(c.outfitID ?? "0") == false) {
-                        let entry: Entry = {
-                            display: "<no outfit>",
-                            count: 0,
-                            link: (c.outfitID == null) ? null : `/o/${c.outfitID}`
-                        };
-
-                        if (c.outfitID != null) {
-                            entry.display = `[${c.outfitTag}] ${c.outfitName}`;
+                            if (c.outfitID != null) {
+                                entry.display = `[${c.outfitTag}] ${c.outfitName}`;
+                            }
+                            outfitMap.set(c.outfitID ?? "0", entry);
                         }
-                        outfitMap.set(c.outfitID ?? "0", entry);
-                    }
 
-                    ++outfitMap.get(c.outfitID ?? "0")!.count;
+                        ++outfitMap.get(c.outfitID ?? "0")!.count;
+                    }
                 }
 
                 const player = Array.from(charMap.values()).sort((a, b) => b.count - a.count);
@@ -343,28 +344,28 @@
         },
 
         computed: {
-            heals: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isHeal(iter.event.experienceID));
+            heals: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isHeal(iter.experienceID));
             },
 
-            revives: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isRevive(iter.event.experienceID));
+            revives: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isRevive(iter.experienceID));
             },
 
-            resupplies: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isResupply(iter.event.experienceID));
+            resupplies: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isResupply(iter.experienceID));
             },
 
-            repairs: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isMaxRepair(iter.event.experienceID));
+            repairs: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isMaxRepair(iter.experienceID));
             },
 
-            shieldRepairs: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isShieldRepair(iter.event.experienceID));
+            shieldRepairs: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isShieldRepair(iter.experienceID));
             },
 
-            spawns: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isSpawn(iter.event.experienceID));
+            spawns: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isSpawn(iter.experienceID));
             }
 
         },

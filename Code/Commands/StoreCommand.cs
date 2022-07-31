@@ -88,7 +88,7 @@ namespace watchtower.Commands {
                 return;
             }
 
-            List<Session> sessions = await _SessionDb.GetByCharacterID(c.ID, 120);
+            List<Session> sessions = await _SessionDb.GetByRangeAndCharacterID(c.ID, DateTime.UtcNow - TimeSpan.FromMinutes(120), DateTime.UtcNow);
 
             double sessionLength = sessions.Sum(iter => ((iter.End ?? DateTime.UtcNow) - iter.Start).TotalSeconds);
 
@@ -102,7 +102,7 @@ namespace watchtower.Commands {
                 + $"\tZoneID: {player.ZoneID}\n"
                 + $"\tOnline: {player.Online}\n"
                 + $"\tSessions: {sessions.Count} sessions, {sessionLength} seconds\n"
-                + $"{String.Join("\n", sessions.Select(iter => $"\t\t{iter.Start} - {iter.End} {((iter.End ?? DateTime.UtcNow) - iter.Start).TotalSeconds}"))}"
+                + $"{string.Join("\n", sessions.Select(iter => $"\t\t{iter.Start} - {iter.End} {((iter.End ?? DateTime.UtcNow) - iter.Start).TotalSeconds}"))}"
             );
         }
 

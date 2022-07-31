@@ -47,6 +47,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ItemCategoryRepository>();
             services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
             services.AddSingleton<AchievementRepository>();
+            services.AddSingleton<ExperienceTypeRepository>();
+            services.AddSingleton<IStaticRepository<ExperienceType>, ExperienceTypeRepository>();
             services.AddSingleton<DirectiveRepository>();
             services.AddSingleton<DirectiveTreeRepository>();
             services.AddSingleton<DirectiveTierRepository>();
@@ -67,6 +69,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<RealtimeNetworkRepository>();
 
             services.AddSingleton<BadHealthRepository>();
+            services.AddSingleton<SessionRepository>();
         }
 
     }

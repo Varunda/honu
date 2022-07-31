@@ -27,10 +27,25 @@ export class ExpEvent {
     public timestamp: Date = new Date();
 }
 
+export class ExperienceType {
+    public id: number = 0;
+    public name: string = "";
+    public amount: number = 0;
+}
+
 export class ExpandedExpEvent {
     public event: ExpEvent = new ExpEvent();
     public source: PsCharacter | null = null;
     public other: PsCharacter | null = null;
+}
+
+export class ExperienceBlock {
+    public inputCharacters: string[] = [];
+    public periodStart: Date = new Date();
+    public periodEnd: Date = new Date();
+    public characters: PsCharacter[] = [];
+    public experienceTypes: ExperienceType[] = [];
+    public events: ExpEvent[] = [];
 }
 
 export class Experience {
@@ -233,29 +248,27 @@ export class ExpStatApi extends ApiWrapper<ExpEvent> {
         };
     }
 
-    public static async getBySessionID(sessionID: number): Promise<Loading<ExpandedExpEvent[]>> {
-        return ExpStatApi.get().readList(`/api/exp/session/${sessionID}`, ExpStatApi.parseExpandedExpEntry);
+    public static parseBlock(elem: any): ExperienceBlock {
+        return {
+            inputCharacters: elem.inputCharacters,
+            periodStart: new Date(elem.periodStart),
+            periodEnd: new Date(elem.periodEnd),
+            characters: elem.characters.map((iter: any) => CharacterApi.parse(iter)),
+            events: elem.events.map((iter: any) => ExpStatApi.parseExpEvent(iter)),
+            experienceTypes: elem.experienceTypes.map((iter: any) => ExpStatApi.parseExperienceType(iter))
+        };
     }
 
-    private static async getList<T>(url: string, reader: (elem: any) => T): Promise<T[]> {
-        const response: axios.AxiosResponse<any> = await axios.default.get(url);
+    public static parseExperienceType(elem: any): ExperienceType {
+        return {
+            id: elem.id,
+            name: elem.name,
+            amount: elem.amount
+        };
+    }
 
-        if (response.status != 200) {
-            return [];
-        }
-
-        if (Array.isArray(response.data) == false) {
-            console.warn(`response data is not an array: ${response.data}`);
-            return [];
-        }
-
-        const ret: T[] = [];
-        for (const datum of response.data) {
-            const elem: T = reader(datum);
-            ret.push(elem);
-        }
-
-        return ret;
+    public static async getBySessionID(sessionID: number): Promise<Loading<ExperienceBlock>> {
+        return ExpStatApi.get().readSingle(`/api/exp/sessions/${sessionID}`, ExpStatApi.parseBlock);
     }
 
     public static async getByCharacterIDAndRange(charID: string, start: Date, end: Date): Promise<Loading<ExpandedExpEvent[]>> {

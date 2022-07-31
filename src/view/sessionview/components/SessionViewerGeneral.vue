@@ -60,6 +60,16 @@
                 </td>
             </tr>
 
+            <tr v-if="FullExp == true">
+                <td>XP</td>
+                <td>
+                    {{exp.events.reduce((acc, i) => acc += i.amount, 0) | locale(0)}}
+                </td>
+                <td>
+                    {{exp.events.reduce((acc, i) => acc += i.amount, 0) / durationInSeconds * 60 | locale(2)}}
+                </td>
+            </tr>
+
             <tr v-if="classPlaytime.medic.secondsAs > 0">
                 <td>Revives</td>
                 <td>
@@ -106,6 +116,8 @@
                 <th><b>Class</b></th>
                 <th>Duration</th>
                 <th>%</th>
+                <th v-if="FullExp">Score</th>
+                <th v-if="FullExp">SPM</th>
                 <th>Kills</th>
                 <th>Deaths</th>
                 <th>K/D</th>
@@ -116,6 +128,8 @@
                 <td>Infiltrator</td>
                 <td>{{classPlaytime.infil.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.infil.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.infil.score | locale(2)}}</td>
+                <td v-if="FullExp">{{classPlaytime.infil.score / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.infil.kills}}</td>
                 <td>{{classPlaytime.infil.deaths}}</td>
                 <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.deaths, 1) | fixed}}</td>
@@ -126,6 +140,8 @@
                 <td>Light Assault</td>
                 <td>{{classPlaytime.lightAssault.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.lightAssault.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.lightAssault.score | locale(0)}}</td>
+                <td v-if="FullExp">{{classPlaytime.lightAssault.score / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.lightAssault.kills}}</td>
                 <td>{{classPlaytime.lightAssault.deaths}}</td>
                 <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.deaths, 1) | fixed}}</td>
@@ -136,6 +152,8 @@
                 <td>Medic</td>
                 <td>{{classPlaytime.medic.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.medic.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.medic.score | locale(0)}}</td>
+                <td v-if="FullExp">{{classPlaytime.medic.score / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.medic.kills}}</td>
                 <td>{{classPlaytime.medic.deaths}}</td>
                 <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.deaths, 1) | fixed}}</td>
@@ -146,6 +164,8 @@
                 <td>Engineer</td>
                 <td>{{classPlaytime.engineer.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.engineer.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.engineer.score | locale(0)}}</td>
+                <td v-if="FullExp">{{classPlaytime.engineer.score / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.engineer.kills}}</td>
                 <td>{{classPlaytime.engineer.deaths}}</td>
                 <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.deaths, 1) | fixed}}</td>
@@ -156,6 +176,8 @@
                 <td>Heavy</td>
                 <td>{{classPlaytime.heavy.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.heavy.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.heavy.score | locale(0)}}</td>
+                <td v-if="FullExp">{{classPlaytime.heavy.score / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.heavy.kills}}</td>
                 <td>{{classPlaytime.heavy.deaths}}</td>
                 <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.deaths, 1) | fixed}}</td>
@@ -166,6 +188,8 @@
                 <td>MAX</td>
                 <td>{{classPlaytime.max.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.max.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td v-if="FullExp">{{classPlaytime.max.score | locale(0)}}</td>
+                <td v-if="FullExp">{{classPlaytime.max.score / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.max.kills}}</td>
                 <td>{{classPlaytime.max.deaths}}</td>
                 <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.deaths, 1) | fixed}}</td>
@@ -177,6 +201,8 @@
                 <td colspan="2">
                     {{durationInSeconds | mduration}}
                 </td>
+                <td v-if="FullExp">{{exp.events.reduce((acc, i) => acc += i.amount, 0) | locale(0)}}</td>
+                <td v-if="FullExp">{{exp.events.reduce((acc, i) => acc += i.amount, 0) / Math.max(1, durationInSeconds) * 60 | locale(2)}}</td>
                 <td>
                     {{kills.length}}
                 </td>
@@ -210,11 +236,11 @@
     import Busy from "components/Busy.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
-    import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
     import { Session } from "api/SessionApi";
 
     import Loadout from "util/Loadout";
-import TimeUtils from "../../../util/Time";
+    import TimeUtils from "util/Time";
 
     interface LoadoutEvent {
         loadoutID: number;
@@ -225,14 +251,16 @@ import TimeUtils from "../../../util/Time";
         public secondsAs: number = 0;
         public kills: number = 0;
         public deaths: number = 0;
+        public score: number = 0;
     }
 
     export const SessionViewerGeneral = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true },
+            exp: { type: Object as PropType<ExperienceBlock>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true }
+            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
+            FullExp: { type: Boolean, required: true }
         },
 
         data: function() {
@@ -348,7 +376,7 @@ import TimeUtils from "../../../util/Time";
             setClassPlaytime: function(): void {
                 const events: LoadoutEvent[] = [];
 
-                events.push(...this.exp.map(iter => { return { loadoutID: iter.event.loadoutID, timestamp: iter.event.timestamp }; }));
+                events.push(...this.exp.events.map(iter => { return { loadoutID: iter.loadoutID, timestamp: iter.timestamp }; }));
                 events.push(...this.kills.map(iter => { return { loadoutID: iter.event.attackerLoadoutID, timestamp: iter.event.timestamp }; }));
                 events.push(...this.deaths.map(iter => { return { loadoutID: iter.event.killedLoadoutID, timestamp: iter.event.timestamp }; }));
                 events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -380,23 +408,33 @@ import TimeUtils from "../../../util/Time";
                     prev = iter;
                 }
 
+                const expFilter = (callback: (_: ExpEvent) => boolean): number => {
+                    return this.exp.events.filter(iter => callback(iter) == true).reduce((acc, i) => acc += i.amount, 0);
+                }
+
                 this.classPlaytime.infil.kills = this.kills.filter(iter => Loadout.isInfiltrator(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.infil.deaths = this.deaths.filter(iter => Loadout.isInfiltrator(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.infil.score = expFilter((ev: ExpEvent) => Loadout.isInfiltrator(ev.loadoutID));
 
                 this.classPlaytime.lightAssault.kills = this.kills.filter(iter => Loadout.isLightAssault(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.lightAssault.deaths = this.deaths.filter(iter => Loadout.isLightAssault(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.lightAssault.score = expFilter((ev: ExpEvent) => Loadout.isLightAssault(ev.loadoutID));
 
                 this.classPlaytime.medic.kills = this.kills.filter(iter => Loadout.isMedic(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.medic.deaths = this.deaths.filter(iter => Loadout.isMedic(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.medic.score = expFilter((ev: ExpEvent) => Loadout.isMedic(ev.loadoutID));
 
                 this.classPlaytime.engineer.kills = this.kills.filter(iter => Loadout.isEngineer(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.engineer.deaths = this.deaths.filter(iter => Loadout.isEngineer(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.engineer.score = expFilter((ev: ExpEvent) => Loadout.isEngineer(ev.loadoutID));
 
                 this.classPlaytime.heavy.kills = this.kills.filter(iter => Loadout.isHeavy(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.heavy.deaths = this.deaths.filter(iter => Loadout.isHeavy(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.heavy.score = expFilter((ev: ExpEvent) => Loadout.isHeavy(ev.loadoutID));
 
                 this.classPlaytime.max.kills = this.kills.filter(iter => Loadout.isMax(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.max.deaths = this.deaths.filter(iter => Loadout.isMax(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.max.score = expFilter((ev: ExpEvent) => Loadout.isMax(ev.loadoutID));
 
                 if (this.chart == null) {
                     this.generateClassPlaytimeChart();
@@ -410,28 +448,28 @@ import TimeUtils from "../../../util/Time";
                 return ((this.session.end || new Date()).getTime() - this.session.start.getTime()) / 1000;
             },
 
-            expHeals: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isHeal(iter.event.experienceID));
+            expHeals: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isHeal(iter.experienceID));
             },
 
-            expRevives: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isRevive(iter.event.experienceID));
+            expRevives: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isRevive(iter.experienceID));
             },
 
-            expResupplies: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isResupply(iter.event.experienceID));
+            expResupplies: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isResupply(iter.experienceID));
             },
 
-            expRepairs: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isMaxRepair(iter.event.experienceID));
+            expRepairs: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isMaxRepair(iter.experienceID));
             },
 
-            expSpawns: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isSpawn(iter.event.experienceID));
+            expSpawns: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isSpawn(iter.experienceID));
             },
 
-            expAssists: function(): ExpandedExpEvent[] {
-                return this.exp.filter(iter => Experience.isAssist(iter.event.experienceID));
+            expAssists: function(): ExpEvent[] {
+                return this.exp.events.filter(iter => Experience.isAssist(iter.experienceID));
             },
 
             backgroundColors: function(): string[] {

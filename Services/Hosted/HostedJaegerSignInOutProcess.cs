@@ -35,6 +35,7 @@ namespace watchtower.Services.Hosted {
         private readonly List<string> _DevAccounts = new List<string>() {
             "5428861140076767121", // njLive
             "5428662532303167729", // PlaysWithSteeringWheel
+            "5429063001623372113"  // BlueOwl122
         };
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,

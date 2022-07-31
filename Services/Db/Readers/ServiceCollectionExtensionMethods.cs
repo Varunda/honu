@@ -28,6 +28,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<FacilityControlDbEntry>, FacilityControlDbEntryReader>();
             services.AddSingleton<IDataReader<PsItem>, ItemReader>();
             services.AddSingleton<IDataReader<CharacterAchievement>, CharacterAchievementReader>();
+            services.AddSingleton<IDataReader<AchievementEarnedEvent>, AchievementEarnedReader>();
+            services.AddSingleton<IDataReader<ExperienceType>, ExperienceTypeReader>();
 
             services.AddSingleton<IDataReader<PsFacilityLink>, PsFacilityLinkReader>();
             services.AddSingleton<IDataReader<PsMapHex>, PsMapHexReader>();

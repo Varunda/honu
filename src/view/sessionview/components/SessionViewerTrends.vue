@@ -76,7 +76,7 @@
     import Busy from "components/Busy.vue";
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
-    import { Experience, ExpandedExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { Experience, ExpandedExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
 
@@ -85,7 +85,7 @@
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true }
+            exp: { type: Object as PropType<ExperienceBlock>, required: true }
         },
 
         data: function() {
@@ -108,13 +108,13 @@
 
         methods: {
             bindExp: function(): void {
-                this.healData = this.exp.filter(iter => Experience.isHeal(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.reviveData = this.exp.filter(iter => Experience.isRevive(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.resupplyData = this.exp.filter(iter => Experience.isResupply(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.repairData = this.exp.filter(iter => Experience.isMaxRepair(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.shieldRepairData = this.exp.filter(iter => Experience.isShieldRepair(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.vehicleKillData = this.exp.filter(iter => Experience.isVehicleKill(iter.event.experienceID)).map(iter => iter.event.timestamp);
-                this.assistData = this.exp.filter(iter => Experience.isAssist(iter.event.experienceID)).map(iter => iter.event.timestamp);
+                this.healData = this.exp.events.filter(iter => Experience.isHeal(iter.experienceID)).map(iter => iter.timestamp);
+                this.reviveData = this.exp.events.filter(iter => Experience.isRevive(iter.experienceID)).map(iter => iter.timestamp);
+                this.resupplyData = this.exp.events.filter(iter => Experience.isResupply(iter.experienceID)).map(iter => iter.timestamp);
+                this.repairData = this.exp.events.filter(iter => Experience.isMaxRepair(iter.experienceID)).map(iter => iter.timestamp);
+                this.shieldRepairData = this.exp.events.filter(iter => Experience.isShieldRepair(iter.experienceID)).map(iter => iter.timestamp);
+                this.vehicleKillData = this.exp.events.filter(iter => Experience.isVehicleKill(iter.experienceID)).map(iter => iter.timestamp);
+                this.assistData = this.exp.events.filter(iter => Experience.isAssist(iter.experienceID)).map(iter => iter.timestamp);
             },
 
             bindKills: function(): void {

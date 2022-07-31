@@ -17,6 +17,13 @@ namespace watchtower.Services.Db {
             _DbHelper = dbHelper;
         }
 
+        /// <summary>
+        ///     Insert a new <see cref="ItemAddedEvent"/>
+        /// </summary>
+        /// <param name="ev">Event to insert</param>
+        /// <returns>
+        ///     The <see cref="ItemAddedEvent.ID"/> that was created
+        /// </returns>
         public async Task<long> Insert(ItemAddedEvent ev) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

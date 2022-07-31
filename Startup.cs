@@ -162,16 +162,9 @@ namespace watchtower {
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
             services.AddSingleton<WorldTagManager>();
 
-            // Queues
-            services.AddSingleton<CensusRealtimeEventQueue>();
-            services.AddSingleton<CharacterCacheQueue, CharacterCacheQueue>();
-            services.AddSingleton<SessionStarterQueue, SessionStarterQueue>();
-            services.AddSingleton<DiscordMessageQueue, DiscordMessageQueue>();
-            services.AddSingleton<CharacterUpdateQueue>();
-            services.AddSingleton<WeaponPercentileCacheQueue>();
-            services.AddSingleton<LogoutUpdateBuffer>();
+            services.AddHonuQueueServices(); // queue services
+
             services.AddSingleton<ExtraStatHoster>();
-            services.AddSingleton<JaegerSignInOutQueue>();
 
             services.AddHonuDatabasesServices(); // Db services
             services.AddHonuDatabaseReadersServices(); // DB readers
@@ -181,6 +174,7 @@ namespace watchtower {
 
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
+
 
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();

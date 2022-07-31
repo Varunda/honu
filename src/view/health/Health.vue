@@ -26,7 +26,7 @@
                 <div class="col-12">
                     <h1 class="wt-header">Queues</h1>
 
-                    <table class="table table-striped table-sm">
+                    <table class="table table-striped table-sm" style="table-layout: fixed;">
                         <thead>
                             <tr class="table-secondary">
                                 <th>Queue</th>

@@ -87,7 +87,7 @@
     import "filters/LocaleFilter";
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
-    import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
+    import { ExpandedExpEvent, Experience, ExperienceBlock, ExpEvent } from "api/ExpStatApi";
     import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
@@ -119,7 +119,7 @@
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true },
+            exp: { type: Object as PropType<ExperienceBlock>, required: true },
             VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
         },
 
@@ -247,21 +247,15 @@
             makeExp: function(): void {
                 let scoreMult: number = 1;
 
-                for (const ev of this.exp) {
-                    const expID: number = ev.event.experienceID;
+                for (const ev of this.exp.events) {
+                    const expID: number = ev.experienceID;
 
                     let baseAmount: number | null = null;
 
                     switch (expID) {
-                        //case Experience.HEAL: baseAmount = 10; break;
-                        //case Experience.SQUAD_HEAL: baseAmount = 15; break;
                         case Experience.REVIVE: baseAmount = 75; break;
                         case Experience.SQUAD_REVIVE: baseAmount = 100; break;
-                        //case Experience.SHIELD_REPAIR: baseAmount = 10; break;
-                        //case Experience.SQUAD_SHIELD_REPAIR: baseAmount = 10; break;
 
-                        //case Experience.MAX_REPAIR: baseAmount = 5; break;
-                        //case Experience.SQUAD_MAX_REPAIR: baseAmount = 15; break;
                         case Experience.RESUPPLY: baseAmount = 10; break;
                         case Experience.SQUAD_RESUPPLY: baseAmount = 15; break;
 
@@ -269,7 +263,7 @@
                     }
 
                     if (baseAmount != null) {
-                        scoreMult = ev.event.amount / baseAmount;
+                        scoreMult = ev.amount / baseAmount;
                     }
                 }
 
@@ -279,15 +273,18 @@
 
                 let prev: ActionLogEntry | null = null;
 
-                for (let i = 0; i < this.exp.length; ++i) {
-                    const iter: ExpandedExpEvent = this.exp[i];
+                for (let i = 0; i < this.exp.events.length; ++i) {
+                    const iter: ExpEvent = this.exp.events[i];
 
-                    const expID: number = iter.event.experienceID;
+                    const expID: number = iter.experienceID;
 
                     let type: string = `other - experience ${expID}`;
 
+                    const source: PsCharacter | null = this.exp.characters.find(c => c.id == iter.sourceID) || null;
+                    const other: PsCharacter | null = this.exp.characters.find(c => c.id == iter.otherID) || null;
+
                     const parts: LogPart[] = [
-                        this.createCharacterLink(iter.source, iter.event.sourceID)
+                        this.createCharacterLink(source, iter.sourceID)
                     ];
 
                     if (Experience.isMaxRepair(expID)) {
@@ -295,14 +292,14 @@
                         type = "max_repair";
 
                         parts.push({
-                            html: `<a href="/c/${iter.event.otherID}">${this.getCharacterName(iter.other, iter.event.otherID)}</a>'s MAX suit`
+                            html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s MAX suit`
                         });
                     } else if (Experience.isShieldRepair(expID)) {
                         parts.push({ html: `repaired` });
                         type = "shield_repair";
 
                         parts.push({
-                            html: `<a href="/c/${iter.event.otherID}">${this.getCharacterName(iter.other, iter.event.otherID)}</a>'s shield`
+                            html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s shield`
                         });
                     } else if (Experience.isVehicleKill(expID)) {
                         /*
@@ -347,7 +344,7 @@
                         }
 
                         parts.push(this.createLogText(verb));
-                        parts.push(this.createCharacterLink(iter.other, iter.event.otherID));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
 
                         // For assist events, the amount of score gained is relative to the % of damage dealt (i think)
                         if (Experience.isAssist(expID)) {
@@ -361,23 +358,23 @@
                             }
 
                             parts.push({
-                                html: `(${((iter.event.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
+                                html: `(${((iter.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
                             });
                         }
                     }
 
                     parts.push(this.createLogText(`as a`));
-                    parts.push(this.createLoadoutName(iter.event.loadoutID));
+                    parts.push(this.createLoadoutName(iter.loadoutID));
 
-                    if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.event.otherID) {
+                    if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
                         ++prev.count;
                     } else {
                         const entry: ActionLogEntry = {
                             parts: parts,
-                            timestamp: iter.event.timestamp,
+                            timestamp: iter.timestamp,
                             type: type,
                             count: 1,
-                            otherID: iter.event.otherID
+                            otherID: iter.otherID
                         };
 
                         this.entries.push(entry);
@@ -425,8 +422,8 @@
                     return { zoneID: iter.event.zoneID, timestamp: iter.event.timestamp };
                 }));
 
-                zonedEvents.push(...this.exp.map((iter) => {
-                    return { zoneID: iter.event.zoneID, timestamp: iter.event.timestamp };
+                zonedEvents.push(...this.exp.events.map((iter) => {
+                    return { zoneID: iter.zoneID, timestamp: iter.timestamp };
                 }));
 
                 zonedEvents.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());

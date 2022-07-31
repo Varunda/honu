@@ -80,6 +80,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<ItemTypeDbStore>();
             services.AddSingleton<IStaticDbStore<ItemCategory>, ItemCategoryDbStore>();
             services.AddSingleton<ItemCategoryDbStore>();
+            services.AddSingleton<IStaticDbStore<ExperienceType>, ExperienceTypeDbStore>();
+            services.AddSingleton<ExperienceTypeDbStore>();
         }
 
     }

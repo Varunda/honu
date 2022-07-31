@@ -17,5 +17,10 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public DateTime LastEvent { get; set; }
 
+        /// <summary>
+        ///     How many times Honu failed to start the session
+        /// </summary>
+        public int FailCount { get; set; } = 0;
+
     }
 }

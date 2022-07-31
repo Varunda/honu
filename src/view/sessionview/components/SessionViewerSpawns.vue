@@ -77,7 +77,7 @@
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import ToggleButton from "components/ToggleButton";
 
-    import { ExpandedExpEvent, Experience } from "api/ExpStatApi";
+    import { ExpandedExpEvent, Experience, ExperienceBlock } from "api/ExpStatApi";
     import { Session } from "api/SessionApi";
 
     type Spawn = {
@@ -91,7 +91,7 @@
     export const SessionViewerSpawns = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
-            exp: { type: Array as PropType<ExpandedExpEvent[]>, required: true },
+            exp: { type: Object as PropType<ExperienceBlock>, required: true },
         },
 
         data: function() {
@@ -108,8 +108,8 @@
             makeSpawns: function(): void {
                 const map: Map<string, Spawn> = new Map();
 
-                for (const ev of this.exp) {
-                    const expID: number = ev.event.experienceID;
+                for (const ev of this.exp.events) {
+                    const expID: number = ev.experienceID;
                     if (expID != Experience.SUNDERER_SPAWN_BONUS && expID != Experience.GENERIC_NPC_SPAWN) {
                         continue;
                     }
@@ -117,35 +117,35 @@
                     let spawn: Spawn;
 
                     if (expID == Experience.SUNDERER_SPAWN_BONUS) {
-                        if (map.has(ev.event.otherID) == false) {
+                        if (map.has(ev.otherID) == false) {
                             spawn = {
-                                id: ev.event.otherID,
+                                id: ev.otherID,
                                 type: "sunderer",
                                 spawns: 0,
-                                firstSpawn: ev.event.timestamp,
-                                lastSpawn: ev.event.timestamp
+                                firstSpawn: ev.timestamp,
+                                lastSpawn: ev.timestamp
                             };
                             map.set(spawn.id, spawn);
                             console.log(`SessionViewerSpawns> new sunderer`);
                         }
                     } else if (expID == Experience.GENERIC_NPC_SPAWN) {
-                        if (map.has(ev.event.otherID) == false) {
+                        if (map.has(ev.otherID) == false) {
                             spawn = {
-                                id: ev.event.otherID,
+                                id: ev.otherID,
                                 type: "router",
                                 spawns: 0,
-                                firstSpawn: ev.event.timestamp,
-                                lastSpawn: ev.event.timestamp
+                                firstSpawn: ev.timestamp,
+                                lastSpawn: ev.timestamp
                             };
                             map.set(spawn.id, spawn);
                             console.log(`SessionViewerSpawns> new router`);
                         }
                     }
 
-                    spawn = map.get(ev.event.otherID)!;
+                    spawn = map.get(ev.otherID)!;
                     ++spawn.spawns;
-                    if (spawn.lastSpawn < ev.event.timestamp) {
-                        spawn.lastSpawn = ev.event.timestamp;
+                    if (spawn.lastSpawn < ev.timestamp) {
+                        spawn.lastSpawn = ev.timestamp;
                     }
                 }
 

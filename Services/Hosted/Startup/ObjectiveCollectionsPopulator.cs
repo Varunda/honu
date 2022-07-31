@@ -1,14 +1,17 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted.Startup {
 
@@ -25,6 +28,7 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly AchievementCollection _AchievementCensus;
         private readonly ItemCollection _ItemCensus;
         private readonly VehicleCollection _VehicleCensus;
+        private readonly ExperienceTypeCollection _ExpTypeCensus;
 
         private readonly ObjectiveDbStore _ObjectiveDb;
         private readonly ObjectiveTypeDbStore _ObjectiveTypeDb;
@@ -32,6 +36,7 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly AchievementDbStore _AchievementDb;
         private readonly ItemDbStore _ItemDb;
         private readonly VehicleDbStore _VehicleDb;
+        private readonly ExperienceTypeDbStore _ExpTypeDb;
 
         public ObjectiveCollectionsPopulator(ILogger<ObjectiveCollectionsPopulator> logger,
             ObjectiveCollection objCensus, ObjectiveDbStore objDb,
@@ -39,7 +44,8 @@ namespace watchtower.Services.Hosted.Startup {
             ObjectiveSetCollection objSetCensus, ObjectiveSetDbStore objSetDb,
             AchievementCollection achCensus, AchievementDbStore achDb,
             ItemCollection itemCensus, ItemDbStore itemDb,
-            VehicleCollection vehCensus, VehicleDbStore vehDb) {
+            VehicleCollection vehCensus, VehicleDbStore vehDb,
+            ExperienceTypeDbStore expTypeDb, ExperienceTypeCollection expTypeCensus) {
 
             _Logger = logger;
 
@@ -55,6 +61,8 @@ namespace watchtower.Services.Hosted.Startup {
             _ItemDb = itemDb;
             _VehicleCensus = vehCensus;
             _VehicleDb = vehDb;
+            _ExpTypeDb = expTypeDb;
+            _ExpTypeCensus = expTypeCensus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -128,6 +136,14 @@ namespace watchtower.Services.Hosted.Startup {
                     foreach (PsVehicle veh in censusVehs) {
                         await _VehicleDb.Upsert(veh);
                     }
+                }
+
+                List<ExperienceType> censusExpType = await _ExpTypeCensus.GetAll();
+                List<ExperienceType> dbExpType = await _ExpTypeDb.GetAll();
+
+                _Logger.LogDebug($"ExperienceType: got {censusExpType.Count} from Census, have {dbExpType.Count} in DB");
+                foreach (ExperienceType expt in dbExpType) {
+                    await _ExpTypeDb.Upsert(expt);
                 }
 
                 _Logger.LogDebug($"Finished objective populator in {timer.ElapsedMilliseconds}ms");

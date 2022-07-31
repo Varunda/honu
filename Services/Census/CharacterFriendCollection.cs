@@ -35,11 +35,10 @@ namespace watchtower.Services.Census {
 
             JToken? token = await query.GetAsync();
             if (token == null) {
-                _Logger.LogError($"Request to {charID} returned a null token? URL: {query.GetUri()}");
+                return new List<CharacterFriend>();
             }
 
-            JToken? friendToken = token!.SelectToken("friend_list"); // NOT SAFE: this is intentionally broken for debug reasons
-
+            JToken? friendToken = token!.SelectToken("friend_list");
             if (friendToken == null) {
                 throw new FormatException($"Failed to get token 'friend_list' for {charID}");
             }

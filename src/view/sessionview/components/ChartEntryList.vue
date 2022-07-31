@@ -1,8 +1,8 @@
 ﻿<template>
     <table class="table table-sm">
         <tr class="table-secondary th-border-top-0">
-            <th>Target</th>
-            <th>Amount</th>
+            <th>{{LeftColumnTitle}}</th>
+            <th>{{MiddleColumnTitle}}</th>
             <th>%</th>
         </tr>
 
@@ -15,19 +15,19 @@
                     {{entry.display}}
                 </span>
             </td>
-            <td>{{entry.count}}</td>
-            <td>{{entry.count / total * 100 | fixed | locale}}%</td>
+            <td>{{entry.count | locale}}</td>
+            <td>{{entry.count / total * 100 | locale(2)}}%</td>
         </tr>
 
         <tr v-if="data.length > MaxEntries">
             <td>Other</td>
-            <td>{{hiddenTotal}}</td>
-            <td>{{hiddenTotal / total * 100 | fixed | locale}}%</td>
+            <td>{{hiddenTotal | locale}}</td>
+            <td>{{hiddenTotal / total * 100 | locale(2)}}%</td>
         </tr>
 
         <tr class="table-secondary th-border-top-0">
             <td>Total</td>
-            <td colspan="2">{{total}}</td>
+            <td colspan="2">{{total | locale}}</td>
         </tr>
     </table>
 </template>
@@ -48,7 +48,9 @@
     export const ChartEntryPie = Vue.extend({
         props: {
             data: { type: Array as PropType<Entry[]>, required: true },
-            MaxEntries: { type: Number, required: false, default: 8 }
+            MaxEntries: { type: Number, required: false, default: 8 },
+            LeftColumnTitle: { type: String, required: false, default: "Target" },
+            MiddleColumnTitle: { type: String, required: false, default: "Amount" }
         },
 
         data: function() {
