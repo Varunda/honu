@@ -28,7 +28,7 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("CharacterID", ev.CharacterID);
-            cmd.AddParameter("ItemID", ev.ItemCount);
+            cmd.AddParameter("ItemID", ev.ItemID);
             cmd.AddParameter("Context", ev.Context);
             cmd.AddParameter("ItemCount", ev.ItemCount);
             cmd.AddParameter("Timestamp", ev.Timestamp);
