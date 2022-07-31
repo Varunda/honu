@@ -44,6 +44,9 @@ PostgreSQL | database
         - done!
     - Windows:
         - use pgAdmin or something I'm not sure exactly
+1. change `syncronous_commit` to `off` instead of the default `on`.
+    - https://www.postgresql.org/docs/current/wal-async-commit.html
+    - Find your `postgresql.conf`, then to reload call `SELECT pg_reload_conf();`
 1. compile the frontend code
     - install the node modules
         - `npm install`

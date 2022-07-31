@@ -19,6 +19,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<ExpEventDbStore, ExpEventDbStore>();
             services.AddSingleton<VehicleDestroyDbStore>();
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
+            services.AddSingleton<ItemAddedDbStore>();
+            services.AddSingleton<AchievementEarnedDbStore>();
 
             services.AddSingleton<ItemDbStore>();
             services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();

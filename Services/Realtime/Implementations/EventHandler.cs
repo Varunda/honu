@@ -38,6 +38,8 @@ namespace watchtower.Realtime {
         private readonly IBattleRankDbStore _BattleRankDb;
         private readonly FacilityPlayerControlDbStore _FacilityPlayerDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
+        private readonly ItemAddedDbStore _ItemAddedDb;
+        private readonly AchievementEarnedDbStore _AchievementEarnedDb;
         private readonly AlertDbStore _AlertDb;
         private readonly AlertPlayerDataRepository _ParticipantDataRepository;
 
@@ -71,7 +73,8 @@ namespace watchtower.Realtime {
             ItemRepository itemRepo, MapRepository mapRepo,
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
-            AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager) {
+            AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
+            ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb) {
 
             _Logger = logger;
 
@@ -102,6 +105,8 @@ namespace watchtower.Realtime {
             _MapHub = mapHub;
             _ParticipantDataRepository = participantDataRepository;
             _TagManager = tagManager;
+            _ItemAddedDb = itemAddedDb;
+            _AchievementEarnedDb = achievementEarnedDb;
         }
 
         public DateTime MostRecentProcess() {
@@ -176,6 +181,10 @@ namespace watchtower.Realtime {
                     await _ProcessMetagameEvent(payloadToken);
                 } else if (eventName == "VehicleDestroy") {
                     await _ProcessVehicleDestroy(payloadToken);
+                } else if (eventName == "ItemAdded") {
+                    await _ProcessItemAdded(payloadToken);
+                } else if (eventName == "AchievementEarned") {
+                    await _ProcessAchievementEarned(payloadToken);
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
@@ -1147,6 +1156,55 @@ namespace watchtower.Realtime {
                 _Logger.LogDebug($"Total: {total}\nQueue: {queueMs}, Read: {readValuesMs}, create: {createEventMs}, process: {processCharMs}, DB {dbInsertMs}, revive {reviveMs}");
             }
 
+        }
+
+        private async Task _ProcessItemAdded(JToken payload) {
+            ItemAddedEvent ev = new ItemAddedEvent();
+            ev.CharacterID = payload.GetRequiredString("character_id");
+            ev.Context = payload.GetString("context", "");
+            ev.ItemCount = payload.GetInt32("item_count", 0);
+            ev.ItemID = payload.GetRequiredInt32("item_id");
+            ev.Timestamp = payload.CensusTimestamp("timestamp");
+            ev.WorldID = payload.GetWorldID();
+            ev.ZoneID = payload.GetZoneID();
+
+            await _ItemAddedDb.Insert(ev);
+
+            /*
+                {
+                    "character_id": "5429269171559531473",
+                    "context": "SkillGrantItemLine",
+                    "event_name": "ItemAdded",
+                    "item_count": "1",
+                    "item_id": "6013812",
+                    "timestamp": "1659246325",
+                    "world_id": "1",
+                    "zone_id": "131434"
+                }
+             */
+        }
+
+        private async Task _ProcessAchievementEarned(JToken payload) {
+            AchievementEarnedEvent ev = new AchievementEarnedEvent();
+
+            ev.CharacterID = payload.GetRequiredString("character_id");
+            ev.Timestamp = payload.CensusTimestamp("timestamp");
+            ev.AchievementID = payload.GetRequiredInt32("achievement_id");
+            ev.ZoneID = payload.GetZoneID();
+            ev.WorldID = payload.GetWorldID();
+
+            await _AchievementEarnedDb.Insert(ev);
+
+            /*
+                {
+                    "achievement_id": "90020",
+                    "character_id": "5429292002801114593",
+                    "event_name": "AchievementEarned",
+                    "timestamp": "1659246271",
+                    "world_id": "1",
+                    "zone_id": "4"
+                }
+            */
         }
 
     }
