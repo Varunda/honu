@@ -377,24 +377,6 @@ namespace watchtower.Services.Repositories {
 
             time.Stop();
 
-            /*
-            _Logger.LogInformation(
-                $"{DateTime.UtcNow} took {time.ElapsedMilliseconds}ms to build world data for {worldID}\n"
-            );
-
-                + $"\ttime to copy players: {timeToCopyPlayers}ms\n"
-                + $"\ttime to get heal entries: {timeToGetHealEntries}ms\n"
-                + $"\ttime to get revive entries: {timeToGetReviveEntries}ms\n"
-                + $"\ttime to get resupply entries: {timeToGetResupplyEntries}ms\n"
-                + $"\ttime to get spawn entries: {timeToGetSpawnEntries}ms\n"
-                + $"\ttime to get top kills: {timeToGetTopKills}ms\n"
-                + $"\ttime to copy npc store: {timeToCopyNpcStore}ms\n"
-                + $"\ttime to get biggest spawns: {timeToGetBiggestSpawns}ms\n"
-                + $"\ttime to get world totals: {timeToGetWorldTotals}ms\n"
-                + $"\ttime to update seconds online: {timeToUpdateSecondsOnline}ms\n"
-            );
-            */
-
             return data;
         }
 

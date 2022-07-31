@@ -239,6 +239,9 @@ namespace watchtower.Realtime {
                 LogicalAndCharactersWithWorlds = true
             };
 
+            sub.EventNames = new List<string>() { "GainExperience", "AchievementEarned", "ItemAdded" };
+
+            /*
             sub.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
             foreach (int expId in Experience.VehicleRepairEvents) {
                 sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
@@ -246,6 +249,7 @@ namespace watchtower.Realtime {
             foreach (int expId in Experience.SquadVehicleRepairEvents) {
                 sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
             }
+            */
             sub.EventNames = sub.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")
