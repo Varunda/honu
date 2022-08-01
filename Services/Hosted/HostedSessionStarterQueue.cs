@@ -61,9 +61,12 @@ namespace watchtower.Services.Hosted {
                         if (c == null) {
                             ++entry.FailCount;
                             _Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
-                            _Queue.Queue(entry);
-                            _CharacterCacheQueue.Queue(entry.CharacterID);
-                            continue;
+
+                            if (entry.FailCount <= 50) {
+                                _Queue.Queue(entry);
+                                _CharacterCacheQueue.Queue(entry.CharacterID);
+                                continue;
+                            }
                         }
 
                         if (entry.FailCount > 0) {
@@ -71,7 +74,7 @@ namespace watchtower.Services.Hosted {
                         }
 
                         using (Activity? repoCall = HonuActivitySource.Root.StartActivity("repo start")) {
-                            await _SessionRepository.Start(entry.CharacterID, entry.LastEvent, c.OutfitID, c.FactionID);
+                            await _SessionRepository.Start(entry.CharacterID, entry.LastEvent, c?.OutfitID ?? "0", c?.FactionID ?? 0);
                         }
                     }
 

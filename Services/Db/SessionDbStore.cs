@@ -287,26 +287,6 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
         }
 
-        /*
-        public async Task SetOutfitAndTeamIdByID(long sessionID, string? outfitID, short teamID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                UPDATE wt_session
-                    SET outfit_id = @OutfitID,
-                        team_id = @TeamID
-                    WHERE id = @ID;
-            ");
-
-            cmd.AddParameter("ID", sessionID);
-            cmd.AddParameter("OutfitID", outfitID);
-            cmd.AddParameter("TeamID", teamID);
-            await cmd.PrepareAsync();
-
-            await cmd.ExecuteNonQueryAsync();
-            await conn.CloseAsync();
-        }
-        */
-
         /// <summary>
         ///     End all sessions currently opened in the DB
         /// </summary>

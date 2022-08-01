@@ -2,8 +2,10 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Tracking;
 
 namespace watchtower.Services.Census {
 
@@ -33,18 +35,27 @@ namespace watchtower.Services.Census {
         ///     A list of type <typeparamref name="T"/>, generated from the census query passed in <paramref name="query"/>
         /// </returns>
         public async Task<List<T>> ReadList(CensusQuery query) {
-            IEnumerable<JToken> tokens = await query.GetListAsync();
+            using (Activity? start = HonuActivitySource.Root.StartActivity("Census")) {
+                start?.AddTag("url", query.GetUri());
+                start?.AddTag("service namespace", query.ServiceNamespace);
 
-            List<T> list = new List<T>();
+                using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
+                IEnumerable<JToken> tokens = await query.GetListAsync();
+                makeRequest?.Stop();
 
-            foreach (JToken token in tokens) {
-                T? elem = ReadEntry(token);
-                if (elem != null) {
-                    list.Add(elem);
+                using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
+                List<T> list = new List<T>();
+
+                foreach (JToken token in tokens) {
+                    T? elem = ReadEntry(token);
+                    if (elem != null) {
+                        list.Add(elem);
+                    }
                 }
-            }
+                parseData?.Stop();
 
-            return list;
+                return list;
+            }
         }
 
         /// <summary>
@@ -55,13 +66,22 @@ namespace watchtower.Services.Census {
         ///     A new type <typeparamref name="T"/>, or null if the read could not be completed 
         /// </returns>
         public async Task<T?> ReadSingle(CensusQuery query) {
-            JToken token = await query.GetAsync();
+            using (Activity? start = HonuActivitySource.Root.StartActivity("Census")) {
+                start?.AddTag("url", query.GetUri());
+                start?.AddTag("service namespace", query.ServiceNamespace);
 
-            if (token != null) {
-                return ReadEntry(token);
+                using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
+                JToken token = await query.GetAsync();
+                makeRequest?.Stop();
+
+                using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
+                if (token != null) {
+                    return ReadEntry(token);
+                }
+                parseData?.Stop();
+
+                return null;
             }
-
-            return null;
         }
 
     }
