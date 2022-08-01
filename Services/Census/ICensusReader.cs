@@ -35,27 +35,26 @@ namespace watchtower.Services.Census {
         ///     A list of type <typeparamref name="T"/>, generated from the census query passed in <paramref name="query"/>
         /// </returns>
         public async Task<List<T>> ReadList(CensusQuery query) {
-            using (Activity? start = HonuActivitySource.Root.StartActivity("Census")) {
-                start?.AddTag("url", query.GetUri());
-                start?.AddTag("service namespace", query.ServiceNamespace);
+            using Activity? start = HonuActivitySource.Root.StartActivity("Census");
+            start?.AddTag("url", query.GetUri());
+            start?.AddTag("service namespace", query.ServiceNamespace);
 
-                using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
-                IEnumerable<JToken> tokens = await query.GetListAsync();
-                makeRequest?.Stop();
+            using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
+            IEnumerable<JToken> tokens = await query.GetListAsync();
+            makeRequest?.Stop();
 
-                using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
-                List<T> list = new List<T>();
+            using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
+            List<T> list = new List<T>();
 
-                foreach (JToken token in tokens) {
-                    T? elem = ReadEntry(token);
-                    if (elem != null) {
-                        list.Add(elem);
-                    }
+            foreach (JToken token in tokens) {
+                T? elem = ReadEntry(token);
+                if (elem != null) {
+                    list.Add(elem);
                 }
-                parseData?.Stop();
-
-                return list;
             }
+            parseData?.Stop();
+
+            return list;
         }
 
         /// <summary>

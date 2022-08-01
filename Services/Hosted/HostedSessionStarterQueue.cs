@@ -59,10 +59,11 @@ namespace watchtower.Services.Hosted {
 
                     // If Honu has a single entry in the queue, don't constantly loop thru it, take a breather
                     if (_LastCharacterId == entry.CharacterID) {
-                        await Task.Delay(1000 * 5, stoppingToken);
+                        await Task.Delay(100, stoppingToken);
                     }
 
-                    if (entry.Backoff <= DateTime.UtcNow) {
+                    if (entry.FailCount > 0 && entry.Backoff >= DateTime.UtcNow) {
+                        _Logger.LogDebug($"Backoff for {entry.CharacterID} is {entry.Backoff:u}, currently {DateTime.UtcNow:u}, requeueing");
                         _Queue.Queue(entry);
                         continue;
                     }

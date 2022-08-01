@@ -47,7 +47,7 @@ namespace watchtower.Services.Hosted.Startup {
                     List<PsFacility> facs = await _FacilityRepository.GetAll();
 
                     foreach (short worldID in World.All) {
-                        _Logger.LogDebug($"Getting zone maps for {string.Join(", ", Zone.All.Select(iter => $"{Zone.GetName(iter)}/{iter}"))} for the world {World.GetName(worldID)}");
+                        //_Logger.LogDebug($"Getting zone maps for {string.Join(", ", Zone.All.Select(iter => $"{Zone.GetName(iter)}/{iter}"))} for the world {World.GetName(worldID)}");
 
                         List<PsMap> maps = await GetMaps(worldID);
 
@@ -79,7 +79,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
 
                     timer.Stop();
-                    _Logger.LogInformation($"Finished in {timer.ElapsedMilliseconds}ms");
+                    //_Logger.LogInformation($"Finished in {timer.ElapsedMilliseconds}ms");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"{SERVICE_NAME}> stopping");
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {

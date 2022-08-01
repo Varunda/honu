@@ -175,7 +175,6 @@ namespace watchtower {
             // Hosted services
             services.AddHostedService<DbCreatorStartupService>(); // Have first to ensure DBs exist
 
-
             services.AddHostedService<HostedRealtimeMonitor>();
             services.AddHostedService<EventCleanupService>();
             services.AddHostedService<DataBuilderService>();
@@ -231,6 +230,8 @@ namespace watchtower {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownProxies.Add(IPAddress.Parse("64.227.19.86"));
             });
+
+            Console.WriteLine($"!!!!! ConfigureServices finished !!!!!");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
