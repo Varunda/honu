@@ -63,7 +63,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     if (entry.FailCount > 0 && entry.Backoff >= DateTime.UtcNow) {
-                        _Logger.LogDebug($"Backoff for {entry.CharacterID} is {entry.Backoff:u}, currently {DateTime.UtcNow:u}, requeueing");
+                        //_Logger.LogDebug($"Backoff for {entry.CharacterID} is {entry.Backoff:u}, currently {DateTime.UtcNow:u}, requeueing");
                         _Queue.Queue(entry);
                         continue;
                     }
