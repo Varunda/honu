@@ -32,6 +32,9 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterRepository _CharacterRepository;
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
+        // Used to prevent a single character stuck in the queue from causing it to run a ton of times
+        private string _LastCharacterId = "";
+
         public HostedSessionStarterQueue(ILogger<HostedSessionStarterQueue> logger,
             SessionStarterQueue queue, CharacterRepository characterRepository,
             CharacterCacheQueue characterCacheQueue, SessionRepository sessionRepository) {
@@ -54,6 +57,18 @@ namespace watchtower.Services.Hosted {
                     CharacterSessionStartQueueEntry entry = await _Queue.Dequeue(stoppingToken);
                     timer.Restart();
 
+                    // If Honu has a single entry in the queue, don't constantly loop thru it, take a breather
+                    if (_LastCharacterId == entry.CharacterID) {
+                        await Task.Delay(1000 * 5, stoppingToken);
+                    }
+
+                    if (entry.Backoff <= DateTime.UtcNow) {
+                        _Queue.Queue(entry);
+                        continue;
+                    }
+
+                    _LastCharacterId = entry.CharacterID;
+
                     using (Activity? start = HonuActivitySource.Root.StartActivity("session start")) {
                         using Activity? getCharacter = HonuActivitySource.Root.StartActivity("get char");
                         PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID);
@@ -62,7 +77,9 @@ namespace watchtower.Services.Hosted {
                             ++entry.FailCount;
                             _Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
 
-                            if (entry.FailCount <= 50) {
+                            entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
+
+                            if (entry.FailCount <= 10) {
                                 _Queue.Queue(entry);
                                 _CharacterCacheQueue.Queue(entry.CharacterID);
                                 continue;

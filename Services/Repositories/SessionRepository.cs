@@ -110,11 +110,6 @@ namespace watchtower.Services.Repositories {
                 return;
             }
 
-            PsCharacter? character = await _CharacterRepository.GetByID(charID, fast: true);
-            if (character == null) {
-                throw new ArgumentNullException($"How is character {charID} null here?");
-            }
-
             Session s = new Session();
             s.CharacterID = charID;
             s.Start = when;

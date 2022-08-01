@@ -22,5 +22,7 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public int FailCount { get; set; } = 0;
 
+        public DateTime Backoff { get; set; }
+
     }
 }
