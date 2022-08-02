@@ -2,7 +2,7 @@
 
 export const HonuMenu = Vue.extend({
     template: `
-        <nav class="navbar navbar-expand p-0" style="overflow-x: auto">
+        <nav class="navbar navbar-expand p-0">
             <div class="navbar-collapse">
                 <ul class="navbar-nav h1">
                     <slot></slot>
