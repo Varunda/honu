@@ -19,13 +19,16 @@ namespace watchtower.Controllers.Api {
     public class MapApiController : ApiControllerBase {
 
         private readonly ILogger<MapApiController> _Logger;
+
         private readonly MapRepository _MapRepository;
+        private readonly WorldOverviewRepository _WorldOverviewRepository;
 
         public MapApiController(ILogger<MapApiController> logger,
-            MapRepository mapRepo) {
+            MapRepository mapRepo, WorldOverviewRepository worldOverviewRepository) {
 
             _Logger = logger;
             _MapRepository = mapRepo ?? throw new ArgumentNullException(nameof(mapRepo));
+            _WorldOverviewRepository = worldOverviewRepository;
         }
 
         /// <summary>

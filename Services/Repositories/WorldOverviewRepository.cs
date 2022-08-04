@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Constants;
@@ -12,16 +13,18 @@ namespace watchtower.Services.Repositories {
     public class WorldOverviewRepository {
 
         private readonly ILogger<WorldOverviewRepository> _Logger;
-
         private readonly IMemoryCache _Cache;
+
+        private readonly MapRepository _MapRepository;
 
         private const string CACHE_KEY = "WorldOverview.All";
 
         public WorldOverviewRepository(ILogger<WorldOverviewRepository> logger,
-            IMemoryCache cache) {
+            IMemoryCache cache, MapRepository mapRepository) {
 
             _Logger = logger;
             _Cache = cache;
+            _MapRepository = mapRepository;
         }
 
         public List<WorldOverview> Build() {
@@ -37,6 +40,37 @@ namespace watchtower.Services.Repositories {
                     connery, cobalt, jaeger, miller, emerald, soltech
                 };
 
+                foreach (WorldOverview world in worlds) {
+                    lock (ZoneStateStore.Get().Zones) {
+                        foreach (uint zoneID in Zone.All) {
+                            ZoneState? zs = ZoneStateStore.Get().GetZone(world.WorldID, zoneID);
+                            if (zs != null) {
+                                zs.UnstableState = _MapRepository.GetUnstableState(world.WorldID, zoneID);
+                                world.Zones.Add(zs);
+                            }
+                        }
+                    }
+                }
+
+                void UpdateZoneCount(WorldOverview wo, ref TrackedPlayer player) {
+                    uint zoneID = player.ZoneID;
+
+                    ZoneState? state = wo.Zones.FirstOrDefault(iter => iter.ZoneID == zoneID);
+                    if (state != null) {
+                        ++state.PlayerCount;
+
+                        if (player.TeamID == Faction.VS) {
+                            ++state.VsCount;
+                        } else if (player.TeamID == Faction.NC) {
+                            ++state.NcCount;
+                        } else if (player.TeamID == Faction.TR) {
+                            ++state.TrCount;
+                        } else {
+                            ++state.OtherCount;
+                        }
+                    }
+                }
+
                 lock (CharacterStore.Get().Players) {
                     foreach (KeyValuePair<string, TrackedPlayer> iter in CharacterStore.Get().Players) {
                         TrackedPlayer c = iter.Value;
@@ -47,33 +81,23 @@ namespace watchtower.Services.Repositories {
 
                         if (c.WorldID == World.Connery) {
                             ++connery.PlayersOnline;
+                            UpdateZoneCount(connery, ref c);
                         } else if (c.WorldID == World.Cobalt) {
                             ++cobalt.PlayersOnline;
+                            UpdateZoneCount(cobalt, ref c);
                         } else if (c.WorldID == World.Emerald) {
                             ++emerald.PlayersOnline;
+                            UpdateZoneCount(emerald, ref c);
                         } else if (c.WorldID == World.Jaeger) {
                             ++jaeger.PlayersOnline;
+                            UpdateZoneCount(jaeger, ref c);
                         } else if (c.WorldID == World.Miller) {
                             ++miller.PlayersOnline;
+                            UpdateZoneCount(miller, ref c);
                         } else if (c.WorldID == World.SolTech) {
                             ++soltech.PlayersOnline;
+                            UpdateZoneCount(soltech, ref c);
                         }
-                    }
-                }
-
-                foreach (WorldOverview world in worlds) {
-                    lock (ZoneStateStore.Get().Zones) {
-                        ZoneState? indar = ZoneStateStore.Get().GetZone(world.WorldID, Zone.Indar);
-                        ZoneState? hossin = ZoneStateStore.Get().GetZone(world.WorldID, Zone.Hossin);
-                        ZoneState? amerish = ZoneStateStore.Get().GetZone(world.WorldID, Zone.Amerish);
-                        ZoneState? esamir = ZoneStateStore.Get().GetZone(world.WorldID, Zone.Esamir);
-                        ZoneState? oshur = ZoneStateStore.Get().GetZone(world.WorldID, Zone.Oshur);
-
-                        if (indar != null) { world.Zones.Add(indar); }
-                        if (hossin != null) { world.Zones.Add(hossin); }
-                        if (amerish != null) { world.Zones.Add(amerish); }
-                        if (esamir != null) { world.Zones.Add(esamir); }
-                        if (oshur != null) { world.Zones.Add(oshur); }
                     }
                 }
 
