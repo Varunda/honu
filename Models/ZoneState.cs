@@ -6,10 +6,42 @@ using watchtower.Code.Constants;
 
 namespace watchtower.Models {
 
+    public class PlayerCount {
+        public int All { get; set; }
+        public int VS { get; set; }
+        public int NC { get; set; }
+        public int TR { get; set; }
+        public int Unknown { get; set; }
+    }
+
+    public class TerritoryControl {
+        public int VS { get; set; }
+        public int NC { get; set; }
+        public int TR { get; set; }
+        public int Total { get; set; }
+    }
+
+
     /// <summary>
     /// Represents state data of a zone
     /// </summary>
     public class ZoneState {
+
+        public ZoneState() {
+
+        }
+
+        public ZoneState(ZoneState other) {
+            ZoneID = other.ZoneID;
+            WorldID = other.WorldID;
+            IsOpened = other.IsOpened;
+            UnstableState = other.UnstableState;
+            AlertStart = other.AlertStart;
+            AlertEnd = other.AlertEnd;
+            PlayerCount = other.PlayerCount;
+            Players = other.Players;
+            TerritoryControl = other.TerritoryControl;
+        }
 
         /// <summary>
         /// ID of the zone
@@ -41,18 +73,11 @@ namespace watchtower.Models {
         /// </summary>
         public DateTime? AlertEnd { get; set; }
 
-        /// <summary>
-        ///     How many players are in this zone
-        /// </summary>
         public int PlayerCount { get; set; }
 
-        public int VsCount { get; set; }
+        public PlayerCount Players { get; set; } = new PlayerCount();
 
-        public int NcCount { get; set; }
-
-        public int TrCount { get; set; }
-
-        public int OtherCount { get; set; }
+        public TerritoryControl TerritoryControl { get; set; } = new TerritoryControl();
 
     }
 }

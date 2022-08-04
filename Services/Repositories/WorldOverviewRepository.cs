@@ -44,10 +44,26 @@ namespace watchtower.Services.Repositories {
                     lock (ZoneStateStore.Get().Zones) {
                         foreach (uint zoneID in Zone.All) {
                             ZoneState? zs = ZoneStateStore.Get().GetZone(world.WorldID, zoneID);
+
                             if (zs != null) {
                                 zs.UnstableState = _MapRepository.GetUnstableState(world.WorldID, zoneID);
-                                world.Zones.Add(zs);
+                                ZoneState copy = new ZoneState(zs);
+                                copy.Players = new PlayerCount();
+                                copy.PlayerCount = 0;
+                                world.Zones.Add(copy);
                             }
+                        }
+                    }
+
+                    foreach (uint zoneID in Zone.All) {
+                        PsZone? zone = _MapRepository.GetZone(world.WorldID, zoneID);
+                        ZoneState? state = world.Zones.FirstOrDefault(iter => iter.ZoneID == zoneID);
+                        if (zone != null && state != null) {
+                            List<PsFacilityOwner> owners = zone.GetFacilities();
+                            state.TerritoryControl.VS = owners.Where(iter => iter.Owner == Faction.VS).Count();
+                            state.TerritoryControl.NC = owners.Where(iter => iter.Owner == Faction.NC).Count();
+                            state.TerritoryControl.TR = owners.Where(iter => iter.Owner == Faction.TR).Count();
+                            state.TerritoryControl.Total = owners.Count;
                         }
                     }
                 }
@@ -60,13 +76,13 @@ namespace watchtower.Services.Repositories {
                         ++state.PlayerCount;
 
                         if (player.TeamID == Faction.VS) {
-                            ++state.VsCount;
+                            ++state.Players.VS;
                         } else if (player.TeamID == Faction.NC) {
-                            ++state.NcCount;
+                            ++state.Players.NC;
                         } else if (player.TeamID == Faction.TR) {
-                            ++state.TrCount;
+                            ++state.Players.TR;
                         } else {
-                            ++state.OtherCount;
+                            ++state.Players.Unknown;
                         }
                     }
                 }
