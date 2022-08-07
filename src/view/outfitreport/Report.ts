@@ -1,5 +1,5 @@
 ﻿import { KillEvent } from "api/KillStatApi";
-import { ExpEvent } from "api/ExpStatApi";
+import { ExpEvent, ExperienceType } from "api/ExpStatApi";
 import { PsItem } from "api/ItemApi";
 import { PsOutfit } from "api/OutfitApi";
 import { PsCharacter } from "api/CharacterApi";
@@ -9,9 +9,9 @@ import { PlayerControlEvent } from "api/PlayerControlEventApi";
 import { PsFacility } from "api/MapApi";
 import { RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
 import { ItemCategory } from "api/ItemCategoryApi";
+import { VehicleDestroyEvent } from "api/VehicleDestroyEventApi";
 
 import LoadoutUtils from "util/Loadout";
-import { VehicleDestroyEvent } from "../../api/VehicleDestroyEventApi";
 
 export class ReportParameters {
 	public id: string = ""; // guid
@@ -42,6 +42,7 @@ export default class Report {
 
 	public items: Map<number, PsItem> = new Map();
 	public itemCategories: Map<number, ItemCategory> = new Map();
+	public experienceTypes: Map<number, ExperienceType> = new Map();
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public facilities: Map<number, PsFacility> = new Map();

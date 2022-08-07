@@ -129,6 +129,7 @@
                             beginAtZero: true,
                             ticks: {
                                 color: "#ffffff",
+                                precision: 0
                             },
                             grid: {
                                 color: "#777777"

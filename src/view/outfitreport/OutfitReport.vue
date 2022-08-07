@@ -424,6 +424,8 @@
 
                 <report-support-breakdown :report="report" :parameters="parameters"></report-support-breakdown>
 
+                <report-exp-breakdown :report="report" :parameters="parameters"></report-exp-breakdown>
+
                 <report-winter :report="report" :parameters="parameters"></report-winter>
 
                 <report-outfit-versus :report="report" :parameters="parameters"></report-outfit-versus>
@@ -442,7 +444,7 @@
     import { Loading, Loadable } from "Loading";
 
     import { KillEvent, KillStatApi } from "api/KillStatApi";
-    import { ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { ExperienceType, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { ItemApi, PsItem } from "api/ItemApi";
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -469,6 +471,7 @@
     import ReportHeader from "./components/ReportHeader.vue";
     import ReportPopulation from "./components/ReportPopulation.vue";
     import ReportPerMinuteGraph from "./components/ReportPerMinuteGraph.vue";
+    import ReportExpBreakdown from "./components/ReportExpBreakdown.vue";
     import ProgressBar from "./components/ProgressBar.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
@@ -753,6 +756,7 @@
                 this.connection.on("UpdatePlayerControls", this.onUpdatePlayerControls);
                 this.connection.on("UpdateFacilities", this.onUpdateFacilities);
                 this.connection.on("UpdateReconnects", this.onUpdateReconnect);
+                this.connection.on("UpdateExperienceTypes", this.onUpdateExperienceTypes);
 
                 this.connection.start().then(() => {
                     if (this.makeOnConnection == true && this.generator != "") {
@@ -1011,6 +1015,12 @@
                 }
                 this.report.reconnects = entries;
                 this.log(`Loaded ${this.report.reconnects.length} reconnects`);
+            },
+
+            onUpdateExperienceTypes: function(types: ExperienceType[]): void {
+                for (const entry of types) {
+                    this.report.experienceTypes.set(entry.id, entry);
+                }
             }
         },
 
@@ -1089,7 +1099,7 @@
 
         components: {
             DateTimeInput, InfoHover, Busy,
-            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportPerMinuteGraph,
+            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportPerMinuteGraph, ReportExpBreakdown,
             ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader, ReportPopulation,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             ProgressBar

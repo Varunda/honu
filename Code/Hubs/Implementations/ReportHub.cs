@@ -40,6 +40,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly ItemCategoryRepository _ItemCategoryRepository;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
+        private readonly ExperienceTypeRepository _ExperienceTypeRepository;
         private readonly IEventHandler _EventHandler;
 
         private readonly ReportRepository _ReportRepository;
@@ -52,7 +53,7 @@ namespace watchtower.Code.Hubs.Implementations {
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,
             ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb,
             ItemCategoryRepository itemCategoryRepository, VehicleDestroyDbStore vehicleDestroyDb,
-            IEventHandler eventHandler) {
+            IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository) {
 
             _Logger = logger;
             _Cache = cache;
@@ -72,6 +73,7 @@ namespace watchtower.Code.Hubs.Implementations {
             _ItemCategoryRepository = itemCategoryRepository;
             _VehicleDestroyDb = vehicleDestroyDb;
             _EventHandler = eventHandler;
+            _ExperienceTypeRepository = experienceTypeRepository;
         }
 
         public async Task GenerateReport(string generator) {
@@ -101,6 +103,9 @@ namespace watchtower.Code.Hubs.Implementations {
 
             List<ItemCategory> cats = await _ItemCategoryRepository.GetAll();
             await Clients.Caller.UpdateItemCategories(cats);
+
+            List<ExperienceType> expTypes = await _ExperienceTypeRepository.GetAll();
+            await Clients.Caller.UpdateExperienceTypes(expTypes);
 
             string cacheKey = string.Format(CACHE_KEY, parms.Generator);
 
@@ -206,28 +211,6 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get exp
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
-
-                /*
-                ConcurrentQueue<string> charQueue = new(chars);
-                Task[] expTasks = BatchProcess(4, async (int index) => {
-                    charQueue.TryDequeue(out string? charID);
-                    while (charID != null) {
-                        _Logger.LogDebug($"BATCH {index}> Batch process {charID}");
-                        try {
-                            List<ExpEvent> exp = await _ExpDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
-                            await Clients.Caller.SendExp(charID, exp);
-                            report.Experience.AddRange(exp);
-                            charQueue.TryDequeue(out charID);
-                        } catch (Exception ex) {
-                            _Logger.LogError(ex, $"error loading exp events for {charID}");
-                            await Clients.Caller.SendError($"error while getting exp events for {charID}: {ex.Message}");
-                        } 
-                    }
-                });
-
-                await Task.WhenAll(expTasks);
-                */
-
                 foreach (string charID in chars) {
                     try {
                         List<ExpEvent> exp = await _ExpDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);

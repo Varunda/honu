@@ -99,6 +99,8 @@ namespace watchtower.Code.Hubs {
         /// </summary>
         Task UpdateItemCategories(List<ItemCategory> cats);
 
+        Task UpdateExperienceTypes(List<ExperienceType> types);
+
         /// <summary>
         ///     Sent when outfits have been populated
         /// </summary>

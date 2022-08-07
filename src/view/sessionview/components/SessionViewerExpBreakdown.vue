@@ -173,7 +173,6 @@
         },
 
         methods: {
-
             makeFull: function(): void {
                 for (const ev of this.exp.events) {
                     const f: FullEvent = {
