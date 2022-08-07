@@ -23,6 +23,7 @@
     import { PsAlert } from "api/AlertApi";
 
     import "filters/ZoneNameFilter";
+    import "filters/WorldNameFilter";
 
     export const AlertGeneral = Vue.extend({
         props: {

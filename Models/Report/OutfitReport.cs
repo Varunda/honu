@@ -12,29 +12,14 @@ namespace watchtower.Models.Report {
     public class OutfitReport {
 
         /// <summary>
-        ///     Unique ID of the report. Used to easily share reports
+        ///     Parameters used to generate this report
         /// </summary>
-        public Guid ID { get; set; } = Guid.Empty;
+        public OutfitReportParameters Parameters { get; set; } = new();
 
         /// <summary>
-        ///     Generator used to make the report. This is a DSL I guess. I wish I kept it as JSON instead lol
+        ///     This when report was generated
         /// </summary>
-        public string Generator { get; set; } = "";
-
-        /// <summary>
-        ///     -1 means not set yet
-        /// </summary>
-        public short TeamID { get; set; } = -1;
-
-        /// <summary>
-        ///     Optional zone filter
-        /// </summary>
-        public uint? ZoneID { get; set; } = null;
-
-        /// <summary>
-        ///     List of the player IDs that were tracked
-        /// </summary>
-        public List<string> Players { get; set; } = new List<string>();
+        public DateTime Timestamp { get; set; }
 
         /// <summary>
         ///     List of outfits that were tracked
@@ -46,24 +31,31 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<PsCharacter> TrackedCharacters { get; set; } = new List<PsCharacter>();
 
-        public DateTime Timestamp { get; set; }
-
-        public DateTime PeriodStart { get; set; }
-
-        public DateTime PeriodEnd { get; set; }
-
-        public List<string> CharacterIDs { get; set; } = new List<string>();
-
+        /// <summary>
+        ///     List of kills that tracked characters got during the period of the report
+        /// </summary>
         public List<KillEvent> Kills { get; set; } = new List<KillEvent>();
 
+        /// <summary>
+        ///     Deaths that tracked characters got during the period of the report
+        /// </summary>
         public List<KillEvent> Deaths { get; set; } = new List<KillEvent>();
 
+        /// <summary>
+        ///     Exp events that tracked characters got during the period of the report
+        /// </summary>
         public List<ExpEvent> Experience { get; set; } = new List<ExpEvent>();
 
+        public List<VehicleDestroyEvent> VehicleDestroy { get; set; } = new();
+
+        /// <summary>
+        ///     Capture/Defend events that tracked outfits got during the alert
+        /// </summary>
         public List<FacilityControlEvent> Control { get; set; } = new List<FacilityControlEvent>();
 
         /// <summary>
-        ///     All player control events relevant to the players tracked
+        ///     Has all player control events for the tracker characters, and any control events
+        ///     the tracked character participated in
         /// </summary>
         public List<PlayerControlEvent> PlayerControl { get; set; } = new List<PlayerControlEvent>();
 
@@ -77,6 +69,9 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<PsItem> Items { get; set; } = new List<PsItem>();
 
+        /// <summary>
+        ///     All item categories
+        /// </summary>
         public List<ItemCategory> ItemCategories { get; set; } = new();
 
         /// <summary>

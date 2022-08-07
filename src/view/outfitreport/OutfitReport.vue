@@ -45,17 +45,17 @@
                 <table class="table table-sm">
                     <tr>
                         <td><b>Start</b></td>
-                        <td>{{report.periodStart | moment}}</td>
+                        <td>{{parameters.periodStart | moment}}</td>
                     </tr>
 
                     <tr>
                         <td><b>End</b></td>
-                        <td>{{report.periodEnd | moment}}</td>
+                        <td>{{parameters.periodEnd | moment}}</td>
                     </tr>
 
                     <tr>
                         <td><b>Duration</b></td>
-                        <td>{{(report.periodEnd.getTime() - report.periodStart.getTime()) / 1000 | mduration}}</td>
+                        <td>{{(parameters.periodEnd.getTime() - parameters.periodStart.getTime()) / 1000 | mduration}}</td>
                     </tr>
 
                     <tr>
@@ -308,73 +308,102 @@
         </div>
 
         <div id="generation-progress" class="collapse">
-            <table v-if="isMaking == true" class="table table-sm">
-                <tr class="table-secondary">
-                    <td>Step</td>
-                    <td>Done?</td>
-                </tr>
+            <div v-if="isMaking == true" class="text-center">
+                <h2 v-if="reportState == 'not_stated'">
+                    <busy class="honu-busy-lg"></busy>
+                    Pending report createion
+                </h2>
 
-                <tr :class="[ !steps.report ? 'table-warning' : 'table-success' ]">
-                    <td>Submitting request</td>
-                    <td>{{steps.report}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'parsing_generator'">
+                    <busy class="honu-busy-lg"></busy>
+                    Parsing report 
+                </h2>
 
-                <tr :class="[ !steps.kills ? 'table-warning' : 'table-success' ]">
-                    <td>Getting kills</td>
-                    <td>{{steps.kills}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_sessions'">
+                    <busy class="honu-busy-lg"></busy>
+                    Loading session data
+                </h2>
 
-                <tr :class="[ !steps.deaths ? 'table-warning' : 'table-success' ]">
-                    <td>Getting deaths</td>
-                    <td>{{steps.deaths}}</td>
-                </tr>
+                <div v-else-if="reportState == 'getting_killdeaths' || reportState == 'getting_exp' || reportState == 'getting_vehicle_destroy' || reportState == 'getting_player_control'">
+                    <h2>
+                        <busy class="honu-busy-lg"></busy>
+                        Loading events:
+                        <span v-if="reportState == 'getting_killdeaths'">
+                            kill and death
+                        </span>
+                        <span v-else-if="reportState == 'getting_exp'">
+                            experience
+                        </span>
+                        <span v-else-if="reportState == 'getting_vehicle_destroy'">
+                            vehicle destroy
+                        </span>
+                        <span v-else-if="reportState == 'getting_player_control'">
+                            player capture/defend
+                        </span>
+                    </h2>
 
-                <tr :class="[ !steps.exp ? 'table-warning' : 'table-success' ]">
-                    <td>Getting exp events</td>
-                    <td>{{steps.exp}}</td>
-                </tr>
+                    <h5>
+                        Kills: {{report.kills.length | locale}};
+                        Deaths: {{report.deaths.length | locale}};
+                        Exp: {{report.experience.length | locale}};
+                        Vehicle: {{report.vehicleDestroy.length | locale}};
+                        Control: {{report.playerControl.length | locale}}
+                    </h5>
 
-                <tr :class="[ !steps.chars ? 'table-warning' : 'table-success' ]">
-                    <td>Getting characters</td>
-                    <td>{{steps.chars}}</td>
-                </tr>
+                    <progress-bar :total="trackedCharacters.length" :progress="progress.killdeath" :color="progressKillDeathColor">
+                        Kill/Death:
+                    </progress-bar>
+                    <progress-bar :total="trackedCharacters.length" :progress="progress.exp" :color="progressExpColor">
+                        Experience:
+                    </progress-bar>
+                    <progress-bar :total="trackedCharacters.length" :progress="progress.vehicleDestroy" :color="progressVehicleDestroyColor">
+                        Vehicle destroy:
+                    </progress-bar>
+                    <progress-bar :total="trackedCharacters.length" :progress="progress.playerControl" :color="progressPlayerControlColor">
+                        Player capture/defend:
+                    </progress-bar>
 
-                <tr :class="[ !steps.outfits ? 'table-warning' : 'table-success' ]">
-                    <td>Getting outfits</td>
-                    <td>{{steps.outfits}}</td>
-                </tr>
+                    <h5 v-if="trackedCharacters.length > 50" class="mt-2">
+                        Loading data for {{trackedCharacters.length}} characters
+                        <template v-if="trackedCharacters.length > 20">
+                            <br />
+                            <span v-if="trackedCharacters.length > 100">This is a lot of characters. This may take up to 10 minutes</span>
+                            <span v-else-if="trackedCharacters.length > 50">This is a lot of characters. This may take 5 minutes</span>
+                            <span v-else-if="trackedCharacters.length > 25">This is a lot of characters. This may take a couple minutes</span>
+                        </template>
+                    </h5>
+                </div>
 
-                <tr :class="[ !steps.items ? 'table-warning' : 'table-success' ]">
-                    <td>Getting items</td>
-                    <td>{{steps.items}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_facility_control'">
+                    <busy class="honu-busy-lg"></busy>
+                    Loading facility capture/defend events
+                </h2>
 
-                <tr :class="[ !steps.control ? 'table-warning' : 'table-success' ]">
-                    <td>Getting captures/defenses</td>
-                    <td>{{steps.control}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_characters'">
+                    <busy class="honu-busy-lg"></busy>
+                    Caching characters
+                </h2>
 
-                <tr :class="[ !steps.playerControl ? 'table-warning' : 'table-success' ]">
-                    <td>Getting player captures/defenses</td>
-                    <td>{{steps.playerControl}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_outfits'">
+                    <busy class="honu-busy-lg"></busy>
+                    Caching outfits
+                </h2>
 
-                <tr :class="[ !steps.facility ? 'table-warning' : 'table-success' ]">
-                    <td>Getting facilities</td>
-                    <td>{{steps.facility}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_facilities'">
+                    <busy class="honu-busy-lg"></busy>
+                    Caching facilities
+                </h2>
 
-                <tr :class="[ !steps.reconnects ? 'table-warning' : 'table-success' ]">
-                    <td>Getting realtime reconnects</td>
-                    <td>{{steps.reconnects}}</td>
-                </tr>
+                <h2 v-else-if="reportState == 'getting_items'">
+                    <busy class="honu-busy-lg"></busy>
+                    Caching items
+                </h2>
 
-                <tr v-if="isDone == true" class="table-success">
-                    <td colspan="2">
-                        All done!
-                    </td>
-                </tr>
-            </table>
+                <h2 v-else-if="reportState == 'getting_reconnects'">
+                    <busy class="honu-busy-lg"></busy>
+                    Loading reconnects
+                </h2>
+            </div>
         </div>
 
         <div v-if="isDone == true">
@@ -383,23 +412,25 @@
             </div>
 
             <div v-else>
-                <report-header :report="report"></report-header>
+                <report-header :report="report" :parameters="parameters"></report-header>
 
-                <report-population :report="report"></report-population>
+                <report-population :report="report" :parameters="parameters"></report-population>
 
-                <report-class-breakdown :report="report"></report-class-breakdown>
+                <report-per-minute-graph :report="report" :parameters="parameters"></report-per-minute-graph>
 
-                <report-control-breakdown :report="report"></report-control-breakdown>
+                <report-class-breakdown :report="report" :parameters="parameters"></report-class-breakdown>
 
-                <report-support-breakdown :report="report"></report-support-breakdown>
+                <report-control-breakdown :report="report" :parameters="parameters"></report-control-breakdown>
 
-                <report-winter :report="report"></report-winter>
+                <report-support-breakdown :report="report" :parameters="parameters"></report-support-breakdown>
 
-                <report-outfit-versus :report="report"></report-outfit-versus>
+                <report-winter :report="report" :parameters="parameters"></report-winter>
 
-                <report-weapon-breakdown :report="report"></report-weapon-breakdown>
+                <report-outfit-versus :report="report" :parameters="parameters"></report-outfit-versus>
 
-                <report-player-list :report="report"></report-player-list>
+                <report-weapon-breakdown :report="report" :parameters="parameters"></report-weapon-breakdown>
+
+                <report-player-list :report="report" :parameters="parameters"></report-player-list>
             </div>
         </div>
     </div>
@@ -421,8 +452,9 @@
     import { PsFacility, MapApi } from "api/MapApi";
     import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
     import { ItemCategory } from "api/ItemCategoryApi";
+    import { VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
 
-    import Report, { PlayerMetadata, PlayerMetadataGenerator } from "./Report";
+    import Report, { ReportParameters, PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
     import "MomentFilter";
     import DateUtil from "util/Date";
@@ -436,6 +468,8 @@
     import ReportControlBreakdown from "./components/ReportControlBreakdown.vue";
     import ReportHeader from "./components/ReportHeader.vue";
     import ReportPopulation from "./components/ReportPopulation.vue";
+    import ReportPerMinuteGraph from "./components/ReportPerMinuteGraph.vue";
+    import ProgressBar from "./components/ProgressBar.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
@@ -484,25 +518,20 @@
                     noPlayers: false as boolean,
                 },
 
-                steps: {
-                    report: false as boolean,
-                    kills: false as boolean,
-                    deaths: false as boolean,
-                    exp: false as boolean,
-                    chars: false as boolean,
-                    outfits: false as boolean,
-                    items: false as boolean,
-                    sessions: false as boolean,
-                    control: false as boolean,
-                    playerControl: false as boolean,
-                    facility: false as boolean,
-                    reconnects: false as boolean
+                progress: {
+                    killdeath: 0 as number,
+                    exp: 0 as number,
+                    vehicleDestroy: 0 as number,
+                    playerControl: 0 as number
                 },
 
                 connection: null as sR.HubConnection | null,
                 connected: false as boolean,
 
                 report: new Report() as Report,
+                parameters: new ReportParameters() as ReportParameters,
+                trackedCharacters: [] as string[],
+                reportState: "" as string,
 
                 outfits: [] as PsOutfit[],
                 characters: [] as PsCharacter[],
@@ -702,12 +731,19 @@
 
                 this.log(`Connecting...`);
 
-                this.connection.on("SendReport", this.onSendReport);
+                this.connection.on("SendParameters", this.onSendParameters);
                 this.connection.on("SendError", this.onSendError);
-                this.connection.on("UpdateCharacterIDs", this.onUpdateCharacterIDs);
+                this.connection.on("UpdateState", this.onUpdateState);
+                this.connection.on("SendCharacterIDs", this.onSendCharacterIDs);
+                this.connection.on("SendKills", this.onSendKills);
+                this.connection.on("SendDeaths", this.onSendDeaths);
+                this.connection.on("SendExp", this.onSendExp);
+                this.connection.on("SendVehicleDestroy", this.onSendVehicleDestroy);
+                this.connection.on("SendPlayerControl", this.onSendPlayerControl);
                 this.connection.on("UpdateKills", this.onUpdateKills);
                 this.connection.on("UpdateDeaths", this.onUpdateDeaths);
                 this.connection.on("UpdateExp", this.onUpdateExp);
+                this.connection.on("UpdateVehicleDestroy", this.onUpdateVehicleDestroy);
                 this.connection.on("UpdateItems", this.onUpdateItems);
                 this.connection.on("UpdateItemCategories", this.onUpdateItemCategories);
                 this.connection.on("UpdateOutfits", this.onUpdateOutfits);
@@ -757,7 +793,7 @@
                 }
 
                 this.log(`Sending generator string: '${this.generator}'`);
-                this.report.generator = this.generator;
+                this.parameters.generator = this.generator;
                 history.pushState({}, "", `/report/${this.generator64}`);
 
                 this.isMaking = true;
@@ -769,8 +805,8 @@
                     this.isDone = true;
 
                     //this.report.generator = `#${this.report.id};`;
-                    this.generator = `#${this.report.id};`;
-                    console.log(`ID of report '${this.report.id}'`);
+                    this.generator = `#${this.parameters.id};`;
+                    console.log(`ID of report '${this.parameters.id}'`);
                     history.pushState({}, "", `/report/${this.generator64}`);
 
                     const metadatas: PlayerMetadata[] = PlayerMetadataGenerator.generate(this.report);
@@ -837,58 +873,88 @@
                 this.hasErrored = true;
             },
 
-            onSendReport: function(report: Report): void {
-                this.report.id = report.id;
-                this.report.generator = report.generator;
-                this.generator = this.report.generator;
-                console.log(`set generator to ${this.report.generator} from ${report.generator}`);
-                // No idea why, but these dates don't include the Z, while the timestamp does
-                this.report.periodEnd = new Date(report.periodEnd + "Z");
-                this.report.periodStart = new Date(report.periodStart + "Z");
-                this.report.timestamp = new Date(report.timestamp);
-                this.report.teamID = report.teamID;
-                this.report.trackedCharacters = report.trackedCharacters;
-                this.report.trackedOutfits = report.trackedOutfits;
-
-                this.periodStart = new Date(this.report.periodStart);
-                this.periodEnd = new Date(this.report.periodEnd);
-
-                console.log(this.report);
-                this.log(`Got report: ${JSON.stringify(this.report)}`);
-                this.steps.report = true;
+            onUpdateState: function(state: string): void {
+                this.log("STATE: " + state);
+                this.reportState = state;
             },
 
-            onUpdateCharacterIDs: function(ids: string[]): void {
-                this.log(`Including data from ${ids.length} characters`);
-                this.report.players = ids.filter((iter, index, arr) => arr.indexOf(iter) == index);
+            onSendCharacterIDs: function(ids: string[]): void {
+                this.log(`Loaded data from ${ids.length} characters`);
+                this.trackedCharacters = ids;
+            },
+
+            onSendParameters: function(parms: ReportParameters): void {
+                this.parameters = {
+                    ...parms,
+                    timestamp: new Date(parms.timestamp + "Z"),
+                    periodStart: new Date(parms.periodStart + "Z"),
+                    periodEnd: new Date(parms.periodEnd + "Z")
+                };
+                console.log(`set generator to ${this.parameters.generator} from ${parms.generator}`);
+
+                this.periodStart = new Date(this.parameters.periodStart);
+                this.periodEnd = new Date(this.parameters.periodEnd);
+
+                console.log(this.parameters);
+                this.report.parameters = this.parameters;
+                this.log(`Got parameters: ${JSON.stringify(this.parameters)}`);
+            },
+
+            onSendKills: function(charID: string, events: KillEvent[]): void {
+                events = events.map(iter => KillStatApi.parseKillEvent(iter));
+                this.report.kills.push(...events);
+                ++this.progress.killdeath;
+            },
+
+            onSendDeaths: function(charID: string, events: KillEvent[]): void {
+                events = events.map(iter => KillStatApi.parseKillEvent(iter));
+                this.report.deaths.push(...events);
+            },
+
+            onSendExp: function(charID: string, events: ExpEvent[]): void {
+                events = events.map(iter => ExpStatApi.parseExpEvent(iter));
+                this.report.experience.push(...events);
+                ++this.progress.exp;
+            },
+
+            onSendVehicleDestroy: function(charID: string, events: VehicleDestroyEvent[]): void {
+                events = events.map(iter => VehicleDestroyEventApi.parse(iter));
+                this.report.vehicleDestroy.push(...events);
+                ++this.progress.vehicleDestroy;
+            },
+
+            onSendPlayerControl: function(charID: string, events: PlayerControlEvent[]): void {
+                events = events.map(iter => PlayerControlEventApi.parse(iter));
+                this.report.playerControl.push(...events);
+                ++this.progress.playerControl;
             },
 
             onUpdateKills: function(ev: KillEvent[]): void {
                 this.report.kills = ev.map(iter => KillStatApi.parseKillEvent(iter));
                 this.log(`Loaded ${this.report.kills.length} kill`);
-                this.steps.kills = true;
             },
 
             onUpdateDeaths: function(ev: KillEvent[]): void {
                 this.report.deaths = ev.map(iter => KillStatApi.parseKillEvent(iter));
                 this.log(`Loaded ${this.report.deaths.length} deaths`);
-                this.steps.deaths = true;
             },
 
             onUpdateExp: function(ev: ExpEvent[]): void {
                 this.report.experience = ev.map(iter => ExpStatApi.parseExpEvent(iter));
                 this.log(`Loaded ${this.report.experience.length} experience events`);
-                this.steps.exp = true;
+            },
+
+            onUpdateVehicleDestroy: function(ev: VehicleDestroyEvent[]): void {
+                this.report.vehicleDestroy = ev.map(iter => VehicleDestroyEventApi.parse(iter));
+                this.log(`Loaded ${this.report.vehicleDestroy.length} vehicle destroy events`);
             },
 
             onUpdatePlayerControls: function(ev: PlayerControlEvent[]): void {
                 this.report.playerControl = ev.map(iter => PlayerControlEventApi.parse(iter));
-                this.steps.playerControl = true;
             },
 
             onUpdateControls: function(ev: FacilityControlEvent[]): void {
                 this.report.control = ev.map(iter => FacilityControlEventApi.parse(iter));
-                this.steps.control = true;
             },
 
             onUpdateFacilities: function(ev: PsFacility[]): void {
@@ -896,7 +962,6 @@
                     this.report.facilities.set(fac.facilityID, fac);
                 }
                 this.log(`Loaded ${this.report.facilities.size} facilities`);
-                this.steps.facility = true;
             },
 
             onUpdateItems: function(items: PsItem[]): void {
@@ -904,7 +969,6 @@
                     this.report.items.set(item.id, item);
                 }
                 this.log(`Loaded ${this.report.items.size} items`);
-                this.steps.items = true;
             },
 
             onUpdateItemCategories: function(cats: ItemCategory[]): void {
@@ -919,7 +983,6 @@
                     this.report.characters.set(c.id, c);
                 }
                 this.log(`Loaded ${this.report.characters.size} characters`);
-                this.steps.chars = true;
             },
 
             onUpdateOutfits: function(outfits: PsOutfit[]): void {
@@ -927,7 +990,6 @@
                     this.report.outfits.set(outfit.id, outfit);
                 }
                 this.log(`Loaded ${this.report.outfits.size} outfits`);
-                this.steps.outfits = true;
             },
 
             onUpdateSessions: function(sessions: Session[]): void {
@@ -936,8 +998,11 @@
                     session.end = (session.end == null) ? null : new Date(session.end);
                 }
                 this.report.sessions = sessions;
+
+                this.report.trackedCharacters = sessions.map(iter => iter.characterID)
+                    .filter((v, i, arr) => arr.indexOf(v) == i);
+
                 this.log(`Loaded ${this.report.sessions.length} sessions`);
-                this.steps.sessions = true;
             },
 
             onUpdateReconnect: function(entries: RealtimeReconnectEntry[]): void {
@@ -946,14 +1011,13 @@
                 }
                 this.report.reconnects = entries;
                 this.log(`Loaded ${this.report.reconnects.length} reconnects`);
-                this.steps.reconnects = true;
             }
         },
 
         watch: {
             periodStart: function(): void {
                 if (this.isMaking == true) {
-                    console.log(`currently making a report, not updating the generator, current gen: ${this.report.generator}`);
+                    console.log(`currently making a report, not updating the generator, current gen: ${this.parameters.generator}`);
                     return;
                 }
                 this.updateGenerator();
@@ -961,10 +1025,14 @@
 
             periodEnd: function(): void {
                 if (this.isMaking == true) {
-                    console.log(`currently making a report, not updating the generator, current gen: ${this.report.generator}`);
+                    console.log(`currently making a report, not updating the generator, current gen: ${this.parameters.generator}`);
                     return;
                 }
                 this.updateGenerator();
+            },
+
+            teamID: function(): void {
+
             }
         },
 
@@ -975,14 +1043,56 @@
 
             generator64: function(): string {
                 return btoa(this.generator);
+            },
+
+            progressKillDeathColor: function(): string {
+                if (this.reportState == "getting_killdeaths") {
+                    return "primary";
+                }
+                if (this.progress.killdeath >= this.trackedCharacters.length) {
+                    return "success";
+                }
+                return "info";
+            },
+
+            progressExpColor: function(): string {
+                if (this.reportState == "getting_exp") {
+                    return "primary";
+                }
+                if (this.progress.exp >= this.trackedCharacters.length) {
+                    return "success";
+                }
+                return "info";
+            },
+
+            progressVehicleDestroyColor: function(): string {
+                if (this.reportState == "getting_vehicle_destroy") {
+                    return "primary";
+                }
+                if (this.progress.vehicleDestroy >= this.trackedCharacters.length) {
+                    return "success";
+                }
+                return "info";
+            },
+
+            progressPlayerControlColor: function(): string {
+                if (this.reportState == "getting_player_control") {
+                    return "primary";
+                }
+                if (this.progress.playerControl >= this.trackedCharacters.length) {
+                    return "success";
+                }
+                return "info";
             }
+
         },
 
         components: {
             DateTimeInput, InfoHover, Busy,
-            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown,
+            ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportPerMinuteGraph,
             ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader, ReportPopulation,
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            ProgressBar
         }
 
     });

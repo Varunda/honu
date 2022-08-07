@@ -34,7 +34,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<CharacterItemDbStore>();
             services.AddSingleton<CharacterStatDbStore>();
             services.AddSingleton<IBattleRankDbStore, BattleRankDbStore>();
-            services.AddSingleton<ReportDbStore>();
+            services.AddSingleton<OutfitReportParameterDbStore>();
             services.AddSingleton<CharacterMetadataDbStore>();
             services.AddSingleton<LogoutBufferDbStore>();
             services.AddSingleton<FacilityPlayerControlDbStore>();

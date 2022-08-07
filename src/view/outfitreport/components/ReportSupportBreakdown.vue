@@ -103,7 +103,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report from "../Report";
+    import Report, { PlayerMetadata, ReportParameters } from "../Report";
 
     import { PsCharacter } from "api/CharacterApi";
     import { PsOutfit } from "api/OutfitApi";
@@ -118,7 +118,8 @@
 
     export const ReportSupportBreakdown = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {

@@ -75,6 +75,11 @@ export class Experience {
 	public static SQUAD_VEHICLE_SPAWN_BONUS: number = 355;
 	public static GENERIC_NPC_SPAWN: number = 1410;
 
+    public static MOTION_DETECT: number = 293;
+    public static SQUAD_MOTION_DETECT: number = 294;
+    public static SCOUT_RADAR_DETECT: number = 353;
+    public static SQUAD_SCOUT_RADAR_DETECT: number = 354;
+
 	public static VKILL_FLASH: number = 24;
 	public static VKILL_GALAXY: number = 60;
 	public static VKILL_LIBERATOR: number = 61;

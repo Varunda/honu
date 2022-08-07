@@ -7,7 +7,7 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
 
-    import Report from "../Report";
+    import Report, { ReportParameters } from "../Report";
 
     import Chart, { LegendItem } from "chart.js/auto/auto.esm";
     import * as moment from "moment";
@@ -21,7 +21,8 @@
 
     export const ReportPopulation = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {
@@ -47,12 +48,12 @@
             makeData: function(): void {
                 this.data = [];
 
-                const iterationCount: number = Math.ceil(Math.floor((this.report.periodEnd.getTime() - this.report.periodStart.getTime()) / 1000) / 60);
+                const iterationCount: number = Math.ceil(Math.floor((this.parameters.periodEnd.getTime() - this.parameters.periodStart.getTime()) / 1000) / 60);
 
                 console.log(`ReportPopulation> using ${iterationCount} iterations`);
 
                 for (let i = 0; i < iterationCount; ++i) {
-                    const iterTime: Date = moment(this.report.periodStart).add(i, "minutes").toDate();
+                    const iterTime: Date = moment(this.parameters.periodStart).add(i, "minutes").toDate();
                     const endIter: Date = moment(iterTime).add(1, "minutes").toDate();
 
                     const entry: PopulationEntry = {

@@ -13,9 +13,49 @@ namespace watchtower.Code.Hubs {
     public interface IReportHub {
 
         /// <summary>
-        ///     Initial send of the report with no data in it
+        ///     Update the client on what step has just been performed
         /// </summary>
-        Task SendReport(OutfitReport report);
+        /// <param name="state">State, pull this from <see cref="OutfitReportState"/></param>
+        Task UpdateState(string state);
+
+        /// <summary>
+        ///     Send the parameters used to generate the report
+        /// </summary>
+        Task SendParameters(OutfitReportParameters report);
+
+        /// <summary>
+        ///     Tell the client the character IDs that are tracked for the report,
+        ///     and how many will be loading events. This is used for progress bars
+        /// </summary>
+        Task SendCharacterIDs(List<string> ids);
+
+        /// <summary>
+        ///     Send the client the kills for a specific character
+        /// </summary>
+        /// <param name="characterID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
+        Task SendKills(string characterID, List<KillEvent> events);
+
+        /// <summary>
+        ///     Send the client the deaths for a specific character
+        /// </summary>
+        /// <param name="characterID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
+        Task SendDeaths(string characterID, List<KillEvent> events);
+
+        /// <summary>
+        ///     Send the client the exp events for a specific character
+        /// </summary>
+        /// <param name="characterID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
+        Task SendExp(string characterID, List<ExpEvent> events);
+
+        Task SendVehicleDestroy(string characterID, List<VehicleDestroyEvent> events);
+
+        Task SendPlayerControl(string charID, List<PlayerControlEvent> events);
 
         /// <summary>
         ///     Sent when all character IDs have been populated
@@ -46,12 +86,17 @@ namespace watchtower.Code.Hubs {
         /// <param name="events">List of exp events to be included in the report</param>
         Task UpdateExp(List<ExpEvent> events);
 
+        Task UpdateVehicleDestroy(List<VehicleDestroyEvent> events);
+
         /// <summary>
         ///     Sent when the items have been populated
         /// </summary>
         /// <param name="items">List of items to be included in the report</param>
         Task UpdateItems(List<PsItem> items);
 
+        /// <summary>
+        ///     Send the item categories
+        /// </summary>
         Task UpdateItemCategories(List<ItemCategory> cats);
 
         /// <summary>

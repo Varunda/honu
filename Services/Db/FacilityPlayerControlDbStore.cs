@@ -52,7 +52,7 @@ namespace watchtower.Services.Db {
                         AND l.timestamp BETWEEN @PeriodStart AND @PeriodEnd
             ");
 
-            cmd.AddParameter("CharaterID", charID);
+            cmd.AddParameter("CharacterID", charID);
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
 

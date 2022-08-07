@@ -132,7 +132,7 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
-    import Report, { PlayerMetadata } from "../Report";
+    import Report, { PlayerMetadata, ReportParameters } from "../Report";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import Collapsible from "components/Collapsible.vue";
@@ -160,7 +160,8 @@
 
     export const ReportPlayerList = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         created: function(): void {

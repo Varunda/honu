@@ -14,11 +14,11 @@ namespace watchtower.Controllers.Api {
     public class ReportApiController : ApiControllerBase {
 
         private readonly ILogger<ReportApiController> _Logger;
-        private readonly ReportDbStore _ReportDb;
+        private readonly OutfitReportParameterDbStore _ReportDb;
         private readonly ReportRepository _ReportRepository;
 
         public ReportApiController(ILogger<ReportApiController> logger,
-            ReportDbStore reportDb, ReportRepository reportRepo) {
+            OutfitReportParameterDbStore reportDb, ReportRepository reportRepo) {
 
             _Logger = logger;
             _ReportDb = reportDb;
@@ -42,6 +42,7 @@ namespace watchtower.Controllers.Api {
         ///     A parsing exception happened while parsing <paramref name="generator"/>. The response will contain
         ///     more information about what part of the parse failed
         /// </response>
+        /*
         [HttpPost]
         public async Task<ApiResponse<Guid>> CreateReport([FromBody] string generator) {
             OutfitReport report = new OutfitReport();
@@ -57,6 +58,7 @@ namespace watchtower.Controllers.Api {
 
             return ApiOk(report.ID);
         }
+        */
 
     }
 

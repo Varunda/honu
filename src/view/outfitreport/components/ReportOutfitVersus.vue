@@ -159,7 +159,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report from "../Report";
+    import Report, { ReportParameters } from "../Report";
 
     import InfoHover from "components/InfoHover.vue";
     import Collapsible from "components/Collapsible.vue";
@@ -215,7 +215,8 @@
 
     export const ReportOutfitVersus = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         created: function(): void {
@@ -328,8 +329,8 @@
                         n.tag = character.outfitTag;
                         n.factionID = outfit?.factionID ?? -1;
 
-                        const start: number = Math.floor(this.report.periodStart.getTime() / 1000);
-                        const end: number = Math.floor(this.report.periodEnd.getTime() / 1000);
+                        const start: number = Math.floor(this.parameters.periodStart.getTime() / 1000);
+                        const end: number = Math.floor(this.parameters.periodEnd.getTime() / 1000);
 
                         const gen: string = btoa(`${start},${end},${n.factionID};o${n.id};`);
                         n.generator = gen;

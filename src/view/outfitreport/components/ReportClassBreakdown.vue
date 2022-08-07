@@ -129,7 +129,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report, { PlayerClassStats, PlayerMetadata } from "../Report";
+    import Report, { PlayerClassStats, PlayerMetadata, ReportParameters } from "../Report";
 
     import Loadout from "util/Loadout";
 
@@ -150,7 +150,8 @@
 
     export const ReportClassBreakdown = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {

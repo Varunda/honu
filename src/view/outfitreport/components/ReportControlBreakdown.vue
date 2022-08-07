@@ -79,7 +79,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report from "../Report";
+    import Report, { ReportParameters } from "../Report";
 
     import { PlayerControlEvent } from "api/PlayerControlEventApi";
     import { FacilityControlEvent } from "api/FacilityControlEventApi";
@@ -106,7 +106,8 @@
 
     export const ReportControlBreakdown = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {
@@ -132,7 +133,7 @@
             updateOurOutfits: function(b: boolean): void {
                 this.showAllOutfits = b;
 
-                for (const player of this.report.players) {
+                for (const player of this.report.trackedCharacters) {
                     const character: PsCharacter | null = this.report.characters.get(player) || null;
                     if (character == null) {
                         continue;

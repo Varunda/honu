@@ -11,27 +11,31 @@ import { RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
 import { ItemCategory } from "api/ItemCategoryApi";
 
 import LoadoutUtils from "util/Loadout";
+import { VehicleDestroyEvent } from "../../api/VehicleDestroyEventApi";
 
-export default class Report {
+export class ReportParameters {
 	public id: string = ""; // guid
-	public generator: string = "";
 	public timestamp: Date = new Date();
+	public generator: string = "";
+	public teamID: number = -1;
+	public zoneID: number | null = null;
+	public characterIDs: string[] = [];
+	public outfitIDs: string[] = [];
+	public ignoredCharacters: string[] = [];
 	public periodStart: Date = new Date();
 	public periodEnd: Date = new Date();
-	public teamID: number = 0;
+}
+
+export default class Report {
+	public parameters: ReportParameters = new ReportParameters();
 	public reconnects: RealtimeReconnectEntry[] = [];
 
-	/**
-	 * IDs of the characters that were used to generate the report
-	 */
-	public players: string[] = [];
-
-	public trackedCharacters: PsCharacter[] = [];
-	public trackedOutfits: PsOutfit[] = [];
+	public trackedCharacters: string[] = [];
 
 	public kills: KillEvent[] = [];
 	public deaths: KillEvent[] = [];
 	public experience: ExpEvent[] = [];
+	public vehicleDestroy: VehicleDestroyEvent[] = [];
 	public sessions: Session[] = [];
 	public control: FacilityControlEvent[] = [];
 	public playerControl: PlayerControlEvent[] = [];

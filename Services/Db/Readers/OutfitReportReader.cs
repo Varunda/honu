@@ -4,10 +4,10 @@ using watchtower.Models.Report;
 
 namespace watchtower.Services.Db.Readers {
 
-    public class OutfitReportReader : IDataReader<OutfitReport> {
+    public class OutfitReportReader : IDataReader<OutfitReportParameters> {
 
-        public override OutfitReport? ReadEntry(NpgsqlDataReader reader) {
-            OutfitReport report = new OutfitReport();
+        public override OutfitReportParameters? ReadEntry(NpgsqlDataReader reader) {
+            OutfitReportParameters report = new();
 
             report.ID = reader.GetGuid("id");
             report.Generator = reader.GetString("generator");

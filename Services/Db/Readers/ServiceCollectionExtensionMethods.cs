@@ -43,7 +43,7 @@ namespace watchtower.Services.Db.Readers {
 
             services.AddSingleton<IDataReader<CharacterFriend>, CharacterFriendReader>();
 
-            services.AddSingleton<IDataReader<OutfitReport>, OutfitReportReader>();
+            services.AddSingleton<IDataReader<OutfitReportParameters>, OutfitReportReader>();
 
             services.AddSingleton<IDataReader<PsDirective>, DirectiveReader>();
             services.AddSingleton<IDataReader<DirectiveTree>, DirectiveTreeReader>();

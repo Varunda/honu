@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,9 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services.Repositories {
 
+    /// <summary>
+    ///     Parses the generator strings for outfit reports
+    /// </summary>
     public class ReportRepository {
 
         private readonly ILogger<ReportRepository> _Logger;
@@ -18,16 +22,19 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly SessionDbStore _SessionDb;
+        private readonly OutfitReportParameterDbStore _ReportParametersDb;
 
         public ReportRepository(ILogger<ReportRepository> logger,
             OutfitCollection outfitCensus, CharacterRepository charRepo,
-            OutfitRepository outfitRepo, SessionDbStore sessionDb) {
+            OutfitRepository outfitRepo, SessionDbStore sessionDb,
+            OutfitReportParameterDbStore reportParametersDb) {
 
             _Logger = logger;
             _OutfitCensus = outfitCensus;
             _CharacterRepository = charRepo;
             _OutfitRepository = outfitRepo;
             _SessionDb = sessionDb;
+            _ReportParametersDb = reportParametersDb;
         }
 
         public enum GenState {
@@ -52,11 +59,27 @@ namespace watchtower.Services.Repositories {
 
         }
 
-        public async Task<OutfitReport> ParseGenerator(string input) {
+        /// <summary>
+        ///     Parses the generator string into the parameters used to generate a report
+        /// </summary>
+        /// <param name="input">Input generator string</param>
+        /// <returns>
+        ///     <see cref="OutfitReportParameters"/> that is used to pull all the information necessary
+        /// </returns>
+        /// <exception cref="FormatException">If one of the parameters could not be parsed to the type needed from the string</exception>
+        /// <exception cref="SystemException">There was an error in the parser, and it reached an invalidate state. This is on Honu's end, my bad</exception>
+        /// <exception cref="ArgumentException">
+        ///     The parameter in the generator string could be parsed to the valid type,
+        ///     but the value is not valid in the context.
+        ///     For example, setting the team ID to -1 can be parse, but is not valid
+        /// </exception>
+        public async Task<OutfitReportParameters> ParseGenerator(string input) {
             List<string> ignored = new List<string>();
 
             GenState state = GenState.GET_START;
-            OutfitReport report = new OutfitReport();
+            OutfitReportParameters parms = new();
+            parms.Timestamp = DateTime.UtcNow;
+            parms.Generator = input;
 
             string word = "";
             foreach (char i in input) {
@@ -70,7 +93,7 @@ namespace watchtower.Services.Repositories {
                             throw new FormatException($"In state GET_START, needed to parse '{word}' into an int32");
                         }
 
-                        report.PeriodStart = DateTimeOffset.FromUnixTimeSeconds(startEpoch).DateTime;
+                        parms.PeriodStart = DateTimeOffset.FromUnixTimeSeconds(startEpoch).DateTime;
                         state = GenState.GET_END;
                         word = "";
                         //_Logger.LogTrace($"PeriodStart = {report.PeriodStart}");
@@ -87,7 +110,7 @@ namespace watchtower.Services.Repositories {
                             throw new FormatException($"In state GET_END, needed to parse '{word}' into an int32");
                         }
 
-                        report.PeriodEnd = DateTimeOffset.FromUnixTimeSeconds(endEpoch).DateTime;
+                        parms.PeriodEnd = DateTimeOffset.FromUnixTimeSeconds(endEpoch).DateTime;
                         word = "";
                         //_Logger.LogTrace($"PeriodEnd = {report.PeriodEnd}");
 
@@ -109,7 +132,7 @@ namespace watchtower.Services.Repositories {
                     if (i == ';') {
                         state = GenState.READ_NEXT;
                     } else if (char.IsDigit(i) == true) {
-                        report.TeamID = short.Parse($"{i}");
+                        parms.TeamID = short.Parse($"{i}");
                     } else {
                         throw new FormatException($"In state GET_TEAM_ID, expected {i} to either be ';' or a digit");
                     }
@@ -131,14 +154,7 @@ namespace watchtower.Services.Repositories {
                     if (i == ';') {
                         PsOutfit? outfit = await _OutfitCensus.GetByTag(word);
                         if (outfit != null) {
-                            List<OutfitMember> members = await _OutfitCensus.GetMembers(outfit.ID);
-                            //_Logger.LogTrace($"outfit tag {word} has {members.Count} members");
-                            foreach (OutfitMember member in members) {
-                                if (ignored.Contains(member.CharacterID)) {
-                                    continue;
-                                }
-                                report.CharacterIDs.Add(member.CharacterID);
-                            }
+                            parms.OutfitIDs.Add(outfit.ID);
 
                             word = "";
                             state = GenState.READ_NEXT;
@@ -148,17 +164,8 @@ namespace watchtower.Services.Repositories {
                     }
                 } else if (state == GenState.READING_CHAR_ID) {
                     if (i == ';') {
-                        PsCharacter? c = await _CharacterRepository.GetByID(word);
-                        if (c != null && report.TeamID == -1) {
-                            report.TeamID = c.FactionID;
-                        }
+                        parms.CharacterIDs.Add(word);
 
-                        List<Session> sessions = await _SessionDb.GetByRangeAndCharacterID(word, report.PeriodStart, report.PeriodEnd);
-                        foreach (Session s in sessions) {
-                            report.Sessions.Add(s);
-                        }
-
-                        report.CharacterIDs.Add(word);
                         word = "";
                         state = GenState.READ_NEXT;
                     } else {
@@ -166,27 +173,7 @@ namespace watchtower.Services.Repositories {
                     }
                 } else if (state == GenState.READING_OUTFIT_ID) {
                     if (i == ';') {
-                        PsOutfit? outfit = await _OutfitRepository.GetByID(word);
-                        if (outfit != null) {
-                            List<Session> sessions = await _SessionDb.GetByRangeAndOutfit(outfit.ID, report.PeriodStart, report.PeriodEnd);
-                            //_Logger.LogTrace($"outfit ID {word} has {sessions.Count} sessions");
-                            foreach (Session s in sessions) {
-                                if (ignored.Contains(s.CharacterID)) {
-                                    continue;
-                                }
-
-                                report.Sessions.Add(s);
-                                report.CharacterIDs.Add(s.CharacterID);
-
-                                if (report.TeamID == -1 && s.TeamID > 0) {
-                                    report.TeamID = s.TeamID;
-                                }
-                            }
-
-                            if (report.TeamID == -1) {
-                                report.TeamID = outfit.FactionID;
-                            }
-                        }
+                        parms.OutfitIDs.Add(word);
 
                         word = "";
                         state = GenState.READ_NEXT;
@@ -195,8 +182,8 @@ namespace watchtower.Services.Repositories {
                     }
                 } else if (state == GenState.READING_SKIPPED) {
                     if (i == ';') {
-                        ignored.Add(word);
-                        report.CharacterIDs = report.CharacterIDs.Where(iter => iter != word).ToList();
+                        parms.IgnoredPlayers.Add(word);
+
                         word = "";
                         state = GenState.READ_NEXT;
                     } else {
@@ -206,8 +193,8 @@ namespace watchtower.Services.Repositories {
                     if (i == ';') {
                         //_Logger.LogTrace($"In state READING_ID> ID is '{word}'");
                         bool valid = Guid.TryParse(word, out Guid id);
-                        if (valid == true) {
-                            report.ID = id;
+                        if (valid == true && id != Guid.Empty) {
+                            parms.ID = id;
                         } else {
                             throw new FormatException($"Failed to parse '{word}' to a valid Guid");
                         }
@@ -221,7 +208,7 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            return report;
+            return parms;
         }
 
     }

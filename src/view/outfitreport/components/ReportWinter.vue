@@ -62,7 +62,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report, { PlayerMetadata } from "../Report";
+    import Report, { PlayerMetadata, ReportParameters } from "../Report";
 
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
@@ -77,6 +77,7 @@
 
     import TimeUtils from "util/Time";
     import LoadoutUtils from "util/Loadout";
+    import LocaleUtil from "util/Locale";
 
     const WinterSection = Vue.extend({
         props: {
@@ -126,7 +127,8 @@
 
     export const ReportWinter = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {
@@ -173,6 +175,9 @@
                 this.makeHSR();
                 this.makeAssists();
                 this.makeMostMaxKills();
+                this.makeKillstreak();
+                this.makeSPM();
+                this.makeScore();
 
                 this.makeHeals();
                 this.makeRevives();
@@ -291,6 +296,134 @@
                 metric.entries = metrics;
 
                 this.catMisc.metrics.push(metric);
+            },
+
+            makeScore: function(): void {
+                const metric: WinterMetric = new WinterMetric();
+                metric.name = "Score";
+                metric.funName = "Score";
+                metric.description = "Highest score (per minute)";
+
+                const map: Map<string, WinterEntry> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (map.has(ev.sourceID) == false) {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = ev.sourceID;
+
+                        entry.name = this.getCharacterName(ev.sourceID);
+                        entry.value = 0;
+
+                        map.set(entry.characterID, entry);
+                    }
+
+                    const entry: WinterEntry = map.get(ev.sourceID)!;
+                    entry.value += ev.amount;
+                    ++entry.value;
+                    map.set(ev.sourceID, entry);
+                }
+
+                const entries: WinterEntry[] = Array.from(map.values());
+                for (const entry of entries) {
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                    if (metadata != undefined) {
+                        entry.display = `${LocaleUtil.locale(entry.value, 0)} (${(entry.value / Math.max(1, metadata.timeAs) * 60).toFixed(2)})`;
+                    }
+                }
+
+                metric.entries = entries.sort((a, b) => b.value - a.value);
+
+                this.catKills.metrics.push(metric);
+            },
+
+            makeSPM: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "SPM";
+                metric.funName = "Speed runner";
+                metric.description = "Highest SPM";
+
+                const map: Map<string, number> = new Map();
+
+                for (const exp of this.report.experience) {
+                    const id: string = exp.sourceID;
+                    map.set(id, (map.get(id) || 0) + exp.amount);
+                }
+
+                map.forEach((score: number, charID: string) => {
+                    if (score < 2_000) {
+                        return;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(charID);
+                    if (metadata == undefined) {
+                        console.warn(`Missing metadata for ${charID}`);
+                        return;
+                    }
+
+                    const entry: WinterEntry = new WinterEntry();
+                    entry.characterID = charID;
+                    entry.name = this.getCharacterName(charID);
+                    entry.value = score / Math.max(1, metadata.timeAs) * 60;
+                    entry.display = LocaleUtil.locale(entry.value, 2);
+
+                    metric.entries.push(entry);
+                });
+
+                metric.entries.sort((a, b) => b.value - a.value);
+
+                this.catKills.metrics.push(metric);
+            },
+
+            makeKillstreak: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Longest killstreak";
+                metric.funName = "Streaker";
+                metric.description = "Longest killstreak";
+
+                const map: Map<string, number[]> = new Map();
+                const streaks: Map<string, number> = new Map();
+
+                const events: KillEvent[] = [...this.report.kills];
+                events.push(...this.report.deaths);
+                events.sort((a, b) => {
+                    return a.timestamp.getTime() - b.timestamp.getTime();
+                });
+
+                for (const ev of events) {
+                    // If this is a kill
+                    if (this.report.trackedCharacters.indexOf(ev.attackerCharacterID) > -1) {
+                        if (map.has(ev.attackerCharacterID) == false) {
+                            map.set(ev.attackerCharacterID, []);
+                        }
+
+                        streaks.set(ev.attackerCharacterID, (streaks.get(ev.attackerCharacterID) || 0) + 1);
+                    } else if (this.report.trackedCharacters.indexOf(ev.killedCharacterID) > -1) { // this is death
+                        if (map.has(ev.killedCharacterID) == false) {
+                            map.set(ev.killedCharacterID, []);
+                        }
+
+                        if (streaks.has(ev.killedCharacterID) == true) {
+                            const s: number[] = map.get(ev.killedCharacterID) || [];
+                            s.push(streaks.get(ev.killedCharacterID)!);
+                            map.set(ev.killedCharacterID, s);
+                            streaks.set(ev.killedCharacterID, 0);
+                        }
+                    }
+                }
+
+                const metrics: WinterEntry[] = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.value = Math.max(...iter[1]);
+                        entry.name = this.getCharacterName(iter[0]);
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = metrics;
+
+                this.catKills.metrics.push(metric);
             },
 
             makeRoadkills: function(): void {
@@ -640,7 +773,7 @@
                 metric.funName = "Head popper";
                 metric.description = "Highest HSR";
 
-                for (const player of this.report.players) {
+                for (const player of this.report.trackedCharacters) {
                     const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
                     if (kills.length < 25) {
                         continue;
@@ -668,7 +801,7 @@
                 metric.funName = "KDR";
                 metric.description = "Highest KDR";
 
-                for (const player of this.report.players) {
+                for (const player of this.report.trackedCharacters) {
                     const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
                     if (kills.length < 25) {
                         continue;
@@ -881,7 +1014,7 @@
                 metric.funName = "Elders";
                 metric.description = "Longest average life expectancy";
 
-                for (const player of this.report.players) {
+                for (const player of this.report.trackedCharacters) {
                     // Get the first event of the player
                     const firstKill: KillEvent | null = this.report.kills.find(iter => iter.attackerCharacterID == player) || null;
                     const firstKillTime: number = firstKill?.timestamp.getTime() ?? 0;

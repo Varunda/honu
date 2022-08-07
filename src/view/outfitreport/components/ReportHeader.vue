@@ -73,14 +73,15 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
-    import Report from "../Report";
+    import Report, { ReportParameters } from "../Report";
 
     import Collapsible from "components/Collapsible.vue";
     import TimeUtils from "util/Time";
 
     export const ReportHeader = Vue.extend({
         props: {
-            report: { type: Object as PropType<Report>, required: true }
+            report: { type: Object as PropType<Report>, required: true },
+            parameters: { type: Object as PropType<ReportParameters>, required: true }
         },
 
         data: function() {
@@ -114,7 +115,7 @@
                     playerMetadata: Array.from(this.report.playerMetadata.values())
                 });
 
-                const name: string = TimeUtils.format(this.report.periodStart, "YYYY-MM-DDThh:mm");
+                const name: string = TimeUtils.format(this.parameters.periodStart, "YYYY-MM-DDThh:mm");
 
                 const anchor = document.createElement("a");
                 anchor.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(json)}`);
@@ -132,7 +133,7 @@
             },
 
             generator64: function(): string {
-                return btoa(`#${this.report.id};`)
+                return btoa(`#${this.parameters.id};`)
             },
 
             badStreams: function(): any[] {
