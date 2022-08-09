@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -171,10 +172,19 @@ namespace watchtower.Controllers.Api {
             //      for the current character iterations =
             //      5k members * 10 stats = 50k
             //      5k members * 50k iterations = 250'000'000 iterations, no good
-            List<PsCharacterHistoryStat> listStats = await _CharacterHistoryStatDb.GetByCharacterIDs(characterIDs);
+            List<PsCharacterHistoryStat> listStats = new();
+            try {
+                listStats = await _CharacterHistoryStatDb.GetByCharacterIDs(characterIDs);
+            } catch (NpgsqlException ex) {
+                if (ex.InnerException is TimeoutException) {
+                    _Logger.LogWarning($"Timeout getting character history stats for {outfitID}");
+                } else {
+                    throw;
+                }
+            }
             long loadHistMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            Dictionary<string, List<PsCharacterHistoryStat>> statMap = new Dictionary<string, List<PsCharacterHistoryStat>>(members.Count);
+            Dictionary<string, List<PsCharacterHistoryStat>> statMap = new(members.Count);
             foreach (PsCharacterHistoryStat stat in listStats) {
                 if (statMap.ContainsKey(stat.CharacterID) == false) {
                     statMap.Add(stat.CharacterID, new List<PsCharacterHistoryStat>());
