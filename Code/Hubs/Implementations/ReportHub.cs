@@ -85,7 +85,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
             try {
                 parms = await _ReportRepository.ParseGenerator(generator);
-                _Logger.LogTrace($"first parse: {JToken.FromObject(parms)}");
+                //_Logger.LogTrace($"first parse: {JToken.FromObject(parms)}");
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"failed to parse generator '{generator}'");
                 await Clients.Caller.SendError(ex.Message);
@@ -95,9 +95,9 @@ namespace watchtower.Code.Hubs.Implementations {
             if (parms.ID != Guid.Empty) {
                 OutfitReportParameters? dbParms = await _ReportParametersDb.GetByID(parms.ID);
                 if (dbParms != null) {
-                    _Logger.LogDebug($"Finding previous parameters from ID {parms.ID}: {JToken.FromObject(dbParms)}");
+                    //_Logger.LogDebug($"Finding previous parameters from ID {parms.ID}: {JToken.FromObject(dbParms)}");
                     parms = await _ReportRepository.ParseGenerator(dbParms.Generator);
-                    _Logger.LogDebug($"Parms after ID load: {JToken.FromObject(dbParms)}");
+                    //_Logger.LogDebug($"Parms after ID load: {JToken.FromObject(dbParms)}");
                 }
             }
 
@@ -211,6 +211,9 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get exp
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
+                List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+                await Clients.Caller.UpdateExp(expEvents);
+                /*
                 foreach (string charID in chars) {
                     try {
                         List<ExpEvent> exp = await _ExpDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
@@ -221,6 +224,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         await Clients.Caller.SendError($"error while getting exp events for {charID}: {ex.Message}");
                     }
                 }
+                */
 
                 // Get vehicle destroy
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_VEHICLE_DESTROY);

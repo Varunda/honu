@@ -207,6 +207,8 @@ namespace watchtower.Services.Db {
                         AND source_character_id = ANY(@IDs)
             ");
 
+            cmd.CommandTimeout = Math.Min(300, IDs.Count * 20);
+
             cmd.AddParameter("IDs", IDs);
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
@@ -262,6 +264,8 @@ namespace watchtower.Services.Db {
                     {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
                     {(worldID != null ? " AND world_id = @WorldID " : "")}
             ");
+
+            cmd.CommandTimeout = 300;
 
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
