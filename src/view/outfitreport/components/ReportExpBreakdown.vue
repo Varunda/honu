@@ -4,7 +4,7 @@
             <div class="col-12 col-xl-6">
                 <div class="row">
                     <div class="col-12 col-lg-6">
-                        <chart-block-pie-chart :data="count" left-title="Experience type" right-title="# detected"></chart-block-pie-chart>
+                        <chart-block-pie-chart :data="count" left-title="Experience type" right-title="# detected" :label-value="false" :show-percent="true"></chart-block-pie-chart>
                     </div>
                     <div class="col-12 col-lg-6">
                         <chart-block-list :data="count" left-title="Experience type" right-title="# detected"></chart-block-list>
@@ -15,7 +15,7 @@
             <div class="col-12 col-xl-6">
                 <div class="row">
                     <div class="col-12 col-lg-6">
-                        <chart-block-pie-chart :data="amount" left-title="Experience type" right-title="Experience earned"></chart-block-pie-chart>
+                        <chart-block-pie-chart :data="amount" left-title="Experience type" right-title="Experience earned" :label-value="false" :show-percent="true"></chart-block-pie-chart>
                     </div>
                     <div class="col-12 col-lg-6">
                         <chart-block-list :data="amount" left-title="Experience type" right-title="Experience earned"></chart-block-list>
@@ -35,6 +35,8 @@
     import ChartBlockList from "./charts/ChartBlockList.vue";
     import ChartBlockPieChart from "./charts/ChartBlockPieChart.vue";
     import { Block }  from "./charts/common";
+
+    import ExpAlias from "util/ExpAlias";
 
     interface Entry {
         display: string;
@@ -70,8 +72,9 @@
                 const amount: Map<number, number> = new Map();
 
                 for (const ev of this.report.experience) {
-                    count.set(ev.experienceID, (count.get(ev.experienceID) || 0) + 1);
-                    amount.set(ev.experienceID, (amount.get(ev.experienceID) || 0) + ev.amount);
+                    const aliasID: number = ExpAlias.get(ev.experienceID);
+                    count.set(aliasID, (count.get(aliasID) || 0) + 1);
+                    amount.set(aliasID, (amount.get(aliasID) || 0) + ev.amount);
                 }
 
                 for (const kvp of count) {

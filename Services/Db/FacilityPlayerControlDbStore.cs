@@ -76,6 +76,8 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
 
+            cmd.CommandTimeout = 300;
+
             List<PlayerControlEvent> evs = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
 

@@ -17,6 +17,7 @@
             ShowPercent: { type: Boolean, required: false, default: false },
             PercentPrecision: { type: Number, required: false, default: 0 },
             ShowTotal: { type: Boolean, required: false, default: false },
+            LabelValue: { type: Boolean, required: false, default: true }
         },
 
         data: function() {
@@ -105,8 +106,15 @@
                                             return chart.data.labels?.map((label, index) => {
                                                 const datum = dataset.data![index];
                                                 if (typeof (datum) == "number") {
+                                                    let text: string = `${(label as any).toString()}`;
+                                                    if (this.LabelValue == true) {
+                                                        text += ` - ${datum}`;
+                                                    }
+                                                    if (this.ShowPercent == true) {
+                                                        text += ` (${(datum / Math.max(1, sum) * 100).toFixed(this.PercentPrecision)}%)`;
+                                                    }
                                                     return {
-                                                        text: `${(label as any).toString()} - ${datum} ${this.ShowPercent == true ? `(${(datum / Math.max(1, sum) * 100).toFixed(this.PercentPrecision)}%)` : ""}`,
+                                                        text: text,
                                                         fillStyle: this.colors[index],
                                                         datasetIndex: index,
                                                         fontColor: "#fff"

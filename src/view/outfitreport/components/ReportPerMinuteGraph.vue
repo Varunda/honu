@@ -1,8 +1,13 @@
 ﻿<template>
     <collapsible header-text="Per minute graph">
-        <canvas :id="canvasKillID" style="height: 300px; max-height: 300px;" class="mb-2 w-100"></canvas>
+        <canvas :id="canvasKillID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
 
-        <canvas :id="canvasScoreID" style="height: 300px; max-height: 300px;" class="mb-2 w-100"></canvas>
+        <canvas :id="canvasScoreID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
+
+        <canvas :id="canvasMedicID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
+
+        <canvas :id="canvasEngiID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
+
     </collapsible>
 </template>
 
@@ -33,13 +38,18 @@
             return {
                 killDeathChart: null as Chart | null,
                 scoreChart: null as Chart | null,
+                medicChart: null as Chart | null,
+                engiChart: null as Chart | null,
 
                 data: {
                     kills: [] as GraphEntry[],
                     deaths: [] as GraphEntry[],
-                    exp: [] as GraphEntry[],
                     score: [] as GraphEntry[],
-                    vehicleDestroy: [] as GraphEntry[]
+                    vehicleDestroy: [] as GraphEntry[],
+                    revive: [] as GraphEntry[],
+                    heal: [] as GraphEntry[],
+                    resupply: [] as GraphEntry[],
+                    maxRepair: [] as GraphEntry[]
                 }
             }
         },
@@ -58,15 +68,19 @@
                 this.data = {
                     kills: [],
                     deaths: [],
-                    exp: [],
+                    vehicleDestroy: [],
                     score: [],
-                    vehicleDestroy: []
+                    revive: [],
+                    heal: [],
+                    resupply: [],
+                    maxRepair: []
                 };
 
                 const iterationCount: number = Math.ceil(Math.floor((this.parameters.periodEnd.getTime() - this.parameters.periodStart.getTime()) / 1000) / 60);
 
                 console.log(`PerMinuteGraph> using ${iterationCount} iterations`);
 
+                // This code is bad, it iterates thru all kill/death/exp events every single block, which is really bad
                 for (let i = 0; i < iterationCount; ++i) {
                     const iterTime: Date = moment(this.parameters.periodStart).add(i, "minutes").toDate();
                     const endIter: Date = moment(iterTime).add(1, "minutes").toDate();
@@ -89,7 +103,47 @@
                         timestamp: iterTime,
                         count: this.report.experience.filter(iter => {
                             return iter.timestamp >= iterTime && iter.timestamp <= endIter;
-                        }).reduce((acc, iter) => acc += iter.amount, 0) / 60
+                        }).reduce((acc, iter) => acc += iter.amount, 0)
+                    });
+
+                    this.data.revive.push({
+                        timestamp: iterTime,
+                        count: this.report.experience.filter(iter => {
+                            return Experience.isRevive(iter.experienceID)
+                                && iter.timestamp >= iterTime && iter.timestamp <= endIter;
+                        }).length
+                    });
+
+                    this.data.revive.push({
+                        timestamp: iterTime,
+                        count: this.report.experience.filter(iter => {
+                            return Experience.isRevive(iter.experienceID)
+                                && iter.timestamp >= iterTime && iter.timestamp <= endIter;
+                        }).length
+                    });
+
+                    this.data.heal.push({
+                        timestamp: iterTime,
+                        count: this.report.experience.filter(iter => {
+                            return Experience.isHeal(iter.experienceID)
+                                && iter.timestamp >= iterTime && iter.timestamp <= endIter;
+                        }).length
+                    });
+
+                    this.data.resupply.push({
+                        timestamp: iterTime,
+                        count: this.report.experience.filter(iter => {
+                            return Experience.isResupply(iter.experienceID)
+                                && iter.timestamp >= iterTime && iter.timestamp <= endIter;
+                        }).length
+                    });
+
+                    this.data.maxRepair.push({
+                        timestamp: iterTime,
+                        count: this.report.experience.filter(iter => {
+                            return Experience.isMaxRepair(iter.experienceID)
+                                && iter.timestamp >= iterTime && iter.timestamp <= endIter;
+                        }).length
                     });
                 }
 
@@ -102,6 +156,12 @@
                 this.scoreChart?.destroy();
                 this.scoreChart = null;
 
+                this.medicChart?.destroy();
+                this.medicChart = null;
+
+                this.engiChart?.destroy();
+                this.engiChart = null;
+
                 const killCanvas: HTMLCanvasElement | null = document.getElementById(this.canvasKillID) as HTMLCanvasElement | null;
                 if (killCanvas == null) {
                     return console.error(`PerMinuteGraph> Failed to find <canvas> element with ID ${this.canvasKillID}`);
@@ -110,6 +170,16 @@
                 const scoreCanvas: HTMLCanvasElement | null = document.getElementById(this.canvasScoreID) as HTMLCanvasElement | null;
                 if (scoreCanvas == null) {
                     return console.error(`PerMinuteGraph> Failed to find <canvas> element with ID ${this.canvasScoreID}`);
+                }
+
+                const medicCanvas: HTMLCanvasElement | null = document.getElementById(this.canvasMedicID) as HTMLCanvasElement | null;
+                if (medicCanvas == null) {
+                    return console.error(`PerMinuteGraph> Failed to find <canvas> element with ID ${this.canvasMedicID}`);
+                }
+
+                const engiCanvas: HTMLCanvasElement | null = document.getElementById(this.canvasEngiID) as HTMLCanvasElement | null;
+                if (engiCanvas == null) {
+                    return console.error(`PerMinuteGraph> Failed to find <canvas> element with ID ${this.canvasEngiID}`);
                 }
 
                 const config = {
@@ -141,6 +211,11 @@
                             labels: {
                                 color: "#ffffff"
                             }
+                        },
+                        tooltip: {
+                            mode: "nearest" as "nearest", // as "x", // tell typescript this isn't a string
+                            intersect: false,
+                            axis: "x" as "x"
                         }
                     }
                 }
@@ -154,14 +229,14 @@
                                 data: this.data.kills.map(iter => iter.count),
                                 borderColor: "#00ff00",
                                 fill: true,
-                                backgroundColor: "#007700",
+                                backgroundColor: "#00770088",
                                 label: "Kills"
                             },
                             {
                                 data: this.data.deaths.map(iter => iter.count),
                                 borderColor: "#ff0000",
                                 fill: true,
-                                backgroundColor: "#770000",
+                                backgroundColor: "#770000FF",
                                 label: "Deaths"
                             }
                         ]
@@ -178,8 +253,56 @@
                                 data: this.data.score.map(iter => iter.count),
                                 borderColor: "#ffff00",
                                 fill: true,
-                                backgroundColor: "#777700",
-                                label: "Score per minute"
+                                backgroundColor: "#77770088",
+                                label: "Score"
+                            }
+                        ]
+                    },
+                    options: config
+                });
+
+                this.medicChart = new Chart(medicCanvas.getContext("2d")!, {
+                    type: "line",
+                    data: {
+                        labels: this.data.score.map(iter => moment(iter.timestamp).format("YYYY-MM-DD hh:mm")),
+                        datasets: [
+                            {
+                                data: this.data.revive.map(iter => iter.count),
+                                borderColor: "#ff00ff",
+                                fill: true,
+                                backgroundColor: "#77007788",
+                                label: "Revives"
+                            },
+                            {
+                                data: this.data.heal.map(iter => iter.count),
+                                borderColor: "#00ffff",
+                                fill: true,
+                                backgroundColor: "#00ffff88",
+                                label: "Heals"
+                            }
+                        ]
+                    },
+                    options: config
+                });
+
+                this.engiChart = new Chart(engiCanvas.getContext("2d")!, {
+                    type: "line",
+                    data: {
+                        labels: this.data.score.map(iter => moment(iter.timestamp).format("YYYY-MM-DD hh:mm")),
+                        datasets: [
+                            {
+                                data: this.data.resupply.map(iter => iter.count),
+                                borderColor: "#ff8888",
+                                fill: true,
+                                backgroundColor: "#77333388",
+                                label: "Resupplies"
+                            },
+                            {
+                                data: this.data.maxRepair.map(iter => iter.count),
+                                borderColor: "#8888ff",
+                                fill: true,
+                                backgroundColor: "#33337788",
+                                label: "MAX repairs"
                             }
                         ]
                     },
@@ -189,13 +312,13 @@
         },
 
         computed: {
-            canvasKillID: function(): string {
-                return `chart-report-per-minute-kills`;
-            },
+            canvasKillID: function(): string { return `chart-report-per-minute-kills`; },
 
-            canvasScoreID: function(): string {
-                return `chart-report-per-minute-score`;
-            }
+            canvasMedicID: function(): string { return `chart-report-per-minute-medic`; },
+
+            canvasScoreID: function(): string { return `chart-report-per-minute-score`; },
+
+            canvasEngiID: function(): string { return `chart-report-per-minute-engi`; },
         },
 
         components: {

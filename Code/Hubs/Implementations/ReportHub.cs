@@ -212,6 +212,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 // Get exp
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
                 List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+                report.Experience = expEvents;
                 await Clients.Caller.UpdateExp(expEvents);
                 /*
                 foreach (string charID in chars) {
@@ -241,6 +242,14 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get player control
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_PLAYER_CONTROL);
+                try {
+                    List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+                    await Clients.Caller.UpdatePlayerControls(pcEvents);
+                    report.PlayerControl = pcEvents;
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, "error getting player control events");
+                }
+                /*
                 foreach (string charID in chars) {
                     try {
                         List<PlayerControlEvent> events = await _PlayerControlDb.GetByCharacterIDPeriod(charID, parms.PeriodStart, parms.PeriodEnd);
@@ -251,6 +260,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         await Clients.Caller.SendError($"error while getting player control events for {charID}: {ex.Message}");
                     }
                 }
+                */
 
                 // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
                 //      and load the characters that were present
@@ -272,6 +282,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
                 report.Control = control;
                 await Clients.Caller.UpdateControls(report.Control);
+                await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
 
                 // Get characters
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);

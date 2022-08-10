@@ -50,6 +50,10 @@ export class ExperienceBlock {
 
 export class Experience {
 
+    public static KILL: number = 1;
+    public static PRIORITY_KILL: number = 278;
+    public static HIGH_PRIORITY_KILL: number = 279;
+
     public static ASSIST: number = 2;
     public static SPAWN_ASSIST: number = 3;
     public static PRIORITY_ASSIST: number = 371;

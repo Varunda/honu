@@ -378,10 +378,11 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Longest killstreak";
                 metric.funName = "Streaker";
-                metric.description = "Longest killstreak";
+                metric.description = "Longest killstreak (30s timeout)";
 
                 const map: Map<string, number[]> = new Map();
                 const streaks: Map<string, number> = new Map();
+                const lastKill: Map<string, KillEvent> = new Map();
 
                 const events: KillEvent[] = [...this.report.kills];
                 events.push(...this.report.deaths);
@@ -396,7 +397,23 @@
                             map.set(ev.attackerCharacterID, []);
                         }
 
+                        // Timeout for kills, if kills are more than 60 seconds apart, they are not a streak
+                        const lastKillEv: KillEvent | null = lastKill.get(ev.attackerCharacterID) || null;
+                        if (lastKillEv != null) {
+                            const lastKillTs: number = lastKillEv.timestamp.getTime();
+                            const curKillTs: number = ev.timestamp.getTime();
+                            if (curKillTs - lastKillTs >= 1000 * 30) { // 1000 ms * 30 seconds
+                                if (streaks.has(ev.attackerCharacterID) == true) {
+                                    const s: number[] = map.get(ev.attackerCharacterID) || [];
+                                    s.push(streaks.get(ev.attackerCharacterID)!);
+                                    map.set(ev.attackerCharacterID, s);
+                                    streaks.set(ev.attackerCharacterID, 0);
+                                }
+                            }
+                        }
+
                         streaks.set(ev.attackerCharacterID, (streaks.get(ev.attackerCharacterID) || 0) + 1);
+                        lastKill.set(ev.attackerCharacterID, ev);
                     } else if (this.report.trackedCharacters.indexOf(ev.killedCharacterID) > -1) { // this is death
                         if (map.has(ev.killedCharacterID) == false) {
                             map.set(ev.killedCharacterID, []);

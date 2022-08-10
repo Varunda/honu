@@ -15,7 +15,7 @@
                 </span>
             </td>
             <td>
-                {{datum.count}}
+                {{datum.count | locale}}
                 <span v-if="ShowPercent == true">
                     ({{datum.count / Math.max(1, data.total) * 100 | locale}}%)
                 </span>
@@ -24,7 +24,7 @@
 
         <tr v-if="ShowTotal == true" class="table-dark">
             <td>Total</td>
-            <td>{{data.total}}</td>
+            <td>{{data.total | locale}}</td>
         </tr>
     </table>
 

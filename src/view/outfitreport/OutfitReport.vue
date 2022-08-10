@@ -946,6 +946,7 @@
             onUpdateExp: function(ev: ExpEvent[]): void {
                 this.report.experience = ev.map(iter => ExpStatApi.parseExpEvent(iter));
                 this.log(`Loaded ${this.report.experience.length} experience events`);
+                this.progress.exp = this.trackedCharacters.length;
             },
 
             onUpdateVehicleDestroy: function(ev: VehicleDestroyEvent[]): void {
