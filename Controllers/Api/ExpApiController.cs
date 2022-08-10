@@ -135,7 +135,6 @@ namespace watchtower.Controllers {
             List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), fast: true);
             block.Characters = chars;
 
-            _Logger.LogTrace($"{string.Join(", ", expTypeIDs)}");
             List<ExperienceType> types = (await _ExperienceTypeRepository.GetAll()).Where(iter => expTypeIDs.Contains(iter.ID)).ToList();
             block.ExperienceTypes = types;
 
