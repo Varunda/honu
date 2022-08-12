@@ -86,7 +86,6 @@ export class Loadable {
 
         if (wrap.state == "loaded") {
             throw `cannot wrap a loaded Loading, as no conversion between the two exists`;
-
         }
 
         throw `failed to wrap, unchecked state: '${wrap.state}'`;

@@ -18,12 +18,12 @@
         </h2>
 
         <div id="report-header" class="collapse show text-center mb-3">
-            <div v-if="report.trackedOutfits.length > 0">
+            <div v-if="trackedOutfits.length > 0">
                 <h3 class="d-inline-block mr-2">
                     Outfits:
                 </h3>
 
-                <h3 v-for="outfit in report.trackedOutfits" class="d-inline-block mr-2">
+                <h3 v-for="outfit in trackedOutfits" class="d-inline-block mr-2">
                     <a :href="'/o/' + outfit.id">
                         <span v-if="outfit.tag != null">
                             [{{outfit.tag}}]
@@ -40,15 +40,15 @@
 
             <div>
                 <h4>
-                    <span v-if="report.periodStart.getDate() != report.periodEnd.getDate()">
-                        From {{report.periodStart | moment}} to {{report.periodEnd | moment}},
+                    <span v-if="parameters.periodStart.getDate() != parameters.periodEnd.getDate()">
+                        From {{parameters.periodStart | moment}} to {{parameters.periodEnd | moment}},
                     </span>
 
                     <span v-else>
-                        On {{report.periodStart | moment("YYYY-MM-DD")}} from {{report.periodStart | moment("hh:mm A")}} to {{report.periodEnd | moment("hh:mm A")}}
+                        On {{parameters.periodStart | moment("YYYY-MM-DD")}} from {{parameters.periodStart | moment("hh:mm A")}} to {{parameters.periodEnd | moment("hh:mm A")}}
                     </span>
 
-                    (over {{(report.periodEnd.getTime() - report.periodStart.getTime()) / 1000 | mduration}})
+                    (over {{(parameters.periodEnd.getTime() - parameters.periodStart.getTime()) / 1000 | mduration}})
                 </h4>
             </div>
 
@@ -77,6 +77,13 @@
 
     import Collapsible from "components/Collapsible.vue";
     import TimeUtils from "util/Time";
+    import { PsCharacter } from "api/CharacterApi";
+
+    type OutfitEntry = {
+        id: string;
+        tag: string | null;
+        name: string;
+    }
 
     export const ReportHeader = Vue.extend({
         props: {
@@ -92,10 +99,6 @@
         },
 
         methods: {
-            bindIDs: function() {
-                //this.outfitsIDs = this.report.
-            },
-
             copy: function() {
                 try {
                     navigator.clipboard.writeText(location.href);
@@ -128,6 +131,27 @@
         },
 
         computed: {
+            trackedOutfits: function(): OutfitEntry[] {
+                const trackedCharts: PsCharacter[] = Array.from(this.report.characters.values())
+                    .filter((iter: PsCharacter) => this.report.trackedCharacters.indexOf(iter.id) > -1);
+
+                const outfits: OutfitEntry[] = [];
+
+                for (const c of trackedCharts) {
+                    if (c.outfitID == null || outfits.find(iter => iter.id == c.outfitID) != undefined) {
+                        continue;
+                    }
+
+                    outfits.push({
+                        id: c.outfitID,
+                        tag: c.outfitTag,
+                        name: c.outfitName!
+                    });
+                }
+
+                return outfits;
+            },
+
             reportUrl: function(): string {
                 return `/report/${this.generator64}`;
             },

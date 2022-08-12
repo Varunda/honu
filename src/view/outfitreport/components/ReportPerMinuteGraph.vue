@@ -48,6 +48,7 @@
                     vehicleDestroy: [] as GraphEntry[],
                     revive: [] as GraphEntry[],
                     heal: [] as GraphEntry[],
+                    shieldRepair: [] as GraphEntry[],
                     resupply: [] as GraphEntry[],
                     maxRepair: [] as GraphEntry[]
                 }
@@ -64,6 +65,41 @@
                 this.makeGraph();
             },
 
+            getSlice(arr: { timestamp: Date }[], startTime: Date, endTime: Date): GraphEntry {
+                const datum: GraphEntry = {
+                    timestamp: startTime,
+                    count: 0
+                };
+                let i = 0;
+                for (i = 0; i < arr.length; ++i) {
+                    let k = arr[i];
+                    if (k.timestamp > endTime) {
+                        break;
+                    }
+                    ++datum.count;
+                }
+
+                return datum;
+            },
+
+            getSliceAndAdvance(arr: { timestamp: Date }[], startTime: Date, endTime: Date): GraphEntry {
+                const datum: GraphEntry = {
+                    timestamp: startTime,
+                    count: 0
+                };
+                let i = 0;
+                for (i = 0; i < arr.length; ++i) {
+                    let k = arr[i];
+                    if (k.timestamp > endTime) {
+                        break;
+                    }
+                    ++datum.count;
+                }
+                arr = arr.slice(0, i);
+
+                return datum;
+            },
+
             makeData: function(): void {
                 this.data = {
                     kills: [],
@@ -72,6 +108,7 @@
                     score: [],
                     revive: [],
                     heal: [],
+                    shieldRepair: [],
                     resupply: [],
                     maxRepair: []
                 };
@@ -80,10 +117,34 @@
 
                 console.log(`PerMinuteGraph> using ${iterationCount} iterations`);
 
+                let kills: KillEvent[] = [...this.report.kills];
+                let deaths: KillEvent[] = [...this.report.deaths];
+                let exp: ExpEvent[] = [...this.report.experience];
+
                 // This code is bad, it iterates thru all kill/death/exp events every single block, which is really bad
                 for (let i = 0; i < iterationCount; ++i) {
                     const iterTime: Date = moment(this.parameters.periodStart).add(i, "minutes").toDate();
                     const endIter: Date = moment(iterTime).add(1, "minutes").toDate();
+
+                    /*
+                    const datum: GraphEntry = {
+                        timestamp: iterTime,
+                        count: 0
+                    };
+                    for (let i = 0; i < kills.length; ++i) {
+                        let k: KillEvent = kills[i];
+                        if (k.timestamp > endIter) {
+                            break;
+                        }
+                        ++datum.count;
+                    }
+                    kills = kills.slice(0, i);
+                    this.data.kills.push(datum);
+
+                    this.data.kills.push(this.getSliceAndAdvance(kills, iterTime, endIter));
+
+                    this.data.deaths.push(this.getSliceAndAdvance(deaths, iterTime, endIter));
+                    */
 
                     this.data.kills.push({
                         timestamp: iterTime,
@@ -114,7 +175,7 @@
                         }).length
                     });
 
-                    this.data.revive.push({
+                    this.data.shieldRepair.push({
                         timestamp: iterTime,
                         count: this.report.experience.filter(iter => {
                             return Experience.isRevive(iter.experienceID)
@@ -277,8 +338,15 @@
                                 data: this.data.heal.map(iter => iter.count),
                                 borderColor: "#00ffff",
                                 fill: true,
-                                backgroundColor: "#00ffff88",
+                                backgroundColor: "#00777788",
                                 label: "Heals"
+                            },
+                            {
+                                data: this.data.shieldRepair.map(iter => iter.count),
+                                borderColor: "#0000ff",
+                                fill: true,
+                                backgroundColor: "#00007788",
+                                label: "Shield repair"
                             }
                         ]
                     },
