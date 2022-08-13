@@ -2,9 +2,9 @@
     <div class="card mr-3 mb-3 bg-transparent border">
         <div class="card-header">
             <h5>
-                {{ShowFunName ? card.funName : card.name}}
+                {{settings.showFunNames ? card.funName : card.name}}
 
-                <info-hover v-if="card.availableAfter != null" :text="'Data not tracked before ' + card.availableAfter"></info-hover>
+                <info-hover v-if="card.helpText != null" :text="card.helpText"></info-hover>
             </h5>
             <h6 class="mb-0">
                 {{card.description}}
@@ -12,7 +12,7 @@
         </div>
 
         <div class="list-group list-group-flush flex-grow-1">
-            <div v-for="entry in card.entries.slice(0, size)" class="list-group-item border-top bg-transparent">
+            <div v-for="entry in card.entries.slice(0, settings.size)" class="list-group-item border-top bg-transparent">
                 <a :href="'/c/' + entry.characterID">
                     {{entry.name}}
                 </a>
@@ -30,6 +30,7 @@
     export const WinterCard = Vue.extend({
         props: {
             card: { type: Object, required: true },
+            settings: { type: Object, required: true },
             ShowFunName: { type: Boolean, required: false, default: false },
             size: { type: Number, required: false, default: 5 }
         },

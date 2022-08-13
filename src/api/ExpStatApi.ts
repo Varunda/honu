@@ -102,6 +102,24 @@ export class Experience {
 	public static VKILL_CHIMERA: number = 1565;
 	public static VKILL_DERVISH: number = 1635;
 
+    public static VASSIST_FLASH: number = 101;
+	public static VASSIST_GALAXY: number = 105;
+	public static VASSIST_LIBERATOR: number = 106;
+	public static VASSIST_LIGHTNING: number = 107;
+	public static VASSIST_MAGRIDER: number = 108;
+	public static VASSIST_MOSQUITO: number = 109;
+	public static VASSIST_PROWLER: number = 110;
+	public static VASSIST_REAVER: number = 111;
+	public static VASSIST_SCYTHE: number = 112;
+	public static VASSIST_VANGUARD: number = 114;
+	public static VASSIST_HARASSER: number = 304;
+	public static VASSIST_VALKYRIE: number = 504;
+	public static VASSIST_ANT: number = 654;
+	public static VASSIST_COLOSSUS: number = 1453;
+	public static VASSIST_JAVELIN: number = 1484;
+	public static VASSIST_CHIMERA: number = -1;
+	public static VASSIST_DERVISH: number = -1;
+
     public static REPAIR_FLASH: number = 31;
     public static REPAIR_ENGI_TURRET: number = 88;
     public static REPAIR_PHALANX: number = 89;
@@ -165,36 +183,60 @@ export class Experience {
         Experience.SQUAD_REPAIR_CHIMERA, Experience.SQUAD_REPAIR_DERVISH
     ];
 
+    /**
+     * Is this exp ID an assist event?
+     */
     public static isAssist(expID: number): boolean {
         return expID == this.ASSIST || expID == this.SPAWN_ASSIST
             || expID == this.PRIORITY_ASSIST || expID == this.HIGH_PRIORITY_ASSIST;
 	}
 
+    /**
+     * Is this exp ID an assist event?
+     */
     public static isHeal(expID: number): boolean {
         return expID == this.HEAL || expID == this.SQUAD_HEAL;
     }
 
+    /**
+     * Is this exp ID a revive exp event
+     */
     public static isRevive(expID: number): boolean {
         return expID == this.REVIVE || expID == this.SQUAD_REVIVE;
     }
 
+    /**
+     * Is this exp ID a resupply exp event
+     */
     public static isResupply(expID: number): boolean {
         return expID == this.RESUPPLY || expID == this.SQUAD_RESUPPLY;
     }
 
+    /**
+     * Is this exp ID a max repair exp event
+     */
     public static isMaxRepair(expID: number): boolean {
         return expID == this.MAX_REPAIR || expID == this.SQUAD_MAX_REPAIR;
     }
 
+    /**
+     * Is this exp ID a shield repair exp event
+     */
     public static isShieldRepair(expID: number): boolean {
         return expID == this.SHIELD_REPAIR || expID == this.SQUAD_SHIELD_REPAIR;
     }
 
+    /**
+     * Is this exp ID a spawn event
+     */
     public static isSpawn(expID: number): boolean {
         return expID == this.SQUAD_SPAWN || expID == this.GALAXY_SPAWN_BONUS || expID == this.SUNDERER_SPAWN_BONUS
             || expID == this.SQUAD_VEHICLE_SPAWN_BONUS || expID == this.GENERIC_NPC_SPAWN;
     }
 
+    /**
+     * Is this exp ID a vehicle kill exp event
+     */
     public static isVehicleKill(expID: number): boolean {
         return expID == this.VKILL_FLASH || expID == this.VKILL_GALAXY
             || expID == this.VKILL_LIBERATOR || expID == this.VKILL_LIGHTNING
@@ -205,6 +247,18 @@ export class Experience {
             || expID == this.VKILL_ANT || expID == this.VKILL_COLOSSUS
             || expID == this.VKILL_JAVELIN || expID == this.VKILL_CHIMERA
             || expID == this.VKILL_DERVISH;
+    }
+
+    public static isVehicleAssist(expID: number): boolean {
+        return expID == this.VKILL_FLASH || expID == this.VASSIST_GALAXY
+            || expID == this.VASSIST_LIBERATOR || expID == this.VASSIST_LIGHTNING
+            || expID == this.VASSIST_MAGRIDER || expID == this.VASSIST_MOSQUITO
+            || expID == this.VASSIST_PROWLER || expID == this.VASSIST_REAVER
+            || expID == this.VASSIST_SCYTHE || expID == this.VASSIST_VANGUARD
+            || expID == this.VASSIST_HARASSER || expID == this.VASSIST_VALKYRIE
+            || expID == this.VASSIST_ANT || expID == this.VASSIST_COLOSSUS
+            || expID == this.VASSIST_JAVELIN || expID == this.VASSIST_CHIMERA
+            || expID == this.VASSIST_DERVISH;
     }
 
     public static isVehicleRepair(expID: number): boolean {

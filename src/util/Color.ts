@@ -5,6 +5,10 @@ export class RGB {
     public blue: number = 0;
 }
 
+export type BootstrapColor = "primary" | "secondary" | "success" | "info" | "warning" | "danger"
+    | "blue" | "indigo" | "purple" | "pink" | "red" | "orange" | "yellow" | "green" | "teal" | "cyan"
+    | "white" | "gray" | "gray-dark" | "light" | "dark";
+
 export default class ColorUtils {
 
     /*

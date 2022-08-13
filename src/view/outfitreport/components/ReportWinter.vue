@@ -1,5 +1,4 @@
 ﻿<template>
-
     <collapsible header-text="Winter Leaderboard">
         <template v-slot:header>
             <div style="display: inline-flex; flex-grow: 1; align-items: center;">
@@ -12,17 +11,25 @@
                     <option :value="12">12</option>
                 </select>
 
-                <button type="button" class="btn btn-small border mr-2" :class="[ settings.showFunNames == true ? 'btn-primary' : 'btn-secondary' ]" @click.stop="settings.showFunNames = !settings.showFunNames">
-                    Use fun names
-                </button>
+                <toggle-button v-model="settings.showFunNames" class="mr-2">
+                    Show fun names
+                </toggle-button>
+
+                <toggle-button v-model="settings.showHeader" class="mr-2">
+                    Show section headers
+                </toggle-button>
 
                 <span class="btn-group">
                     <toggle-button v-model="show.kills">
                         Kills
                     </toggle-button>
 
-                    <toggle-button v-model="show.support">
-                        Support
+                    <toggle-button v-model="show.medic">
+                        Medic
+                    </toggle-button>
+
+                    <toggle-button v-model="show.engi">
+                        Engineer
                     </toggle-button>
 
                     <toggle-button v-model="show.spawns">
@@ -49,13 +56,14 @@
         </template>
 
         <template v-slot:default>
-            <winter-section v-if="show.kills" :category="catKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.support" :category="catSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.spawns" :category="catSpawns" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.weaponTypes" :category="catWeaponTypes" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.vehicleSupport" :category="catVehicleSupport" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
-            <winter-section v-if="show.misc" :category="catMisc" :show-fun-names="settings.showFunNames" :size="settings.size"></winter-section>
+            <winter-section v-if="show.kills" :category="catKills" :settings="settings"></winter-section>
+            <winter-section v-if="show.medic" :category="catMedic" :settings="settings"></winter-section>
+            <winter-section v-if="show.engi" :category="catEngi" :settings="settings"></winter-section>
+            <winter-section v-if="show.spawns" :category="catSpawns" :settings="settings"></winter-section>
+            <winter-section v-if="show.weaponTypes" :category="catWeaponTypes" :settings="settings"></winter-section>
+            <winter-section v-if="show.vehicleKills" :category="catVehicleKills" :settings="settings"></winter-section>
+            <winter-section v-if="show.vehicleSupport" :category="catVehicleSupport" :settings="settings"></winter-section>
+            <winter-section v-if="show.misc" :category="catMisc" :settings="settings"></winter-section>
         </template>
     </collapsible>
 </template>
@@ -63,6 +71,7 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import Report, { PlayerMetadata, ReportParameters } from "../Report";
+    import { InfantryDamageEntry } from "../InfantryDamage";
 
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
@@ -71,26 +80,30 @@
     import WinterCard from "./winter/WinterCard.vue";
 
     import { PsCharacter } from "api/CharacterApi";
-    import { Experience, ExpEvent } from "api/ExpStatApi";
+    import { Experience, ExperienceType, ExpEvent } from "api/ExpStatApi";
     import { KillEvent } from "api/KillStatApi";
     import { PsItem } from "api/ItemApi";
 
     import TimeUtils from "util/Time";
     import LoadoutUtils from "util/Loadout";
     import LocaleUtil from "util/Locale";
+    import { BootstrapColor } from "util/Color";
 
     const WinterSection = Vue.extend({
         props: {
             category: { type: Object as PropType<WinterCategory>, required: true },
-            ShowFunNames: { type: Boolean, required: true },
-            size: { type: Number, required: true }
+            settings: { type: Object, required: true },
         },
 
         template: `
             <div>
+                <h4 v-if="settings.showHeader == true" class="wt-header" :style="'background-color: var(--' + (category.color || 'secondary') + ');'">
+                    {{category.name}}
+                </h4>
+
                 <div class="d-flex flex-row flex-wrap">
                     <template v-for="metric in category.metrics">
-                        <winter-card v-if="metric.entries.length > 0" :card="metric" :show-fun-name="ShowFunNames" :size="size"></winter-card>
+                        <winter-card v-if="metric.entries.length > 0" :card="metric" :settings="settings"></winter-card>
                     </template>
                 </div>
             </div>
@@ -106,15 +119,19 @@
         public funName: string = "";
         public description: string = "";
         public entries: WinterEntry[] = [];
-        public availableAfter: string | null = null;
+        public helpText: string | null = null;
     }
 
     class WinterCategory {
-        public constructor(name: string) {
+        public constructor(name: string, color?: BootstrapColor) {
             this.name = name;
+            if (color) {
+                this.color = color;
+            }
         }
 
         public name: string = "";
+        public color: BootstrapColor = "secondary";
         public metrics: WinterMetric[] = [];
     }
 
@@ -135,12 +152,14 @@
             return {
                 settings: {
                     size: 5 as number,
-                    showFunNames: false as boolean
+                    showFunNames: false as boolean,
+                    showHeader: true as boolean
                 },
 
                 show: {
                     kills: true as boolean,
-                    support: true as boolean,
+                    medic: true as boolean,
+                    engi: true as boolean,
                     spawns: true as boolean,
                     vehicleKills: true as boolean,
                     vehicleSupport: true as boolean,
@@ -149,13 +168,14 @@
                 },
 
                 categories: [
-                    new WinterCategory("Kills") as WinterCategory,
-                    new WinterCategory("Support") as WinterCategory,
-                    new WinterCategory("Spawns") as WinterCategory,
-                    new WinterCategory("Weapon types") as WinterCategory,
-                    new WinterCategory("Vehicle kills") as WinterCategory,
-                    new WinterCategory("Vehicle support") as WinterCategory,
-                    new WinterCategory("Misc") as WinterCategory,
+                    new WinterCategory("Kills", "primary") as WinterCategory,
+                    new WinterCategory("Medic", "success") as WinterCategory,
+                    new WinterCategory("Engineer", "indigo") as WinterCategory,
+                    new WinterCategory("Spawns", "info") as WinterCategory,
+                    new WinterCategory("Weapon types", "pink") as WinterCategory,
+                    new WinterCategory("Vehicle kills", "blue") as WinterCategory,
+                    new WinterCategory("Vehicle support", "cyan") as WinterCategory,
+                    new WinterCategory("Misc", "purple") as WinterCategory,
                 ] as WinterCategory[],
 
                 essential: [] as WinterMetric[],
@@ -168,6 +188,10 @@
         },
 
         methods: {
+            ///
+            /// Woe unto the code below, for it is bad, but it gets the job done
+            ///
+
             makeAll: function(): void {
                 this.makeKills();
                 this.makeKpm();
@@ -180,10 +204,18 @@
                 this.makeScore();
 
                 this.makeHeals();
+                this.makeHealthHealed();
                 this.makeRevives();
                 this.makeShieldRepairs();
+                this.makeShieldsHealed();
+
                 this.makeResupplies();
+                this.makeTotalRepairHealth();
                 this.makeMaxRepairs();
+                this.makeMaxRepairHealth();
+                this.makeVehicleRepair();
+                this.makeVehicleRepairHealth();
+                this.makeVehicleResupply();
                 this.makeHardlightAssists();
 
                 this.makeSpawns();
@@ -202,9 +234,6 @@
                 this.makeESFKills();
                 this.makeLiberatorKills();
 
-                this.makeVehicleRepair();
-                this.makeVehicleResupply();
-
                 this.makeMostUniqueWeapons();
                 this.makeC4Kills();
                 this.makeKnifeKills();
@@ -213,6 +242,8 @@
 
                 this.makeAverageLifetime();
                 this.makeRoadkills();
+                this.makeInfantryDamage();
+                this.makeInfantryDamagePerMinute();
             },
 
             makeKills: function(): void {
@@ -256,7 +287,7 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Assists";
                 metric.funName = "Wingman";
-                metric.description = "Highest assists (per minute)";
+                metric.description = "Most assists (per minute)";
 
                 this.catKills.metrics.push(this.generateExperience(
                     metric,
@@ -303,6 +334,7 @@
                 metric.name = "Score";
                 metric.funName = "Score";
                 metric.description = "Highest score (per minute)";
+                metric.helpText = "Not tracked before 2022-08-02";
 
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -341,6 +373,7 @@
                 metric.name = "SPM";
                 metric.funName = "Speed runner";
                 metric.description = "Highest SPM";
+                metric.helpText = "Not tracked before 2022-08-02";
 
                 const map: Map<string, number> = new Map();
 
@@ -364,7 +397,7 @@
                     entry.characterID = charID;
                     entry.name = this.getCharacterName(charID);
                     entry.value = score / Math.max(1, metadata.timeAs) * 60;
-                    entry.display = LocaleUtil.locale(entry.value, 2);
+                    entry.display = `${LocaleUtil.locale(entry.value, 2)} (${LocaleUtil.locale(score, 0)})`;
 
                     metric.entries.push(entry);
                 });
@@ -374,11 +407,58 @@
                 this.catKills.metrics.push(metric);
             },
 
+            makeInfantryDamage: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Infantry damage dealt";
+                metric.funName = "Infantry damage dealt";
+                metric.description = "Damage dealt to infantry (estimated!)";
+                metric.helpText = "Estimated from assist XP, not available before 2022-08-02";
+
+                const map: Map<string, number> = new Map();
+                this.report.playerInfantryDamage.forEach((value: InfantryDamageEntry, key: string) => {
+                    map.set(key, value.totalDamage);
+                });
+
+                metric = this.generateFromMap(metric, map, (metadata) => metadata.timeAs, 0, 2);
+
+                this.catMisc.metrics.push(metric);
+            },
+
+            makeInfantryDamagePerMinute: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Infantry damage per min";
+                metric.funName = "Infantry damage per min";
+                metric.description = "Damage dealt to infantry (estimated!)";
+                metric.helpText = "Estimated from assist XP, not available before 2022-08-02";
+
+                metric.entries = Array.from(this.report.playerInfantryDamage.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata == undefined) {
+                            console.warn(`Missing player metadata for ${iter[0]}/${this.getCharacterName(iter[0])})`);
+                        }
+
+                        entry.value = iter[1].totalDamage / (metadata?.timeAs || 120) * 60;
+                        entry.name = this.getCharacterName(iter[0]);
+                        entry.display = `${LocaleUtil.locale(entry.value, 2)} (${LocaleUtil.locale(iter[1].totalDamage, 0)})`;
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                this.catMisc.metrics.push(metric);
+            },
+
+
+
             makeKillstreak: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Longest killstreak";
                 metric.funName = "Streaker";
                 metric.description = "Longest killstreak (30s timeout)";
+                metric.helpText = "Killstreaks are reset on death, or if there is more than 30 seconds between kills";
 
                 const map: Map<string, number[]> = new Map();
                 const streaks: Map<string, number> = new Map();
@@ -397,7 +477,7 @@
                             map.set(ev.attackerCharacterID, []);
                         }
 
-                        // Timeout for kills, if kills are more than 60 seconds apart, they are not a streak
+                        // Timeout for kills, if kills are more than 30 seconds apart, they are not a streak
                         const lastKillEv: KillEvent | null = lastKill.get(ev.attackerCharacterID) || null;
                         if (lastKillEv != null) {
                             const lastKillTs: number = lastKillEv.timestamp.getTime();
@@ -457,21 +537,7 @@
                     }
                 }
 
-                const metrics: WinterEntry[] = Array.from(map.entries())
-                    .map(iter => {
-                        const entry: WinterEntry = new WinterEntry();
-                        entry.characterID = iter[0];
-                        entry.value = iter[1];
-                        entry.name = this.getCharacterName(iter[0]);
-
-                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
-                        if (metadata != undefined) {
-                            entry.display = `${entry.value} (${(entry.value / metadata.timeAs * 60 * 60).toFixed(2)})`;
-                        }
-                        return entry;
-                    }).sort((a, b) => b.value - a.value);
-
-                metric.entries = metrics;
+                metric = this.generateFromMap(metric, map, (metadata) => metadata.timeAs / 60, 0, 2);
 
                 this.catMisc.metrics.push(metric);
             },
@@ -481,7 +547,66 @@
                 metric.name = "Heals";
                 metric.funName = "Green Wizard";
                 metric.description = "Most heals (per minute)";
-                this.catSupport.metrics.push(this.generateExperience(metric, [Experience.HEAL, Experience.SQUAD_HEAL], (metadata) => metadata.classes.medic.timeAs));
+                this.catMedic.metrics.push(this.generateExperience(metric, [Experience.HEAL, Experience.SQUAD_HEAL], (metadata) => metadata.classes.medic.timeAs));
+            },
+
+            makeHealthHealed: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Health healed";
+                metric.funName = "Health healed";
+                metric.description = "Health healed (estimated, per minute)";
+                metric.helpText = "Estimated from 1 xp per heal tick is equal to 10 health healed";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isHeal(ev.experienceID) == false) {
+                        continue;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(ev.sourceID);
+                    if (ev.experienceID == Experience.SQUAD_HEAL) {
+                        ev.amount /= 1.5;
+                    }
+
+                    // One 1xp = 10 health healed (GUESS ALERT THIS IS A GUESS SIREN WEEWHOO)
+                    // also ignore double XP if the player has it
+                    const amount: number = ev.amount * 10 / (metadata?.scoreMultiplier ?? 1);
+
+                    map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
+                }
+
+                this.catMedic.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs));
+            },
+
+            makeShieldsHealed: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Shields restored";
+                metric.funName = "Shields restored";
+                metric.description = "Shields restored (estimated, per minute)";
+                metric.helpText = "Estimated from 1 xp per tick is equal to 10 shield restored";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isShieldRepair(ev.experienceID) == false) {
+                        continue;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(ev.sourceID);
+                    if (ev.experienceID == Experience.SQUAD_SHIELD_REPAIR) {
+                        ev.amount /= 1.5;
+                    }
+
+                    // One 1xp = 10 health healed (GUESS ALERT THIS IS A GUESS SIREN WEEWHOO)
+                    // also ignore double XP if the player has it
+                    const amount: number = ev.amount * 10 / (metadata?.scoreMultiplier ?? 1);
+
+                    map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
+                }
+
+                this.catMedic.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs));
+
             },
 
             makeRevives: function(): void {
@@ -490,7 +615,7 @@
                 metric.funName = "Necromancer";
                 metric.description = "Most revives (per minute)";
 
-                this.catSupport.metrics.push(this.generateExperience(metric, [Experience.REVIVE, Experience.SQUAD_REVIVE], (metadata) => metadata.classes.medic.timeAs));
+                this.catMedic.metrics.push(this.generateExperience(metric, [Experience.REVIVE, Experience.SQUAD_REVIVE], (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeResupplies: function(): void {
@@ -499,7 +624,7 @@
                 metric.funName = "Ammo printer";
                 metric.description = "Most resupplies (per minute)";
 
-                this.catSupport.metrics.push(this.generateExperience(metric, [Experience.RESUPPLY, Experience.SQUAD_RESUPPLY], (metadata) => metadata.classes.engineer.timeAs));
+                this.catEngi.metrics.push(this.generateExperience(metric, [Experience.RESUPPLY, Experience.SQUAD_RESUPPLY], (metadata) => metadata.classes.engineer.timeAs));
             },
 
             makeMaxRepairs: function(): void {
@@ -508,7 +633,102 @@
                 metric.funName = "Welder";
                 metric.description = "Most MAX repairs (per minute)";
 
-                this.catSupport.metrics.push(this.generateExperience(metric, [Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR], (metadata) => metadata.classes.engineer.timeAs));
+                this.catEngi.metrics.push(this.generateExperience(metric, [Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR], (metadata) => metadata.classes.engineer.timeAs));
+            },
+
+            makeMaxRepairHealth: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "MAX health repairs";
+                metric.funName = "MAX health repairs";
+                metric.description = "MAX health repairs (estimated, per minute)";
+                metric.helpText = "Estimated from 1 xp per repair tick is equal to 25 health repaired";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isMaxRepair(ev.experienceID) == false) {
+                        continue;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(ev.sourceID);
+                    if (ev.experienceID == Experience.SQUAD_MAX_REPAIR) {
+                        ev.amount /= 1.5;
+                    }
+
+                    // One 1xp = 25 health healed (GUESS ALERT THIS IS A GUESS SIREN WEEWHOO)
+                    // also ignore double XP if the player has it
+                    const amount: number = ev.amount * 25 / (metadata?.scoreMultiplier ?? 1);
+
+                    map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
+                }
+
+                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
+            },
+
+            makeVehicleRepairHealth: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Vehicle health repairs";
+                metric.funName = "Vehicle health repairs";
+                metric.description = "Vehicle health repairs (estimated, per minute)";
+                metric.helpText = "Lower bound, estimated from 1 xp per repair tick is equal to 25 health repaired";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isVehicleRepair(ev.experienceID) == false) {
+                        continue;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(ev.sourceID);
+                    let amt: number = ev.amount;
+                    if (Experience.isSquadVehicleRepair(ev.experienceID)) {
+                        amt /= 1.5;
+                    }
+
+                    // One 1xp = 25 health healed (GUESS ALERT THIS IS A GUESS SIREN WEEWHOO)
+                    // also ignore double XP if the player has it
+                    const amount: number = amt * 25 / (metadata?.scoreMultiplier ?? 1);
+
+                    map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
+                }
+
+                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
+            },
+
+            makeTotalRepairHealth: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Total repairs";
+                metric.funName = "Total repairs";
+                metric.description = "Total repairs (estimated, per minute)";
+                metric.helpText = "Lower bound, estimated from 1 xp per repair tick is equal to 25 health repaired";
+
+                const map: Map<string, number> = new Map();
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isVehicleRepair(ev.experienceID) == false
+                        && Experience.isMaxRepair(ev.experienceID) == false
+                        && ev.experienceID != 87 // secondary objective repair
+                        && ev.experienceID != 276 // terminal repair
+                        && ev.experienceID != 1375 // hardlight repair
+                        && ev.experienceID != 1378 // squad hardlight repair
+                        && ev.experienceID != 1545 // do0k lock repair
+                    ) {
+                        continue;
+                    }
+
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(ev.sourceID);
+                    if (Experience.isSquadVehicleRepair(ev.experienceID)) {
+                        ev.amount /= 1.5;
+                    }
+
+                    // One 1xp = 25 health healed (GUESS ALERT THIS IS A GUESS SIREN WEEWHOO)
+                    // also ignore double XP if the player has it
+                    const amount: number = ev.amount * 25 / (metadata?.scoreMultiplier ?? 1);
+
+                    map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
+                }
+
+                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
             },
 
             makeHardlightAssists: function(): void {
@@ -516,9 +736,9 @@
                 metric.name = "Hardlight Assists";
                 metric.funName = "Brick layer";
                 metric.description = "Most draw fire assists (per minute)";
-                metric.availableAfter = "2022-05-02";
+                metric.helpText = "Data not tracked before 2022-05-02";
 
-                this.catSupport.metrics.push(this.generateExperience(metric, [1393], (metadata) => metadata.classes.engineer.timeAs));
+                this.catEngi.metrics.push(this.generateExperience(metric, [1393], (metadata) => metadata.classes.engineer.timeAs));
             },
 
             makeShieldRepairs: function(): void {
@@ -527,12 +747,12 @@
                 metric.funName = "Shield battery";
                 metric.description = "Most shield repairs (per minute)";
 
-                this.catSupport.metrics.push(this.generateExperience(metric, [Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR], (metadata) => metadata.classes.medic.timeAs));
+                this.catMedic.metrics.push(this.generateExperience(metric, [Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR], (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeSpawns: function(): void {
                 let metric: WinterMetric = new WinterMetric();
-                metric.name = "Spawns";
+                metric.name = "Total spawns";
                 metric.funName = "Mother";
                 metric.description = "Most spawns (per minute)";
 
@@ -558,9 +778,9 @@
 
             makeSundySpawns: function(): void {
                 let metric: WinterMetric = new WinterMetric();
-                metric.name = "Sundy spawns";
+                metric.name = "Bus spawns";
                 metric.funName = "Cat herder";
-                metric.description = "Most sundy spawns (per minute)";
+                metric.description = "Most spawns from a bus (per minute)";
 
                 this.catSpawns.metrics.push(this.generateExperience(
                     metric,
@@ -611,9 +831,9 @@
 
             makeSundiesPlaced: function(): void {
                 let metric: WinterMetric = new WinterMetric();
-                metric.name = "Sunderers placed";
+                metric.name = "Buses placed";
                 metric.funName = "Bus stop builder";
-                metric.description = "Most sunderers deployed (per hour)";
+                metric.description = "Most buses deployed (per hour)";
 
                 const map: Map<string, Set<string>> = new Map();
 
@@ -751,6 +971,7 @@
                 metric.name = "KPM";
                 metric.funName = "Speed gunner";
                 metric.description = "Highest KPM";
+                metric.helpText = "Minimum 25 kills";
 
                 const map: Map<string, number> = new Map();
 
@@ -817,6 +1038,7 @@
                 metric.name = "KDR";
                 metric.funName = "KDR";
                 metric.description = "Highest KDR";
+                metric.helpText = "Revives remove a death (like in game)";
 
                 for (const player of this.report.trackedCharacters) {
                     const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
@@ -844,7 +1066,7 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Vehicle kills";
                 metric.funName = "Vehicle kills";
-                metric.description = "Most vehicle kills (per minute)";
+                metric.description = "Most vehicle kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
@@ -855,7 +1077,7 @@
                         Experience.VKILL_PROWLER, Experience.VKILL_VANGUARD, Experience.VKILL_PROWLER, Experience.VKILL_CHIMERA,
                         Experience.VKILL_COLOSSUS, Experience.VKILL_JAVELIN
                     ],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -863,12 +1085,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Flash kills";
                 metric.funName = "Flash kills";
-                metric.description = "Most flash kills (per minute)";
+                metric.description = "Most flash kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_FLASH, Experience.VKILL_JAVELIN],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -876,12 +1098,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Lightning kills";
                 metric.funName = "Lightning kills";
-                metric.description = "Most lightning kills (per minute)";
+                metric.description = "Most lightning kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_LIGHTNING],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -889,12 +1111,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "MBT kills";
                 metric.funName = "MBT kills";
-                metric.description = "Most MBT kills (per minute)";
+                metric.description = "Most MBT kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_MAGRIDER, Experience.VKILL_VANGUARD, Experience.VKILL_PROWLER, Experience.VKILL_CHIMERA],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -902,12 +1124,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Harasser kills";
                 metric.funName = "Harasser kills";
-                metric.description = "Most harasser kills (per minute)";
+                metric.description = "Most harasser kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_HARASSER],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -915,12 +1137,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "ESF kills";
                 metric.funName = "ESF kills";
-                metric.description = "Most ESF kills (per minute)";
+                metric.description = "Most ESF kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_MOSQUITO, Experience.VKILL_SCYTHE, Experience.VKILL_REAVER, Experience.VKILL_DERVISH],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -928,12 +1150,12 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Liberator kills";
                 metric.funName = "Liberator kills";
-                metric.description = "Most liberator kills (per minute)";
+                metric.description = "Most liberator kills (per hour)";
 
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_LIBERATOR],
-                    (metadata) => metadata.timeAs)
+                    (metadata) => metadata.timeAs / 60)
                 );
             },
 
@@ -1084,9 +1306,9 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Vehicle repairs";
                 metric.funName = "Road mechanic";
-                metric.description = "Most vehicle repairs";
+                metric.description = "Most vehicle repairs (per minute)";
 
-                this.catVehicleSupport.metrics.push(this.generateExperience(
+                this.catEngi.metrics.push(this.generateExperience(
                     metric,
                     [...Experience.VehicleRepairs, ...Experience.SquadVehicleRepairs],
                     (metadata) => metadata.timeAs)
@@ -1097,15 +1319,53 @@
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Vehicle resupplies";
                 metric.funName = "Vehicle resupplies";
-                metric.description = "Most vehicle resupplies";
+                metric.description = "Most vehicle resupplies (per minute)";
 
-                this.catVehicleSupport.metrics.push(this.generateExperience(
+                this.catEngi.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY],
                     (metadata) => metadata.timeAs)
                 );
             },
 
+            /**
+             * Generate a winter metric from a map that contains a character ID an whatever value they got. An option to have a per time selector is given
+             * @param metric
+             * @param map
+             * @param perMinuteSelector
+             */
+            generateFromMap: function(metric: WinterMetric, map: Map<string, number>,
+                perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null,
+                fixedLength?: number, fixedLengthPerMin?: number): WinterMetric {
+
+                metric.entries = Array.from(map.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+
+                        entry.characterID = iter[0];
+                        entry.value = iter[1];
+                        entry.name = this.getCharacterName(entry.characterID);
+
+                        if (perMinuteSelector != null) {
+                            const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                            if (metadata != undefined) {
+                                const minutes: number = perMinuteSelector(metadata);
+                                entry.display = `${LocaleUtil.locale(entry.value, fixedLength)} (${LocaleUtil.locale(entry.value / Math.max(1, minutes) * 60, fixedLengthPerMin)})`;
+                            }
+                        }
+
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                return metric;
+            },
+
+            /**
+             * Generate a winter metric from the amount of XP ticks of a type were earned
+             * @param metric
+             * @param expIDs
+             * @param perMinuteSelector
+             */
             generateExperience: function(metric: WinterMetric, expIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -1145,6 +1405,12 @@
                 return metric;
             },
 
+            /**
+             * Generate a winter metric for the top killers with specific weapon IDs
+             * @param metric
+             * @param weaponIDs
+             * @param perMinuteSelector
+             */
             generateWeaponKills: function(metric: WinterMetric, weaponIDs: number[], perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -1183,6 +1449,12 @@
                 return metric;
             },
 
+            /**
+             * Generate a winter metric for the top killers with a specific weapon type
+             * @param metric
+             * @param itemCategoryID
+             * @param perMinuteSelector
+             */
             generateWeaponCategoryKills: function(metric: WinterMetric, itemCategoryID: number, perMinuteSelector: ((metadata: PlayerMetadata) => number) | null = null): WinterMetric {
                 const map: Map<string, WinterEntry> = new Map();
 
@@ -1236,23 +1508,26 @@
             catKills: function(): WinterCategory {
                 return this.categories[0];
             },
-            catSupport: function(): WinterCategory {
+            catMedic: function(): WinterCategory {
                 return this.categories[1];
             },
-            catSpawns: function(): WinterCategory {
+            catEngi: function(): WinterCategory {
                 return this.categories[2];
             },
-            catWeaponTypes: function(): WinterCategory {
+            catSpawns: function(): WinterCategory {
                 return this.categories[3];
             },
-            catVehicleKills: function(): WinterCategory {
+            catWeaponTypes: function(): WinterCategory {
                 return this.categories[4];
             },
-            catVehicleSupport: function(): WinterCategory {
+            catVehicleKills: function(): WinterCategory {
                 return this.categories[5];
             },
-            catMisc: function(): WinterCategory {
+            catVehicleSupport: function(): WinterCategory {
                 return this.categories[6];
+            },
+            catMisc: function(): WinterCategory {
+                return this.categories[7];
             },
         },
 

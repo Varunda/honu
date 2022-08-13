@@ -478,6 +478,7 @@
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
+import { InfantryDamage, InfantryDamageEntry } from "./InfantryDamage";
 
     type Message = {
         when: Date;
@@ -714,14 +715,25 @@
                 this.updateGenerator();
             },
 
+            /**
+             * Remove an outfit from the generator
+             * @param outfitID
+             */
             removeOutfit: function(outfitID: string): void {
                 this.outfits = this.outfits.filter(iter => iter.id != outfitID);
             },
 
+            /**
+             * Remove a character from the generator
+             * @param charID
+             */
             removeCharacter: function(charID: string): void {
                 this.characters = this.characters.filter(iter => iter.id != charID);
             },
 
+            /**
+             * Initalize the connection to the signalR hub
+             */
             createConnection: function(): void {
                 document.title = `Honu / Outfit Report`;
                 this.log(`Starting signalR connection`);
@@ -791,6 +803,9 @@
                 });
             },
 
+            /**
+             * Start the generation process, sending the request to the hub by calling 'GenerateReport'
+             */
             start: function(): void {
                 if (this.connection == null) {
                     return this.log(`connection is null, cannot start generation`);
@@ -818,6 +833,13 @@
                         this.report.playerMetadata.set(metadata.ID, metadata);
                     }
 
+                    const damage: InfantryDamageEntry[] = InfantryDamage.get(this.report);
+                    for (const d of damage) {
+                        this.report.playerInfantryDamage.set(d.characterID, d);
+                        //const c: PsCharacter | undefined = this.report.characters.get(d.characterID);
+                        //console.log(`${d.characterID}/${c?.name} dealt ${d.totalDamage} damage; kills:`, d.kills, "; assists: ", d.assists);
+                    }
+
                     //this.closeConnection();
 
                     setTimeout(() => {
@@ -831,6 +853,9 @@
                 });
             },
 
+            /**
+             * Close the connection to the signalR hub, prevents future requests from being made unless the connection is re-opened
+             */
             closeConnection: function(): void {
                 if (this.connection != null) {
                     this.connection.stop().then(() => {
@@ -841,6 +866,9 @@
                 }
             },
 
+            /**
+             * Update the generator string based on the parameters used
+             */
             updateGenerator: function(): void {
                 console.log(`Start: ${this.periodStart} = ${this.periodStart.toISOString()}`);
                 console.log(`End: ${this.periodEnd} = ${this.periodStart.toISOString()}`);
@@ -863,6 +891,9 @@
                 console.log(`Generator used: ${gen}`);
             },
 
+            /**
+             * Take the user to a page where they can start a new report
+             */
             newReport: function(): void {
                 const conf: boolean = confirm(`Are you sure you want to leave this report and make a new one?`);
 
@@ -1043,7 +1074,11 @@
             },
 
             teamID: function(): void {
-
+                if (this.isMaking == true) {
+                    console.log(`currently making a report, not updating the generator, current gen: ${this.parameters.generator}`);
+                    return;
+                }
+                this.updateGenerator();
             }
         },
 

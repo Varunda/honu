@@ -256,7 +256,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 // Get characters
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);
                 HashSet<string> charsToLoad = GetUniqueCharacters(report);
-                report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList());
+                report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), fast: true);
                 await Clients.Caller.UpdateCharacters(report.Characters);
 
                 // Get outfits

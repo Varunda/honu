@@ -1,5 +1,5 @@
 ﻿import { KillEvent } from "api/KillStatApi";
-import { ExpEvent, ExperienceType } from "api/ExpStatApi";
+import { ExpEvent, ExperienceType, Experience } from "api/ExpStatApi";
 import { PsItem } from "api/ItemApi";
 import { PsOutfit } from "api/OutfitApi";
 import { PsCharacter } from "api/CharacterApi";
@@ -12,6 +12,7 @@ import { ItemCategory } from "api/ItemCategoryApi";
 import { VehicleDestroyEvent } from "api/VehicleDestroyEventApi";
 
 import LoadoutUtils from "util/Loadout";
+import { InfantryDamageEntry } from "./InfantryDamage";
 
 export class ReportParameters {
 	public id: string = ""; // guid
@@ -46,7 +47,10 @@ export default class Report {
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public facilities: Map<number, PsFacility> = new Map();
+
+	// These are added and calculated on the frontend
 	public playerMetadata: Map<string, PlayerMetadata> = new Map();
+	public playerInfantryDamage: Map<string, InfantryDamageEntry> = new Map();
 }
 
 export class PlayerClassStats {
@@ -63,6 +67,7 @@ export class PlayerClassStats {
 export class PlayerMetadata {
 	public ID: string = "";
 	public name: string = "";
+	public scoreMultiplier: number = 1;
 	public outfitID: string | null = null;
 	public outfitTag: string | null = null;
 	public outfitName: string | null = null;
@@ -163,6 +168,7 @@ export class PlayerMetadataGenerator {
 
 		console.log(`Have ${metas.length} metas to work on`);
 
+		// Get the time for each class
 		for (const meta of metas) {
 			let timedEvents: { timestamp: Date, loadoutID: number }[] = meta.kills.map(iter => { return { timestamp: iter.timestamp, loadoutID: iter.attackerLoadoutID } });
 			timedEvents.push(...meta.deaths.map(iter => { return { timestamp: iter.timestamp, loadoutID: iter.killedLoadoutID }; }));
@@ -211,6 +217,38 @@ export class PlayerMetadataGenerator {
 			meta.timeAs = meta.classes.infil.timeAs + meta.classes.lightAssault.timeAs
 				+ meta.classes.medic.timeAs + meta.classes.engineer.timeAs
 				+ meta.classes.heavy.timeAs + meta.classes.max.timeAs;
+		}
+
+        /**
+         * Get the score multiplier that each character had. It's important to note that a character's score multiplier
+         *      can change mid-session, such as if they lose membership or the double XP ends, but I'm not interested
+         *      in tracking a changing score multiplier too
+         */
+		for (const ev of report.experience) {
+			if (map.has(ev.sourceID) == false) {
+				continue;
+            }
+
+			let base: number | null = null;
+
+			switch (ev.experienceID) {
+				case Experience.KILL: base = 100; break;
+				case Experience.PRIORITY_KILL: base = 150; break;
+				case Experience.HIGH_PRIORITY_KILL: base = 300; break;
+
+				case Experience.REVIVE: base = 75; break;
+				case Experience.SQUAD_REVIVE: base = 100; break;
+
+				case Experience.RESUPPLY: base = 10; break;
+				case Experience.SQUAD_RESUPPLY: base = 15; break;
+
+				case Experience.SQUAD_SPAWN: base = 10; break;
+			}
+
+			if (base != null) {
+				const metadata: PlayerMetadata = map.get(ev.sourceID)!;
+				metadata.scoreMultiplier = ev.amount / base;
+			}
 		}
 
 		return metas;
