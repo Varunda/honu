@@ -178,7 +178,7 @@
                     this.data.shieldRepair.push({
                         timestamp: iterTime,
                         count: this.report.experience.filter(iter => {
-                            return Experience.isRevive(iter.experienceID)
+                            return Experience.isShieldRepair(iter.experienceID)
                                 && iter.timestamp >= iterTime && iter.timestamp <= endIter;
                         }).length
                     });
@@ -207,7 +207,6 @@
                         }).length
                     });
                 }
-
             },
 
             makeGraph: function(): void {

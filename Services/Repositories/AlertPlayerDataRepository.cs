@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models.Alert;
 using watchtower.Models.Census;
@@ -111,15 +112,27 @@ namespace watchtower.Services.Repositories {
         /// <returns></returns>
         private async Task<List<AlertPlayerDataEntry>> GenerateAndInsertByAlert(PsAlert alert) {
             Stopwatch timer = Stopwatch.StartNew();
+            Activity? root = HonuActivitySource.Root.StartActivity("Create alert player data");
 
             DateTime start = alert.Timestamp;
             DateTime end = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
 
             // Events not in the alert's zone are there to get when a player joins/leaves the zone
+            Activity? killAct = HonuActivitySource.Root.StartActivity("Alert - get kills");
             List<KillEvent> kills = await _KillDb.GetByRange(start, end, null, alert.WorldID);
+            killAct?.Stop();
+
+            Activity? expAct = HonuActivitySource.Root.StartActivity("Alert - get exp");
             List<ExpEvent> exp = await _ExpDb.GetByRange(start, end, null, alert.WorldID);
+            expAct?.Stop();
+
+            Activity? playersAct = HonuActivitySource.Root.StartActivity("Alert - get players");
             List<AlertPlayer> parts = await _AlertDb.GetParticipants(alert);
+            playersAct?.Stop();
+
+            Activity? sessionAct = HonuActivitySource.Root.StartActivity("Alert - get sessions");
             List<Session> sessions = await _SessionDb.GetByRange(start, end);
+            sessionAct?.Stop();
 
             long loadData = timer.ElapsedMilliseconds;
 

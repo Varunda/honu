@@ -184,6 +184,8 @@ namespace watchtower.Services.Db {
                     );
             ");
 
+            cmd.CommandTimeout = 300;
+
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
 

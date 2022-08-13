@@ -472,11 +472,13 @@ namespace watchtower.Services.Db {
                     {(zoneID != null ? " AND zone_id = @ZoneID " : "")}
                     {(worldID != null ? " AND world_id = @WorldID " : "")}
             ");
+            cmd.CommandTimeout = 300;
 
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
             cmd.AddParameter("ZoneID", zoneID);
             cmd.AddParameter("WorldID", worldID);
+
             await cmd.PrepareAsync();
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);

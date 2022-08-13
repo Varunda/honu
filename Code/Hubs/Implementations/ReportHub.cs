@@ -214,18 +214,6 @@ namespace watchtower.Code.Hubs.Implementations {
                 List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
                 report.Experience = expEvents;
                 await Clients.Caller.UpdateExp(expEvents);
-                /*
-                foreach (string charID in chars) {
-                    try {
-                        List<ExpEvent> exp = await _ExpDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
-                        await Clients.Caller.SendExp(charID, exp);
-                        report.Experience.AddRange(exp);
-                    } catch (Exception ex) {
-                        _Logger.LogError(ex, $"error loading exp events for {charID}");
-                        await Clients.Caller.SendError($"error while getting exp events for {charID}: {ex.Message}");
-                    }
-                }
-                */
 
                 // Get vehicle destroy
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_VEHICLE_DESTROY);
@@ -242,32 +230,13 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get player control
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_PLAYER_CONTROL);
-                try {
-                    List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
-                    await Clients.Caller.UpdatePlayerControls(pcEvents);
-                    report.PlayerControl = pcEvents;
-                } catch (Exception ex) {
-                    _Logger.LogError(ex, "error getting player control events");
-                }
-                /*
-                foreach (string charID in chars) {
-                    try {
-                        List<PlayerControlEvent> events = await _PlayerControlDb.GetByCharacterIDPeriod(charID, parms.PeriodStart, parms.PeriodEnd);
-                        await Clients.Caller.SendPlayerControl(charID, events);
-                        report.PlayerControl.AddRange(events);
-                    } catch (Exception ex) {
-                        _Logger.LogError(ex, $"error loading player control events for {charID}");
-                        await Clients.Caller.SendError($"error while getting player control events for {charID}: {ex.Message}");
-                    }
-                }
-                */
+                List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
 
                 // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
                 //      and load the characters that were present
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITY_CONTROL);
                 List<FacilityControlEvent> control = new List<FacilityControlEvent>();
-                List<PlayerControlEvent> controlEvents = new List<PlayerControlEvent>(report.PlayerControl);
-                foreach (PlayerControlEvent ev in controlEvents) {
+                foreach (PlayerControlEvent ev in pcEvents) {
                     if (control.FirstOrDefault(iter => iter.ID == ev.ControlID) != null) {
                         continue;
                     }
