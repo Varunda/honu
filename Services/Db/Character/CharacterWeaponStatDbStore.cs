@@ -79,6 +79,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WorldID", worlds.Count == 0 ? null : worlds);
             cmd.AddParameter("FactionID", factions.Count == 0 ? null : factions);
             cmd.AddParameter("MinKills", minKills);
+            cmd.CommandTimeout = 120;
 
             //_Logger.LogDebug(cmd.Print());
 

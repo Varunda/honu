@@ -224,10 +224,10 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT wt_exp.*
                     FROM wt_recent_exp
-                        INNER JOIN wt_character ON wt_exp.source_character_id = wt_character.id
-                    WHERE wt_exp.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
-                        AND wt_exp.world_id = @WorldID
-                        AND wt_exp.source_team_id = @TeamID
+                        INNER JOIN wt_character ON wt_recent_exp.source_character_id = wt_character.id
+                    WHERE wt_recent_exp.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                        AND wt_recent_exp.world_id = @WorldID
+                        AND wt_recent_exp.source_team_id = @TeamID
                         AND (wt_character.outfit_id = @OutfitID OR (@OutfitID = '0' AND wt_character.outfit_id IS NULL));
             ");
 

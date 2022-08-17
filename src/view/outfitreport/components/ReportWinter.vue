@@ -451,8 +451,6 @@
                 this.catMisc.metrics.push(metric);
             },
 
-
-
             makeKillstreak: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Longest killstreak";

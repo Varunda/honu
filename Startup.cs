@@ -189,6 +189,7 @@ namespace watchtower {
             services.AddHostedService<AlertLoadStartupService>();
             services.AddHostedService<RealtimeNetworkBroadcastService>();
             services.AddHostedService<RealtimeNetworkBuilderService>();
+            services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();

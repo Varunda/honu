@@ -82,6 +82,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<ItemCategoryDbStore>();
             services.AddSingleton<IStaticDbStore<ExperienceType>, ExperienceTypeDbStore>();
             services.AddSingleton<ExperienceTypeDbStore>();
+
+            services.AddSingleton<WeaponStatSnapshotDbStore>();
         }
 
     }
