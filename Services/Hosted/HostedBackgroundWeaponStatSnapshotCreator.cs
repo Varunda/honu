@@ -48,7 +48,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     DateTime? lastRan = await _SnapshotDb.GetMostRecent();
-                    _Logger.LogInformation($"{SERVICE_NAME}> Last ran at {lastRan:u}");
+                    _Logger.LogInformation($"{SERVICE_NAME}> Last ran at {lastRan?.ToString("u")}");
 
                     await _SnapshotDb.Generate(stoppingToken);
 
