@@ -73,7 +73,7 @@ namespace watchtower.Services.Db {
                     HAVING sum(kills) > 0;
             ");
 
-            cmd.CommandTimeout = 30 * 60; // 30 minutes
+            cmd.CommandTimeout = 60 * 60; // 60 minutes
 
             await cmd.ExecuteNonQueryAsync(cancel);
             await conn.CloseAsync();
