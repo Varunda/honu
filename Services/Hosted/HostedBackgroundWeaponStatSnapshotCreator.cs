@@ -16,7 +16,7 @@ namespace watchtower.Services.Hosted {
         private readonly WeaponStatSnapshotDbStore _SnapshotDb;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
-        private const int WHEN_HOUR = 10;
+        private const int WHEN_HOUR = 17;
         private const string SERVICE_NAME = "background_weapon_snapshot";
 
         public HostedBackgroundWeaponStatSnapshotCreator(ILogger<HostedBackgroundWeaponStatSnapshotCreator> logger,
