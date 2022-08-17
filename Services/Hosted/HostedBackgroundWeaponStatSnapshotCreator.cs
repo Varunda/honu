@@ -41,7 +41,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     DateTime now = DateTime.UtcNow;
-                    if (now.Hour != WHEN_HOUR || now.Minute != 0) {
+                    if (now.Hour != WHEN_HOUR || now.Minute != 5) {
                         //_Logger.LogTrace($"{SERVICE_NAME}> It's currently {now:u}, must be {WHEN_HOUR}:00");
                         await Task.Delay(1000 * 30, stoppingToken);
                         continue;
@@ -55,9 +55,9 @@ namespace watchtower.Services.Hosted {
                     health.RunDuration = timer.ElapsedMilliseconds;
                     health.LastRan = DateTime.UtcNow;
                     health.Message = $"ran at {now:u}";
-                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == true) {
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"{SERVICE_NAME}> Stopping");
-                } catch (Exception) when (stoppingToken.IsCancellationRequested == false) {
+                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"error when generating weapon stat snapshot");
                 }
             }
