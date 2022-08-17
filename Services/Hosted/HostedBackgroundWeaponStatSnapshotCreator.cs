@@ -56,9 +56,9 @@ namespace watchtower.Services.Hosted {
                     health.LastRan = DateTime.UtcNow;
                     health.Message = $"ran at {now:u}";
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogError(ex, $"error when generating weapon stat snapshot");
-                } catch (Exception) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogInformation($"{SERVICE_NAME}> Stopping");
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == false) {
+                    _Logger.LogError(ex, $"error when generating weapon stat snapshot");
                 }
             }
 
