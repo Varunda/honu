@@ -41,7 +41,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     DateTime now = DateTime.UtcNow;
-                    if (now.Hour != WHEN_HOUR || now.Minute != 5) {
+                    if (now.Hour != WHEN_HOUR || now.Minute != 8) {
                         //_Logger.LogTrace($"{SERVICE_NAME}> It's currently {now:u}, must be {WHEN_HOUR}:00");
                         await Task.Delay(1000 * 30, stoppingToken);
                         continue;
