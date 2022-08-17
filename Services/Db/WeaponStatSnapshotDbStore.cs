@@ -93,7 +93,7 @@ namespace watchtower.Services.Db {
             object? obj = await cmd.ExecuteScalarAsync();
             await conn.CloseAsync();
 
-            if (obj != null) {
+            if (obj != null && obj is not DBNull) {
                 return (DateTime)obj;
             }
 
