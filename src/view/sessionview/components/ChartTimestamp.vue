@@ -37,6 +37,10 @@ import TimeUtils from "../../../util/Time";
         },
 
         beforeMount: function(): void {
+            this.sortedData = [...this.data].sort((a, b) => a.getTime() - b.getTime());
+        },
+
+        mounted: function(): void {
             this.ID = Math.floor(Math.random() * 100000);
 
             this.$nextTick(() => {
@@ -44,10 +48,6 @@ import TimeUtils from "../../../util/Time";
                 this.generateTrend();
                 this.makeChart();
             });
-        },
-
-        mounted: function(): void {
-            this.sortedData = [...this.data].sort((a, b) => a.getTime() - b.getTime());
         },
 
         methods: {
