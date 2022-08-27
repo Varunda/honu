@@ -171,7 +171,7 @@ namespace watchtower.Services.Census {
         /// <returns></returns>
         public short? GetZoneMapOwner(short worldID, uint zoneID, List<PsMap> map) {
             //_Logger.LogDebug($"{worldID}:{zoneID} => using {map.Count} regions");
-            int total = map.Count;
+            int total = map.Where(iter => iter.FactionID != 0).Count();
 
             Dictionary<short, int> counts = new();
 

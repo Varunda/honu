@@ -76,7 +76,7 @@ namespace watchtower.Services.Hosted {
                         getCharacter?.Stop();
                         if (c == null) {
                             ++entry.FailCount;
-                            _Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
+                            //_Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
 
                             entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
 
