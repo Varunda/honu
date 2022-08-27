@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -47,7 +48,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the kills and deaths that occured in a session
+        ///     Get the kills and deaths that occured in a session of a PC player
         /// </summary>
         /// <remarks>
         ///     The character ID used to find the kills and deaths is based on the <see cref="Session.CharacterID"/>
@@ -84,7 +85,7 @@ namespace watchtower.Controllers {
             List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
             IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
 
-            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs);
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs, CensusEnvironment.PC);
             foreach (PsCharacter c in characters) {
                 if (chars.ContainsKey(c.ID) == false) {
                     chars.Add(c.ID, c);
@@ -116,7 +117,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the weapons a character has used in the last 2 hours
+        ///     Get the weapons a PC character has used in the last 2 hours
         /// </summary>
         /// <remarks>
         ///     Used for the realtime server view, when you click on the character in the top killers list
@@ -133,7 +134,7 @@ namespace watchtower.Controllers {
         /// </response>
         [HttpGet("character/{charID}")]
         public async Task<ApiResponse<List<CharacterWeaponKillEntry>>> CharacterKills(string charID) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
 
             if (c == null) {
                 return ApiNotFound<List<CharacterWeaponKillEntry>>($"{nameof(PsCharacter)} {charID}");
@@ -175,7 +176,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the characters who have gotten the most kills in an outfit in the last 2 hours
+        ///     Get the PC characters who have gotten the most kills in an outfit in the last 2 hours
         /// </summary>
         /// <remarks>
         ///      Used for the realtime server view, when you click on the amount of kills an outfit has gotten
@@ -209,7 +210,7 @@ namespace watchtower.Controllers {
                 }
 
                 if (entries.TryGetValue(ev.AttackerCharacterID, out OutfitKillerEntry? entry) == false) {
-                    PsCharacter? character = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
+                    PsCharacter? character = await _CharacterRepository.GetByID(ev.AttackerCharacterID, CensusEnvironment.PC);
                     entry = new OutfitKillerEntry() {
                         CharacterID = ev.AttackerCharacterID,
                         CharacterName = character?.Name ?? $"Missing {ev.AttackerCharacterID}"
@@ -229,7 +230,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the kills of a character between two times
+        ///     Get the kills of a PC character between two times
         /// </summary>
         /// <param name="charID">ID of the character to get the kills of</param>
         /// <param name="start">When the time period starts</param>
@@ -266,7 +267,7 @@ namespace watchtower.Controllers {
             List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
             IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
 
-            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs);
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs, CensusEnvironment.PC);
             foreach (PsCharacter c in characters) {
                 if (chars.ContainsKey(c.ID) == false) {
                     chars.Add(c.ID, c);

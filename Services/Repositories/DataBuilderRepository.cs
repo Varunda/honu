@@ -235,7 +235,7 @@ namespace watchtower.Services.Repositories {
                 .Where(iter => iter.WorldID == worldID)
                 .OrderByDescending(iter => iter.SpawnCount).Take(8)
                 .Select(async iter => {
-                    PsCharacter? c = await _CharacterRepository.GetByID(iter.OwnerID);
+                    PsCharacter? c = await _CharacterRepository.GetByID(iter.OwnerID, CensusEnvironment.PC);
 
                     return new SpawnEntry() {
                         FirstSeenAt = iter.FirstSeenAt,
@@ -385,14 +385,18 @@ namespace watchtower.Services.Repositories {
 
             List<KillDbEntry> topKillers = await _KillEventDb.GetTopKillers(options);
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(topKillers.Select(iter => iter.CharacterID).ToList(), fast: true);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(
+                IDs: topKillers.Select(iter => iter.CharacterID).ToList(),
+                env: CensusEnvironment.PC,
+                fast: true
+            );
 
             foreach (KillDbEntry entry in topKillers) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == entry.CharacterID);
                 bool hasPlayer = players.TryGetValue(entry.CharacterID, out TrackedPlayer? p);
 
                 if (hasPlayer == false && c != null) {
-                    _CharacterCacheQueue.Queue(entry.CharacterID);
+                    _CharacterCacheQueue.Queue(entry.CharacterID, CensusEnvironment.PC);
                 }
 
                 //_Logger.LogTrace($"{c?.Name ?? entry.CharacterID} has been online for {entry.SecondsOnline} seconds");
@@ -469,7 +473,11 @@ namespace watchtower.Services.Repositories {
             List<BlockEntry> blockEntries = new List<BlockEntry>();
 
             List<ExpDbEntry> entries = await _ExpEventDb.GetEntries(options);
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(entries.Select(iter => iter.ID).ToList(), fast: true);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(
+                IDs: entries.Select(iter => iter.ID).ToList(),
+                env: CensusEnvironment.PC,
+                fast: true
+            );
 
             foreach (ExpDbEntry entry in entries) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == entry.ID);

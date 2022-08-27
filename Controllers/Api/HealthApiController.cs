@@ -69,8 +69,8 @@ namespace watchtower.Controllers.Api {
         public async Task<ApiResponse<HonuHealth>> GetRealtimeHealth() {
             if (_Cache.TryGetValue("Honu.Health", out HonuHealth health) == false) {
                 health = new HonuHealth();
-                health.Death = _RealtimeHealthRepository.GetDeathHealth();
-                health.Exp = _RealtimeHealthRepository.GetExpHealth();
+                health.Death = _RealtimeHealthRepository.GetDeathHealth().OrderBy(iter => iter.WorldID).ToList();
+                health.Exp = _RealtimeHealthRepository.GetExpHealth().OrderBy(iter => iter.WorldID).ToList();
 
                 health.Reconnects = (await _ReconnectDb.GetAllByInterval(DateTime.UtcNow - TimeSpan.FromDays(1), DateTime.UtcNow))
                     .OrderByDescending(iter => iter.Timestamp).ToList();

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
@@ -18,7 +19,7 @@ using watchtower.Services.Queues;
 namespace watchtower.Services.Hosted {
 
     /// <summary>
-    ///     Background buffer that will buffer logouts until Census has updated their data.
+    ///     Background buffer that will buffer PC logouts until Census has updated their data.
     ///     This prevents Honu from attempting to do a character update before Census 
     ///         has updated the data
     /// </summary>
@@ -82,7 +83,7 @@ namespace watchtower.Services.Hosted {
                     List<PsCharacter> chars = new List<PsCharacter>(entries.Count);
 
                     try {
-                        chars = await _CharacterCensus.GetByIDs(entries.Select(i => i.CharacterID).ToList());
+                        chars = await _CharacterCensus.GetByIDs(entries.Select(i => i.CharacterID).ToList(), CensusEnvironment.PC);
                     } catch (Exception ex) {
                         _Logger.LogError(ex, "Failed to get characters for logout buffer, trying again in a bit");
                         await Task.Delay(1000 * PERIOD_WAIT_SHORT, stoppingToken);

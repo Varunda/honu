@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -119,7 +120,7 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get the members of an outfit
+        ///     Get the members of a PC outfit
         /// </summary>
         /// <remarks>
         ///     The character data includes the characters stats, if present in the DB. If the stats are not present
@@ -154,7 +155,7 @@ namespace watchtower.Controllers.Api {
             //      to iterate thru that list for each character is n^2, and when you have 5k members,
             //      that's 25 million iterations, so instead make a lookup table
             //List<PsCharacter> listCharacters = await _CharacterDb.GetByIDs(characterIDs);
-            List<PsCharacter> listCharacters = await _CharacterRepository.GetByIDs(characterIDs);
+            List<PsCharacter> listCharacters = await _CharacterRepository.GetByIDs(characterIDs, CensusEnvironment.PC);
             long loadCharsMs = timer.ElapsedMilliseconds; timer.Restart();
 
             Dictionary<string, PsCharacter> charMap = new Dictionary<string, PsCharacter>(members.Count); // lookup table

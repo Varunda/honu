@@ -50,7 +50,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the experience events a player got during a time period
+        ///     Get the experience events a PC player got during a time period
         /// </summary>
         /// <param name="charID">ID of the character to get the events of</param>
         /// <param name="start">When the time period to load started</param>
@@ -88,7 +88,7 @@ namespace watchtower.Controllers {
             characterIDs.AddRange(expEvents.Where(iter => iter.OtherID.Length == 19).Select(iter => iter.OtherID).ToList());
             characterIDs = characterIDs.Distinct().ToList();
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(characterIDs);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(characterIDs, CensusEnvironment.PC);
 
             foreach (ExpEvent ev in expEvents) {
                 ExpandedExpEvent ex = new ExpandedExpEvent();
@@ -132,7 +132,7 @@ namespace watchtower.Controllers {
                 expTypeIDs.Add(ev.ExperienceID);
             }
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), fast: true);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), CensusEnvironment.PC, fast: true);
             block.Characters = chars;
 
             List<ExperienceType> types = (await _ExperienceTypeRepository.GetAll()).Where(iter => expTypeIDs.Contains(iter.ID)).ToList();
@@ -237,7 +237,7 @@ namespace watchtower.Controllers {
         }
 
         /// <summary>
-        ///     Get the entities another character is supporting in the last 2 hours
+        ///     Get the entities another PC character is supporting in the last 2 hours
         /// </summary>
         /// <remarks>
         ///     A support event is a specific type of exp event, where the other_id is another character that benefitted
@@ -281,7 +281,7 @@ namespace watchtower.Controllers {
         /// </response>
         [HttpGet("character/{charID}/{type}")]
         public async Task<ApiResponse<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID);
+            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<CharacterExpSupportEntry>>($"{nameof(PsCharacter)} {charID}");
             }
@@ -492,7 +492,7 @@ namespace watchtower.Controllers {
                 }
 
                 if (entries.TryGetValue(ev.OtherID, out CharacterExpSupportEntry? entry) == false) {
-                    PsCharacter? character = await _CharacterRepository.GetByID(ev.OtherID);
+                    PsCharacter? character = await _CharacterRepository.GetByID(ev.OtherID, CensusEnvironment.PC);
 
                     entry = new CharacterExpSupportEntry() {
                         CharacterID = ev.OtherID,
@@ -523,7 +523,7 @@ namespace watchtower.Controllers {
                 }
 
                 if (entries.TryGetValue(ev.SourceID, out OutfitExpEntry? entry) == false) {
-                    PsCharacter? character = await _CharacterRepository.GetByID(ev.SourceID);
+                    PsCharacter? character = await _CharacterRepository.GetByID(ev.SourceID, CensusEnvironment.PC);
                     entry = new OutfitExpEntry() {
                         CharacterID = ev.SourceID,
                         CharacterName = character?.Name ?? $"Missing {ev.SourceID}"

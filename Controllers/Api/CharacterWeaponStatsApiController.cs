@@ -53,7 +53,7 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get the weapon stats of a character
+        ///     Get the weapon stats of a PC character
         /// </summary>
         /// <remarks>
         ///     If a character has more than 100 kills with an item, and the item isn't ID 0, 
@@ -69,7 +69,7 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("{charID}/weapon_stats")]
         public async Task<ApiResponse<List<CharacterWeaponStatEntry>>> GetWeaponStats(string charID) {
-            PsCharacter? character = await _CharacterRepository.GetByID(charID);
+            PsCharacter? character = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (character == null) {
                 return ApiNotFound<List<CharacterWeaponStatEntry>>($"{nameof(PsCharacter)} {charID}");
             }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -53,7 +54,7 @@ namespace watchtower.Controllers.Api {
 
             List<ExpandedPlayerControlEvent> expanded = new List<ExpandedPlayerControlEvent>(players.Count);
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(players.Select(iter => iter.CharacterID).ToList());
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(players.Select(iter => iter.CharacterID).ToList(), CensusEnvironment.PC);
 
             foreach (PlayerControlEvent i in players) {
                 expanded.Add(new ExpandedPlayerControlEvent() {

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
@@ -175,7 +176,7 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), fast: true);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), env: CensusEnvironment.PC, fast: true);
 
             foreach (RealtimeNetworkPlayer player in network.Players) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == player.CharacterID);

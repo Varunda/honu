@@ -70,6 +70,8 @@ namespace watchtower.Services.Repositories {
 
             services.AddSingleton<BadHealthRepository>();
             services.AddSingleton<SessionRepository>();
+
+            services.AddSingleton<OutfitWarsMatchRepository>();
         }
 
     }

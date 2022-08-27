@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -256,7 +257,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 // Get characters
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);
                 HashSet<string> charsToLoad = GetUniqueCharacters(report);
-                report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), fast: true);
+                report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), CensusEnvironment.PC, fast: true);
                 await Clients.Caller.UpdateCharacters(report.Characters);
 
                 // Get outfits

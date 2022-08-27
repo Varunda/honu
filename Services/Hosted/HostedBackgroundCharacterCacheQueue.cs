@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -44,7 +45,7 @@ namespace watchtower.Services.Hosted {
                     CharacterFetchQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
                     string charID = entry.CharacterID;
-                    PsCharacter? character = await _CharacterRepository.GetByID(charID);
+                    PsCharacter? character = await _CharacterRepository.GetByID(charID, entry.Environment);
 
                     if (character != null && entry.Store == true) {
                         lock (CharacterStore.Get().Players) {

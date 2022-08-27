@@ -35,9 +35,12 @@ namespace watchtower.Services.Repositories {
                 WorldOverview miller = new() { WorldID = World.Miller, WorldName = "Miller" };
                 WorldOverview emerald = new() { WorldID = World.Emerald, WorldName = "Emerald" };
                 WorldOverview soltech = new() { WorldID = World.SolTech, WorldName = "SolTech" };
+                WorldOverview genudine = new() { WorldID = World.Genudine, WorldName = "Genudine" };
+                WorldOverview ceres = new() { WorldID = World.Ceres, WorldName = "Ceres" };
+                WorldOverview apex = new() { WorldID = World.Apex, WorldName = "Apex" };
 
                 worlds = new List<WorldOverview>() {
-                    connery, cobalt, jaeger, miller, emerald, soltech
+                    connery, miller, cobalt, emerald, apex, jaeger, soltech, genudine, ceres
                 };
 
                 foreach (WorldOverview world in worlds) {
@@ -113,6 +116,15 @@ namespace watchtower.Services.Repositories {
                         } else if (c.WorldID == World.SolTech) {
                             ++soltech.PlayersOnline;
                             UpdateZoneCount(soltech, ref c);
+                        } else if (c.WorldID == World.Genudine) {
+                            ++genudine.PlayersOnline;
+                            UpdateZoneCount(genudine, ref c);
+                        } else if (c.WorldID == World.Ceres) {
+                            ++ceres.PlayersOnline;
+                            UpdateZoneCount(ceres, ref c);
+                        } else if (c.WorldID == World.Apex) {
+                            ++apex.PlayersOnline;
+                            UpdateZoneCount(apex, ref c);
                         }
                     }
                 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
 
@@ -22,7 +23,8 @@ namespace watchtower.Services.Queues {
         ///     Queue a new character for caching
         /// </summary>
         /// <param name="charID">ID of the character</param>
-        public void Queue(string charID) {
+        /// <param name="environment">What environment this character is in, see </param>
+        public void Queue(string charID, CensusEnvironment environment) {
             if (charID == "0") {
                 return;
             }
@@ -33,7 +35,8 @@ namespace watchtower.Services.Queues {
 
             _Items.Enqueue(new CharacterFetchQueueEntry() {
                 CharacterID = charID,
-                Store = true
+                Store = true,
+                Environment = environment
             });
 
             lock (_Pending) {

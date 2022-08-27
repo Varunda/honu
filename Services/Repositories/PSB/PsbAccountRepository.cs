@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.PSB;
@@ -360,7 +361,7 @@ namespace watchtower.Services.Repositories.PSB {
             };
             names.AddRange(nsNames);
 
-            List<PsCharacter> characters = new List<PsCharacter>();
+            List<PsCharacter> characters = new();
 
             foreach (string iter in names) {
                 PsCharacter? c = await _CharacterCollection.GetByName(iter);
@@ -374,7 +375,7 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         private async Task<int> GetStatus(string? charID, List<string> names) {
-            PsCharacter? byID = (charID != null) ? await _CharacterCollection.GetByID(charID) : null;
+            PsCharacter? byID = (charID != null) ? await _CharacterCollection.GetByID(charID, CensusEnvironment.PC) : null;
 
             string? usedName = null;
             PsCharacter? byName = null;

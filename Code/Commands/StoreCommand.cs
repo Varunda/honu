@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -67,7 +68,7 @@ namespace watchtower.Commands {
         public async Task Print(string nameOrId) {
             PsCharacter? c;
             if (nameOrId.Length == 19) {
-                c = await _Characters.GetByID(nameOrId);
+                c = await _Characters.GetByID(nameOrId, CensusEnvironment.PC);
             } else {
                 c = await _Characters.GetByName(nameOrId);
             }

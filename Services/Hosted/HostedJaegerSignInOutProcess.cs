@@ -76,7 +76,7 @@ namespace watchtower.Services.Hosted {
                         foreach (JaegerSigninoutEntry s in signin) { both.Add(s.CharacterID); }
                         foreach (JaegerSigninoutEntry s in signout) { both.Add(s.CharacterID); }
 
-                        List<PsCharacter> chars = await _CharacterRepository.GetByIDs(both.ToList(), fast: false);
+                        List<PsCharacter> chars = await _CharacterRepository.GetByIDs(both.ToList(), CensusEnvironment.PC, fast: false);
 
                         string msg = $"<https://wt.honu.pw/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}>\n";
 
@@ -94,6 +94,7 @@ namespace watchtower.Services.Hosted {
                             PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == s.CharacterID);
                             string part = $"+[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
 
+                            // Prevent messages that are too long from being sent, and break them into multiple messages
                             if (msg.Length + part.Length + "```".Length >= messageLimit) {
                                 _DiscordQueue.Queue(msg + "```");
                                 msg = "```diff\n";

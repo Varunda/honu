@@ -14,15 +14,12 @@ using watchtower.Services.Census;
 using watchtower.Services.Repositories;
 using watchtower.Services.Implementations;
 using watchtower.Services.Db.Readers;
-using watchtower.Code.Hubs;
 using System.Text.Json;
-using watchtower.Models.Events;
 using DaybreakGames.Census;
 using watchtower.Services.Offline;
 using DaybreakGames.Census.Stream;
 using watchtower.Models;
 using watchtower.Services.Hosted.Startup;
-using watchtower.Models.Census;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.CharacterViewer.Implementations;
 using watchtower.Services.Census.Readers;
@@ -32,11 +29,7 @@ using System;
 using System.IO;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using watchtower.Services.Queues;
-using watchtower.Models.Queues;
 using Microsoft.Extensions.Logging;
-using watchtower.Models.Report;
-using watchtower.Services.Hosted.PSB;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
@@ -46,10 +39,8 @@ using watchtower.Models.PSB;
 using watchtower.Services.Realtime;
 using watchtower.Models.Health;
 using watchtower.Models.Alert;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
-using Npgsql;
+using watchtower.Code.Constants;
+using System.Collections.Generic;
 
 //using honu_census;
 
@@ -161,6 +152,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
             services.AddSingleton<WorldTagManager>();
+            services.AddSingleton<OutfitWarsNexusEventHandler>();
 
             services.AddHonuQueueServices(); // queue services
 
@@ -238,6 +230,8 @@ namespace watchtower {
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
             IHostApplicationLifetime lifetime, ILogger<Startup> logger) {
+
+            WorldIdSanityCheck();
 
             app.UseForwardedHeaders();
 
@@ -354,6 +348,20 @@ namespace watchtower {
 
                 endpoints.MapSwagger();
             });
+        }
+
+        private void WorldIdSanityCheck() {
+            List<short> worlds = new();
+            worlds.AddRange(World.PcStreams);
+            worlds.AddRange(World.Ps4UsStreams);
+            worlds.AddRange(World.Ps4EuStreams);
+
+            foreach (short worldID in worlds) {
+                CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
+                if (env == null) {
+                    throw new SystemException($"Sanity check for census environment for world ID {worldID} failed");
+                }
+            }
         }
 
     }

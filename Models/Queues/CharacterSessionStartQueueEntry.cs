@@ -1,4 +1,5 @@
 ﻿using System;
+using watchtower.Code.Constants;
 
 namespace watchtower.Models.Queues {
 
@@ -11,6 +12,8 @@ namespace watchtower.Models.Queues {
         ///     Character ID of the character to have their session started
         /// </summary>
         public string CharacterID { get; set; } = "";
+
+        public CensusEnvironment Environment { get; set; }
 
         /// <summary>
         ///     When this character was first seen, and when the session will be started

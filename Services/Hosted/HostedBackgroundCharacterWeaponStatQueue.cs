@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Models.Db;
@@ -117,7 +118,7 @@ namespace watchtower.Services.Hosted {
 
                     if (censusChar == null) {
                         try {
-                            censusChar = await _CharacterCensus.GetByID(entry.CharacterID);
+                            censusChar = await _CharacterCensus.GetByID(entry.CharacterID, CensusEnvironment.PC);
                         } catch (CensusConnectionException) {
                             _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, delaying 30 seconds, requeueing and retrying");
                             await Task.Delay(30 * 1000, stoppingToken);

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Db;
@@ -64,9 +65,9 @@ namespace watchtower.Controllers.Api {
             foreach (VehicleDestroyEvent ev in events) {
                 ExpandedVehicleDestroyEvent ex = new ExpandedVehicleDestroyEvent();
                 ex.Event = ev;
-                ex.Attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
+                ex.Attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID, CensusEnvironment.PC);
                 ex.AttackerVehicle = await _VehicleRepository.GetByID(int.Parse(ev.AttackerVehicleID));
-                ex.Killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
+                ex.Killed = await _CharacterRepository.GetByID(ev.KilledCharacterID, CensusEnvironment.PC);
                 ex.KilledVehicle = await _VehicleRepository.GetByID(int.Parse(ev.KilledVehicleID));
                 ex.Item = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 

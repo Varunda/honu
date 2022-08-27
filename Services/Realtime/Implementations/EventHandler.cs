@@ -18,6 +18,7 @@ using watchtower.Models;
 using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
+using watchtower.Models.OutfitWarsNexus;
 using watchtower.Models.Queues;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -58,6 +59,8 @@ namespace watchtower.Realtime {
 
         private readonly IHubContext<RealtimeMapHub> _MapHub;
         private readonly WorldTagManager _TagManager;
+        private readonly OutfitWarsNexusEventHandler _NexusHandler;
+        private readonly OutfitWarsMatchRepository _MatchRepository;
 
         private readonly List<string> _Recent;
         private DateTime _MostRecentProcess = DateTime.UtcNow;
@@ -74,7 +77,8 @@ namespace watchtower.Realtime {
             JaegerSignInOutQueue jaegerQueue, FacilityRepository facRepo,
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
             AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
-            ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb) { 
+            ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
+            OutfitWarsNexusEventHandler nexusHandler, OutfitWarsMatchRepository matchRepository) {
 
             _Logger = logger;
 
@@ -107,6 +111,8 @@ namespace watchtower.Realtime {
             _ItemAddedDb = itemAddedDb;
             _AchievementEarnedDb = achievementEarnedDb;
             _SessionRepository = sessionRepository;
+            _NexusHandler = nexusHandler;
+            _MatchRepository = matchRepository;
         }
 
         public DateTime MostRecentProcess() {
@@ -234,6 +240,11 @@ namespace watchtower.Realtime {
                 ev.KilledFactionID = ev.AttackerFactionID;
             }
 
+            CensusEnvironment? plat = CensusEnvironmentHelper.FromWorldID(ev.WorldID);
+            if (plat == null) {
+                _Logger.LogError($"Failed to get the {nameof(CensusEnvironment)} for world ID {ev.WorldID} in vehicle destroy event");
+            }
+
             lock (CharacterStore.Get().Players) {
                 // The default value for Online must be false, else when a new TrackedPlayer is constructed,
                 //      the session will never start, as the handler already sees the character online,
@@ -247,13 +258,18 @@ namespace watchtower.Realtime {
                 });
 
                 if (attacker.ID != "0" && attacker.Online == false) {
-                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
-                        CharacterID = attacker.ID,
-                        LastEvent = ev.Timestamp
-                    });
+                    if (plat != null) {
+                        _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                            CharacterID = attacker.ID,
+                            LastEvent = ev.Timestamp,
+                            Environment = plat.Value
+                        });
+                    }
                 }
 
-                _CacheQueue.Queue(attacker.ID);
+                if (plat != null) {
+                    _CacheQueue.Queue(attacker.ID, plat.Value);
+                }
 
                 attacker.ZoneID = ev.ZoneID;
 
@@ -273,14 +289,19 @@ namespace watchtower.Realtime {
                     WorldID = ev.WorldID
                 });
 
-                _CacheQueue.Queue(killed.ID);
+                if (plat != null) {
+                    _CacheQueue.Queue(killed.ID, plat.Value);
+                }
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
                 if (killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
-                    _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
-                        CharacterID = killed.ID,
-                        LastEvent = ev.Timestamp
-                    });
+                    if (plat != null) {
+                        _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                            CharacterID = killed.ID,
+                            LastEvent = ev.Timestamp,
+                            Environment = plat.Value
+                        });
+                    }
                 }
 
                 killed.ZoneID = ev.ZoneID;
@@ -329,9 +350,9 @@ namespace watchtower.Realtime {
 
                 new Thread(async () => {
                     try {
-                        PsCharacter? attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID);
-                        PsCharacter? owner = (bus != null) ? await _CharacterRepository.GetByID(bus.OwnerID) : null;
-                        PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID);
+                        PsCharacter? attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID, CensusEnvironment.PC);
+                        PsCharacter? owner = (bus != null) ? await _CharacterRepository.GetByID(bus.OwnerID, CensusEnvironment.PC) : null;
+                        PsCharacter? killed = await _CharacterRepository.GetByID(ev.KilledCharacterID, CensusEnvironment.PC);
                         PsItem? attackerItem = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 
                         string msg = $"A bus has been blown up at **{ev.Timestamp:u}** on **{Zone.GetName(ev.ZoneID)}\n**";
@@ -504,8 +525,6 @@ namespace watchtower.Realtime {
 
             using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogin");
 
-            _CacheQueue.Queue(charID);
-
             DateTime timestamp = payload.CensusTimestamp("timestamp");
             short worldID = payload.GetWorldID();
             if (worldID == World.Jaeger) {
@@ -513,6 +532,13 @@ namespace watchtower.Realtime {
                     CharacterID = charID,
                     Timestamp = timestamp
                 });
+            }
+
+            CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
+            if (env != null) {
+                _CacheQueue.Queue(charID, env.Value);
+            } else {
+                _Logger.LogError($"Failed to get {nameof(CensusEnvironment)} for world ID {worldID} player login");
             }
 
             TrackedPlayer p;
@@ -530,10 +556,11 @@ namespace watchtower.Realtime {
                 p.LastLogin = DateTime.UtcNow;
             }
 
-            if (World.IsTrackedWorld(worldID)) {
+            if (env != null) {
                 _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                     CharacterID = p.ID,
-                    LastEvent = timestamp
+                    LastEvent = timestamp,
+                    Environment = env.Value
                 });
             }
 
@@ -549,8 +576,6 @@ namespace watchtower.Realtime {
             using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogout");
             logoutRoot?.AddTag("CharacterID", charID);
 
-            _CacheQueue.Queue(charID);
-
             DateTime timestamp = payload.CensusTimestamp("timestamp");
 
             short worldID = payload.GetWorldID();
@@ -559,6 +584,13 @@ namespace watchtower.Realtime {
                     CharacterID = charID,
                     Timestamp = timestamp
                 });
+            }
+
+            CensusEnvironment? plat = CensusEnvironmentHelper.FromWorldID(worldID);
+            if (plat != null) {
+                _CacheQueue.Queue(charID, plat.Value);
+            } else {
+                _Logger.LogError($"Failed to get {nameof(CensusEnvironment)} for world ID {worldID} in player logout");
             }
 
             TrackedPlayer? p;
@@ -614,6 +646,25 @@ namespace watchtower.Realtime {
 
                     if (metagameEventName == "started") {
                         state.AlertStart = timestamp;
+
+                        if (metagameEventID == 234) { // Nexus pre-match
+                            OutfitWarsMatch match = new();
+                            match.WorldID = worldID;
+                            match.ZoneID = zoneID;
+                            match.Timestamp = timestamp;
+
+                            _MatchRepository.Add(match);
+
+                            _Logger.LogDebug($"Started Nexus match at {match.Timestamp:u}, WorldID = {match.WorldID}, ZoneID = {match.ZoneID}");
+                        } else if (metagameEventID == 227) { // Nexus match start
+                            OutfitWarsMatch match = _MatchRepository.Get(worldID, zoneID) ?? new() {
+                                WorldID = worldID,
+                                ZoneID = zoneID,
+                                Timestamp = timestamp - TimeSpan.FromMinutes(20)
+                            };
+
+                            _Logger.LogDebug($"Nexus match {match.WorldID}-{match.ZoneID} finished prep period at {timestamp:u}, prep started at {match.Timestamp:u}");
+                        }
 
                         TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
                         if (duration == null) {
@@ -904,9 +955,14 @@ namespace watchtower.Realtime {
             traceDeath?.AddTag("World", ev.WorldID);
             traceDeath?.AddTag("Zone", ev.ZoneID);
 
-            if (World.IsTrackedWorld(ev.WorldID)) {
-                _CacheQueue.Queue(charID);
-                _CacheQueue.Queue(attackerID);
+            CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(ev.WorldID);
+            if (env == null) {
+                _Logger.LogError($"Missing {nameof(CensusEnvironment)} for world ID {ev.WorldID}");
+            }
+
+            if (env != null) { 
+                _CacheQueue.Queue(charID, env.Value);
+                _CacheQueue.Queue(attackerID, env.Value);
             }
 
             //_Logger.LogTrace($"Processing death: {payload}");
@@ -924,14 +980,17 @@ namespace watchtower.Realtime {
                     WorldID = ev.WorldID
                 });
 
-                if (attacker.ID != "0" && attacker.Online == false) {
+                if (env != null && attacker.ID != "0" && attacker.Online == false) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = attacker.ID,
-                        LastEvent = ev.Timestamp
+                        LastEvent = ev.Timestamp,
+                        Environment = env.Value
                     });
                 }
 
-                _CacheQueue.Queue(attacker.ID);
+                if (env != null) {
+                    _CacheQueue.Queue(attacker.ID, env.Value);
+                }
 
                 attacker.ZoneID = zoneID;
 
@@ -953,13 +1012,16 @@ namespace watchtower.Realtime {
                     WorldID = ev.WorldID
                 });
 
-                _CacheQueue.Queue(killed.ID);
+                if (env != null) {
+                    _CacheQueue.Queue(killed.ID, env.Value);
+                }
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
-                if (killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
+                if (env != null && killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = killed.ID,
-                        LastEvent = ev.Timestamp
+                        LastEvent = ev.Timestamp,
+                        Environment = env.Value
                     });
                 }
 
@@ -988,6 +1050,8 @@ namespace watchtower.Realtime {
                 insertDeath?.Stop();
             }
 
+            _NexusHandler.HandleKill(ev);
+
             //await _TagManager.OnKillHandler(ev);
         }
 
@@ -1003,7 +1067,6 @@ namespace watchtower.Realtime {
 
             Stopwatch timer = Stopwatch.StartNew();
 
-            _CacheQueue.Queue(charID);
             long queueMs = timer.ElapsedMilliseconds; timer.Restart();
 
             int expId = payload.GetInt32("experience_id", -1);
@@ -1014,6 +1077,13 @@ namespace watchtower.Realtime {
             string otherID = payload.GetString("other_id", "0");
 
             short factionID = Loadout.GetFaction(loadoutId);
+
+            CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
+            if (env != null) {
+                _CacheQueue.Queue(charID, env.Value);
+            } else {
+                _Logger.LogError($"Failed to find {nameof(CensusEnvironment)} for world ID {worldID} in exp event");
+            }
 
             long readValuesMs = timer.ElapsedMilliseconds; timer.Restart();
 
@@ -1044,10 +1114,11 @@ namespace watchtower.Realtime {
                     WorldID = worldID
                 });
 
-                if (p.Online == false) {
+                if (p.Online == false && env != null) {
                     _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
                         CharacterID = p.ID,
-                        LastEvent = ev.Timestamp
+                        LastEvent = ev.Timestamp,
+                        Environment = env.Value
                     });
                 }
 
@@ -1093,7 +1164,7 @@ namespace watchtower.Realtime {
             if (World.IsTrackedWorld(ev.WorldID)) {
                 ID = await _ExpEventDb.Insert(ev);
             } else {
-                _Logger.LogTrace($"not inserting exp event for world {ev.WorldID}");
+               // _Logger.LogTrace($"not inserting exp event for world {ev.WorldID}");
             }
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 

@@ -272,7 +272,7 @@ namespace watchtower.Controllers.Api {
                     Entry = entry
                 };
 
-                PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID);
+                PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID, CensusEnvironment.PC);
                 ex.Character = c;
 
                 expanded.Add(ex);

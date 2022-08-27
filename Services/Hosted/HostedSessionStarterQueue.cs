@@ -72,7 +72,7 @@ namespace watchtower.Services.Hosted {
 
                     using (Activity? start = HonuActivitySource.Root.StartActivity("session start")) {
                         using Activity? getCharacter = HonuActivitySource.Root.StartActivity("get char");
-                        PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID);
+                        PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID, entry.Environment);
                         getCharacter?.Stop();
                         if (c == null) {
                             ++entry.FailCount;
@@ -82,7 +82,7 @@ namespace watchtower.Services.Hosted {
 
                             if (entry.FailCount <= 10) {
                                 _Queue.Queue(entry);
-                                _CharacterCacheQueue.Queue(entry.CharacterID);
+                                _CharacterCacheQueue.Queue(entry.CharacterID, entry.Environment);
                                 continue;
                             }
                         }

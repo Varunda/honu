@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Alert;
 using watchtower.Models.Api;
@@ -186,7 +187,7 @@ namespace watchtower.Controllers.Api {
 
             if (excludeCharacters == false) {
                 List<string> charIDs = entries.Select(iter => iter.CharacterID).Distinct().ToList();
-                List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs, fast: true);
+                List<PsCharacter> characters = await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC, fast: true);
                 block.Characters = characters.Select(iter => new MinimalCharacter() {
                     ID = iter.ID, OutfitID = iter.OutfitID, OutfitTag = iter.OutfitTag, Name = iter.Name, FactionID = iter.FactionID
                 }).ToList();

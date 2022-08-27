@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -70,7 +71,7 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get the directive progress of a character
+        ///     Get the directive progress of a PC character
         /// </summary>
         /// <param name="charID">ID of the character</param>
         /// <response code="200">
@@ -91,7 +92,7 @@ namespace watchtower.Controllers.Api {
 
             Dictionary<int, ExpandedCharacterDirectiveCategory> charCategories = new();
 
-            PsCharacter? character = await _CharacterRepository.GetByID(charID);
+            PsCharacter? character = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (character == null) {
                 _Logger.LogError($"Failed to find character {charID}, some extra directives not for this faction will be included");
             }

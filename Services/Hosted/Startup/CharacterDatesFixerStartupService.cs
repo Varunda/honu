@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -51,7 +52,7 @@ namespace watchtower.Services.Hosted.Startup {
 
                     List<string> slice = characters.Skip(i * BLOCK_SIZE).Take(BLOCK_SIZE).Select(iter => iter.ID).ToList();
 
-                    List<PsCharacter> block = await _CharacterCensus.GetByIDs(slice);
+                    List<PsCharacter> block = await _CharacterCensus.GetByIDs(slice, CensusEnvironment.PC);
 
                     int missing = 0;
 

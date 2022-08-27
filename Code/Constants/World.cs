@@ -28,27 +28,31 @@ namespace watchtower.Code.Constants {
         /// </returns>
         public static bool IsTrackedWorld(short worldID) {
             return worldID == Connery || worldID == Miller || worldID == Cobalt
-                || worldID == Emerald || worldID == Jaeger || worldID == SolTech;
+                || worldID == Emerald || worldID == Jaeger || worldID == SolTech
+                || worldID == Apex;
         }
 
         /// <summary>
         ///     List of worlds that pc realtime streams are made for
         /// </summary>
-        public static List<short> PcStreams = new() {
-            Connery, Miller, Cobalt, Emerald, Jaeger, SolTech
+        public static readonly List<short> PcStreams = new() {
+            Connery, Miller, Cobalt, Emerald, Jaeger, SolTech, Apex
         };
 
         /// <summary>
         ///     List of worlds that ps4us streams are made for
         /// </summary>
-        public static List<short> Ps4UsStreams = new() { Genudine };
+        public static readonly List<short> Ps4UsStreams = new() { Genudine };
 
         /// <summary>
         ///     List of worlds that ps4eu streams are made for
         /// </summary>
-        public static List<short> Ps4EuStreams = new() { Ceres };
+        public static readonly List<short> Ps4EuStreams = new() { Ceres };
 
-        public static List<short> All = new() {
+        /// <summary>
+        ///     All servers
+        /// </summary>
+        public static readonly List<short> All = new() {
             Connery, Helios, Miller, Cobalt, Emerald, Jaeger, SolTech, Apex, Briggs, Genudine, Ceres
         };
 

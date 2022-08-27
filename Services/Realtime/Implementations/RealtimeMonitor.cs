@@ -144,11 +144,23 @@ namespace watchtower.Realtime {
 
         public async Task OnStartAsync(CancellationToken cancel) {
             // Initalized all the worlds to now, useful if a world isn't sending any events on the first connect, we'd like to know that
-            foreach (short worldID in World.PcStreams) {
+
+            List<short> worlds = new();
+            worlds.AddRange(World.PcStreams);
+            worlds.AddRange(World.Ps4UsStreams);
+            worlds.AddRange(World.Ps4EuStreams);
+
+            foreach (short worldID in worlds) {
                 _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
                 _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
 
-                RealtimeStream stream = CreateStream($"stream-{worldID}-{World.GetName(worldID)}", "asdf", "ps2");
+                CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
+                if (env == null) {
+                    _Logger.LogError($"Unknown {nameof(CensusEnvironment)} from world ID {worldID}, defaulting to PC for creating realtime stream");
+                    env = CensusEnvironment.PC;
+                }
+
+                RealtimeStream stream = CreateStream($"stream-{worldID}-{World.GetName(worldID)}", "asdf", env.Value);
 
                 CensusStreamSubscription sub = CreateSubscription(worldID);
                 stream.Subscriptions.Add(sub);
@@ -270,7 +282,7 @@ namespace watchtower.Realtime {
         ///     The newly created stream, with all callbacks setup. To actually start receiving events on it, you must call .ConnectAsync
         /// </returns>
         /// <exception cref="Exception">If a named stream matching <paramref name="name"/> already exists</exception>
-        internal RealtimeStream CreateStream(string name, string? serviceID, string? platform) {
+        internal RealtimeStream CreateStream(string name, string? serviceID, CensusEnvironment environment) {
             lock (_Streams) {
                 if (_Streams.ContainsKey(name) == true) {
                     throw new Exception($"cannot create another stream with name '{name}'");
@@ -280,10 +292,10 @@ namespace watchtower.Realtime {
             ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
-            _Logger.LogTrace($"Created new stream named '{name}', using platform {platform}");
+            _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");
 
             if (serviceID != null) { stream.SetServiceId(serviceID); }
-            if (platform != null) { stream.SetServiceNamespace(platform); }
+            stream.SetServiceNamespace(CensusEnvironmentHelper.ToNamespace(environment));
 
             stream.OnConnect((type) => {
                 if (type == ReconnectionType.Initial) {

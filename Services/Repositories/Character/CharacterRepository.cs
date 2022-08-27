@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -41,8 +42,8 @@ namespace watchtower.Services.Repositories {
         private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
-                CharacterDbStore db, CharacterCollection census,
-                CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue) {
+            CharacterDbStore db, CharacterCollection census,
+            CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue) {
 
             _Logger = logger;
             _Cache = cache;
@@ -59,13 +60,17 @@ namespace watchtower.Services.Repositories {
         ///     is used if possible
         /// </summary>
         /// <param name="charID">ID of the character</param>
-        /// <param name="fast"></param>
+        /// <param name="env">Which census environment, such as PC, PS4 EU or PS4 US</param>
+        /// <param name="fast">
+        ///     If the character is not found in the DB, will a Census call be made?
+        ///     If false and not found in the DB, the character will be put into a queue to be pulled later
+        /// </param>
         /// <returns>
         ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>,
         ///     or <c>null</c> if it could not be found in the available data sources. If <paramref name="fast"/>
         ///     is <c>true</c>, it is possible that it exists in Census, but not locally
         /// </returns>
-        public async Task<PsCharacter?> GetByID(string charID, bool fast = false) {
+        public async Task<PsCharacter?> GetByID(string charID, CensusEnvironment env, bool fast = false) {
             string key = string.Format(CACHE_KEY_ID, charID);
 
             // When Honu fails to get a character cause of a timeout, don't cache a potentially outdated
@@ -82,7 +87,7 @@ namespace watchtower.Services.Repositories {
                     try {
                         // If we have the character in DB, but not in Census, return it from DB
                         //      Useful if census is down, or a character has been deleted
-                        PsCharacter? censusChar = await _Census.GetByID(charID);
+                        PsCharacter? censusChar = await _Census.GetByID(charID, env);
                         if (censusChar != null) {
                             character = censusChar;
                             await _Db.Upsert(censusChar);
@@ -118,9 +123,10 @@ namespace watchtower.Services.Repositories {
         ///     Get all the characters that have an ID
         /// </summary>
         /// <param name="IDs">List of IDs to load</param>
+        /// <param name="env">Which census environment, such as PC, PS4 EU or PS4 US</param>
         /// <param name="fast">If only characters from DB will be loaded, and any characters not in the DB will be queued for retrieval</param>
         /// <returns></returns>
-        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, bool fast = false) {
+        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, CensusEnvironment env, bool fast = false) {
             // Make a copy of the IDs as this list gets modified, and if the passed list is modified,
             //      that could affect whatever is calling this method
             List<string> localIDs = new List<string>(IDs);
@@ -171,7 +177,9 @@ namespace watchtower.Services.Repositories {
                             ++found;
                         } else {
                             _Queue.Queue(c.ID);
-                            _CacheQueue.Queue(c.ID);
+
+                            _CacheQueue.Queue(c.ID, env);
+
                             ++inExpired;
                         }
                     }
@@ -186,7 +194,7 @@ namespace watchtower.Services.Repositories {
             int inCensus = 0;
             if (found < total) {
                 if (fast == false) {
-                    List<PsCharacter> census = await _Census.GetByIDs(localIDs);
+                    List<PsCharacter> census = await _Census.GetByIDs(localIDs, env);
 
                     foreach (PsCharacter c in census) {
                         localIDs.Remove(c.ID);
@@ -196,7 +204,7 @@ namespace watchtower.Services.Repositories {
                     }
                 } else {
                     foreach (string ID in localIDs) {
-                        _CacheQueue.Queue(ID);
+                        _CacheQueue.Queue(ID, env);
                     }
                 }
                 toCensus = timer.ElapsedMilliseconds;
@@ -264,7 +272,7 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
-        ///     Search for characters that have a partial match to a name
+        ///     Search for characters that have a partial match to a name, currently only supports PC
         /// </summary>
         /// <param name="name">Name to search</param>
         /// <param name="timeoutCensus">If the census request will be timed out or not</param>

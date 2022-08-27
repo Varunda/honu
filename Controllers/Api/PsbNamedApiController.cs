@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api.PSB;
 using watchtower.Models.Census;
@@ -261,7 +262,7 @@ namespace watchtower.Controllers.Api {
                 if (acc.NsID != null) { IDs.Add(acc.NsID);  }
             }
 
-            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs, true);
+            List<PsCharacter> characters = await _CharacterRepository.GetByIDs(IDs, CensusEnvironment.PC, fast: true);
 
             foreach (PsbNamedAccount acc in named) {
                 PsCharacter? vs = (acc.VsID != null) ? characters.FirstOrDefault(iter => iter.ID == acc.VsID) : null;

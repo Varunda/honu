@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Census;
@@ -39,7 +40,7 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
-        ///     Get the friends of a character by using both Census and the local DB
+        ///     Get the friends of a PC character by using both Census and the local DB
         /// </summary>
         /// <param name="charID">ID of the character</param>
         /// <param name="fast">Will only the DB be used, and no queries to Census be used?</param>
@@ -55,7 +56,7 @@ namespace watchtower.Services.Repositories {
                 bool fetchCensus = friends.Count == 0;
                 if (fetchCensus == false && fast == false) {
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(charID);
-                    PsCharacter? c = await _CharacterRepository.GetByID(charID);
+                    PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
                     if (metadata == null) {
                         fetchCensus = true;
                     } else if (c != null) {

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
 
 namespace watchtower.Services.Census {
@@ -65,12 +66,15 @@ namespace watchtower.Services.Census {
         ///     Get a <see cref="PsCharacter"/> by ID
         /// </summary>
         /// <param name="ID">ID of the character to get</param>
+        /// <param name="env">What census environment to make the call in</param>
         /// <returns>
         ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="ID"/>,
         ///     or <c>null</c> if it doesn't exist
         /// </returns>
-        public async Task<PsCharacter?> GetByID(string ID) {
+        public async Task<PsCharacter?> GetByID(string ID, CensusEnvironment env) {
             CensusQuery query = _Census.Create("character");
+            query.SetServiceNamespace(CensusEnvironmentHelper.ToNamespace(env));
+
             query.Where("character_id").Equals(ID);
             query.AddResolve("outfit", "world");
 
@@ -83,11 +87,12 @@ namespace watchtower.Services.Census {
         ///     Get a list of characters by IDs
         /// </summary>
         /// <param name="IDs">IDs to get from Census</param>
+        /// <param name="env">What census environment to make the call in</param>
         /// <returns>
         ///     A list of <see cref="PsCharacter"/> with a <see cref="PsCharacter.ID"/>
         ///     as an element of <paramref name="IDs"/>
         /// </returns>
-        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
+        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, CensusEnvironment env) {
             int batchCount = (int) Math.Ceiling(IDs.Count / (double) BATCH_SIZE);
 
             //_Logger.LogTrace($"Doing {batchCount} batches to get {IDs.Count} characters");
@@ -101,6 +106,7 @@ namespace watchtower.Services.Census {
                 //_Logger.LogTrace($"Slize size: {slice.Count}");
 
                 CensusQuery query = _Census.Create("character");
+                query.SetServiceNamespace(CensusEnvironmentHelper.ToNamespace(env));
                 foreach (string id in slice) {
                     query.Where("character_id").Equals(id);
                 }

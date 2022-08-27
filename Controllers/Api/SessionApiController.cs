@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -58,7 +59,7 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get all sessions that were online at a given time
+        ///     Get all PC sessions that were online at a given time
         /// </summary>
         /// <param name="whenEpoch">When to lookup the sessions, in unix epoch seconds</param>
         /// <param name="worldID">Optional world ID to limit the lookup by</param>
@@ -76,7 +77,7 @@ namespace watchtower.Controllers.Api {
 
             List<string> charIDs = sessions.Select(iter => iter.CharacterID).Distinct().ToList();
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC);
 
             List<ExpandedSession> expanded = new List<ExpandedSession>(sessions.Count);
 
