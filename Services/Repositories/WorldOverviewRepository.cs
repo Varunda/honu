@@ -77,6 +77,7 @@ namespace watchtower.Services.Repositories {
                     ZoneState? state = wo.Zones.FirstOrDefault(iter => iter.ZoneID == zoneID);
                     if (state != null) {
                         ++state.PlayerCount;
+                        ++state.Players.All;
 
                         if (player.TeamID == Faction.VS) {
                             ++state.Players.VS;
