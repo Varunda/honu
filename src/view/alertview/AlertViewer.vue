@@ -371,6 +371,18 @@
                     return;
                 }
 
+                const noVS: OutfitDataEntry = new OutfitDataEntry();
+                noVS.outfitDisplay = "no outfit VS";
+                this.outfitMap.set("0-vs", noVS);
+
+                const noNC: OutfitDataEntry = new OutfitDataEntry();
+                noNC.outfitDisplay = "no outfit NC";
+                this.outfitMap.set("0-nc", noNC);
+
+                const noTR: OutfitDataEntry = new OutfitDataEntry();
+                noTR.outfitDisplay = "no outfit TR";
+                this.outfitMap.set("0-tr", noTR);
+
                 this.outfits = Loadable.loading();
 
                 let vsKills: number = 0;
@@ -379,22 +391,24 @@
                 let totalKills: number = 0;
 
                 for (const entry of this.participants.data) {
-                    if (entry.outfitID == null) {
+                    if (entry.outfitID == null || entry.outfitID == "0") {
                         continue;
                     }
 
+                    let outfitID: string = entry.outfitID;
+
                     if (this.outfitMap.has(entry.outfitID) == false) {
                         const outfitEntry: OutfitDataEntry = new OutfitDataEntry();
-                        outfitEntry.outfitID = entry.outfitID;
+                        outfitEntry.outfitID = outfitID;
                         outfitEntry.outfitTag = entry.outfitTag;
-                        outfitEntry.outfitName = entry.outfitName ?? `<missing ${entry.outfitID}>`;
+                        outfitEntry.outfitName = entry.outfitName ?? `<missing ${outfitID}>`;
                         outfitEntry.outfitDisplay = `[${entry.outfitTag}] ${entry.outfitName}`;
                         outfitEntry.factionID = entry.factionID;
 
-                        this.outfitMap.set(entry.outfitID, outfitEntry);
+                        this.outfitMap.set(outfitID, outfitEntry);
                     }
 
-                    const outfitEntry: OutfitDataEntry = this.outfitMap.get(entry.outfitID)!;
+                    const outfitEntry: OutfitDataEntry = this.outfitMap.get(outfitID)!;
 
                     outfitEntry.kills += entry.kills;
                     outfitEntry.deaths += entry.deaths;
