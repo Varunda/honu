@@ -8,6 +8,11 @@ namespace watchtower.Models {
     public class HonuAccount {
 
         /// <summary>
+        ///     Default ID of the system account
+        /// </summary>
+        public const long SystemID = 1;
+
+        /// <summary>
         ///     ID of the account
         /// </summary>
         public long ID { get; set; }
@@ -38,9 +43,14 @@ namespace watchtower.Models {
         public ulong DiscordID { get; set; }
 
         /// <summary>
-        ///     Default ID of the system account
+        ///     When this account was deleted
         /// </summary>
-        public static long SystemID = 1;
+        public DateTime? DeletedOn { get; set; }
+
+        /// <summary>
+        ///     Who deleted this account
+        /// </summary>
+        public long? DeletedBy { get; set; }
 
     }
 }

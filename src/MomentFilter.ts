@@ -24,7 +24,7 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
     } else if (typeof input == "number") {
         return moment(new Date(input)).format(format);
     } else {
-        throw `Unknown type of input: ${input} (${typeof input})`;
+        throw `Unknown type of input in moment filter, cannot parse to the format: ${input} (${typeof input})`;
     }
 }
 

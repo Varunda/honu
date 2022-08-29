@@ -11,6 +11,9 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services {
 
+    /// <summary>
+    ///     Service to get the current user making an HTTP request
+    /// </summary>
     public class CurrentHonuAccount {
 
         private readonly ILogger<CurrentHonuAccount> _Logger;

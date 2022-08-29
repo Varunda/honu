@@ -57,8 +57,11 @@ namespace watchtower.Services.Repositories.PSB {
         /// <summary>
         ///     Get a specific <see cref="PsbNamedAccount"/> by ID
         /// </summary>
-        /// <param name="ID"></param>
-        /// <returns></returns>
+        /// <param name="ID">The ID of the account to get</param>
+        /// <returns>
+        ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.ID"/> of <paramref name="ID"/>,
+        ///     or <c>null</c> if it doesn't exist
+        /// </returns>
         public async Task<PsbNamedAccount?> GetByID(long ID) {
             return (await GetAll()).FirstOrDefault(iter => iter.ID == ID);
         }
@@ -68,7 +71,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="acc">Parameters used to insert</param>
         /// <returns>The new <see cref="PsbNamedAccount.ID"/> that was assigned</returns>
-        [Obsolete("Use Insert instead")]
+        [Obsolete("Use Create instead")]
         protected Task<long> Insert(PsbNamedAccount acc) {
             _Cache.Remove(CACHE_KEY);
             return _Db.Insert(acc);

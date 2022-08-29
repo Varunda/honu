@@ -55,8 +55,14 @@ export class Loadable {
         return { state: "nocontent", data: null };
     }
 
-    public static notFound<T>(err: string): Loading<T> {
-        return { state: "notfound", message: err };
+    /**
+     * Create a Loading that is in the state of 'notfound'.
+     * Data will be a string that represents what resource was missing
+     * 
+     * @param res String that indicates what resources were missing
+     */
+    public static notFound<T>(res: string): Loading<T> {
+        return { state: "notfound", message: res };
     }
 
     /**

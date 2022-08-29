@@ -336,6 +336,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "accountmanagement",
+                    pattern: "/accountmanagement/{*.}",
+                    defaults: new { controller = "Home", action = "AccountManagement" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );

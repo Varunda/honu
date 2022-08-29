@@ -20,8 +20,8 @@ namespace watchtower.Services.Repositories {
         private readonly BadHealthRepository _BadHealthRepository;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
 
-        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
-        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new ConcurrentDictionary<short, CensusRealtimeHealthEntry>();
+        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new();
+        private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new();
 
         private readonly IOptions<CensusRealtimeHealthOptions> _HealthTolerances;
 

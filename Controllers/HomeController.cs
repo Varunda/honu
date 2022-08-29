@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using watchtower.Code;
 using watchtower.Models.Census;
+using watchtower.Models.Internal;
 using watchtower.Services;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -149,6 +151,18 @@ namespace watchtower.Controllers {
         }
 
         public IActionResult RealtimeNetwork(short worldID) {
+            return View();
+        }
+
+        [PermissionNeeded(HonuPermission.HONU_ACCOUNT_ADMIN)]
+        [Authorize]
+        public IActionResult AccountManagement() {
+            return View();
+        }
+
+        [PermissionNeeded(HonuPermission.ALERT_CREATE)]
+        [Authorize]
+        public IActionResult AlertCreate() {
             return View();
         }
 

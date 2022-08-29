@@ -144,7 +144,6 @@
                             Unchecked state of sessions: {{sessions.state}}
                         </td>
                     </tr>
-
                 </tbody>
             </table>
 

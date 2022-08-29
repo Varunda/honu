@@ -16,6 +16,8 @@ namespace watchtower.Services.Db.Readers {
             acc.Email = "<hidden in reader>";
             acc.Discord = "<hidded in reader>";
             acc.DiscordID = reader.GetUInt64("discord_id");
+            acc.DeletedOn = reader.GetNullableDateTime("deleted_on");
+            acc.DeletedBy = reader.GetNullableInt64("deleted_by");
 
             return acc;
         }

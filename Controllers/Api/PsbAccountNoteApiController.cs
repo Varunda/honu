@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Models;
+using watchtower.Models.Internal;
 using watchtower.Models.PSB;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories.PSB;
@@ -13,7 +15,6 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-notes")]
-    //[Authorize]
     public class PsbAccountNoteApiController : ApiControllerBase {
 
         private readonly ILogger<PsbAccountNoteApiController> _Logger;
@@ -29,6 +30,8 @@ namespace watchtower.Controllers.Api {
         }
 
         [HttpGet("account/{accountID}")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
         public async Task<ApiResponse<List<PsbAccountNote>>> GetByAccountID(long accountID) {
             PsbNamedAccount? account = await _NamedRepository.GetByID(accountID);
             if (account == null) {

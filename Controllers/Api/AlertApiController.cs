@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -6,13 +7,16 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Code.Constants;
+using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Alert;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.Internal;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -248,6 +252,17 @@ namespace watchtower.Controllers.Api {
             return ApiOk(ex);
         }
 
+        /// <summary>
+        ///     Get the population of an alert
+        /// </summary>
+        /// <param name="alertID">ID of the alert</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="AlertPopulation"/>s that
+        ///     represent the changing population over the course of an alert
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/> exists
+        /// </response>
         [HttpGet("{alertID}/population")]
         public async Task<ApiResponse<List<AlertPopulation>>> GetPopulation(long alertID) {
             PsAlert? alert = await _AlertDb.GetByID(alertID);
@@ -258,6 +273,31 @@ namespace watchtower.Controllers.Api {
             List<AlertPopulation> pops = await _AlertPopulationRepository.GetByAlertID(alertID, CancellationToken.None);
 
             return ApiOk(pops);
+        }
+
+        [HttpPost]
+        [PermissionNeeded(HonuPermission.ALERT_CREATE)]
+        [Authorize]
+        public async Task<ApiResponse<long>> CreateCustom([FromBody] PsAlert parameters) {
+            List<string> errors = new();
+
+            if (string.IsNullOrEmpty(parameters.Name)) {
+                errors.Add("Missing name");
+            }
+            if (World.All.IndexOf(parameters.WorldID) == -1) {
+                errors.Add($"Invalid world {parameters.WorldID}");
+            }
+            if (parameters.ZoneID != 0 && Zone.All.IndexOf(parameters.ZoneID) == -1) {
+                errors.Add($"Invalid zone {parameters.ZoneID}");
+            }
+
+            if (errors.Count > 0) {
+                return ApiBadRequest<long>($"{string.Join(", ", errors)}");
+            }
+
+            long ID = await _AlertDb.Insert(parameters);
+
+            return ApiOk(ID);
         }
 
     }

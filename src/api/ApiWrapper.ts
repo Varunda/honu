@@ -79,6 +79,8 @@ export default class ApiWrapper<T> {
                 return Loadable.nocontent();
             } else if (response.status == 400) {
                 return Loadable.error(`bad request: ${response.data}`);
+            } else if (response.status == 403) {
+                return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
             } else if (response.status == 404) {
                 return Loadable.notFound(response.data);
             } else if (response.status == 500) {
@@ -99,6 +101,8 @@ export default class ApiWrapper<T> {
 
 			if (responseCode == 400) {
 				return Loadable.error(`bad request: ${responseData}`);
+            } else if (responseCode == 403) {
+                return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
 			} else if (responseCode == 404) {
 				return Loadable.notFound(responseData);
 			} else if (responseCode == 500) {
@@ -111,8 +115,55 @@ export default class ApiWrapper<T> {
         }
 	}
 
+	public async postReplyForm<U>(url: string, body: any, reader: ApiReader<U>): Promise<Loading<U>> {
+		try {
+			const response: axios.AxiosResponse<any> = await axios.default.post(url, body, {
+				validateStatus: () => true
+			});
+
+            if (response.status == 204) {
+                return Loadable.nocontent();
+            } else if (response.status == 400) {
+                return Loadable.error(`bad request: ${response.data}`);
+            } else if (response.status == 403) {
+                return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
+            } else if (response.status == 404) {
+                return Loadable.notFound(response.data);
+            } else if (response.status == 500) {
+                return Loadable.error(`internal server error: ${response.data}`);
+            } else if (response.status == 524) {
+                return Loadable.error(`timeout from cloudflare`);
+            }
+
+            if (response.status != 200) {
+                throw `unchecked status code ${response.status}: ${response.data}`;
+            }
+
+            const datum: U = reader(response.data);
+            return Loadable.loaded(datum);
+		} catch (err) {
+			const responseData = err.response.data;
+			const responseCode = err.response.status;
+
+			if (responseCode == 400) {
+				return Loadable.error(`bad request: ${responseData}`);
+            } else if (responseCode == 403) {
+                return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
+			} else if (responseCode == 404) {
+				return Loadable.notFound(responseData);
+			} else if (responseCode == 500) {
+				return Loadable.error(`internal server error: ${responseData}`);
+			} else if (responseCode == 524) {
+				return Loadable.error(`timeout from cloudflare`);
+			}
+
+			throw `unchecked status code ${responseCode}: ${responseData}`;
+        }
+
+    }
+
 	/**
-	 * Common 
+	 * Common method to call axios to get some data, then handle the status and return an appropriate Loading object
 	 */
 	private async getData(url: string): Promise<Loading<any>> {
 		const response: axios.AxiosResponse<any> = await axios.default.get(url, { validateStatus: () => true });
@@ -121,6 +172,8 @@ export default class ApiWrapper<T> {
 			return Loadable.nocontent();
 		} else if (response.status == 400) {
 			return Loadable.error(`bad request: ${response.data}`);
+		} else if (response.status == 403) {
+			return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {

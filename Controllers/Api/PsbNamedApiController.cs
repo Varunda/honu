@@ -10,6 +10,7 @@ using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api.PSB;
 using watchtower.Models.Census;
+using watchtower.Models.Internal;
 using watchtower.Models.PSB;
 using watchtower.Services;
 using watchtower.Services.Repositories;
@@ -19,8 +20,6 @@ namespace watchtower.Controllers.Api {
 
     [ApiController]
     [Route("/api/psb-named/")]
-    [Authorize]
-    [PsbAdmin]
     public class PsbNamedApiController : ApiControllerBase {
 
         private readonly ILogger<PsbNamedApiController> _Logger;
@@ -47,6 +46,8 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a list of all PSB named accounts
         /// </response>
         [HttpGet]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
         public async Task<ApiResponse<List<ExpandedPsbNamedAccount>>> GetAll() {
             List<PsbNamedAccount> named = await _NamedRepository.GetAll();
 
@@ -67,6 +68,8 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.ID"/> of <paramref name="ID"/> exists
         /// </response>
         [HttpGet("{ID}")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
         public async Task<ApiResponse<ExpandedPsbNamedAccount>> GetByID(long ID) {
             PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
             if (acc == null) {
@@ -86,6 +89,8 @@ namespace watchtower.Controllers.Api {
         ///     Returned after the recheck is complete
         /// </response>
         [HttpGet("recheck/{accountID}")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
         public async Task<ApiResponse<PsbNamedAccount>> Recheck(long accountID) {
             PsbNamedAccount? acc = await _NamedRepository.GetByID(accountID);
             if (acc == null) {
@@ -116,6 +121,8 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.ID"/> of <paramref name="ID"/> exists
         /// </response>
         [HttpDelete("{ID}")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_MANAGE)]
+        [Authorize]
         public async Task<ApiResponse> Delete(long ID) {
             PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
             if (acc == null) {
@@ -145,6 +152,8 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain the <see cref="PsbCharacterSet"/> that matches the tag and name passed
         /// </response>
         [HttpGet("character-set")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
         public async Task<ApiResponse<PsbCharacterSet>> GetCharacterSet([FromQuery] string? tag, [FromQuery] string name) {
             PsbCharacterSet set = await _NamedRepository.GetCharacterSet(tag, name);
 
@@ -171,6 +180,8 @@ namespace watchtower.Controllers.Api {
         ///     </ul>
         /// </resposne>
         [HttpPost]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_MANAGE)]
+        [Authorize]
         public async Task<ApiResponse<PsbNamedAccount>> Create([FromQuery] string? tag, [FromQuery] string name) {
             PsbCharacterSet set = await _NamedRepository.GetCharacterSet(tag, name);
             if (set.VS == null || set.NC == null || set.TR == null || set.NS == null) {
@@ -212,6 +223,8 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsbNamedAccount"/>  with <see cref="PsbNamedAccount.ID"/> of <paramref name="accountID"/> exists
         /// </response>
         [HttpPost("{accountID}")]
+        [PermissionNeeded(HonuPermission.PSB_NAMED_MANAGE)]
+        [Authorize]
         public async Task<ApiResponse<PsbNamedAccount>> Rename(long accountID, [FromQuery] string? tag, [FromQuery] string name) {
             if (string.IsNullOrEmpty(name) == true) {
                 return ApiBadRequest<PsbNamedAccount>($"Missing {nameof(name)} parameter");

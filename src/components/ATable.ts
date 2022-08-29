@@ -197,108 +197,110 @@ export const ATable = Vue.extend({
 
         // Find the filters and create them
         for (const column of this.nodes.columns) {
-            if (column.componentOptions?.children) {
-                const filterNodes: VNode[] = column.componentOptions.children
-                    .filter((iter: VNode) => iter.componentOptions?.tag == "a-filter");
-
-                if (filterNodes.length > 1) {
-                    throw `Cannot define multiple <a-filter> elements in a single <a-col>`;
-                }
-
-                const colClass: string = (column.componentOptions!.propsData as any).ColClass;
-
-                const filter: Filter = {
-                    method: "empty",
-                    type: "empty",
-                    conditions: [],
-                    selectedCondition: "",
-                    colClass: colClass,
-                    field: "",
-                    value: "",
-                    source: undefined,
-                    sourceKey: undefined,
-                    sourceValue: undefined,
-                    placeholder: undefined,
-                    vnode: undefined,
-                    width: undefined
-                };
-
-                if (filterNodes.length == 0) {
-                    this.filters.push(filter);
-                    continue;
-                }
-
-                const filterNode: VNode = filterNodes[0];
-                filter.vnode = filterNode;
-
-                filter.width = (filterNode.componentOptions!.propsData as any).MaxWidth;
-
-                // Validate method prop
-                filter.method = (filterNode.componentOptions!.propsData as any).method;
-                if (typeof filter.method != "string") {
-                    throw `Needed string for method of <a-filter>, got ${typeof filter.method}`;
-                }
-                if (filter.method == "reset") {
-                    this.filters.push(filter);
-                    continue;
-                }
-
-                // Validate a correct source for a dropdown filter
-                if (filter.method == "dropdown") {
-                    filter.source = (filterNode.componentOptions!.propsData as any).source;
-
-                    // A function was passed as the source, validate and begin the
-                    if (typeof (filter.source) == "function") {
-                        filter.sourceKey = (filterNode.componentOptions!.propsData as any).SourceKey;
-                        if (filter.sourceKey == undefined) {
-                            throw `Missing source-key for <a-filter>`;
-                        }
-
-                        filter.sourceValue = (filterNode.componentOptions!.propsData as any).SourceValue;
-                        if (filter.sourceValue == undefined) {
-                            throw `Missing source-value for <a-filter>`;
-                        }
-
-                        const sourceRet: any = (filter.source as Function)();
-                        if (typeof (sourceRet.ok) != "function") {
-                            throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
-                        }
-                    } else if (filter.source != undefined && Array.isArray(filter.source) == false) {
-                        throw `<a-filter> source was given but was not an array`;
-                    }
-                }
-
-                // Validate type prop
-                filter.type = (filterNode.componentOptions!.propsData as any).type;
-                if (typeof filter.type != "string") {
-                    throw `Needed string for type of <a-filter>, got ${typeof filter.type}`;
-                }
-                if (ValidFilterTypes.indexOf(filter.type) == -1) {
-                    throw `Invalid filter type '${filter.type}'`;
-                }
-
-                // Validate conditions prop
-                filter.conditions = (filterNode.componentOptions!.propsData as any).conditions;
-                if (!Array.isArray(filter.conditions)) {
-                    throw `Needed array for conditions of <a-filter>, got ${typeof filter.conditions}`;
-                }
-                if (filter.conditions.length == 0) {
-                    throw `No conditions of <a-filter> given, need at least one`;
-                }
-
-                // Validate field prop
-                filter.field = (filterNode.componentOptions!.propsData as any).field;
-                if (typeof filter.field != "string") {
-                    throw `Need string for field of <a-filter>, got ${typeof filter.field}`;
-                }
-
-                filter.placeholder = (filterNode.componentOptions!.propsData as any).placeholder;
-
-                filter.value = (filter.type == "number") ? null : "";
-                filter.selectedCondition = filter.conditions[0];
-
-                this.filters.push(filter);
+            if (!column.componentOptions?.children) {
+                continue;
             }
+
+            const filterNodes: VNode[] = column.componentOptions.children
+                .filter((iter: VNode) => iter.componentOptions?.tag == "a-filter");
+
+            if (filterNodes.length > 1) {
+                throw `Cannot define multiple <a-filter> elements in a single <a-col>`;
+            }
+
+            const colClass: string = (column.componentOptions.propsData as any).ColClass;
+
+            const filter: Filter = {
+                method: "empty",
+                type: "empty",
+                conditions: [],
+                selectedCondition: "",
+                colClass: colClass,
+                field: "",
+                value: "",
+                source: undefined,
+                sourceKey: undefined,
+                sourceValue: undefined,
+                placeholder: undefined,
+                vnode: undefined,
+                width: undefined
+            };
+
+            if (filterNodes.length == 0) {
+                this.filters.push(filter);
+                continue;
+            }
+
+            const filterNode: VNode = filterNodes[0];
+            filter.vnode = filterNode;
+
+            filter.width = (filterNode.componentOptions!.propsData as any).MaxWidth;
+
+            // Validate method prop
+            filter.method = (filterNode.componentOptions!.propsData as any).method;
+            if (typeof filter.method != "string") {
+                throw `Needed string for method of <a-filter>, got ${typeof filter.method}`;
+            }
+            if (filter.method == "reset" || filter.method == "template") {
+                this.filters.push(filter);
+                continue;
+            }
+
+            // Validate a correct source for a dropdown filter
+            if (filter.method == "dropdown") {
+                filter.source = (filterNode.componentOptions!.propsData as any).source;
+
+                // A function was passed as the source, validate and begin the
+                if (typeof (filter.source) == "function") {
+                    filter.sourceKey = (filterNode.componentOptions!.propsData as any).SourceKey;
+                    if (filter.sourceKey == undefined) {
+                        throw `Missing source-key for <a-filter>`;
+                    }
+
+                    filter.sourceValue = (filterNode.componentOptions!.propsData as any).SourceValue;
+                    if (filter.sourceValue == undefined) {
+                        throw `Missing source-value for <a-filter>`;
+                    }
+
+                    const sourceRet: any = (filter.source as Function)();
+                    if (typeof (sourceRet.ok) != "function") {
+                        throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
+                    }
+                } else if (filter.source != undefined && Array.isArray(filter.source) == false) {
+                    throw `<a-filter> source was given but was not an array`;
+                }
+            }
+
+            // Validate type prop
+            filter.type = (filterNode.componentOptions!.propsData as any).type;
+            if (typeof filter.type != "string") {
+                throw `Needed string for type of <a-filter>, got ${typeof filter.type}`;
+            }
+            if (ValidFilterTypes.indexOf(filter.type) == -1) {
+                throw `Invalid filter type '${filter.type}'`;
+            }
+
+            // Validate conditions prop
+            filter.conditions = (filterNode.componentOptions!.propsData as any).conditions;
+            if (!Array.isArray(filter.conditions) && filter.method != "empty") {
+                throw `Needed array for conditions of <a-filter>, got ${typeof filter.conditions} on field ${filter.field}`;
+            }
+            if (filter.conditions.length == 0) {
+                throw `No conditions of <a-filter> given, need at least one`;
+            }
+
+            // Validate field prop
+            filter.field = (filterNode.componentOptions!.propsData as any).field;
+            if (typeof filter.field != "string") {
+                throw `Need string for field of <a-filter>, got ${typeof filter.field}`;
+            }
+
+            filter.placeholder = (filterNode.componentOptions!.propsData as any).placeholder;
+
+            filter.value = (filter.type == "number") ? null : "";
+            filter.selectedCondition = filter.conditions[0];
+
+            this.filters.push(filter);
         }
 
         for (const column of this.nodes.columns) {
@@ -309,7 +311,7 @@ export const ATable = Vue.extend({
 
                 // Ensure at most one exists for each column, cannot have multiple
                 if (footerNodes.length > 1) {
-                    throw "Cannot define multiple <a-header> elements in a single <a-col>";
+                    throw "Cannot define multiple <a-footer> elements in a single <a-col>";
                 }
 
                 const footer: Footer = {
@@ -330,51 +332,94 @@ export const ATable = Vue.extend({
         this.log("render");
         let rows: VNode[] = [];
 
-        if (this.ShowHeader == true) {
-            rows.push(this.renderHeader(createElement));
-        }
-
-        if (this.ShowFilters == true) {
-            rows.push(this.renderFilter(createElement));
-        }
-
-        if (this.entries.state == "idle") {
-
-        } else if (this.entries.state == "loading") {
-			rows.push(createElement("tr", [
-                createElement("td", {
-                    attrs: {
-                        "colspan": `${this.nodes.columns.length}`
-                    }
-                }, [
-                    "Loading...",
-                    createElement(Busy, {
-                        staticStyle: {
-                            "height": "1.5rem"
-                        }
-                    })
-                ])
-			]));
-
-            this.$emit("rerender", Loadable.loading());
-        } else if (this.entries.state == "loaded") {
-            if (this.entries.data.length == 0) {
-                console.log(`<a-table> 0 entries, showing no data row`);
-                rows.push(this.renderNoDataRow(createElement));
-            } else {
-                if (this.ShowTopPages == true && this.paging.size > 10 && this.paginate == true) {
-                    rows.push(this.renderPages(createElement));
-                }
-
-                rows.push(createElement("tbody", {},
-                    this.displayedEntries.map(iter => {
-                        return this.renderDataRow(createElement, iter);
-                    }))
-                );
+        try {
+            if (this.ShowHeader == true) {
+                rows.push(this.renderHeader(createElement));
             }
 
-            this.$emit("rerender", Loadable.loaded(this.displayedEntries));
-        } else if (this.entries.state == "error") {
+            if (this.ShowFilters == true) {
+                rows.push(this.renderFilter(createElement));
+            }
+
+            if (this.entries.state == "idle") {
+
+            } else if (this.entries.state == "loading") {
+                rows.push(createElement("tr", [
+                    createElement("td", {
+                        attrs: {
+                            "colspan": `${this.nodes.columns.length}`
+                        }
+                    }, [
+                        "Loading...",
+                        createElement(Busy, {
+                            staticStyle: {
+                                "height": "1.5rem"
+                            }
+                        })
+                    ])
+                ]));
+
+                this.$emit("rerender", Loadable.loading());
+            } else if (this.entries.state == "loaded") {
+                if (this.entries.data.length == 0) {
+                    console.log(`<a-table> 0 entries, showing no data row`);
+                    rows.push(this.renderNoDataRow(createElement));
+                } else {
+                    if (this.ShowTopPages == true && this.paging.size > 10 && this.paginate == true) {
+                        rows.push(this.renderPages(createElement));
+                    }
+
+                    rows.push(createElement("tbody", {},
+                        this.displayedEntries.map(iter => {
+                            return this.renderDataRow(createElement, iter);
+                        }))
+                    );
+                }
+
+                this.$emit("rerender", Loadable.loaded(this.displayedEntries));
+            } else if (this.entries.state == "error") {
+                rows.push(createElement("tr",
+                    {
+                        staticClass: "table-danger"
+                    },
+                    [
+                        createElement("td", {
+                            attrs: {
+                                "colspan": `${this.nodes.columns.length}`
+                            }
+                        },
+                            [`Error loading data from source: ${this.entries.message}`]
+                        )
+
+                    ]
+                ));
+
+                this.$emit("rerender", Loadable.error(this.entries.message));
+            } else {
+                rows.push(createElement("tr",
+                    {
+                        staticClass: "table-danger"
+                    },
+                    [
+                        createElement("td", {
+                            attrs: {
+                                "colspan": `${this.nodes.columns.length}`
+                            }
+                        },
+                            [`Unchecked state of entries: '${this.entries.state}'`]
+                        )
+                    ]
+                ));
+            }
+
+            if (this.ShowFooter == true) {
+                rows.push(this.renderFooter(createElement));
+            }
+
+            if (this.paginate == true) {
+                rows.push(this.renderPages(createElement));
+            }
+        } catch (err) {
             rows.push(createElement("tr",
                 {
                     staticClass: "table-danger"
@@ -385,28 +430,15 @@ export const ATable = Vue.extend({
                             "colspan": `${this.nodes.columns.length}`
                         }
                     },
-                        [`Error loading data from source: ${this.entries.message}`]
+                        [
+                            `Error occured while rendering <a-table>`,
+                            createElement("br"),
+                            `${err}`
+                        ]
                     )
-
                 ]
             ));
-
-            this.$emit("rerender", Loadable.error(this.entries.message));
-        } else {
-            rows.push(createElement("div",
-                {
-                    staticClass: "list-group-item list-group-item-danger"
-                },
-                [`Unchecked state of entries: '${this.entries.state}'`]
-            ));
-        }
-
-        if (this.ShowFooter == true) {
-            rows.push(this.renderFooter(createElement));
-        }
-
-        if (this.paginate == true) {
-            rows.push(this.renderPages(createElement));
+            console.error(err);
         }
 
 		return createElement("table",
@@ -656,6 +688,8 @@ export const ATable = Vue.extend({
                     inputNode = this.createResetFilter(createElement, filter);
                 } else if (filter.method == "empty") {
                     inputNode = createElement("div");
+                } else if (filter.method == "template") {
+                    inputNode = this.createTemplateFilter(createElement, filter);
                 } else {
                     throw `Unknown filter method '${filter.method}'`;
                 }
@@ -681,6 +715,38 @@ export const ATable = Vue.extend({
             }
 
             return createElement("tr", footers);
+        },
+
+        createTemplateFilter(createElement: CreateElement, filter: Filter): VNode {
+            if (filter.vnode == undefined) {
+                throw new Error(`Missing vnode for template <a-filter>`);
+            }
+            if (filter.vnode.data == undefined) {
+                throw new Error(`Missing vnode.data for template <a-filter>`);
+            }
+            if (filter.vnode.data.scopedSlots == undefined) {
+                throw new Error(`Missing vnode.data.scopedSlots for template <a-filter>. Did you put the v-slot in the <a-filter>?`);
+            }
+
+            const slot = filter.vnode.data?.scopedSlots["default"];
+            if (slot == undefined) {
+                throw new Error(`Missing default slot for a template <a-filter>`);
+            }
+
+            const options: VNodeData = {
+                staticClass: filter.colClass,
+                staticStyle: {
+                    //"line-height": lineHeight
+                }
+            }
+
+            // Copy listeners to the generated node
+            if (filter.vnode.componentOptions?.listeners) {
+                options.on = { ...filter.vnode.componentOptions.listeners };
+            }
+
+            options.staticClass = "";
+            return createElement("div", options, [slot(null)]);
         },
 
         createInputFilter(createElement: CreateElement, filter: Filter): VNode {
@@ -1107,7 +1173,7 @@ export const ATable = Vue.extend({
                     } else if (iter.selectedCondition == "not_empty") {
                         return ((elem: any) => !!elem[iter.field]);
                     } else {
-                        throw `Invalid condition ${iter.selectedCondition} for type 'string'`;
+                        throw `Invalid condition ${iter.selectedCondition} for type 'string' on field ${iter.field}`;
                     }
                 } else if (iter.type == "number") {
                     if (iter.selectedCondition == "equals") {
@@ -1123,7 +1189,7 @@ export const ATable = Vue.extend({
                     } else if (iter.selectedCondition == "not_empty") {
                         return ((elem: any) => elem[iter.field] != null && elem[iter.field] != undefined);
                     } else {
-                        throw `Invalid condition ${iter.selectedCondition} for type 'number'`;
+                        throw `Invalid condition ${iter.selectedCondition} for type 'number' on field ${iter.field}`;
                     }
                 } else if (iter.type == "date") {
                     const iterTime: number = (iter.value as Date).getTime();
@@ -1140,16 +1206,16 @@ export const ATable = Vue.extend({
                     } else if (iter.selectedCondition == "not_empty") {
                         return ((elem: any) => elem[iter.field] != null && elem[iter.field] != undefined);
                     } else {
-                        throw `Invalid condition ${iter.selectedCondition} for type 'date'`;
+                        throw `Invalid condition ${iter.selectedCondition} for type 'date' on field ${iter.field}`;
                     }
                 } else if (iter.type == "boolean") {
                     if (iter.selectedCondition == "equals") {
                         return ((elem: any) => elem[iter.field] == iter.value);
                     } else {
-                        throw `Invalid condition ${iter.selectedCondition} for type 'boolean'`;
+                        throw `Invalid condition ${iter.selectedCondition} for type 'boolean' on field ${iter.field}`;
                     }
                 }
-                throw `Uncheck type to create a filter function for: '${iter.type}'`;
+                throw `Uncheck type to create a filter function for: '${iter.type}' on field ${iter.field}`;
             });
 
             return this.entries.data.filter((iter: object) => {

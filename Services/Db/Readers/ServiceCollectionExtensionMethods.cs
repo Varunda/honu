@@ -79,6 +79,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<RealtimeReconnectEntry>, RealtimeReconnectReader>();
             services.AddSingleton<IDataReader<OutfitActivityDbEntry>, OutfitActivityDbEntryReader>();
             services.AddSingleton<IDataReader<WeaponStatSnapshot>, WeaponStatSnapshotReader>();
+
+            services.AddSingleton<IDataReader<HonuAccountPermission>, HonuAccountPermissionReader>();
         }
 
     }

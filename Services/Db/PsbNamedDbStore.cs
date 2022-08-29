@@ -30,6 +30,24 @@ namespace watchtower.Services.Db {
         public async Task<List<PsbNamedAccount>> GetAll() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                WITH char_ids AS (
+                    SELECT id, vs_id AS ids FROM psb_named WHERE vs_id IS NOT NULL
+                    UNION SELECT id, nc_id AS ids FROM psb_named WHERE nc_id IS NOT NULL
+                    UNION SELECT id, tr_id AS ids FROM psb_named WHERE tr_id IS NOT NULL
+                    UNION SELECT id, ns_id AS ids FROM psb_named WHERE ns_id IS NOT NULL
+                ), times AS (
+                    SELECT ci.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
+                        FROM wt_session s
+                            INNER JOIN char_ids ci ON s.character_id = ci.ids
+                        WHERE character_id IN (SELECT ids FROM char_ids)
+                            AND start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
+                        GROUP BY ci.id
+                )
+                SELECT *
+                    FROM psb_named pn1
+                    LEFT JOIN times t ON pn1.id = t.id order by pn1.id ASC;
+            ");
+            /*
                 SELECT pn1.*, usage.seconds_online
                     FROM psb_named pn1
                     LEFT JOIN (
@@ -40,7 +58,8 @@ namespace watchtower.Services.Db {
                             GROUP BY pn2.id
                     ) usage ON usage.id = pn1.id
                     ORDER BY pn1.ID ASC;
-            ");
+             */
+
 
             List<PsbNamedAccount> accs = await _Reader.ReadList(cmd);
             await conn.CloseAsync();

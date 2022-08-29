@@ -54,6 +54,7 @@ namespace watchtower.Code {
 
             if (httpContext.User.Identity.IsAuthenticated == false) {
                 _Logger.LogWarning($"User is not authed, return them to the sign in");
+                throw new SystemException($"User is not authed?");
             } else if (httpContext.User is ClaimsPrincipal claims) {
                 /*
                 string s = "";

@@ -233,8 +233,9 @@
     import * as sR from "signalR";
     import RealtimeNetworkSocket from "./RealtimeNetworkSocket";
 
-    import "filters/LocaleFilter";
     import "MomentFilter";
+    import "filters/LocaleFilter";
+    import "filters/WorldNameFilter";
 
     import ColorUtil from "util/Color";
     import WorldUtil from "util/World";

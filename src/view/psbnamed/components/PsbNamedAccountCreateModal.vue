@@ -99,6 +99,8 @@
     import { FlatPsbNamedAccount, PsbCharacterSet, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
 
+    import "filters/WorldNameFilter";
+
     const CharacterColumn = Vue.extend({
         props: {
             faction: { type: String, required: true },

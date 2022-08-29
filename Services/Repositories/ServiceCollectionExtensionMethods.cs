@@ -72,6 +72,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<SessionRepository>();
 
             services.AddSingleton<OutfitWarsMatchRepository>();
+            services.AddSingleton<HonuAccountPermissionRepository>();
         }
 
     }
