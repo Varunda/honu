@@ -18,7 +18,7 @@ using watchtower.Models;
 using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
-using watchtower.Models.OutfitWarsNexus;
+using watchtower.Models.RealtimeAlert;
 using watchtower.Models.Queues;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -59,8 +59,8 @@ namespace watchtower.Realtime {
 
         private readonly IHubContext<RealtimeMapHub> _MapHub;
         private readonly WorldTagManager _TagManager;
-        private readonly OutfitWarsNexusEventHandler _NexusHandler;
-        private readonly OutfitWarsMatchRepository _MatchRepository;
+        private readonly RealtimeAlertEventHandler _NexusHandler;
+        private readonly RealtimeAlertRepository _MatchRepository;
 
         private readonly List<string> _Recent;
         private DateTime _MostRecentProcess = DateTime.UtcNow;
@@ -78,7 +78,7 @@ namespace watchtower.Realtime {
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
             AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
             ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
-            OutfitWarsNexusEventHandler nexusHandler, OutfitWarsMatchRepository matchRepository) {
+            RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository) {
 
             _Logger = logger;
 
@@ -323,6 +323,8 @@ namespace watchtower.Realtime {
             if (World.IsTrackedWorld(ev.WorldID)) {
                 await _VehicleDestroyDb.Insert(ev, CancellationToken.None);
             }
+
+            _NexusHandler.HandleVehicleDestroy(ev);
 
             if (ev.KilledVehicleID == Vehicle.SUNDERER && ev.WorldID == World.Jaeger) {
                 List<ExpEvent> possibleEvents = RecentSundererDestroyExpStore.Get().GetList();
@@ -648,7 +650,7 @@ namespace watchtower.Realtime {
                         state.AlertStart = timestamp;
 
                         if (metagameEventID == 234) { // Nexus pre-match
-                            OutfitWarsMatch match = new();
+                            RealtimeAlert match = new();
                             match.WorldID = worldID;
                             match.ZoneID = zoneID;
                             match.Timestamp = timestamp;
@@ -657,7 +659,7 @@ namespace watchtower.Realtime {
 
                             _Logger.LogDebug($"Started Nexus match at {match.Timestamp:u}, WorldID = {match.WorldID}, ZoneID = {match.ZoneID}");
                         } else if (metagameEventID == 227) { // Nexus match start
-                            OutfitWarsMatch match = _MatchRepository.Get(worldID, zoneID) ?? new() {
+                            RealtimeAlert match = _MatchRepository.Get(worldID, zoneID) ?? new() {
                                 WorldID = worldID,
                                 ZoneID = zoneID,
                                 Timestamp = timestamp - TimeSpan.FromMinutes(20)
@@ -930,8 +932,12 @@ namespace watchtower.Realtime {
 
             int timestamp = payload.Value<int?>("timestamp") ?? 0;
             uint zoneID = payload.GetZoneID();
+
             short attackerLoadoutID = payload.Value<short?>("attacker_loadout_id") ?? -1;
             short loadoutID = payload.Value<short?>("character_loadout_id") ?? -1;
+
+            short attackerTeamID = payload.GetRequiredInt16("attacker_team_id");
+            short teamID = payload.GetRequiredInt16("team_id");
 
             short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
             short factionID = Loadout.GetFaction(loadoutID);
@@ -939,10 +945,10 @@ namespace watchtower.Realtime {
             KillEvent ev = new KillEvent() {
                 AttackerCharacterID = attackerID,
                 AttackerLoadoutID = attackerLoadoutID,
-                AttackerTeamID = attackerFactionID,
+                AttackerTeamID = attackerTeamID,
                 KilledCharacterID = charID,
                 KilledLoadoutID = loadoutID,
-                KilledTeamID = factionID,
+                KilledTeamID = teamID,
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime,
                 WeaponID = payload.GetInt32("attacker_weapon_id", 0),
                 WorldID = payload.GetWorldID(),
@@ -975,7 +981,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = attackerFactionID,
-                    TeamID = (attackerFactionID == 4) ? Faction.NS : attackerFactionID,
+                    TeamID = ev.AttackerLoadoutID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -999,15 +1005,17 @@ namespace watchtower.Realtime {
                     attacker.TeamID = ev.AttackerTeamID;
                 }
 
+                /*
                 if (attacker.FactionID == Faction.NS) {
                     ev.AttackerTeamID = attacker.TeamID;
                 }
+                */
 
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = factionID,
-                    TeamID = (factionID == 4) ? Faction.NS : factionID,
+                    TeamID = ev.KilledTeamID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -1032,9 +1040,11 @@ namespace watchtower.Realtime {
                     killed.TeamID = ev.KilledTeamID;
                 }
 
+                /*
                 if (killed.FactionID == Faction.NS) {
                     ev.KilledTeamID = killed.TeamID;
                 }
+                */
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
@@ -1077,6 +1087,7 @@ namespace watchtower.Realtime {
             string otherID = payload.GetString("other_id", "0");
 
             short factionID = Loadout.GetFaction(loadoutId);
+            short teamID = payload.Value<short?>("team_id") ?? factionID;
 
             CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
             if (env != null) {
@@ -1090,7 +1101,7 @@ namespace watchtower.Realtime {
             ExpEvent ev = new ExpEvent() {
                 SourceID = charID,
                 LoadoutID = loadoutId,
-                TeamID = factionID,
+                TeamID = teamID,
                 Amount = payload.Value<int?>("amount") ?? 0,
                 ExperienceID = expId,
                 OtherID = otherID,
@@ -1109,7 +1120,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
                     ID = charID,
                     FactionID = factionID,
-                    TeamID = factionID,
+                    TeamID = teamID,
                     Online = false,
                     WorldID = worldID
                 });
@@ -1124,12 +1135,14 @@ namespace watchtower.Realtime {
 
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID;
+                p.TeamID = teamID;
 
                 if (p.FactionID == Faction.UNKNOWN) {
                     p.FactionID = factionID;
                     p.TeamID = factionID;
                 }
 
+                /*
                 // If the event could only happen if two characters are on the same faction, update the team_id field
                 if (Experience.IsRevive(expId) || Experience.IsHeal(expId) || Experience.IsResupply(expId)) {
                     // If either character was not NSO, update the team_id of the character
@@ -1155,6 +1168,7 @@ namespace watchtower.Realtime {
                 if (p.FactionID == Faction.NS && p.TeamID != Faction.UNKNOWN && p.TeamID != 0) {
                     ev.TeamID = p.TeamID;
                 }
+                */
             }
             processExp?.Stop();
 
@@ -1226,6 +1240,8 @@ namespace watchtower.Realtime {
             //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
                 RecentSundererDestroyExpStore.Get().Add(ev);
             }
+
+            _NexusHandler.HandleExp(ev);
 
             long total = queueMs + readValuesMs + createEventMs + processCharMs + dbInsertMs + reviveMs;
 

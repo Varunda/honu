@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using watchtower.Commands;
 using watchtower.Models.Alert;
 using watchtower.Models.Census;
+using watchtower.Models.RealtimeAlert;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 
@@ -22,6 +23,7 @@ namespace watchtower.Code.Commands {
         private readonly AlertPlayerProfileDataDbStore _ProfileDataDb;
         private readonly AlertPopulationDbStore _PopulationDb;
         private readonly AlertPopulationRepository _PopulationRepository;
+        private readonly RealtimeAlertRepository _RealtimeAlertRepository;
 
         public AlertCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<AlertCommand>>();
@@ -31,6 +33,7 @@ namespace watchtower.Code.Commands {
             _ProfileDataDb = services.GetRequiredService<AlertPlayerProfileDataDbStore>();
             _PopulationDb = services.GetRequiredService<AlertPopulationDbStore>();
             _PopulationRepository = services.GetRequiredService<AlertPopulationRepository>();
+            _RealtimeAlertRepository = services.GetRequiredService<RealtimeAlertRepository>();
         }
 
         public async Task Rebuild(long alertID) {
@@ -83,6 +86,26 @@ namespace watchtower.Code.Commands {
             alert.ID = await _AlertRepository.Insert(alert);
 
             _Logger.LogInformation($"Created alert {alert.ID}/{alert.Name}");
+        }
+
+        public async Task Realtime() {
+            List<RealtimeAlert> alerts = _RealtimeAlertRepository.GetAll();
+
+            _Logger.LogInformation($"Have {alerts.Count} realtime alerts:");
+            foreach (RealtimeAlert alert in alerts) {
+                _Logger.LogInformation($"Alert {alert.WorldID}.{alert.ZoneID}");
+            }
+        }
+
+        public async Task RealtimeCreate(short worldID, uint zoneID) {
+            RealtimeAlert alert = new();
+            alert.WorldID = worldID;
+            alert.ZoneID = zoneID;
+            alert.Timestamp = DateTime.UtcNow;
+
+            _RealtimeAlertRepository.Add(alert);
+
+            _Logger.LogInformation($"Alert world {alert.WorldID} zone {alert.ZoneID} started at {alert.Timestamp:u}");
         }
 
     }

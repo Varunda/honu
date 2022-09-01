@@ -114,6 +114,8 @@ namespace watchtower.Realtime {
                 JToken token = JToken.Parse(msg);
                 _Queue.Queue(token);
 
+                //_Logger.LogDebug($"{token}");
+
                 // The health of the realtime connection is monitored here, as events are not always guaranteed to be processed in realtime.
                 //      For example, if there are 20k events in the task queue, it's likely that processing those events is minutes behind
                 //      and if Honu checked the health in the event handler, it would incorrectly see the event is say 3 minutes old,

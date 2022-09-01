@@ -152,7 +152,7 @@ namespace watchtower {
             services.AddSingleton<ICharacterStatGeneratorStore, CharacterStatGeneratorStore>();
             services.AddSingleton<IServiceHealthMonitor, ServiceHealthMonitor>();
             services.AddSingleton<WorldTagManager>();
-            services.AddSingleton<OutfitWarsNexusEventHandler>();
+            services.AddSingleton<RealtimeAlertEventHandler>();
 
             services.AddHonuQueueServices(); // queue services
 
@@ -182,6 +182,7 @@ namespace watchtower {
             services.AddHostedService<RealtimeNetworkBroadcastService>();
             services.AddHostedService<RealtimeNetworkBuilderService>();
             services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
+            services.AddHostedService<RealtimeAlertBroadcastServer>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -342,6 +343,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "realtimealert",
+                    pattern: "/realtimealert/{*.}",
+                    defaults: new { controller = "Home", action = "RealtimeAlert" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );
@@ -351,6 +358,7 @@ namespace watchtower {
                 endpoints.MapHub<ReportHub>("/ws/report");
                 endpoints.MapHub<RealtimeMapHub>("/ws/realtime-map");
                 endpoints.MapHub<RealtimeNetworkHub>("/ws/realtime-network");
+                endpoints.MapHub<RealtimeAlertHub>("/ws/realtime-alert");
 
                 endpoints.MapSwagger();
             });

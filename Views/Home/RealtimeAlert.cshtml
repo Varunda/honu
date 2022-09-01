@@ -1,0 +1,19 @@
+﻿<meta property="og:title" content="Honu / Realtime Alert" />
+<meta property="og:description" content="Realtime alert" />
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="~/lib/signalr/signalr.js"></script>
+
+<link rel="stylesheet" href="~/css/input-grid.css" />
+<script src="~/dist/view/realtimealert/view.js" defer asp-append-version="true"></script>
+
+<style>
+    a {
+        cursor: pointer !important;
+        color: var(--success) !important;
+    }
+</style>
+
+<div id="app">
+    <realtime-alert></realtime-alert>
+</div>

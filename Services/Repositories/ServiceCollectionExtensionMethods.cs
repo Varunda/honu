@@ -71,7 +71,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<BadHealthRepository>();
             services.AddSingleton<SessionRepository>();
 
-            services.AddSingleton<OutfitWarsMatchRepository>();
+            services.AddSingleton<RealtimeAlertRepository>();
             services.AddSingleton<HonuAccountPermissionRepository>();
         }
 

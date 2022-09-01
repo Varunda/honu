@@ -166,5 +166,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult RealtimeAlert(string instanceID) {
+            return View();
+        }
+
     }
 }
