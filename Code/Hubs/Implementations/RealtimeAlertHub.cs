@@ -24,7 +24,16 @@ namespace watchtower.Code.Hubs.Implementations {
         public async Task GetList() {
             List<RealtimeAlert> alerts = _RealtimeAlertRepository.GetAll();
 
-            await Clients.Caller.SendAll(alerts);
+            List<RealtimeAlert> mini = new(alerts.Count);
+            foreach (RealtimeAlert a in alerts) {
+                RealtimeAlert alert = new(a.VS, a.NC, a.TR);
+                alert.WorldID = a.WorldID;
+                alert.ZoneID = a.ZoneID;
+                alert.Timestamp = a.Timestamp;
+                mini.Add(alert);
+            }
+
+            await Clients.Caller.SendAll(mini);
         }
 
         public async Task Subscribe(short worldID, uint zoneID) {
