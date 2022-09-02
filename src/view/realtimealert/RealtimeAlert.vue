@@ -6,7 +6,7 @@
             <div class="list-group">
                 <div v-for="alert in list.alerts" class="list-group-item d-flex">
                     <span class="flex-grow-1">
-                        {{alert.timestamp | moment}} - {{alert.worldID | world}} instance {{alert.zoneID >> 16 && 0x0000FFFF}} ({{alert.worldID}}.{{alert.zoneID}})
+                        {{alert.timestamp | moment}} - {{alert.worldID | world}} instance {{alert.zoneID >> 16 & 0x0000FFFF}} ({{alert.worldID}}.{{alert.zoneID}})
                     </span>
 
                     <button class="btn btn-primary" @click="subscribe(alert.worldID, alert.zoneID)">
