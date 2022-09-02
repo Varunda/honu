@@ -14,17 +14,42 @@
                     </button>
                 </div>
             </div>
-
         </div>
 
         <div v-else-if="view == 'alert'">
+            <!--
             <img v-if="alert.showExample" src="/img/ow_example.png" width="1920" height="1080" style="position: fixed; z-index: -10;" />
+            -->
 
-            <realtime-alert-team-view v-if="alert.data != null" :team="alert.data.nc" :name="alert.outfitNC" style="left: 490px; top: 5px; position: fixed;">
-            </realtime-alert-team-view>
+            <img src="/img/overlaybackgroundwicons.png" style="position: fixed; z-index: -5; left: 50%; transform: translateX(-50%)" />
 
-            <realtime-alert-team-view v-if="alert.data != null" :team="alert.data.tr" :name="alert.outfitTR" style="left: 1220px; top: 5px; position: fixed;">
-            </realtime-alert-team-view>
+            <div class="ps2-text position-fixed" style="font-size: 48pt; left: 50%; transform: translateX(-50%)">
+                {{alert.worldID | world}}
+            </div>
+
+            <div v-if="alert.data != null && alert.data.tr != null" style="font-size: 28pt; text-align: right; position: fixed; top: 102px; right: 1450px; font-family: ps2; line-height: 1;">
+                <realtime-alert-team-view :team="alert.data.tr"></realtime-alert-team-view>
+            </div>
+
+            <team-icon v-if="alert.outfitTR != null" class="position-fixed" style="top: 160px; left: 620px;"
+                :team-id="3" :outfit="alert.outfitTR">
+            </team-icon>
+
+            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-right" style="font-size: 32pt; right: 1114px; top: 160px">
+                [{{alert.outfitNC.tag}}]
+            </div>
+
+            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-left" style="font-size: 32pt; left: 1114px; top: 160px">
+                [{{alert.outfitTR.tag}}]
+            </div>
+
+            <team-icon v-if="alert.outfitNC != null" class="position-fixed" style="top: 160px; right: 620px;"
+                :team-id="2" :outfit="alert.outfitNC">
+            </team-icon>
+
+            <div v-if="alert.data != null && alert.data.nc != null" style="font-size: 28pt; text-align: left; position: fixed; top: 102px; left: 1450px; font-family: ps2; line-height: 1;">
+                <realtime-alert-team-view :team="alert.data.nc"></realtime-alert-team-view>
+            </div>
         </div>
 
         <div v-else class="text-danger">
@@ -43,6 +68,7 @@
     import { CharacterApi, PsCharacter } from "api/CharacterApi";
 
     import RealtimeAlertTeamView from "./components/RealtimeAlertTeam.vue";
+    import TeamIcon from "./components/TeamIcon.vue";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
@@ -69,8 +95,8 @@
                     showExample: true as boolean,
 
                     data: null as RealtimeAlert | null,
-                    outfitNC: null as string | null,
-                    outfitTR: null as string | null
+                    outfitNC: null as PsOutfit | null,
+                    outfitTR: null as PsOutfit | null
                 }
             }
         },
@@ -183,9 +209,15 @@
                     for (const ev of this.alert.data.nc.killDeathEvents) {
                         if (ev.attackerTeamID == 2) {
                             CharacterApi.getByID(ev.attackerCharacterID).then((char: Loading<PsCharacter>) => {
-                                if (char.state == "loaded") {
-                                    this.alert.outfitNC = char.data.outfitName ?? "";
+                                if (char.state != "loaded" || char.data.outfitID == null || char.data.outfitID == "0") {
+                                    return;
                                 }
+
+                                OutfitApi.getByID(char.data.outfitID).then((outfit: Loading<PsOutfit>) => {
+                                    if (outfit.state == "loaded") {
+                                        this.alert.outfitNC = outfit.data;
+                                    }
+                                });
                             });
                             break;
                         }
@@ -196,9 +228,15 @@
                     for (const ev of this.alert.data.tr.killDeathEvents) {
                         if (ev.attackerTeamID == 3) {
                             CharacterApi.getByID(ev.attackerCharacterID).then((char: Loading<PsCharacter>) => {
-                                if (char.state == "loaded") {
-                                    this.alert.outfitTR = char.data.outfitName ?? "";
+                                if (char.state != "loaded" || char.data.outfitID == null || char.data.outfitID == "0") {
+                                    return;
                                 }
+
+                                OutfitApi.getByID(char.data.outfitID).then((outfit: Loading<PsOutfit>) => {
+                                    if (outfit.state == "loaded") {
+                                        this.alert.outfitTR = outfit.data;
+                                    }
+                                });
                             });
                             break;
                         }
@@ -214,7 +252,8 @@
         },
 
         components: {
-            RealtimeAlertTeamView
+            RealtimeAlertTeamView,
+            TeamIcon
         }
 
     });

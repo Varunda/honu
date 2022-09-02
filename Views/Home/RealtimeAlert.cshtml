@@ -7,10 +7,38 @@
 <link rel="stylesheet" href="~/css/input-grid.css" />
 <script src="~/dist/view/realtimealert/view.js" defer asp-append-version="true"></script>
 
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="0">
+    <defs>
+        <filter id="f1">
+            <feGuassianBlur stdDeviation="1.5"/>
+        </filter>
+    </defs>
+</svg>
+
 <style>
     a {
         cursor: pointer !important;
         color: var(--success) !important;
+    }
+
+    :root {
+        --owred: #6e0808;
+        --owblue: #081b79;
+    }
+
+    .gb-red {
+        color: white;
+        /*: -1px -1px 2px #6e0808, 1px -1px 2px #6e0808, -1px 1px 2px #6e0808, 1px 1px 2px #6e0808;*/
+        text-shadow: -1px -1px 2px #f00, 1px -1px 2px #f00, -1px 1px 2px #f00, 1px 1px 2px #f00;
+    }
+
+    .gb-blue {
+        color: white;
+        text-shadow: -1px -1px 2px var(--owblue), 1px -1px 2px var(--owblue), -1px 1px 2px var(--owblue), 1px 1px 2px var(--owblue);
+    }
+
+    .gb3 {
+        filter: blur(1.5px);
     }
 </style>
 

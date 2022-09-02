@@ -102,3 +102,13 @@
 .th-border-top-0 > * {
     border-top: 0 !important;
 }
+
+@font-face {
+    font-family: "ps2";
+    src: url("/Geo-Md.ttf");
+}
+
+.ps2-text {
+    line-height: 1;
+    font-family: ps2;
+}

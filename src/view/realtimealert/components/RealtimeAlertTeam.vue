@@ -1,34 +1,13 @@
 ﻿<template>
-    <div style="background-color: var(--light)" class="text-dark px-2 py-1">
-        <div v-if="team == null">
-
+    <div>
+        <div>
+            {{team.kills | locale(0)}}
         </div>
-        <div v-else>
-            <h4 class="border-bottom text-center" style="border-color: var(--dark) !important; width: 200px;">
-                <span v-if="name">
-                    {{name}}
-                </span>
-                <span v-else>
-                    {{team.teamID | faction}}
-                </span>
-            </h4>
-            <span class="w-50 d-inline-block">
-                K: {{team.kills | locale(0)}}
-            </span>
-            <span class="w-50">
-                D: {{team.deaths | locale(0)}}
-            </span>
-
-            <div>
-                Revives: {{reviveCount | locale(0)}}
-            </div>
-
-            <span class="w-50 d-inline-block">
-                VK: {{team.vehicleKills | locale(0)}}
-            </span>
-            <span>
-                VD: {{team.vehicleDeaths | locale(0)}}
-            </span>
+        <div>
+            {{team.vehicleKills | locale(0)}}
+        </div>
+        <div>
+            {{reviveCount | locale(0)}}
         </div>
     </div>
 </template>
