@@ -36,11 +36,11 @@
             </team-icon>
 
             <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-right" style="font-size: 32pt; right: 1114px; top: 160px">
-                [{{alert.outfitNC.tag}}]
+                [{{alert.outfitTR.tag}}]
             </div>
 
             <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-left" style="font-size: 32pt; left: 1114px; top: 160px">
-                [{{alert.outfitTR.tag}}]
+                [{{alert.outfitNC.tag}}]
             </div>
 
             <team-icon v-if="alert.outfitNC != null" class="position-fixed" style="top: 160px; right: 620px;"
