@@ -215,13 +215,13 @@
 
             getOutfitNC: async function(): Promise<void> {
                 if (this.alert.full != null) {
-                    this.alert.outfitNC = await this.getOutfit(this.alert.full.tr, 3);
+                    this.alert.outfitNC = await this.getOutfit(this.alert.full.nc, 2);
                 }
             },
 
             getOutfitTR: async function(): Promise<void> {
                 if (this.alert.full != null) {
-                    this.alert.outfitTR = await this.getOutfit(this.alert.full.nc, 2);
+                    this.alert.outfitTR = await this.getOutfit(this.alert.full.tr, 3);
                 }
             },
 
