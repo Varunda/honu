@@ -40,5 +40,11 @@ namespace watchtower.Services.Repositories {
             }
         }
 
+        public void Clear() {
+            lock (_Matches) {
+                _Matches.Clear();
+            }
+        }
+
     }
 }

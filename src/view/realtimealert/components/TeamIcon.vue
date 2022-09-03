@@ -1,5 +1,5 @@
 ﻿<template>
-    <img :src="'/img/' + factionBase + '_' + colorSuffix + '.png'" width="48" height="48" />
+    <img :src="'/img/' + factionBase + '_' + colorSuffix + '.png'" width="24" height="24" />
 </template>
 
 <script lang="ts">

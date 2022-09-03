@@ -21,33 +21,33 @@
             <img v-if="alert.showExample" src="/img/ow_example.png" width="1920" height="1080" style="position: fixed; z-index: -10;" />
             -->
 
-            <img src="/img/overlaybackgroundwicons.png" style="position: fixed; z-index: -5; left: 50%; transform: translateX(-50%)" />
+            <img src="/img/overlaybackgroundwicons.png" style="position: fixed; z-index: -5; left: 50%; transform: translateX(-50%);" width="695" height="112" />
 
-            <div class="ps2-text position-fixed" style="font-size: 48pt; left: 50%; transform: translateX(-50%)">
+            <div class="ps2-text position-fixed" style="font-size: 24pt; left: 50%; transform: translateX(-50%)">
                 {{alert.worldID | world}}
             </div>
 
-            <div v-if="alert.data != null && alert.data.tr != null" style="font-size: 28pt; text-align: right; position: fixed; top: 102px; right: 1450px; font-family: ps2; line-height: 1;">
+            <div v-if="alert.data != null && alert.data.tr != null" style="font-size: 14pt; text-align: right; position: fixed; top: 62px; right: 1212px; font-family: ps2; line-height: 1;">
                 <realtime-alert-team-view :team="alert.data.tr"></realtime-alert-team-view>
             </div>
 
-            <team-icon v-if="alert.outfitTR != null" class="position-fixed" style="top: 160px; left: 620px;"
+            <team-icon v-if="alert.outfitTR != null" class="position-fixed" style="top: 93px; left: 862px;"
                 :team-id="3" :outfit="alert.outfitTR">
             </team-icon>
 
-            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-right" style="font-size: 32pt; right: 1114px; top: 160px">
+            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-right" style="font-size: 16pt; right: 1060px; top: 93px;">
                 [{{alert.outfitTR.tag}}]
             </div>
 
-            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-left" style="font-size: 32pt; left: 1114px; top: 160px">
+            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-left" style="font-size: 16pt; left: 1060px; top: 93px;">
                 [{{alert.outfitNC.tag}}]
             </div>
 
-            <team-icon v-if="alert.outfitNC != null" class="position-fixed" style="top: 160px; right: 620px;"
+            <team-icon v-if="alert.outfitNC != null" class="position-fixed" style="top: 93px; right: 862px;"
                 :team-id="2" :outfit="alert.outfitNC">
             </team-icon>
 
-            <div v-if="alert.data != null && alert.data.nc != null" style="font-size: 28pt; text-align: left; position: fixed; top: 102px; left: 1450px; font-family: ps2; line-height: 1;">
+            <div v-if="alert.data != null && alert.data.nc != null" style="font-size: 14pt; text-align: left; position: fixed; top: 62px; left: 1212px; font-family: ps2; line-height: 1;">
                 <realtime-alert-team-view :team="alert.data.nc"></realtime-alert-team-view>
             </div>
         </div>
@@ -88,6 +88,8 @@
                     alerts: [] as RealtimeAlert[]
                 },
 
+                intervalID: 0 as number,
+
                 alert: {
                     worldID: null as number | null,
                     zoneID: null as number | null,
@@ -95,6 +97,7 @@
                     showExample: true as boolean,
 
                     data: null as RealtimeAlert | null,
+                    full: null as RealtimeAlert | null,
                     outfitNC: null as PsOutfit | null,
                     outfitTR: null as PsOutfit | null
                 }
@@ -136,6 +139,15 @@
                 }).catch(err => {
                     console.error(err);
                 });
+
+                this.intervalID = setInterval(() => {
+                    if (this.alert.outfitNC == null || this.alert.outfitTR == null) {
+                        if (this.connection != null) {
+                            console.log(`an outfit is null, requesting full`);
+                            this.connection.send("GetFull", this.alert.worldID, this.alert.zoneID);
+                        }
+                    }
+                }, 1000 * 10) as unknown as number;
             },
 
             /**
@@ -201,46 +213,73 @@
                 console.log(alerts);
             },
 
-            onFullSend: function(data: any): void {
-                const alert: RealtimeAlert = RealtimeAlertApi.parse(data);
-                this.alert.data = alert;
+            getOutfitNC: async function(): Promise<void> {
+                if (this.alert.full != null) {
+                    this.alert.outfitNC = await this.getOutfit(this.alert.full.tr, 3);
+                }
+            },
 
-                if (this.alert.outfitNC == null) {
-                    for (const ev of this.alert.data.nc.killDeathEvents) {
-                        if (ev.attackerTeamID == 2) {
-                            CharacterApi.getByID(ev.attackerCharacterID).then((char: Loading<PsCharacter>) => {
-                                if (char.state != "loaded" || char.data.outfitID == null || char.data.outfitID == "0") {
-                                    return;
-                                }
+            getOutfitTR: async function(): Promise<void> {
+                if (this.alert.full != null) {
+                    this.alert.outfitTR = await this.getOutfit(this.alert.full.nc, 2);
+                }
+            },
 
-                                OutfitApi.getByID(char.data.outfitID).then((outfit: Loading<PsOutfit>) => {
-                                    if (outfit.state == "loaded") {
-                                        this.alert.outfitNC = outfit.data;
-                                    }
-                                });
-                            });
+            getOutfit: async function(team: RealtimeAlertTeam, teamID: number): Promise<PsOutfit | null> {
+                let charID: string | null = null;
+
+                for (const ev of team.killDeathEvents) {
+                    if (ev.attackerTeamID == teamID) {
+                        charID = ev.attackerCharacterID;
+                        break;
+                    }
+                    if (ev.killedTeamID == teamID) {
+                        charID = ev.killedCharacterID;
+                        break;
+                    }
+                }
+
+                if (charID == null) {
+                    for (const ev of team.expEvents) {
+                        if (ev.teamID == teamID) {
+                            charID = ev.sourceID;
                             break;
                         }
                     }
                 }
 
-                if (this.alert.outfitTR == null) {
-                    for (const ev of this.alert.data.tr.killDeathEvents) {
-                        if (ev.attackerTeamID == 3) {
-                            CharacterApi.getByID(ev.attackerCharacterID).then((char: Loading<PsCharacter>) => {
-                                if (char.state != "loaded" || char.data.outfitID == null || char.data.outfitID == "0") {
-                                    return;
-                                }
+                if (charID == null) {
+                    console.log(`cannot get outfit for team ${teamID}, charID is null`);
+                    return null;
+                }
 
-                                OutfitApi.getByID(char.data.outfitID).then((outfit: Loading<PsOutfit>) => {
-                                    if (outfit.state == "loaded") {
-                                        this.alert.outfitTR = outfit.data;
-                                    }
-                                });
-                            });
-                            break;
-                        }
-                    }
+                console.log(`loading outfit of ${charID} for team ${teamID}`);
+                const char: Loading<PsCharacter> = await CharacterApi.getByID(charID);
+                if (char.state != "loaded" || char.data.outfitID == null || char.data.outfitID == "") {
+                    return null;
+                }
+
+                const outfit: Loading<PsOutfit> = await OutfitApi.getByID(char.data.outfitID);
+                if (outfit.state == "loaded") {
+                    return outfit.data;
+                }
+
+                return null;
+            },
+
+            onFullSend: function(data: any): void {
+                const alert: RealtimeAlert = RealtimeAlertApi.parse(data);
+                this.alert.full = alert;
+
+                console.log(`got full data`);
+
+                if (this.alert.outfitNC == null) {
+                    console.log(`getting NC outfit`);
+                    this.getOutfitNC();
+                }
+
+                if (this.alert.outfitTR == null) {
+                    this.getOutfitTR();
                 }
             },
 

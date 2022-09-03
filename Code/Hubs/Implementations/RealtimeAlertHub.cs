@@ -60,7 +60,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 return;
             }
 
-            await Clients.Caller.UpdateAlert(alert);
+            await Clients.Caller.SendFull(alert);
         }
 
     }

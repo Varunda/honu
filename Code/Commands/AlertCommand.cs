@@ -108,5 +108,10 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation($"Alert world {alert.WorldID} zone {alert.ZoneID} started at {alert.Timestamp:u}");
         }
 
+        public void RealtimeClear() {
+            _RealtimeAlertRepository.Clear();
+            _Logger.LogInformation($"Cleared realtime alert matches");
+        }
+
     }
 }
