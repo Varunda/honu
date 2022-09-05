@@ -39,7 +39,8 @@
             <table v-if="showAllEvents" class="table table-sm">
                 <thead>
                     <tr class="table-secondary">
-                        <td>timestamp</td>
+                        <th>timestamp</th>
+                        <th>Zone ID</th>
                         <th>source</th>
                         <th>other</th>
                         <th>exp type</th>
@@ -54,6 +55,10 @@
                     <tr v-for="ev in full">
                         <td>
                             {{ev.event.timestamp | moment}}
+                        </td>
+
+                        <td>
+                            {{ev.event.zoneID}}
                         </td>
 
                         <td>
