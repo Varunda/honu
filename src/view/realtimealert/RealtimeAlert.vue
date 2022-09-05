@@ -139,6 +139,22 @@
                     <button class="btn btn-primary" @click="remoteControlCall('remoteTopRevives')">
                         Top revives
                     </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteTopHeals')">
+                        Top heals
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteTopSpawns')">
+                        Top spawns
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteTopMaxRepairs')">
+                        Top max repairs
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteTopVehicleRepairs')">
+                        Top vehicle repairs
+                    </button>
                 </div>
 
                 <div class="btn-group btn-group-vertical">
@@ -165,6 +181,34 @@
                     </button>
                 </div>
 
+                <div class="btn-group btn-group-vertical">
+                    <button class="btn btn-secondary" disabled>
+                        Panels hide after:
+                        <span v-if="stats.autoHide == 0">
+                            never
+                        </span>
+                        <span v-else>
+                            {{stats.autoHide}} seconds
+                        </span>
+                    </button>
+
+                    <button class="btn btn-secondary" disabled>
+                        Hiding panels in: {{stats.autoHideCount}} seconds
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteAutoHide0')">
+                        Set never
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteAutoHide10')">
+                        Set 10 seconds
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteAutoHide30')">
+                        Set 30 seconds
+                    </button>
+                </div>
+
             </div>
         </div>
 
@@ -184,6 +228,7 @@
     import { CharacterApi, PsCharacter } from "api/CharacterApi";
     import { Experience, ExpStatApi } from "api/ExpStatApi";
     import { ItemApi, PsItem } from "api/ItemApi";
+    import { VehicleApi } from "api/VehicleApi";
 
     import RealtimeAlertTeamView from "./components/RealtimeAlertTeam.vue";
     import TeamIcon from "./components/TeamIcon.vue";
@@ -229,6 +274,9 @@
 
                 stats: {
                     componentName: "" as string,
+
+                    autoHide: 0 as number,
+                    autoHideCount: 0 as number,
 
                     block: {
                         nc: new Block() as Block,
@@ -323,6 +371,19 @@
                         this.getOutfitTR();
                     }
                 }, 1000 * 10) as unknown as number;
+
+                setInterval(() => {
+                    if (this.stats.autoHide <= 0) {
+                        return;
+                    }
+
+                    if (this.stats.autoHideCount <= 0) {
+                        this.alert.showPanels = false;
+                    } else {
+                        --this.stats.autoHideCount;
+                    }
+                }, 1000);
+
             },
 
             /**
@@ -530,7 +591,7 @@
                 this.stats.block.leftTitle = "Player";
                 this.stats.block.rightTitle = rightTitle;
                 this.stats.componentName = "list";
-                this.alert.showPanels = true;
+                this.showPanels();
             },
 
             /**
@@ -568,6 +629,14 @@
                 return block;
             },
 
+            showPanels: function(): void {
+                this.alert.showPanels = true;
+
+                if (this.stats.autoHide > 0) {
+                    this.stats.autoHideCount = this.stats.autoHide;
+                }
+            },
+
             /**
              * Callback when the hub tells us to perform an action from a remote call
              * @param action Action to be performed
@@ -599,6 +668,18 @@
                 this.alert.showExample = !this.alert.showExample;
             },
 
+            remoteAutoHide0: function(): void {
+                this.stats.autoHide = 0;
+            },
+
+            remoteAutoHide10: function(): void {
+                this.stats.autoHide = 10;
+            },
+
+            remoteAutoHide30: function(): void {
+                this.stats.autoHide = 30;
+            },
+
             remoteTopKillers: function(): Promise<void> {
                 return this.topCountWrapper((team: RealtimeAlertTeam, teamID: number): Map<string, number> => {
                     const m: Map<string, number> = new Map();
@@ -627,6 +708,66 @@
 
                     return m;
                 }, "Revives");
+            },
+
+            remoteTopSpawns: function(): Promise<void> {
+                return this.topCountWrapper((team: RealtimeAlertTeam, teamID: number): Map<string, number> => {
+                    const m: Map<string, number> = new Map();
+
+                    for (const ev of team.expEvents) {
+                        if (ev.teamID != teamID || Experience.isSpawn(ev.experienceID) == false) { continue; }
+
+                        const charID: string = ev.sourceID;
+                        m.set(charID, (m.get(charID) || 0) + 1);
+                    }
+
+                    return m;
+                }, "Spawns");
+            },
+
+            remoteTopHeals: function(): Promise<void> {
+                return this.topCountWrapper((team: RealtimeAlertTeam, teamID: number): Map<string, number> => {
+                    const m: Map<string, number> = new Map();
+
+                    for (const ev of team.expEvents) {
+                        if (ev.teamID != teamID || Experience.isHeal(ev.experienceID) == false) { continue; }
+
+                        const charID: string = ev.sourceID;
+                        m.set(charID, (m.get(charID) || 0) + 1);
+                    }
+
+                    return m;
+                }, "Spawns");
+            },
+
+            remoteTopMaxRepairs: function(): Promise<void> {
+                return this.topCountWrapper((team: RealtimeAlertTeam, teamID: number): Map<string, number> => {
+                    const m: Map<string, number> = new Map();
+
+                    for (const ev of team.expEvents) {
+                        if (ev.teamID != teamID || Experience.isMaxRepair(ev.experienceID) == false) { continue; }
+
+                        const charID: string = ev.sourceID;
+                        m.set(charID, (m.get(charID) || 0) + 1);
+                    }
+
+                    return m;
+                }, "MAX repairs");
+            },
+
+            remoteTopVehicleRepairs: function(): Promise<void> {
+                return this.topCountWrapper((team: RealtimeAlertTeam, teamID: number): Map<string, number> => {
+                    const m: Map<string, number> = new Map();
+
+                    for (const ev of team.expEvents) {
+                        if (ev.teamID != teamID || Experience.isVehicleRepair(ev.experienceID) == false) { continue; }
+
+                        const charID: string = ev.sourceID;
+                        m.set(charID, (m.get(charID) || 0) + 1);
+                    }
+
+                    return m;
+                }, "Vehicle repair ticks");
             },
 
             remoteTopVehicleKills: function(): Promise<void> {
@@ -687,38 +828,37 @@
                     return;
                 }
 
-                const trBlock: Block = new Block();
-                trBlock.entries = trTop.map(iter => {
-                    const item: PsItem | null = items.data.find(i => i.id == Number.parseInt(iter)) || null;
+                const makeBlock = (entries: string[], map: Map<string, number>): Block => {
+                    const b: Block = new Block();
 
-                    const b: BlockEntry = new BlockEntry();
-                    b.name = item?.name ?? `unknown item?`;
-                    b.count = tr.get(iter)!;
+                    b.entries = entries.map(iter => {
+                        const item: PsItem | null = items.data.find(i => i.id == Number.parseInt(iter)) || null;
+
+                        const b: BlockEntry = new BlockEntry();
+
+                        if (iter == "0") {
+                            b.name = "No weapon";
+                        } else {
+                            b.name = item?.name ?? `unknown item?`;
+                        }
+
+                        b.count = map.get(iter)!;
+
+                        return b;
+                    });
+
+                    b.total = Array.from(map.values()).reduce((acc, i) => acc += i, 0);
 
                     return b;
-                });
+                };
 
-                trBlock.total = Array.from(tr.values()).reduce((acc, i) => acc += i, 0);
-                this.stats.block.tr = trBlock;
-
-                const ncBlock: Block = new Block();
-                ncBlock.entries = ncTop.map(iter => {
-                    const item: PsItem | null = items.data.find(i => i.id == Number.parseInt(iter)) || null;
-
-                    const b: BlockEntry = new BlockEntry();
-                    b.name = item?.name ?? `unknown item?`;
-                    b.count = nc.get(iter)!;
-
-                    return b;
-                });
-
-                ncBlock.total = Array.from(nc.values()).reduce((acc, i) => acc += i, 0);
-                this.stats.block.nc = ncBlock;
-
+                this.stats.block.tr = makeBlock(trTop, tr);
+                this.stats.block.nc = makeBlock(ncTop, nc);
                 this.stats.block.leftTitle = "Weapon";
                 this.stats.block.rightTitle = "Kills";
+
                 this.stats.componentName = "list";
-                this.alert.showPanels = true;
+                this.showPanels();
             },
 
             remoteDomainKills: async function(): Promise<void> {
@@ -760,21 +900,21 @@
                 const createBlock = (team: RealtimeAlertTeam, teamID: number): Block => {
                     const b: Block = new Block();
 
-                    const air: BlockEntry = new BlockEntry();
-                    air.name = "Air";
-                    air.color = colors[2];
-
                     const max: BlockEntry = new BlockEntry();
                     max.name = "MAX";
                     max.color = colors[0];
 
-                    const inf: BlockEntry = new BlockEntry();
-                    inf.name = "Infantry";
-                    inf.color = colors[3];
-
                     const armor: BlockEntry = new BlockEntry();
                     armor.name = "Armor";
                     armor.color = colors[1];
+
+                    const air: BlockEntry = new BlockEntry();
+                    air.name = "Air";
+                    air.color = colors[2];
+
+                    const inf: BlockEntry = new BlockEntry();
+                    inf.name = "Infantry";
+                    inf.color = colors[3];
 
                     b.entries = [inf, max, air, armor];
 
@@ -808,7 +948,11 @@
                 this.stats.block.rightTitle = "Kills";
 
                 this.stats.componentName = "pie";
-                this.alert.showPanels = true;
+                this.showPanels();
+            },
+
+            remoteVehiclesLost: async function(): Promise<void> {
+
             }
 
         },
