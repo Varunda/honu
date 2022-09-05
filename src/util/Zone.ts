@@ -20,6 +20,7 @@ export default class ZoneUtils {
             case 4: return "Hossin";
             case 6: return "Amerish";
             case 8: return "Esamir";
+            case 10: return (instanceID > 0) ? `Nexus (instance ${instanceID})` : "Nexus";
             case 344: return "Oshur";
 
             case 14: return "Koltyr";

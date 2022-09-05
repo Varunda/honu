@@ -78,6 +78,7 @@ export class Experience {
 	public static SUNDERER_SPAWN_BONUS: number = 233;
 	public static SQUAD_VEHICLE_SPAWN_BONUS: number = 355;
 	public static GENERIC_NPC_SPAWN: number = 1410;
+    public static ANT_SPAWN: number = 1988;
 
     public static MOTION_DETECT: number = 293;
     public static SQUAD_MOTION_DETECT: number = 294;
@@ -231,7 +232,7 @@ export class Experience {
      */
     public static isSpawn(expID: number): boolean {
         return expID == this.SQUAD_SPAWN || expID == this.GALAXY_SPAWN_BONUS || expID == this.SUNDERER_SPAWN_BONUS
-            || expID == this.SQUAD_VEHICLE_SPAWN_BONUS || expID == this.GENERIC_NPC_SPAWN;
+            || expID == this.SQUAD_VEHICLE_SPAWN_BONUS || expID == this.GENERIC_NPC_SPAWN || expID == this.ANT_SPAWN;
     }
 
     /**

@@ -31,6 +31,7 @@ namespace watchtower.Constants {
         public const int SUNDERER_SPAWN_BONUS = 233;
         public const int SQUAD_VEHICLE_SPAWN_BONUS = 355;
         public const int GENERIC_NPC_SPAWN = 1410;
+        public const int ANT_SPAWN = 1988;
 
         public const int HARDLIGHT_COVER = 1393;
         public const int DRAW_FIRE_AWARD = 1394;
@@ -161,7 +162,7 @@ namespace watchtower.Constants {
         public static bool IsSpawn(int expId) {
             return expId == SQUAD_SPAWN || expId == SQUAD_VEHICLE_SPAWN_BONUS
                 || expId == GALAXY_SPAWN_BONUS || expId == GENERIC_NPC_SPAWN
-                || expId == SUNDERER_SPAWN_BONUS;
+                || expId == SUNDERER_SPAWN_BONUS || expId == ANT_SPAWN;
         }
 
         public static bool IsVehicleKill(int expId) {

@@ -756,7 +756,10 @@
 
                 this.catSpawns.metrics.push(this.generateExperience(
                     metric,
-                    [Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN, Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS],
+                    [
+                        Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
+                        Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS, Experience.ANT_SPAWN
+                    ],
                     (metadata) => metadata.timeAs)
                 );
             },

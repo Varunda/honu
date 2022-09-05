@@ -192,6 +192,11 @@
                 }
             },
 
+            /**
+             * Tell the hub what alert we're subscribing to
+             * @param worldID ID of the world the alert is happening on
+             * @param zoneID ID of the zone the alert is happening on
+             */
             subscribe: function(worldID: number, zoneID: number): void {
                 this.alert.worldID = worldID;
                 this.alert.zoneID = zoneID;
@@ -207,24 +212,39 @@
                 }
             },
 
+            /**
+             * Callback when the hub sends all the alerts to us
+             * @param data
+             */
             onSendAll: function(data: any[]): void {
                 const alerts: RealtimeAlert[] = data.map(iter => RealtimeAlertApi.parse(iter));
                 this.list.alerts = alerts;
                 console.log(alerts);
             },
 
+            /**
+             * Get the NC outfit
+             */
             getOutfitNC: async function(): Promise<void> {
                 if (this.alert.full != null) {
                     this.alert.outfitNC = await this.getOutfit(this.alert.full.nc, 2);
                 }
             },
 
+            /**
+             * Get the TR outfit
+             */
             getOutfitTR: async function(): Promise<void> {
                 if (this.alert.full != null) {
                     this.alert.outfitTR = await this.getOutfit(this.alert.full.tr, 3);
                 }
             },
 
+            /**
+             * Get an outfit based on the events that team has gotten
+             * @param team
+             * @param teamID
+             */
             getOutfit: async function(team: RealtimeAlertTeam, teamID: number): Promise<PsOutfit | null> {
                 let charID: string | null = null;
 
@@ -267,14 +287,15 @@
                 return null;
             },
 
+            /**
+             * Callback when the hub sends all the data about an alert
+             * @param data
+             */
             onFullSend: function(data: any): void {
                 const alert: RealtimeAlert = RealtimeAlertApi.parse(data);
                 this.alert.full = alert;
 
-                console.log(`got full data`);
-
                 if (this.alert.outfitNC == null) {
-                    console.log(`getting NC outfit`);
                     this.getOutfitNC();
                 }
 
@@ -283,6 +304,10 @@
                 }
             },
 
+            /**
+             * Callback when the hub sends the small update for an alert
+             * @param data
+             */
             onUpdateAlert: function(data: any): void {
                 const alert: RealtimeAlert = RealtimeAlertApi.parse(data);
                 this.alert.data = alert;
