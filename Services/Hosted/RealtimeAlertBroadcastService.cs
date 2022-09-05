@@ -20,7 +20,7 @@ namespace watchtower.Services.Hosted {
 
     public class RealtimeAlertBroadcastServer : BackgroundService {
 
-        private const string SERVICE_NAME = "network_broadcast";
+        private const string SERVICE_NAME = "realtime_alert_broadcast";
 
         private readonly ILogger<RealtimeAlertBroadcastServer> _Logger;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
@@ -56,11 +56,7 @@ namespace watchtower.Services.Hosted {
 
                     foreach (RealtimeAlert a in _RealtimeAlertRepository.GetAll()) {
                         string group = $"RealtimeAlert.{a.WorldID}.{a.ZoneID}";
-                        RealtimeAlert alert = new(a.VS, a.NC, a.TR);
-                        alert.WorldID = a.WorldID;
-                        alert.ZoneID = a.ZoneID;
-                        alert.Timestamp = a.Timestamp;
-                        await _AlertHub.Clients.Group(group).UpdateAlert(alert);
+                        await _AlertHub.Clients.Group(group).UpdateAlert(a.AsMini());
                     }
 
                     healthEntry.RunDuration = time.ElapsedMilliseconds;

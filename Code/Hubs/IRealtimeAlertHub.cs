@@ -12,14 +12,7 @@ namespace watchtower.Code.Hubs {
         /// <param name="alert">Alert to be sent</param>
         Task UpdateAlert(RealtimeAlert alert);
 
-        /// <summary>
-        ///     Send the full alert, which has all of the events
-        /// </summary>
-        /// <param name="alert"></param>
-        /// <returns></returns>
-        Task SendFull(RealtimeAlert alert);
-
-        Task SendAll(List<RealtimeAlert> alerts);
+        Task RemoteCall(string action);
 
     }
 }

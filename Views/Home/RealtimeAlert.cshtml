@@ -40,6 +40,34 @@
     .gb3 {
         filter: blur(1.5px);
     }
+
+    .slider {
+        position: fixed;
+        top: 180px;
+        width: 280px;
+        max-width: 280px;
+        background-color: var(--gray-dark);
+    }
+
+    .slide-left-in {
+        animation: slide-left-in 1s forwards;
+        z-index: 10;
+    }
+
+    .slide-left-out {
+        animation: slide-left-out 1s forwards;
+        z-index: 10;
+    }
+
+    .slide-right-in {
+        animation: slide-right-in 1s forwards;
+        z-index: 10;
+    }
+
+    .slide-right-out {
+        animation: slide-right-out 1s forwards;
+        z-index: 10;
+    }
 </style>
 
 <div id="app">

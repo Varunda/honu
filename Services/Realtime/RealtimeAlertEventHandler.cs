@@ -99,11 +99,13 @@ namespace watchtower.Services.Realtime {
 
             RealtimeAlertTeam? attackerTeam = GetTeamByID(match, ev.AttackerTeamID);
             if (attackerTeam != null) {
+                attackerTeam.VehicleDestroyEvents.Add(ev);
                 ++attackerTeam.VehicleKills;
             }
 
             RealtimeAlertTeam? killedTeam = GetTeamByID(match, ev.KilledTeamID);
             if (killedTeam != null) {
+                killedTeam.VehicleDestroyEvents.Add(ev);
                 ++killedTeam.VehicleDeaths;
             }
         }

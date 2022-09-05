@@ -166,7 +166,7 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public IActionResult RealtimeAlert(string instanceID) {
+        public IActionResult RealtimeAlert(short? worldID, uint? zoneID) {
             return View();
         }
 

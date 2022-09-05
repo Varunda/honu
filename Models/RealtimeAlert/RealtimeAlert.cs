@@ -47,6 +47,19 @@ namespace watchtower.Models.RealtimeAlert {
             TR = new RealtimeAlertTeam(tr);
         }
 
+        /// <summary>
+        ///     Turn the alert into a mini alert, which has the same information, but without the events
+        /// </summary>
+        /// <returns></returns>
+        public RealtimeAlert AsMini() {
+            RealtimeAlert mini = new(VS, NC, TR);
+            mini.WorldID = WorldID;
+            mini.ZoneID = ZoneID;
+            mini.Timestamp = Timestamp;
+
+            return mini;
+        }
+
     }
 
 }

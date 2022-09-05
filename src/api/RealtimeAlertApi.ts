@@ -1,4 +1,7 @@
-﻿import { ExpEvent, ExpStatApi } from "./ExpStatApi";
+﻿import { Loading } from "Loading";
+import ApiWrapper from "api/ApiWrapper";
+
+import { ExpEvent, ExpStatApi } from "./ExpStatApi";
 import { KillEvent, KillStatApi } from "./KillStatApi";
 import { VehicleDestroyEvent, VehicleDestroyEventApi } from "./VehicleDestroyEventApi";
 
@@ -24,7 +27,10 @@ export class RealtimeAlertTeam {
     public vehicleDestroyEvents: VehicleDestroyEvent[] = [];
 }
 
-export class RealtimeAlertApi {
+export class RealtimeAlertApi extends ApiWrapper<RealtimeAlert> {
+
+    private static _instance: RealtimeAlertApi = new RealtimeAlertApi();
+    public static get(): RealtimeAlertApi { return RealtimeAlertApi._instance; }
 
     public static parse(elem: any): RealtimeAlert {
         return {
@@ -36,6 +42,14 @@ export class RealtimeAlertApi {
         };
     }
 
+    public static getFull(worldID: number, zoneID: number): Promise<Loading<RealtimeAlert>> {
+        return RealtimeAlertApi.get().readSingle(`/api/realtime-alert/${worldID}/${zoneID}`, RealtimeAlertApi.parse);
+    }
+
+    public static getList(): Promise<Loading<RealtimeAlert[]>> {
+        return RealtimeAlertApi.get().readList(`/api/realtime-alert/`, RealtimeAlertApi.parse);
+    }
+
 }
 
 export class RealtimeAlertTeamApi {
@@ -45,8 +59,8 @@ export class RealtimeAlertTeamApi {
             ...elem,
             experience: new Map(Object.entries(elem.experience).map(iter => [Number.parseInt(iter[0]), iter[1]])),
             killDeathEvents: elem.killDeathEvents.map((iter: any) => KillStatApi.parseKillEvent(iter)),
-            expEvents: elem.killDeathEvents.map((iter: any) => ExpStatApi.parseExpEvent(iter)),
-            vehicleDestroyEvents: elem.killDeathEvents.map((iter: any) => VehicleDestroyEventApi.parse(iter)),
+            expEvents: elem.expEvents.map((iter: any) => ExpStatApi.parseExpEvent(iter)),
+            vehicleDestroyEvents: elem.vehicleDestroyEvents.map((iter: any) => VehicleDestroyEventApi.parse(iter)),
         };
     }
 

@@ -112,3 +112,23 @@
     line-height: 1;
     font-family: ps2;
 }
+
+@keyframes slide-right-in {
+    0%      { right: -500px; }
+    100%    { right: 0px; }
+}
+
+@keyframes slide-right-out {
+    0%      { right: 0px; }
+    100%    { right: -500px; }
+}
+
+@keyframes slide-left-in {
+    0%      { left: -500px; }
+    100%    { left: 0px; }
+}
+
+@keyframes slide-left-out {
+    0%      { left: 0px; }
+    100%    { left: -500px; }
+}

@@ -88,6 +88,15 @@ export class ItemApi extends ApiWrapper<PsItem> {
 		return ItemApi.get().readSingle(`/api/item/${itemID}`, ItemApi.parse)
 	}
 
+	public static async getByIDs(ids: string[]): Promise<Loading<PsItem[]>> {
+		const params: URLSearchParams = new URLSearchParams();
+		for (const id of ids) {
+			params.append("IDs", id);
+		}
+
+		return ItemApi.get().readList(`/api/item/many?${params.toString()}`, ItemApi.parse);
+    }
+
 	public static async getAll(): Promise<Loading<PsItem[]>> {
 		return ItemApi.get().readList(`/api/items/weapons`, ItemApi.parse);
     }

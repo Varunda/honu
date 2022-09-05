@@ -61,6 +61,29 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get many items at once
+        /// </summary>
+        /// <param name="IDs">List of IDs to get</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="PsItem"/>, each with an <see cref="PsItem.ID"/>
+        ///     that was passed in <paramref name="IDs"/>
+        /// </response>
+        [HttpGet("many")]
+        public async Task<ApiResponse<List<PsItem>>> GetByIDs([FromQuery] List<int> IDs) {
+            List<PsItem> allItems = await _ItemRepository.GetAll();
+            Dictionary<int, PsItem> map = allItems.ToDictionary(iter => iter.ID);
+
+            List<PsItem> items = new(IDs.Count);
+            foreach (int itemID in IDs) {
+                if (map.TryGetValue(itemID, out PsItem? i) == true) {
+                    items.Add(i);
+                }
+            }
+
+            return ApiOk(items);
+        }
+
+        /// <summary>
         ///     Get all items
         /// </summary>
         /// <response code="200">
