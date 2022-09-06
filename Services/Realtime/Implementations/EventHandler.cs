@@ -1142,6 +1142,8 @@ namespace watchtower.Realtime {
                     p.TeamID = factionID;
                 }
 
+                CharacterStore.Get().Players.TryGetValue(otherID, out otherPlayer);
+
                 /*
                 // If the event could only happen if two characters are on the same faction, update the team_id field
                 if (Experience.IsRevive(expId) || Experience.IsHeal(expId) || Experience.IsResupply(expId)) {
@@ -1183,7 +1185,7 @@ namespace watchtower.Realtime {
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
             // If this event was a revive, get the latest death of the character who died and set the revived id
-            if ((ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
+            if (ID > 0 && (ev.ExperienceID == Experience.REVIVE || ev.ExperienceID == Experience.SQUAD_REVIVE)
                 && otherPlayer != null && otherPlayer.LatestDeath != null) {
 
                 TimeSpan diff = ev.Timestamp - otherPlayer.LatestDeath.Timestamp;
