@@ -76,14 +76,14 @@
         <div v-else-if="view == 'alert'">
             <img v-if="alert.showExample" src="/img/ow_example.png" width="1920" height="1080" style="position: fixed; z-index: -10;" />
 
-            <img src="/img/overlaybackgroundwicons.png" style="position: fixed; z-index: -5; left: 50%; transform: translateX(-50%);" width="695" height="112" />
+            <img src="/img/smalloverlaybackgroundwicons.png" style="position: fixed; z-index: -5; left: 50%; top: 3px; transform: translateX(-50%);" /> <!-- width="695" height="112" /> -->
 
-            <div class="ps2-text position-fixed" style="font-size: 24pt; left: 50%; transform: translateX(-50%);">
+            <div class="ps2-text position-fixed glow-24" style="font-size: 24pt; left: 50%; top: 14px; transform: translateX(-50%);">
                 {{alert.worldID | world}}
             </div>
 
             <div v-if="alert.data != null && alert.data.tr != null" style="font-size: 14pt; text-align: right; position: fixed; top: 62px; right: 1212px; font-family: ps2; line-height: 1;">
-                <realtime-alert-team-view :team="alert.data.tr"></realtime-alert-team-view>
+                <realtime-alert-team-view :team="alert.data.tr" class="glow-red"></realtime-alert-team-view>
             </div>
 
             <div :class="[ alert.showPanels ? 'slide-left-in' : 'slide-left-out', 'slider' ]">
@@ -100,11 +100,11 @@
                 :team-id="3" :outfit="alert.outfitTR">
             </team-icon>
 
-            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-right" style="font-size: 16pt; right: 1060px; top: 93px;">
+            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-right glow-red" style="font-size: 16pt; right: 1060px; top: 93px;">
                 [{{alert.outfitTR.tag}}]
             </div>
 
-            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-left" style="font-size: 16pt; left: 1060px; top: 93px;">
+            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-left glow-blue" style="font-size: 16pt; left: 1060px; top: 93px;">
                 [{{alert.outfitNC.tag}}]
             </div>
 
@@ -123,7 +123,7 @@
             </div>
 
             <div v-if="alert.data != null && alert.data.nc != null" style="font-size: 14pt; text-align: left; position: fixed; top: 62px; left: 1212px; font-family: ps2; line-height: 1;">
-                <realtime-alert-team-view :team="alert.data.nc"></realtime-alert-team-view>
+                <realtime-alert-team-view :team="alert.data.nc" class="glow-blue"></realtime-alert-team-view>
             </div>
 
             <div v-if="alert.showControls" class="position-fixed" style="left: 50%; top: 200px; transform: translateX(-50%); display: grid; column-gap: 0.5rem; align-content: start; align-items: start; grid-template-columns: 1fr 1fr 1fr 1fr;">
@@ -168,6 +168,10 @@
 
                     <button class="btn btn-primary" @click="remoteControlCall('remoteToggleExample')">
                         Toggle example
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteRefreshOutfits')">
+                        Refresh outfits
                     </button>
                 </div>
 
@@ -951,10 +955,20 @@
                 this.showPanels();
             },
 
-            remoteVehiclesLost: async function(): Promise<void> {
+            remoteRefreshOutfits: async function(): Promise<void> {
+                if (this.alert.worldID == null || this.alert.zoneID == null) {
+                    return console.warn(`RealtimeAlert> cannot show top items: worldID or zoneID is null`);
+                }
 
+                const full: Loading<RealtimeAlert> = await RealtimeAlertApi.getFull(this.alert.worldID, this.alert.zoneID);
+                if (full.state != "loaded") {
+                    return console.warn(`RealtimeAlert> cannot show top items: full returned '${full.state}', not 'loaded'`);
+                }
+
+                this.alert.full = full.data;
+                await this.getOutfitNC();
+                await this.getOutfitTR();
             }
-
         },
 
         computed: {
