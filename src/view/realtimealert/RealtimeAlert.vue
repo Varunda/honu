@@ -100,11 +100,11 @@
                 :team-id="3" :outfit="alert.outfitTR">
             </team-icon>
 
-            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-right glow-red" style="font-size: 16pt; right: 1060px; top: 93px;">
+            <div v-if="alert.outfitTR != null" class="ps2-text position-fixed text-center outfit-tag glow-red" style="right: 1060px;">
                 [{{alert.outfitTR.tag}}]
             </div>
 
-            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-left glow-blue" style="font-size: 16pt; left: 1060px; top: 93px;">
+            <div v-if="alert.outfitNC != null" class="ps2-text position-fixed text-left glow-blue outfit-tag" style="left: 1060px;">
                 [{{alert.outfitNC.tag}}]
             </div>
 
