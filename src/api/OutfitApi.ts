@@ -164,12 +164,12 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return OutfitApi.get().readList(`/api/outfit/tag/${tag}`, OutfitApi.parse);
 	}
 
-	public static async getMembers(outfitID: string): Promise<Loading<ExpandedOutfitMember[]>> {
-		return OutfitApi.get().readList(`/api/outfit/${outfitID}/members`, OutfitApi.parseExpandedOutfitMember);
+	public static async getMembers(outfitID: string, includeStats: boolean = true): Promise<Loading<ExpandedOutfitMember[]>> {
+		return OutfitApi.get().readList(`/api/outfit/${outfitID}/members?includeStats=${includeStats}`, OutfitApi.parseExpandedOutfitMember);
 	}
 
-	public static async getMembersFlat(outfitID: string): Promise<Loading<FlatExpandedOutfitMember[]>> {
-		const members: Loading<ExpandedOutfitMember[]> = await OutfitApi.getMembers(outfitID);
+	public static async getMembersFlat(outfitID: string, includeStats: boolean = true): Promise<Loading<FlatExpandedOutfitMember[]>> {
+		const members: Loading<ExpandedOutfitMember[]> = await OutfitApi.getMembers(outfitID, includeStats);
 		if (members.state != "loaded") {
 			return Loadable.rewrap(members);
 		}

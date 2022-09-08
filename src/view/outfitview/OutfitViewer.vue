@@ -152,8 +152,12 @@
         </collapsible>
 
         <collapsible header-text="Members">
+            <div v-if="members.state == 'loading' && simpleMembers.state == 'loaded'" class="alert alert-info text-center">
+                Stats have not finished loading! Displaying only the outfit member list
+            </div>
+
             <a-table 
-                :entries="members"
+                :entries="outfitMembers"
                 :show-filters="true"
                 default-sort-field="rankOrder" default-sort-order="asc"
                 display-type="table">
@@ -328,6 +332,7 @@
                 leader: Loadable.idle() as Loading<PsCharacter>,
 
                 outfit: Loadable.idle() as Loading<PsOutfit>,
+                simpleMembers: Loadable.idle() as Loading<FlatExpandedOutfitMember[]>,
                 members: Loadable.idle() as Loading<FlatExpandedOutfitMember[]>,
 
                 activeCutoff: 1000 * 60 * 60 * 24 * 30 as number,
@@ -342,6 +347,7 @@
         beforeMount: function(): void {
             this.parseOutfitIDFromUrl();
             this.bindOutfit();
+            this.bindSimpleMembers();
             this.bindMembers();
         },
 
@@ -380,6 +386,11 @@
                 }
             },
 
+            bindSimpleMembers: async function(): Promise<void> {
+                this.simpleMembers = Loadable.loading();
+                this.simpleMembers = await OutfitApi.getMembersFlat(this.outfitID, false);
+            },
+
             bindMembers: async function(): Promise<void> {
                 this.members = Loadable.loading();
                 this.members = await OutfitApi.getMembersFlat(this.outfitID);
@@ -400,6 +411,18 @@
                     return -1;
                 }
                 return this.members.data.filter(iter => iter.online == true).length;
+            },
+
+            outfitMembers: function(): Loading<FlatExpandedOutfitMember[]> {
+                if (this.members.state == "loading" && this.simpleMembers.state == "loading") {
+                    return this.members;
+                } else if (this.members.state == "loading" && this.simpleMembers.state == "loaded") {
+                    return this.simpleMembers;
+                } else if (this.members.state == "loaded") {
+                    return this.members;
+                }
+
+                return this.members;
             },
 
             active30d: function(): FlatExpandedOutfitMember[] {

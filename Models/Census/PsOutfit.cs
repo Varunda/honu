@@ -33,6 +33,11 @@ namespace watchtower.Models.Census {
         public string LeaderID { get; set; } = "";
 
         /// <summary>
+        /// Not usually populated, only set in specific API calls
+        /// </summary>
+        public short? WorldID { get; set; }
+
+        /// <summary>
         /// How many members are in the outfit
         /// </summary>
         public int MemberCount { get; set; }
