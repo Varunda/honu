@@ -270,7 +270,8 @@ namespace watchtower.Services.Db {
             outfit.LastUpdated = reader.GetDateTime("last_updated_on");
             outfit.LeaderID = reader.GetString("leader_id");
             outfit.MemberCount = reader.GetInt32("member_count");
-            outfit.LastUpdated = reader.GetNullableDateTime("time_create") ?? DateTime.MinValue;
+            outfit.LastUpdated = reader.GetDateTime("timestamp");
+            outfit.DateCreated = reader.GetNullableDateTime("time_create") ?? DateTime.MinValue;
             outfit.Tag = reader.GetNullableString("tag");
 
             return outfit;

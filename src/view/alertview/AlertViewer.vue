@@ -135,11 +135,11 @@
                     <h2 class="wt-header">Kills</h2>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12 col-lg-6">
                     <alert-kill-board :alert="alert.data" :participants="participants"></alert-kill-board>
                 </div>
 
-                <div class="col-6">
+                <div class="col-12 col-lg-6">
                     <alert-outfit-kill-board :outfits="outfits" :alert="alert.data" :participants="participants"></alert-outfit-kill-board>
                 </div>
             </div>
@@ -149,11 +149,11 @@
                     <h2 class="wt-header">Medic</h2>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 col-lg-6">
                     <alert-medic-board :participants="participants" :alert="alert.data"></alert-medic-board>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 col-lg-6">
                     <alert-outfit-medic-board :outfits="outfits" :participants="participants" :alert="alert.data"></alert-outfit-medic-board>
                 </div>
             </div>
@@ -163,11 +163,11 @@
                     <h2 class="wt-header">Engineer</h2>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 col-lg-6">
                     <alert-engineer-board :participants="participants" :alert="alert.data"></alert-engineer-board>
                 </div>
 
-                <div class="col-12">
+                <div class="col-12 col-lg-6">
                     <alert-outfit-engineer-board :outfits="outfits" :alert="alert.data" :participants="participants"></alert-outfit-engineer-board>
                 </div>
             </div>

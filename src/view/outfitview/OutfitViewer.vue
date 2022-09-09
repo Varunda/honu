@@ -153,6 +153,7 @@
 
         <collapsible header-text="Members">
             <div v-if="members.state == 'loading' && simpleMembers.state == 'loaded'" class="alert alert-info text-center">
+                <busy class="honu-busy-sm"></busy>
                 Stats have not finished loading! Displaying only the outfit member list
             </div>
 
