@@ -312,7 +312,8 @@
         },
 
         mounted: function(): void {
-            this.controlCode = `${1_000_000_000 + Math.floor(Math.random() * (1_000_000_000))}`;
+            const code: string = `${1_000_000_000 + Math.floor(Math.random() * (1_000_000_000))}`
+            this.setControlCode(code);
             this.connect();
         },
 
@@ -335,6 +336,7 @@
                 this.connection.on("RemoteCall", this.onRemoteCall);
 
                 this.connection.onreconnected(() => {
+                    console.log(`reconnected ${this.alert.worldID}.${this.alert.zoneID} // ${this.controlCode}`);
                     if (this.alert.worldID != null && this.alert.zoneID != null) {
                         this.subscribe(this.alert.worldID, this.alert.zoneID);
                     }
@@ -423,7 +425,7 @@
                 }
 
                 if (params.has("controlCode")) {
-                    this.setControlCode(params.get("contorlCode")!);
+                    this.setControlCode(params.get("controlCode")!);
                 }
 
                 this.alert.showControls = params.has("control");
@@ -459,7 +461,7 @@
 
                 if (this.connection != null) {
                     this.connection.send("SetControlCode", this.controlCode);
-                    console.log(`RealtimeAlert> control code set`);
+                    console.log(`RealtimeAlert> control code set to ${this.controlCode}`);
                 }
             },
 
@@ -646,7 +648,7 @@
              * @param action Action to be performed
              */
             onRemoteCall: function(action: string): void {
-                console.log(`RealtimeAlert> performing action '${action}'`);
+                console.log(`RealtimeAlert> ${this.controlCode} performing action '${action}'`);
 
                 const func: any = (this as any)[action];
                 if (func == undefined) {
