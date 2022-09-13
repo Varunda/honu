@@ -57,9 +57,6 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 
-                DELETE FROM character_items
-                    WHERE character_id = @CharacterID;
-
                 INSERT INTO character_stats(character_id, stat_name, profile_id, value_forever, value_monthly, value_weekly, value_daily, value_max_one_life, timestamp)
                     VALUES {string.Join(",\n", stats.Select(iter => $"('{iter.CharacterID}', '{iter.StatName}', {iter.ProfileID}, "
                     + $"{iter.ValueForever}, {iter.ValueMonthly}, {iter.ValueWeekly}, {iter.ValueDaily}, {iter.ValueMaxOneLife}, '{iter.Timestamp}')"))};
