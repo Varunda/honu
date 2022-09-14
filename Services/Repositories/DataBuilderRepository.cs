@@ -66,8 +66,9 @@ namespace watchtower.Services.Repositories {
         ///     Build the <see cref="WorldData"/> for a specific world
         /// </summary>
         /// <param name="worldID">ID of the world to build the data for</param>
+        /// <param name="duration">How many minutes back to make the data</param>
         /// <param name="stoppingToken">Cancellation token</param>
-        public async Task<WorldData> Build(short worldID, CancellationToken? stoppingToken) {
+        public async Task<WorldData> Build(short worldID, int duration, CancellationToken? stoppingToken) {
 
             using var processTrace = HonuActivitySource.Root.StartActivity("Realtime Activity");
             processTrace?.AddTag("worldID", worldID);
@@ -80,6 +81,7 @@ namespace watchtower.Services.Repositories {
 
             data.WorldID = worldID;
             data.WorldName = World.GetName(worldID);
+            data.Duration = duration;
             data.ContinentCount = new ContinentCount();
             data.ProcessLag = (int)(DateTime.UtcNow - _EventHandler.MostRecentProcess()).TotalSeconds;
 
@@ -94,13 +96,13 @@ namespace watchtower.Services.Repositories {
             long timeToCopyPlayers = time.ElapsedMilliseconds;
 
             ExpEntryOptions expOptions = new ExpEntryOptions() {
-                Interval = 120,
+                Interval = duration,
                 WorldID = worldID
             };
 
-            ExpEntryOptions vsExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = worldID, FactionID = Faction.VS };
-            ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = worldID, FactionID = Faction.NC };
-            ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = 120, WorldID = worldID, FactionID = Faction.TR };
+            ExpEntryOptions vsExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.VS };
+            ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.NC };
+            ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.TR };
 
             using (var interval = HonuActivitySource.Root.StartActivity("exp heals")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
@@ -198,9 +200,9 @@ namespace watchtower.Services.Repositories {
             }
 
             using (var interval = HonuActivitySource.Root.StartActivity("top killers")) {
-                KillDbOptions vsKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.VS };
-                KillDbOptions ncKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.NC };
-                KillDbOptions trKillOptions = new KillDbOptions() { Interval = 120, WorldID = data.WorldID, FactionID = Faction.TR };
+                KillDbOptions vsKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.VS };
+                KillDbOptions ncKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.NC };
+                KillDbOptions trKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.TR };
 
                 await Task.WhenAll(
                     GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
@@ -250,7 +252,7 @@ namespace watchtower.Services.Repositories {
             long timeToGetBiggestSpawns = time.ElapsedMilliseconds;
 
             WorldTotalOptions totalOptions = new WorldTotalOptions() {
-                Interval = 120,
+                Interval = duration,
                 WorldID = worldID
             };
 
@@ -370,7 +372,7 @@ namespace watchtower.Services.Repositories {
 
             //data.TagEntries = _TagManager.GetRecent(data.WorldID);
             using (var interval = HonuActivitySource.Root.StartActivity("health data")) {
-                data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(120), DateTime.UtcNow);
+                data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(duration), DateTime.UtcNow);
                 data.RealtimeHealth = _HealthRepository.GetDeathHealth().Where(iter => iter.WorldID == data.WorldID).ToList();
                 data.RealtimeHealth.AddRange(_HealthRepository.GetExpHealth().Where(iter => iter.WorldID == data.WorldID));
             }

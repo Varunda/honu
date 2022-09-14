@@ -478,7 +478,8 @@
     import DateTimeInput from "components/DateTimeInput.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
-import { InfantryDamage, InfantryDamageEntry } from "./InfantryDamage";
+
+    import { InfantryDamage, InfantryDamageEntry } from "./InfantryDamage";
 
     type Message = {
         when: Date;
@@ -1140,7 +1141,6 @@ import { InfantryDamage, InfantryDamageEntry } from "./InfantryDamage";
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             ProgressBar
         }
-
     });
     export default OutfitReport;
 </script>

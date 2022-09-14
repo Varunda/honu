@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using watchtower.Code.Constants;
 using watchtower.Code.Hubs;
 using watchtower.Code.Hubs.Implementations;
 using watchtower.Models;
@@ -26,8 +27,8 @@ namespace watchtower.Services.Hosted {
 
         private readonly IHubContext<WorldDataHub, IWorldDataHub> _DataHub;
 
-        private List<short> _WorldIDs = new List<short>() {
-            1, 10, 13, 17, 19, 40
+        private List<int> _Durations = new() {
+            60, 120
         };
 
         public WorldDataBroadcastService(ILogger<WorldDataBroadcastService> logger,
@@ -56,20 +57,31 @@ namespace watchtower.Services.Hosted {
                         };
                     }
 
-                    foreach (short worldID in _WorldIDs) {
-                        try {
-                            WorldData? data = _WorldDataRepository.Get(worldID);
-                            if (data != null) {
-                                _ = _DataHub.Clients.Group(worldID.ToString()).UpdateData(data);
+                    foreach (int duration in _Durations) {
+                        foreach (short worldID in World.PcStreams) {
+                            try {
+                                WorldData? data = _WorldDataRepository.Get(worldID, duration);
+                                if (data == null) {
+                                    continue;
+                                }
+
+                                string group = $"RealtimeData.{worldID}.";
+                                if (duration == 60) {
+                                    group += "Short";
+                                } else if (duration == 120) {
+                                    group += "Long";
+                                } else {
+                                    throw new Exception($"Unchecked duration {duration}");
+                                }
+
+                                _ = _DataHub.Clients.Group(group).UpdateData(data);
 
                                 if ((data.Timestamp - TimeSpan.FromMinutes(3)) >= DateTime.UtcNow) {
                                     _Logger.LogWarning($"WorldData for {worldID} is out of date! Timestamp: {data.Timestamp}");
                                 }
-                            } else {
-                                //_Logger.LogWarning($"Missing world data for {worldID}");
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, "Error updating clients listening on worldID {worldID}", worldID);
                             }
-                        } catch (Exception ex) {
-                            _Logger.LogError(ex, "Error updating clients listening on worldID {worldID}", worldID);
                         }
                     }
 

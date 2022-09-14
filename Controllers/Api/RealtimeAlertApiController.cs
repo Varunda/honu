@@ -37,7 +37,7 @@ namespace watchtower.Controllers.Api {
                 mini.Add(a.AsMini());
             }
 
-            return ApiOk(alerts);
+            return ApiOk(mini);
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -82,10 +83,14 @@ namespace watchtower {
             Console.WriteLine($"Ran host");
 
             string? line = "";
+            bool fastStop = false;
             while (line != ".close") {
                 line = Console.ReadLine();
 
-                if (line == ".close") {
+                if (line == ".close" || line == ".closefast") {
+                    if (line == ".closefast") {
+                        fastStop = true;
+                    }
                     break;
                 } else {
                     if (line != null && commands != null) {
@@ -94,7 +99,14 @@ namespace watchtower {
                 }
             }
 
-            await _Host.StopAsync();
+            CancellationTokenSource cts = new CancellationTokenSource();
+            if (fastStop == true) {
+                cts.CancelAfter(1000 * 1);
+            } else {
+                cts.CancelAfter(1000 * 60);
+            }
+
+            await _Host.StopAsync(cts.Token);
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) {

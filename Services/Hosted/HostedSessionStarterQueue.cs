@@ -108,7 +108,7 @@ namespace watchtower.Services.Hosted {
         public override async Task StopAsync(CancellationToken stoppingToken) {
             _Logger.LogInformation($"Ending all current sessions");
             Stopwatch timer = Stopwatch.StartNew();
-            await _SessionRepository.EndAll(DateTime.UtcNow);
+            await _SessionRepository.EndAll(DateTime.UtcNow, stoppingToken);
 
             _Logger.LogDebug($"Took {timer.ElapsedMilliseconds}ms to close all sessions");
         }

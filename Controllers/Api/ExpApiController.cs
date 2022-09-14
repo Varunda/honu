@@ -166,35 +166,6 @@ namespace watchtower.Controllers {
             }
 
             return await GetByCharacterIDAndRange(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
-
-            /*
-            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
-            List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(events.Count);
-
-            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
-
-            foreach (ExpEvent ev in events) {
-                ExpandedExpEvent ex = new ExpandedExpEvent();
-                ex.Event = ev;
-
-                if (chars.ContainsKey(ev.SourceID) == false) {
-                    chars.Add(ev.SourceID, await _CharacterRepository.GetByID(ev.SourceID));
-                }
-
-                ex.Source = chars[ev.SourceID];
-
-                if (ev.OtherID.Length == 19) {
-                    if (chars.ContainsKey(ev.OtherID) == false) {
-                        chars.Add(ev.OtherID, await _CharacterRepository.GetByID(ev.OtherID));
-                    }
-                    ex.Other = chars[ev.OtherID];
-                }
-
-                expanded.Add(ex);
-            }
-
-            return ApiOk(expanded);
-            */
         }
 
         [HttpGet("sessions/{sessionID}")]
@@ -205,35 +176,6 @@ namespace watchtower.Controllers {
             }
 
             return await GetByCharacterIDAndRange2(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
-
-            /*
-            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
-            List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(events.Count);
-
-            Dictionary<string, PsCharacter?> chars = new Dictionary<string, PsCharacter?>();
-
-            foreach (ExpEvent ev in events) {
-                ExpandedExpEvent ex = new ExpandedExpEvent();
-                ex.Event = ev;
-
-                if (chars.ContainsKey(ev.SourceID) == false) {
-                    chars.Add(ev.SourceID, await _CharacterRepository.GetByID(ev.SourceID));
-                }
-
-                ex.Source = chars[ev.SourceID];
-
-                if (ev.OtherID.Length == 19) {
-                    if (chars.ContainsKey(ev.OtherID) == false) {
-                        chars.Add(ev.OtherID, await _CharacterRepository.GetByID(ev.OtherID));
-                    }
-                    ex.Other = chars[ev.OtherID];
-                }
-
-                expanded.Add(ex);
-            }
-
-            return ApiOk(expanded);
-            */
         }
 
         /// <summary>
@@ -280,19 +222,19 @@ namespace watchtower.Controllers {
         ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
         /// </response>
         [HttpGet("character/{charID}/{type}")]
-        public async Task<ApiResponse<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type) {
+        public async Task<ApiResponse<List<CharacterExpSupportEntry>>> CharacterEntries(string charID, string type, [FromQuery] bool useShort = false) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<CharacterExpSupportEntry>>($"{nameof(PsCharacter)} {charID}");
             }
 
             if (type == "spawns") {
-                List<CharacterExpSupportEntry> spawns = await CharacterSpawns(charID);
+                List<CharacterExpSupportEntry> spawns = await CharacterSpawns(charID, useShort);
                 return ApiOk(spawns);
             }
 
             if (type == "vehicleKills") {
-                List<CharacterExpSupportEntry> kills = await CharacterVehicleKills(charID);
+                List<CharacterExpSupportEntry> kills = await CharacterVehicleKills(charID, useShort);
                 return ApiOk(kills);
             }
 
@@ -310,7 +252,7 @@ namespace watchtower.Controllers {
                 return ApiBadRequest<List<CharacterExpSupportEntry>>($"Unknown type '{type}'");
             }
 
-            List<CharacterExpSupportEntry> list = await GetByCharacterAndExpIDs(charID, expTypes);
+            List<CharacterExpSupportEntry> list = await GetByCharacterAndExpIDs(charID, expTypes, useShort);
 
             return ApiOk(list);
         }
@@ -349,7 +291,7 @@ namespace watchtower.Controllers {
         ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
         /// </response>
         [HttpGet("outfit/{outfitID}/{type}/{worldID}/{teamID}")]
-        public async Task<ApiResponse<List<OutfitExpEntry>>> OutfitEntries(string outfitID, string type, short worldID, short teamID) {
+        public async Task<ApiResponse<List<OutfitExpEntry>>> OutfitEntries(string outfitID, string type, short worldID, short teamID, [FromQuery] bool useShort = false) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
             if (outfitID != "0" && outfit == null) {
                 return ApiNotFound<List<OutfitExpEntry>>($"{nameof(PsOutfit)} {outfitID}");
@@ -377,13 +319,13 @@ namespace watchtower.Controllers {
                 return ApiBadRequest<List<OutfitExpEntry>>($"Unknown type '{type}'");
             }
 
-            List<OutfitExpEntry> list = await GetByOutfitAndExpIDs(outfitID, expTypes, worldID, teamID);
+            List<OutfitExpEntry> list = await GetByOutfitAndExpIDs(outfitID, expTypes, worldID, teamID, useShort);
 
             return ApiOk(list);
         }
 
-        private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID) {
-            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
+        private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID, bool useShort) {
+            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, useShort == true ? 60 : 120);
 
             CharacterExpSupportEntry sundySpawns = new CharacterExpSupportEntry() { CharacterName = "Sunderers" };
             CharacterExpSupportEntry routerSpawns = new CharacterExpSupportEntry() { CharacterName = "Routers" };
@@ -409,8 +351,8 @@ namespace watchtower.Controllers {
             return list;
         }
 
-        private async Task<List<CharacterExpSupportEntry>> CharacterVehicleKills(string charID) {
-            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
+        private async Task<List<CharacterExpSupportEntry>> CharacterVehicleKills(string charID, bool useShort) {
+            List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, useShort == true ? 60 : 120);
 
             CharacterExpSupportEntry flashKills = new CharacterExpSupportEntry() { CharacterName = "Flashes" };
             CharacterExpSupportEntry galaxyKills = new CharacterExpSupportEntry() { CharacterName = "Galaxies" };
@@ -481,8 +423,8 @@ namespace watchtower.Controllers {
             return list;
         }
 
-        private async Task<List<CharacterExpSupportEntry>> GetByCharacterAndExpIDs(string charID, List<int> events) {
-            List<ExpEvent> exps = await _ExpDbStore.GetRecentByCharacterID(charID, 120);
+        private async Task<List<CharacterExpSupportEntry>> GetByCharacterAndExpIDs(string charID, List<int> events, bool useShort) {
+            List<ExpEvent> exps = await _ExpDbStore.GetRecentByCharacterID(charID, useShort ? 60 : 120);
 
             Dictionary<string, CharacterExpSupportEntry> entries = new Dictionary<string, CharacterExpSupportEntry>();
 
@@ -512,8 +454,8 @@ namespace watchtower.Controllers {
             return list;
         }
 
-        private async Task<List<OutfitExpEntry>> GetByOutfitAndExpIDs(string outfitID, List<int> events, short worldID, short teamID) {
-            List<ExpEvent> exp = await _ExpDbStore.GetByOutfitID(outfitID, worldID, teamID, 120);
+        private async Task<List<OutfitExpEntry>> GetByOutfitAndExpIDs(string outfitID, List<int> events, short worldID, short teamID, bool useShort) {
+            List<ExpEvent> exp = await _ExpDbStore.GetByOutfitID(outfitID, worldID, teamID, useShort ? 60 : 120);
 
             Dictionary<string, OutfitExpEntry> entries = new Dictionary<string, OutfitExpEntry>();
 

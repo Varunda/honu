@@ -293,7 +293,8 @@ namespace watchtower.Services.Db {
         ///     End all sessions currently opened in the DB
         /// </summary>
         /// <param name="when">What the finish value will be set to</param>
-        public async Task EndAll(DateTime when) {
+        /// <param name="cancel">Cancelation token</param>
+        public async Task EndAll(DateTime when, CancellationToken cancel) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
@@ -303,7 +304,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("Timestamp", when);
 
-            await cmd.ExecuteNonQueryAsync();
+            await cmd.ExecuteNonQueryAsync(cancel);
             await conn.CloseAsync();
         }
 

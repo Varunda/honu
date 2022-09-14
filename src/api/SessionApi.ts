@@ -52,4 +52,8 @@ export class SessionApi extends ApiWrapper<Session> {
 		return SessionApi.get().readList(`/api/session/character/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, SessionApi.parse);
     }
 
+	public static async getByOutfit(outfitID: string): Promise<Loading<Session[]>> {
+		return SessionApi.get().readList(`/api/session/outfit/${outfitID}`, SessionApi.parse);
+    }
+
 }

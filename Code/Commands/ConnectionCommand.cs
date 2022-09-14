@@ -23,7 +23,7 @@ namespace watchtower.Code.Commands {
                 string s = $"Connections: {ConnectionStore.Get().Connections.Count}\n";
 
                 foreach (KeyValuePair<string, TrackedConnection> entry in ConnectionStore.Get().Connections) {
-                    s += $"\t{entry.Key}: {entry.Value.WorldID}\t{entry.Value.ConnectedAt}\n";
+                    s += $"\t{entry.Key}: {entry.Value.WorldID}#{entry.Value.Duration}\t{entry.Value.ConnectedAt}\n";
                 }
 
                 _Logger.LogInformation(s);

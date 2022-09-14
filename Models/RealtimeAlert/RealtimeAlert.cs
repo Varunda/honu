@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using watchtower.Constants;
 using watchtower.Models.Census;
 
@@ -24,10 +25,23 @@ namespace watchtower.Models.RealtimeAlert {
         /// </summary>
         public uint ZoneID { get; set; }
 
+        public PsZone Zone { get; set; } = new();
+
+        public List<PsFacilityOwner> Facilities { get; set; } = new();
+
+        /// <summary>
+        ///     Represents a summary of what has happened with characters with a team_id of VS
+        /// </summary>
         public RealtimeAlertTeam VS { get; }
 
+        /// <summary>
+        ///     Represents a summary of what has happened with characters with a team_id of NC
+        /// </summary>
         public RealtimeAlertTeam NC { get; }
 
+        /// <summary>
+        ///     Represents a summary of what has happened with characters with a team_id of TR
+        /// </summary>
         public RealtimeAlertTeam TR { get; }
 
         public RealtimeAlert() {
@@ -41,7 +55,7 @@ namespace watchtower.Models.RealtimeAlert {
             TR.TeamID = Faction.TR;
         }
 
-        public RealtimeAlert(RealtimeAlertTeam vs, RealtimeAlertTeam nc, RealtimeAlertTeam tr) {
+        private RealtimeAlert(RealtimeAlertTeam vs, RealtimeAlertTeam nc, RealtimeAlertTeam tr) {
             VS = new RealtimeAlertTeam(vs);
             NC = new RealtimeAlertTeam(nc);
             TR = new RealtimeAlertTeam(tr);
@@ -56,6 +70,7 @@ namespace watchtower.Models.RealtimeAlert {
             mini.WorldID = WorldID;
             mini.ZoneID = ZoneID;
             mini.Timestamp = Timestamp;
+            mini.Facilities = Facilities;
 
             return mini;
         }

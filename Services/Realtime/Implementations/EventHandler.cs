@@ -59,6 +59,7 @@ namespace watchtower.Realtime {
 
         private readonly IHubContext<RealtimeMapHub> _MapHub;
         private readonly WorldTagManager _TagManager;
+
         private readonly RealtimeAlertEventHandler _NexusHandler;
         private readonly RealtimeAlertRepository _MatchRepository;
 
@@ -414,6 +415,8 @@ namespace watchtower.Realtime {
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"failed to send 'UpdateMap' event to signalR for worldID {ev.WorldID}, zone ID {ev.ZoneID}");
             }
+
+            _NexusHandler.HandleFacilityControl(ev);
 
             // Set the map repository before we discard server events, such as a continent unlock, to keep the map repo in sync with live
             if (World.IsTrackedWorld(ev.WorldID) == false || ev.OldFactionID == 0 || ev.NewFactionID == 0) {

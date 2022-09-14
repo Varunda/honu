@@ -22,6 +22,11 @@ namespace watchtower.Models {
         public string WorldName { get; set; } = "";
 
         /// <summary>
+        /// How many minutes back this data goes
+        /// </summary>
+        public int Duration { get; set; }
+
+        /// <summary>
         /// Timestamp of when this data was generated
         /// </summary>
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;

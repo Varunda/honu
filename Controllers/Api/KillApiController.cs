@@ -125,6 +125,7 @@ namespace watchtower.Controllers {
         ///     Get the weapons a character used to get kills in the last 2 hours. This excludes TKs
         /// </remarks>
         /// <param name="charID">ID of the character</param>
+        /// <param name="useShort">Will only the last hour of data be usd instead of 2 hours?</param>
         /// <response code="200">
         ///     The response will contain the <see cref="CharacterWeaponKillEntry"/>s for the character
         ///     passed in <paramref name="charID"/> and within the last 2 hours
@@ -133,14 +134,14 @@ namespace watchtower.Controllers {
         ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
         /// </response>
         [HttpGet("character/{charID}")]
-        public async Task<ApiResponse<List<CharacterWeaponKillEntry>>> CharacterKills(string charID) {
+        public async Task<ApiResponse<List<CharacterWeaponKillEntry>>> CharacterKills(string charID, [FromQuery] bool useShort = false) {
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
 
             if (c == null) {
                 return ApiNotFound<List<CharacterWeaponKillEntry>>($"{nameof(PsCharacter)} {charID}");
             }
 
-            List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, 120);
+            List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, useShort ? 60 :120);
 
             Dictionary<int, CharacterWeaponKillEntry> entries = new Dictionary<int, CharacterWeaponKillEntry>();
 
@@ -183,7 +184,8 @@ namespace watchtower.Controllers {
         ///      <br/><br/>
         ///      Get the top killers in an outfit in the last 2 hours
         /// </remarks>
-        /// <param name="outfitID"></param>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <param name="useShort">Will only 1 hour of data be used instead of 2 hours?</param>
         /// <response code="200">
         ///     The response will contain a list of <see cref="OutfitKillerEntry"/>s for the
         ///     <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>
@@ -192,7 +194,7 @@ namespace watchtower.Controllers {
         ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
         /// </response>
         [HttpGet("outfit/{outfitID}")]
-        public async Task<ActionResult<List<OutfitKillerEntry>>> OutfitKills(string outfitID) {
+        public async Task<ActionResult<List<OutfitKillerEntry>>> OutfitKills(string outfitID, [FromQuery] bool useShort = false) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
 
             if (outfit == null) {

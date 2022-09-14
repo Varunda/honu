@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -162,8 +163,9 @@ namespace watchtower.Services.Repositories {
         ///     End all sessions currently opened in the DB
         /// </summary>
         /// <param name="when">What the finish value will be set to</param>
-        public Task EndAll(DateTime when) {
-            return _SessionDb.EndAll(when);
+        /// <param name="cancel">Cancelation token</param>
+        public Task EndAll(DateTime when, CancellationToken cancel) {
+            return _SessionDb.EndAll(when, cancel);
         }
 
     }

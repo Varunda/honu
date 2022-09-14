@@ -15,7 +15,7 @@ namespace watchtower.Services.Repositories {
 
         private readonly ILogger<WorldDataRepository> _Logger;
 
-        private ConcurrentDictionary<short, WorldData> _WorldData = new ConcurrentDictionary<short, WorldData>();
+        private ConcurrentDictionary<string, WorldData> _WorldData = new();
 
         public WorldDataRepository(ILogger<WorldDataRepository> logger) {
             _Logger = logger;
@@ -29,9 +29,9 @@ namespace watchtower.Services.Repositories {
         ///     The <see cref="WorldData"/> with <see cref="WorldData.WorldID"/> of <paramref name="worldID"/>,
         ///     or <c>null</c> if it does not exist
         /// </returns>
-        public WorldData? Get(short worldID) {
+        public WorldData? Get(short worldID, int duration) {
             lock (_WorldData) {
-                _ = _WorldData.TryGetValue(worldID, out WorldData? worldData);
+                _ = _WorldData.TryGetValue($"{worldID}#{duration}", out WorldData? worldData);
                 return worldData;
             }
         }
@@ -43,7 +43,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="data">WorldData to be set</param>
         public void Set(short worldID, WorldData data) {
             lock (_WorldData) {
-                _WorldData.AddOrUpdate(worldID, data, (key, oldValue) => {
+                _WorldData.AddOrUpdate($"{worldID}#{data.Duration}", data, (key, oldValue) => {
                     return data;
                 });
             }

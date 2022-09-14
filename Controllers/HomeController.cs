@@ -170,5 +170,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult OutfitSankey() {
+            return View();
+        }
+
     }
 }

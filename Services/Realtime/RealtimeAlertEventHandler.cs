@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Events;
@@ -85,6 +86,11 @@ namespace watchtower.Services.Realtime {
                 return;
             }
 
+            _Logger.LogDebug($"{JToken.FromObject(ev)} {ev.WorldID}.{ev.ZoneID}");
+
+            match.Zone.SetFacilityOwner(ev.FacilityID, ev.NewFactionID);
+            match.Facilities = match.Zone.GetFacilities();
+            _Logger.LogDebug($"{JToken.FromObject(match.Zone.GetFacilities())}");
         }
 
         public void HandleVehicleDestroy(VehicleDestroyEvent ev) {
@@ -100,13 +106,17 @@ namespace watchtower.Services.Realtime {
             RealtimeAlertTeam? attackerTeam = GetTeamByID(match, ev.AttackerTeamID);
             if (attackerTeam != null) {
                 attackerTeam.VehicleDestroyEvents.Add(ev);
-                ++attackerTeam.VehicleKills;
+                if (ev.AttackerTeamID != ev.KilledTeamID) {
+                    ++attackerTeam.VehicleKills;
+                }
             }
 
             RealtimeAlertTeam? killedTeam = GetTeamByID(match, ev.KilledTeamID);
             if (killedTeam != null) {
                 killedTeam.VehicleDestroyEvents.Add(ev);
-                ++killedTeam.VehicleDeaths;
+                if (ev.AttackerTeamID != ev.KilledTeamID) {
+                    ++killedTeam.VehicleDeaths;
+                }
             }
         }
 

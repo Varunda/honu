@@ -126,6 +126,10 @@
                 <realtime-alert-team-view :team="alert.data.nc" class="glow-blue"></realtime-alert-team-view>
             </div>
 
+            <realtime-alert-map v-if="alert.data != null"
+                :bases="alert.data.facilities" class="position-fixed" style="width: 600px; height: 600px; bottom: 0px; right: 0px; background-color: transparent;">
+            </realtime-alert-map>
+
             <div v-if="alert.showControls" class="position-fixed" style="left: 50%; top: 200px; transform: translateX(-50%); display: grid; column-gap: 0.5rem; align-content: start; align-items: start; grid-template-columns: 1fr 1fr 1fr 1fr;">
                 <div class="btn-group btn-group-vertical">
                     <button class="btn btn-primary" @click="remoteControlCall('remoteTopKillers')">
@@ -236,6 +240,7 @@
 
     import RealtimeAlertTeamView from "./components/RealtimeAlertTeam.vue";
     import TeamIcon from "./components/TeamIcon.vue";
+    import RealtimeAlertMap from "./components/RealtimeAlertMap.vue";
 
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
@@ -279,7 +284,7 @@
                 stats: {
                     componentName: "" as string,
 
-                    autoHide: 0 as number,
+                    autoHide: 30 as number,
                     autoHideCount: 0 as number,
 
                     block: {
@@ -995,8 +1000,7 @@
         },
 
         components: {
-            RealtimeAlertTeamView,
-            TeamIcon,
+            RealtimeAlertTeamView, TeamIcon, RealtimeAlertMap,
             ToggleButton, InfoHover,
             ChartBlockList, ChartBlockPieChart
         }

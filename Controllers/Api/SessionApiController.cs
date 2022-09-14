@@ -115,5 +115,12 @@ namespace watchtower.Controllers.Api {
             return ApiOk(sessions);
         }
 
+        [HttpGet("outfit/{outfitID}")]
+        public async Task<ApiResponse<List<Session>>> GetByOutfitID(string outfitID) {
+            List<Session> sessions = await _SessionDb.GetByRangeAndOutfit(outfitID, DateTime.MinValue, DateTime.UtcNow);
+
+            return ApiOk(sessions);
+        }
+
     }
 }

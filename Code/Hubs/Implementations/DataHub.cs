@@ -46,21 +46,29 @@ namespace watchtower.Code.Hubs.Implementations {
             return base.OnDisconnectedAsync(exception);
         }
 
-        public async Task SubscribeToWorld(short worldID) {
+        public async Task SubscribeToWorld(short worldID, bool useShort = false) {
             string connID = Context.ConnectionId;
 
             // Prevent clients from subscribing to multiple worlds at once
-            await Task.WhenAll(
-                Groups.RemoveFromGroupAsync(connID, "1"),
-                Groups.RemoveFromGroupAsync(connID, "10"),
-                Groups.RemoveFromGroupAsync(connID, "13"),
-                Groups.RemoveFromGroupAsync(connID, "17"),
-                Groups.RemoveFromGroupAsync(connID, "19"),
-                Groups.RemoveFromGroupAsync(connID, "40")
-            );
+
+            foreach (short id in World.PcStreams) {
+                await Groups.RemoveFromGroupAsync(connID, $"RealtimeData.{id}.Short");
+                await Groups.RemoveFromGroupAsync(connID, $"RealtimeData.{id}.Long");
+            }
 
             if (World.IsTrackedWorld(worldID)) {
-                await Groups.AddToGroupAsync(connID, worldID.ToString());
+                string group = $"RealtimeData.{worldID}.";
+                if (useShort == true) {
+                    group += "Short";
+                } else {
+                    group += "Long";
+                }
+
+                await Groups.AddToGroupAsync(connID, group);
+
+                _Logger.LogDebug($"Adding {connID} to {group}");
+
+                int duration = useShort ? 60 : 120;
 
                 lock (ConnectionStore.Get().Connections) {
                     TrackedConnection conn = ConnectionStore.Get().Connections.GetOrAdd(connID, new TrackedConnection() {
@@ -68,9 +76,11 @@ namespace watchtower.Code.Hubs.Implementations {
                         WorldID = worldID
                     });
                     conn.WorldID = worldID;
+                    conn.ConnectedAt = DateTime.UtcNow;
+                    conn.Duration = duration;
                 }
 
-                WorldData? data = _WorldDataRepository.Get(worldID);
+                WorldData? data = _WorldDataRepository.Get(worldID, duration);
                 if (data != null) {
                     // If the data was generated too long ago, don't send the data
                     TimeSpan diff = DateTime.UtcNow - data.Timestamp;

@@ -44,6 +44,10 @@ namespace watchtower.Services {
             World.Connery, World.Cobalt, World.Emerald, World.Jaeger, World.Miller, World.SolTech
         };
 
+        private List<int> _Durations = new() {
+            60, 120
+        };
+
         public DataBuilderService(ILogger<DataBuilderService> logger,
             DataBuilderRepository dataBuilder, WorldDataRepository worldDataRepo,
             IServiceHealthMonitor healthMon) {
@@ -77,31 +81,33 @@ namespace watchtower.Services {
 
                     string msg = "";
 
-                    foreach (short worldID in _WorldIDs) {
-                        lock (ConnectionStore.Get().Connections) {
-                            int count = ConnectionStore.Get().Connections.Where(iter => iter.Value.WorldID == worldID).Count();
-                            if (count == 0) {
-                                msg += $"{worldID} skipped; ";
-                                continue;
+                    foreach (int duration in _Durations) {
+                        foreach (short worldID in _WorldIDs) {
+                            lock (ConnectionStore.Get().Connections) {
+                                int count = ConnectionStore.Get().Connections.Where(iter => iter.Value.WorldID == worldID && iter.Value.Duration == duration).Count();
+                                if (count == 0) {
+                                    msg += $"{worldID}#{duration} skipped; ";
+                                    continue;
+                                }
                             }
-                        }
 
-                        Stopwatch worldTime = Stopwatch.StartNew();
-                        WorldData data = await _DataBuilder.Build(worldID, stoppingToken);
-                        msg += $"{worldID} {worldTime.ElapsedMilliseconds}ms; ";
-                        _WorldDataRepository.Set(worldID, data);
+                            Stopwatch worldTime = Stopwatch.StartNew();
+                            WorldData data = await _DataBuilder.Build(worldID, duration, stoppingToken);
+                            msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms; ";
+                            _WorldDataRepository.Set(worldID, data);
 
-                        if (stoppingToken.IsCancellationRequested) {
-                            _Logger.LogDebug($"Stopping token sent, disabling early");
-                            entry.Enabled = false;
-                            break;
-                        }
+                            if (stoppingToken.IsCancellationRequested) {
+                                _Logger.LogDebug($"Stopping token sent, disabling early");
+                                entry.Enabled = false;
+                                break;
+                            }
 
-                        ServiceHealthEntry? iterEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
-                        if (iterEntry != null && iterEntry.Enabled == false) {
-                            _Logger.LogInformation($"{SERVICE_NAME} ended early");
-                            entry.Enabled = false;
-                            break;
+                            ServiceHealthEntry? iterEntry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                            if (iterEntry != null && iterEntry.Enabled == false) {
+                                _Logger.LogInformation($"{SERVICE_NAME} ended early");
+                                entry.Enabled = false;
+                                break;
+                            }
                         }
                     }
 
