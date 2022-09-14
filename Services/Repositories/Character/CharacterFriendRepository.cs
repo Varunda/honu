@@ -65,7 +65,7 @@ namespace watchtower.Services.Repositories {
                 }
 
                 if (fetchCensus == true) {
-                    _Logger.LogTrace($"DB is invalid for some reason, getting from Census");
+                    _Logger.LogTrace($"DB is invalid for some reason, getting from Census for {charID}");
                     List<CharacterFriend> censusFriends = await _Census.GetByCharacterID(charID);
                     // Only set if they have friends, else you risk deleting data from deleted characters
                     if (censusFriends.Count > 0) {
