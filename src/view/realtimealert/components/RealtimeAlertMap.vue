@@ -38,7 +38,6 @@
         adjacent: number[];
     };
 
-    /*
     // Actual Nexus data
     const NEXUS_WARPGATE_ALPHA: number = 310570;
     const NEXUS_ARAZEK: number = 310500;
@@ -51,8 +50,8 @@
     const NEXUS_WARPGATE_OMEGA: number = 310560;
     const NEXUS_ALPHA: number = 310600;
     const NEXUS_OMEGA: number = 310610;
-    */
 
+    /*
     // Test Amerish data
     const NEXUS_WARPGATE_ALPHA: number = 222180; // chimney
     const NEXUS_ARAZEK: number = 206002; // heyoka chem
@@ -65,6 +64,7 @@
     const NEXUS_WARPGATE_OMEGA: number = 220000; // west pass
     const NEXUS_ALPHA: number = 210003; // wokuk watchtower
     const NEXUS_OMEGA: number = 222220; // torremar
+    */
 
     const NexusImage = Vue.extend({
         props: {
