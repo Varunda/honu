@@ -126,7 +126,7 @@
                 <realtime-alert-team-view :team="alert.data.nc" class="glow-blue"></realtime-alert-team-view>
             </div>
 
-            <realtime-alert-map v-if="alert.data != null"
+            <realtime-alert-map v-if="alert.showMap == true && alert.data != null"
                 :bases="alert.data.facilities" class="position-fixed" style="width: 600px; height: 600px; bottom: 0px; right: 0px; background-color: transparent;">
             </realtime-alert-map>
 
@@ -215,6 +215,14 @@
                     <button class="btn btn-primary" @click="remoteControlCall('remoteAutoHide30')">
                         Set 30 seconds
                     </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteShowMap')">
+                        Show map
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteHideMap')">
+                        Hide map
+                    </button>
                 </div>
 
             </div>
@@ -301,7 +309,7 @@
 
                     showControls: false as boolean,
                     showExample: false as boolean,
-
+                    showMap: true as boolean,
                     showPanels: false as boolean,
                     panelAnimation: false as boolean,
 
@@ -975,6 +983,25 @@
                 this.alert.full = full.data;
                 await this.getOutfitNC();
                 await this.getOutfitTR();
+            },
+
+            remoteShowMap: function(): void {
+                this.alert.showMap = true;
+            },
+
+            remoteHideMap: function(): void {
+                this.alert.showMap = false;
+            },
+
+            remoteVehicleKills: async function(): Promise<void> {
+                if (this.alert.worldID == null || this.alert.zoneID == null) {
+                    return console.warn(`RealtimeAlert> cannot show vehicle kills: worldID or zoneID is null`);
+                }
+
+                const full: Loading<RealtimeAlert> = await RealtimeAlertApi.getFull(this.alert.worldID, this.alert.zoneID);
+                if (full.state != "loaded") {
+                    return console.warn(`RealtimeAlert> cannot show top items: full returned '${full.state}', not 'loaded'`);
+                }
             }
         },
 

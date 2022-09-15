@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Constants;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Events;
 using watchtower.Models.Watchtower;
@@ -114,7 +115,7 @@ namespace watchtower.Services.Repositories {
                 } else if (Experience.IsAssist(exp.ExperienceID)) {
                     str = 0.25d;
                 } else {
-                    _Logger.LogTrace($"Exp event {exp.ExperienceID} has an other ID of {exp.OtherID}, but was not handled");
+                    _Logger.LogTrace($"Exp event {exp.ExperienceID} has an other ID of {exp.OtherID} (which is for a character), but was not handled");
                 }
 
                 if (str > 0) {
@@ -176,17 +177,22 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), env: CensusEnvironment.PC, fast: true);
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(charIDs.ToList(), env: CensusEnvironment.PC, fast: true)).ToDictionary(iter => iter.ID);
 
             foreach (RealtimeNetworkPlayer player in network.Players) {
-                PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == player.CharacterID);
+                chars.TryGetValue(player.CharacterID, out PsCharacter? c);
+                TrackedPlayer? ct = CharacterStore.Get().GetByCharacterID(player.CharacterID);
 
                 player.FactionID = c?.FactionID ?? 0;
+                player.TeamID = ct?.TeamID ?? player.FactionID;
                 player.OutfitID = c?.OutfitID;
 
                 foreach (RealtimeNetworkInteraction inter in player.Interactions) {
-                    PsCharacter? other = chars.FirstOrDefault(iter => iter.ID == inter.OtherID);
+                    chars.TryGetValue(inter.OtherID, out PsCharacter? other);
+                    TrackedPlayer? othert = CharacterStore.Get().GetByCharacterID(inter.OtherID);
+
                     inter.FactionID = other?.FactionID ?? 0;
+                    inter.TeamID = othert?.TeamID ?? inter.FactionID;
                     inter.OutfitID = other?.OutfitID;
                 }
 

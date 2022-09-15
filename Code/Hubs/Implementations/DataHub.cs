@@ -66,7 +66,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 await Groups.AddToGroupAsync(connID, group);
 
-                _Logger.LogDebug($"Adding {connID} to {group}");
+                //_Logger.LogDebug($"Adding {connID} to {group}");
 
                 int duration = useShort ? 60 : 120;
 

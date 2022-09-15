@@ -11,6 +11,7 @@ export class RealtimeNetworkPlayer {
     public characterID: string = "";
     public outfitID: string | null = null;
     public factionID: number = 0;
+    public teamID: number = 0;
     public interactions: RealtimeNetworkInteraction[] = [];
 }
 
@@ -18,6 +19,7 @@ export class RealtimeNetworkInteraction {
     public otherID: string = "";
     public outfitID: string | null = null;
     public factionID: number = 0;
+    public teamID: number = 0;
     public strength: number = 0;
 }
 

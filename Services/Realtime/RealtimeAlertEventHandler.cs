@@ -86,11 +86,11 @@ namespace watchtower.Services.Realtime {
                 return;
             }
 
-            _Logger.LogDebug($"{JToken.FromObject(ev)} {ev.WorldID}.{ev.ZoneID}");
+            //_Logger.LogDebug($"{JToken.FromObject(ev)} {ev.WorldID}.{ev.ZoneID}");
 
             match.Zone.SetFacilityOwner(ev.FacilityID, ev.NewFactionID);
             match.Facilities = match.Zone.GetFacilities();
-            _Logger.LogDebug($"{JToken.FromObject(match.Zone.GetFacilities())}");
+            //_Logger.LogDebug($"{JToken.FromObject(match.Zone.GetFacilities())}");
         }
 
         public void HandleVehicleDestroy(VehicleDestroyEvent ev) {

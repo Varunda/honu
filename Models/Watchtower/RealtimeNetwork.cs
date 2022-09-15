@@ -23,6 +23,8 @@ namespace watchtower.Models.Watchtower {
 
         public short FactionID { get; set; }
 
+        public short TeamID { get; set; }
+
         public List<RealtimeNetworkInteraction> Interactions { get; set; } = new();
 
     }
@@ -34,6 +36,8 @@ namespace watchtower.Models.Watchtower {
         public string? OutfitID { get; set; } = null;
 
         public short FactionID { get; set; }
+
+        public short TeamID { get; set; }
 
         public double Strength { get; set; }
 

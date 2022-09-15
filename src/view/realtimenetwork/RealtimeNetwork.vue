@@ -35,6 +35,10 @@
                         Toggle auto-update
                     </toggle-button>
 
+                    <toggle-button v-model="settings.useTeam" class="d-block w-100 mb-2">
+                        Show team
+                    </toggle-button>
+
                     <div class="mb-3">
                         <label class="mb-0">Character search</label>
                         <input v-model="filter" class="form-control" placeholder="Filter" />
@@ -186,6 +190,10 @@
                             </p>
 
                             <p>
+                                <b>Show team: </b>Will characters be colored based on what faction they are, or what team they are currently on (such as NSO or Nexus)
+                            </p>
+
+                            <p>
                                 <b>Character search: </b>Filter the displayed nodes that match the input (case-insensitive)
                             </p>
 
@@ -311,6 +319,7 @@
 
                 settings: {
                     outfit: false as boolean,
+                    useTeam: false as boolean,
                     preferedLayout: "recommended" as "recommended" | "force" | "atlas",
                     allowedConnections: "all" as "all" | "ally" | "enemy"
                 },
@@ -533,7 +542,7 @@
                             x: attr.x || getPosition(player.characterID, this.graphWidth).x,
                             y: attr.y || getPosition(player.characterID, this.graphWidth).y,
                             label: label,
-                            color: attr.color || ColorUtil.getFactionColor(player.factionID ?? 0),
+                            color: ColorUtil.getFactionColor((this.settings.useTeam == true) ? player.teamID : player.factionID),
                             size: Math.min(20, 5 + 5 * totalStrength)
                         }
                     });
@@ -554,7 +563,7 @@
                                 x: attr.x || getPosition(inter.otherID, this.graphWidth).x,
                                 y: attr.y || getPosition(inter.otherID, this.graphWidth).y,
                                 label: label,
-                                color: attr.color || ColorUtil.getFactionColor(inter.factionID ?? 0),
+                                color: ColorUtil.getFactionColor((this.settings.useTeam == true) ? inter.teamID : inter.factionID),
                                 size: attr.size || 5
                             }
                         });
