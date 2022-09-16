@@ -529,7 +529,7 @@
                     {{modalData.title}}
                 </span>
 
-                <button type="button" class="btn flex-grow-0" @@click="closeStatTooltip">
+                <button type="button" class="btn flex-grow-0" @click="closeStatTooltip">
                     &times;
                 </button>
             </div>
@@ -786,14 +786,18 @@
                 this.popperInstance = popper;
             },
 
-            closeStatTooltip: function (): void {
-                if (this.popperInstance != null) {
-                    this.popperInstance.destroy();
+            closeStatTooltip: function(): void {
+                if (this.popperInstance == null) {
+                    return console.warn(`popperInstance is null, no stat tooltip to close`);
+                }
 
-                    const tooltip: HTMLElement | null = document.getElementById("stat-table");
-                    if (tooltip != null) {
-                        tooltip.style.display = "none";
-                    }
+                this.popperInstance.destroy();
+
+                const tooltip: HTMLElement | null = document.getElementById("stat-table");
+                if (tooltip != null) {
+                    tooltip.style.display = "none";
+                } else {
+                    console.log(`#stat-table is null, cannot close`);
                 }
             }
 
