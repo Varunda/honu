@@ -22,7 +22,9 @@ namespace watchtower.Services.Repositories {
         }
 
         public List<RealtimeAlert> GetAll() {
-            return _Matches;
+            lock (_Matches) {
+                return new List<RealtimeAlert>(_Matches);
+            }
         }
 
         public RealtimeAlert? Get(short worldID, uint zoneID) {
@@ -43,6 +45,9 @@ namespace watchtower.Services.Repositories {
             PsZone? zone = _MapRepository.GetZone(match.WorldID, match.ZoneID);
             if (zone != null) {
                 match.Zone = zone;
+                match.Facilities = match.Zone.GetFacilities();
+            } else {
+                _Logger.LogDebug($"zone for {match.WorldID}.{match.ZoneID} is null, cannot copy");
             }
 
             lock (_Matches) {
