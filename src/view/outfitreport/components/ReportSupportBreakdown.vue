@@ -162,7 +162,7 @@
                     switch (exp.experienceID) {
                         case Experience.REPAIR_FLASH: case Experience.SQUAD_REPAIR_FLASH: vehicleName = "Flash"; break;
                         case Experience.REPAIR_GALAXY: case Experience.SQUAD_REPAIR_GALAXY: vehicleName = "Galaxy"; break;
-                        case Experience.REPAIR_LIBERATOR: case Experience.SQUAD_REPAIR_LIBERATOR: vehicleName = "Flash"; break;
+                        case Experience.REPAIR_LIBERATOR: case Experience.SQUAD_REPAIR_LIBERATOR: vehicleName = "Liberator"; break;
                         case Experience.REPAIR_LIGHTNING: case Experience.SQUAD_REPAIR_LIGHTNING: vehicleName = "Lightning"; break;
                         case Experience.REPAIR_MAGRIDER: case Experience.SQUAD_REPAIR_MAGRIDER: vehicleName = "Magrider"; break;
                         case Experience.REPAIR_MOSQUITO: case Experience.SQUAD_REPAIR_MOSQUITO: vehicleName = "Mosquito"; break;
