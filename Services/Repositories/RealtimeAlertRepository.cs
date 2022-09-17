@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using watchtower.Models;
 using watchtower.Models.RealtimeAlert;
 
 namespace watchtower.Services.Repositories {
@@ -9,11 +10,15 @@ namespace watchtower.Services.Repositories {
     public class RealtimeAlertRepository {
 
         private readonly ILogger<RealtimeAlertRepository> _Logger;
+        private readonly MapRepository _MapRepository;
 
         private readonly List<RealtimeAlert> _Matches = new List<RealtimeAlert>();
 
-        public RealtimeAlertRepository(ILogger<RealtimeAlertRepository> logger) {
+        public RealtimeAlertRepository(ILogger<RealtimeAlertRepository> logger,
+            MapRepository mapRepository) {
+
             _Logger = logger;
+            _MapRepository = mapRepository;
         }
 
         public List<RealtimeAlert> GetAll() {
@@ -33,6 +38,11 @@ namespace watchtower.Services.Repositories {
 
             if (Get(match.WorldID, match.ZoneID) != null) {
                 throw new ArgumentException($"A match with WorldID {match.WorldID} ZoneID {match.ZoneID} already exists");
+            }
+
+            PsZone? zone = _MapRepository.GetZone(match.WorldID, match.ZoneID);
+            if (zone != null) {
+                match.Zone = zone;
             }
 
             lock (_Matches) {

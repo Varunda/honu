@@ -39,6 +39,9 @@
                 <toggle-button v-model="setup.allowRemoteControl">
                     Allow remote control
                 </toggle-button>
+                <toggle-button v-model="alert.showMap">
+                    Show map
+                </toggle-button>
             </div>
 
             <div>
@@ -127,10 +130,10 @@
             </div>
 
             <realtime-alert-map v-if="alert.showMap == true && alert.data != null"
-                :bases="alert.data.facilities" class="position-fixed" style="width: 600px; height: 600px; bottom: 0px; right: 0px; background-color: transparent;">
+                :bases="alert.data.facilities" class="position-fixed" :style="mapClass">
             </realtime-alert-map>
 
-            <div v-if="alert.showControls" class="position-fixed" style="left: 50%; top: 200px; transform: translateX(-50%); display: grid; column-gap: 0.5rem; align-content: start; align-items: start; grid-template-columns: 1fr 1fr 1fr 1fr;">
+            <div v-if="alert.showControls" class="position-fixed" style="left: 50%; top: 200px; transform: translateX(-50%); display: grid; gap: 0.5rem; align-content: start; align-items: start; grid-template-columns: 1fr 1fr 1fr 1fr;">
                 <div class="btn-group btn-group-vertical">
                     <button class="btn btn-primary" @click="remoteControlCall('remoteTopKillers')">
                         Top killers
@@ -215,6 +218,12 @@
                     <button class="btn btn-primary" @click="remoteControlCall('remoteAutoHide30')">
                         Set 30 seconds
                     </button>
+                </div>
+
+                <div class="btn-group btn-group-vertical">
+                    <button class="btn btn-secondary" disabled>
+                        Map controls
+                    </button>
 
                     <button class="btn btn-primary" @click="remoteControlCall('remoteShowMap')">
                         Show map
@@ -222,6 +231,14 @@
 
                     <button class="btn btn-primary" @click="remoteControlCall('remoteHideMap')">
                         Hide map
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteTopLeftMap')">
+                        Top left map
+                    </button>
+
+                    <button class="btn btn-primary" @click="remoteControlCall('remoteBottomRightMap')">
+                        Bottom right map
                     </button>
                 </div>
 
@@ -286,7 +303,8 @@
                 characterCache: new Map() as Map<string, PsCharacter>,
 
                 setup: {
-                    allowRemoteControl: false as boolean
+                    allowRemoteControl: false as boolean,
+                    bottomRightMap: true as boolean
                 },
 
                 stats: {
@@ -439,6 +457,10 @@
 
                 if (params.has("controlCode")) {
                     this.setControlCode(params.get("controlCode")!);
+                }
+
+                if (params.get("hideMap") == "true") {
+                    this.alert.showMap = false;
                 }
 
                 this.alert.showControls = params.has("control");
@@ -1002,6 +1024,14 @@
                 if (full.state != "loaded") {
                     return console.warn(`RealtimeAlert> cannot show top items: full returned '${full.state}', not 'loaded'`);
                 }
+            },
+
+            remoteTopLeftMap: function(): void {
+                this.setup.bottomRightMap = false;
+            },
+
+            remoteBottomRightMap: function(): void {
+                this.setup.bottomRightMap = true;
             }
         },
 
@@ -1010,6 +1040,9 @@
                 let base: string = `${location.href}/?worldID=${this.alert.worldID}&zoneID=${this.alert.zoneID}`;
                 if (this.setup.allowRemoteControl == true) {
                     base += `&controlCode=${this.controlCode}`;
+                }
+                if (this.alert.showMap == false) {
+                    base += `&hideMap=true`;
                 }
 
                 return base;
@@ -1022,6 +1055,16 @@
             hasError: function(): boolean {
                 return this.alert.worldID == null
                     || this.alert.zoneID == null;
+            },
+
+            mapClass: function(): object {
+                return {
+                    "width": "480px",
+                    "height": "480px",
+                    "bottom": (this.setup.bottomRightMap == true) ? "0px" : "780px",
+                    "right": (this.setup.bottomRightMap == true) ? "0px" : "1440px",
+                    "background": "transparent"
+                };
             }
 
         },

@@ -71,7 +71,7 @@
             name: { type: String },
         },
 
-        template: `<img v-if="name != null" width=600 height=600 :src="'/img/nexus/' + name + '_1000x1000.png'" :style="'position: absolute;'" />`
+        template: `<img v-if="name != null" width=480 height=480 :src="'/img/nexus/' + name + '_1000x1000.png'" :style="'position: absolute;'" />`
     });
 
     function makeBase(facilityID: number, imageBase: string, adjacent: number[]): NexusBase {
