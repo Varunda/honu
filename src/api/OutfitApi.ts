@@ -46,6 +46,7 @@ export class FlatExpandedOutfitMember {
 	public prestige: number | null = null;
 	public battleRank: number | null = null;
 	public prestigeRank: string | null = null;
+	public battleRankOrder: number | null = null;
 	public name: string | null = null;
 	public lastLogin: Date | null = null;
 
@@ -107,6 +108,7 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 			flat.name = entry.character.name;
 			flat.prestigeRank = `${entry.character.prestige}~${entry.character.battleRank}`;
 			flat.lastLogin = entry.character.dateLastLogin;
+			flat.battleRankOrder = entry.character.prestige * 1000 + entry.character.battleRank;
 		} else {
 			flat.name = `<not yet loaded>`;
         }

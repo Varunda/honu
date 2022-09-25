@@ -176,7 +176,7 @@
                     </a-body>
                 </a-col>
 
-                <a-col sort-field="prestigeRank">
+                <a-col sort-field="battleRankOrder">
                     <a-header>
                         <b>BR</b>
                     </a-header>
