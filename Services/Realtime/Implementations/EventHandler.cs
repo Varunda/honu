@@ -213,19 +213,22 @@ namespace watchtower.Realtime {
 
             short attackerLoadoutID = payload.GetInt16("attacker_loadout_id", -1);
             short attackerFactionID = Loadout.GetFaction(attackerLoadoutID);
+            // PS4 doesn't send this field
+            short attackerTeamID = payload.Value<short?>("attacker_team_id") ?? attackerFactionID;
+            short teamID = payload.GetRequiredInt16("team_id");
 
             VehicleDestroyEvent ev = new() {
                 AttackerCharacterID = payload.GetRequiredString("attacker_character_id"),
                 AttackerLoadoutID = attackerLoadoutID,
                 AttackerVehicleID = payload.GetString("attacker_vehicle_id", "0"),
                 AttackerFactionID = attackerFactionID,
-                // AttackerTeamID - This is set from CharacterStore
+                AttackerTeamID = attackerTeamID,
                 AttackerWeaponID = payload.GetInt32("attacker_weapon_id", 0),
 
                 KilledCharacterID = payload.GetRequiredString("character_id"),
                 KilledFactionID = payload.GetInt16("faction_id", Faction.UNKNOWN),
                 KilledVehicleID = payload.GetString("vehicle_id", "0"),
-                // KilledTeamID - This is set from CharacterStore
+                KilledTeamID = teamID,
 
                 ZoneID = payload.GetZoneID(),
                 WorldID = payload.GetWorldID(),
@@ -253,7 +256,7 @@ namespace watchtower.Realtime {
                 TrackedPlayer attacker = CharacterStore.Get().Players.GetOrAdd(ev.AttackerCharacterID, new TrackedPlayer() {
                     ID = ev.AttackerCharacterID,
                     FactionID = ev.AttackerFactionID,
-                    TeamID = (ev.AttackerFactionID == 4) ? Faction.NS : ev.AttackerFactionID,
+                    TeamID = ev.AttackerTeamID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -279,13 +282,11 @@ namespace watchtower.Realtime {
                     attacker.TeamID = ev.AttackerTeamID;
                 }
 
-                ev.AttackerTeamID = attacker.TeamID;
-
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
                     FactionID = ev.KilledFactionID,
-                    TeamID = (ev.KilledFactionID == 4) ? Faction.NS : ev.KilledFactionID,
+                    TeamID = ev.KilledTeamID,
                     Online = false,
                     WorldID = ev.WorldID
                 });
@@ -310,8 +311,6 @@ namespace watchtower.Realtime {
                     killed.FactionID = ev.KilledFactionID;
                     killed.TeamID = killed.FactionID;
                 }
-
-                ev.KilledTeamID = killed.TeamID;
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
@@ -1008,12 +1007,6 @@ namespace watchtower.Realtime {
                     attacker.TeamID = ev.AttackerTeamID;
                 }
 
-                /*
-                if (attacker.FactionID == Faction.NS) {
-                    ev.AttackerTeamID = attacker.TeamID;
-                }
-                */
-
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
@@ -1042,12 +1035,6 @@ namespace watchtower.Realtime {
                     killed.FactionID = factionID;
                     killed.TeamID = ev.KilledTeamID;
                 }
-
-                /*
-                if (killed.FactionID == Faction.NS) {
-                    ev.KilledTeamID = killed.TeamID;
-                }
-                */
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
