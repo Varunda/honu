@@ -187,8 +187,8 @@ namespace watchtower.Code.Hubs.Implementations {
                         List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
 
                         List<KillEvent> kills = killDeaths.Where(iter => {
-                            return iter.AttackerTeamID == parms.TeamID
-                                && chars.Contains(iter.AttackerCharacterID)
+                            return //iter.AttackerTeamID == parms.TeamID
+                                chars.Contains(iter.AttackerCharacterID)
                                 && iter.KilledTeamID != parms.TeamID;
                         }).ToList();
                         report.Kills.AddRange(kills);
@@ -196,8 +196,8 @@ namespace watchtower.Code.Hubs.Implementations {
                         await Clients.Caller.SendKills(charID, kills);
 
                         List<KillEvent> deaths = killDeaths.Where(iter => {
-                            return (iter.KilledTeamID == parms.TeamID || iter.KilledTeamID == 4)
-                                && chars.Contains(iter.KilledCharacterID)
+                            return // (iter.KilledTeamID == parms.TeamID || iter.KilledTeamID == 4)
+                                chars.Contains(iter.KilledCharacterID)
                                 && (iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4)
                                 && iter.RevivedEventID == null;
                         }).ToList();
