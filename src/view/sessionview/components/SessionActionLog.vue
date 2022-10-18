@@ -68,7 +68,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    {{entry.timestamp | moment("YYYY-MM-DD hh:mm:ss A")}}
+                    {{entry.timestamp | moment("YYYY-MM-DD hh:mm:ssA")}}
                 </a-body>
             </a-col>
         </a-table>
@@ -214,17 +214,24 @@
                 this.entries.push(...this.makeDeathEventEntries(this.deaths, false));
             },
 
+            /**
+             * Make action log entries for kills and deaths
+             * @param events Events to make the log entries of
+             * @param asKill Where these kill/deaths a kill for the character of the session, or deaths?
+             */
             makeDeathEventEntries: function(events: ExpandedKillEvent[], asKill: boolean): ActionLogEntry[] {
                 const entries: ActionLogEntry[] = events.map(iter => {
                     const entry: ActionLogEntry = {
                         parts: [
+                            this.createLoadoutIcon(iter.event.attackerLoadoutID),
                             this.createCharacterLink(iter.attacker, iter.event.attackerCharacterID),
                             { html: `killed` },
+                            this.createLoadoutIcon(iter.event.killedLoadoutID),
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
                             { html: `using` },
                             { html: (iter.event.weaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
-                            ((LoadoutUtils.isEngineer(iter.event.attackerLoadoutID) || LoadoutUtils.isInfiltrator(iter.event.attackerLoadoutID)) ? this.createLogText("as an") : this.createLogText("as a")),
-                            this.createLoadoutName(iter.event.attackerLoadoutID)
+                            //((LoadoutUtils.isEngineer(iter.event.attackerLoadoutID) || LoadoutUtils.isInfiltrator(iter.event.attackerLoadoutID)) ? this.createLogText("as an") : this.createLogText("as a")),
+                            //this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
                         type: (asKill == true) ? "kill" : "death",
@@ -244,6 +251,9 @@
                 return entries;
             },
 
+            /**
+             * Make action log entries for experience events
+             */
             makeExp: function(): void {
                 let scoreMult: number = 1;
 
@@ -269,7 +279,7 @@
 
                 this.assistScoreMult = scoreMult;
 
-                console.log(`Using a score mult of ${scoreMult.toFixed(2)}`);
+                console.log(`SessionActionLog> Using a score mult of ${scoreMult.toFixed(2)}`);
 
                 let prev: ActionLogEntry | null = null;
 
@@ -284,6 +294,7 @@
                     const other: PsCharacter | null = this.exp.characters.find(c => c.id == iter.otherID) || null;
 
                     const parts: LogPart[] = [
+                        this.createLoadoutIcon(iter.loadoutID),
                         this.createCharacterLink(source, iter.sourceID)
                     ];
 
@@ -302,6 +313,7 @@
                             html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s shield`
                         });
                     } else if (Experience.isVehicleKill(expID)) {
+                        // Done thru another method now
                         /*
                         parts.push(this.createLogText("destroyed a"));
                         type = "vehicle_destroy";
@@ -363,8 +375,8 @@
                         }
                     }
 
-                    parts.push(this.createLogText(`as a`));
-                    parts.push(this.createLoadoutName(iter.loadoutID));
+                    //parts.push(this.createLogText(`as a`));
+                    //parts.push(this.createLoadoutName(iter.loadoutID));
 
                     if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
                         ++prev.count;
@@ -383,21 +395,25 @@
                 }
             },
 
+            /**
+             * Make log entries for vehicle kills/deaths
+             */
             makeVehicleDestroy: function(): void {
                 const entries: ActionLogEntry[] = this.VehicleDestroy.map(iter => {
                     const killedColor: string = ColorUtils.getFactionColor(iter.killed?.factionID ?? iter.event.killedFactionID);
 
                     const entry: ActionLogEntry = {
                         parts: [
+                            this.createLoadoutIcon(iter.event.attackerLoadoutID),
                             this.createCharacterLink(iter.attacker, iter.event.attackerCharacterID),
                             this.createLogText(`destroyed`),
-                            this.createLogText(`<a style="color: ${killedColor}" href="/c/${iter.event.killedCharacterID}">${this.getCharacterName(iter.killed, iter.event.killedCharacterID)}</a>'s`),
+                            this.createCharacterLink(iter.killed, iter.event.killedCharacterID, { possessive: true }),
                             this.createLogText(`${iter.killedVehicle?.name ?? `&lt;missing vehicle ${iter.event.killedVehicleID}&gt;`}`),
                             this.createLogText(`using the`),
                             this.createLogText((iter.event.attackerVehicleID == "0") ? "": `${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
                             { html: (iter.event.attackerWeaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.attackerWeaponID}&gt;`, `/i/${iter.event.attackerWeaponID}`) },
-                            this.createLogText("as a"),
-                            this.createLoadoutName(iter.event.attackerLoadoutID)
+                            //this.createLogText("as a"),
+                            //this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
@@ -411,6 +427,9 @@
                 this.entries.push(...entries);
             },
 
+            /**
+             * Make the log entries for continent changes
+             */
             makeZoneChange: function(): void {
                 const zonedEvents: ZonedEvent[] = [];
 
@@ -450,22 +469,77 @@
                 }
             },
 
+            /**
+             * Create a text part with color
+             * @param text Text to display
+             * @param color Color of the text. Leave undefined for default color
+             */
             createLogText: function(text: string, color?: string): LogPart {
-                return { html: `<span ${(color != undefined ? `style="color: ${color}"` : ``)}>${text}</span>` };
+                return { html: `<span${(color != undefined ? ` style="color: ${color}"` : ``)}>${text}</span>` };
             },
 
+            /**
+             * Create a link with color and text
+             * @param name What the link will be displayed as
+             * @param link What URL the link links to
+             * @param color What color to display the link. Leave undefined for default color
+             */
             createLink: function(name: string, link: string, color?: string): string {
                 return `<a href="${link}" ${(color != undefined ? `style="color:${color};"` : "")}>${name}</a>`;
             },
 
-            createCharacterLink: function(c: PsCharacter | null, id: string): LogPart {
+            /**
+             * Create a LogPart that links to a character
+             * @param c PsCharacter, used for the faction ID
+             * @param id ID of the character
+             * @param options Optional options about how to display the link, such as will an 's be included?
+             */
+            createCharacterLink: function(c: PsCharacter | null, id: string, options?: { possessive?: boolean }): LogPart {
+                let text: string = this.getCharacterName(c, id);
+                if (options && options.possessive) {
+                    text += "'s";
+                }
+
                 return {
-                    html: this.createLink(this.getCharacterName(c, id), `/c/${id}`, (c != null) ? ColorUtils.getFactionColor(c.factionID) : undefined)
+                    html: this.createLink(text, `/c/${id}`, (c != null) ? ColorUtils.getFactionColor(c.factionID) : undefined)
                 }
             },
 
+            /**
+             * Get the name of a loadout/class
+             * @param loadoutID ID of the loadout
+             */
             createLoadoutName: function(loadoutID: number): LogPart {
                 return this.createLogText(`${LoadoutUtils.getLoadoutName(loadoutID)}`);
+            },
+
+            /**
+             * Create a 16 pixel icon based on the loadout ID of a class
+             * @param loadoutID ID of the loadout
+             */
+            createLoadoutIcon: function(loadoutID: number): LogPart {
+                const className: string = LoadoutUtils.getLoadoutName(loadoutID);
+                let iconName: string = "";
+                if (className == LoadoutUtils.NAME_INFILTRATOR) {
+                    iconName = "icon_infil.png";
+                } else if (className == LoadoutUtils.NAME_LIGHT_ASSAULT) {
+                    iconName = "icon_light.png";
+                } else if (className == LoadoutUtils.NAME_MEDIC) {
+                    iconName = "icon_medic.png";
+                } else if (className == LoadoutUtils.NAME_ENGINEER) {
+                    iconName = "icon_engi.png";
+                } else if (className == LoadoutUtils.NAME_HEAVY_ASSAULT) {
+                    iconName = "icon_heavy.png";
+                } else if (className == LoadoutUtils.NAME_MAX) {
+                    iconName = "icon_max.png";
+                } else {
+                    console.warn(`SessionActionLog.createLoadoutIcon> Unchecked loadoutID ${loadoutID}`);
+                    return { html: "" };
+                }
+
+                return {
+                    html: `<img src="/img/classes/${iconName}" height="16" />`
+                };
             },
 
             getCharacterName: function(c: PsCharacter | null, id: string): string {

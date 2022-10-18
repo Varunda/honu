@@ -28,10 +28,12 @@ namespace watchtower.Controllers.Api {
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly CharacterWeaponStatDbStore _StatDb;
         private readonly CharacterRepository _CharacterRepository;
+        private readonly WeaponStatBucketDbStore _BucketDb;
 
         public ItemApiController(ILogger<ItemApiController> logger,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
-            CharacterWeaponStatDbStore statDb, CharacterRepository charRepo) {
+            CharacterWeaponStatDbStore statDb, CharacterRepository charRepo,
+            WeaponStatBucketDbStore bucketDb) {
 
             _Logger = logger;
 
@@ -39,6 +41,7 @@ namespace watchtower.Controllers.Api {
             _PercentileDb = percDb ?? throw new ArgumentNullException(nameof(percDb));
             _StatDb = statDb ?? throw new ArgumentNullException(nameof(statDb));
             _CharacterRepository = charRepo;
+            _BucketDb = bucketDb;
         }
 
         /// <summary>
@@ -121,7 +124,6 @@ namespace watchtower.Controllers.Api {
             [FromQuery] List<short> factionIDs) {
 
             List<WeaponStatEntry> entries = await _StatDb.GetTopKD(itemID, worldIDs, factionIDs);
-            _Logger.LogTrace($"Got {entries.Count} entries for {itemID}");
             if (entries.Count < 50) {
                 entries = await _StatDb.GetTopKD(itemID, worldIDs, factionIDs, 50);
             }
@@ -272,17 +274,19 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("{itemID}/percentile_stats")]
         public async Task<ApiResponse<WeaponStatPercentileAll>> GetPercentileStats(string itemID) {
-            List<WeaponStatEntry> entries = await _StatDb.GetByItemID(itemID, 1159);
-            if (entries.Count < 50) {
-                entries = await _StatDb.GetByItemID(itemID, 50);
+            if (int.TryParse(itemID, out int id) == false) {
+                return ApiBadRequest<WeaponStatPercentileAll>($"{itemID} is not a valid Int32");
             }
+
+            List<WeaponStatBucket> allBuckets = await _BucketDb.GetByItemID(id);
 
             WeaponStatPercentileAll all = new WeaponStatPercentileAll();
             all.ItemID = itemID;
-            all.KD = GetBuckets(entries.Select(iter => iter.KillDeathRatio).ToList(), 100);
-            all.KPM = GetBuckets(entries.Select(iter => iter.KillsPerMinute).ToList(), 100);
-            all.Accuracy = GetBuckets(entries.Select(iter => iter.Accuracy * 100).ToList(), 100);
-            all.HeadshotRatio = GetBuckets(entries.Select(iter => iter.HeadshotRatio * 100).ToList(), 100);
+            all.KD = allBuckets.Where(iter => iter.TypeID == PercentileCacheType.KD).ToList();
+            all.KPM = allBuckets.Where(iter => iter.TypeID == PercentileCacheType.KPM).ToList();
+            all.Accuracy = allBuckets.Where(iter => iter.TypeID == PercentileCacheType.ACC).ToList();
+            all.HeadshotRatio = allBuckets.Where(iter => iter.TypeID == PercentileCacheType.HSR).ToList();
+            all.VKPM = allBuckets.Where(iter => iter.TypeID == PercentileCacheType.VKPM).ToList();
 
             return ApiOk(all);
         }
@@ -302,100 +306,6 @@ namespace watchtower.Controllers.Api {
             }
 
             return expanded;
-        }
-
-        private List<Bucket> GetBuckets(List<double> values, int bucketCount) {
-            if (values.Count == 0) {
-                return new List<Bucket>();
-            }
-
-            List<double> sorted = values.OrderBy(iter => iter).ToList();
-
-            int mi = MedianIndex(0, values.Count);
-            double median = Median(sorted, 0, values.Count);
-
-            //int q1i = MedianIndex(0, m2i);
-            double q1 = Median(sorted, 0, mi);
-            //int q3i = m2i + MedianIndex(m2i, values.Count);
-            double q3 = Median(sorted, mi, values.Count);
-
-            double iqr = q3 - q1;
-
-            // Exclude data outside 8 times the inter-quartile range (iqr)
-            sorted = sorted.Where(iter => iter < q3 + (iqr * 8)).ToList();
-
-            if (sorted.Count == 0) {
-                return new List<Bucket>();
-            }
-
-            double max = sorted.Last();
-            double min = sorted.First();
-
-            //_Logger.LogInformation($"{min}/0 {q1}/{q1i} {median2}/{m2i} {q3}/{q3i} {max}/{values.Count - 1}, iqr = {iqr}");
-
-            double bucketWidth = (max - min) / bucketCount;
-
-            List<Bucket> buckets = new List<Bucket>();
-
-            Bucket iter = new Bucket() {
-                Start = min,
-                Width = bucketWidth,
-                Count = 0
-            };
-
-            for (double i = min; i <= max; i += bucketWidth) {
-                int count = sorted.Where(iter => (iter >= i && iter < i + bucketWidth)).Count();
-
-                Bucket b = new Bucket() {
-                    Start = i,
-                    Width = bucketWidth,
-                    Count = count
-                };
-
-                buckets.Add(b);
-
-                //_Logger.LogInformation($"Bucket {i} - {i + bucketWidth} = {count}");
-            }
-
-            /*
-            for (int i = 0; i < sorted.Count; ++i) {
-                double entry = sorted[i];
-
-                if (entry > iqr * 8) {
-                    if (iter.Count > 0) {
-                        buckets.Add(iter);
-                    }
-                    break;
-                }
-
-                if (entry > (iter.Start + iter.Width)) {
-                    buckets.Add(iter);
-                    iter = new Bucket() {
-                        Start = entry,
-                        Width = bucketWidth,
-                        Count = 0
-                    };
-                }
-
-                ++iter.Count;
-            }
-            */
-
-            return buckets;
-        }
-
-        private static double Median(List<double> list, int lowerBound, int upperBound) {
-            int median = MedianIndex(lowerBound, upperBound) + lowerBound;
-            if (median % 2 == 0) {
-                return list[median];
-            }
-            return (list[median + 1] + list[median]) / 2;
-        }
-
-        private static int MedianIndex(int lowerBound, int upperBound) {
-            int n = upperBound - lowerBound + 1;
-            n = (n + 1) / 2 - 1;
-            return n;
         }
 
     }

@@ -89,7 +89,8 @@ module.exports = {
         //"moment": "moment",
         "signalR": "signalR",
         "file-saver": "saveAs",
-        "chartjs-plugin-annotation": "chartjs-plugin-annotation"
+        "chartjs-plugin-annotation": "chartjs-plugin-annotation",
+        "d3": "d3"
     },
 
     resolve: {

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,6 +45,8 @@ namespace watchtower.Services.Hosted {
                 try {
                     CharacterFetchQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
+                    Stopwatch timer = Stopwatch.StartNew();
+
                     string charID = entry.CharacterID;
                     PsCharacter? character = await _CharacterRepository.GetByID(charID, entry.Environment);
 
@@ -71,6 +74,9 @@ namespace watchtower.Services.Hosted {
                     if (character != null && character.OutfitID != null) {
                         await _OutfitRepository.GetByID(character.OutfitID);
                     }
+
+                    _Queue.AddProcessTime(timer.ElapsedMilliseconds);
+
                 } catch (CensusServiceUnavailableException) {
                     _Logger.LogWarning($"Failed to get character from API, service unavailable");
                     await Task.Delay(30 * 1000, stoppingToken);

@@ -7,15 +7,17 @@ namespace watchtower.Code.Constants {
 
     public class PercentileCacheType {
 
-        public static short KD = 1;
+        public const short KD = 1;
 
-        public static short KPM = 2;
+        public const short KPM = 2;
 
-        public static short VKPM = 3;
+        public const short VKPM = 3;
 
-        public static short ACC = 4;
+        public const short ACC = 4;
 
-        public static short HSR = 5;
+        public const short HSR = 5;
+
+        public const short KILLS = 6;
 
     }
 }

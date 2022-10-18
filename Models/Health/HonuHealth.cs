@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using watchtower.Models.Api;
 
 namespace watchtower.Models.Health {
@@ -32,6 +33,11 @@ namespace watchtower.Models.Health {
         ///     Information about the hosted queues in Honu
         /// </summary>
         public List<ServiceQueueCount> Queues { get; set; } = new List<ServiceQueueCount>();
+
+        /// <summary>
+        ///     When this data was created
+        /// </summary>
+        public DateTime Timestamp { get; set; }
 
     }
 }

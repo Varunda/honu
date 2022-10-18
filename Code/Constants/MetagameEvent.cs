@@ -17,6 +17,16 @@ namespace watchtower.Code.Constants {
 
         public const int AERIAL_ANOMALY_OSHUR = 232;
 
+        public const int GHOST_BASTION_INDAR = 242;
+
+        public const int GHOST_BASTION_HOSSIN = 243;
+
+        public const int GHOST_BASTION_AMERISH = 244;
+
+        public const int GHOST_BASTION_ESAMIR = 245;
+
+        public const int GHOST_BASTION_OSHUR = 246; // probably
+
         /// <summary>
         /// Get how long a metagame event will last
         /// </summary>
@@ -26,6 +36,14 @@ namespace watchtower.Code.Constants {
         ///     or <c>null</c> if it's unknown
         /// </returns>
         public static TimeSpan? GetDuration(int metagameEventID) {
+            if (IsGhostBastion(metagameEventID)) {
+                return TimeSpan.FromMinutes(15);
+            }
+
+            if (IsAerialAnomaly(metagameEventID)) {
+                return TimeSpan.FromMinutes(30);
+            }
+
             return metagameEventID switch {
                 147 or 148 or 149 // Indar
                     or 150 or 151 or 152 // Esamir
@@ -37,10 +55,6 @@ namespace watchtower.Code.Constants {
 
                 176 or 177 or 178 or 179 or 186 or 187 or 188 or 189 or 190 or 191 or 192 or 193 => TimeSpan.FromMinutes(45),
                 208 or 209 or 210 => TimeSpan.FromMinutes(1),
-
-                AERIAL_ANOMALY_INDAR or AERIAL_ANOMALY_HOSSIN 
-                    or AERIAL_ANOMALY_AMERISH or AERIAL_ANOMALY_ESAMIR 
-                    or AERIAL_ANOMALY_OSHUR => TimeSpan.FromMinutes(30),
 
                 _ => null,
             };
@@ -56,6 +70,14 @@ namespace watchtower.Code.Constants {
                 || metagameEventID == AERIAL_ANOMALY_AMERISH
                 || metagameEventID == AERIAL_ANOMALY_ESAMIR
                 || metagameEventID == AERIAL_ANOMALY_OSHUR;
+        }
+
+        public static bool IsGhostBastion(int metagameEventID) {
+            return metagameEventID == GHOST_BASTION_INDAR
+                || metagameEventID == GHOST_BASTION_HOSSIN
+                || metagameEventID == GHOST_BASTION_AMERISH
+                || metagameEventID == GHOST_BASTION_ESAMIR
+                || metagameEventID == GHOST_BASTION_OSHUR;
         }
 
     }

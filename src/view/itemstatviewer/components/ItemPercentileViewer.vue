@@ -6,6 +6,12 @@
         </div>
 
         <div v-else-if="all.state == 'loaded'">
+
+            <h3 v-if="updatedAt != null" class="alert alert-secondary text-center">
+                This information was last updated on:
+                {{updatedAt | moment}}
+            </h3>
+
             <h3>KD</h3>
             <div class="row" v-if="all.data.kd != null">
                 <div class="col-2">
@@ -57,6 +63,19 @@
                     <chart-item-total-stats :stats="all.data.headshotRatio" name="HSR%" v-if="all.data.headshotRatio != null"></chart-item-total-stats>
                 </div>
             </div>
+
+            <h3>Vehicle Kill per minute</h3>
+            <div class="row" v-if="all.data.vkpm != null">
+                <div class="col-2">
+                    <chart-quartile-stats :data="all.data.vkpm" :interval="0.5"></chart-quartile-stats>
+                </div>
+                <div class="col-5">
+                    <chart-item-percentile-stats :stats="all.data.vkpm" name="VKPM" v-if="all.data.vkpm != null"></chart-item-percentile-stats>
+                </div>
+                <div class="col-5">
+                    <chart-item-total-stats :stats="all.data.vkpm" name="VKPM" v-if="all.data.vkpm != null"></chart-item-total-stats>
+                </div>
+            </div>
         </div>
 
         <div v-else-if="all.state == 'error'" class="text-danger">
@@ -78,13 +97,14 @@
 
     import Quartile from "util/Quartile";
     import Percentile from "util/Percentile";
-    (window as any).Percentile = Percentile;
 
     import { ItemPercentileStats, ItemPercentileAll, ItemApi } from "api/ItemApi";
 
     import ChartItemPercentileStats from "./ChartItemPercentileStats.vue";
     import ChartItemTotalStats from "./ChartItemTotalStats.vue";
     import ChartQuartileStats from "./ChartQuartileStats.vue";
+
+    import "MomentFilter";
 
     export const ItemPercentileViewer = Vue.extend({
         props: {
@@ -99,6 +119,7 @@
                 kd: null as Quartile | null,
                 acc: null as Quartile | null,
                 hsr: null as Quartile | null,
+                vkpm: null as Quartile | null
             }
         },
 
@@ -124,7 +145,36 @@
                     if (this.all.data.headshotRatio != null) {
                         this.hsr = Quartile.get(this.all.data.headshotRatio.map(iter => iter.start));
                     }
+                    if (this.all.data.vkpm != null) {
+                        this.vkpm = Quartile.get(this.all.data.vkpm.map(iter => iter.start));
+                    }
                 }
+            }
+        },
+
+        computed: {
+            updatedAt: function(): Date | null {
+                if (this.all.state != "loaded") {
+                    return null;
+                }
+
+                if (this.all.data.kpm != null && this.all.data.kpm.length > 0) {
+                    return this.all.data.kpm[0].timestamp;
+                }
+                if (this.all.data.kd != null && this.all.data.kd.length > 0) {
+                    return this.all.data.kd[0].timestamp;
+                }
+                if (this.all.data.accuracy != null && this.all.data.accuracy.length > 0) {
+                    return this.all.data.accuracy[0].timestamp;
+                }
+                if (this.all.data.headshotRatio != null && this.all.data.headshotRatio.length > 0) {
+                    return this.all.data.headshotRatio[0].timestamp;
+                }
+                if (this.all.data.vkpm != null && this.all.data.vkpm.length > 0) {
+                    return this.all.data.vkpm[0].timestamp;
+                }
+
+                return null;
             }
         },
 

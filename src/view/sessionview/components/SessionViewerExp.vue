@@ -112,7 +112,7 @@
         </div>
 
         <div v-if="repairs.length > 0">
-            <h3>Revives</h3>
+            <h3>MAX Repairs</h3>
 
             <div class="d-flex mw-100">
                 <div class="flex-grow-1 flex-basis-0">

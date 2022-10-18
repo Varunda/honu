@@ -19,22 +19,27 @@ namespace watchtower.Models.Api {
         /// <summary>
         ///     Buckets that contain accuracy intervals
         /// </summary>
-        public List<Bucket> Accuracy { get; set; } = new List<Bucket>();
+        public List<WeaponStatBucket> Accuracy { get; set; } = new();
 
         /// <summary>
         ///     Buckets that contain headshot ratio intervals
         /// </summary>
-        public List<Bucket> HeadshotRatio { get; set; } = new List<Bucket>();
+        public List<WeaponStatBucket> HeadshotRatio { get; set; } = new();
 
         /// <summary>
         ///     Buckets that contain KD intervals
         /// </summary>
-        public List<Bucket> KD { get; set; } = new List<Bucket>();
+        public List<WeaponStatBucket> KD { get; set; } = new();
 
         /// <summary>
         ///     Buckets that contain KPM intervals
         /// </summary>
-        public List<Bucket> KPM { get; set; } = new List<Bucket>();
+        public List<WeaponStatBucket> KPM { get; set; } = new();
+
+        /// <summary>
+        ///     Buckets that contain VKPM intervals
+        /// </summary>
+        public List<WeaponStatBucket> VKPM { get; set; } = new();
 
     }
 }

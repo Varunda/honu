@@ -62,8 +62,8 @@ export default class ColorUtils {
      * @param hue
      * @param total
      */
-    public static randomColors(hue: number, total: number): string[] {
-        return Array.from(Array(total)).map((_, index) => ColorUtils.randomColor(hue, total, index));
+    public static randomColors(hue: number, total: number, opacity: number = 1): string[] {
+        return Array.from(Array(total)).map((_, index) => ColorUtils.randomColor(hue, total, index, opacity));
     }
 
     /**
@@ -72,7 +72,7 @@ export default class ColorUtils {
      * @param total
      * @param index
      */
-    public static randomColor(hue: number, total: number, index: number): string {
+    public static randomColor(hue: number, total: number, index: number, opacity: number = 1): string {
         const diff: number = 0.618033988749895;
         //let hue: number = Math.random();
         hue += index / total;
@@ -100,7 +100,7 @@ export default class ColorUtils {
             case 5: r = val; g = p; b = q; break;
         }
 
-        return `rgba(${~~(r * 256)}, ${~~(g * 256)}, ${~~(b * 256)}, 1)`;
+        return `rgba(${~~(r * 256)}, ${~~(g * 256)}, ${~~(b * 256)}, ${opacity})`;
     }
 
     /**

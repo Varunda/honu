@@ -106,6 +106,8 @@ namespace watchtower.Services.Db {
                         AND kills > @MinKills
             ");
 
+            cmd.CommandTimeout = 60 * 15; // 15 minutes, i've seen it take 7 minutes, so around double to be safe
+
             cmd.AddParameter("ItemID", itemID);
             cmd.AddParameter("MinKills", minKills ?? 0);
 

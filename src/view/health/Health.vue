@@ -45,7 +45,7 @@
 
                                 <td>
                                     <span v-if="queue.average != null">
-                                        {{queue.average | locale(2)}}ms
+                                        {{queue.average | duration}}
                                     </span>
                                     <span v-else>
                                         --
@@ -53,7 +53,7 @@
                                 </td>
                                 <td>
                                     <span v-if="queue.median != null">
-                                        {{queue.median | locale(2)}}ms
+                                        {{queue.median | duration}}
                                     </span>
                                     <span v-else>
                                         --
@@ -61,7 +61,7 @@
                                 </td>
                                 <td>
                                     <span v-if="queue.min != null">
-                                        {{queue.min | locale(2)}}ms
+                                        {{queue.min | duration}}
                                     </span>
                                     <span v-else>
                                         --
@@ -69,7 +69,7 @@
                                 </td>
                                 <td>
                                     <span v-if="queue.max != null">
-                                        {{queue.max | locale(2)}}ms
+                                        {{queue.max | duration}}
                                     </span>
                                     <span v-else>
                                         --
@@ -169,6 +169,7 @@
     import "filters/TimeAgoFilter";
     import "filters/WorldNameFilter";
     import "filters/LocaleFilter";
+    import "filters/DurationFilter";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";

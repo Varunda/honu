@@ -104,6 +104,8 @@ namespace watchtower.Services.Hosted {
 
             Stopwatch timer = Stopwatch.StartNew();
 
+            return;
+
             while (stoppingToken.IsCancellationRequested == false) {
                 timer.Restart();
                 CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
@@ -218,32 +220,48 @@ namespace watchtower.Services.Hosted {
                             try {
                                 await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
                             } catch (Exception ex) {
-                                _Logger.LogError(ex, $"Error updating character weapon stat data for {entry.CharacterID}");
+                                _Logger.LogError(ex, $"error updating character weapon stat data for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
                             }
                         }
                         stoppingToken.ThrowIfCancellationRequested();
                         long dbWeapon = timer.ElapsedMilliseconds; timer.Restart();
 
-                        foreach (PsCharacterHistoryStat stat in historyStats) {
-                            await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
+                        try {
+                            foreach (PsCharacterHistoryStat stat in historyStats) {
+                                await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
+                            }
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"error updating history stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
                         }
                         long dbHistory = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        if (itemStats.Count > 0) {
-                            await _ItemDb.Set(entry.CharacterID, itemStats);
+                        try {
+                            if (itemStats.Count > 0) {
+                                await _ItemDb.Set(entry.CharacterID, itemStats);
+                            }
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"error updating item stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
                         }
                         long dbItem = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        if (statEntries.Count > 0) {
-                            await _StatDb.Set(entry.CharacterID, statEntries);
+                        try {
+                            if (statEntries.Count > 0) {
+                                await _StatDb.Set(entry.CharacterID, statEntries);
+                            }
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"error updating stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
                         }
                         long dbStats = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        if (charFriends.Count > 0) {
-                            await _FriendDb.Set(entry.CharacterID, charFriends);
+                        try {
+                            if (charFriends.Count > 0) {
+                                await _FriendDb.Set(entry.CharacterID, charFriends);
+                            }
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"error updating friends for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
                         }
                         long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();

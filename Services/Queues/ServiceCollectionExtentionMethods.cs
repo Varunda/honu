@@ -17,6 +17,7 @@ namespace watchtower.Services.Queues {
             services.AddSingleton<WeaponPercentileCacheQueue>();
             services.AddSingleton<LogoutUpdateBuffer>();
             services.AddSingleton<JaegerSignInOutQueue>();
+            services.AddSingleton<WeaponUpdateQueue>();
         }
 
     }

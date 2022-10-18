@@ -85,6 +85,7 @@ namespace watchtower.Services.Db {
 
             services.AddSingleton<WeaponStatSnapshotDbStore>();
             services.AddSingleton<HonuAccountPermissionDbStore>();
+            services.AddSingleton<WeaponStatBucketDbStore>();
         }
 
     }

@@ -7,7 +7,8 @@
     import * as moment from "moment";
 
     import Chart from "chart.js/auto/auto.esm";
-import TimeUtils from "../../../util/Time";
+
+    import TimeUtils from "util/Time";
 
     interface Interval {
         value: number;
@@ -130,6 +131,8 @@ import TimeUtils from "../../../util/Time";
                     value: total / ((last - start) / 1000 / 60),
                     timestamp: new Date(last)
                 });
+
+                this.trend.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
             },
 
             makeChart: function(): void {

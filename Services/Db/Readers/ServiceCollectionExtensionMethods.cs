@@ -81,6 +81,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<WeaponStatSnapshot>, WeaponStatSnapshotReader>();
 
             services.AddSingleton<IDataReader<HonuAccountPermission>, HonuAccountPermissionReader>();
+            services.AddSingleton<IDataReader<WeaponStatBucket>, WeaponStatBucketReader>();
+            services.AddSingleton<IDataReader<WeaponStatTop>, WeaponStatTopReader>();
         }
 
     }

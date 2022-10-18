@@ -61,6 +61,40 @@ namespace watchtower.Services.Db {
             return snapshots;
         }
 
+        /// <summary>
+        ///     Insert a new <see cref="WeaponStatSnapshot"/>
+        /// </summary>
+        /// <param name="snapshot">Parameters to use</param>
+        /// <param name="cancel">Cancellation token</param>
+        /// <returns>
+        ///     The <see cref="WeaponStatSnapshot.ID"/> of the entry that was just inserted
+        /// </returns>
+        public async Task<Int64> Insert(WeaponStatSnapshot snapshot, CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                INSERT INTO weapon_stat_snapshot (
+                    item_id, timestamp, users, kills, deaths, headshots, shots, shots_hit, vehicle_kills, seconds_with
+                ) VALUES (
+                    @ItemID, @Timestamp, @Users, @Kills, @Deaths, @Headshots, @Shots, @ShotsHit, @VehicleKills, @SecondsWith
+                ) RETURNING id;
+            ");
+
+            cmd.AddParameter("ItemID", snapshot.ItemID);
+            cmd.AddParameter("Timestamp", snapshot.Timestamp);
+            cmd.AddParameter("Users", snapshot.Users);
+            cmd.AddParameter("Kills", snapshot.Kills);
+            cmd.AddParameter("Deaths", snapshot.Deaths);
+            cmd.AddParameter("Headshots", snapshot.Headshots);
+            cmd.AddParameter("Shots", snapshot.Shots);
+            cmd.AddParameter("ShotsHit", snapshot.ShotsHit);
+            cmd.AddParameter("VehicleKills", snapshot.VehicleKills);
+            cmd.AddParameter("SecondsWith", snapshot.SecondsWith);
+
+            Int64 ID = await cmd.ExecuteInt64(cancel);
+
+            return ID;
+        }
+
         public async Task Generate(CancellationToken cancel) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

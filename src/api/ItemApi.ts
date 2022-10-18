@@ -39,13 +39,18 @@ export class ItemPercentileStats {
 
 export class ItemPercentileAll {
 	public itemID: string = "";
-	public kd: Bucket[] = [];
-	public kpm: Bucket[] = [];
-	public accuracy: Bucket[] = [];
-	public headshotRatio: Bucket[] = [];
+	public kd: WeaponStatBucket[] = [];
+	public kpm: WeaponStatBucket[] = [];
+	public accuracy: WeaponStatBucket[] = [];
+	public headshotRatio: WeaponStatBucket[] = [];
+	public vkpm: WeaponStatBucket[] = [];
 }
 
-export class Bucket {
+export class WeaponStatBucket {
+	public id: number = 0;
+	public itemID: number = 0;
+	public typeID: number = 0;
+	public timestamp: Date = new Date();
 	public start: number = 0;
 	public width: number = 0;
 	public count: number = 0;
@@ -68,9 +73,10 @@ export class ItemApi extends ApiWrapper<PsItem> {
 		};
 	}
 
-	public static parseBucket(elem: any): Bucket {
+	public static parseBucket(elem: any): WeaponStatBucket {
 		return {
-			...elem
+			...elem,
+			timestamp: new Date(elem.timestamp)
 		};
 	}
 
@@ -81,6 +87,7 @@ export class ItemApi extends ApiWrapper<PsItem> {
 			kpm: elem.kpm.map((iter: any) => ItemApi.parseBucket(iter)),
 			accuracy: elem.accuracy.map((iter: any) => ItemApi.parseBucket(iter)),
 			headshotRatio: elem.headshotRatio.map((iter: any) => ItemApi.parseBucket(iter)),
+			vkpm: elem.vkpm.map((iter: any) => ItemApi.parseBucket(iter))
 		}
 	}
 

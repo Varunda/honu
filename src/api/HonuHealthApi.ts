@@ -9,6 +9,7 @@ export class HonuHealth {
     public exp: CensusRealtimeHealthEntry[] = [];
     public reconnects: RealtimeReconnectEntry[] = [];
     public realtimeHealthFailures: BadHealthEntry[] = [];
+    public timestamp: Date = new Date();
 }
 
 export class ServiceQueueCount {
@@ -64,7 +65,8 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
             death: elem.death.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
             exp: elem.exp.map((iter: any) => HonuHealthApi.parseRealtime(iter)),
             realtimeHealthFailures: elem.realtimeHealthFailures.map((iter: any) => HonuHealthApi.parseBadHealth(iter)),
-            reconnects: elem.reconnects.map((iter: any) => RealtimeReconnectApi.parse(iter))
+            reconnects: elem.reconnects.map((iter: any) => RealtimeReconnectApi.parse(iter)),
+            timestamp: new Date(elem.timestamp)
         };
     }
 

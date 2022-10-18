@@ -32,13 +32,14 @@ namespace watchtower.Controllers.Api {
         private readonly CensusRealtimeEventQueue _TaskQueue;
         private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly DiscordMessageQueue _DiscordQueue;
+        private readonly WeaponUpdateQueue _WeaponUpdateQueue;
 
         public HealthApiController(ILogger<HealthApiController> logger, IMemoryCache cache,
             CensusRealtimeHealthRepository realtimeHealthRepository, CharacterCacheQueue characterCache,
             SessionStarterQueue sessionQueue, CharacterUpdateQueue weaponQueue,
             CensusRealtimeEventQueue taskQueue, WeaponPercentileCacheQueue percentileQueue,
             DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
-            RealtimeReconnectDbStore reconnectDb) {
+            RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue) {
 
             _Logger = logger;
             _Cache = cache;
@@ -53,6 +54,7 @@ namespace watchtower.Controllers.Api {
             _PercentileQueue = percentileQueue;
             _DiscordQueue = discordQueue;
             _ReconnectDb = reconnectDb;
+            _WeaponUpdateQueue = weaponUpdateQueue;
         }
 
         /// <summary>
@@ -69,14 +71,12 @@ namespace watchtower.Controllers.Api {
         public async Task<ApiResponse<HonuHealth>> GetRealtimeHealth() {
             if (_Cache.TryGetValue("Honu.Health", out HonuHealth health) == false) {
                 health = new HonuHealth();
+                health.Timestamp = DateTime.UtcNow;
                 health.Death = _RealtimeHealthRepository.GetDeathHealth().OrderBy(iter => iter.WorldID).ToList();
                 health.Exp = _RealtimeHealthRepository.GetExpHealth().OrderBy(iter => iter.WorldID).ToList();
 
                 health.Reconnects = (await _ReconnectDb.GetAllByInterval(DateTime.UtcNow - TimeSpan.FromDays(1), DateTime.UtcNow))
                     .OrderByDescending(iter => iter.Timestamp).ToList();
-
-                List<long> weaponAve = _WeaponQueue.GetProcessTime();
-                List<long> taskAve = _TaskQueue.GetProcessTime();
 
                 ServiceQueueCount c = _MakeCount("character_cache_queue", _CharacterCache);
                 ServiceQueueCount session = _MakeCount("session_start_queue", _SessionQueue);
@@ -84,10 +84,10 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount task = _MakeCount("task_queue", _TaskQueue);
                 ServiceQueueCount percentile = _MakeCount("weapon_percentile_cache_queue", _PercentileQueue);
                 ServiceQueueCount discord = _MakeCount("discord_message_queue", _DiscordQueue);
+                ServiceQueueCount weaponUpdate = _MakeCount("weapon_update_queue", _WeaponUpdateQueue);
 
                 health.Queues = new List<ServiceQueueCount>() {
-                    c, session, weapon,
-                    task, percentile, discord
+                    task, session, c, weapon, weaponUpdate, percentile, discord
                 };
 
                 _Cache.Set("Honu.Health", health, new MemoryCacheEntryOptions() {
@@ -99,7 +99,10 @@ namespace watchtower.Controllers.Api {
         }
 
         private ServiceQueueCount _MakeCount(string name, IProcessQueue queue) {
-            ServiceQueueCount c = new() { QueueName = name, Count = queue.Count() };
+            ServiceQueueCount c = new() {
+                QueueName = name,
+                Count = queue.Count() 
+            };
 
             List<long> times = queue.GetProcessTime();
             if (times.Count > 0) {
@@ -122,6 +125,10 @@ namespace watchtower.Controllers.Api {
         /// <summary>
         ///     Get historical reconnect data, optionally filtering by world ID
         /// </summary>
+        /// <remarks>
+        ///     The time span between <paramref name="start"/> and <paramref name="end"/> cannot be more
+        ///     than 31 days
+        /// </remarks>
         /// <param name="start">Start period</param>
         /// <param name="end">End period</param>
         /// <param name="worldID">Optional ID of the world to filter the results to</param>

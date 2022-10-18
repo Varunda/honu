@@ -1,6 +1,13 @@
 ﻿
 export default class LoadoutUtils {
 
+	public static NAME_INFILTRATOR: string = "infiltrator";
+	public static NAME_LIGHT_ASSAULT: string = "light assault";
+	public static NAME_MEDIC: string = "medic";
+	public static NAME_ENGINEER: string = "engineer";
+	public static NAME_HEAVY_ASSAULT: string = "heavy assault";
+	public static NAME_MAX: string = "MAX";
+
 	public static NC_INFILTRATOR: number = 1;
 	public static NC_LIGHT_ASSAULT: number = 3;
 	public static NC_MEDIC: number = 4;
@@ -115,37 +122,37 @@ export default class LoadoutUtils {
             case LoadoutUtils.NC_INFILTRATOR:
             case LoadoutUtils.TR_INFILTRATOR:
 			case LoadoutUtils.NS_INFILTRATOR:
-				return "infiltrator";
+				return this.NAME_INFILTRATOR;
 
             case LoadoutUtils.NC_ENGINEER:
             case LoadoutUtils.TR_ENGINEER:
             case LoadoutUtils.VS_ENGINEER:
 			case LoadoutUtils.NS_ENGINEER:
-				return "engineer";
+				return this.NAME_ENGINEER;
 
             case LoadoutUtils.NC_MAX:
             case LoadoutUtils.TR_MAX:
             case LoadoutUtils.VS_MAX:
 			case LoadoutUtils.NS_MAX:
-				return "MAX";
+				return this.NAME_MAX;
 
             case LoadoutUtils.TR_LIGHT_ASSAULT:
             case LoadoutUtils.NC_LIGHT_ASSAULT:
             case LoadoutUtils.VS_LIGHT_ASSAULT:
 			case LoadoutUtils.NS_LIGHT_ASSAULT:
-				return "light assault";
+				return this.NAME_LIGHT_ASSAULT;
 
             case LoadoutUtils.TR_MEDIC:
             case LoadoutUtils.NC_MEDIC:
             case LoadoutUtils.VS_MEDIC:
 			case LoadoutUtils.NS_MEDIC:
-				return "medic";
+				return this.NAME_MEDIC;
 
             case LoadoutUtils.TR_HEAVY_ASSAULT:
             case LoadoutUtils.NC_HEAVY_ASSAULT:
             case LoadoutUtils.VS_HEAVY_ASSAULT:
 			case LoadoutUtils.NS_HEAVY_ASSAULT:
-				return "heavy assault";
+				return this.NAME_HEAVY_ASSAULT;
 
 			default: return `unchecked loudoutID ${loadoutID}`;
         }

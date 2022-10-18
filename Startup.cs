@@ -191,6 +191,7 @@ namespace watchtower {
             services.AddHostedService<HostedJaegerSignInOutProcess>();
             services.AddHostedService<HostedDailyAlertCreator>();
             services.AddHostedService<HostedWatchtowerRecentCleanup>();
+            services.AddHostedService<HostedBackgroundWeaponStatQueue>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

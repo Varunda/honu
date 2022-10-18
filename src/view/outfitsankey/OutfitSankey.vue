@@ -28,11 +28,9 @@
             </progress-bar>
         </div>
 
-        <div id="canvas-parent">
-            <canvas id="outfit-sankey"></canvas>
-        </div>
+        <div id="d3_canvas"></div>
 
-        <div id="chart">
+        <div id="chart" style="width: 100%; height: 100vh;">
 
         </div>
 
@@ -41,11 +39,6 @@
 
 <script lang="ts">
     import Vue from "vue";
-
-    /// @ts-ignore
-    import { SankeyController, Flow } from "node_modules/chartjs-chart-sankey/dist/chartjs-chart-sankey.esm.js";
-    import Chart, { LegendItem } from "chart.js/auto/auto.esm";
-    Chart.register(SankeyController, Flow);
 
     import { Loadable, Loading } from "Loading";
     import { Session, SessionApi } from "api/SessionApi";
@@ -59,8 +52,12 @@
 
     import TimeUtils from "util/Time";
 
+    import * as d3s from "d3-sankey";
+    import * as d3 from "d3";
+
     /// @ts-ignore
     import * as Plotly from "plotly.js/dist/plotly";
+    import ColorUtils from "util/Color";
 
     type DataEntry = {
         from: string;
@@ -89,11 +86,11 @@
 
         data: function() {
             return {
-                chart: null as Chart | null,
-
                 outfit: Loadable.idle() as Loading<PsOutfit>,
                 sessions: Loadable.idle() as Loading<Session[]>,
                 outfits: Loadable.idle() as Loading<PsOutfit[]>,
+
+                interval: 1000 * 60 * 60 * 24 * 7 as number, // 1000 ms, 60 seconds, 60 minutes, 24 hours, 7 days
 
                 progress: {
                     initial: false as boolean,
@@ -101,20 +98,61 @@
                     total: 0 as number
                 },
 
+                plotly: {} as any,
+
                 p: [] as PD[],
 
                 data: [] as DataEntry[]
             }
         },
 
+        created: function(): void {
+            document.title = "Honu / Sankey";
+        },
+
         mounted: function(): void {
             this.$nextTick(async () => {
+                this.d3s();
+                /*
                 await this.getSessions();
                 await this.getOutfits();
+                this.makeData();
+                this.makeGraph();
+                */
             });
         },
 
         methods: {
+            d3s: function(): void {
+                const svg = d3.select("#d3_canvas").append("svg")
+                    .attr("width", 1920)
+                    .attr("height", 1080)
+                    .append("g")
+                    .attr("transform", `translate(0, 0)`);
+
+                const s = d3s.sankey()
+                    .nodeWidth(36)
+                    .nodePadding(290)
+                    .size([1920, 1080]);
+
+                console.log(`d3 stuff`);
+
+                d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/data_sankey.json", function(err, graph) {
+                    console.log(`over here!`);
+                    debugger;
+                    if (err) {
+                        console.error(err);
+                    }
+
+                    console.log(`over here!`);
+
+                    s.nodes(graph.nodes).links(graph.links);
+                });
+            },
+
+            /**
+             * Get all the sessions relevant to load the outfit's sankey
+             */
             getSessions: async function(): Promise<void> {
                 this.sessions = Loadable.loading();
 
@@ -153,6 +191,9 @@
                 this.sessions = Loadable.loaded(Array.from(map.values()));
             },
 
+            /**
+             * Get all the outfits from the sessions that are loaded
+             */
             getOutfits: async function(): Promise<void> {
                 if (this.sessions.state != "loaded") {
                     return console.warn(`cannot get outfits, sessions is ${this.sessions.state} is not 'loaded'`);
@@ -166,12 +207,10 @@
                 this.outfits = await OutfitApi.getByIDs(outfitIDs);
             },
 
-            makeGraph: function(): void {
-                if (this.chart != null) {
-                    this.chart.destroy();
-                    this.chart = null;
-                }
-
+            /**
+             * Use the session data to make the Sankey data
+             */
+            makeData: function(): void {
                 if (this.sessions.state != "loaded") {
                     return console.warn(`sessions not loaded`);
                 }
@@ -185,6 +224,7 @@
                 }
 
                 const firstSession: Session = this.sessions.data.sort((a, b) => a.start.getTime() - b.start.getTime())[0];
+                console.log(`first session at ${firstSession.start}`);
 
                 const day: Date = firstSession.start;
                 day.setUTCHours(0);
@@ -198,10 +238,7 @@
                 now.setUTCSeconds(0);
                 now.setUTCMilliseconds(0);
 
-                const interval: number = 1000 * 60 * 60 * 24 * 7; // 1000 ms, 60 seconds, 60 minutes, 24 hours
-
                 const c: Map<string, string> = new Map();
-                const labels: any = {};
 
                 for (const session of this.sessions.data) {
                     if (c.has(session.characterID) == true) {
@@ -210,13 +247,13 @@
                     c.set(session.characterID, session.outfitID ?? "0");
                 }
 
-                let ii: number = 0;
-
-                for (let i = day.getTime(); i <= now.getTime(); i += interval) {
+                for (let i = day.getTime(); i <= now.getTime(); i += this.interval) {
                     const slice: Session[] = this.sessions.data.filter((iter: Session) => {
                         const time: number = iter.start.getTime();
-                        return time >= i && time <= (i + interval);
+                        return time >= i && time <= (i + this.interval);
                     });
+
+                    console.log(`NEW LINE =====================================`);
 
                     const entries: PD[] = [];
                     const curr: Map<string, string> = new Map();
@@ -231,15 +268,6 @@
 
                         const previousOutfitID: string = kvp[1];
                         const currentOutfitID: string = curr.get(charID) ?? previousOutfitID;
-
-                        const toDate: string = TimeUtils.format(new Date(i + interval), "YYYY-MM-DD");
-                        const fromDate: string = TimeUtils.format(new Date(i), "YYYY-MM-DD");
-
-                        const to: string = `${currentOutfitID}-${toDate}`;
-                        const from: string = `${previousOutfitID}-${fromDate}`;
-
-                        labels[to] = currentOutfitID == "0" ? "No outfit" : (this.outfits.data.find(iter => iter.id == currentOutfitID)?.name ?? `missing ${currentOutfitID}`);
-                        labels[from] = previousOutfitID == "0" ? "No outfit" : (this.outfits.data.find(iter => iter.id == previousOutfitID)?.name ?? `missing ${previousOutfitID}`);
 
                         let entry: PD | undefined = entries.find(iter => iter.outfitID == previousOutfitID && iter.timestamp == i);
                         if (entry == undefined) {
@@ -275,67 +303,49 @@
                         c.set(session.characterID, session.outfitID ?? "0");
                     }
 
-                    ++ii;
-                    this.p.push(...entries);
-
                     /*
-                    const entries: DataEntry[] = [];
-                    const curr: Map<string, string> = new Map();
+                    for (const e of entries) {
+                        console.log(e);
 
-                    console.log(`getting sessions on ${new Date(i)} ${slice.length}`);
-
-                    for (const session of slice) {
-                        const outfitID: string = session.outfitID ?? "0";
-                        curr.set(session.characterID, outfitID);
-                    }
-
-                    for (const kvp of c.entries()) {
-                        const charID: string = kvp[0];
-
-                        const previousOutfitID: string = kvp[1];
-                        const currentOutfitID: string = curr.get(charID) ?? previousOutfitID;
-
-                        const toDate: string = TimeUtils.format(new Date(i + interval), "YYYY-MM-DD");
-                        const fromDate: string = TimeUtils.format(new Date(i), "YYYY-MM-DD");
-
-                        const to: string = `${currentOutfitID}-${toDate}`;
-                        const from: string = `${previousOutfitID}-${fromDate}`;
-
-                        labels[to] = currentOutfitID == "0" ? "No outfit" : (this.outfits.data.find(iter => iter.id == currentOutfitID)?.name ?? `missing ${currentOutfitID}`);
-                        labels[from] = previousOutfitID == "0" ? "No outfit" : (this.outfits.data.find(iter => iter.id == previousOutfitID)?.name ?? `missing ${previousOutfitID}`);
-
-                        let entry: DataEntry | undefined = entries.find(iter => iter.to == to && iter.from == from);
-                        if (entry == undefined) {
-                            //console.log(`new entry ${from} => ${to}`);
-                            entry = {
-                                to: to,
-                                from: from,
-                                flow: 0
-                            };
-                            entries.push(entry);
+                        if (i == day.getTime()) {
+                            this.p.push(e);
+                            continue;
                         }
 
-                        ++entry.flow;
-                        //console.log(`${from} => ${to} :: ${entry.flow}`);
+                        if (e.flow.length > 1) {
+                            this.p.push(e);
+                            continue;
+                        }
+
+                        if (e.outfitID != e.flow[0].to) {
+                            this.p.push(e);
+                            continue;
+                        }
+
+                        console.log(`SKIP`);
                     }
-
-                    for (const session of slice) {
-                        c.set(session.characterID, session.outfitID ?? "0");
-                    }
-
-                    this.data.push(...entries);
-
-                    ++ii;
                     */
-                }
 
-                console.log(`first session at ${firstSession.start}`);
+                    this.p.push(...entries);
+                }
+            },
+
+            /**
+             * Render the Sankey graph from Plotly
+             */
+            makeGraph: function(): void {
+                if (this.outfits.state != "loaded") {
+                    return console.warn(`cannot make graph: outfits is not loaded`);
+                }
+                if (this.sessions.state != "loaded") {
+                    return console.warn(`cannot make graph: sessions is not loaded`);
+                }
 
                 const getOutfitIndex = (outfitID: string): number => {
                     if (this.outfits.state != "loaded") {
                         return 0;
                     }
-                    return this.outfits.data.findIndex(iter => iter.id == outfitID) + 1;
+                    return this.outfits.data.findIndex(iter => iter.id == outfitID);
                 };
 
                 const getOutfitLabel = (outfitID: string): string => {
@@ -354,8 +364,6 @@
                     return `${(outfit.tag != null) ? `[${outfit.tag}] ` : ""}${outfit.name}`;
                 }
 
-                const outfitCount: number = this.outfits.data.length;
-
                 const flows: PDE[] = [];
                 for (const pd of this.p) {
                     flows.push(...pd.flow);
@@ -365,68 +373,106 @@
                     return this.p.findIndex(i => i.outfitID == outfitID && i.timestamp == timestamp) ?? 0;
                 };
 
+                const getY = (outfitID: string, timestamp: number): number => {
+                    const thisDay: PD[] = this.p.filter(iter => iter.timestamp == timestamp)
+                        .sort((a, b) => b.members.length - a.members.length || b.outfitID.localeCompare(a.outfitID));
+
+                    //console.log(thisDay);
+
+                    const totalMembers: number = thisDay.reduce((acc, i) => acc += i.members.length, 0);
+
+                    //console.log(`@${timestamp} has ${thisDay.length} outfits, with ${totalMembers} total members`);
+
+                    let acc: number = 0;
+                    for (const datum of thisDay) {
+                        if (datum.outfitID == outfitID) {
+                            console.log(`${outfitID}@${timestamp} => ${acc / totalMembers} - ${(acc + datum.members.length) / totalMembers}`);
+                            return acc / totalMembers;
+                        }
+                        acc += datum.members.length;
+                    }
+
+                    return 0;
+                }
+
+                const firstSession: Session = this.sessions.data.sort((a, b) => a.start.getTime() - b.start.getTime())[0];
+                const day: Date = firstSession.start;
+                day.setUTCHours(0);
+                day.setUTCMinutes(0);
+                day.setUTCSeconds(0);
+                day.setUTCMilliseconds(0);
+
+                const now: Date = new Date();
+                now.setUTCHours(0);
+                now.setUTCMinutes(0);
+                now.setUTCSeconds(0);
+                now.setUTCMilliseconds(0);
+
+                const outfitCount: number = this.outfits.data.length;
+                const colors: string[] = ColorUtils.randomColors(Math.random(), outfitCount + 1, 0.8); // +1 for no outfit
+
+                const nodes = this.p.map((value) => {
+                    const n = {
+                        color: colors[getOutfitIndex(value.outfitID)],
+                        x: (value.timestamp - day.getTime()) / (now.getTime() - day.getTime()),
+                        y: getY(value.outfitID, value.timestamp),
+                        label: getOutfitLabel(value.outfitID),
+                    };
+
+                    console.log(`${value.outfitID}@${value.timestamp} => (${n.x}, ${n.y}) :: ${n.label}`);
+
+                    return n;
+                });
+
+                console.log(nodes);
+
                 const data = [{
                     type: "sankey",
                     arragement: "fixed",
+                    orientation: "h",
+                    //hoverinfo: "none",
                     node: {
-                        label: this.p.map(iter => getOutfitLabel(iter.outfitID)),
-                        y: this.p.map((value) => getOutfitIndex(value.outfitID) / outfitCount),
-                        x: this.p.map((value) => (value.timestamp - day.getTime()) / (now.getTime() - day.getTime())),
-                        pad: 10
+                        label: nodes.map(i => i.label),
+                        x: nodes.map(i => i.x),
+                        y: nodes.map(i => i.y),
+                        color: nodes.map(i => i.color + "33"),
+                        thickness: 20,
+                        hovertemplate: "x: %{x}, y: %{y}",
+                        line: {
+                            width: 0
+                        },
+                        pad: 0
+                        //pad: 10
                     },
                     link: {
                         source: flows.map(iter => getIndex(iter.from, iter.timestamp)),
-                        target: flows.map(iter => getIndex(iter.to, iter.timestamp + interval)),
-                        value: flows.map(iter => iter.members.length)
+                        target: flows.map(iter => getIndex(iter.to, iter.timestamp + this.interval)),
+                        value: flows.map(iter => iter.members.length),
+                        //color: flows.map(iter => colors[getOutfitIndex(iter.from)] + "33")
                     }
                 }];
 
+                const layout = {
+                    title: "Outfit Sankey",
+                    showlegend: false,
+                    height: 1920
+                };
+
+                const options = {
+                    scrollZoom: true
+                };
+
                 console.log(data);
 
-                Plotly.newPlot(document.getElementById("chart")!, data);
-
-                /*
-                const canvas: HTMLCanvasElement | null = document.getElementById("outfit-sankey") as HTMLCanvasElement | null;
-                if (canvas == null) {
-                    throw `missing canvas`;
-                }
-
-                document.getElementById("canvas-parent")!.style.width = `${ii * 60}px`;
-                document.getElementById("canvas-parent")!.style.height = `${c.size * 20}px`;
-                canvas.width = ii * 60;
-                canvas.height = c.size * 20;
-
-                this.chart = new Chart(canvas.getContext("2d")!, {
-                    type: "sankey" as any,
-                    data: {
-                        datasets: [
-                            {
-                                data: [
-                                    ...this.data
-                                ] as DataEntry[],
-                                labels: labels,
-                                colorMode: "from",
-                                size: "max"
-                            } as any
-                        ]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        tooltips: {
-                            callbacks: {
-                                title() {
-                                    return "penis";
-                                },
-                                label() {
-                                    return "";
-                                }
-                            }
-                        }
-                    }
+                Plotly.newPlot(document.getElementById("chart")!, data, layout, options).then((huh: any) => {
+                    this.plotly = huh;
                 });
-                */
-            }
 
+                d3.select("svg")
+                    .attr("width", 1920).attr("height", 1080)
+                    .append("g")
+                    .attr("transform", `translate(10,10)`);
+            }
         },
 
         components: {

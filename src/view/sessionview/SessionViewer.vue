@@ -220,7 +220,7 @@
                 </session-viewer-kills>
             </collapsible>
 
-            <collapsible header-text="Experience breakdown">
+            <collapsible v-if="showFullExp == true" header-text="Experience breakdown">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -249,6 +249,17 @@
                 </session-viewer-trends>
             </collapsible>
 
+            <collapsible header-text="Routers & Sunderers">
+                <div v-if="exp.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-viewer-spawns v-else-if="exp.state == 'loaded'"
+                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                </session-viewer-spawns>
+            </collapsible>
+
             <collapsible header-text="Action log">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading' || vehicleDestroy.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
@@ -260,16 +271,6 @@
                 </session-action-log>
             </collapsible>
 
-            <collapsible header-text="Routers & Sunderers">
-                <div v-if="exp.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
-
-                <session-viewer-spawns v-else-if="exp.state == 'loaded'"
-                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
-                </session-viewer-spawns>
-            </collapsible>
         </div>
     </div>
 </template>

@@ -88,7 +88,7 @@ namespace watchtower.Services.Hosted {
                         }
 
                         if (entry.FailCount > 0) {
-                            _Logger.LogDebug($"Took {entry.FailCount} tries to find the character locally");
+                            _Logger.LogDebug($"Took {entry.FailCount} tries to find the character {entry.CharacterID}/{c?.Name} locally");
                         }
 
                         using (Activity? repoCall = HonuActivitySource.Root.StartActivity("repo start")) {

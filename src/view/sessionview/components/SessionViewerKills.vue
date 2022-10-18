@@ -77,6 +77,10 @@
                     <thead>
                         <tr class="table-secondary th-border-top-0">
                             <th>Outfit</th>
+                            <th>
+                                Players
+                                <info-hover text="How many unique players in this outfit were encountered"></info-hover>
+                            </th>
                             <th>Kills</th>
                             <th>Deaths</th>
                             <th>K/D</th>
@@ -98,6 +102,9 @@
                                 </a>
                             </td>
                             <td>
+                                {{entry.unique.size}}
+                            </td>
+                            <td>
                                 {{entry.kills}}
                             </td>
                             <td>
@@ -105,6 +112,57 @@
                             </td>
                             <td>
                                 {{entry.kills / Math.max(entry.deaths, 1) | fixed}}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <h3>Classes</h3>
+
+                <table class="table table-sm">
+                    <thead>
+                        <tr class="table-secondary th-border-top-0">
+                            <th>Class</th>
+                            <th>
+                                Kills
+                                <info-hover text="Number of kills against this class"></info-hover>
+                            </th>
+                            <th>
+                                Deaths
+                                <info-hover text="Number of deaths from this class"></info-hover>
+                            </th>
+                            <th>K/D</th>
+                            <th>
+                                Kill HSR%
+                                <info-hover text="Number of headshot kills against this class"></info-hover>
+                            </th>
+                            <th>
+                                Death HSR%
+                                <info-hover text="Number of headshot deaths from this class"></info-hover>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="clazz in classData">
+                            <td>
+                                <img :src="'/img/classes/' + clazz.icon" height="24" />
+                                {{clazz.name}}
+                            </td>
+                            <td>
+                                {{clazz.kills}}
+                            </td>
+                            <td>{{clazz.deaths}}</td>
+                            <td>{{clazz.kills / Math.max(clazz.deaths, 1) | fixed}}</td>
+                            <td>
+                                {{clazz.killHeadshots}}
+                                ({{clazz.killHeadshots / Math.max(1, clazz.kills) * 100 | fixed(2)}}%)
+                            </td>
+                            <td>
+                                {{clazz.deathHeadshots}}
+                                ({{clazz.deathHeadshots / Math.max(1, clazz.deaths) * 100 | fixed(2)}}%)
                             </td>
                         </tr>
                     </tbody>
@@ -124,6 +182,7 @@
     import Chart from "chart.js/auto/auto.esm";
 
     import ColorUtils from "util/Color";
+    import LoadoutUtils from "util/Loadout";
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
     import { PsItem } from "api/ItemApi";
@@ -131,13 +190,29 @@
     import { PsCharacter } from "api/CharacterApi";
 
     import ChartTimestamp from "./ChartTimestamp.vue";
+    import InfoHover from "components/InfoHover.vue";
 
-    interface OutfitKD {
+    type OutfitKD = {
         outfitID: string;
         outfitTag: string | null;
         outfitName: string | null;
         kills: number;
         deaths: number;
+        unique: Set<string>;
+    }
+
+    class ClassKD {
+        public name: string = "";
+        public icon: string = "";
+        public kills: number = 0;
+        public deaths: number = 0;
+        public killHeadshots: number = 0;
+        public deathHeadshots: number = 0;
+
+        public constructor(name: string, icon: string) {
+            this.name = name;
+            this.icon = icon;
+        }
     }
 
     export const SessionViewerKills = Vue.extend({
@@ -154,6 +229,7 @@
                 kpmData: [] as Date[],
 
                 outfitData: [] as OutfitKD[],
+                classData: [] as ClassKD[],
             }
         },
 
@@ -164,6 +240,7 @@
 
             this.kpmData = this.kills.map(iter => iter.event.timestamp);
             this.generateOutfitData();
+            this.generateClassData();
         },
 
         methods: {
@@ -206,6 +283,62 @@
                 });
             },
 
+            generateClassData: function(): void {
+                this.classData = [];
+
+                const infil: ClassKD = new ClassKD("Infiltrator", "icon_infil.png");
+                const lightAssault: ClassKD = new ClassKD("Light Assault", "icon_light.png");
+                const medic: ClassKD = new ClassKD("Medic", "icon_medic.png");
+                const engi: ClassKD = new ClassKD("Engineer", "icon_engi.png");
+                const heavy: ClassKD = new ClassKD("Heavy Assault", "icon_heavy.png");
+                const max: ClassKD = new ClassKD("MAX", "icon_max.png");
+
+                //LoadoutUtils.getLoadoutName
+
+                function getClass(name: string): ClassKD {
+                    if (name == LoadoutUtils.NAME_INFILTRATOR) {
+                        return infil;
+                    } else if (name == LoadoutUtils.NAME_LIGHT_ASSAULT) {
+                        return lightAssault;
+                    } else if (name == LoadoutUtils.NAME_MEDIC) {
+                        return medic;
+                    } else if (name == LoadoutUtils.NAME_ENGINEER) {
+                        return engi;
+                    } else if (name == LoadoutUtils.NAME_HEAVY_ASSAULT) {
+                        return heavy;
+                    } else if (name == LoadoutUtils.NAME_MAX) {
+                        return max;
+                    }
+
+                    throw `Unchecked loadout name: '${name}'`;
+                }
+
+                for (const ev of this.kills) {
+                    const name: string = LoadoutUtils.getLoadoutName(ev.event.killedLoadoutID);
+                    const clazz: ClassKD = getClass(name);
+
+                    ++clazz.kills;
+                    if (ev.event.isHeadshot == true) {
+                        ++clazz.killHeadshots;
+                    }
+                }
+
+                for (const ev of this.deaths) {
+                    const name: string = LoadoutUtils.getLoadoutName(ev.event.attackerLoadoutID);
+                    const clazz: ClassKD = getClass(name);
+
+                    ++clazz.deaths;
+                    if (ev.event.isHeadshot == true) {
+                        ++clazz.deathHeadshots;
+                    }
+                }
+
+                this.classData = [
+                    infil, lightAssault, medic,
+                    engi, heavy, max
+                ];
+            },
+
             generateOutfitData: function(): void {
                 this.outfitData = [];
 
@@ -220,7 +353,8 @@
                                 outfitTag: null,
                                 outfitName: "<no outfit>",
                                 kills: 0,
-                                deaths: 0
+                                deaths: 0,
+                                unique: new Set()
                             };
                         } else {
                             outfit = {
@@ -228,7 +362,8 @@
                                 outfitTag: character.outfitTag,
                                 outfitName: character.outfitName,
                                 kills: 0,
-                                deaths: 0
+                                deaths: 0,
+                                unique: new Set()
                             };
                         }
 
@@ -244,6 +379,7 @@
 
                     const outfit: OutfitKD = getOutfit(event.killed);
                     ++outfit.kills;
+                    outfit.unique.add(event.event.killedCharacterID);
                 }
 
                 for (const event of this.deaths) {
@@ -253,6 +389,7 @@
 
                     const outfit: OutfitKD = getOutfit(event.attacker);
                     ++outfit.deaths;
+                    outfit.unique.add(event.event.attackerCharacterID);
                 }
 
                 this.outfitData = Array.from(outfitMap.values()).sort((a, b) => (b.kills + b.deaths) - (a.kills + a.deaths)).slice(0, 8);
@@ -303,7 +440,8 @@
         },
 
         components: {
-            ChartTimestamp
+            ChartTimestamp,
+            InfoHover
         }
 
     });

@@ -120,7 +120,7 @@ namespace watchtower.Services.Hosted {
                                             await _LogoutDb.Upsert(entry, stoppingToken);
                                             Interlocked.Increment(ref requeued);
                                         } else {
-                                            _Logger.LogWarning($"Missing character {entry.CharacterID} after getting batch. Discarding");
+                                            _Logger.LogWarning($"Missed character {entry.CharacterID} {entry.NotFoundCount} times after getting batch. First seen at {entry.Timestamp:u} Discarding");
                                             await _LogoutDb.Delete(entry.CharacterID, stoppingToken);
                                             Interlocked.Increment(ref discarded);
                                         }

@@ -50,6 +50,7 @@ namespace watchtower.Realtime {
         private readonly DiscordMessageQueue _MessageQueue;
         private readonly LogoutUpdateBuffer _LogoutQueue;
         private readonly JaegerSignInOutQueue _JaegerQueue;
+        private readonly WeaponUpdateQueue _WeaponUpdateQueue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly MapCollection _MapCensus;
@@ -79,7 +80,8 @@ namespace watchtower.Realtime {
             IHubContext<RealtimeMapHub> mapHub, AlertDbStore alertDb,
             AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
             ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
-            RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository) {
+            RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository,
+            WeaponUpdateQueue weaponUpdateQueue) {
 
             _Logger = logger;
 
@@ -114,6 +116,7 @@ namespace watchtower.Realtime {
             _SessionRepository = sessionRepository;
             _NexusHandler = nexusHandler;
             _MatchRepository = matchRepository;
+            _WeaponUpdateQueue = weaponUpdateQueue;
         }
 
         public DateTime MostRecentProcess() {
@@ -1048,6 +1051,8 @@ namespace watchtower.Realtime {
                 using Activity? insertDeath = HonuActivitySource.Root.StartActivity("insert");
                 ev.ID = await _KillEventDb.Insert(ev);
                 insertDeath?.Stop();
+
+                _WeaponUpdateQueue.Queue(ev.WeaponID); // If a weapon gets a kill, it'll be good to update it's stats at some point
             }
 
             _NexusHandler.HandleKill(ev);
