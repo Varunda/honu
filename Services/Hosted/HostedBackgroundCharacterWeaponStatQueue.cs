@@ -104,8 +104,6 @@ namespace watchtower.Services.Hosted {
 
             Stopwatch timer = Stopwatch.StartNew();
 
-            return;
-
             while (stoppingToken.IsCancellationRequested == false) {
                 timer.Restart();
                 CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
