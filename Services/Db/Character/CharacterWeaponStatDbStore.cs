@@ -53,43 +53,6 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Get the top performers with a weapon. This is meant to be used internally and isn't commented :)
-        /// </summary>
-        /// <param name="itemID"></param>
-        /// <param name="column"></param>
-        /// <param name="worlds"></param>
-        /// <param name="factions"></param>
-        /// <param name="minKills"></param>
-        /// <returns></returns>
-        public async Task<List<WeaponStatEntry>> GetTopEntries(string itemID, string column, List<short> worlds, List<short> factions, int minKills = 1159) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
-                SELECT weapon_stats.*
-                    FROM weapon_stats
-                        {(worlds.Count > 0 || factions.Count > 0 ? "INNER JOIN wt_character c ON c.id = weapon_stats.character_id" : "")}
-                    WHERE weapon_stats.item_id = @ItemID
-                        AND kills > @MinKills
-                        {(worlds.Count > 0 ? "AND c.world_id = ANY(@WorldID) " : "")}
-                        {(factions.Count > 0 ? "AND c.faction_id = ANY(@FactionID) " : "")}
-                    ORDER BY {column} DESC
-                    LIMIT 100;
-            ");
-
-            cmd.AddParameter("ItemID", itemID);
-            cmd.AddParameter("WorldID", worlds.Count == 0 ? null : worlds);
-            cmd.AddParameter("FactionID", factions.Count == 0 ? null : factions);
-            cmd.AddParameter("MinKills", minKills);
-            cmd.CommandTimeout = 120;
-
-            //_Logger.LogDebug(cmd.Print());
-
-            List<WeaponStatEntry> entry = await ReadList(cmd);
-            await conn.CloseAsync();
-
-            return entry;
-        }
-
-        /// <summary>
         ///     Get all the <see cref="WeaponStatEntry"/> for a weapon
         /// </summary>
         /// <param name="itemID">ID of the weapon</param>
@@ -292,29 +255,6 @@ namespace watchtower.Services.Db {
             return entry;
         }
 
-    }
-
-    public static class ICharacterWeaponStatDbStoreExtensionMethods {
-
-        public static Task<List<WeaponStatEntry>> GetTopKD(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
-            return repo.GetTopEntries(itemID, "kd", worlds, factions, minKills);
-        }
-
-        public static Task<List<WeaponStatEntry>> GetTopKPM(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
-            return repo.GetTopEntries(itemID, "kpm", worlds, factions, minKills);
-        }
-
-        public static Task<List<WeaponStatEntry>> GetTopAccuracy(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
-            return repo.GetTopEntries(itemID, "acc", worlds, factions, minKills);
-        }
-
-        public static Task<List<WeaponStatEntry>> GetTopHeadshotRatio(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions, int minKills = 1159) {
-            return repo.GetTopEntries(itemID, "hsr", worlds, factions, minKills);
-        }
-
-        public static Task<List<WeaponStatEntry>> GetTopKills(this CharacterWeaponStatDbStore repo, string itemID, List<short> worlds, List<short> factions) {
-            return repo.GetTopEntries(itemID, "kills", worlds, factions, 0);
-        }
     }
 
 }

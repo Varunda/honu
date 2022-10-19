@@ -60,6 +60,15 @@ export class ExpandedWeaponStatEntry {
 	public character: PsCharacter | null = null;
 }
 
+export class PercentileCacheType {
+	public static KD: number = 1;
+	public static KPM: number = 2;
+	public static VKPM: number = 3;
+	public static ACC: number = 4;
+	public static HSR: number = 5;
+	public static KILLS: number = 6;
+}
+
 export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry> {
 	private static _instance: CharacterWeaponStatApi = new CharacterWeaponStatApi();
 	public static get(): CharacterWeaponStatApi { return CharacterWeaponStatApi._instance; }
@@ -109,51 +118,6 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 
 	public static async getByCharacterID(charID: string): Promise<Loading<CharacterWeaponStatEntry[]>> {
 		return CharacterWeaponStatApi.get().readList(`/api/character/${charID}/weapon_stats`, CharacterWeaponStatApi.parse);
-	}
-
-	public static async getTopKD(itemID: string, worldIDs: number[] = [], factionIDs: number[] = []): Promise<Loading<ExpandedWeaponStatEntry[]>> {
-		const params: URLSearchParams = new URLSearchParams();
-        for (const i of worldIDs) { params.append("worldIDs", i.toString()); }
-        for (const i of factionIDs) { params.append("factionIDs", i.toString()); }
-
-		let url: string = `/api/item/${itemID}/top/kd?${params.toString()}`;
-		return CharacterWeaponStatApi.get().readList(url, CharacterWeaponStatApi.parseExpanded);
-	}
-
-	public static async getTopKPM(itemID: string, worldIDs: number[] = [], factionIDs: number[] = []): Promise<Loading<ExpandedWeaponStatEntry[]>> {
-		const params: URLSearchParams = new URLSearchParams();
-        for (const i of worldIDs) { params.append("worldIDs", i.toString()); }
-        for (const i of factionIDs) { params.append("factionIDs", i.toString()); }
-
-		let url: string = `/api/item/${itemID}/top/kpm?${params.toString()}`;
-		return CharacterWeaponStatApi.get().readList(url, CharacterWeaponStatApi.parseExpanded);
-	}
-
-	public static async getTopAccuracy(itemID: string, worldIDs: number[] = [], factionIDs: number[] = []): Promise<Loading<ExpandedWeaponStatEntry[]>> {
-		const params: URLSearchParams = new URLSearchParams();
-        for (const i of worldIDs) { params.append("worldIDs", i.toString()); }
-        for (const i of factionIDs) { params.append("factionIDs", i.toString()); }
-
-		let url: string = `/api/item/${itemID}/top/accuracy?${params.toString()}`;
-		return CharacterWeaponStatApi.get().readList(url, CharacterWeaponStatApi.parseExpanded);
-	}
-
-	public static async getTopHeadshotRatio(itemID: string, worldIDs: number[] = [], factionIDs: number[] = []): Promise<Loading<ExpandedWeaponStatEntry[]>> {
-		const params: URLSearchParams = new URLSearchParams();
-        for (const i of worldIDs) { params.append("worldIDs", i.toString()); }
-        for (const i of factionIDs) { params.append("factionIDs", i.toString()); }
-
-		let url: string = `/api/item/${itemID}/top/hsr?${params.toString()}`;
-		return CharacterWeaponStatApi.get().readList(url, CharacterWeaponStatApi.parseExpanded);
-	}
-
-	public static async getTopKills(itemID: string, worldIDs: number[] = [], factionIDs: number[] = []): Promise<Loading<ExpandedWeaponStatEntry[]>> {
-		const params: URLSearchParams = new URLSearchParams();
-        for (const i of worldIDs) { params.append("worldIDs", i.toString()); }
-        for (const i of factionIDs) { params.append("factionIDs", i.toString()); }
-
-		let url: string = `/api/item/${itemID}/top/kills?${params.toString()}`;
-		return CharacterWeaponStatApi.get().readList(url, CharacterWeaponStatApi.parseExpanded);
 	}
 
 }

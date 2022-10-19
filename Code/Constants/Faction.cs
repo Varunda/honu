@@ -17,6 +17,8 @@ namespace watchtower.Constants {
 
         public const short NS = 4;
 
+        public readonly static List<short> All = new() { VS, NC, TR, NS };
+
         public static string GetName(short factionID) {
             switch (factionID) {
                 case UNKNOWN: return "unknown";

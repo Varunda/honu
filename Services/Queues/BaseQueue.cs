@@ -26,6 +26,12 @@ namespace watchtower.Services.Queues {
             return entry!;
         }
 
+        /// <summary>
+        ///     Insert a new entry into the front of the queue. Use this sparingly,
+        ///     as in order to insert at the top of the list, a copy of the list must be allocated,
+        ///     the items are cleared, then each item is re-queued behind <paramref name="entry"/>
+        /// </summary>
+        /// <param name="entry">Entry to be queued at the front</param>
         public void QueueAtFront(T entry) {
             lock (_Items) {
                 T[] items = _Items.ToArray();
@@ -46,6 +52,10 @@ namespace watchtower.Services.Queues {
             _Signal.Release();
         }
 
+        /// <summary>
+        ///     Add some basic metrics about how long it took to process "something" in the queue
+        /// </summary>
+        /// <param name="ms">How many milliseconds it took to process something that came from this queue</param>
         public void AddProcessTime(long ms) {
             _ProcessTime.Enqueue(ms);
             while (_ProcessTime.Count > 100) {
@@ -53,6 +63,12 @@ namespace watchtower.Services.Queues {
             }
         }
 
+        /// <summary>
+        ///     Get a copy of a list that contains how many milliseconds it took to process data in this queue
+        /// </summary>
+        /// <returns>
+        ///     A newly allocated list whose elements represent how long it took to process data from this queue
+        /// </returns>
         public List<long> GetProcessTime() {
             lock (_ProcessTime) {
                 List<long> ms = new List<long>(_ProcessTime);
@@ -66,6 +82,16 @@ namespace watchtower.Services.Queues {
         /// <returns></returns>
         public int Count() {
             return _Items.Count;
+        }
+
+        /// <summary>
+        ///     Allocate a copy of the items in the list
+        /// </summary>
+        /// <returns>A newly allocated list that contains a shallow-reference to the items in the list</returns>
+        public List<T> ToList() {
+            T[] arr = new T[Count()];
+            _Items.CopyTo(arr, 0);
+            return arr.ToList();
         }
 
     }

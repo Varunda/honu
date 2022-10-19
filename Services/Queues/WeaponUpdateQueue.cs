@@ -12,6 +12,7 @@ namespace watchtower.Services.Queues {
     public class WeaponUpdateQueue : BaseQueue<long> {
 
         private readonly HashSet<long> _Pending = new HashSet<long>();
+        private long? _Last;
 
         public new void Queue(long id) {
             lock (_Pending) {
@@ -34,7 +35,13 @@ namespace watchtower.Services.Queues {
                 _Pending.Remove(entry);
             }
 
+            _Last = entry;
+
             return entry;
+        }
+
+        public long? GetMostRecentDequeued() {
+            return _Last;
         }
 
     }

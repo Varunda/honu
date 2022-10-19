@@ -26,15 +26,32 @@ namespace watchtower.Services.Db.Patches {
 
                 CREATE TABLE IF NOT EXISTS weapon_stat_top_xref (
                     id bigint NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-                    item_id int NOT NULL,
+
                     world_id smallint NOT NULL,
                     faction_id smallint NOT NULL,
                     type_id smallint NOT NULL,
                     timestamp timestamptz NOT NULL,
-                    reference_id bigint NOT NULL
+
+                    item_id int NOT NULL,
+                    character_id varchar NOT NULL,
+                    vehicle_id int NOT NULL,
+
+                    kills int NOT NULL,
+                    deaths int NOT NULL,
+                    headshots int NOT NULL,
+                    shots int NOT NULL,
+                    shots_hit int NOT NULL,
+                    vehicle_kills int NOT NULL,
+                    seconds_with int NOT NULL,
+
+                    kd real NOT NULL,
+                    kpm real NOT NULL,
+                    vkpm real NOT NULL,
+                    acc real NOT NULL,
+                    hsr real NOT NULL
                 );
 
-                CREATE INDEX IF NOT EXISTS idx_weapon_stat_top_item_id ON weapon_stat_top_xref(reference_id);
+                CREATE INDEX IF NOT EXISTS idx_weapon_stat_top_item_id ON weapon_stat_top_xref(item_id);
             ");
 
             await cmd.ExecuteNonQueryAsync();

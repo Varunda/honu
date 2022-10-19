@@ -1,5 +1,14 @@
 ﻿<template>
     <div>
+        <h4 v-if="displayedStats.state == 'loaded' && displayedStats.data.length == 0" class="alert alert-warning text-center">
+            There is no top data stored in the database. This means it either has yet to be generated, or this item you
+            are viewing is not a weapon
+        </h4>
+
+        <h3 v-if="lastUpdated != null" class="alert alert-secondary text-center">
+            This data was last updated on: {{lastUpdated | moment}}
+        </h3>
+
         <div class="input-grid-col2" style="grid-template-columns: min-content min-content; row-gap: 0.5rem; justify-content: center">
             <div class="input-cell mr-2">
                 Stat
@@ -24,6 +33,10 @@
 
                 <button @click="loadKills" type="button" class="btn" :class="[ column == 'kills' ? 'btn-primary' : 'btn-secondary' ]">
                     Kills
+                </button>
+
+                <button @click="loadVKPM" type="button" class="btn" :class="[ column == 'vkpm' ? 'btn-primary' : 'btn-secondary' ]">
+                    Vehicle KPM
                 </button>
             </div>
 
@@ -78,21 +91,26 @@
                     NS
                 </toggle-button>
             </div>
-
-            <div class="input-cell" style="grid-column: 1 / span 2;">
-                <button type="button" class="btn btn-primary w-100" @click="load">
-                    Load
-                </button>
-            </div>
         </div>
 
         <hr />
 
         <div>
+
             <a-table
-                :entries="entries"
+                :entries="displayedStats"
                 display-type="table" row-padding="compact"
                 :paginate="false">
+
+                <a-col>
+                    <a-header>
+                        <b>Rank</b>
+                    </a-header>
+
+                    <a-body>
+                        <a-rank></a-rank>
+                    </a-body>
+                </a-col>
 
                 <a-col>
                     <a-header>
@@ -226,6 +244,35 @@
                         </span>
                     </a-body>
                 </a-col>
+
+                <a-col>
+                    <a-header>
+                        <span class="text-center d-inline-block w-100">
+                            <b>Vehicle Kills</b>
+                        </span>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span class="w-100 h-100 d-inline-block text-center" :class="[ column == 'vkills' ? 'selected-column table-secondary' : '' ]">
+                            {{entry.entry.vehicleKills | locale}}
+                        </span>
+                    </a-body>
+                </a-col>
+
+                <a-col>
+                    <a-header>
+                        <span class="text-center d-inline-block w-100">
+                            <b>Vehicle KPM</b>
+                        </span>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        <span class="w-100 h-100 d-inline-block text-center" :class="[ column == 'vkpm' ? 'selected-column table-secondary' : '' ]">
+                            {{entry.entry.vehicleKillsPerMinute | locale}}
+                        </span>
+                    </a-body>
+                </a-col>
+
             </a-table>
         </div>
 
@@ -237,15 +284,18 @@
     import { Loading, Loadable } from "Loading";
 
     import ColorUtils from "util/Color";
+    import WorldUtils from "util/World";
+
     import "MomentFilter";
     import "filters/LocaleFilter";
     import "filters/WorldNameFilter";
     import "filters/FactionNameFilter";
 
-    import { ATable, AFilter, AHeader, ABody, ACol } from "components/ATable";
+    import { ATable, AFilter, AHeader, ABody, ACol, ARank } from "components/ATable";
     import ToggleButton from "components/ToggleButton";
 
-    import { ExpandedWeaponStatEntry, CharacterWeaponStatApi } from "api/CharacterWeaponStatApi";
+    import { ExpandedWeaponStatEntry, CharacterWeaponStatApi, PercentileCacheType } from "api/CharacterWeaponStatApi";
+    import { ExpandedWeaponStatTop, WeaponStatTopApi } from "api/WeaponStatTopApi";
 
     export const ItemTopViewer = Vue.extend({
         props: {
@@ -253,14 +303,14 @@
         },
 
         mounted: function(): void {
+            this.loadAll();
             this.loadKpm();
         },
 
         data: function() {
             return {
-                entries: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>,
-
-                column: "kpm" as "kd" | "kpm" | "hsr" | "acc" | "kills",
+                column: "kpm" as "kd" | "kpm" | "vkpm" | "hsr" | "acc" | "kills" | "vkills",
+                count: 50 as number,
 
                 world: {
                     connery: true as boolean,
@@ -278,97 +328,49 @@
                     ns: true as boolean,
                 },
 
-                kd: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>,
-                kpm: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>,
-                acc: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>,
-                hsr: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>,
-                kills: Loadable.idle() as Loading<ExpandedWeaponStatEntry[]>
+                all: Loadable.idle() as Loading<ExpandedWeaponStatTop[]>,
             };
         },
 
         methods: {
-            load: function(): void {
-                if (this.column == "kd") {
-                    this.loadKd();
-                } else if (this.column == "kpm") {
-                    this.loadKpm();
-                } else if (this.column == "acc") {
-                    this.loadAcc();
-                } else if (this.column == "hsr") {
-                    this.loadHsr();
-                } else if (this.column == "kills") {
-                    this.loadKills();
-                }
+            loadAll: async function(): Promise<void> {
+                this.all = Loadable.loading();
+                this.all = await WeaponStatTopApi.getTopAll(Number.parseInt(this.ItemId));
             },
 
             loadKd: function(): void {
                 this.column = "kd";
-
-                if (this.kd.state == "idle") {
-                    this.kd = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKD(this.ItemId, this.worlds, this.factions).then(iter => {
-                        this.kd = iter;
-                        this.entries = this.kd;
-                    });
-                }
-                this.entries = this.kd;
+                this.count = 50;
             },
 
             loadKpm: function(): void {
                 this.column = "kpm";
-
-                if (this.kpm.state == "idle") {
-                    console.log(`doing first load of KPM`);
-                    this.kpm = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKPM(this.ItemId, this.worlds, this.factions).then(iter => {
-                        this.kpm = iter;
-                        this.entries = this.kpm;
-                    });
-                }
-
-                this.entries = this.kpm;
+                this.count = 50;
             },
 
             loadAcc: function(): void {
                 this.column = "acc";
-
-                if (this.acc.state == "idle") {
-                    this.acc = Loadable.loading();
-                    CharacterWeaponStatApi.getTopAccuracy(this.ItemId, this.worlds, this.factions).then(iter => {
-                        this.acc = iter;
-                        this.entries = this.acc;
-                    });
-                }
-
-                this.entries = this.acc;
+                this.count = 50;
             },
 
             loadHsr: function(): void {
                 this.column = "hsr";
-
-                if (this.hsr.state == "idle") {
-                    this.hsr = Loadable.loading();
-                    CharacterWeaponStatApi.getTopHeadshotRatio(this.ItemId, this.worlds, this.factions).then(iter => {
-                        this.hsr = iter;
-                        this.entries = this.hsr;
-                    });
-                }
-
-                this.entries = this.hsr;
+                this.count = 50;
             },
 
             loadKills: function(): void {
                 this.column = "kills";
+                this.count = 200;
+            },
 
-                if (this.kills.state == "idle") {
-                    this.kills = Loadable.loading();
-                    CharacterWeaponStatApi.getTopKills(this.ItemId, this.worlds, this.factions).then(iter => {
-                        this.kills = iter;
-                        this.entries = this.kills;
-                    });
-                }
+            loadVKills: function(): void {
+                this.column = "vkills";
+                this.count = 50;
+            },
 
-                this.entries = this.kills;
+            loadVKPM: function(): void {
+                this.column = "vkpm";
+                this.count = 50;
             },
 
             columnStyle: function(col: string): object {
@@ -377,43 +379,77 @@
                     padding: this.column == col ? "0.3rem" : "",
                 };
             },
-
-            clearData: function(): void {
-                this.kd = Loadable.idle();
-                this.kpm = Loadable.idle();
-                this.acc = Loadable.idle();
-                this.hsr = Loadable.idle();
-                this.kills = Loadable.idle();
-            },
-        },
-
-        watch: {
-            world: {
-                handler: function(): void {
-                    console.log("yuh");
-                    this.clearData();
-                },
-                deep: true
-            },
-
-            faction: {
-                handler: function(): void {
-                    this.clearData();
-                },
-                deep: true
-            }
         },
 
         computed: {
+            lastUpdated: function(): Date | null {
+                if (this.all.state != "loaded") {
+                    return null;
+                }
+
+                if (this.all.data.length == 0) {
+                    return null;
+                }
+
+                return this.all.data[0].entry.timestamp;
+            },
+
+            displayedStats: function(): Loading<ExpandedWeaponStatTop[]> {
+                if (this.all.state != "loaded") {
+                    return Loadable.rewrap(this.all);
+                }
+
+                let typeID: number = 0;
+                let sortFunc: ((iter: ExpandedWeaponStatTop) => number) | null = null;
+
+                if (this.column == "kd") {
+                    typeID = PercentileCacheType.KD;
+                    sortFunc = iter => iter.entry.killDeathRatio;
+                } else if (this.column == "kpm") {
+                    typeID = PercentileCacheType.KPM;
+                    sortFunc = iter => iter.entry.killsPerMinute;
+                } else if (this.column == "vkpm") {
+                    typeID = PercentileCacheType.VKPM;
+                    sortFunc = iter => iter.entry.vehicleKillsPerMinute;
+                } else if (this.column == "acc") {
+                    typeID = PercentileCacheType.ACC;
+                    sortFunc = iter => iter.entry.accuracy;
+                } else if (this.column == "hsr") {
+                    typeID = PercentileCacheType.HSR;
+                    sortFunc = iter => iter.entry.headshotRatio;
+                } else if (this.column == "kills") {
+                    typeID = PercentileCacheType.KILLS;
+                    sortFunc = iter => iter.entry.kills;
+                } else if (this.column == "vkills") {
+                    typeID = PercentileCacheType.VKPM;
+                    sortFunc = iter => iter.entry.vehicleKillsPerMinute;
+                } else {
+                    throw `Unchecked value of column: '${this.column}'`;
+                }
+
+                if (sortFunc == null) {
+                    throw `sortFunc is null somehow`;
+                }
+
+                const type: ExpandedWeaponStatTop[] = this.all.data.filter((iter: ExpandedWeaponStatTop) => {
+                    return iter.entry.typeID == typeID
+                        && iter.character != null
+                        && this.worlds.indexOf(iter.character.worldID) > -1
+                        && this.factions.indexOf(iter.character.factionID) > -1;
+                }).sort((a, b) => sortFunc!(b) - sortFunc!(a)).slice(0, this.count);
+
+                return Loadable.loaded(type);
+            },
+
             worlds: function(): number[] {
                 let worlds: number[] = [];
 
-                if (this.world.connery == true) { worlds.push(1); }
-                if (this.world.cobalt == true) { worlds.push(13); }
-                if (this.world.emerald == true) { worlds.push(17); }
-                if (this.world.miller == true) { worlds.push(10); }
-                if (this.world.soltech == true) { worlds.push(40); }
-                if (this.world.jaeger == true) { worlds.push(19); }
+                if (this.world.connery == true) { worlds.push(WorldUtils.Connery ); }
+                if (this.world.cobalt == true) { worlds.push(WorldUtils.Cobalt); }
+                if (this.world.emerald == true) { worlds.push(WorldUtils.Emerald); }
+                if (this.world.miller == true) { worlds.push(WorldUtils.Miller); }
+                if (this.world.soltech == true) { worlds.push(WorldUtils.SolTech); }
+                if (this.world.jaeger == true) { worlds.push(WorldUtils.Jaeger); }
 
                 return worlds;
             },
@@ -445,9 +481,9 @@
             AHeader,
             ABody,
             ACol,
+            ARank,
             ToggleButton
         }
-
     });
     export default ItemTopViewer;
 </script>

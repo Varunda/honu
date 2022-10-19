@@ -8,7 +8,7 @@
         <div v-else-if="all.state == 'loaded'">
 
             <h3 v-if="updatedAt != null" class="alert alert-secondary text-center">
-                This information was last updated on:
+                This data was last updated on:
                 {{updatedAt | moment}}
             </h3>
 
@@ -64,7 +64,7 @@
                 </div>
             </div>
 
-            <h3>Vehicle Kill per minute</h3>
+            <h3>Vehicle KPM</h3>
             <div class="row" v-if="all.data.vkpm != null">
                 <div class="col-2">
                     <chart-quartile-stats :data="all.data.vkpm" :interval="0.5"></chart-quartile-stats>

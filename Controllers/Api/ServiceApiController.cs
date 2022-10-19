@@ -29,13 +29,14 @@ namespace watchtower.Controllers.Api {
         private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly LogoutUpdateBuffer _LogoutQueue;
+        private readonly WeaponUpdateQueue _WeaponUpdateQueue;
 
         public ServiceApiController(ILogger<ServiceApiController> logger,
             IServiceHealthMonitor mon,
             CharacterCacheQueue charQueue, SessionStarterQueue session,
             CharacterUpdateQueue weapon, CensusRealtimeEventQueue task,
             WeaponPercentileCacheQueue percentile, DiscordMessageQueue discord,
-            LogoutUpdateBuffer logoutQueue) {
+            LogoutUpdateBuffer logoutQueue, WeaponUpdateQueue weaponUpdateQueue) {
 
             _Logger = logger;
 
@@ -48,6 +49,7 @@ namespace watchtower.Controllers.Api {
             _PercentileQueue = percentile;
             _DiscordQueue = discord;
             _LogoutQueue = logoutQueue;
+            _WeaponUpdateQueue = weaponUpdateQueue;
         }
 
         /// <summary>
@@ -92,6 +94,26 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(entries);
+        }
+
+        /// <summary>
+        ///     Get a list of weapon IDs that represent the order the stats will be updated in
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a list of longs, with the order representing what place in queue
+        ///     that weapon is to be updated. The weapon currently being updated will be at index 0, with
+        ///     all weapons in queue at index 1 and beyond
+        /// </response>
+        [HttpGet("weapon_update_queue")]
+        public ApiResponse<List<long>> GetWeaponUpdateQueue() {
+            List<long> queued = _WeaponUpdateQueue.ToList();
+
+            long? mostRecent = _WeaponUpdateQueue.GetMostRecentDequeued();
+            if (mostRecent != null) {
+                queued.Insert(0, mostRecent.Value);
+            }
+
+            return ApiOk(queued);
         }
 
     }

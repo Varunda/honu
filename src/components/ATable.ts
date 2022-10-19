@@ -370,8 +370,8 @@ export const ATable = Vue.extend({
                     }
 
                     rows.push(createElement("tbody", {},
-                        this.displayedEntries.map(iter => {
-                            return this.renderDataRow(createElement, iter);
+                        this.displayedEntries.map((iter, index) => {
+                            return this.renderDataRow(createElement, iter, index);
                         }))
                     );
                 }
@@ -586,7 +586,7 @@ export const ATable = Vue.extend({
 			]);
         },
 
-        renderDataRow(createElement: CreateElement, data: object): VNode {
+        renderDataRow(createElement: CreateElement, data: object, index: number): VNode {
             const cols: VNode[] = [];
 
             for (const column of this.nodes.columns) {
@@ -607,24 +607,6 @@ export const ATable = Vue.extend({
                     }
 
                     const bodyNode: VNode = headerNodes[0];
-                    if (bodyNode.data?.scopedSlots == undefined) {
-                        throw `No slots defined for an <a-body>`;
-                    }
-
-                    const slot = bodyNode.data?.scopedSlots["default"];
-                    if (slot == undefined) {
-                        throw `Missing default slot for a <a-body>`;
-                    }
-
-                    let lineHeight: string = "1.5";
-                    /*
-                    switch (this.RowPadding) {
-                        case "compact": lineHeight = "1"; break;
-                        case "expanded": lineHeight = "2"; break;
-                        case "tiny": lineHeight = "0.8"; break;
-                        default: lineHeight = "1.5"; break;
-                    }
-                    */
 
                     const options: VNodeData = {
                         staticClass: colClass,
@@ -633,13 +615,39 @@ export const ATable = Vue.extend({
                         }
                     }
 
-                    // Copy listeners to the generated node
-                    if (bodyNode.componentOptions?.listeners) {
-                        options.on = { ...bodyNode.componentOptions.listeners };
-                    }
+                    // If the <a-body> has a <a-rank> child, render a <td> with a child
+                    // Useful for an ordered list, such as the weapon stat top table
+                    if ((bodyNode.componentOptions?.children?.length ?? 0 > 0) && bodyNode.componentOptions?.children![0].componentOptions?.tag == "a-rank") {
+                        cols.push(createElement("td", options, `${this.pageOffset + index + 1}`));
+                    } else {
+                        if (bodyNode.data?.scopedSlots == undefined) {
+                            throw `No slots defined for an <a-body>`;
+                        }
 
-					options.staticClass = "";
-					cols.push(createElement("td", options, [slot(data)]));
+                        const slot = bodyNode.data?.scopedSlots["default"];
+                        if (slot == undefined) {
+                            throw `Missing default slot for a <a-body>`;
+                        }
+
+                        let lineHeight: string = "1.5";
+                        /*
+                        switch (this.RowPadding) {
+                            case "compact": lineHeight = "1"; break;
+                            case "expanded": lineHeight = "2"; break;
+                            case "tiny": lineHeight = "0.8"; break;
+                            default: lineHeight = "1.5"; break;
+                        }
+                        */
+
+
+                        // Copy listeners to the generated node
+                        if (bodyNode.componentOptions?.listeners) {
+                            options.on = { ...bodyNode.componentOptions.listeners };
+                        }
+
+                        options.staticClass = "";
+                        cols.push(createElement("td", options, [slot(data)]));
+                    }
                 }
             }
 
@@ -1425,4 +1433,8 @@ const AFilter = Vue.extend({
     template: `<div></div>`
 });
 
-export { ACol, AHeader, ABody, AFilter, AFooter }
+const ARank = Vue.extend({
+    template: `<div></div>`
+});
+
+export { ACol, AHeader, ABody, AFilter, AFooter, ARank };
