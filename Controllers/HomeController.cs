@@ -174,5 +174,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Population() {
+            return View();
+        }
+
     }
 }

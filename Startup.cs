@@ -202,6 +202,7 @@ namespace watchtower {
             //services.AddHostedService<PsbNamedImportStartupService>();
             //services.AddHostedService<PsbNamedCheckerService>();
             //services.AddHostedService<BackCreateAlertStartupService>();
+            services.AddHostedService<HostedPopulationCreatorService>();
 
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();

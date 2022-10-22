@@ -7,9 +7,22 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
     if (typeof (vueMoment as any).tz == "undefined") {
         (vueMoment as any).tz = new Date().getTimezoneOffset();
     }
+    if (typeof (vueMoment as any).tzname == "undefined") {
+        const today = new Date();
+        const short = today.toLocaleDateString();
+        const full = today.toLocaleDateString(undefined, { timeZoneName: "short" });
+
+        const shortIndex = full.indexOf(short);
+        if (shortIndex >= 0) {
+            const trimmed = full.substring(0, shortIndex) + full.substring(shortIndex + short.length);
+            (vueMoment as any).tzname = trimmed.replace(/^[\s,.\-:;]+|[\s,.\-:;]+$/g, '');
+        }
+    }
     if (input == null || input == undefined || input == "") {
         return "";
     }
+
+    const tzname: string = (vueMoment as any).tzname;
 
     if (typeof input == "string") {
         // Date strings ending with Z mean this ISO8601 date string is formatted in UTC time
@@ -17,12 +30,12 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
         if (input.endsWith("Z") == false) {
             input += "Z";
         }
-        return moment(input).format(format);
+        return moment(input).format(format) + " " + tzname;
     } else if (input instanceof Date) {
-        return moment(input).format(format);
+        return moment(input).format(format) + " " + tzname;
         //return moment(input).add(-(vueMoment as any).tz, "minutes").format(format);
     } else if (typeof input == "number") {
-        return moment(new Date(input)).format(format);
+        return moment(new Date(input)).format(format) + " " + tzname;
     } else {
         throw `Unknown type of input in moment filter, cannot parse to the format: ${input} (${typeof input})`;
     }

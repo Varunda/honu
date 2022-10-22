@@ -179,7 +179,6 @@ namespace watchtower.Services.Db {
                         (start BETWEEN @PeriodStart AND @PeriodEnd)
                         OR (finish BETWEEN @PeriodStart AND @PeriodEnd)
                         OR (start <= @PeriodStart AND finish >= @PeriodEnd)
-                        OR (start >= @PeriodStart AND finish <= @PeriodEnd)
                         OR (start < @PeriodStart AND finish IS NULL)
                     );
             ");
@@ -306,6 +305,28 @@ namespace watchtower.Services.Db {
 
             await cmd.ExecuteNonQueryAsync(cancel);
             await conn.CloseAsync();
+        }
+
+        /// <summary>
+        ///     Get the first session that occured, or null if no sessions have occured
+        /// </summary>
+        /// <remarks>
+        ///     This is used for creating population data
+        /// </remarks>
+        /// <returns></returns>
+        public async Task<Session?> GetFirstSession() {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    ORDER BY start ASC
+                    LIMIT 1;
+            ");
+
+            Session? f = await ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return f;
         }
 
         public override Session ReadEntry(NpgsqlDataReader reader) {

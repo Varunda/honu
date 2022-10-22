@@ -127,6 +127,10 @@ namespace watchtower.Services.Repositories {
         /// <param name="fast">If only characters from DB will be loaded, and any characters not in the DB will be queued for retrieval</param>
         /// <returns></returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, CensusEnvironment env, bool fast = false) {
+            if (IDs.Count == 0) {
+                return new List<PsCharacter>();
+            }
+
             // Make a copy of the IDs as this list gets modified, and if the passed list is modified,
             //      that could affect whatever is calling this method
             List<string> localIDs = new List<string>(IDs);

@@ -16,6 +16,7 @@ using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using watchtower.Code;
 using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Services;
@@ -111,6 +112,13 @@ namespace watchtower {
 
         public static IHostBuilder CreateHostBuilder(string[] args) {
             IHostBuilder? host = Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(logging => {
+                    // i don't like any of the provided default loggers
+                    logging.AddConsole(options => options.FormatterName = "HonuLogger")
+                        .AddConsoleFormatter<HonuLogger, HonuFormatterOptions>(options => {
+
+                        });
+                })
                 .ConfigureAppConfiguration(appConfig => {
                     appConfig.AddUserSecrets<Startup>();
                 }).ConfigureWebHostDefaults(webBuilder => {

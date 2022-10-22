@@ -24,14 +24,17 @@ namespace watchtower.Controllers.Api {
         private readonly ILogger<PopulationApiController> _Logger;
         private readonly OutfitDbStore _OutfitDb;
         private readonly WorldPopulationRepository _PopulationRepository;
+        private readonly PopulationDbStore _PopulationDb;
 
         public PopulationApiController(ILogger<PopulationApiController> logger,
-            OutfitDbStore outfitRepo, WorldPopulationRepository popRepo) {
+            OutfitDbStore outfitRepo, WorldPopulationRepository popRepo,
+            PopulationDbStore populationDb) {
 
             _Logger = logger;
 
             _OutfitDb = outfitRepo;
             _PopulationRepository = popRepo ?? throw new ArgumentNullException(nameof(popRepo));
+            _PopulationDb = populationDb;
         }
 
         /// <summary>
@@ -90,6 +93,90 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(pops);
+        }
+
+        /// <summary>
+        ///     Get historical population data between two time periods, optionally filtering by world and faction
+        /// </summary>
+        /// <remarks>
+        ///     If <paramref name="worlds"/> and <paramref name="factions"/> are not provided, 
+        ///     they have default behaviors described in the parameter documentation
+        ///     <br/><br/>
+        ///     Example queries:
+        ///     <br/>
+        ///     Loading the month of August, all worlds combined into one value, all factions combined into one:<br/>
+        ///     <code>&amp;start=2022-08-01T00:00&amp;end=2022-08-31T23:59</code>
+        ///     <br/><br/>
+        ///     Loading the month of August, filtered for only Connery NC<br/>
+        ///     <code>&amp;start=2022-08-01T00:00&amp;end=2022-08-31T23:59&amp;worlds=1&amp;factions=2</code>
+        ///     <br/><br/>
+        ///     Loading the month of August, filtered for only Emerald and Cobalt, all factions broken out<br/>
+        ///     <code>&amp;start=2022-08-01T00:00&amp;end=2022-08-31T23:59&amp;worlds=19&amp;worlds=13&amp;factions=1&amp;factions=2&amp;factions=3&amp;factions=4</code>
+        /// </remarks>
+        /// <param name="start">Start of the range where historical population data will be loaded</param>
+        /// <param name="end">End of the range (exclusive) where historical population data will be loaded</param>
+        /// <param name="worlds">
+        ///     Which worlds to include in the response. If no values are provided, it is assumed you want
+        ///     population data across all worlds combined into one value (world_id = 0).
+        ///     If you want to filter for specific worlds, you must set this parameter.
+        ///     <br/>
+        ///     For example, if you wanted to compare Connery (world 1) to Emerald (world 17), you'd have
+        ///     <code>&amp;worlds=1&amp;worlds=17</code>
+        /// </param>
+        /// <param name="factions">
+        ///     Which factions to include in the response. If no values are provided, it is assumed you want
+        ///     population data across all factions combined into one value (faction_id = 0).
+        ///     If you want to filter for specific factions, you must set this parameter.
+        ///     <br/>
+        ///     For example, if you want to load only VS and NC data, you'd have
+        ///     <code>&amp;factions=1&amp;factions=2</code>
+        /// </param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="PopulationEntry"/>s that match the 
+        ///     filters given. See the parameter documentation about the filters
+        /// </response>
+        /// <response code="400">
+        ///     One of the parameters passed failed validation:
+        ///     <ul>
+        ///         <li><paramref name="start"/> was the default value</li>
+        ///         <li><paramref name="end"/> was the default value</li>
+        ///         <li><paramref name="start"/> came after <paramref name="end"/></li>
+        ///     </ul>
+        /// </response>
+        [HttpGet("historical")]
+        public async Task<ApiResponse<List<PopulationEntry>>> GetByRange(
+            [FromQuery] DateTime start,
+            [FromQuery] DateTime end,
+            [FromQuery] List<short> worlds,
+            [FromQuery] List<short> factions) {
+
+            if (start == default) {
+                return ApiBadRequest<List<PopulationEntry>>($"{nameof(start)} must be provided");
+            }
+
+            if (end == default) {
+                return ApiBadRequest<List<PopulationEntry>>($"{nameof(end)} must be provided");
+            }
+
+            if (start >= end) {
+                return ApiBadRequest<List<PopulationEntry>>($"{nameof(start)} must come before {nameof(end)}");
+            }
+
+            List<PopulationEntry> entries = await _PopulationDb.GetByTimestampRange(start, end);
+
+            if (worlds.Count > 0) {
+                entries = entries.Where(iter => worlds.Contains(iter.WorldID)).ToList();
+            } else {
+                entries = entries.Where(iter => iter.WorldID == 0).ToList();
+            }
+
+            if (factions.Count > 0) {
+                entries = entries.Where(iter => factions.Contains(iter.FactionID)).ToList();
+            } else {
+                entries = entries.Where(iter => iter.FactionID == 0).ToList();
+            }
+
+            return ApiOk(entries);
         }
 
     }
