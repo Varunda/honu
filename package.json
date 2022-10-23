@@ -24,6 +24,7 @@
     "graphology-layout-forceatlas2": "^0.9.1",
     "graphology-layout-noverlap": "^0.4.2",
     "graphology-metrics": "^2.1.0",
+    "highcharts": "^10.2.1",
     "leaflet": "^1.7.1",
     "moment": "^2.29.2",
     "plotly.js": "^2.14.0",

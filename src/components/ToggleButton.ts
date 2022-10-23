@@ -4,6 +4,7 @@ export const ToggleButton = Vue.extend({
     props: {
         value: { type: Boolean, required: true },
         TrueColor: { type: String, default: "btn-success" },
+        FalseColor: { type: String, default: "" }
     },
 
     template: `
@@ -24,6 +25,9 @@ export const ToggleButton = Vue.extend({
             if (this.value == true && this.TrueColor.startsWith("#") == false) {
                 css += ` ${this.TrueColor}`;
             }
+            if (this.value == false && this.FalseColor.startsWith("#") == false) {
+                css += ` ${this.FalseColor}`;
+            }
             return css;
         },
 
@@ -31,6 +35,9 @@ export const ToggleButton = Vue.extend({
             let css: string = "";
             if (this.value == true && this.TrueColor.startsWith("#") == true) {
                 css += `background-color: ${this.TrueColor}`;
+            }
+            if (this.value == false && this.FalseColor.startsWith("#") == false) {
+                css += `background-color: ${this.FalseColor}`;
             }
 
             return css;
