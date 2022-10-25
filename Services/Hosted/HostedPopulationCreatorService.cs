@@ -30,7 +30,6 @@ namespace watchtower.Services.Hosted {
         private readonly List<short> _Worlds = new();
         private readonly List<short> _Factions = new();
 
-        private readonly HashSet<DateTime> _PopulatedPopulations = new();
         private readonly HashSet<string> _MissingCharacters = new();
 
         private const int TASK_DELAY = 60 * 5; // 5 minutes between runs
@@ -58,9 +57,10 @@ namespace watchtower.Services.Hosted {
                     Stopwatch timer = Stopwatch.StartNew();
                     int generatedCount = 0;
 
+                    HashSet<DateTime> alreadyPopulated = new();
                     List<PopulationCount> counts = await _PopulationDb.GetCounts();
                     foreach (PopulationCount count in counts) {
-                        _PopulatedPopulations.Add(count.Timestamp);
+                        alreadyPopulated.Add(count.Timestamp);
                     }
 
                     Session? firstSession = await _SessionDb.GetFirstSession();
@@ -85,7 +85,7 @@ namespace watchtower.Services.Hosted {
                         DateTime rangeEnd = i + TimeSpan.FromHours(1);
 
                         try {
-                            if (_PopulatedPopulations.Contains(i)) {
+                            if (alreadyPopulated.Contains(i)) {
                                 continue;
                             }
 
@@ -143,10 +143,6 @@ namespace watchtower.Services.Hosted {
                             return false;
                         }
 
-                        if (iter.End == null) {
-                            return false;
-                        }
-
                         if (worldID != 0 && c.WorldID != worldID) {
                             return false;
                         }
@@ -165,21 +161,20 @@ namespace watchtower.Services.Hosted {
                     entry.Duration = duration;
                     entry.Total = filtered.Count;
                     entry.Logins = filtered.Count(iter => iter.Start >= timestamp);
-                    entry.Logouts = filtered.Count(iter => iter.End <= rangeEnd);
+                    entry.Logouts = filtered.Count(iter => iter != null && iter.End <= rangeEnd);
                     entry.UniqueCharacters = filtered.Select(iter => iter.CharacterID).Distinct().Count();
 
                     List<int> sessionLengths = new(filtered.Count);
                     foreach (Session session in filtered) {
+                        DateTime end = session.End ?? DateTime.UtcNow;
+
                         DateTime b = (session.Start < timestamp) ? timestamp : session.Start;
-                        DateTime e = (session.End! > rangeEnd) ? rangeEnd : session.End!.Value;
+                        DateTime e = (end > rangeEnd) ? rangeEnd : end;
 
                         int length = (int)(e - b).TotalSeconds;
 
                         entry.SecondsPlayed += length;
-
-                        // If the session is outside the bounds of the time range, I think it's still useful
-                        //      to include that the session went on for a long time
-                        sessionLengths.Add((int)(session.Start - session.End!.Value).TotalSeconds);
+                        sessionLengths.Add((int)(session.Start - e).TotalSeconds);
                     }
 
                     entry.AverageSessionLength = (sessionLengths.Count == 0) ? 0 : (int)sessionLengths.Average();

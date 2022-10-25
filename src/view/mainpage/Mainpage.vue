@@ -127,6 +127,16 @@
         <hr class="border" />
 
         <div>
+            <h1 class="d-inline-block mr-2">
+                <a href="/population">
+                    Population
+                </a>
+            </h1>
+        </div>
+
+        <hr class="border" />
+
+        <div>
             <h4>Contact</h4>
 
             <div>

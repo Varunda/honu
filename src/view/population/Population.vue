@@ -114,21 +114,27 @@
                     <h4>Y axis</h4>
                     <toggle-button class="w-100" v-model="show.unique" false-color="btn-secondary">
                         Show unique characters with sessions
+                        <info-hover text="How many unique characters had a session occur within this timeframe"></info-hover>
                     </toggle-button>
                     <toggle-button class="w-100" v-model="show.total" false-color="btn-secondary">
                         Show total sessions
+                        <info-hover text="How many sessions in total took over within this timeframe"></info-hover>
                     </toggle-button>
                     <toggle-button class="w-100" v-model="show.logins" false-color="btn-secondary">
                         Show session starts
+                        <info-hover text="How many sessions were started within this timeframe"></info-hover>
                     </toggle-button>
                     <toggle-button class="w-100" v-model="show.logouts" false-color="btn-secondary">
                         Show session finishes
+                        <info-hover text="How many sessions were concluded within this timeframe"></info-hover>
                     </toggle-button>
                     <toggle-button class="w-100" v-model="show.length" false-color="btn-secondary">
                         Show time played by all
+                        <info-hover text="How much time was spent online by players"></info-hover>
                     </toggle-button>
                     <toggle-button class="w-100" v-model="show.average" false-color="btn-secondary">
                         Show average session length
+                        <info-hover text="How long a session that occured within this timeframe lasted on average"></info-hover>
                     </toggle-button>
                 </div>
             </div>
@@ -175,6 +181,7 @@
 
     import * as hc from "highcharts";
     import * as hs from "highcharts/highstock";
+    import "highcharts/modules/annotations";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
@@ -304,6 +311,7 @@
                 } else if (value == "length") {
                     return entry.secondsPlayed;
                 } else if (value == "average") {
+                    console.log(entry.averageSessionLength);
                     return entry.averageSessionLength;
                 }
 
@@ -392,7 +400,13 @@
 
                             let ret: string = "<b>" + this.series.name + "</b><br/>";
                             ret += `${moment(d).format("YYYY-MM-DD HH:mmA")} ${TimeUtils.getTimezoneName()}<br/>`;
-                            ret += `${this.y}<br/>`;
+
+                            const name: string = this.series.name;
+                            if (name.indexOf("length") > -1 || name.indexOf("average") > -1) {
+                                ret += `${TimeUtils.duration(this.y || 0)}</br>`;
+                            } else {
+                                ret += `${this.y}<br/>`;
+                            }
 
                             return ret;
                         }
@@ -406,12 +420,27 @@
                     }).reduce((acc, iter) => {
                         acc.push(...iter);
                         return acc;
-                    }, [])
+                    }, []),
+
+                    annotations: [
+                        {
+                            crop: false,
+                            labels: [
+                                {
+                                    point: { x: 0, y: 0, xAxis: 0, yAxis: 0 },
+                                    text: "Honu starts",
+                                },
+                                {
+                                    point: "max",
+                                    text: "Max"
+                                }
+                            ]
+                        }
+                    ]
                 });
             },
 
             generateSeries: function(entries: PopulationEntry[], colors: string[], index: number, values: string[], worldID: number, factionID: number): hc.SeriesOptionsType[] {
-
                 const arr: hc.SeriesOptionsType[] = [];
 
                 console.log(`World = ${worldID}, Faction = ${factionID}`);
