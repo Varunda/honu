@@ -45,8 +45,12 @@ namespace watchtower.Services.Hosted {
 
                         if (DateTime.UtcNow > w && (DateTime.UtcNow - TimeSpan.FromMinutes(1) <= w)) {
                             new Thread(async () => {
-                                _Logger.LogDebug($"Making alert for {entry.WorldID} start at {alertStart:u} in new thread");
-                                await GenerateAlert(entry.WorldID, alertStart, stoppingToken);
+                                try {
+                                    _Logger.LogDebug($"Making alert for {entry.WorldID} start at {alertStart:u} in new thread");
+                                    await GenerateAlert(entry.WorldID, alertStart, stoppingToken);
+                                } catch (Exception ex) {
+                                    _Logger.LogError(ex, $"error generating daily alert for {entry.WorldID}");
+                                }
                             }).Start();
                         }
                     }
