@@ -734,7 +734,7 @@ namespace watchtower.Realtime {
                         .Where(iter => iter.TypeID == 7) // 7 = warpgate
                         .ToList();
 
-                    _Logger.LogDebug($"Found {facs.Count} warpgates in {alert.ZoneID}, finding owners");
+                    _Logger.LogDebug($"Found {facs.Count} warpgates in zone {alert.ZoneID} world {alert.WorldID}, finding owners");
 
                     foreach (PsFacility fac in facs) {
                         PsFacilityOwner? owner = zone.GetFacilityOwner(fac.FacilityID);

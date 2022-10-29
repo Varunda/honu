@@ -59,8 +59,9 @@ namespace watchtower.Services.Hosted {
                     long itemID = await _Queue.Dequeue(stoppingToken);
 
                     if (_LastUpdated.TryGetValue(itemID, out DateTime lastUpdatedAt) == true) {
-                        if ((lastUpdatedAt - DateTime.UtcNow) <= TimeSpan.FromHours(2)) {
-                            _Logger.LogInformation($"{SERVICE_NAME}> Last updated {itemID} at {lastUpdatedAt:u}, skipping");
+                        TimeSpan diff = DateTime.UtcNow - lastUpdatedAt;
+                        if (diff.Duration() <= TimeSpan.FromHours(2)) {
+                            _Logger.LogInformation($"{SERVICE_NAME}> Last updated {itemID} at {lastUpdatedAt:u}, diff {diff}, skipping");
                             continue;
                         }
                     }
