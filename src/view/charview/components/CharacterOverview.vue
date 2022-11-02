@@ -216,6 +216,11 @@
                 </tr>
             </table>
 
+            <div v-if="stats.state == 'loading'">
+                <busy class="honu-busy"></busy>
+                Loading...
+            </div>
+
             <character-class-stats v-if="stats.state == 'loaded'" class="mr-4"
                 :data="stats.data" type="forever" title="All time" :include-metadata="true">
             </character-class-stats>

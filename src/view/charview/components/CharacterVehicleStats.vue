@@ -1,9 +1,5 @@
 ﻿<template>
     <div>
-        <h3 class="text-warning text-center">
-            work in progress
-        </h3>
-
         <div class="mb-2">
             <button type="button" class="btn btn-primary" @click="loadEntries">
                 Reload
@@ -15,6 +11,10 @@
 
             <toggle-button v-model="showImages">
                 Show images
+            </toggle-button>
+
+            <toggle-button v-model="showExtra">
+                Show extra
             </toggle-button>
         </div>
 
@@ -30,7 +30,7 @@
                     <b>Vehicle</b>
                 </a-header>
 
-                <a-filter method="input" type="string" field="itemName"
+                <a-filter method="input" type="string" field="name"
                     :conditions="[ 'contains' ]">
                 </a-filter>
 
@@ -45,7 +45,7 @@
                             style="position: absolute; text-align: center; height: 100%; right: 0;" class="mr-1">
                         </census-image>
 
-                        <a :href="'/i/' + entry.itemID" class="ml-1"
+                        <span class="ml-1"
                             style="
                                 position: absolute;
                                 text-shadow: -1px -1px 2px rgb(32, 32, 32), -1px 1px 2px rgb(32, 32, 32), 1px -1px 2px rgb(32, 32, 32), 1px 1px 2px rgb(32, 32, 32);
@@ -55,8 +55,68 @@
                             <span v-if="showDebug == true">
                                 / {{entry.vehicleID}}
                             </span>
-                        </a>
+                        </span>
                     </div>
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="kills">
+                <a-header>
+                    <b>Kills</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.kills | locale}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="kpm">
+                <a-header>
+                    <b>KPM</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.kpm | locale(3)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="weaponKills">
+                <a-header>
+                    <b>Weapon kills</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.weaponKills | locale(0)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="roadKills">
+                <a-header>
+                    <b>Road kills</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.roadKills | locale(0)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="vkills">
+                <a-header>
+                    <b>Vehicle kills</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.vkills | locale(0)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="vkpm">
+                <a-header>
+                    <b>VKPM</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.vkpm | locale(3)}}
                 </a-body>
             </a-col>
 
@@ -69,6 +129,21 @@
                     {{entry.secondsWith | mduration}}
                 </a-body>
             </a-col>
+
+            <a-col sort-field="kd">
+                <a-header>
+                    <b>K/D</b>
+                    <info-hover text="For multi-seat vehicles, deaths only occur if you pulled the vehicle"></info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.kd | locale(2)}}
+                    <span v-if="showExtra">
+                        ({{entry.kills | locale(0)}} / {{entry.deaths | locale(0)}})
+                    </span>
+                </a-body>
+            </a-col>
+
         </a-table>
     </div>
 </template>
@@ -92,17 +167,57 @@
     type VehicleStatEntry = {
         vehicleID: number;
         name: string;
-        secondsWith: number;
         imageID: number;
+
+        vkills: number;
+        roadKills: number;
+        weaponKills: number;
+        kills: number;
+
+        secondsWith: number;
+        weaponSecondsWith: number;
+        roadSecondsWith: number;
+
+        kpm: number;
+        vkpm: number;
+
+        deaths: number;
+        kd: number;
+        accuracy: number;
     };
 
-    function weaponStatToVehicleStat(entry: CharacterWeaponStatEntry): VehicleStatEntry {
-        return {
-            vehicleID: entry.vehicleID,
-            name: entry.vehicle == null ? `<unknown ${entry.vehicleID}>` : entry.vehicle.name,
-            secondsWith: entry.secondsWith,
-            imageID: entry.vehicle?.imageID ?? 0
+    function weaponStatToVehicleStat(entries: CharacterWeaponStatEntry[]): VehicleStatEntry {
+        let baseEntry: CharacterWeaponStatEntry | undefined = entries.find(iter => iter.itemID == "0");
+        if (baseEntry == undefined) {
+            baseEntry = entries[0];
         }
+
+        console.log(JSON.stringify(baseEntry));
+
+        const weaponKills: number = entries.filter(iter => iter.itemID != "0").reduce((acc, iter) => acc += iter.kills, 0);
+        const weaponTime: number = entries.filter(iter => iter.itemID != "0").reduce((acc, iter) => acc += iter.secondsWith, 0);
+
+        return {
+            vehicleID: baseEntry.vehicleID,
+            name: baseEntry.vehicle == null ? `<unknown ${baseEntry.vehicleID}>` : baseEntry.vehicle.name,
+            imageID: baseEntry.vehicle?.imageID ?? 0,
+
+            secondsWith: baseEntry.secondsWith,
+            weaponSecondsWith: weaponTime,
+            roadSecondsWith: baseEntry.secondsWith - weaponTime,
+
+            kills: baseEntry.kills,
+            vkills: baseEntry.vehicleKills,
+            roadKills: baseEntry.kills - weaponKills,
+            weaponKills: weaponKills,
+
+            kpm: baseEntry.killsPerMinute,
+            vkpm: baseEntry.vehicleKills / Math.max(1, baseEntry.secondsWith) * 60,
+
+            deaths: baseEntry.deaths,
+            kd: baseEntry.killDeathRatio,
+            accuracy: baseEntry.accuracy
+        };
     }
 
     export const CharacterVehicleStats = Vue.extend({
@@ -113,8 +228,10 @@
         data: function() {
             return {
                 entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>,
+
                 showImages: true as boolean,
-                showDebug: false as boolean
+                showDebug: false as boolean,
+                showExtra: false as boolean
             }
         },
 
@@ -124,25 +241,8 @@
 
         methods: {
             getWeaponNameStyle: function(entry: CharacterWeaponStatEntry): object {
-                let background: string = "rgb(32, 32, 32)";
-
-                if (entry.kills >= 10) {
-                    background = "#5c2b00";
-                }
-                if (entry.kills >= 60) {
-                    background = "#4c4c4c";
-                }
-                if (entry.kills >= 160) {
-                    background = "#544e01";
-                }
-                if (entry.kills >= 1160) {
-                    background = "#5c005c";
-                }
-
                 return {
                     'height': (this.showImages == true) ? '3rem' : '1.5rem',
-                    'background-color': background,
-                    width: Math.min(100, (entry.kills / 1160 * 100)) + '%',
                     'border-radius': '3px' 
                 }
             },
@@ -159,9 +259,22 @@
                     return Loadable.rewrap(this.entries);
                 }
 
+                const entries: Map<number, CharacterWeaponStatEntry[]> = new Map();
+
+                for (const datum of this.entries.data) {
+                    if (datum.vehicleID == 0) {
+                        continue;
+                    }
+
+                    if (entries.has(datum.vehicleID) == false) {
+                        entries.set(datum.vehicleID, []);
+                    }
+
+                    entries.get(datum.vehicleID)!.push(datum);
+                }
+
                 return Loadable.loaded(
-                    this.entries.data.filter(iter => iter.vehicleID > 0 && iter.itemID == "0" && iter.secondsWith > 0)
-                        .map(iter => weaponStatToVehicleStat(iter))
+                    Array.from(entries.values()).map(iter => weaponStatToVehicleStat(iter))
                 );
             }
         },
@@ -173,11 +286,7 @@
         },
 
         components: {
-            ATable,
-            ACol,
-            AHeader,
-            ABody,
-            AFilter,
+            ATable, ACol, AHeader, ABody, AFilter,
             InfoHover,
             PercentileCell,
             CensusImage,
