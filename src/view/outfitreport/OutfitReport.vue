@@ -151,6 +151,13 @@
                 </div>
 
                 <div style="grid-template-columns: min-content 1fr min-content" class="input-grid-col3">
+
+                    <div class="input-cell">
+                        Add outfits
+                    </div>
+                    <div class="input-cell"></div>
+                    <div class="input-cell"></div>
+
                     <!-- Outfit by tag -->
                     <div class="input-cell input-group-text input-group-prepend">
                         Outfit by tag
@@ -198,6 +205,12 @@
                             Add
                         </button>
                     </div>
+
+                    <div class="input-cell mt-3">
+                        Add characters
+                    </div>
+                    <div class="input-cell"></div>
+                    <div class="input-cell"></div>
 
                     <!-- character by name -->
                     <div class="input-cell input-group-text input-group-prepend">
@@ -298,7 +311,7 @@
 
             <div class="mb-3 w-100 border-top pt-3">
                 <div v-if="hasErrors" class="text-center">
-                    There are errors above. Fix them to continue
+                    There are errors above. Fix them to generate the report
                 </div>
 
                 <button @click="start" type="button" class="btn btn-lg btn-primary w-100" :disabled="connected == true || hasErrors">

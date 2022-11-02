@@ -25,7 +25,7 @@
                             <info-hover text="When the last data was received from the server"></info-hover>
                         </td>
                         <td>
-                            {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
+                            {{lastUpdate | moment("YYYY-MM-DD hh:mm:ssA")}}
                         </td>
                     </tr>
 
@@ -35,7 +35,7 @@
                             <info-hover text="When the data was last updated by the server"></info-hover>
                         </td>
                         <td>
-                            {{worldData.timestamp | moment("YYYY-MM-DD hh:mm:ssA ZZ")}}
+                            {{worldData.timestamp | moment("YYYY-MM-DD hh:mm:ssA")}}
                         </td>
                     </tr>
                 </table>
