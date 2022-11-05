@@ -181,7 +181,7 @@ namespace watchtower {
             services.AddHostedService<AlertLoadStartupService>();
             services.AddHostedService<RealtimeNetworkBroadcastService>();
             services.AddHostedService<RealtimeNetworkBuilderService>();
-            services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
+            //services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
             services.AddHostedService<RealtimeAlertBroadcastServer>();
 
             // Hosted queues

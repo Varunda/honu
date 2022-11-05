@@ -45,6 +45,11 @@ namespace watchtower.Services.Db {
             return snapshot;
         }
 
+        /// <summary>
+        ///     Get the weapon stat snapshots for a specific item
+        /// </summary>
+        /// <param name="itemID">ID of the item to get the snapshots of</param>
+        /// <returns>A list of <see cref="WeaponStatSnapshot"/>s</returns>
         public async Task<List<WeaponStatSnapshot>> GetByItemID(int itemID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -53,7 +58,7 @@ namespace watchtower.Services.Db {
                     WHERE item_id = @ItemID;
             ");
 
-            cmd.AddParameter("item_id", itemID);
+            cmd.AddParameter("ItemID", itemID);
 
             List<WeaponStatSnapshot> snapshots = await _Reader.ReadList(cmd);
             await conn.CloseAsync();

@@ -9,6 +9,9 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services.Hosted {
 
+    /// <summary>
+    ///     Now defunt, see <see cref="HostedBackgroundWeaponStatQueue"/>
+    /// </summary>
     public class HostedBackgroundWeaponStatSnapshotCreator : BackgroundService {
 
         private readonly ILogger<HostedBackgroundWeaponStatSnapshotCreator> _Logger;

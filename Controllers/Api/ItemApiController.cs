@@ -31,11 +31,13 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterRepository _CharacterRepository;
         private readonly WeaponStatBucketDbStore _BucketDb;
         private readonly WeaponStatTopDbStore _StatTopDb;
+        private readonly WeaponStatSnapshotDbStore _SnapshotDb;
 
         public ItemApiController(ILogger<ItemApiController> logger,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percDb,
             CharacterWeaponStatDbStore statDb, CharacterRepository charRepo,
-            WeaponStatBucketDbStore bucketDb, WeaponStatTopDbStore statTopDb) {
+            WeaponStatBucketDbStore bucketDb, WeaponStatTopDbStore statTopDb,
+            WeaponStatSnapshotDbStore snapshotDb) {
 
             _Logger = logger;
 
@@ -45,6 +47,7 @@ namespace watchtower.Controllers.Api {
             _CharacterRepository = charRepo;
             _BucketDb = bucketDb;
             _StatTopDb = statTopDb;
+            _SnapshotDb = snapshotDb;
         }
 
         /// <summary>
@@ -187,15 +190,31 @@ namespace watchtower.Controllers.Api {
             return ApiOk(all);
         }
 
+        /// <summary>
+        ///     Get the weapon stat snapshots for a specific item
+        /// </summary>
+        /// <param name="itemID">ID of the item</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="WeaponStatSnapshot"/>s
+        /// </response>
+        [HttpGet("{itemID}/snapshots")]
+        public async Task<ApiResponse<List<WeaponStatSnapshot>>> GetSnapshots(int itemID) {
+            List<WeaponStatSnapshot> snapshots = await _SnapshotDb.GetByItemID(itemID);
+            return ApiOk(snapshots);
+        }
+
         private async Task<List<ExpandedWeaponStatEntry>> GetExpanded(List<WeaponStatEntry> entries) {
             List<ExpandedWeaponStatEntry> expanded = new List<ExpandedWeaponStatEntry>(entries.Count);
+
+            List<string> charIDs = entries.Select(iter => iter.CharacterID).Distinct().ToList();
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC)).ToDictionary(iter => iter.ID);
 
             foreach (WeaponStatEntry entry in entries) {
                 ExpandedWeaponStatEntry ex = new ExpandedWeaponStatEntry() {
                     Entry = entry
                 };
 
-                PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID, CensusEnvironment.PC);
+                _ = chars.TryGetValue(entry.CharacterID, out PsCharacter? c);
                 ex.Character = c;
 
                 expanded.Add(ex);

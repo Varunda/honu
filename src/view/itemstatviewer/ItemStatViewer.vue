@@ -51,14 +51,24 @@
             </div>
         </div>
 
+        <!--
         <div class="w-100 mw-100">
-            <h2 class="wt-header">Percentile stats</h2>
-            <item-percentile-viewer :item-id="itemID"></item-percentile-viewer>
+            <collapsible header-text="Snapshots">
+                <item-snapshot :item-id="itemID"></item-snapshot>
+            </collapsible>
+        </div>
+        -->
+
+        <div class="w-100 mw-100">
+            <collapsible header-text="Percentile stats">
+                <item-percentile-viewer :item-id="itemID"></item-percentile-viewer>
+            </collapsible>
         </div>
 
         <div>
-            <h2 class="wt-header">Top</h2>
-            <item-top-viewer :item-id="itemID"></item-top-viewer>
+            <collapsible header-text="Top">
+                <item-top-viewer :item-id="itemID"></item-top-viewer>
+            </collapsible>
         </div>
 
     </div>
@@ -70,6 +80,7 @@
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
+    import Collapsible from "components/Collapsible.vue";
 
     import { PsItem, ItemApi } from "api/ItemApi";
     import { WeaponStatTopApi } from "api/WeaponStatTopApi";
@@ -77,6 +88,7 @@
 
     import ItemPercentileViewer from "./components/ItemPercentileViewer.vue";
     import ItemTopViewer from "./components/ItemTopViewer.vue";
+    import ItemSnapshot from "./components/ItemSnapshot.vue";
 
     import "MomentFilter";
 
@@ -186,9 +198,8 @@
         },
 
         components: {
-            ItemPercentileViewer,
-            ItemTopViewer,
-            InfoHover,
+            ItemPercentileViewer, ItemTopViewer, ItemSnapshot,
+            InfoHover, Collapsible,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });

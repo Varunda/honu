@@ -22,7 +22,7 @@
             </tr>
 
             <tr>
-                <td><b>Avg</b></td>
+                <td><b>50%</b></td>
                 <td>
                     {{quartile.median | locale}}{{ShowPercent == true ? "%" : ""}}
                 </td>
