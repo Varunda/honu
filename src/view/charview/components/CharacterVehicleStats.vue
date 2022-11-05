@@ -60,6 +60,16 @@
                 </a-body>
             </a-col>
 
+            <a-col sort-field="secondsWith">
+                <a-header>
+                    <b>Time</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.secondsWith | mduration}}
+                </a-body>
+            </a-col>
+
             <a-col sort-field="kills">
                 <a-header>
                     <b>Kills</b>
@@ -117,16 +127,6 @@
 
                 <a-body v-slot="entry">
                     {{entry.vkpm | locale(3)}}
-                </a-body>
-            </a-col>
-
-            <a-col sort-field="secondsWith">
-                <a-header>
-                    <b>Time</b>
-                </a-header>
-
-                <a-body v-slot="entry">
-                    {{entry.secondsWith | mduration}}
                 </a-body>
             </a-col>
 
