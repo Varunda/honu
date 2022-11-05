@@ -19,7 +19,7 @@ export default class TimeUtils {
     }
 
     public static format(date: Date, format: string = "YYYY-MM-DD hh:mmA"): string {
-        return moment(date).format(format);
+        return moment(date).format(format) + " " + TimeUtils.getTimezoneName();
     }
 
     // https://stackoverflow.com/questions/9772955/how-can-i-get-the-timezone-name-in-javascript

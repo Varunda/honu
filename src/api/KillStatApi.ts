@@ -80,8 +80,8 @@ export class KillStatApi extends ApiWrapper<KillEvent> {
         }
     }
 
-    public static async getWeaponEntries(charID: string): Promise<Loading<CharacterWeaponKillEntry[]>> {
-        return KillStatApi.get().readList(`/api/kills/character/${charID}`, KillStatApi.parseCharacterWeaponKillEntry);
+    public static async getWeaponEntries(charID: string, useShort: boolean): Promise<Loading<CharacterWeaponKillEntry[]>> {
+        return KillStatApi.get().readList(`/api/kills/character/${charID}?useShort=${useShort}`, KillStatApi.parseCharacterWeaponKillEntry);
     }
 
     public static async getOutfitKillers(outfitID: string): Promise<Loading<OutfitKillerEntry[]>> {

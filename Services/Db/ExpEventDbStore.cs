@@ -198,6 +198,16 @@ namespace watchtower.Services.Db {
             return events;
         }
 
+        /// <summary>
+        ///     Get all the <see cref="ExpEvent"/>s that have a <see cref="ExpEvent.SourceID"/>
+        ///     within <paramref name="IDs"/> and occured between <paramref name="start"/> and <paramref name="end"/>
+        /// </summary>
+        /// <param name="IDs">List of character IDs</param>
+        /// <param name="start">Start range to include the events of</param>
+        /// <param name="end">End range to include the events of</param>
+        /// <returns>
+        ///     A list of <see cref="ExpEvent"/>
+        /// </returns>
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
@@ -219,6 +229,18 @@ namespace watchtower.Services.Db {
             return events;
         }
 
+        /// <summary>
+        ///     Get all the <see cref="ExpEvent"/> that have occured within the last <paramref name="interval"/> minutes
+        ///     on the world of <paramref name="worldID"/>, while on team <paramref name="teamID"/>,
+        ///     and are a member of the outfit with ID <paramref name="outfitID"/>
+        /// </summary>
+        /// <param name="outfitID">ID of the outfit to limit the results to</param>
+        /// <param name="worldID">ID of the world to limit the results to</param>
+        /// <param name="teamID">ID of the team to limit the results to (useful for NSO and Deso)</param>
+        /// <param name="interval">How many minutes to go back</param>
+        /// <returns>
+        ///     A list of <see cref="ExpEvent"/>s
+        /// </returns>
         public async Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
@@ -290,8 +312,21 @@ namespace watchtower.Services.Db {
 
     }
 
+    /// <summary>
+    ///     Extension methods for <see cref="ExpEventDbStore"/>
+    /// </summary>
     public static class IExpEventDbStoreExtensionMethods {
 
+        /// <summary>
+        ///     Get the recent <see cref="ExpEvent"/>s a character has performed
+        /// </summary>
+        /// <param name="db">Extension instance</param>
+        /// <param name="characterID">ID of the character</param>
+        /// <param name="interval">How many minutes back to look</param>
+        /// <returns>
+        ///     A list of <see cref="ExpEvent"/>s that have occured within the last <paramref name="interval"/> minutes
+        ///     with a <see cref="ExpEvent.SourceID"/> of <paramref name="characterID"/>
+        /// </returns>
         public static Task<List<ExpEvent>> GetRecentByCharacterID(this ExpEventDbStore db, string characterID, int interval) {
             DateTime start = DateTime.UtcNow - TimeSpan.FromSeconds(interval * 60);
             return db.GetByCharacterID(characterID, start, DateTime.UtcNow);

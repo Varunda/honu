@@ -233,7 +233,7 @@
             </h4>
 
             <div class="grid-vs-player-kills">
-                <player-kill-block :block="worldData.vs" link="'/c/'"></player-kill-block>
+                <player-kill-block :block="worldData.vs" link="'/c/'" :use-short="useShort"></player-kill-block>
             </div>
 
             <div class="grid-vs-outfit-kills">
@@ -246,55 +246,55 @@
 
             <div class="grid-vs-heals d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerHeals" link="/c/"
-                    :source="expSources.charHeal" source-title="Players healed">
+                    :source="expSources.charHeal" source-title="Players healed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitHeals" title="Outfits" link="/o/"
-                    :source="expSources.outfitHeal" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitHeal" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-vs-revives d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerRevives" link="/c/"
-                    :source="expSources.charRevive" source-title="Players revived">
+                    :source="expSources.charRevive" source-title="Players revived" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitRevives" title="Outfits" link="/o/"
-                    :source="expSources.outfitRevive" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitRevive" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-vs-shields d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerShieldRepair" link="/c/"
-                    :source="expSources.charShield" source-title="Players shielded">
+                    :source="expSources.charShield" source-title="Players shielded" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitShieldRepair" link="/o/"
-                    :source="expSources.outfitShield" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitShield" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-vs-resupplies d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerResupplies" link="/c/"
-                    :source="expSources.charResupply" source-title="Players resupplies">
+                    :source="expSources.charResupply" source-title="Players resupplies" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitResupplies" title="Outfits" link="/o/"
-                    :source="expSources.outfitResupply" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitResupply" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-vs-spawns d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerSpawns" link="/c/"
-                    :source="expSources.charSpawn" source-title="Types of spawn">
+                    :source="expSources.charSpawn" source-title="Types of spawn" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitSpawns" title="Outfits" link="/o/"
-                    :source="expSources.outfitSpawn" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitSpawn" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-vs-vehicle-kills d-flex">
                 <block-view class="mr-3" :block="worldData.vs.playerVehicleKills" link="/c/"
-                    :source="expSources.charVKills" source-title="Vehicles destroyed">
+                    :source="expSources.charVKills" source-title="Vehicles destroyed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.vs.outfitVehicleKills" title="Outfit" link="/o/"
-                    :source="expSources.outfitVKills" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitVKills" :source-team-id="1" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
@@ -315,7 +315,7 @@
             </h4>
 
             <div class="grid-nc-player-kills">
-                <player-kill-block :block="worldData.nc"></player-kill-block>
+                <player-kill-block :block="worldData.nc" :use-short="useShort"></player-kill-block>
             </div>
             
             <div class="grid-nc-outfit-kills">
@@ -328,55 +328,55 @@
 
             <div class="grid-nc-heals d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerHeals" link="/c/"
-                    :source="expSources.charHeal" source-title="Players healed">
+                    :source="expSources.charHeal" source-title="Players healed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitHeals" title="Outfits" link="/o/"
-                    :source="expSources.outfitHeal" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitHeal" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-nc-revives d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerRevives" link="/c/"
-                    :source="expSources.charRevive" source-title="Players revived">
+                    :source="expSources.charRevive" source-title="Players revived" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitRevives" title="Outfits" link="/o/"
-                    :source="expSources.outfitRevive" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitRevive" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-nc-shields d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerShieldRepair" link="/c/"
-                    :source="expSources.charShield" source-title="Players shielded">
+                    :source="expSources.charShield" source-title="Players shielded" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitShieldRepair" link="/o/"
-                    :source="expSources.outfitShield" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitShield" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-nc-resupplies d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerResupplies" link="/c/"
-                    :source="expSources.charResupply" source-title="Players resupplies">
+                    :source="expSources.charResupply" source-title="Players resupplies" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitResupplies" title="Outfits" link="/o/"
-                    :source="expSources.outfitResupply" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitResupply" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-nc-spawns d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerSpawns" link="/c/"
-                    :source="expSources.charSpawn" source-title="Types of spawns">
+                    :source="expSources.charSpawn" source-title="Types of spawns" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitSpawns" title="Outfits" link="/o/"
-                    :source="expSources.outfitSpawn" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitSpawn" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-nc-vehicle-kills d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerVehicleKills" link="/c/"
-                    :source="expSources.charVKills" source-title="Vehicles destroyed">
+                    :source="expSources.charVKills" source-title="Vehicles destroyed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.nc.outfitVehicleKills" title="Outfit" link="/o/"
-                    :source="expSources.outfitVKills" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitVKills" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
@@ -397,7 +397,7 @@
             </h4>
 
             <div class="grid-tr-player-kills">
-                <player-kill-block :block="worldData.tr"></player-kill-block>
+                <player-kill-block :block="worldData.tr" :use-short="useShort"></player-kill-block>
             </div>
 
             <div class="grid-tr-outfit-kills">
@@ -410,55 +410,55 @@
 
             <div class="grid-tr-heals d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerHeals" link="/c/"
-                    :source="expSources.charHeal" source-title="Players healed">
+                    :source="expSources.charHeal" source-title="Players healed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitHeals" title="Outfits" link="/o/"
-                    :source="expSources.outfitHeal" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitHeal" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-tr-revives d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerRevives" link="/c/"
-                    :source="expSources.charRevive" source-title="Players revived">
+                    :source="expSources.charRevive" source-title="Players revived" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitRevives" title="Outfits" link="/o/"
-                    :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-tr-shields d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerShieldRepair" link="/c/"
-                    :source="expSources.charShield" source-title="Players shielded">
+                    :source="expSources.charShield" source-title="Players shielded" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitShieldRepair" link="/o/"
-                    :source="expSources.outfitShield" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitShield" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-tr-resupplies d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerResupplies" link="/c/"
-                    :source="expSources.charResupply" source-title="Players resupplied">
+                    :source="expSources.charResupply" source-title="Players resupplied" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitResupplies" title="Outfits" link="/o/"
-                    :source="expSources.outfitResupply" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitResupply" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-tr-spawns d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerSpawns" link="/c/"
-                    :source="expSources.charSpawn" source-title="Types of spawns">
+                    :source="expSources.charSpawn" source-title="Types of spawns" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitSpawns" title="Outfits" link="/o/"
-                    :source="expSources.outfitSpawn" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitSpawn" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
             <div class="grid-tr-vehicle-kills d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerVehicleKills" link="/c/"
-                    :source="expSources.charVKills" source-title="Vehicles destroyed">
+                    :source="expSources.charVKills" source-title="Vehicles destroyed" :source-use-short="useShort">
                 </block-view>
                 <block-view :block="worldData.tr.outfitVehicleKills" title="Outfit" link="/o/"
-                    :source="expSources.outfitVKills" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit">
+                    :source="expSources.outfitVKills" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
 
@@ -523,43 +523,7 @@
             </div>
         </div>
 
-        <div id="stat-table" style="display: none; background-color: var(--secondary); color: white; border: 2px var(--light) solid;">
-            <div class="d-flex bg-dark" style="align-items: center;">
-                <span class="flex-grow-1 px-2">
-                    {{modalData.title}}
-                </span>
-
-                <button type="button" class="btn flex-grow-0" @click="closeStatTooltip">
-                    &times;
-                </button>
-            </div>
-
-            <table class="table table-sm table-striped mb-0">
-                <thead>
-                    <tr>
-                        <th v-for="column in modalData.columnNames">
-                            {{column}}
-                        </th>
-                    </tr>
-                </thead>
-
-                <tbody v-if="modalData.loading == false">
-                    <tr v-for="datum in modalData.data">
-                        <td v-for="field in modalData.columnFields">
-                            {{datum[field]}}
-                        </td>
-                    </tr>
-                </tbody>
-
-                <tbody v-else>
-                    <tr>
-                        <td :colspan="modalData.columnNames.length">
-                            Loading...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <popper-modal :value="modalData"></popper-modal>
 
     </div>
 </template>
@@ -587,6 +551,7 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ContinentMetadata from "components/ContinentMetadata.vue";
     import InfoHover from "components/InfoHover.vue";
+    import PopperModal from "components/PopperModal.vue";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
@@ -948,7 +913,8 @@
             "WeaponKills": WeaponKillsView,
             InfoHover,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            WorldTag
+            WorldTag,
+            PopperModal
         }
     });
 

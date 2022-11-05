@@ -211,9 +211,12 @@ namespace watchtower.Controllers {
         ///     </ul>
         ///     All other values will produced a 404 Bad Request response
         /// </param>
+        /// <param name="useShort">
+        ///     True if only getting the data from the last hour, otherwise false for 2 hours
+        /// </param>
         /// <response code="200">
         ///     The response will contain a list of <see cref="CharacterExpSupportEntry"/>s the character has produced
-        ///     in the last 2 hours. See remarks for more info
+        ///     in the last 1 or 2 hours (depending on <paramref name="useShort"/>. See remarks for more info
         /// </response>
         /// <response code="400">
         ///     <paramref name="type"/> was an invalid value. See the parameter documentation on what is a valid value
@@ -238,7 +241,7 @@ namespace watchtower.Controllers {
                 return ApiOk(kills);
             }
 
-            List<int> expTypes = new List<int>();
+            List<int> expTypes = new();
 
             if (type == "heals") {
                 expTypes = new List<int> { Experience.HEAL, Experience.SQUAD_HEAL };
@@ -260,12 +263,16 @@ namespace watchtower.Controllers {
         /// <summary>
         ///     Get the characters in an outfit that have performed the exp event in <paramref name="type"/>
         /// </summary>
+        /// 
         /// <remarks>
         ///     Get a list of characters in an outfit that have performed the exp event passed in <paramref name="type"/>.
-        ///     For example, getting the top healers of an outfit in the last 2 hours. See <see cref="CharacterEntries(string, string)"/>
+        ///     For example, getting the top healers of an outfit in the last 2 hours. See <see cref="CharacterEntries(string, string, bool)"/>
         ///     for more remarks on what a "support event" is
         /// </remarks>
-        /// <param name="outfitID">ID of the outfit</param>
+        /// 
+        /// <param name="outfitID">
+        ///     ID of the outfit
+        /// </param>
         /// <param name="type">
         ///     What type of exp event the supported entries will be for. Expected values are:
         ///     <ul>
@@ -278,8 +285,16 @@ namespace watchtower.Controllers {
         ///     </ul>
         ///     All other values will produced a 404 Bad Request response
         /// </param>
-        /// <param name="worldID">ID of the world to restrict the data to. Needed as outfit members may be on multiple servers</param>
-        /// <param name="teamID">Team ID to restrict the data to. Needed for NSO characters currently on different teams, but are in the outfit</param>
+        /// <param name="worldID">
+        ///     ID of the world to restrict the data to. Needed as outfit members may be on multiple servers
+        /// </param>
+        /// <param name="teamID">
+        ///     Team ID to restrict the data to. Needed for NSO characters currently on different teams, but are in the outfit
+        /// </param>
+        /// <param name="useShort">
+        ///     True if only getting the data from the last hour, otherwise false for 2 hours
+        /// </param>
+        /// 
         /// <response code="200">
         ///     The response will contain a list of <see cref="OutfitExpEntry"/>s for the parameters given in the last 2 hours.
         ///     See remarks for more info
@@ -354,6 +369,7 @@ namespace watchtower.Controllers {
         private async Task<List<CharacterExpSupportEntry>> CharacterVehicleKills(string charID, bool useShort) {
             List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, useShort == true ? 60 : 120);
 
+            // please stop adding more vehicles ;-;
             CharacterExpSupportEntry flashKills = new CharacterExpSupportEntry() { CharacterName = "Flashes" };
             CharacterExpSupportEntry galaxyKills = new CharacterExpSupportEntry() { CharacterName = "Galaxies" };
             CharacterExpSupportEntry libKills = new CharacterExpSupportEntry() { CharacterName = "Liberators" };
@@ -438,7 +454,7 @@ namespace watchtower.Controllers {
 
                     entry = new CharacterExpSupportEntry() {
                         CharacterID = ev.OtherID,
-                        CharacterName = character?.GetDisplayName() ?? $"Missing {ev.OtherID}"
+                        CharacterName = character?.GetDisplayName() ?? $"missing {ev.OtherID}"
                     };
                 }
 
@@ -468,7 +484,7 @@ namespace watchtower.Controllers {
                     PsCharacter? character = await _CharacterRepository.GetByID(ev.SourceID, CensusEnvironment.PC);
                     entry = new OutfitExpEntry() {
                         CharacterID = ev.SourceID,
-                        CharacterName = character?.Name ?? $"Missing {ev.SourceID}"
+                        CharacterName = character?.GetDisplayName() ?? $"missing {ev.SourceID}"
                     };
                 }
 

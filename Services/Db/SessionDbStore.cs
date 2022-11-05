@@ -319,7 +319,7 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
-                    ORDER BY start ASC
+                    ORDER BY id ASC
                     LIMIT 1;
             ");
 

@@ -5,7 +5,10 @@
                 <th style="width: 30ch">Player</th>
                 <th>Kills</th>
                 <th title="Kills / Minutes Online">KPM</th>
-                <th title="Revives remove deaths">Deaths</th>
+                <th title="Revives remove deaths">
+                    Deaths
+                    <info-hover text="Revives remove a death, like in game"></info-hover>
+                </th>
                 <th>Assists</th>
                 <th title="Kills / Deaths">K/D</th>
                 <th title="(Kills + Assists) / Deaths">KDA</th>
@@ -27,13 +30,13 @@
                             {{entry.name}}
                         </a>
 
-                        <span style="flex-grow: 0;" title="hours:minutes">
+                        <a style="flex-grow: 0;" @click="openCharacterSessions($event, entry.id);" href="javascript:void(0);">
                             {{entry.secondsOnline | duration}}
-                        </span>
+                        </a>
                     </span>
                 </td>
                 <td>
-                    <a @click="openCharacterWeaponKills($event, entry.id)">
+                    <a @click="openCharacterWeaponKills($event, entry.id);" href="javascript:void(0);">
                         {{entry.kills}}
                     </a>
                 </td>
@@ -70,12 +73,19 @@
 
     import FactionColors from "FactionColors";
     import { PopperModalData } from "popper/PopperModalData";
+
     import { KillStatApi, CharacterWeaponKillEntry } from "api/KillStatApi";
+    import { Session, SessionApi } from "api/SessionApi";
+
+    import InfoHover from "components/InfoHover.vue";
+    import TimeUtils from "util/Time";
 
     export const KillData = Vue.extend({
         props: {
             block: { required: true },
-            title: { type: String, required: false, default: "Player" }
+            title: { type: String, required: false, default: "Player" },
+
+            UseShort: { type: Boolean, required: true }
         },
 
         data: function () {
@@ -89,6 +99,44 @@
                 return FactionColors.getFactionColor(factionID) + "!important";
             },
 
+            openCharacterSessions: async function(event: any, charID: string): Promise<void> {
+                const modalData: PopperModalData = new PopperModalData();
+                modalData.root = event.target;
+                modalData.title = "Session";
+                modalData.columnFields = [ "sessionID", "start", "end"];
+                modalData.columnNames = [ "ID", "Start", "End" ];
+                modalData.loading = true;
+
+                EventBus.$emit("set-modal-data", modalData);
+
+                const intervalStart: Date = new Date((new Date()).getTime() - (((this.UseShort == true) ? 120 : 60) * 60 * 1000));
+
+                const api: Loading<Session[]> = await SessionApi.getByCharacterIDAndPeriod(charID, intervalStart, new Date());
+                if (api.state != "loaded") {
+                    console.warn(`cannot load character session info: ${api.state} is not 'loaded'`);
+                    return;
+                }
+
+                let sessions: Session[] = api.data.sort((a, b) => b.start.getTime() - a.start.getTime());
+                modalData.data = sessions.map((iter: Session) => {
+                    const start: string = TimeUtils.format(iter.start);
+                    const end: string = iter.end == null ? "current" : TimeUtils.format(iter.end);
+                    return {
+                        sessionID: iter.id,
+                        start: start,
+                        end: end
+                    }
+                });
+
+                modalData.renderers.set("sessionID", (data: any): string => {
+                    return `<a href="/s/${data.sessionID}">${data.sessionID}</a>`;
+                });
+
+                modalData.loading = false;
+
+                EventBus.$emit("set-modal-data", modalData);
+            },
+
             openCharacterWeaponKills: async function(event: any, charID: string): Promise<void> {
                 const modalData: PopperModalData = new PopperModalData();
                 modalData.root = event.target;
@@ -99,7 +147,7 @@
 
                 EventBus.$emit("set-modal-data", modalData);
 
-                const api: Loading<CharacterWeaponKillEntry[]> = await KillStatApi.getWeaponEntries(charID);
+                const api: Loading<CharacterWeaponKillEntry[]> = await KillStatApi.getWeaponEntries(charID, this.UseShort);
                 if (api.state != "loaded") {
                     console.warn(`Got ${api.state} not 'loaded'`);
                     return;
@@ -110,9 +158,14 @@
                 modalData.data = kills.map((iter: CharacterWeaponKillEntry) => {
                     return {
                         ...iter,
+                        weaponID: iter.weaponID,
                         headshotRatio: `${(iter.headshotKills / iter.kills * 100).toFixed(2)}%`,
                         percent: `${(iter.kills / totalKills * 100).toFixed(2)}%`
                     }
+                });
+
+                modalData.renderers.set("weaponName", (data: any): string => {
+                    return `<a href="/i/${data.weaponID}">${data.weaponName}</a>`;
                 });
 
                 modalData.loading = false;
@@ -121,6 +174,9 @@
             }
         },
 
+        components: {
+            InfoHover
+        }
     });
     export default KillData;
 </script>

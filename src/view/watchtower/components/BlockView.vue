@@ -18,7 +18,7 @@
                     </span>
                 </td>
                 <td>
-                    <a v-if="source" @click="clickHandler($event, entry.id)">
+                    <a v-if="source" @click="clickHandler($event, entry.id)" href="javascript:void(0);">
                         {{entry.value}} 
                     </a>
 
@@ -55,10 +55,11 @@
             source: { type: Function, required: false, default: null },
             link: { type: String, required: false },
 
-            sourceLimit: { type: Number, required: false, default: 6 },
-            sourceWorldId: { type: Number, required: false },
-            sourceTeamId: { type: Number, required: false },
-            sourceTitle: { type: String, required: false, default: "Supported" }
+            SourceLimit: { type: Number, required: false, default: 6 },
+            SourceWorldId: { type: Number, required: false },
+            SourceTeamId: { type: Number, required: false },
+            SourceTitle: { type: String, required: false, default: "Supported" },
+            SourceUseShort: { type: Boolean, required: true }
         },
 
         data: function () {
@@ -76,14 +77,14 @@
                 if (this.source) {
                     const modalData: PopperModalData = new PopperModalData();
                     modalData.root = event.target;
-                    modalData.title = this.sourceTitle;
+                    modalData.title = this.SourceTitle;
                     modalData.columnFields = [ "characterName", "amount", "percent" ];
                     modalData.columnNames = [ "Character", "Amount", "Percent" ];
                     modalData.loading = true;
 
                     EventBus.$emit("set-modal-data", modalData);
 
-                    const api: Loading<CharacterExpSupportEntry[]> = await this.source(charID, this.sourceWorldId, this.sourceTeamId);
+                    const api: Loading<CharacterExpSupportEntry[]> = await this.source(charID, this.SourceUseShort, this.SourceWorldId, this.SourceTeamId);
                     if (api.state != "loaded") {
                         console.warn(`Got ${api.state} not 'loaded'`);
                         return;
@@ -92,9 +93,9 @@
                     const total: number = data.reduce((acc, iter) => acc + iter.amount, 0);
 
                     // Trim to only show the top 6 killers
-                    if (data.length > (this.sourceLimit + 1)) {
-                        const hidden: CharacterExpSupportEntry[] = data.slice(this.sourceLimit);
-                        data = data.slice(0, this.sourceLimit);
+                    if (data.length > (this.SourceLimit + 1)) {
+                        const hidden: CharacterExpSupportEntry[] = data.slice(this.SourceLimit);
+                        data = data.slice(0, this.SourceLimit);
 
                         data.push({
                             characterID: "",
@@ -105,10 +106,20 @@
 
                     modalData.data = data.map((iter: CharacterExpSupportEntry) => {
                         return {
-                            ...iter,
+                            characterID: iter.characterID,
+                            characterName: iter.characterName,
+                            amount: iter.amount,
                             percent: `${(iter.amount / total * 100).toFixed(2)}%`
                         }
                     });
+
+                    modalData.renderers.set("characterName", (data: any): string => {
+                        if (data.characterID != "") {
+                            return `<a href="/c/${data.characterID}">${data.characterName}</a>`;
+                        }
+                        return `${data.characterName}`;
+                    });
+
                     modalData.loading = false;
 
                     EventBus.$emit("set-modal-data", modalData);
