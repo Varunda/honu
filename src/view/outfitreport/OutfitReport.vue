@@ -891,7 +891,7 @@
                 const start: number = Math.floor(this.periodStart.getTime() / 1000);
                 const end: number = Math.floor(this.periodEnd.getTime() / 1000);
 
-                this.errors.longTime = end - start > 60 * 60 * 8;
+                this.errors.longTime = end - start > 60 * 60 * 12;
 
                 this.errors.badTime = start > end;
                 this.errors.noPlayers = (this.outfits.length == 0 && this.characters.length == 0);
