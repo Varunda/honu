@@ -329,8 +329,8 @@ namespace watchtower.Code.Hubs.Implementations {
                 return false;
             }
 
-            if (parms.PeriodEnd - parms.PeriodStart >= TimeSpan.FromHours(8)) {
-                await Clients.Caller.SendError($"A report cannot span more than 8 hours");
+            if (parms.PeriodEnd - parms.PeriodStart > TimeSpan.FromHours(12)) {
+                await Clients.Caller.SendError($"A report cannot span more than 12 hours");
                 return false;
             }
 
