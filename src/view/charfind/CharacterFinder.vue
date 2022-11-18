@@ -70,16 +70,19 @@
             </tbody>
 
             <tbody v-else-if="characters.state == 'loaded' && characters.data.length > 0">
-                <tr v-for="(c, index) of characters.data" :key="c.id" :class="[ scrollIndex == index ? 'table-info' : '' ]">
-                    <td>
-                        <span v-if="c.outfitID != null" :title="'\'' + c.outfitName + '\''">
-                            [{{c.outfitTag}}]
+                <tr v-for="(c, index) of entries" :key="c.character.id" :class="[ scrollIndex == index ? 'table-info' : '' ]">
+                    <td :class="{ 'text-danger': c.metadata != null && c.metadata.notFoundCount > 0 }">
+                        <span v-if="c.character.outfitID != null" :title="'\'' + c.character.outfitName + '\''">
+                            [{{c.character.outfitTag}}]
                         </span>
-                        {{c.name}}
+                        {{c.character.name}}
+
+                        <info-hover v-if="c.metadata != null && c.metadata.notFoundCount > 0" text="This character may have been deleted">
+                        </info-hover>
                     </td>
 
                     <td>
-                        {{c.prestige}}~{{c.battleRank}}
+                        {{c.character.prestige}}~{{c.character.battleRank}}
                     </td>
 
                     <td>
@@ -88,37 +91,37 @@
                         </span>
 
                         <span v-else>
-                            <a :href="'/o/' + c.outfitID">
-                                [{{c.outfitTag}}] {{c.outfitName}}
+                            <a :href="'/o/' + c.character.outfitID">
+                                [{{c.character.outfitTag}}] {{c.character.outfitName}}
                             </a>
                         </span>
                     </td>
 
                     <td>
-                        {{c.factionID | faction}}
+                        {{c.character.factionID | faction}}
 
                     <td>
-                        {{c.worldID | world}}
+                        {{c.character.worldID | world}}
                     </td>
 
                     <td>
-                        <span v-if="c.dateLastLogin.getTime() == defaultTime || c.dateLastLogin.getTime() == 0">
-                            {{c.lastUpdated | moment}}
-                            ({{c.lastUpdated | timeAgo}})
+                        <span v-if="c.character.dateLastLogin.getTime() == defaultTime || c.character.dateLastLogin.getTime() == 0">
+                            {{c.character.lastUpdated | moment}}
+                            ({{c.character.lastUpdated | timeAgo}})
                         </span>
                         <span v-else>
-                            {{c.dateLastLogin | moment}}
-                            ({{c.dateLastLogin | timeAgo}})
+                            {{c.character.dateLastLogin | moment}}
+                            ({{c.character.dateLastLogin | timeAgo}})
                         </span>
                     </td>
 
                     <td>
-                        <a :href="'/c/' + c.id" class="btn btn-success">View in this tab</a>
-                        <a :href="'/c/' + c.id" target="_blank" class="btn btn-primary">View in new tab</a>
+                        <a :href="'/c/' + c.character.id" class="btn btn-success">View in this tab</a>
+                        <a :href="'/c/' + c.character.id" target="_blank" class="btn btn-primary">View in new tab</a>
                     </td>
 
                     <td>
-                        <button type="button" @click="copyToClipboard(c.id)" class="btn btn-primary">
+                        <button type="button" @click="copyToClipboard(c.character.id)" class="btn btn-primary">
                             Copy
                         </button>
                     </td>
@@ -157,6 +160,12 @@
 
     import { Loading, Loadable } from "Loading";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
+    import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
+
+    type CharacterEntry = {
+        character: PsCharacter,
+        metadata: CharacterMetadata | null
+    };
 
     export const CharacterFinder = Vue.extend({
         props: {
@@ -166,6 +175,7 @@
         data: function() {
             return {
                 characters: Loadable.idle() as Loading<PsCharacter[]>,
+                metadatas: Loadable.idle() as Loading<CharacterMetadata[]>,
 
                 charName: "" as string,
                 lastSearch: "" as string,
@@ -294,6 +304,17 @@
                 } else {
                     this.characters = Loadable.loaded(arr);
                 }
+
+                if (this.characters.state != "loaded") {
+                    throw `how aren't you loaded?`;
+                }
+
+                const charIDs: string[] = this.characters.data.map(iter => iter.id);
+                this.metadatas = Loadable.loading();
+
+                CharacterMetadataApi.getByIDs(charIDs).then((data: Loading<CharacterMetadata[]>) => {
+                    this.metadatas = data;
+                });
             },
 
             copyToClipboard: function(charID: string): void {
@@ -340,6 +361,24 @@
             validCharName: function(): boolean {
                 return this.charName.trim().length > 1
                     && this.charName.length < 33;
+            },
+
+            entries: function(): CharacterEntry[] {
+                if (this.characters.state != "loaded") {
+                    return [];
+                }
+
+                return this.characters.data.map(iter => {
+                    let metadata: CharacterMetadata | null = null;
+                    if (this.metadatas.state == "loaded") {
+                        metadata = this.metadatas.data.find(i => i.id == iter.id) ?? null;
+                    }
+
+                    return {
+                        character: iter,
+                        metadata: metadata
+                    };
+                });
             }
         },
 

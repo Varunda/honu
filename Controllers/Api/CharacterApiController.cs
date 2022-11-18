@@ -308,6 +308,31 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get the metadata for multiple characters
+        /// </summary>
+        /// <param name="IDs">IDs of the characters to get</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="CharacterMetadata"/>s for each character
+        ///     in the parameter <paramref name="IDs"/>
+        /// </response>
+        /// <response code="400">
+        ///     One of the following validation error occured:
+        ///     <ul>
+        ///         <li><paramref name="IDs"/> had more than 250 elements</li>
+        ///     </ul>
+        /// </response>
+        [HttpGet("character/many/metadata")]
+        public async Task<ApiResponse<List<CharacterMetadata>>> GetMetadatas([FromQuery] List<string> IDs) {
+            if (IDs.Count > 250) {
+                return ApiBadRequest<List<CharacterMetadata>>($"Can only request 250 characters at once, requested {IDs.Count}");
+            }
+
+            List<CharacterMetadata> data = await _MetadataDb.GetByIDs(IDs);
+
+            return ApiOk(data);
+        }
+
+        /// <summary>
         ///     Get the friends of a PC character
         /// </summary>
         /// <remarks>

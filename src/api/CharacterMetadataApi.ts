@@ -22,5 +22,14 @@ export class CharacterMetadataApi extends ApiWrapper<CharacterMetadata> {
 		return CharacterMetadataApi.get().readSingle(`/api/character/${charID}/metadata`, CharacterMetadataApi.parse);
 	}
 
+	public static async getByIDs(IDs: string[]): Promise<Loading<CharacterMetadata[]>> {
+		const params: URLSearchParams = new URLSearchParams();
+		for (const charID of IDs) {
+			params.append("IDs", charID);
+		}
+
+		return CharacterMetadataApi.get().readList(`/api/character/many/metadata?${params.toString()}`, CharacterMetadataApi.parse);
+    }
+
 }
 

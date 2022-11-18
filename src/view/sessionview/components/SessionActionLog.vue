@@ -245,8 +245,6 @@
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
                             { html: `using` },
                             { html: (iter.event.weaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
-                            //((LoadoutUtils.isEngineer(iter.event.attackerLoadoutID) || LoadoutUtils.isInfiltrator(iter.event.attackerLoadoutID)) ? this.createLogText("as an") : this.createLogText("as a")),
-                            //this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
                         type: (asKill == true) ? "kill" : "death",

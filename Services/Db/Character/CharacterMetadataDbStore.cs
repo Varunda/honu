@@ -54,6 +54,27 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Get the metadata of multiple characters
+        /// </summary>
+        /// <param name="IDs"></param>
+        /// <returns></returns>
+        public async Task<List<CharacterMetadata>> GetByIDs(List<string> IDs) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM character_metadata
+                    WHERE id = ANY(@IDs);
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+
+            List<CharacterMetadata> md = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return md;
+        }
+
+        /// <summary>
         ///     Update/Insert a <see cref="CharacterMetadata"/>
         /// </summary>
         /// <param name="charID">ID of the character the <paramref name="metadata"/> is for</param>
