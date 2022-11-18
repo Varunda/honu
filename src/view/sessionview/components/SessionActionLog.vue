@@ -91,6 +91,7 @@
     import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
+    import { PsVehicle, VehicleApi } from "api/VehicleApi";
 
     import ZoneUtils from "util/Zone";
     import TimeUtils from "util/Time";
@@ -158,7 +159,9 @@
                     maxRepairs: false as boolean,
                     vehicleDestroy: true as boolean,
                     expOther: false as boolean
-                }
+                },
+
+                vehicles: Loadable.idle() as Loading<PsVehicle[]>
             }
         },
 
@@ -167,7 +170,15 @@
         },
 
         methods: {
-            makeAll: function(): void {
+
+            bindVehicles: async function(): Promise<void> {
+                this.vehicles = Loadable.loading();
+                this.vehicles = await VehicleApi.getAll();
+            },
+
+            makeAll: async function(): Promise<void> {
+                await this.bindVehicles();
+
                 this.makeKills();
                 this.makeDeaths();
                 this.makeExp();
@@ -220,6 +231,10 @@
              * @param asKill Where these kill/deaths a kill for the character of the session, or deaths?
              */
             makeDeathEventEntries: function(events: ExpandedKillEvent[], asKill: boolean): ActionLogEntry[] {
+                if (this.vehicles.state != "loaded") {
+                    console.warn(`SessionActionLog> vehicles isn't loaded`);
+                }
+
                 const entries: ActionLogEntry[] = events.map(iter => {
                     const entry: ActionLogEntry = {
                         parts: [
@@ -238,6 +253,13 @@
                         count: 1,
                         otherID: (asKill == true) ? iter.event.killedCharacterID : iter.event.attackerCharacterID
                     };
+
+                    if (iter.event.attackerVehicleID != 0 && this.vehicles.state == "loaded") {
+                        const v: PsVehicle | null = this.vehicles.data.find(i => i.id == iter.event.attackerVehicleID) ?? null;
+                        entry.parts.push({
+                            html: `in a ${v?.name ?? `unknown vehicle ${iter.event.attackerVehicleID}`}`
+                        });
+                    }
 
                     if (iter.event.isHeadshot == true) {
                         entry.parts.push({

@@ -174,6 +174,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import { Loading, Loadable } from "Loading";
 
     import "MomentFilter";
     import "filters/FixedFilter";
@@ -191,6 +192,7 @@
 
     import ChartTimestamp from "./ChartTimestamp.vue";
     import InfoHover from "components/InfoHover.vue";
+    import { PsVehicle, VehicleApi } from "api/VehicleApi";
 
     type OutfitKD = {
         outfitID: string;
@@ -230,11 +232,14 @@
 
                 outfitData: [] as OutfitKD[],
                 classData: [] as ClassKD[],
+
+                vehicles: Loadable.idle() as Loading<PsVehicle[]>
             }
         },
 
         mounted: function(): void {
-            this.$nextTick(() => {
+            this.$nextTick(async () => {
+                await this.bindVehicles();
                 this.generateKillWeaponChart();
             });
 
@@ -244,6 +249,12 @@
         },
 
         methods: {
+
+            bindVehicles: async function(): Promise<void> {
+                this.vehicles = Loadable.loading();
+                this.vehicles = await VehicleApi.getAll();
+            },
+
             generateKillWeaponChart: function(): void {
                 if (this.chart != null) {
                     this.chart.destroy();
@@ -293,8 +304,6 @@
                 const heavy: ClassKD = new ClassKD("Heavy Assault", "icon_heavy.png");
                 const max: ClassKD = new ClassKD("MAX", "icon_max.png");
 
-                //LoadoutUtils.getLoadoutName
-
                 function getClass(name: string): ClassKD {
                     if (name == LoadoutUtils.NAME_INFILTRATOR) {
                         return infil;
@@ -314,6 +323,10 @@
                 }
 
                 for (const ev of this.kills) {
+                    if (ev.event.killedLoadoutID == 0) {
+                        continue;
+                    }
+
                     const name: string = LoadoutUtils.getLoadoutName(ev.event.killedLoadoutID);
                     const clazz: ClassKD = getClass(name);
 
@@ -324,6 +337,10 @@
                 }
 
                 for (const ev of this.deaths) {
+                    if (ev.event.attackerLoadoutID == 0) {
+                        continue;
+                    }
+
                     const name: string = LoadoutUtils.getLoadoutName(ev.event.attackerLoadoutID);
                     const clazz: ClassKD = getClass(name);
 
