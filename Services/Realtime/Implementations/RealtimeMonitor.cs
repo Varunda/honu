@@ -279,7 +279,7 @@ namespace watchtower.Realtime {
         /// </summary>
         /// <param name="name">Name of the stream. Must be unique</param>
         /// <param name="serviceID">Service ID. If left null, the default value will be used</param>
-        /// <param name="platform">Platform to use, valid values are ps2|ps2ps4eu|ps2ps4us</param>
+        /// <param name="environment">Platform to use, valid values are ps2|ps2ps4eu|ps2ps4us</param>
         /// <returns>
         ///     The newly created stream, with all callbacks setup. To actually start receiving events on it, you must call .ConnectAsync
         /// </returns>

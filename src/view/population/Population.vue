@@ -139,7 +139,6 @@
                 </div>
             </div>
 
-
             <button class="btn btn-primary w-100" @click="loadEntries">
                 Load
             </button>

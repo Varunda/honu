@@ -25,6 +25,7 @@ namespace watchtower.Services.Repositories {
         ///     Get the <see cref="WorldData"/> of a world
         /// </summary>
         /// <param name="worldID">ID of the world to get the world data of</param>
+        /// <param name="duration">Duration of the world data</param>
         /// <returns>
         ///     The <see cref="WorldData"/> with <see cref="WorldData.WorldID"/> of <paramref name="worldID"/>,
         ///     or <c>null</c> if it does not exist

@@ -88,16 +88,18 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation($"Created alert {alert.ID}/{alert.Name}");
         }
 
-        public async Task Realtime() {
+        public Task Realtime() {
             List<RealtimeAlert> alerts = _RealtimeAlertRepository.GetAll();
 
             _Logger.LogInformation($"Have {alerts.Count} realtime alerts:");
             foreach (RealtimeAlert alert in alerts) {
                 _Logger.LogInformation($"Alert {alert.WorldID}.{alert.ZoneID}");
             }
+
+            return Task.CompletedTask;
         }
 
-        public async Task RealtimeCreate(short worldID, uint zoneID) {
+        public Task RealtimeCreate(short worldID, uint zoneID) {
             RealtimeAlert alert = new();
             alert.WorldID = worldID;
             alert.ZoneID = zoneID;
@@ -106,6 +108,8 @@ namespace watchtower.Code.Commands {
             _RealtimeAlertRepository.Add(alert);
 
             _Logger.LogInformation($"Alert world {alert.WorldID} zone {alert.ZoneID} started at {alert.Timestamp:u}");
+
+            return Task.CompletedTask;
         }
 
         public void RealtimeClear() {

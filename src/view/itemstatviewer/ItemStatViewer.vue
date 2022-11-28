@@ -13,7 +13,7 @@
                 <span>/</span>
 
                 <span v-if="item.state == 'loading'">
-                    &lt;Loading...&gt;
+                    &lt;loading...&gt;
                 </span>
 
                 <span v-else-if="item.state == 'loaded'">
@@ -51,13 +51,15 @@
             </div>
         </div>
 
-        <!--
-        <div class="w-100 mw-100">
+        <div class="m-2" @click="showSnapshot = !showSnapshot">
+            Show WIP
+        </div>
+
+        <div v-show="showSnapshot" class="w-100 mw-100">
             <collapsible header-text="Snapshots">
                 <item-snapshot :item-id="itemID"></item-snapshot>
             </collapsible>
         </div>
-        -->
 
         <div class="w-100 mw-100">
             <collapsible header-text="Percentile stats">
@@ -104,7 +106,9 @@
                 queue: Loadable.idle() as Loading<number[]>,
                 health: Loadable.idle() as Loading<HonuHealth>,
 
-                item: Loadable.idle() as Loading<PsItem>
+                item: Loadable.idle() as Loading<PsItem>,
+
+                showSnapshot: false as boolean,
             }
         },
 

@@ -30,6 +30,7 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterRepository _CharacterRepository;
         private readonly WeaponStatBucketDbStore _BucketDb;
         private readonly WeaponStatTopDbStore _WeaponTopDb;
+        private readonly IServiceHealthMonitor _ServiceHealthMonitor;
 
         private readonly WeaponUpdateQueue _Queue;
 
@@ -39,7 +40,8 @@ namespace watchtower.Services.Hosted {
             CharacterWeaponStatDbStore weaponStatDb, WeaponUpdateQueue queue,
             WeaponStatSnapshotDbStore weaponStatSnapshotDb, IWeaponStatPercentileCacheDbStore weaponPercentileDb,
             WeaponStatBucketDbStore bucketDb, CharacterRepository characterRepository,
-            WeaponStatTopDbStore weaponTopDb) {
+            WeaponStatTopDbStore weaponTopDb, IServiceHealthMonitor serviceHealthMonitor)
+        {
 
             _Logger = logger;
             _WeaponStatDb = weaponStatDb;
@@ -49,6 +51,7 @@ namespace watchtower.Services.Hosted {
             _BucketDb = bucketDb;
             _CharacterRepository = characterRepository;
             _WeaponTopDb = weaponTopDb;
+            _ServiceHealthMonitor = serviceHealthMonitor;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -56,6 +59,20 @@ namespace watchtower.Services.Hosted {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
+
+                    ServiceHealthEntry? entry = _ServiceHealthMonitor.Get(SERVICE_NAME);
+                    if (entry == null) {
+                        entry = new ServiceHealthEntry() {
+                            Name = SERVICE_NAME
+                        };
+                    }
+
+                    // Useful for debugging on my laptop which can't handle running the queries and run vscode at the same time
+                    if (entry.Enabled == false) {
+                        await Task.Delay(1000, stoppingToken);
+                        continue;
+                    }
+
                     long itemID = await _Queue.Dequeue(stoppingToken);
 
                     if (_LastUpdated.TryGetValue(itemID, out DateTime lastUpdatedAt) == true) {
@@ -80,6 +97,9 @@ namespace watchtower.Services.Hosted {
                     List<WeaponStatEntry> filtered = stats.Where(iter => iter.Kills > 1159).ToList();
                     if (filtered.Count < 100) { // But if there's not enough, expand the sample
                         filtered = stats.Where(iter => iter.Kills > 50).ToList();
+                    }
+                    if (filtered.Count < 100) { // Okay, so not one has more than 50 kills, include everyone
+                        filtered = stats;
                     }
 
                     _Logger.LogTrace($"{SERVICE_NAME}> Loaded {stats.Count} entries for {itemID}");
@@ -135,6 +155,8 @@ namespace watchtower.Services.Hosted {
                     }
 
                     _Queue.AddProcessTime(timer.ElapsedMilliseconds);
+
+                    _ServiceHealthMonitor.Set(SERVICE_NAME, entry);
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "error updating weapon stats");
                 }
