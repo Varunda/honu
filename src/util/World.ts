@@ -7,6 +7,9 @@
     public static readonly Jaeger: number = 19;
     public static readonly SolTech: number = 40;
 
+    public static readonly Genudine: number = 1000;
+    public static readonly Ceres: number = 2000;
+
     public static getWorldID(worldID: number): string {
         if (worldID == WorldUtils.Connery) {
             return "Connery";
@@ -20,6 +23,10 @@
             return "Jaeger";
         } else if (worldID == WorldUtils.SolTech) {
             return "SolTech";
+        } else if (worldID == WorldUtils.Genudine) {
+            return "Genudine";
+        } else if (worldID == WorldUtils.Ceres) {
+            return "Ceres";
         }
 
         return `Unchecked world ID ${worldID}`;

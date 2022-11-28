@@ -49,6 +49,8 @@
         emerald: number;
         jaeger: number;
         soltech: number;
+        ceres: number;
+        genudine: number;
     };
 
     function newDataset(label: string, color: string, borderWidth: number = 2) {
@@ -125,7 +127,9 @@
                             emerald: interval.filter(iter => iter.worldID == WorldUtils.Emerald).reduce((acc, i) => acc += i.duration, 0),
                             jaeger: this.settings.includeJaeger == true ? interval.filter(iter => iter.worldID == WorldUtils.Jaeger).reduce((acc, i) => acc += i.duration, 0) : 0,
                             miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).reduce((acc, i) => acc += i.duration, 0),
-                            soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).reduce((acc, i) => acc += i.duration, 0)
+                            soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).reduce((acc, i) => acc += i.duration, 0),
+                            ceres: interval.filter(iter => iter.worldID == WorldUtils.Ceres).reduce((acc, i) => acc += i.duration, 0),
+                            genudine: interval.filter(iter => iter.worldID == WorldUtils.Genudine).reduce((acc, i) => acc += i.duration, 0),
                         });
                     } else {
                         this.data.push({
@@ -137,6 +141,8 @@
                             jaeger: this.settings.includeJaeger == true ? interval.filter(iter => iter.worldID == WorldUtils.Jaeger).length : 0,
                             miller: interval.filter(iter => iter.worldID == WorldUtils.Miller).length,
                             soltech: interval.filter(iter => iter.worldID == WorldUtils.SolTech).length,
+                            ceres: interval.filter(iter => iter.worldID == WorldUtils.Ceres).length,
+                            genudine: interval.filter(iter => iter.worldID == WorldUtils.Genudine).length,
                         });
                     }
 
@@ -166,7 +172,9 @@
                         newDataset("Emerald", "#00ff00"),
                         newDataset("Miller", "#882222"),
                         newDataset("Jaeger", "#770077"),
-                        newDataset("SolTech", "#007777")
+                        newDataset("SolTech", "#007777"),
+                        newDataset("Ceres", "#777700"),
+                        newDataset("Genudine", "#228822")
                     );
                 }
 
@@ -249,6 +257,10 @@
                         dataset.data = this.data.map(iter => iter.jaeger)
                     } else if (dataset.label == "SolTech") {
                         dataset.data = this.data.map(iter => iter.soltech)
+                    } else if (dataset.label == "Ceres") {
+                        dataset.data = this.data.map(iter => iter.ceres);
+                    } else if (dataset.label == "Genudine") {
+                        dataset.data = this.data.map(iter => iter.genudine);
                     } else {
                         console.warn(`unchecked label '${dataset.label}'`);
                     }
