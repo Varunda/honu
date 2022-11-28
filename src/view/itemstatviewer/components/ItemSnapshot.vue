@@ -5,6 +5,9 @@
             <toggle-button v-model="show.totalKills" class="flex-grow-1">
                 Total kills
             </toggle-button>
+            <toggle-button v-model="show.totalVKills" class="flex-grow-1">
+                Total v. kills
+            </toggle-button>
             <toggle-button v-model="show.totalDeaths" class="flex-grow-1">
                 Total deaths
             </toggle-button>
@@ -13,6 +16,9 @@
             </toggle-button>
             <toggle-button v-model="show.totalKpm" class="flex-grow-1">
                 Total KPM
+            </toggle-button>
+            <toggle-button v-model="show.totalVkpm" class="flex-grow-1">
+                Total VKPM
             </toggle-button>
             <toggle-button v-model="show.totalAcc" class="flex-grow-1">
                 Total Accuracy
@@ -29,6 +35,9 @@
             <toggle-button v-model="show.intervalKills" class="flex-grow-1">
                 Interval kills
             </toggle-button>
+            <toggle-button v-model="show.intervalVKills" class="flex-grow-1">
+                Interval v. kills
+            </toggle-button>
             <toggle-button v-model="show.intervalDeaths" class="flex-grow-1">
                 Interval deaths
             </toggle-button>
@@ -37,6 +46,9 @@
             </toggle-button>
             <toggle-button v-model="show.intervalKpm" class="flex-grow-1">
                 Interval KPM
+            </toggle-button>
+            <toggle-button v-model="show.intervalVkpm" class="flex-grow-1">
+                Interval VKPM
             </toggle-button>
             <toggle-button v-model="show.intervalAcc" class="flex-grow-1">
                 Interval Accuracy
@@ -47,6 +59,16 @@
             <toggle-button v-model="show.intervalTime" class="flex-grow-1">
                 Interval time
             </toggle-button>
+        </div>
+
+        <div>
+            <toggle-button v-model="options.autoRedraw">
+                Auto redraw
+            </toggle-button>
+
+            <button type="button" class="btn btn-primary" @click="makeGraph">
+                Redraw
+            </button>
         </div>
 
         <div id="hc-chart" style="height: 80vh; max-height: 80vh;" class="mb-2 w-100"></div>
@@ -77,15 +99,18 @@
 
         overallKd: number;
         overallKpm: number;
+        overallVkpm: number;
         overallAcc: number;
         overallHsr: number;
 
         intervalKd?: number;
         intervalKpm?: number;
+        intervalVkpm?: number;
         intervalAcc?: number;
         intervalHsr?: number;
 
         kills: number;
+        vkills: number;
         deaths: number;
         shots: number;
         shotsHit: number;
@@ -93,6 +118,7 @@
         secondsWith: number;
 
         killsDiff?: number;
+        vkillsDiff?: number;
         deathsDiff?: number;
         shotsDiff?: number;
         shotsHitDiff?: number;
@@ -123,6 +149,10 @@
         ["intervalKpm", 17],
         ["intervalAcc", 18],
         ["intervalHsr", 19],
+        ["vkills", 20],
+        ["vkillsDiff", 21],
+        ["overallVkpm", 22],
+        ["intervalVkpm", 23]
     ]);
 
     function createYAxis(name: string, visible: boolean, id: number): hc.YAxisOptions {
@@ -156,19 +186,27 @@
 
                 chart: null as hc.StockChart | null,
 
+                options: {
+                    autoRedraw: true as boolean,
+                },
+
                 show: {
                     totalKills: false as boolean,
+                    totalVKills: false as boolean,
                     totalDeaths: false as boolean,
                     totalKd: false as boolean,
                     totalKpm: false as boolean,
+                    totalVkpm: false as boolean,
                     totalAcc: false as boolean,
                     totalHsr: false as boolean,
                     totalTime: false as boolean,
 
                     intervalKills: false as boolean,
+                    intervalVKills: false as boolean,
                     intervalDeaths: false as boolean,
                     intervalKd: true as boolean,
                     intervalKpm: true as boolean,
+                    intervalVkpm: true as boolean,
                     intervalAcc: true as boolean,
                     intervalHsr: true as boolean,
                     intervalTime: true as boolean,
@@ -202,10 +240,12 @@
 
                             overallKd: iter.kills / Math.max(1, iter.deaths),
                             overallKpm: iter.kills / Math.max(1, iter.secondsWith) * 60,
-                            overallAcc: iter.shots / Math.max(1, iter.shotsHit),
-                            overallHsr: iter.kills / Math.max(1, iter.headshots),
+                            overallVkpm: iter.vehicleKills / Math.max(1, iter.secondsWith) * 60,
+                            overallAcc: iter.shotsHit / Math.max(1, iter.shots),
+                            overallHsr: iter.headshots / Math.max(1, iter.kills),
 
                             kills: iter.kills,
+                            vkills: iter.vehicleKills,
                             deaths: iter.deaths,
                             shots: iter.shots,
                             shotsHit: iter.shotsHit,
@@ -215,6 +255,7 @@
 
                         if (next != null) {
                             datum.killsDiff = iter.kills - next.kills;
+                            datum.vkillsDiff = iter.vehicleKills - next.vehicleKills;
                             datum.deathsDiff = iter.deaths - next.deaths;
                             datum.shotsDiff = iter.shots - next.shots;
                             datum.shotsHitDiff = iter.shotsHit - next.shotsHit;
@@ -223,6 +264,7 @@
 
                             datum.intervalKd = datum.killsDiff / Math.max(1, datum.deathsDiff);
                             datum.intervalKpm = datum.killsDiff / Math.max(1, datum.secondsDiff) * 60;
+                            datum.intervalVkpm = datum.vkillsDiff / Math.max(1, datum.secondsDiff) * 60;
                             datum.intervalAcc = datum.shotsHitDiff / Math.max(1, datum.shotsDiff);
                             datum.intervalHsr = datum.headshotsDiff / Math.max(1, datum.killsDiff);
                         }
@@ -240,7 +282,7 @@
                     this.chart = null;
                 }
 
-                const colors: string[] = ColorUtils.randomColors(Math.random(), 8);
+                const colors: string[] = ColorUtils.randomColors(Math.random(), 20);
 
                 this.chart = hs.stockChart("hc-chart", {
                     title: { text: "" },
@@ -316,10 +358,10 @@
                 const arr: hc.SeriesOptionsType[] = [];
 
                 const fields: (keyof GraphableField)[] = [
-                    "kills", "deaths", "secondsWith",
-                    "killsDiff", "deathsDiff",
-                    "overallAcc", "overallHsr", "overallKd", "overallKpm",
-                    "intervalKpm", "intervalKd", "intervalAcc", "intervalHsr"
+                    "kills", "vkills", "deaths", "secondsWith",
+                    "killsDiff", "deathsDiff", "vkillsDiff",
+                    "overallAcc", "overallHsr", "overallKd", "overallKpm", "overallVkpm",
+                    "intervalKpm", "intervalKd", "intervalAcc", "intervalHsr", "intervalVkpm"
                 ];
 
                 for (let i = 0; i < fields.length; ++i) {
@@ -345,7 +387,7 @@
                         id: field
                     };
 
-                    console.log(`Options for ${field} is on ${yaxisIndex}`);
+                    console.log(`Options for ${field} is on ${yaxisIndex}, showing? ${options.visible}`);
 
                     arr.push(options);
                 }
@@ -356,12 +398,16 @@
             isVisible: function(field: keyof GraphableField): boolean {
                 if (field == "kills") {
                     return this.show.totalKills;
+                } else if (field == "vkills") {
+                    return this.show.totalVKills;
                 } else if (field == "deaths") {
                     return this.show.totalDeaths;
                 } else if (field == "secondsWith") {
                     return this.show.totalTime;
                 } else if (field == "killsDiff") {
                     return this.show.intervalKills;
+                } else if (field == "vkillsDiff") {
+                    return this.show.intervalVKills;
                 } else if (field == "deathsDiff") {
                     return this.show.intervalDeaths;
                 } else if (field == "overallKpm") {
@@ -382,25 +428,15 @@
                     return this.show.totalKd;
                 } else if (field == "intervalKd") {
                     return this.show.intervalKd;
+                } else if (field == "overallVkpm") {
+                    return this.show.totalVkpm;
+                } else if (field == "intervalVkpm") {
+                    return this.show.intervalVkpm;
                 }
 
                 console.warn(`Unchecked field '${field}' when checking visiblity`);
 
                 return true;
-            },
-
-            getDataPoint: function(field: keyof DiffedSnapshot, entry: DiffedSnapshot): number {
-                if (field == "kills") {
-                    return entry.kills;
-                } else if (field == "killsDiff") {
-                    return entry.killsDiff ?? 0;
-                } else if (field == "deaths") {
-                    return entry.deaths;
-                } else if (field == "deathsDiff") {
-                    return entry.deathsDiff ?? 0;
-                }
-
-                throw `Unchecked field when getting data point: '${field}'`;
             },
 
             updateVisibility: function(): void {
@@ -428,7 +464,9 @@
             show: {
                 deep: true,
                 handler: function() {
-                    this.updateVisibility();
+                    if (this.options.autoRedraw == true) {
+                        this.updateVisibility();
+                    }
                 }
             }
         },
