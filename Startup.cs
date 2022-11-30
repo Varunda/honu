@@ -41,6 +41,7 @@ using watchtower.Models.Health;
 using watchtower.Models.Alert;
 using watchtower.Code.Constants;
 using System.Collections.Generic;
+using watchtower.Services.Hosted.PSB;
 
 //using honu_census;
 
@@ -192,6 +193,7 @@ namespace watchtower {
             services.AddHostedService<HostedDailyAlertCreator>();
             services.AddHostedService<HostedWatchtowerRecentCleanup>();
             services.AddHostedService<HostedBackgroundWeaponStatQueue>();
+            services.AddHostedService<HostedPsbAccountPlaytimeQueue>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

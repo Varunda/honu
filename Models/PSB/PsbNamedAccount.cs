@@ -9,9 +9,14 @@ namespace watchtower.Models.PSB {
     public class PsbNamedAccount {
 
         /// <summary>
-        ///     Internal ID
+        ///     Internal unique ID
         /// </summary>
         public long ID { get; set; }
+
+        /// <summary>
+        ///     What type of account this is
+        /// </summary>
+        public short AccountType { get; set; }
 
         /// <summary>
         ///     Tag of the characters on the account

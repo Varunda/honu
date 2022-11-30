@@ -13,8 +13,10 @@ using watchtower.Models.Census;
 using watchtower.Models.Discord;
 using watchtower.Models.PSB;
 using watchtower.Models.Queues;
+using watchtower.Services.Hosted.PSB;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Services.Hosted {
 
@@ -25,6 +27,8 @@ namespace watchtower.Services.Hosted {
         private readonly CharacterRepository _CharacterRepository;
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
+        private readonly PsbAccountRepository _AccountRepository;
+        private readonly PsbAccountPlaytimeUpdateQueue _PlaytimeQueue;
 
         private readonly IOptions<JaegerNsaOptions> _Options;
 
@@ -35,21 +39,29 @@ namespace watchtower.Services.Hosted {
         private readonly List<string> _DevAccounts = new List<string>() {
             "5428861140076767121", // njLive
             "5428662532303167729", // PlaysWithSteeringWheel
-            "5429063001623372113"  // BlueOwl122
+            "5429063001623372113", // BlueOwl122
+            "5429332977254799233", // ShowdownSupplierNC
+            "5429332977254799793", // ShowdownSupplierVS
+            "5429332977254798593", // ShowdownSupplierTR
+            "5429332977254796881", // ShowdownModerator
+            "5429332977258919329", // JaegerMithril
         };
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
             DiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon,
-            IOptions<JaegerNsaOptions> options) {
+            IOptions<JaegerNsaOptions> options, PsbAccountRepository accountRepository,
+            PsbAccountPlaytimeUpdateQueue playtimeQueue) {
 
             _Logger = logger;
             _Queue = queue;
             _CharacterRepository = charRepo;
             _DiscordQueue = discordQueue;
             _ServiceHealthMonitor = healthMon;
+            _AccountRepository = accountRepository;
 
             _Options = options;
+            _PlaytimeQueue = playtimeQueue;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -70,6 +82,8 @@ namespace watchtower.Services.Hosted {
 
                     int messageLimit = 2000;
                     bool devSeen = false;
+
+                    List<PsbNamedAccount> accounts = await _AccountRepository.GetAll();
 
                     if (signin.Count + signout.Count > 0) {
                         HashSet<string> both = new(signin.Count + signout.Count);
@@ -118,6 +132,19 @@ namespace watchtower.Services.Hosted {
                             }
 
                             msg += part;
+
+                            // Update the playtime when accounts log out
+                            foreach (PsbNamedAccount account in accounts) {
+                                if (account.VsID == s.CharacterID || account.NcID == s.CharacterID 
+                                    || account.TrID == s.CharacterID || account.NsID == s.CharacterID) {
+
+                                    _PlaytimeQueue.Queue(new PsbAccountPlaytimeUpdateQueueEntry() {
+                                        AccountID = account.ID
+                                    });
+
+                                    break;
+                                }
+                            }
                         }
 
                         msg += "```\n";

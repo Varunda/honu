@@ -11,6 +11,7 @@ namespace watchtower.Services.Db.Readers.PSB {
             PsbNamedAccount acc = new PsbNamedAccount();
 
             acc.ID = reader.GetInt64("id");
+            acc.AccountType = reader.GetInt16("account_type");
             acc.Tag = reader.GetNullableString("tag");
             acc.Name = reader.GetString("name");
             acc.PlayerName = reader.GetString("player_name");
@@ -26,7 +27,7 @@ namespace watchtower.Services.Db.Readers.PSB {
             acc.TrStatus = reader.GetInt32("tr_status");
             acc.NsStatus = reader.GetInt32("ns_status");
 
-            acc.SecondsUsage = (int) (reader.GetNullableDouble("seconds_online") ?? 0d);
+            acc.SecondsUsage = reader.GetInt32("play_time");
 
             acc.DeletedBy = reader.GetNullableInt64("deleted_by");
             acc.DeletedAt = reader.GetNullableDateTime("deleted_at");

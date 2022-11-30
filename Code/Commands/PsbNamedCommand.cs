@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Commands;
 using watchtower.Models;
 using watchtower.Models.PSB;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Code.Commands {
@@ -15,10 +17,12 @@ namespace watchtower.Code.Commands {
 
         private readonly ILogger<PsbNamedCommand> _Logger;
         private readonly PsbAccountRepository _NamedRepository;
+        private readonly PsbAccountPlaytimeUpdateQueue _Queue;
 
         public PsbNamedCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<PsbNamedCommand>>();
             _NamedRepository = services.GetRequiredService<PsbAccountRepository>();
+            _Queue = services.GetRequiredService<PsbAccountPlaytimeUpdateQueue>();
         }
 
         public async Task Create(string tagg, string name) {
@@ -86,6 +90,28 @@ namespace watchtower.Code.Commands {
                 string tr = PsbCharacterStatus.GetName(acc.TrStatus);
                 string ns = PsbCharacterStatus.GetName(acc.NsStatus);
                 _Logger.LogInformation($"{acc.Tag}x{acc.Name} => VS: {vs}, NC: {nc}, TR: {tr}, NS: {ns}");
+            }
+        }
+
+        public Task Retime(long ID) {
+            _Logger.LogInformation($"Adding account {ID} into queue for retiming");
+
+            _Queue.Queue(new Models.Queues.PsbAccountPlaytimeUpdateQueueEntry() {
+                AccountID = ID
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public async Task RetimeAll() {
+            List<PsbNamedAccount> accounts = await _NamedRepository.GetAll();
+
+            _Logger.LogInformation($"Queuing {accounts.Count} accounts for retiming");
+
+            foreach (PsbNamedAccount account in accounts) {
+                _Queue.Queue(new Models.Queues.PsbAccountPlaytimeUpdateQueueEntry() {
+                    AccountID = account.ID
+                });
             }
         }
 
