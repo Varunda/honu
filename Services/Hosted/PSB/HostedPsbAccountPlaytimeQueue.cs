@@ -7,6 +7,7 @@ using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
+using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Services.Hosted.PSB {
 
@@ -16,14 +17,17 @@ namespace watchtower.Services.Hosted.PSB {
         private readonly PsbAccountPlaytimeUpdateQueue _Queue;
 
         private readonly PsbNamedDbStore _PsbAccountDb;
+        private readonly PsbAccountRepository _PsbAccountRepository;
 
         public HostedPsbAccountPlaytimeQueue(ILogger<HostedPsbAccountPlaytimeQueue> logger,
-            PsbAccountPlaytimeUpdateQueue queue, PsbNamedDbStore psbAccountDb) {
+            PsbAccountPlaytimeUpdateQueue queue, PsbNamedDbStore psbAccountDb,
+            PsbAccountRepository psbAccountRepository) {
 
             _Logger = logger;
             _Queue = queue;
 
             _PsbAccountDb = psbAccountDb;
+            _PsbAccountRepository = psbAccountRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -34,7 +38,8 @@ namespace watchtower.Services.Hosted.PSB {
 
                     _Logger.LogTrace($"updating playtime for {entry.AccountID}");
 
-                    PsbNamedAccount? account = await _PsbAccountDb.GetByID(entry.AccountID);
+                    //PsbNamedAccount? account = await _PsbAccountDb.GetByID(entry.AccountID);
+                    PsbNamedAccount? account = await _PsbAccountRepository.GetByID(entry.AccountID);
                     if (account == null) {
                         _Logger.LogError($"Missing {nameof(PsbNamedAccount)} {entry.AccountID} when updating playtime");
                         continue;
@@ -47,7 +52,7 @@ namespace watchtower.Services.Hosted.PSB {
 
                     _Logger.LogTrace($"account {account.ID} has played {account.SecondsUsage} seconds");
 
-                    await _PsbAccountDb.UpdateByID(account.ID, account);
+                    await _PsbAccountRepository.UpdateByID(account.ID, account);
                 } catch (Exception ex) {
                     _Logger.LogError(ex, $"error while updating psb account playtime");
                 }

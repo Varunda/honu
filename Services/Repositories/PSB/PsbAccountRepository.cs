@@ -218,6 +218,16 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
+        ///     Update a <see cref="PsbNamedAccount"/>
+        /// </summary>
+        /// <param name="accountID">ID of the account to update</param>
+        /// <param name="account">Parameters used to update the account</param>
+        public Task UpdateByID(long accountID, PsbNamedAccount account) {
+            _Cache.Remove(CACHE_KEY);
+            return _Db.UpdateByID(accountID, account);
+        }
+
+        /// <summary>
         ///     Recheck all accounts that have any of the characters match the status passed
         /// </summary>
         /// <param name="status">Status to limit the recheck by. Pass <c>null</c> to recheck all accounts</param>
