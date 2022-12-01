@@ -11,6 +11,9 @@ using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Services.Hosted.PSB {
 
+    /// <summary>
+    ///     Hosted queue processor that will update the <see cref="PsbNamedAccount.SecondsUsage"/>
+    /// </summary>
     public class HostedPsbAccountPlaytimeQueue : BackgroundService {
 
         private readonly ILogger<HostedPsbAccountPlaytimeQueue> _Logger;

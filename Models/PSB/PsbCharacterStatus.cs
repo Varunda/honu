@@ -1,7 +1,7 @@
 ﻿namespace watchtower.Models.PSB {
 
     /// <summary>
-    ///     Status of 
+    ///     Status of a <see cref="PsbNamedAccount"/>
     /// </summary>
     public class PsbCharacterStatus {
 
