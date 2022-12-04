@@ -12,8 +12,8 @@
             </honu-menu>
         </div>
 
-        <div v-if="showUI" class="row mb-2">
-            <div class="col-auto">
+        <div v-if="showUI" class="d-flex">
+            <div style="display: contents;">
                 <toggle-button v-model="layers.terrain">
                     Terrain map
                 </toggle-button>
@@ -35,20 +35,20 @@
                 </toggle-button>
             </div>
 
-            <div class="col-1 input-group">
+            <div class="input-group">
                 <span class="input-group-text input-group-prepend">
                     Line thickness
                 </span>
 
-                <input v-model.number="settings.thickness" class="form-control" type="number" />
+                <input v-model.number="settings.thickness" class="form-control" type="number" style="width: 8ch; max-width: 8ch;" />
             </div>
 
-            <div class="col-2 input-group">
+            <div class="input-group">
                 <span class="input-group-text input-group-prepend">
                     Server
                 </span>
 
-                <select v-model.number="settings.worldID" class="form-control">
+                <select v-model.number="settings.worldID" class="form-control" style="width: 20ch; max-width: 20ch;">
                     <option :value="1">Connery</option>
                     <option :value="10">Miller</option>
                     <option :value="13">Cobalt</option>
@@ -58,12 +58,12 @@
                 </select>
             </div>
 
-            <div class="col-2 input-group">
+            <div class="input-group">
                 <span class="input-group-text input-group-prepend">
                     Continent
                 </span>
 
-                <select v-model.number="settings.zoneID" class="form-control">
+                <select v-model.number="settings.zoneID" class="form-control" style="width: 20ch; max-width: 20ch;">
                     <option :value="2">Indar</option>
                     <option :value="4">Hossin</option>
                     <option :value="6">Amerish</option>
@@ -72,14 +72,67 @@
                 </select>
             </div>
 
-            <div class="col-auto">
-                <button @click="copyUrl" class="btn btn-success" type="button">
+            <div>
+                <toggle-button v-model="flip.showUI">
+                    Show flip UI
+                </toggle-button>
+            </div>
+
+            <div>
+                <button @click="copyUrl(true)" class="btn btn-primary" type="button">
                     Copy URL
+                    <info-hover text="Hides the UI at the top, useful for stream overlays"></info-hover>
                 </button>
             </div>
         </div>
 
-        <div id="realtime-map" class="realtime-map" style="height: 100vh;"></div>
+        <div style="height: 100vh;">
+            <div v-if="flip.showUI == true" style="position: absolute; right: 0; top: 0; z-index: 1000;" class="list-group">
+                <div v-for="(cmd, index) in flip.commands" class="list-group-item">
+                    <div class="input-group">
+                        <input type="text" :value="cmd" class="form-control" :id="'flip-cmd-' + index" />
+                        <div class="input-group-append">
+                            <button class="btn btn-primary input-group-addon" @click="copyCommand(index)">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-group-item">
+                    <div class="btn-group w-100">
+                        <button class="btn btn-outline-light" @click="setSelectedFaction(1)" :style="{ 'color': flip.selectedFaction == 1 ? 'var(--color-vs)' : '' }">
+                            VS
+                        </button>
+
+                        <button class="btn btn-outline-light" @click="setSelectedFaction(2)" :style="{ 'color': flip.selectedFaction == 2 ? 'var(--color-nc)' : '' }">
+                            NC
+                        </button>
+
+                        <button class="btn btn-outline-light" @click="setSelectedFaction(3)" :style="{ 'color': flip.selectedFaction == 3 ? 'var(--color-tr)' : '' }">
+                            TR
+                        </button>
+
+                        <button class="btn btn-outline-light" @click="setSelectedFaction(4)" :style="{ 'color': flip.selectedFaction == 4 ? 'var(--color-ns)' : '' }">
+                            NS
+                        </button>
+                    </div>
+
+                    <div v-if="flip.selectedFaction != null" class="mt-2">
+                        {{flip.selectedFaction | faction}} is selected,
+                        <br />right click will set the base.
+                        <br />Click again to toggle
+                    </div>
+                </div>
+
+                <div class="list-group-item">
+                    <button class="btn btn-danger w-100" @click="clearAllFactions">
+                        Clear all
+                    </button>
+                </div>
+            </div>
+
+            <div id="realtime-map" class="realtime-map" style="height: 100vh; z-index: 50;"></div>
+        </div>
+
     </div>
 </template>
 
@@ -93,6 +146,8 @@
     import * as L from "leaflet";
     import * as sR from "signalR";
 
+    import "node_modules/leaflet-contextmenu/dist/leaflet.contextmenu.js";
+
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import { HonuMenu, MenuSep, MenuDropdown } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
@@ -100,6 +155,8 @@
 
     import { ZoneRegion, LatticeLink } from "map/LedgerModels";
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";
+
+    import "filters/FactionNameFilter";
 
     type PsZone = {
         zoneID: number;
@@ -109,6 +166,7 @@
     type PsFacilityOwner = {
         facilityID: number;
         owner: number;
+        flipOwner?: number;
     }
 
     export const RealtimeMap = Vue.extend({
@@ -148,8 +206,19 @@
                     outline: true as boolean,
                     lattice: true as boolean,
                     owner: true as boolean
+                },
+
+                flip: {
+                    showUI: false as boolean,
+                    facilityID: null as number | null,
+                    commands: [] as string[],
+                    selectedFaction: null as number | null
                 }
             }
+        },
+
+        created: function(): void {
+            document.title = `Honu / Realtime map`;
         },
 
         mounted: function(): void {
@@ -198,6 +267,180 @@
                 });
             },
 
+            setSelectedFaction: function(factionID: number): void {
+                if (this.flip.selectedFaction == factionID) {
+                    this.flip.selectedFaction = null;
+                } else {
+                    this.flip.selectedFaction = factionID;
+                }
+            },
+
+            setFaction: function(ev: any, factionID: number | null, connectWarpgate: boolean): void {
+                console.log("event", ev);
+                console.log(`setting facility ${this.flip.facilityID} to ${factionID}`);
+
+                if (this.flip.facilityID == null) { return console.warn(`cannot setFaction: flip.facilityID is null`); }
+                if (this.zoneData == null) { return console.warn(`cannot setFaction: zoneData is null`); }
+                if (this.ownershipData == null) { return console.warn(`cannot setFaction: ownershipData is null`); }
+
+                const facility: PsFacility | undefined = this.zoneData.facilities.find(iter => iter.facilityID == this.flip.facilityID);
+                if (facility == undefined) {
+                    console.warn(`cannot setFaction: facility ${this.flip.facilityID} was not found`);
+                    return;
+                }
+
+                const owner: PsFacilityOwner | undefined = this.ownershipData.facilities.get(this.flip.facilityID);
+                if (owner == null) {
+                    return console.warn(`cannot setFaction: ownership for ${this.flip.facilityID} was not found`);
+                }
+
+                /*
+                // this isn't done lul
+                if (connectWarpgate == true) {
+                    if (this.zoneData == null) {
+                        return console.error(`cannot setFaction: zoneData is null`);
+                    }
+
+                    // Steps:
+                    // 1. find warpgate
+                    // 2. find path from wanted base to warpgate
+                    // 3. ensure none of the bases that would be flipped are already pending a flip
+
+                    // 1. find warpgates
+                    const warpgates: PsFacility[] = this.zoneData.facilities.filter(iter => iter.typeID == 7); // 7 = warpgate
+                    const warpgateIDs: number[] = warpgates.map(iter => iter.facilityID);
+                    console.log(`found ${warpgates.length} warpgates when connected ${this.flip.facilityID}`);
+
+                    const warpgateOwners: PsFacilityOwner[] = Array.from(this.ownershipData.facilities.values())
+                        .filter(iter => warpgateIDs.indexOf(iter.facilityID) > -1);
+
+                    if (warpgateOwners.length != warpgates.length) {
+                        return console.error(`cannot setFaction: warpgateOwners is not the same length as warpgates (${warpgateOwners.length} != ${warpgates.length})`);
+                    }
+
+                    const factionWarpgates: PsFacilityOwner[] = warpgateOwners.filter(iter => iter.owner == factionID);
+                    if (factionWarpgates.length != 1) {
+                        return console.error(`cannot setFaction: there are ${factionWarpgates.length} warpgates owned by ${factionID}, expected 1`);
+                    }
+
+                    const warpgateID: number = factionWarpgates[0].facilityID;
+                    const facilityID: number = this.flip.facilityID;
+
+                    if (warpgateID == facilityID) {
+                        return console.error(`cannot setFaction: warpgateID (${warpgateID}) is the same as the target facilityID (${facilityID})`);
+                    }
+
+                    const queue: number[] = [];
+                    queue.push(facilityID);
+                    const visited: number[] = [];
+
+                    let iterFallback: number = 100; // how many times max to find the path
+
+                    let iter: number | undefined = queue.shift();
+
+                    while (iter != undefined) {
+                        if (iterFallback-- < 0) {
+                            console.error(`hit maximum iteration count!`);
+                            break;
+                        }
+
+                        const links: PsFacilityLink[] = this.zoneData.links.filter(i => i.facilityA == iter || i.facilityB == iter);
+                    }
+
+                    // 2. find path from wanted base to warpgate
+                }
+                */
+
+                owner.flipOwner = factionID ?? undefined;
+
+                this.updateFlipCommands();
+                this.redrawMap({ ownership: true });
+            },
+
+            setFactionVS: function(ev: any): void { this.setFaction(ev, 1, false); },
+            setFactionVSWG: function(ev: any): void { this.setFaction(ev, 1, true); },
+            setFactionNC: function(ev: any): void { this.setFaction(ev, 2, false); },
+            setFactionNCWG: function(ev: any): void { this.setFaction(ev, 2, true); },
+            setFactionTR: function(ev: any): void { this.setFaction(ev, 3, false); },
+            setFactionTRWG: function(ev: any): void { this.setFaction(ev, 3, true); },
+            setFactionNS: function(ev: any): void { this.setFaction(ev, 4, false); },
+            clearFaction: function(ev: any): void { this.setFaction(ev, null, false); },
+
+            clearAllFactions: function(): void {
+                this.flip.commands = [];
+
+                if (this.ownershipData == null) {
+                    return;
+                }
+
+                this.ownershipData.facilities.forEach((owner: PsFacilityOwner) => {
+                    owner.flipOwner = undefined;
+                });
+
+                this.redrawMap({ ownership: true });
+            },
+
+            updateFlipCommands: function(): void {
+                this.flip.commands = [];
+
+                this.flip.commands.push("/alias a:facility setfaction;alias v: a 1; alias n: a 2; alias t: a 3;");
+
+                if (this.ownershipData == null) {
+                    return console.warn(`cannot update flip commands: ownershipData is null`);
+                }
+
+                let currentCommand: string = "/";
+
+                this.ownershipData.facilities.forEach((owner: PsFacilityOwner) => {
+                    if (owner.flipOwner != undefined && owner.owner != owner.flipOwner) {
+                        let iterCmd: string = "";
+
+                        if (owner.flipOwner == 1) {
+                            iterCmd += "v ";
+                        } else if (owner.flipOwner == 2) {
+                            iterCmd += "n ";
+                        } else if (owner.flipOwner == 3) {
+                            iterCmd += "t ";
+                        }
+
+                        iterCmd += `${owner.facilityID}`;
+
+                        if (currentCommand.length + iterCmd.length + 2 > 120) {
+                            this.flip.commands.push(currentCommand);
+
+                            currentCommand = `/${iterCmd}`;
+                        } else {
+                            currentCommand += `${iterCmd};`;
+                        }
+                    }
+                });
+
+                if (currentCommand.length > 0) {
+                    this.flip.commands.push(currentCommand);
+                }
+            },
+
+            copyCommand: function(index: number): void {
+                if (index < 0 || index > this.flip.commands.length - 1) {
+                    return console.warn(`cannot copy command index ${index}: this is out of bound (0 - ${this.flip.commands.length - 1}`);
+                }
+
+                const cmd: HTMLElement | null = document.getElementById(`flip-cmd-${index}`);
+                if (cmd == null) {
+                    return console.warn(`cannot copy command index ${index}: failed to find #flip-cmd-${index}`);
+                }
+                if (cmd.tagName != "INPUT") {
+                    return console.warn(`cannot copy command index ${index}: #flip-cmd-${index} is not an <input> element (is a <${cmd.tagName}>)`);
+                }
+
+                const value: string = (cmd as HTMLInputElement).value;
+
+                navigator.clipboard.writeText(value);
+            },
+
+            /**
+             * Create a fresh copy of the map, clearing old previous data if needed
+             */
             createMap: async function(): Promise<void> {
                 if (this.settings.zoneID == null) {
                     console.warn(`realtime-map> Cannot create map, no zone ID selected`);
@@ -213,11 +456,51 @@
                     throw `Cannot load map, the element #realtime-map is null`;
                 }
 
-                this.map = new L.Map("realtime-map", {
+                const options: L.MapOptions = {
                     crs: L.CRS.Simple,
                     zoomSnap: 0.1,
-                    zoomDelta: 0.1,
-                }).setZoom(2.63).setView(L.latLng(0, 0));
+                    zoomDelta: 0.1
+                };
+
+                // The contextmanu plugin is only Javascript, and doesn't update the type for L.MapOptions
+                // so, the ones that are typed are pulled out above
+                this.map = new L.Map("realtime-map", {
+                    ...options,
+                    contextmenu: true,
+                    contextmenuWidth: 140,
+                    contextmenuItems: [
+                        {
+                            "text": "Set VS",
+                            "iconCls": "setfaction-vs",
+                            "callback": this.setFactionVS
+                        },
+                        {
+                            "text": "Set NC",
+                            "iconCls": "setfaction-nc",
+                            "callback": this.setFactionNC
+                        },
+                        {
+                            "text": "Set TR",
+                            "iconCls": "setfaction-tr",
+                            "callback": this.setFactionTR
+                        },
+                        {
+                            "text": "Set NS",
+                            "iconCls": "setfaction-ns",
+                            "callback": this.setFactionNS
+                        },
+                        {
+                            "text": "Clear",
+                            "iconCls": "setfaction-ns",
+                            "callback": this.clearFaction
+                        },
+                        {
+                            "text": "Clear all",
+                            "iconCls": "setfaction-ns",
+                            "callback": this.clearAllFactions
+                        },
+                    ]
+                } as any).setZoom(2.63).setView(L.latLng(0, 0));
 
                 const zoneName: string = ZoneUtils.getZoneName(this.settings.zoneID).toLowerCase();
 
@@ -260,6 +543,30 @@
                         interactive: true
                     });
 
+                    region.on("contextmenu", (ev: L.LeafletMouseEvent) => {
+                        console.log(`contextmenu`, ev);
+                        this.flip.facilityID = null;
+
+                        if (!ev.target) {
+                            console.warn(`missing target from event, cannot set flip.facilityID`);
+                            return;
+                        }
+
+                        if (!ev.target.facility) {
+                            console.warn(`missing target.facility from event, cannot set flip.facilityID`);
+                            return;
+                        }
+
+                        this.flip.facilityID = ev.target.facility.facilityID;
+                        console.log(`flip.facilityID: ${this.flip.facilityID}`);
+
+                        // Right click also opens the contextmenu plugin, prevent that if there is a selected faction
+                        if (this.flip.selectedFaction != null) {
+                            this.setFaction({}, this.flip.selectedFaction, false);
+                            L.DomEvent.stopPropagation(ev);
+                        }
+                    });
+
                     region.addTo(this.map);
                     this.regionData.push(region);
 
@@ -288,45 +595,107 @@
                     }
                 }
 
-                this.redrawMap();
+                this.redrawMap({ terrain: true, ownership: true });
             },
 
+            /**
+             * Callback for when new data is received from the websocket. Updates the ownership and zone data, and if needed, redraws the map
+             * @param data
+             */
             updateMap: function(data: any): void {
+                let panesToRedraw = {
+                    terrain: false,
+                    ownership: false
+                };
+
+                let needsRefresh: boolean = false;
+                if (this.ownershipData == null) {
+                    console.log(`needs refresh: ownershipData is null (initial render)`);
+                    needsRefresh = true;
+                    panesToRedraw.terrain = true;
+                    panesToRedraw.ownership = true;
+                }
+
                 // Transform the object into a map with numberic keys
                 const zone: PsZone = data;
+                if (this.ownershipData != null && this.ownershipData.zoneID != zone.zoneID) {
+                    console.log(`needs refresh: zone has changed`);
+                    needsRefresh = true;
+                    panesToRedraw.terrain = true;
+                    panesToRedraw.ownership = true;
+                }
+
                 zone.facilities = new Map(Object.entries(zone.facilities).map(iter => {
                     return [Number.parseInt(iter[0]), iter[1]];
                 }));
+
+                if (this.ownershipData != null) {
+                    this.ownershipData.facilities.forEach((owner: PsFacilityOwner, facilityID: number) => {
+                        const newOwner: PsFacilityOwner | null = zone.facilities.get(facilityID) ?? null;
+                        if (newOwner == null) {
+                            console.log(`needs refresh: facility ID ${facilityID} is missing in new data`);
+                            needsRefresh = true;
+                            panesToRedraw.ownership = true;
+                            return;
+                        }
+
+                        if (newOwner.owner != owner.owner) {
+                            console.log(`needs refresh: facility ID ${facilityID} was owned by ${owner.owner}, now owned by ${newOwner.owner}`);
+                            needsRefresh = true;
+                            panesToRedraw.ownership = true;
+                            return;
+                        }
+                    });
+                }
+
                 this.ownershipData = zone;
 
                 console.log(this.ownershipData);
 
-                this.redrawMap();
+                if (needsRefresh == true) {
+                    this.redrawMap(panesToRedraw);
+                }
             },
 
-            redrawMap: function(): void {
+            /**
+             * Redraw/Render the map, optionally specifying what parts of the map to re-render
+             * @param panes
+             */
+            redrawMap: function(panes?: { terrain?: boolean, ownership?: boolean }): void {
                 if (this.ownershipData == null) {
                     console.warn(`realtime-map> this.ownershipData is null, cannot redraw cuz i got no data`);
                     return;
                 }
 
-                if (this.panes.terrain != null) {
+                console.log(`RealtimeMap> redraw map with options:`, panes);
+
+                if (this.panes.terrain != null && panes?.terrain == true) {
                     this.panes.terrain.setOpacity(this.layers.terrain == true ? 1 : 0);
                     this.panes.terrain.redraw();
                 }
 
                 // Fill in each region based on who owns it
                 this.ownershipData.facilities.forEach((owner: PsFacilityOwner, facilityID: number) => {
+
                     const region: ZoneRegion | undefined = this.regionData.find(iter => iter.facility?.facilityID == facilityID);
                     if (region != undefined) {
+
+                        // If the flip owner is different than the current owner, draw a gold outline around it
+                        // undefined color means use the fill color
+                        const isPendingFlip: boolean = !(owner.flipOwner == undefined || owner.flipOwner == owner.owner);
                         region.setStyle({
                             opacity: this.layers.outline == true ? 1 : 0,
                             fill: true,
+                            color: !isPendingFlip ? "#FFFFFF" : FactionColors.getFactionColor(owner.flipOwner ?? owner.owner),
                             fillColor: FactionColors.getFactionColor(owner.owner),
-                            fillOpacity: (this.layers.owner == true) ? this.regionFillOpacity : 0
+                            fillOpacity: (this.layers.owner == true) ? this.regionFillOpacity : 0,
+                            weight: isPendingFlip ? 15 : 3
                         });
                         region.ownerID = owner.owner;
-                        region.redraw();
+
+                        if (panes?.ownership == true) {
+                            region.redraw();
+                        }
 
                         //console.log(`${region.facility?.name} => ${owner.owner}`);
 
@@ -364,6 +733,9 @@
                 }
             },
 
+            /**
+             * Tell the websocket hub what data our connection wants to recieve
+             */
             updateConnection: async function(): Promise<void> {
                 if (this.connection == null) {
                     console.warn(`realtime-map> this.connection is null, cannot update connection`);
@@ -373,18 +745,21 @@
                 await this.connection.send("Initalize", this.settings.worldID, this.settings.zoneID);
             },
 
+            /**
+             * Parses the query parameters into the options used to control how the map is rendered
+             */
             parseQueryParams: function(): void {
                 const params: URLSearchParams = new URLSearchParams(location.search);
 
+                this.showUI = params.get("showUI") != "false";
+
                 const worldID: number = Number.parseInt(params.get("worldID") || "");
                 if (Number.isNaN(worldID) == false) {
-                    this.showUI = false;
                     this.settings.worldID = worldID;
                 }
 
                 const zoneID: number = Number.parseInt(params.get("zoneID") || "");
                 if (Number.isNaN(zoneID) == false) {
-                    this.showUI = false;
                     this.settings.zoneID = zoneID;
                 }
 
@@ -404,7 +779,7 @@
                 }
             },
 
-            updateQueryParams: function(): void {
+            getUrl: function(showUI: boolean): string {
                 const params: URLSearchParams = new URLSearchParams();
 
                 if (this.settings.worldID != null) {
@@ -426,12 +801,29 @@
                     params.set("hide", hide.join(","));
                 }
 
+                if (showUI == true) {
+                    params.set("showUI", "true");
+                } else {
+                    params.set("showUI", "false");
+                }
+
                 const newUrl: string = `${window.location.protocol}//${window.location.host}${window.location.pathname}?${params.toString()}`;
-                window.history.pushState({ path: newUrl }, '', newUrl);
+
+                return newUrl;
             },
 
-            copyUrl: function(): void {
-                navigator.clipboard.writeText(location.href);
+            /**
+             * Update the query parameters in the URL with the settings the user has selected
+             * @param forceShowUI
+             */
+            updateQueryParams: function(): void {
+                const url: string = this.getUrl(false);
+                window.history.pushState({ path: url }, '', url);
+            },
+
+            copyUrl: function(forceShowUI: boolean = false): void {
+                const url: string = this.getUrl(forceShowUI);
+                navigator.clipboard.writeText(url);
             }
         },
 
@@ -455,11 +847,13 @@
 
                     region.redraw();
                 }
+
+                this.updateQueryParams();
             },
 
-            "layers.owner": function(): void { this.redrawMap(); },
-            "layers.outline": function(): void { this.redrawMap(); },
-            "layers.lattice": function(): void { this.redrawMap(); },
+            "layers.owner": function(): void { this.redrawMap({ ownership: true }); this.updateQueryParams(); },
+            "layers.outline": function(): void { this.redrawMap({ ownership: true }); this.updateQueryParams(); },
+            "layers.lattice": function(): void { this.redrawMap({ ownership: true }); this.updateQueryParams(); },
 
             "layers.name": function(): void {
                 for (const region of this.regionData) {
@@ -475,12 +869,14 @@
                 if (this.socketState == "opened") {
                     await this.updateConnection();
                     this.createMap();
+                    this.updateQueryParams();
                 }
             },
 
             "settings.worldID": function(): void {
                 if (this.socketState == "opened") {
                     this.updateConnection();
+                    this.updateQueryParams();
                 }
             },
 

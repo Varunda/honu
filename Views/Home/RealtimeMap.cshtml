@@ -7,6 +7,10 @@
       integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
       crossorigin=""/>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-contextmenu/1.4.0/leaflet.contextmenu.css"
+    integrity="sha512-sgMNQqQqKbwIukMPRGv16lpaZLXNnWdtgLtzUwrorvhoLyC4QnkuT59T1jq9GTaVoZJJ4bnKjs8lS5shjc02AA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <script src="~/dist/view/realtimemap/view.js" defer asp-append-version="true"></script>
 
 <style>
@@ -28,6 +32,28 @@
 
     .leaflet-container {
         background-color: #051110;
+    }
+
+    .setfaction-vs {
+        color: #FF00FF;
+    }
+
+    .setfaction-nc {
+        color: #0000FF;
+    }
+
+    .setfaction-tr {
+        color: #FF0000;
+    }
+
+    .setfaction-ns {
+        color: #777777;
+    }
+
+    .leaflet-flip-parent { 
+        background-color: #222222;
+        width: min(300px, 20vw);
+        padding: 0.5rem;
     }
 </style>
 

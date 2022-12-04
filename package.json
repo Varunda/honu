@@ -26,6 +26,7 @@
     "graphology-metrics": "^2.1.0",
     "highcharts": "^10.2.1",
     "leaflet": "^1.7.1",
+    "leaflet-contextmenu": "^1.4.0",
     "moment": "^2.29.2",
     "plotly.js": "^2.14.0",
     "postcss": "^8.3.6",
