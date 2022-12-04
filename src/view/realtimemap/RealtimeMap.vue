@@ -12,8 +12,8 @@
             </honu-menu>
         </div>
 
-        <div v-if="showUI" class="d-flex">
-            <div style="display: contents;">
+        <div v-if="showUI" class="d-flex mb-2" style="gap: 0.5rem;">
+            <div style="width: initial;">
                 <toggle-button v-model="layers.terrain">
                     Terrain map
                 </toggle-button>
@@ -35,7 +35,7 @@
                 </toggle-button>
             </div>
 
-            <div class="input-group">
+            <div class="input-group" style="width: initial;">
                 <span class="input-group-text input-group-prepend">
                     Line thickness
                 </span>
@@ -43,7 +43,7 @@
                 <input v-model.number="settings.thickness" class="form-control" type="number" style="width: 8ch; max-width: 8ch;" />
             </div>
 
-            <div class="input-group">
+            <div class="input-group" style="width: initial;">
                 <span class="input-group-text input-group-prepend">
                     Server
                 </span>
@@ -58,7 +58,7 @@
                 </select>
             </div>
 
-            <div class="input-group">
+            <div class="input-group" style="width: initial;">
                 <span class="input-group-text input-group-prepend">
                     Continent
                 </span>
@@ -72,13 +72,13 @@
                 </select>
             </div>
 
-            <div>
+            <div style="width: initial;">
                 <toggle-button v-model="flip.showUI">
                     Show flip UI
                 </toggle-button>
             </div>
 
-            <div>
+            <div style="width: initial;">
                 <button @click="copyUrl(true)" class="btn btn-primary" type="button">
                     Copy URL
                     <info-hover text="Hides the UI at the top, useful for stream overlays"></info-hover>
@@ -765,7 +765,6 @@
 
                 const hidden: string | null = params.get("hide");
                 if (hidden != null) {
-                    this.showUI = false;
                     const parts: string[] = hidden.split(",");
 
                     for (const part of parts) {
@@ -779,7 +778,7 @@
                 }
             },
 
-            getUrl: function(showUI: boolean): string {
+            getUrl: function(showUI: boolean = true): string {
                 const params: URLSearchParams = new URLSearchParams();
 
                 if (this.settings.worldID != null) {
@@ -817,7 +816,7 @@
              * @param forceShowUI
              */
             updateQueryParams: function(): void {
-                const url: string = this.getUrl(false);
+                const url: string = this.getUrl(true);
                 window.history.pushState({ path: url }, '', url);
             },
 
