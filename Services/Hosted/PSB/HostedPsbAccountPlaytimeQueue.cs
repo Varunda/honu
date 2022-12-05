@@ -34,7 +34,6 @@ namespace watchtower.Services.Hosted.PSB {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     PsbAccountPlaytimeUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
@@ -60,7 +59,6 @@ namespace watchtower.Services.Hosted.PSB {
                     _Logger.LogError(ex, $"error while updating psb account playtime");
                 }
             }
-
         }
 
     }
