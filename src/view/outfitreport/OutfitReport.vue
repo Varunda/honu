@@ -686,7 +686,7 @@
                     return;
                 }
 
-                characters.data.sort((a, b) => b.id.localeCompare(a.id));
+                characters.data.sort((a, b) => b.dateLastLogin.getTime() - a.dateLastLogin.getTime());
                 this.addCharacters(characters.data[0]);
                 this.search.characterName = "";
             },
