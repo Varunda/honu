@@ -145,6 +145,7 @@
 
     import * as L from "leaflet";
     import * as sR from "signalR";
+    import * as pf from "pathfinding";
 
     import "node_modules/leaflet-contextmenu/dist/leaflet.contextmenu.js";
 
@@ -167,6 +168,18 @@
         facilityID: number;
         owner: number;
         flipOwner?: number;
+    }
+
+    class Path {
+        public path: Node[] = [];
+        public label: string = "";
+        public distance: number = 0;
+    }
+
+    class Node {
+        public id: number = 0;
+        public label: string = "";
+        public links: number[] = [];
     }
 
     export const RealtimeMap = Vue.extend({
@@ -227,6 +240,8 @@
             this.$nextTick(() => {
                 this.createMap();
             });
+
+            this.dij();
         },
 
         methods: {
@@ -275,6 +290,102 @@
                 }
             },
 
+            dij: function(): void {
+                let graph = {
+                    start: { A: 5, B: 2 },
+                    A: { start: 1, C: 4, D: 2 },
+                    B: { A: 8, D: 7 },
+                    C: { D: 6, finish: 3 },
+                    D: { finish: 1 },
+                    finish: {}
+                };
+
+                let shortestDistanceNode = (distances: any, visited: any) => {
+                    // create a default value for shortest
+                    let shortest = null;
+
+                    // for each node in the distances object
+                    for (let node in distances) {
+                        // if no node has been assigned to shortest yet
+                        // or if the current node's distance is smaller than the current shortest
+                        let currentIsShortest =
+                            shortest === null || distances[node] < distances[shortest];
+
+                        // and if the current node is in the unvisited set
+                        if (currentIsShortest && !visited.includes(node)) {
+                            // update shortest to be the current node
+                            shortest = node;
+                        }
+                    }
+                    return shortest;
+                };
+
+                let findShortestPath = (graph: any, startNode: any, endNode: any) => {
+                    // track distances from the start node using a hash object
+                    let distances = {};
+                    distances[endNode] = "Infinity";
+                    distances = Object.assign(distances, graph[startNode]);// track paths using a hash object
+                    let parents = { endNode: null };
+                    for (let child in graph[startNode]) {
+                        parents[child] = startNode;
+                    }
+
+                    // collect visited nodes
+                    let visited = [];// find the nearest node
+                    let node = shortestDistanceNode(distances, visited);
+
+                    // for that node:
+                    while (node) {
+                        // find its distance from the start node & its child nodes
+                        let distance = distances[node];
+                        let children = graph[node];
+
+                        // for each of those child nodes:
+                        for (let child in children) {
+
+                            // make sure each child node is not the start node
+                            if (String(child) === String(startNode)) {
+                                continue;
+                            } else {
+                                // save the distance from the start node to the child node
+                                let newdistance = distance + children[child];// if there's no recorded distance from the start node to the child node in the distances object
+                                // or if the recorded distance is shorter than the previously stored distance from the start node to the child node
+                                if (!distances[child] || distances[child] > newdistance) {
+                                    // save the distance to the object
+                                    distances[child] = newdistance;
+                                    // record the path
+                                    parents[child] = node;
+                                }
+                            }
+                        }
+                        // move the current node to the visited set
+                        visited.push(node);// move to the nearest neighbor node
+                        node = shortestDistanceNode(distances, visited);
+                    }
+
+                    // using the stored paths from start node to end node
+                    // record the shortest path
+                    let shortestPath = [endNode];
+                    let parent = parents[endNode];
+                    while (parent) {
+                        shortestPath.push(parent);
+                        parent = parents[parent];
+                    }
+                    shortestPath.reverse();
+
+                    //this is the shortest path
+                    let results = {
+                        distance: distances[endNode],
+                        path: shortestPath,
+                    };
+                    // return the shortest path & the end node's distance from the start node
+                    return results;
+                };
+
+                console.log(findShortestPath(graph, "start", "finish"));
+
+            },
+
             setFaction: function(ev: any, factionID: number | null, connectWarpgate: boolean): void {
                 console.log("event", ev);
                 console.log(`setting facility ${this.flip.facilityID} to ${factionID}`);
@@ -293,6 +404,54 @@
                 if (owner == null) {
                     return console.warn(`cannot setFaction: ownership for ${this.flip.facilityID} was not found`);
                 }
+
+                this.flip.showUI = true;
+
+                this.pathfind(205001, this.flip.facilityID);
+
+                // construct adjacency matrix
+
+                // create what facility ID is in what index
+                const indexes: Map<number, number> = new Map(); // <facility id, index>
+                let index: number = 0;
+                for (const kvp of this.ownershipData.facilities) {
+                    indexes.set(kvp[0], index++);
+                }
+                console.log(indexes);
+
+                // Create the adjacency matrix
+                const graph: number[][] = [];
+                graph.length = indexes.size;
+                for (let i = 0; i < indexes.size; ++i) {
+                    graph[i] = [];
+                    graph[i].length = indexes.size;
+                    for (let j = 0; j < indexes.size; ++j) {
+                        graph[i][j] = 1;
+                    }
+                }
+                console.log(graph);
+
+                // set what facilities are adjacent to each other
+                for (const link of this.zoneData.links) {
+                    const indexA: number | undefined = indexes.get(link.facilityA);
+                    const indexB: number | undefined = indexes.get(link.facilityB);
+
+                    if (indexA == undefined && indexB == undefined) {
+                        throw `Failed to find index for facilityA (${link.facilityA}) and facilityB (${link.facilityB})`;
+                    }
+                    if (indexA == undefined) {
+                        throw `Failed to find index for facilityA (${link.facilityA})`;
+                    }
+                    if (indexB == undefined) {
+                        throw `Failed to find index for facilityB (${link.facilityB})`;
+                    }
+
+                    graph[indexA][indexB] = 0;
+                    graph[indexB][indexA] = 0;
+                }
+                console.log(graph);
+
+                const grid = new pf.Grid(graph);
 
                 /*
                 // this isn't done lul
@@ -357,6 +516,126 @@
                 this.redrawMap({ ownership: true });
             },
 
+            pathfind: function(facilityA: number, facilityB: number): number[] {
+                if (this.zoneData == null) {
+                    throw `cannot pathfind from ${facilityA} to ${facilityB}: zoneData is null`;
+                }
+                if (this.ownershipData == null) {
+                    throw `cannot pathfind from ${facilityA} to ${facilityB}: ownershipData is null`;
+                }
+
+                // create what facility ID is in what index
+                const indexes: Map<number, number> = new Map(); // <facility id, index>
+                let index: number = 0;
+                for (const kvp of this.ownershipData.facilities) {
+                    indexes.set(kvp[0], index++);
+                }
+                console.log(indexes);
+
+                // Create the adjacency matrix
+                const graph: boolean[][] = [];
+                graph.length = indexes.size;
+                for (let i = 0; i < indexes.size; ++i) {
+                    graph[i] = [];
+                    graph[i].length = indexes.size;
+                    for (let j = 0; j < indexes.size; ++j) {
+                        graph[i][j] = false;
+                    }
+                }
+                console.log(graph);
+
+                // set what facilities are adjacent to each other
+                for (const link of this.zoneData.links) {
+                    const indexA: number | undefined = indexes.get(link.facilityA);
+                    const indexB: number | undefined = indexes.get(link.facilityB);
+
+                    if (indexA == undefined && indexB == undefined) {
+                        throw `Failed to find index for facilityA (${link.facilityA}) and facilityB (${link.facilityB})`;
+                    }
+                    if (indexA == undefined) {
+                        throw `Failed to find index for facilityA (${link.facilityA})`;
+                    }
+                    if (indexB == undefined) {
+                        throw `Failed to find index for facilityB (${link.facilityB})`;
+                    }
+
+                    graph[indexA][indexB] = true;
+                    graph[indexB][indexA] = true;
+                }
+                console.log(graph);
+
+                let start: boolean = true;
+                const facilities: PsFacility[] = this.zoneData.facilities;
+                const links: PsFacilityLink[] = this.zoneData.links;
+                let completed: Path[] = [];
+
+                const travel = (node: Node, path: Node[], total: number): void => {
+                    if (start == true) {
+                        path.push(node);
+                        start = false;
+                    }
+
+                    if (path.length == facilities.length) {
+                        const p: Path = new Path();
+                        for (let i = 0; i < path.length; ++i) {
+                            p.path.push(path[i]);
+                        }
+                        p.distance = total;
+                        completed.push(p);
+
+                        console.log(`path length before: ${path.length}`);
+                        path = path.slice(0, -1);
+                        console.log(`path length after: ${path.length}`);
+                        return;
+                    }
+
+                    const iterID: number = node.id;
+                    const index: number | undefined = indexes.get(iterID);
+                    if (index == undefined) {
+                        throw `failed to find index for ${iterID}`;
+                    }
+
+                    // get the links the facility being iterated over has
+                    const iterLinks: Set<number> = new Set();
+                    for (const iter of links) {
+                        if (iter.facilityA == iterID && iter.facilityB != iterID) {
+                            iterLinks.add(iter.facilityB);
+                        }
+                        if (iter.facilityB == iterID && iter.facilityA != iterID) {
+                            iterLinks.add(iter.facilityA);
+                        }
+                    }
+
+                    for (const linkID of iterLinks) {
+                        let isin: boolean = false;
+                        for (let i = 0; i < path.length; ++i) {
+                            if (path[i].id == linkID) {
+                                isin = true;
+                                break;
+                            }
+                        }
+
+                        if (isin == true) {
+                            console.log(`link to ${linkID} is already in the path, skipping`);
+                            continue;
+                        }
+
+                        const n: Node = new Node();
+                        n.id = linkID;
+                        path.push(n);
+                        travel(n, path, total + 1);
+                    }
+                };
+
+                const s: Node = new Node();
+                s.id = facilityA;
+                travel(s, [], 0);
+
+                debugger;
+
+                return [];
+            },
+
             setFactionVS: function(ev: any): void { this.setFaction(ev, 1, false); },
             setFactionVSWG: function(ev: any): void { this.setFaction(ev, 1, true); },
             setFactionNC: function(ev: any): void { this.setFaction(ev, 2, false); },
@@ -368,6 +647,7 @@
 
             clearAllFactions: function(): void {
                 this.flip.commands = [];
+                this.flip.selectedFaction = null;
 
                 if (this.ownershipData == null) {
                     return;
@@ -383,13 +663,11 @@
             updateFlipCommands: function(): void {
                 this.flip.commands = [];
 
-                this.flip.commands.push("/alias a:facility setfaction;alias v: a 1; alias n: a 2; alias t: a 3;");
-
                 if (this.ownershipData == null) {
                     return console.warn(`cannot update flip commands: ownershipData is null`);
                 }
 
-                let currentCommand: string = "/";
+                let currentCommand: string = "/alias a:facility setfaction;alias v:a 1; alias n:a 2; alias t:a 3; alias s:a 4;";
 
                 this.ownershipData.facilities.forEach((owner: PsFacilityOwner) => {
                     if (owner.flipOwner != undefined && owner.owner != owner.flipOwner) {
@@ -401,6 +679,8 @@
                             iterCmd += "n ";
                         } else if (owner.flipOwner == 3) {
                             iterCmd += "t ";
+                        } else if (owner.flipOwner == 4) {
+                            iterCmd += "s ";
                         }
 
                         iterCmd += `${owner.facilityID}`;
