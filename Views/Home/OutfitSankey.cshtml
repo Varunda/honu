@@ -5,7 +5,24 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 -->
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://unpkg.com/d3-array@1"></script>
+<script src="https://unpkg.com/d3-collection@1"></script>
+<script src="https://unpkg.com/d3-path@1"></script>
+<script src="https://unpkg.com/d3-shape@1"></script>
+<script src="https://unpkg.com/d3-sankey@0"></script>
+<script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/sankey.js"></script>
 <script src="~/dist/view/outfitsankey/view.js" defer asp-append-version="true"></script>
+
+<style>
+.link {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .2;
+}
+.link:hover {
+  stroke-opacity: .5;
+}
+</style>
 
 <div id="app" class="container-fluid">
     <outfit-sankey></outfit-sankey>

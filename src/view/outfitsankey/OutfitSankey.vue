@@ -52,8 +52,12 @@
 
     import TimeUtils from "util/Time";
 
+    /*
     import * as d3s from "d3-sankey";
     import * as d3 from "d3";
+    */
+
+    const d3: any = (window as any).d3;
 
     /// @ts-ignore
     import * as Plotly from "plotly.js/dist/plotly";
@@ -113,40 +117,102 @@
         mounted: function(): void {
             this.$nextTick(async () => {
                 this.d3s();
-                /*
                 await this.getSessions();
                 await this.getOutfits();
                 this.makeData();
                 this.makeGraph();
-                */
             });
         },
 
         methods: {
             d3s: function(): void {
+
                 const svg = d3.select("#d3_canvas").append("svg")
                     .attr("width", 1920)
                     .attr("height", 1080)
                     .append("g")
                     .attr("transform", `translate(0, 0)`);
 
-                const s = d3s.sankey()
+                console.log(`d3 stuff`);
+
+                const s = d3.sankey()
                     .nodeWidth(36)
                     .nodePadding(290)
                     .size([1920, 1080]);
 
-                console.log(`d3 stuff`);
+                console.log(svg, s);
 
-                d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/data_sankey.json", function(err, graph) {
+                d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/data_sankey.json", function(err: any, graph: any) {
                     console.log(`over here!`);
-                    debugger;
+                    //debugger;
                     if (err) {
                         console.error(err);
                     }
 
                     console.log(`over here!`);
 
-                    s.nodes(graph.nodes).links(graph.links);
+                    console.log(graph);
+
+                    s.nodes(graph.nodes)
+                        .links(graph.links)
+                        .layout(1);
+
+                    // add in the links
+                    var link = svg.append("g")
+                        .selectAll(".link")
+                        .data(graph.links)
+                        .enter()
+                        .append("path")
+                        .attr("class", "link")
+                        .attr("d", s.link())
+                        .style("stroke-width", function(d: any) { return Math.max(1, d.dy); })
+                        .sort(function(a: any, b: any) { return b.dy - a.dy; });
+
+                    // add in the nodes
+                    var node = svg.append("g")
+                        .selectAll(".node")
+                        .data(graph.nodes)
+                        .enter().append("g")
+                        .attr("class", "node")
+                        .attr("transform", function(d: any) { return "translate(" + d.x + "," + d.y + ")"; });
+
+                    // add the rectangles for the nodes
+                    node
+                        .append("rect")
+                        .attr("height", function(d: any) {
+                            console.log(d);
+                            return d.dy;
+                        })
+                        .attr("width", s.nodeWidth())
+                        .style("fill", function(d: any) {
+                            return d.color = "#fff";
+                        })
+                        .style("stroke", function(d: any) {
+                            return d3.rgb(d.color).darker(2);
+                        })
+                        // Add hover text
+                        .append("title")
+                        .text(function(d: any) {
+                            return d.name + "\n" + "There is " + d.value + " stuff in this node";
+                        });
+
+                    /*
+                    // add in the title for the nodes
+                    node
+                        .append("text")
+                        .attr("x", -6)
+                        .attr("y", function(d: any) { return d.dy / 2; })
+                        .attr("dy", ".35em")
+                        .attr("text-anchor", "end")
+                        .attr("transform", null)
+                        .text(function(d: any) { return d.name; })
+                        .filter(function(d: any) { return d.x < 1080 / 2; })
+                        .attr("x", 6 + s.nodeWidth())
+                        .attr("text-anchor", "start");
+                    */
+
+                    // the function for moving the nodes
+                    //s.update(graph);
                 });
             },
 
@@ -386,7 +452,7 @@
                     let acc: number = 0;
                     for (const datum of thisDay) {
                         if (datum.outfitID == outfitID) {
-                            console.log(`${outfitID}@${timestamp} => ${acc / totalMembers} - ${(acc + datum.members.length) / totalMembers}`);
+                            //console.log(`${outfitID}@${timestamp} => ${acc / totalMembers} - ${(acc + datum.members.length) / totalMembers}`);
                             return acc / totalMembers;
                         }
                         acc += datum.members.length;
@@ -437,11 +503,12 @@
                         y: nodes.map(i => i.y),
                         color: nodes.map(i => i.color + "33"),
                         thickness: 20,
-                        hovertemplate: "x: %{x}, y: %{y}",
+                        //hovertemplate: "x: %{x}, y: %{y}",
                         line: {
                             width: 0
                         },
                         pad: 0
+                        //pad: 1
                         //pad: 10
                     },
                     link: {
