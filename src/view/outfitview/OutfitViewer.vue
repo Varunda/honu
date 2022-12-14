@@ -46,6 +46,19 @@
                 </tr>
 
                 <tr>
+                    <td><b>Server</b></td>
+                    <td>
+                        <span v-if="leader.state == 'loading'">
+                            &lt;loading...&gt;
+                        </span>
+                        <span v-else-if="leader.state == 'loaded'">
+                            {{leader.data.worldID | world}}
+                            <info-hover text="This is the server of the leader, outfits do not have a server"></info-hover>
+                        </span>
+                    </td>
+                </tr>
+
+                <tr>
                     <td><b>Date created</b></td>
                     <td>
                         {{outfit.data.dateCreated | moment}}
@@ -241,6 +254,11 @@
 
                     <a-body v-slot="entry">
                         {{entry.worldID | world}}
+
+                        <span v-if="leader.state == 'loaded' && leader.data.worldID != entry.worldID">
+                            <info-hover icon="exclamation-circle" text="This character is on a different server than the leader!" style="color: red;"></info-hover>
+                        </span>
+
                     </a-body>
                 </a-col>
 
@@ -303,6 +321,7 @@
     import InfoHover from "components/InfoHover.vue";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import Collapsible from "components/Collapsible.vue";
+    import Busy from "components/Busy.vue";
 
     const QuickNumber = Vue.extend({
         props: {
@@ -506,7 +525,8 @@
             QuickNumber,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Collapsible,
-            OutfitActivityGraph
+            OutfitActivityGraph,
+            Busy
         }
 
     });
