@@ -241,7 +241,7 @@
                 this.createMap();
             });
 
-            this.dij();
+            //this.dij();
         },
 
         methods: {
@@ -290,6 +290,7 @@
                 }
             },
 
+            /*
             dij: function(): void {
                 let graph = {
                     start: { A: 5, B: 2 },
@@ -385,6 +386,7 @@
                 console.log(findShortestPath(graph, "start", "finish"));
 
             },
+            */
 
             setFaction: function(ev: any, factionID: number | null, connectWarpgate: boolean): void {
                 console.log("event", ev);
@@ -407,10 +409,11 @@
 
                 this.flip.showUI = true;
 
-                this.pathfind(205001, this.flip.facilityID);
+                //this.pathfind(205001, this.flip.facilityID);
 
                 // construct adjacency matrix
 
+                /*
                 // create what facility ID is in what index
                 const indexes: Map<number, number> = new Map(); // <facility id, index>
                 let index: number = 0;
@@ -452,6 +455,7 @@
                 console.log(graph);
 
                 const grid = new pf.Grid(graph);
+                */
 
                 /*
                 // this isn't done lul
