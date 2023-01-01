@@ -24,6 +24,13 @@
                 <input type="number" v-model.number="create.count" placeholder="Amount" />
 
                 <div class="input-group-addon">
+                    <toggle-button v-model="create.leadingZeroes">
+                        Leading zeroes
+                        <info-hover text="If the character have leading zeroes, such as D1RExPratice01, instead of D1RExPractice1"></info-hover>
+                    </toggle-button>
+                </div>
+
+                <div class="input-group-addon">
                     <button type="button" class="btn btn-primary" @click="createBlockWrapper">
                         Create 
                     </button>
@@ -86,6 +93,8 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import Collapsible from "components/Collapsible.vue";
+    import ToggleButton from "components/ToggleButton";
+    import InfoHover from "components/InfoHover.vue";
 
     import PracticeAccountList from "./components/PracticeAccountList.vue";
 
@@ -95,7 +104,6 @@
     type GroupedAccount = {
         accounts: Loading<FlatPsbNamedAccount[]>;
         tag: string;
-        headerText: string;
         count: number;
         countOk: number;
         countUnused: number;
@@ -119,7 +127,8 @@
 
                 create: {
                     tag: "" as string,
-                    count: 0 as number
+                    count: 0 as number,
+                    leadingZeroes: false as boolean
                 }
             }
         },
@@ -145,21 +154,29 @@
                     return;
                 }
 
-                await this.createBlock(this.create.tag, this.create.count);
+                await this.createBlock(this.create.tag, this.create.count, this.create.leadingZeroes);
             },
 
-            createBlock: async function(tag: string, count: number): Promise<void> {
+            createBlock: async function(tag: string, count: number, leadingZeroes: boolean): Promise<void> {
                 Toaster.add(`Creating block`, `Creating ${count} practice accounts for ${tag}`, "info");
 
                 let successCount: number = 0;
                 let errorCount: number = 0;
                 for (let i = 0; i < count; ++i) {
-                    const newAccount: Loading<PsbNamedAccount> = await PsbNamedAccountApi.create(tag, `Practice${i + 1}`, PsbAccountType.PRACTICE, true);
+                    const magnitude: number = Math.ceil(Math.log10(count));
+
+                    let number: string = `${i + 1}`;
+                    if (leadingZeroes == true) {
+                        number = (i + 1).toString().padStart(magnitude, "0");
+                    }
+                    const name: string = `Practice${number}`;
+
+                    const newAccount: Loading<PsbNamedAccount> = await PsbNamedAccountApi.create(tag, name, PsbAccountType.PRACTICE, true);
 
                     if (newAccount.state == "loaded") {
                         ++successCount;
                     } else if (newAccount.state == "error") {
-                        Toaster.add(`Error creating ${tag}xPractice${i + 1}`, `Error: ${newAccount.message}`, "warning");
+                        Toaster.add(`Error creating ${tag}x${name}`, `Error: ${newAccount.message}`, "warning");
                         ++errorCount;
                     }
                 }
@@ -240,7 +257,6 @@
                         arr = {
                             accounts: Loadable.loaded([]),
                             tag: tag,
-                            headerText: "",
                             count: 0,
                             countOk: 0,
                             countUnused: 0,
@@ -269,18 +285,6 @@
                     map.set(tag, arr);
                 }
 
-                map.forEach((group: GroupedAccount, _) => {
-                    if (group.accounts.state != "loaded") {
-                        throw ``;
-                    }
-                    group.headerText = `${group.tag} block: ${group.countOk + group.countUnused}/${group.accounts.data.length}: `;
-
-                    if (group.countOk > 0) { group.headerText += `${group.countOk} OK; `; }
-                    if (group.countUnused > 0) { group.headerText += `${group.countUnused} Unused; `; }
-                    if (group.countMissing > 0) { group.headerText += `${group.countMissing} missing; `; }
-                    if (group.countDeleted > 0) { group.headerText += `${group.countDeleted} deleted; `; }
-                });
-
                 let blocks: GroupedAccount[] = Array.from(map.values());
 
                 if (this.search.tag.trim().length > 0) {
@@ -297,6 +301,7 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            ToggleButton, InfoHover,
             Collapsible,
             PracticeAccountList
         }
