@@ -28,7 +28,12 @@
                         Leading zeroes
                         <info-hover text="If the character have leading zeroes, such as D1RExPratice01, instead of D1RExPractice1"></info-hover>
                     </toggle-button>
+
+                    <toggle-button v-model="create.lowercasePractice">
+                        Lowercase practice
+                    </toggle-button>
                 </div>
+
 
                 <div class="input-group-addon">
                     <button type="button" class="btn btn-primary" @click="createBlockWrapper">
@@ -128,7 +133,8 @@
                 create: {
                     tag: "" as string,
                     count: 0 as number,
-                    leadingZeroes: false as boolean
+                    leadingZeroes: false as boolean,
+                    lowercasePractice: false as boolean
                 }
             }
         },
@@ -169,7 +175,7 @@
                     if (leadingZeroes == true) {
                         number = (i + 1).toString().padStart(magnitude, "0");
                     }
-                    const name: string = `Practice${number}`;
+                    const name: string = `${this.create.lowercasePractice == false ? "Practice" : "practice"}${number}`;
 
                     const newAccount: Loading<PsbNamedAccount> = await PsbNamedAccountApi.create(tag, name, PsbAccountType.PRACTICE, true);
 
