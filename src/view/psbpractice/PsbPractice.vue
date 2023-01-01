@@ -268,6 +268,8 @@
                     blocks = blocks.filter(iter => iter.tag.indexOf(this.search.tag) > -1);
                 }
 
+                blocks = blocks.sort((a, b) => a.tag.localeCompare(b.tag));
+
                 return Loadable.loaded(blocks);
             }
 
