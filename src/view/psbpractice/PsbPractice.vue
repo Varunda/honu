@@ -68,6 +68,7 @@
                             <h4>Manage</h4>
                             <button @click="deleteBlockWrapper(group.tag)" type="button" class="btn btn-danger">Delete block</button>
                             <button type="button" class="btn btn-warning">Resize</button>
+                            <button @click="recheckBlock(group.tag)" type="button" class="btn btn-info">Recheck</button>
                         </div>
                     </slot>
                 </collapsible>
@@ -192,6 +193,22 @@
 
                 await this.bindData();
             },
+
+            recheckBlock: async function(tag: string): Promise<void> {
+                if (this.accounts.state != "loaded") {
+                    return console.warn(`cannot delete block ${tag}: accounts is not 'loaded'`);
+                }
+
+                for (const account of this.accounts.data) {
+                    if (account.tag != tag) {
+                        continue;
+                    }
+
+                    await PsbNamedAccountApi.recheckByID(account.id);
+                }
+
+                Toaster.add(`Rechecked accounts for ${tag}`, `Recheck accounts`, "success");
+            }
 
         },
 
