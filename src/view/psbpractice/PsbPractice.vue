@@ -52,7 +52,7 @@
 
                             <div class="ml-3 flex-grow-1">
                                 <div class="progress h-100 h2 mb-0">
-                                    <div class="progress-bar bg-success h3 px-1 mw-fit border-right mb-0" :style="{ width: group.countOk / group.count * 100 + '%' }">{{group.countOk}} OK</div>
+                                    <div v-if="group.countOk > 0" class="progress-bar bg-success h3 px-1 mw-fit border-right mb-0" :style="{ width: group.countOk / group.count * 100 + '%' }">{{group.countOk}} OK</div>
                                     <div v-if="group.countUnused > 0" class="progress-bar bg-warning h3 px-1 mw-fit border-right mb-0" :style="{ width: group.countUnused / group.count * 100 + '%' }">{{group.countUnused}} unused</div>
                                     <div v-if="group.countMissing > 0" class="progress-bar bg-danger h3 px-1 mw-fit border-right mb-0" :style="{ width: group.countMissing / group.count * 100 + '%' }">{{group.countMissing}} missing</div>
                                     <div v-if="group.countDeleted > 0" class="progress-bar bg-danger h3 px-1 mw-fit mb-0" :style="{ width: group.countDeleted / group.count * 100 + '%' }">{{group.countDeleted}} deleted</div>
