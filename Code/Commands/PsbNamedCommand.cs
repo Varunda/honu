@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Commands;
 using watchtower.Models;
 using watchtower.Models.PSB;
@@ -31,7 +32,7 @@ namespace watchtower.Code.Commands {
                 tag = null;
             }
 
-            PsbNamedAccount acc = await _NamedRepository.Create(tag, name);
+            PsbAccount acc = await _NamedRepository.Create(tag, name, PsbAccountType.NAMED);
 
             _Logger.LogInformation($"Created new named account {acc.VsID} {acc.NcID} {acc.TrID} {acc.NsID}");
         }
@@ -39,7 +40,7 @@ namespace watchtower.Code.Commands {
         public async Task Get(string tagg, string name) {
             string? tag = tagg == "." ? null : tagg;
 
-            PsbNamedAccount? acc = await _NamedRepository.GetByTagAndName(tag, name);
+            PsbAccount? acc = await _NamedRepository.GetByTagAndName(tag, name);
 
             if (acc == null) {
                 _Logger.LogWarning($"Failed to find {tag}x{name}");
@@ -50,10 +51,10 @@ namespace watchtower.Code.Commands {
         }
 
         public async Task GetID(long ID) {
-            PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
+            PsbAccount? acc = await _NamedRepository.GetByID(ID);
 
             if (acc == null) {
-                _Logger.LogWarning($"No {nameof(PsbNamedAccount)} {ID} exists");
+                _Logger.LogWarning($"No {nameof(PsbAccount)} {ID} exists");
                 return;
             }
 
@@ -63,7 +64,7 @@ namespace watchtower.Code.Commands {
         public async Task Rename(long ID, string tagg, string name) {
             string? tag = tagg == "." ? null : tagg;
 
-            PsbNamedAccount? acc = await _NamedRepository.Rename(ID, tag, name);
+            PsbAccount? acc = await _NamedRepository.Rename(ID, tag, name);
             if (acc != null) {
                 _Logger.LogInformation($"Successfully renamed {ID} to {tag}x{name}");
             } else {
@@ -72,7 +73,7 @@ namespace watchtower.Code.Commands {
         }
 
         public async Task SetPlayerName(long ID, string playerName) {
-            PsbNamedAccount? acc = await _NamedRepository.SetPlayerName(ID, playerName);
+            PsbAccount? acc = await _NamedRepository.SetPlayerName(ID, playerName);
             if (acc != null) {
                 _Logger.LogInformation($"Successfully set player name for {ID} to {playerName}");
             } else {
@@ -81,9 +82,9 @@ namespace watchtower.Code.Commands {
         }
 
         public async Task Recheck(long ID) {
-            PsbNamedAccount? acc = await _NamedRepository.RecheckByID(ID);
+            PsbAccount? acc = await _NamedRepository.RecheckByID(ID);
             if (acc == null) {
-                _Logger.LogWarning($"Failed to update status of {nameof(PsbNamedAccount)}");
+                _Logger.LogWarning($"Failed to update status of {nameof(PsbAccount)}");
             } else {
                 string vs = PsbCharacterStatus.GetName(acc.VsStatus);
                 string nc = PsbCharacterStatus.GetName(acc.NcStatus);
@@ -104,11 +105,11 @@ namespace watchtower.Code.Commands {
         }
 
         public async Task RetimeAll() {
-            List<PsbNamedAccount> accounts = await _NamedRepository.GetAll();
+            List<PsbAccount> accounts = await _NamedRepository.GetAll();
 
             _Logger.LogInformation($"Queuing {accounts.Count} accounts for retiming");
 
-            foreach (PsbNamedAccount account in accounts) {
+            foreach (PsbAccount account in accounts) {
                 _Queue.Queue(new Models.Queues.PsbAccountPlaytimeUpdateQueueEntry() {
                     AccountID = account.ID
                 });
@@ -122,7 +123,7 @@ namespace watchtower.Code.Commands {
         }
 
         public async Task Delete(long ID) {
-            PsbNamedAccount? acc = await _NamedRepository.GetByID(ID);
+            PsbAccount? acc = await _NamedRepository.GetByID(ID);
             if (acc == null) {
                 _Logger.LogWarning($"Account {ID} does not exist");
                 return;

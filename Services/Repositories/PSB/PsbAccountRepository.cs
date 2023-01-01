@@ -17,7 +17,7 @@ namespace watchtower.Services.Repositories.PSB {
     public class PsbAccountRepository {
 
         private readonly ILogger<PsbAccountRepository> _Logger;
-        private readonly PsbNamedDbStore _Db;
+        private readonly PsbAccountDbStore _Db;
         private readonly CharacterRepository _CharacterRepository;
         private readonly CharacterCollection _CharacterCollection;
         private readonly PsbAccountNoteDbStore _NoteDb;
@@ -26,7 +26,7 @@ namespace watchtower.Services.Repositories.PSB {
         private const string CACHE_KEY = "PsbNamed.All";
 
         public PsbAccountRepository(ILogger<PsbAccountRepository> logger,
-            PsbNamedDbStore db, CharacterRepository charRepo,
+            PsbAccountDbStore db, CharacterRepository charRepo,
             IMemoryCache cache, CharacterCollection charColl,
             PsbAccountNoteDbStore noteDb) {
 
@@ -40,10 +40,10 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Get all <see cref="PsbNamedAccount"/>s
+        ///     Get all <see cref="PsbAccount"/>s
         /// </summary>
-        public async Task<List<PsbNamedAccount>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY, out List<PsbNamedAccount> accounts) == false) {
+        public async Task<List<PsbAccount>> GetAll() {
+            if (_Cache.TryGetValue(CACHE_KEY, out List<PsbAccount> accounts) == false) {
                 accounts = await _Db.GetAll();
 
                 _Cache.Set(CACHE_KEY, accounts, new MemoryCacheEntryOptions() {
@@ -55,39 +55,48 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Get a specific <see cref="PsbNamedAccount"/> by ID
+        ///     Get all <see cref="PsbAccount"/>s with a matching <see cref="PsbAccount.AccountType"/>
+        /// </summary>
+        /// <param name="typeID">ID of the account type to get the accounts of</param>
+        /// <returns></returns>
+        public async Task<List<PsbAccount>> GetByTypeID(long typeID) {
+            return (await GetAll()).Where(iter => iter.AccountType == typeID).ToList();
+        }
+
+        /// <summary>
+        ///     Get a specific <see cref="PsbAccount"/> by ID
         /// </summary>
         /// <param name="ID">The ID of the account to get</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.ID"/> of <paramref name="ID"/>,
+        ///     The <see cref="PsbAccount"/> with <see cref="PsbAccount.ID"/> of <paramref name="ID"/>,
         ///     or <c>null</c> if it doesn't exist
         /// </returns>
-        public async Task<PsbNamedAccount?> GetByID(long ID) {
+        public async Task<PsbAccount?> GetByID(long ID) {
             return (await GetAll()).FirstOrDefault(iter => iter.ID == ID);
         }
 
         /// <summary>
-        ///     Insert a new <see cref="PsbNamedAccount"/>
+        ///     Insert a new <see cref="PsbAccount"/>
         /// </summary>
         /// <param name="acc">Parameters used to insert</param>
-        /// <returns>The new <see cref="PsbNamedAccount.ID"/> that was assigned</returns>
+        /// <returns>The new <see cref="PsbAccount.ID"/> that was assigned</returns>
         [Obsolete("Use Create instead")]
-        protected Task<long> Insert(PsbNamedAccount acc) {
+        protected Task<long> Insert(PsbAccount acc) {
             _Cache.Remove(CACHE_KEY);
             return _Db.Insert(acc);
         }
 
         /// <summary>
-        ///     Get a specific <see cref="PsbNamedAccount"/> by it's tag and name
+        ///     Get a specific <see cref="PsbAccount"/> by it's tag and name
         /// </summary>
         /// <param name="tag">Tag</param>
         /// <param name="name">Name</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Tag"/> of <paramref name="tag"/>,
-        ///     and <see cref="PsbNamedAccount.Name"/> of <paramref name="name"/>
+        ///     The <see cref="PsbAccount"/> with <see cref="PsbAccount.Tag"/> of <paramref name="tag"/>,
+        ///     and <see cref="PsbAccount.Name"/> of <paramref name="name"/>
         /// </returns>
-        public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
-            List<PsbNamedAccount> acc = (await GetAll()).Where(iter => iter.Tag == tag && iter.Name == name && iter.DeletedAt == null).ToList();
+        public async Task<PsbAccount?> GetByTagAndName(string? tag, string name) {
+            List<PsbAccount> acc = (await GetAll()).Where(iter => iter.Tag == tag && iter.Name == name && iter.DeletedAt == null).ToList();
             if (acc.Count > 1) {
                 throw new Exception($"Multiple named accounts named {tag}x{name} exist");
             }
@@ -100,29 +109,32 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Create a new <see cref="PsbNamedAccount"/> using the tag and name passed in
+        ///     Create a new <see cref="PsbAccount"/> using the tag and name passed in
         /// </summary>
         /// <param name="tag">Optional name of the account</param>
         /// <param name="name">Name of the person who the account is for</param>
+        /// <param name="accountTypeID">ID of the account type. See <see cref="PsbAccountType"/></param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> created
+        ///     The <see cref="PsbAccount"/> created
         /// </returns>
         /// <exception cref="ArgumentException">
-        ///     If a <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Tag"/> of <paramref name="tag"/>
-        ///     and <see cref="PsbNamedAccount.Name"/> of <paramref name="name"/> already exists, this is thrown
+        ///     If a <see cref="PsbAccount"/> with <see cref="PsbAccount.Tag"/> of <paramref name="tag"/>
+        ///     and <see cref="PsbAccount.Name"/> of <paramref name="name"/> already exists, this is thrown
         /// </exception>
-        public async Task<PsbNamedAccount> Create(string? tag, string name) {
-            PsbNamedAccount? dbAccount = await _Db.GetByTagAndName(tag, name);
+        public async Task<PsbAccount> Create(string? tag, string name, short accountTypeID) {
+            PsbAccount? dbAccount = await _Db.GetByTagAndName(tag, name);
             if (dbAccount != null && dbAccount.DeletedAt == null) {
                 throw new ArgumentException($"PSB named account with tag '{tag}' and name '{name}' already exists");
             }
 
             PsbCharacterSet charSet = await GetCharacterSet(tag, name);
 
-            PsbNamedAccount acc = new PsbNamedAccount() {
+            PsbAccount acc = new PsbAccount() {
                 Tag = tag,
                 Name = name,
                 PlayerName = name,
+                AccountType = accountTypeID,
+
                 VsID = charSet.VS?.ID,
                 NcID = charSet.NC?.ID,
                 TrID = charSet.TR?.ID,
@@ -150,14 +162,14 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="tag">New tag</param>
         /// <param name="name">New name</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> after the change is mode,
+        ///     The <see cref="PsbAccount"/> after the change is mode,
         ///     or <c>null</c> if the change failed
         /// </returns>
-        public async Task<PsbNamedAccount?> Rename(long ID, string? tag, string name) {
-            PsbNamedAccount? acc = await GetByID(ID);
+        public async Task<PsbAccount?> Rename(long ID, string? tag, string name) {
+            PsbAccount? acc = await GetByID(ID);
 
             if (acc == null) {
-                _Logger.LogWarning($"Cannot rename {nameof(PsbNamedAccount)} to {tag}x{name}, ID {ID} does not exist");
+                _Logger.LogWarning($"Cannot rename {nameof(PsbAccount)} to {tag}x{name}, ID {ID} does not exist");
                 return null;
             }
 
@@ -193,19 +205,19 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Set the <see cref="PsbNamedAccount.PlayerName"/>
+        ///     Set the <see cref="PsbAccount.PlayerName"/>
         /// </summary>
-        /// <param name="ID">ID of the <see cref="PsbNamedAccount"/> to set the player name of</param>
+        /// <param name="ID">ID of the <see cref="PsbAccount"/> to set the player name of</param>
         /// <param name="playerName">New player name</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> with the new <see cref="PsbNamedAccount.PlayerName"/> if successful,
+        ///     The <see cref="PsbAccount"/> with the new <see cref="PsbAccount.PlayerName"/> if successful,
         ///     else <c>null</c>
         /// </returns>
-        public async Task<PsbNamedAccount?> SetPlayerName(long ID, string playerName) {
-            PsbNamedAccount? acc = await GetByID(ID);
+        public async Task<PsbAccount?> SetPlayerName(long ID, string playerName) {
+            PsbAccount? acc = await GetByID(ID);
 
             if (acc == null) {
-                _Logger.LogWarning($"Cannot set player name {nameof(PsbNamedAccount)} to {playerName}, ID {ID} does not exist");
+                _Logger.LogWarning($"Cannot set player name {nameof(PsbAccount)} to {playerName}, ID {ID} does not exist");
                 return null;
             }
 
@@ -218,11 +230,11 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Update a <see cref="PsbNamedAccount"/>
+        ///     Update a <see cref="PsbAccount"/>
         /// </summary>
         /// <param name="accountID">ID of the account to update</param>
         /// <param name="account">Parameters used to update the account</param>
-        public Task UpdateByID(long accountID, PsbNamedAccount account) {
+        public Task UpdateByID(long accountID, PsbAccount account) {
             _Cache.Remove(CACHE_KEY);
             return _Db.UpdateByID(accountID, account);
         }
@@ -232,7 +244,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="status">Status to limit the recheck by. Pass <c>null</c> to recheck all accounts</param>
         public async Task RecheckByStatus(int? status) {
-            List<PsbNamedAccount> accounts = await GetAll();
+            List<PsbAccount> accounts = await GetAll();
 
             if (status != null) {
                 accounts = accounts.Where(iter => iter.VsStatus == status || iter.NcStatus == status || iter.TrStatus == status || iter.NsStatus == status).ToList();
@@ -240,7 +252,7 @@ namespace watchtower.Services.Repositories.PSB {
 
             _Logger.LogDebug($"Rechecking {accounts.Count} accounts");
 
-            foreach (PsbNamedAccount acc in accounts) {
+            foreach (PsbAccount acc in accounts) {
                 await RecheckAccount(acc);
             }
 
@@ -252,10 +264,10 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="ID">ID of the account to recheck</param>
         /// <returns></returns>
-        public async Task<PsbNamedAccount?> RecheckByID(long ID) {
-            PsbNamedAccount? acc = await GetByID(ID);
+        public async Task<PsbAccount?> RecheckByID(long ID) {
+            PsbAccount? acc = await GetByID(ID);
             if (acc == null) {
-                _Logger.LogWarning($"Cannot recheck {nameof(PsbNamedAccount)} {ID}: Does not exist");
+                _Logger.LogWarning($"Cannot recheck {nameof(PsbAccount)} {ID}: Does not exist");
                 return null;
             }
             _Cache.Remove(CACHE_KEY);
@@ -269,7 +281,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// <param name="ID">ID of the account to mark as deleted</param>
         /// <param name="deletedByID">ID of the honu account that is marking the account as deleted</param>
         public async Task DeleteByID(long ID, long deletedByID) {
-            PsbNamedAccount? acc = await GetByID(ID);
+            PsbAccount? acc = await GetByID(ID);
             if (acc != null && (acc.DeletedAt != null || acc.DeletedAt != null)) {
                 _Logger.LogWarning($"Cannot delete account {ID}, already deleted by {acc.DeletedBy} at {acc.DeletedAt:u}");
                 return;
@@ -279,7 +291,7 @@ namespace watchtower.Services.Repositories.PSB {
             _Cache.Remove(CACHE_KEY);
         }
 
-        private async Task<PsbNamedAccount> RecheckAccount(PsbNamedAccount acc) {
+        private async Task<PsbAccount> RecheckAccount(PsbAccount acc) {
             if (acc.VsID == null) {
                 PsCharacter? c = await _CharacterCollection.GetByName(PsbNameTemplate.VS(acc.Tag, acc.Name));
                 if (c != null) {

@@ -3,6 +3,18 @@ import ApiWrapper from "api/ApiWrapper";
 
 import { CharacterApi, PsCharacter } from "api/CharacterApi";
 
+export class PsbAccountType {
+    public static readonly NAMED: number = 1;
+    public static readonly PRACTICE: number = 2;
+}
+
+export class PsbAccountCharacterStatus {
+    public static readonly OK: string = "Ok";
+    public static readonly MISSING: string = "Missing";
+    public static readonly UNUSED: string = "Unused";
+    public static readonly DELETED: string = "Deleted";
+}
+
 export class PsbNamedAccount {
     public id: number = 0;
     public tag: string | null = null;
@@ -217,13 +229,13 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         }
 
         if (flat.missingCharacter || flat.lastUsed == null) {
-            flat.status = "Missing";
-        } else if (flat.lastUsed != null && (new Date().getTime() - flat.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90) {
-            flat.status = "Unused";
+            flat.status = PsbAccountCharacterStatus.MISSING;
+        } else if (flat.lastUsed != null && (new Date().getTime() - flat.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90) { // 90 days
+            flat.status = PsbAccountCharacterStatus.UNUSED;
         } else if (flat.account.deletedAt != null || flat.account.deletedBy != null) {
-            flat.status = "Deleted";
+            flat.status = PsbAccountCharacterStatus.DELETED;
         } else {
-            flat.status = "Ok";
+            flat.status = PsbAccountCharacterStatus.OK;
         }
 
         return flat;
@@ -240,19 +252,23 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
     }
 
     public static getAll(): Promise<Loading<FlatPsbNamedAccount[]>> {
-        return PsbNamedAccountApi.get().readList(`/api/psb-named/`, PsbNamedAccountApi.parseFlat);
+        return PsbNamedAccountApi.get().readList(`/api/psb-account/`, PsbNamedAccountApi.parseFlat);
+    }
+
+    public static getByTypeID(accountTypeID: number): Promise<Loading<FlatPsbNamedAccount[]>> {
+        return PsbNamedAccountApi.get().readList(`/api/psb-account/type/${accountTypeID}`, PsbNamedAccountApi.parseFlat);
     }
 
     public static getByID(id: number): Promise<Loading<ExpandedPsbNamedAccount>> {
-        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/${id}`, PsbNamedAccountApi.parseExpanded);
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-account/${id}`, PsbNamedAccountApi.parseExpanded);
     }
 
     public static deleteByID(id: number): Promise<Loading<void>> {
-        return PsbNamedAccountApi.get().delete(`/api/psb-named/${id}`);
+        return PsbNamedAccountApi.get().delete(`/api/psb-account/${id}`);
     }
 
     public static recheckByID(id: number): Promise<Loading<PsbNamedAccount>> {
-        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/recheck/${id}`, PsbNamedAccountApi.parse);
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-account/recheck/${id}`, PsbNamedAccountApi.parse);
     }
 
     public static getCharacterSet(tag: string | null, name: string): Promise<Loading<PsbCharacterSet>> {
@@ -260,15 +276,17 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         param.append("tag", tag ?? "");
         param.append("name", name);
 
-        return PsbNamedAccountApi.get().readSingle(`/api/psb-named/character-set?${param.toString()}`, PsbNamedAccountApi.parseCharacterSet);
+        return PsbNamedAccountApi.get().readSingle(`/api/psb-account/character-set?${param.toString()}`, PsbNamedAccountApi.parseCharacterSet);
     }
 
-    public static create(tag: string | null, name: string): Promise<Loading<PsbNamedAccount>> {
+    public static create(tag: string | null, name: string, accountTypeID: number, allowMissing: boolean = false): Promise<Loading<PsbNamedAccount>> {
         const param: URLSearchParams = new URLSearchParams();
         param.append("tag", tag ?? "");
         param.append("name", name);
+        param.append("accountTypeID", `${accountTypeID}`);
+        param.append("allowMissing", `${allowMissing}`);
 
-        return PsbNamedAccountApi.get().postReply(`/api/psb-named?${param.toString()}`, PsbNamedAccountApi.parse);
+        return PsbNamedAccountApi.get().postReply(`/api/psb-account?${param.toString()}`, PsbNamedAccountApi.parse);
     }
 
     public static rename(id: number, tag: string | null, name: string): Promise<Loading<PsbNamedAccount>> {
@@ -276,7 +294,7 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         param.append("tag", tag ?? "");
         param.append("name", name);
 
-        return PsbNamedAccountApi.get().postReply(`/api/psb-named/${id}?${param.toString()}`, PsbNamedAccountApi.parse);
+        return PsbNamedAccountApi.get().postReply(`/api/psb-account/${id}?${param.toString()}`, PsbNamedAccountApi.parse);
     }
 
 }

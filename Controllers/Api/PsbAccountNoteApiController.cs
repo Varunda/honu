@@ -33,9 +33,9 @@ namespace watchtower.Controllers.Api {
         [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
         [Authorize]
         public async Task<ApiResponse<List<PsbAccountNote>>> GetByAccountID(long accountID) {
-            PsbNamedAccount? account = await _NamedRepository.GetByID(accountID);
+            PsbAccount? account = await _NamedRepository.GetByID(accountID);
             if (account == null) {
-                return ApiNotFound<List<PsbAccountNote>>($"{nameof(PsbNamedAccount)} {accountID}");
+                return ApiNotFound<List<PsbAccountNote>>($"{nameof(PsbAccount)} {accountID}");
             }
 
             List<PsbAccountNote> notes = await _NoteDb.GetByAccountID(accountID, CancellationToken.None);

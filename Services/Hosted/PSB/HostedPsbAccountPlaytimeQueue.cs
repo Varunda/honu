@@ -12,18 +12,18 @@ using watchtower.Services.Repositories.PSB;
 namespace watchtower.Services.Hosted.PSB {
 
     /// <summary>
-    ///     Hosted queue processor that will update the <see cref="PsbNamedAccount.SecondsUsage"/>
+    ///     Hosted queue processor that will update the <see cref="PsbAccount.SecondsUsage"/>
     /// </summary>
     public class HostedPsbAccountPlaytimeQueue : BackgroundService {
 
         private readonly ILogger<HostedPsbAccountPlaytimeQueue> _Logger;
         private readonly PsbAccountPlaytimeUpdateQueue _Queue;
 
-        private readonly PsbNamedDbStore _PsbAccountDb;
+        private readonly PsbAccountDbStore _PsbAccountDb;
         private readonly PsbAccountRepository _PsbAccountRepository;
 
         public HostedPsbAccountPlaytimeQueue(ILogger<HostedPsbAccountPlaytimeQueue> logger,
-            PsbAccountPlaytimeUpdateQueue queue, PsbNamedDbStore psbAccountDb,
+            PsbAccountPlaytimeUpdateQueue queue, PsbAccountDbStore psbAccountDb,
             PsbAccountRepository psbAccountRepository) {
 
             _Logger = logger;
@@ -41,9 +41,9 @@ namespace watchtower.Services.Hosted.PSB {
                     _Logger.LogTrace($"updating playtime for {entry.AccountID}");
 
                     //PsbNamedAccount? account = await _PsbAccountDb.GetByID(entry.AccountID);
-                    PsbNamedAccount? account = await _PsbAccountRepository.GetByID(entry.AccountID);
+                    PsbAccount? account = await _PsbAccountRepository.GetByID(entry.AccountID);
                     if (account == null) {
-                        _Logger.LogError($"Missing {nameof(PsbNamedAccount)} {entry.AccountID} when updating playtime");
+                        _Logger.LogError($"Missing {nameof(PsbAccount)} {entry.AccountID} when updating playtime");
                         continue;
                     }
 

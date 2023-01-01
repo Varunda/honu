@@ -5,10 +5,10 @@ using watchtower.Models.PSB;
 
 namespace watchtower.Services.Db.Readers.PSB {
 
-    public class PsbNamedReader : IDataReader<PsbNamedAccount> {
+    public class PsbNamedReader : IDataReader<PsbAccount> {
 
-        public override PsbNamedAccount? ReadEntry(NpgsqlDataReader reader) {
-            PsbNamedAccount acc = new PsbNamedAccount();
+        public override PsbAccount? ReadEntry(NpgsqlDataReader reader) {
+            PsbAccount acc = new PsbAccount();
 
             acc.ID = reader.GetInt64("id");
             acc.AccountType = reader.GetInt16("account_type");

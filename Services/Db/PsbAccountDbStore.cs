@@ -13,14 +13,14 @@ namespace watchtower.Services.Db {
     /// <summary>
     ///     DB service to interact with psb accounts
     /// </summary>
-    public class PsbNamedDbStore {
+    public class PsbAccountDbStore {
 
-        private readonly ILogger<PsbNamedDbStore> _Logger;
+        private readonly ILogger<PsbAccountDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
-        private readonly IDataReader<PsbNamedAccount> _Reader;
+        private readonly IDataReader<PsbAccount> _Reader;
 
-        public PsbNamedDbStore(ILogger<PsbNamedDbStore> logger,
-            IDbHelper helper, IDataReader<PsbNamedAccount> reader) {
+        public PsbAccountDbStore(ILogger<PsbAccountDbStore> logger,
+            IDbHelper helper, IDataReader<PsbAccount> reader) {
 
             _Logger = logger;
             _DbHelper = helper;
@@ -28,61 +28,51 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Get all psb named account
+        ///     Get all psb accounts
         /// </summary>
-        /// <returns></returns>
-        public async Task<List<PsbNamedAccount>> GetAll() {
+        public async Task<List<PsbAccount>> GetAll() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM psb_named;
             ");
-            /*
-                WITH char_ids AS (
-                    SELECT id, vs_id AS ids FROM psb_named WHERE vs_id IS NOT NULL
-                    UNION SELECT id, nc_id AS ids FROM psb_named WHERE nc_id IS NOT NULL
-                    UNION SELECT id, tr_id AS ids FROM psb_named WHERE tr_id IS NOT NULL
-                    UNION SELECT id, ns_id AS ids FROM psb_named WHERE ns_id IS NOT NULL
-                ), times AS (
-                    SELECT ci.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
-                        FROM wt_session s
-                            INNER JOIN char_ids ci ON s.character_id = ci.ids
-                        WHERE character_id IN (SELECT ids FROM char_ids)
-                            AND start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
-                        GROUP BY ci.id
-                )
-                SELECT *
-                    FROM psb_named pn1
-                    LEFT JOIN times t ON pn1.id = t.id order by pn1.id ASC;
 
-                SELECT pn1.*, usage.seconds_online
-                    FROM psb_named pn1
-                    LEFT JOIN (
-                        SELECT pn2.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
-                            FROM psb_named pn2
-                            LEFT JOIN wt_session s ON s.character_id = pn2.vs_id OR s.character_id = pn2.nc_id OR s.character_id = pn2.tr_id
-                            WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
-                            GROUP BY pn2.id
-                    ) usage ON usage.id = pn1.id
-                    ORDER BY pn1.ID ASC;
-             */
-
-
-            List<PsbNamedAccount> accs = await _Reader.ReadList(cmd);
+            List<PsbAccount> accs = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
 
             return accs;
         }
 
         /// <summary>
-        ///     Get a single named account by ID
+        ///     Get all <see cref="PsbAccount"/>s with <see cref="PsbAccount.AccountType"/> of <paramref name="typeID"/>
+        /// </summary>
+        /// <param name="typeID">ID of the account type to get</param>
+        /// <returns></returns>
+        public async Task<List<PsbAccount>> GetByTypeID(long typeID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM psb_named
+                    WHERE account_type = @TypeID;
+            ");
+
+            cmd.AddParameter("TypeID", typeID);
+
+            List<PsbAccount> accs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return accs;
+        }
+
+        /// <summary>
+        ///     Get a single psb account by ID
         /// </summary>
         /// <param name="ID">ID of the account to get</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.ID"/> of <paramref name="ID"/>,
+        ///     The <see cref="PsbAccount"/> with <see cref="PsbAccount.ID"/> of <paramref name="ID"/>,
         ///     or <c>null</c> if the account doesn't exist
         /// </returns>
-        public async Task<PsbNamedAccount?> GetByID(long ID) {
+        public async Task<PsbAccount?> GetByID(long ID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT pn1.*
@@ -92,22 +82,22 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("ID", ID);
 
-            PsbNamedAccount? acc = await _Reader.ReadSingle(cmd);
+            PsbAccount? acc = await _Reader.ReadSingle(cmd);
             await conn.CloseAsync();
 
             return acc;
         }
 
         /// <summary>
-        ///     Get the named account that has the tag and name (case sensitive)
+        ///     Get the psb account that has the tag and name (case sensitive)
         /// </summary>
         /// <param name="tag">Tag of the psb account</param>
         /// <param name="name">Name of the psb account</param>
         /// <returns>
-        ///     The <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Tag"/> of <paramref name="tag"/>,
-        ///     and <see cref="PsbNamedAccount"/> with <see cref="PsbNamedAccount.Name"/> of <paramref name="name"/>
+        ///     The <see cref="PsbAccount"/> with <see cref="PsbAccount.Tag"/> of <paramref name="tag"/>,
+        ///     and <see cref="PsbAccount"/> with <see cref="PsbAccount.Name"/> of <paramref name="name"/>
         /// </returns>
-        public async Task<PsbNamedAccount?> GetByTagAndName(string? tag, string name) {
+        public async Task<PsbAccount?> GetByTagAndName(string? tag, string name) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
@@ -119,19 +109,19 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("Tag", tag);
             cmd.AddParameter("Name", name);
 
-            PsbNamedAccount? acc = await _Reader.ReadSingle(cmd);
+            PsbAccount? acc = await _Reader.ReadSingle(cmd);
             await conn.CloseAsync();
 
             return acc;
         }
 
         /// <summary>
-        ///     Get how many seconds the characters on a <see cref="PsbNamedAccount"/> have played
+        ///     Get how many seconds the characters on a <see cref="PsbAccount"/> have played
         ///     in the last 3 months
         /// </summary>
-        /// <param name="accountID">ID of the <see cref="PsbNamedAccount"/></param>
+        /// <param name="accountID">ID of the <see cref="PsbAccount"/></param>
         /// <returns>
-        ///     How many seconds each character of the <see cref="PsbNamedAccount"/> has played
+        ///     How many seconds each character of the <see cref="PsbAccount"/> has played
         ///     in the last 90 days
         /// </returns>
         public async Task<long> GetPlaytime(long accountID) {
@@ -183,7 +173,7 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Insert a new <see cref="PsbNamedAccount"/>
+        ///     Insert a new <see cref="PsbAccount"/>
         /// </summary>
         /// <param name="acc">Parameters used to insert</param>
         /// <returns>
@@ -192,7 +182,7 @@ namespace watchtower.Services.Db {
         /// <exception cref="Exception">
         ///     If the DB failed to return a valid ID
         /// </exception>
-        public async Task<long> Insert(PsbNamedAccount acc) {
+        public async Task<long> Insert(PsbAccount acc) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO psb_named (
@@ -235,7 +225,7 @@ namespace watchtower.Services.Db {
         /// <param name="ID">ID of the account to update</param>
         /// <param name="acc">Parameters used to update</param>
         /// <returns></returns>
-        public async Task UpdateByID(long ID, PsbNamedAccount acc) {
+        public async Task UpdateByID(long ID, PsbAccount acc) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE psb_named 

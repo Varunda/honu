@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.PSB;
 using watchtower.Services.Repositories.PSB;
 
@@ -37,7 +38,7 @@ namespace watchtower.Services.Hosted.Startup {
 
             _Logger.LogInformation($"Have {file.Length} accounts to import");
 
-            List<PsbNamedAccount> existing = await _NamedRepository.GetAll();
+            List<PsbAccount> existing = await _NamedRepository.GetAll();
 
             for (int i = 0; i < file.Length; ++i) {
                 string line = file[i];
@@ -70,7 +71,7 @@ namespace watchtower.Services.Hosted.Startup {
                     continue;
                 }
 
-                await _NamedRepository.Create(tag, name);
+                await _NamedRepository.Create(tag, name, PsbAccountType.NAMED);
                 _Logger.LogInformation($"Inserted new named account {tag}x{name}");
             }
 

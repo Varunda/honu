@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace watchtower.Models.PSB {
 
     /// <summary>
-    ///     Represents info about a PSB named account
+    ///     Represents info about a PSB account
     /// </summary>
-    public class PsbNamedAccount {
+    public class PsbAccount {
 
         /// <summary>
         ///     Internal unique ID

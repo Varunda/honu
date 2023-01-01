@@ -28,6 +28,10 @@ namespace watchtower.Services {
             _HonuAccountDb = accountDb;
         }
 
+        /// <summary>
+        ///     Get the current user, null if the user is not signed in
+        /// </summary>
+        /// <returns></returns>
         public async Task<HonuAccount?> Get() {
             if (_Context.HttpContext == null) {
                 _Logger.LogWarning($"_Context.HttpContext is null, cannot get claims");

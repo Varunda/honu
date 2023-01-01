@@ -343,7 +343,7 @@
     import "filters/TimeAgoFilter";
     import "filters/FactionNameFilter";
 
-    import { FlatPsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
+    import { FlatPsbNamedAccount, PsbAccountType, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
 
     const PsbNamedCharacterCell = Vue.extend({
@@ -406,7 +406,7 @@
             </span>
 
             <span v-else>
-                <span v-if="character.dateLastLogin == null">
+                <span v-if="character.dateLastLogin == null || character.dateLastLogin.getTime() == 0">
                     &lt;never signed in&gt;
                 </span>
 
@@ -507,8 +507,7 @@
 
             loadAll: async function(): Promise<void> {
                 this.accounts = Loadable.loading();
-                this.accounts = await PsbNamedAccountApi.getAll();
-
+                this.accounts = await PsbNamedAccountApi.getByTypeID(PsbAccountType.NAMED); 
                 if (this.accounts.state == "loaded") {
                     this.updateFilters();
                 }

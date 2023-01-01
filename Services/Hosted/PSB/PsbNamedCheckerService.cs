@@ -13,7 +13,7 @@ namespace watchtower.Services.Hosted.PSB {
     public class PsbNamedCheckerService : BackgroundService {
 
         private readonly ILogger<PsbNamedCheckerService> _Logger;
-        private readonly PsbNamedDbStore _NamedDb;
+        private readonly PsbAccountDbStore _NamedDb;
         private readonly PsbAccountRepository _NamedRepository;
 
         private const string SERVICE_NAME = "psb_named_checker";
@@ -21,7 +21,7 @@ namespace watchtower.Services.Hosted.PSB {
         private const int INTERVAL_DELAY = 1000 * 60 * 60; // 60 mins / 1 hour
 
         public PsbNamedCheckerService(ILogger<PsbNamedCheckerService> logger,
-            PsbNamedDbStore namedDb, PsbAccountRepository namedRepo) {
+            PsbAccountDbStore namedDb, PsbAccountRepository namedRepo) {
 
             _Logger = logger;
             _NamedDb = namedDb;
@@ -34,9 +34,9 @@ namespace watchtower.Services.Hosted.PSB {
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-                    List<PsbNamedAccount> accounts = await _NamedRepository.GetAll();
+                    List<PsbAccount> accounts = await _NamedRepository.GetAll();
 
-                    foreach (PsbNamedAccount account in accounts) {
+                    foreach (PsbAccount account in accounts) {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         // Ensure each character still matches the existing ID

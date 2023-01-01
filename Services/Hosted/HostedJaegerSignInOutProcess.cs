@@ -83,7 +83,7 @@ namespace watchtower.Services.Hosted {
                     int messageLimit = 2000;
                     bool devSeen = false;
 
-                    List<PsbNamedAccount> accounts = await _AccountRepository.GetAll();
+                    List<PsbAccount> accounts = await _AccountRepository.GetAll();
 
                     if (signin.Count + signout.Count > 0) {
                         HashSet<string> both = new(signin.Count + signout.Count);
@@ -134,7 +134,7 @@ namespace watchtower.Services.Hosted {
                             msg += part;
 
                             // Update the playtime when accounts log out
-                            foreach (PsbNamedAccount account in accounts) {
+                            foreach (PsbAccount account in accounts) {
                                 if (account.VsID == s.CharacterID || account.NcID == s.CharacterID 
                                     || account.TrID == s.CharacterID || account.NsID == s.CharacterID) {
 

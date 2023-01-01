@@ -3,9 +3,9 @@ using watchtower.Models.PSB;
 
 namespace watchtower.Models.Api.PSB {
 
-    public class ExpandedPsbNamedAccount {
+    public class ExpandedPsbAccount {
 
-        public PsbNamedAccount Account { get; set; } = new PsbNamedAccount();
+        public PsbAccount Account { get; set; } = new PsbAccount();
 
         public PsCharacter? VsCharacter { get; set; }
 

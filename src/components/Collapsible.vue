@@ -38,6 +38,9 @@
                 this.addListeners();
 
                 this.icon = document.getElementById(`icon-${this.elementID}`);
+
+                // start the animation if the collapsibe starts closed (which is NOT the default)
+                this.startAnimation();
             });
         },
 

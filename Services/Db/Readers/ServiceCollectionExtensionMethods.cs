@@ -60,7 +60,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<ObjectiveSet>, ObjectiveSetReader>();
             services.AddSingleton<IDataReader<Achievement>, AchievementReader>();
 
-            services.AddSingleton<IDataReader<PsbNamedAccount>, PsbNamedReader>();
+            services.AddSingleton<IDataReader<PsbAccount>, PsbNamedReader>();
             services.AddSingleton<IDataReader<PsbAccountNote>, PsbAccountNoteReader>();
             services.AddSingleton<IDataReader<HonuAccount>, HonuAccountReader>();
             services.AddSingleton<IDataReader<VehicleDestroyEvent>, VehicleDestroyEventReader>();
