@@ -208,6 +208,8 @@
                 }
 
                 Toaster.add(`Rechecked accounts for ${tag}`, `Recheck accounts`, "success");
+
+                await this.bindData();
             }
 
         },
