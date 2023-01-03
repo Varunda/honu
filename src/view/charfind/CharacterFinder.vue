@@ -16,16 +16,19 @@
             <h4>Character name</h4>
 
             <div class="input-group">
-                <input v-model="charName" class="form-control" @keyup.enter="openEnter" @keyup="scrollOptions" />
+                <input v-model="charName" class="form-control" @keyup.enter="openEnter" @keyup="scrollOptions" placeholder="Enter a name here!" />
 
                 <div class="input-group-append">
                     <button type="button" @click="loadPartial" class="btn btn-primary" :disabled="validCharName == false">
+                        <info-hover text="Search for characters by name, showing the most recent 20 by date logged in"></info-hover>
                         Search
                     </button>
                     <button type="button" @click="loadExact" class="btn btn-primary" :disabled="validCharName == false">
+                        <info-hover text="Load exactly this character by name, showing the most recent 20 by date logged in"></info-hover>
                         Load exact
                     </button>
-                    <button type="button" @click="loadAll" class="btn btn-secondary" title="Show data from all characters, not just 20">
+                    <button type="button" @click="loadAll" class="btn btn-secondary" :disabled="validCharName == false">
+                        <info-hover text="Search for characters by name, showing all characters (not just 20)"></info-hover>
                         Search all
                     </button>
                 </div>
@@ -34,116 +37,127 @@
 
         <hr />
 
-        <table class="table">
-            <thead class="table-secondary">
-                <tr class="font-weight-bold">
-                    <td>Character</td>
-                    <td>Battle rank</td>
-                    <td>Outfit</td>
-                    <td>Faction</td>
-                    <td>Server</td>
-                    <td>Last login</td>
-                    <td>
-                        Permalink
-                        <info-hover text="This link will always function"></info-hover>
-                    </td>
-                    <td>Copy link</td>
-                </tr>
-            </thead>
+        <a-table
+            :entries="tableEntries"
+            :show-filters="true"
+            :paginate="false"
+            default-sort-field="dateLastLogin" default-sort-order="desc"
+            display-type="table">
 
-            <tbody v-if="characters.state == 'idle' || characters.state == 'nocontent'"></tbody>
+            <a-col sort-field="name">
+                <a-header>
+                    <b>Character</b>
+                </a-header>
 
-            <tbody v-else-if="characters.state == 'loading'">
-                <tr>
-                    <td colspan="7">
-                        Loading...
-                    </td>
-                </tr>
-            </tbody>
+                <a-filter method="template" v-slot="entry">
+                    <toggle-button v-model="filter.showDeleted">
+                        Show deleted
+                    </toggle-button>
+                </a-filter>
 
-            <tbody v-else-if="characters.state == 'loaded' && characters.data.length <= 0">
-                <tr class="table-warning">
-                    <td colspan="7">
-                        No characters by the name of '{{lastSearch}}' found
-                    </td>
-                </tr>
-            </tbody>
+                <a-body v-slot="entry">
+                    <span :class="[entry.notFoundCount && entry.notFoundCount > 0 ? 'text-danger' : '' ]">
+                        {{entry | characterName}}
 
-            <tbody v-else-if="characters.state == 'loaded' && characters.data.length > 0">
-                <tr v-for="(c, index) of entries" :key="c.character.id" :class="[ scrollIndex == index ? 'table-info' : '' ]">
-                    <td :class="{ 'text-danger': c.metadata != null && c.metadata.notFoundCount > 0 }">
-                        <span v-if="c.character.outfitID != null" :title="'\'' + c.character.outfitName + '\''">
-                            [{{c.character.outfitTag}}]
-                        </span>
-                        {{c.character.name}}
-
-                        <info-hover v-if="c.metadata != null && c.metadata.notFoundCount > 0" text="This character may have been deleted">
+                        <info-hover v-if="entry.notFoundCount > 0" text="This character may have been deleted">
                         </info-hover>
-                    </td>
+                    </span>
+                </a-body>
+            </a-col>
 
-                    <td>
-                        {{c.character.prestige}}~{{c.character.battleRank}}
-                    </td>
+            <a-col sort-field="battleRankOrder">
+                <a-header>
+                    <b>Battle rank</b>
+                </a-header>
 
-                    <td>
-                        <span v-if="c.outfitID == null">
-                            &lt;no outfit&gt;
-                        </span>
+                <a-body v-slot="entry">
+                    {{entry.prestige}}~{{entry.battleRank}}
+                </a-body>
+            </a-col>
 
-                        <span v-else>
-                            <a :href="'/o/' + c.character.outfitID">
-                                [{{c.character.outfitTag}}] {{c.character.outfitName}}
-                            </a>
-                        </span>
-                    </td>
+            <a-col sort-field="outfitName">
+                <a-header>
+                    <b>Outfit</b>
+                </a-header>
 
-                    <td>
-                        {{c.character.factionID | faction}}
+                <a-filter method="input" type="string" field="outfitSearch"
+                    :conditions="[ 'contains' ]">
+                </a-filter>
 
-                    <td>
-                        {{c.character.worldID | world}}
-                    </td>
+                <a-body v-slot="entry">
+                    <span v-if="entry.outfitID == null">
+                        &lt;no outfit&gt;
+                    </span>
 
-                    <td>
-                        <span v-if="c.character.dateLastLogin.getTime() == defaultTime || c.character.dateLastLogin.getTime() == 0">
-                            {{c.character.lastUpdated | moment}}
-                            ({{c.character.lastUpdated | timeAgo}})
-                        </span>
-                        <span v-else>
-                            {{c.character.dateLastLogin | moment}}
-                            ({{c.character.dateLastLogin | timeAgo}})
-                        </span>
-                    </td>
+                    <span v-else>
+                        <a :href="'/o/' + entry.outfitID">
+                            [{{entry.outfitTag}}] {{entry.outfitName}}
+                        </a>
+                    </span>
+                </a-body>
+            </a-col>
 
-                    <td>
-                        <a :href="'/c/' + c.character.id" class="btn btn-success">View in this tab</a>
-                        <a :href="'/c/' + c.character.id" target="_blank" class="btn btn-primary">View in new tab</a>
-                    </td>
+            <a-col>
+                <a-header>
+                    <b>Faction</b>
+                </a-header>
 
-                    <td>
-                        <button type="button" @click="copyToClipboard(c.character.id)" class="btn btn-primary">
-                            Copy
-                        </button>
-                    </td>
-                </tr>
-            </tbody>
+                <a-filter method="dropdown" type="number" field="factionID" :source="filterSources.faction"
+                    :conditions="[ 'equals' ]">
+                </a-filter>
 
-            <tbody v-else-if="characters.state == 'error'">
-                <tr class="table-danger">
-                    <td colspan="7">
-                        {{characters.message}}
-                    </td>
-                </tr>
-            </tbody>
+                <a-body v-slot="entry">
+                    {{entry.factionID | faction}}
+                </a-body>
+            </a-col>
 
-            <tbody v-else>
-                <tr class="table-danger">
-                    <td colspan="7">
-                        Unchecked state of characters: '{{characters.state}}'
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+            <a-col>
+                <a-header>
+                    <b>Server</b>
+                </a-header>
+
+                <a-filter method="dropdown" type="number" field="worldID" :source="filterSources.world"
+                    :conditions="[ 'equals' ]">
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.worldID | world}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="dateLastLogin">
+                <a-header>
+                    <b>Last login</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <!--
+                        some characters have 2000-01-01T00:00 as their login time, which is wrong,
+                        but we can't fix it cause the character doesn't exist anymore
+                    -->
+                    <span v-if="entry.dateLastLogin.getTime() == defaultTime || entry.dateLastLogin.getTime() == 0">
+                        {{entry.lastUpdated | moment}}
+                        ({{entry.lastUpdated | timeAgo}})
+                    </span>
+                    <span v-else>
+                        {{entry.dateLastLogin | moment}}
+                        ({{entry.dateLastLogin | timeAgo}})
+                    </span>
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Permalink</b>
+                    <info-hover text="This link will always function"></info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <a :href="'/c/' + entry.id" class="btn btn-success">View in this tab</a>
+                    <a :href="'/c/' + entry.id" target="_blank" class="btn btn-primary">View in new tab</a>
+                </a-body>
+            </a-col>
+        </a-table>
     </div>
 </template>
 
@@ -152,11 +166,16 @@
 
     import InfoHover from "components/InfoHover.vue";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import ToggleButton from "components/ToggleButton";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
     import "filters/FactionNameFilter";
     import "filters/TimeAgoFilter";
+    import "filters/CharacterName";
+
+    import WorldUtils from "util/World";
 
     import { Loading, Loadable } from "Loading";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -165,6 +184,11 @@
     type CharacterEntry = {
         character: PsCharacter,
         metadata: CharacterMetadata | null
+    };
+
+    type FlatPsCharacter = PsCharacter & Partial<CharacterMetadata> & {
+        battleRankOrder: number;
+        outfitSearch: string;
     };
 
     export const CharacterFinder = Vue.extend({
@@ -180,6 +204,10 @@
                 charName: "" as string,
                 lastSearch: "" as string,
                 scrollIndex: 0 as number,
+
+                filter: {
+                    showDeleted: true as boolean,
+                },
 
                 searchTimeoutID: -1 as number,
                 pendingSearch: null as Promise<Loading<PsCharacter[]>> | null,
@@ -360,31 +388,72 @@
         computed: {
             validCharName: function(): boolean {
                 return this.charName.trim().length > 1
-                    && this.charName.length < 33;
+                    && this.charName.length < 33; // character limit is 32
             },
 
-            entries: function(): CharacterEntry[] {
-                if (this.characters.state != "loaded") {
-                    return [];
+            tableEntries: function(): Loading<FlatPsCharacter[]> {
+                if (this.characters.state == "nocontent") {
+                    return Loadable.idle();
                 }
 
-                return this.characters.data.map(iter => {
+                if (this.characters.state != "loaded") {
+                    return Loadable.rewrap(this.characters);
+                }
+
+                if (this.filter.showDeleted == false && this.metadatas.state == "loading") {
+                    return Loadable.loading();
+                }
+
+                const chars: FlatPsCharacter[] = [];
+
+                for (const iter of this.characters.data) {
                     let metadata: CharacterMetadata | null = null;
                     if (this.metadatas.state == "loaded") {
                         metadata = this.metadatas.data.find(i => i.id == iter.id) ?? null;
                     }
 
-                    return {
-                        character: iter,
-                        metadata: metadata
-                    };
-                });
+                    if (this.filter.showDeleted == false && (metadata?.notFoundCount ?? 0) > 0) {
+                        continue;
+                    }
+
+                    chars.push({
+                        ...iter,
+                        ...metadata,
+                        battleRankOrder: (iter.prestige * 1000) + iter.battleRank,
+                        outfitSearch: (iter.outfitID != null) ? `[${iter.outfitTag}] ${iter.outfitName}` : ""
+                    });
+                }
+
+                return Loadable.loaded(chars);
+            },
+
+            filterSources: function() {
+                return {
+                    faction: [
+                        { value: null, key: "All" },
+                        { value: 1, key: "VS" } ,
+                        { value: 2, key: "NC" } ,
+                        { value: 3, key: "TR" } ,
+                        { value: 4, key: "NS" } ,
+                    ],
+
+                    world: [
+                        { value: null, key: "All" },
+                        { value: WorldUtils.Connery, key: "Connery" },
+                        { value: WorldUtils.Cobalt, key: "Cobalt" },
+                        { value: WorldUtils.Miller, key: "Miller" },
+                        { value: WorldUtils.Emerald, key: "Emerald" },
+                        { value: WorldUtils.Jaeger, key: "Jaeger" },
+                        { value: WorldUtils.SolTech, key: "SolTech" }
+                    ]
+                }
             }
         },
 
         components: {
-            InfoHover,
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            InfoHover, ToggleButton,
+            ATable, ACol, ABody, AFilter, AHeader,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
         }
     });
     export default CharacterFinder;

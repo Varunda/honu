@@ -134,7 +134,8 @@
                     tag: "" as string,
                     count: 0 as number,
                     leadingZeroes: false as boolean,
-                    lowercasePractice: false as boolean
+                    lowercasePractice: false as boolean,
+                    ovo: false as boolean
                 }
             }
         },
@@ -175,7 +176,11 @@
                     if (leadingZeroes == true) {
                         number = (i + 1).toString().padStart(magnitude, "0");
                     }
-                    const name: string = `${this.create.lowercasePractice == false ? "Practice" : "practice"}${number}`;
+
+                    let name: string = `${this.create.lowercasePractice == false ? "Practice" : "practice"}${number}`;
+                    if (this.create.ovo == true) {
+                        name = `${number}`;
+                    }
 
                     const newAccount: Loading<PsbNamedAccount> = await PsbNamedAccountApi.create(tag, name, PsbAccountType.PRACTICE, true);
 
@@ -208,10 +213,15 @@
                 }
 
                 for (const account of this.accounts.data) {
-                    if (account.tag == tag) {
-                        await PsbNamedAccountApi.deleteByID(account.id);
-                        Toaster.add(`Deleted ${account.id}`, `Successfully deleted ${account.tag}x${account.name}`, "success");
+                    if (account.tag != tag) {
+                        continue;
                     }
+                    if (account.account.deletedAt != null) {
+                        continue;
+                    }
+
+                    await PsbNamedAccountApi.deleteByID(account.id);
+                    Toaster.add(`Deleted ${account.id}`, `Successfully deleted ${account.tag}x${account.name}`, "success");
                 }
 
                 await this.bindData();

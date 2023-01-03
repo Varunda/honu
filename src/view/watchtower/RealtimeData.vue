@@ -612,6 +612,8 @@
 
             this.connection.on("UpdateData", (data: WorldData) => {
                 data.tagEntries = data.tagEntries.map((iter: any) => WorldTagApi.readEntry(iter));
+
+                // convert the string to date objects
                 data.realtimeHealth.forEach((iter) => {
                     iter.lastEvent = new Date(iter.lastEvent);
                     iter.firstEvent = (iter.firstEvent == null) ? null : new Date(iter.firstEvent);
@@ -619,7 +621,6 @@
                 data.reconnects.forEach((iter) => {
                     iter.timestamp = new Date(iter.timestamp);
                 });
-                console.log(data);
 
                 this.worldData = data;
                 this.lastUpdate = new Date();
