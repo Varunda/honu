@@ -42,8 +42,7 @@ namespace watchtower.Models.PSB {
                 $"{tag}x{name}NS",
                 $"{tag}x{name}DONOTUSE",
                 $"DONOTUSEx{name}",
-                $"DONTUSEx{name}",
-                $"DONOTUSEx"
+                $"DONTUSEx{name}"
             };
 
             if (name.StartsWith("Practice") || name.StartsWith("practice")) {
