@@ -37,12 +37,22 @@ namespace watchtower.Models.PSB {
         /// <param name="tag"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static List<string> NS(string? tag, string name) => new List<string>() {
-            $"{tag}x{name}NS",
-            $"{tag}x{name}DONOTUSE",
-            $"DONOTUSEx{name}",
-            $"DONTUSEx{name}",
-        };
+        public static List<string> NS(string? tag, string name) {
+            List<string> names = new List<string>() {
+                $"{tag}x{name}NS",
+                $"{tag}x{name}DONOTUSE",
+                $"DONOTUSEx{name}",
+                $"DONTUSEx{name}",
+                $"DONOTUSEx"
+            };
+
+            if (name.StartsWith("Practice") || name.StartsWith("practice")) {
+                string number = name.Replace("Practice", "");
+                names.Add($"DONOTUSEx{tag}{number}");
+            }
+
+            return names;
+        }
 
     }
 }
