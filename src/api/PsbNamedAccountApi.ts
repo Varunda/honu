@@ -8,7 +8,7 @@ export class PsbAccountType {
     public static readonly PRACTICE: number = 2;
 }
 
-export class PsbAccountCharacterStatus {
+export class PsbAccountStatus {
     public static readonly OK: string = "Ok";
     public static readonly MISSING: string = "Missing";
     public static readonly UNUSED: string = "Unused";
@@ -229,13 +229,13 @@ export class PsbNamedAccountApi extends ApiWrapper<PsbNamedAccount> {
         }
 
         if (flat.missingCharacter || flat.lastUsed == null) {
-            flat.status = PsbAccountCharacterStatus.MISSING;
+            flat.status = PsbAccountStatus.MISSING;
         } else if (flat.lastUsed != null && (new Date().getTime() - flat.lastUsed.getTime()) > 1000 * 60 * 60 * 24 * 90) { // 90 days
-            flat.status = PsbAccountCharacterStatus.UNUSED;
+            flat.status = PsbAccountStatus.UNUSED;
         } else if (flat.account.deletedAt != null || flat.account.deletedBy != null) {
-            flat.status = PsbAccountCharacterStatus.DELETED;
+            flat.status = PsbAccountStatus.DELETED;
         } else {
-            flat.status = PsbAccountCharacterStatus.OK;
+            flat.status = PsbAccountStatus.OK;
         }
 
         return flat;

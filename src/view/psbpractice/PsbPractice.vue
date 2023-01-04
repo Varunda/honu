@@ -60,6 +60,13 @@
                                 <span style="width: 10ch;" class="d-inline-block">
                                     {{group.count}} accounts
                                 </span>
+
+                                <span v-if="group.problems.length > 1">
+                                    <info-hover :allow-html="true" icon="exclamation-circle" class="text-danger"
+                                        :text="'There are ' + group.problems.length + ' problems: <br>' + group.problems.join('<br>')">
+
+                                    </info-hover>
+                                </span>
                             </div>
 
                             <div class="ml-3 flex-grow-1">
@@ -79,12 +86,27 @@
                         <div class="mb-2">
                             <h4>Manage</h4>
                             <button @click="deleteBlockWrapper(group.tag)" type="button" class="btn btn-danger">Delete block</button>
+                            <!--
                             <button type="button" class="btn btn-warning">Resize</button>
+                            -->
                             <button @click="recheckBlock(group.tag)" type="button" class="btn btn-info">Recheck</button>
                         </div>
                     </slot>
                 </collapsible>
             </template>
+        </div>
+
+        <div v-else-if="groupedAccounts.state == 'loading'">
+            <busy class="honu-busy-lg"></busy>
+            Loading...
+        </div>
+
+        <div v-else-if="groupedAccounts.state == 'error'">
+            Error loading accounts: {{groupedAccounts.message}}
+        </div>
+
+        <div v-else>
+            Unchecked state of groupedAccounts: {{groupedAccounts.state}}
         </div>
     </div>
 </template>
@@ -100,10 +122,11 @@
     import Collapsible from "components/Collapsible.vue";
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
+    import Busy from "components/Busy.vue";
 
     import PracticeAccountList from "./components/PracticeAccountList.vue";
 
-    import { FlatPsbNamedAccount, PsbAccountCharacterStatus, PsbAccountType, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
+    import { FlatPsbNamedAccount, PsbAccountStatus, PsbAccountType, PsbCharacterStatus, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
 
     type GroupedAccount = {
@@ -114,6 +137,7 @@
         countUnused: number;
         countMissing: number;
         countDeleted: number;
+        problems: string[];
     };
 
     export const PsbPractice = Vue.extend({
@@ -170,6 +194,7 @@
                 let successCount: number = 0;
                 let errorCount: number = 0;
                 for (let i = 0; i < count; ++i) {
+                    // for ovo, need to use 0001 instead of 01, so get the power of ten, which is how many zeroes to show
                     const magnitude: number = Math.ceil(Math.log10(count));
 
                     let number: string = `${i + 1}`;
@@ -232,6 +257,8 @@
                     return console.warn(`cannot delete block ${tag}: accounts is not 'loaded'`);
                 }
 
+                Toaster.add(`Rechecking block`, `Rechecking accounts for ${tag}`, "info");
+
                 for (const account of this.accounts.data) {
                     if (account.tag != tag) {
                         continue;
@@ -257,6 +284,19 @@
                 const accounts: FlatPsbNamedAccount[] = this.accounts.data;
                 const map: Map<string, GroupedAccount> = new Map();
 
+                const addProblems = function(acc: FlatPsbNamedAccount, arr: GroupedAccount, faction: string, charStatus: number, character: PsCharacter | null): void {
+                    const charName: string = character?.name ?? `${acc.tag}x${acc.name}${faction}`;
+
+                    switch (charStatus) {
+                        case PsbCharacterStatus.doesNotExist: arr.problems.push(`Character ${charName} does not exist`); break;
+                        case PsbCharacterStatus.deleted: arr.problems.push(`Character ${charName} is deleted`); break;
+                        case PsbCharacterStatus.remade: arr.problems.push(`Character ${charName} was remade`); break;
+                    }
+                    if (character != null && character?.worldID != 19) {
+                        arr.problems.push(`Character ${charName}${faction} is not on Jaeger`);
+                    }
+                };
+
                 for (const acc of accounts) {
                     // don't include empty tags
                     const tag: string | null = acc.tag; 
@@ -277,7 +317,8 @@
                             countOk: 0,
                             countUnused: 0,
                             countMissing: 0,
-                            countDeleted: 0
+                            countDeleted: 0,
+                            problems: []
                         };
                     }
 
@@ -288,13 +329,18 @@
                     arr.accounts.data.push(acc);
                     ++arr.count;
 
-                    if (acc.status == PsbAccountCharacterStatus.OK) {
+                    addProblems(acc, arr, "VS", acc.account.vsStatus, acc.vsCharacter);
+                    addProblems(acc, arr, "NC", acc.account.ncStatus, acc.ncCharacter);
+                    addProblems(acc, arr, "TR", acc.account.trStatus, acc.trCharacter);
+                    addProblems(acc, arr, "NS", acc.account.nsStatus, acc.nsCharacter);
+
+                    if (acc.status == PsbAccountStatus.OK) {
                         ++arr.countOk;
-                    } else if (acc.status == PsbAccountCharacterStatus.MISSING) {
+                    } else if (acc.status == PsbAccountStatus.MISSING) {
                         ++arr.countMissing;
-                    } else if (acc.status == PsbAccountCharacterStatus.UNUSED) {
+                    } else if (acc.status == PsbAccountStatus.UNUSED) {
                         ++arr.countUnused;
-                    } else if (acc.status == PsbAccountCharacterStatus.DELETED) {
+                    } else if (acc.status == PsbAccountStatus.DELETED) {
                         ++arr.countDeleted;
                     }
 
@@ -318,7 +364,7 @@
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             ToggleButton, InfoHover,
-            Collapsible,
+            Collapsible, Busy,
             PracticeAccountList
         }
     });
