@@ -44,10 +44,17 @@
         </div>
 
         <div v-if="groupedAccounts.state == 'loaded'">
-            <h1 class="wt-header">
+            <h1 class="wt-header mb-1">
                 Practice blocks
-                <input v-model="search.tag" type="text" placeholder="Filter tag" />
             </h1>
+
+            <div class="mb-2">
+                <input v-model="search.tag" type="text" placeholder="Filter tag" class="form-control d-inline-block" style="max-width: 12ch;" />
+
+                <toggle-button v-model="search.problems">
+                    Show only blocks with problems
+                </toggle-button>
+            </div>
 
             <template v-for="group in groupedAccounts.data">
                 <collapsible header-text="" :show="false">
@@ -151,7 +158,8 @@
 
                 search: {
                     tag: "" as string,
-                    deleted: false as boolean
+                    deleted: false as boolean,
+                    problems: false as boolean
                 },
 
                 create: {
@@ -351,6 +359,10 @@
 
                 if (this.search.tag.trim().length > 0) {
                     blocks = blocks.filter(iter => iter.tag.indexOf(this.search.tag) > -1);
+                }
+
+                if (this.search.problems == true) {
+                    blocks = blocks.filter(iter => iter.problems.length > 0);
                 }
 
                 blocks = blocks.sort((a, b) => a.tag.localeCompare(b.tag));
