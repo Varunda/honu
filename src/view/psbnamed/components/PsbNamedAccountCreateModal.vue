@@ -96,7 +96,7 @@
     import Toaster from "Toaster";
 
     import InfoHover from "components/InfoHover.vue";
-    import { FlatPsbNamedAccount, PsbCharacterSet, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
+    import { FlatPsbNamedAccount, PsbAccountType, PsbCharacterSet, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
 
     import "filters/WorldNameFilter";
@@ -169,7 +169,7 @@
 
             create: async function(): Promise<void> {
                 this.createResponse = Loadable.loading();
-                this.createResponse = await PsbNamedAccountApi.create(this.tag, this.characterName);
+                this.createResponse = await PsbNamedAccountApi.create(this.tag, this.characterName, PsbAccountType.NAMED);
 
                 if (this.createResponse.state == "loaded") {
                     Toaster.add("Named account created", `Successfully created a named account for ${this.tag}x${this.characterName}`, "success");
