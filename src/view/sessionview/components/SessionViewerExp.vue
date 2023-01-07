@@ -4,7 +4,7 @@
         <div v-if="spawns.length > 0">
             <h3>Spawns</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerSpawns"></chart-entry-pie>
                 </div>
@@ -26,7 +26,7 @@
         <div v-if="playerVehicleKills.length > 0">
             <h3>Vehicle kills</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerVehicleKills"></chart-entry-pie>
                 </div>
@@ -42,7 +42,7 @@
         <div v-if="heals.length > 0" class="mw-100">
             <h3>Heals</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerHeals"></chart-entry-pie>
                 </div>
@@ -66,7 +66,7 @@
         <div v-if="revives.length > 0">
             <h3>Revives</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerRevives"></chart-entry-pie>
                 </div>
@@ -90,7 +90,7 @@
         <div v-if="resupplies.length > 0">
             <h3>Resupplies</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerResupplies"></chart-entry-pie>
                 </div>
@@ -114,7 +114,7 @@
         <div v-if="repairs.length > 0">
             <h3>MAX Repairs</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerRepairs"></chart-entry-pie>
                 </div>
@@ -138,7 +138,7 @@
         <div v-if="shieldRepairs.length > 0">
             <h3>Shield Repairs</h3>
 
-            <div class="d-flex mw-100">
+            <div class="d-flex flex-wrap mw-100">
                 <div class="flex-grow-1 flex-basis-0">
                     <chart-entry-pie :data="playerShieldRepairs"></chart-entry-pie>
                 </div>

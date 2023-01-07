@@ -182,6 +182,21 @@
                     </tr>
 
                     <tr>
+                        <td>Achievements</td>
+                        <td>
+                            <span v-if="achievementsEarned.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{achievementsEarned.state}}
+                            </span>
+                            <span v-if="achievementsEarned.state == 'loaded'">
+                                ({{achievementsEarned.data.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
                         <td>
                             Full xp?
                             <info-hover text="Before 2022-07-31, only specific exp events were tracked"></info-hover>
@@ -238,6 +253,15 @@
                 <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp>
             </collapsible>
 
+            <collapsible header-text="Achievements earned">
+                <div v-if="achievementsEarned.state == 'loading'">
+                    <busy class="honu-busy"></busy>
+                    Loading...
+                </div>
+
+                <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'" :session="session.data" :earned="achievementsEarned.data"></session-achievements-earned>
+            </collapsible>
+
             <collapsible header-text="Trends">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
@@ -292,6 +316,7 @@
     import SessionActionLog from "./components/SessionActionLog.vue";
     import SessionViewerSpawns from "./components/SessionViewerSpawns.vue";
     import SessionViewerExpBreakdown from "./components/SessionViewerExpBreakdown.vue";
+    import SessionAchievementsEarned from "./components/SessionAchievementsEarned.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
     import InfoHover from "components/InfoHover.vue";
@@ -301,6 +326,7 @@
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
     import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
+    import { AchievementEarnedBlock, AchievementEarnedApi } from "api/AchievementEarnedApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { RealtimeReconnectEntry, RealtimeReconnectApi } from "api/RealtimeReconnectApi";
@@ -322,6 +348,7 @@
                 killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExperienceBlock>,
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
+                achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
 
                 reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>
             }
@@ -360,6 +387,7 @@
                 this.bindKills();
                 this.bindExp();
                 this.bindVehicleDestroy();
+                this.bindAchievementsEarned();
             },
 
             bindSession: async function(): Promise<void> {
@@ -404,6 +432,11 @@
             bindVehicleDestroy: async function(): Promise<void> {
                 this.vehicleDestroy = Loadable.loading();
                 this.vehicleDestroy = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+            },
+
+            bindAchievementsEarned: async function(): Promise<void> {
+                this.achievementsEarned = Loadable.loading();
+                this.achievementsEarned = await AchievementEarnedApi.getBlockBySessionID(this.sessionID);
             },
 
             bindReconnects: async function(): Promise<void> {
@@ -486,7 +519,7 @@
         },
 
         components: {
-            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerExpBreakdown,
+            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned,
             ChartTimestamp,
             InfoHover,
             Busy,
