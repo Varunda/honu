@@ -244,6 +244,7 @@
                 this.makeRoadkills();
                 this.makeInfantryDamage();
                 this.makeInfantryDamagePerMinute();
+                this.makeRecon();
             },
 
             makeKills: function(): void {
@@ -1325,6 +1326,19 @@
                 this.catEngi.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeRecon: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Recon";
+                metric.funName = "Spotter";
+                metric.description = "Most recon (per minute)";
+
+                this.catMisc.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.MOTION_DETECT, Experience.SQUAD_MOTION_DETECT],
                     (metadata) => metadata.timeAs)
                 );
             },

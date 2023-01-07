@@ -63,7 +63,7 @@
                 modalData.root = event.target;
                 modalData.title = "Outfit top killers";
                 modalData.columnFields = [ "characterName", "kills", "percent" ];
-                modalData.columnNames = [ "Character", "Kills", "Usage" ];
+                modalData.columnNames = [ "Character", "Kills", "Percent" ];
                 modalData.loading = true;
 
                 EventBus.$emit("set-modal-data", modalData);
@@ -78,8 +78,8 @@
 
                 // Trim to only show the top 6 killers
                 if (kills.length > 7) {
-                    const hiddenKillers: OutfitKillerEntry[] = kills.slice(6);
-                    kills = kills.slice(0, 6);
+                    const hiddenKillers: OutfitKillerEntry[] = kills.slice(6); // 6 to end
+                    kills = kills.slice(0, 6); // 0 up to 6, or 0 - 5
 
                     kills.push({
                         characterID: "",

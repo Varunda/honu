@@ -41,6 +41,7 @@
                     <tr class="table-secondary">
                         <th>timestamp</th>
                         <th>Zone ID</th>
+                        <th>Loadout ID</th>
                         <th>source</th>
                         <th>other</th>
                         <th>exp type</th>
@@ -59,6 +60,11 @@
 
                         <td>
                             {{ev.event.zoneID}}
+                        </td>
+                        
+                        <td>
+                            {{ev.event.loadoutID | loadoutName}}
+                            ({{ev.event.loadoutID}})
                         </td>
 
                         <td>
@@ -128,6 +134,7 @@
 
     import "MomentFilter";
     import "filters/CharacterName";
+    import "filters/LoadoutNameFilter";
 
     import ChartTimestamp from "./ChartTimestamp.vue";
     import ChartEntryPie from "./ChartEntryPie.vue";

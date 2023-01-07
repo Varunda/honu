@@ -11,11 +11,15 @@
         </thead>
 
         <tbody>
-            <tr v-for="entry in weaponKills.entries">
+            <tr v-for="entry in weaponKills.entries" :key="entry.itemID">
                 <td :title="entry.name">
-                    <a :href="'/i/' + entry.itemID">
+                    <a v-if="entry.itemID != 0" :href="'/i/' + entry.itemID">
                         {{entry.itemName}}
                     </a>
+
+                    <span v-else>
+                        No weapon
+                    </span>
                 </td>
                 <td>
                     {{entry.users}} 
