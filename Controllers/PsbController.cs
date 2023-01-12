@@ -19,5 +19,11 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        [PermissionNeeded(HonuPermission.PSB_PRACTICE_GET, HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
+        public IActionResult Index() {
+            return View();
+        }
+
     }
 }

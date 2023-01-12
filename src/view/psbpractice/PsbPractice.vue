@@ -16,31 +16,51 @@
             </li>
         </honu-menu>
 
-        <div class="mb-2">
-            <h4>Create a block</h4>
+        <div class="mb-2 d-flex">
+            <div class="border-right px-2">
+                <h4>Create a block</h4>
 
-            <div class="input-group">
-                <input type="text" v-model="create.tag" placeholder="Tag" />
-                <input type="number" v-model.number="create.count" placeholder="Amount" />
+                <div class="input-group">
+                    <input type="text" v-model="create.tag" placeholder="Tag" />
+                    <input type="number" v-model.number="create.count" placeholder="Amount" />
 
-                <div class="input-group-addon">
-                    <toggle-button v-model="create.leadingZeroes">
-                        Leading zeroes
-                        <info-hover text="If the character have leading zeroes, such as D1RExPratice01, instead of D1RExPractice1"></info-hover>
-                    </toggle-button>
+                    <div class="input-group-addon">
+                        <toggle-button v-model="create.leadingZeroes">
+                            Leading zeroes
+                            <info-hover text="If the character have leading zeroes, such as D1RExPratice01, instead of D1RExPractice1"></info-hover>
+                        </toggle-button>
 
-                    <toggle-button v-model="create.lowercasePractice">
-                        Lowercase practice
-                    </toggle-button>
-                </div>
+                        <toggle-button v-model="create.lowercasePractice">
+                            Lowercase practice
+                        </toggle-button>
+                    </div>
 
 
-                <div class="input-group-addon">
-                    <button type="button" class="btn btn-primary" @click="createBlockWrapper">
-                        Create 
-                    </button>
+                    <div class="input-group-addon">
+                        <button type="button" class="btn btn-primary" @click="createBlockWrapper">
+                            Create 
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <div class="border-right px-2">
+                <h4>Recheck all</h4>
+
+                <button type="button" class="btn btn-primary">Recheck all</button>
+            </div>
+
+            <div class="border-right px-2">
+                <h4>Show deleted</h4>
+
+                <toggle-button v-model="search.deleted">Show deleted</toggle-button>
+            </div>
+        </div>
+
+        <div v-if="recheckProgress.show == true" class="mb-2">
+            <h2>Recheck progress</h2>
+
+            <progress-bar :progress="recheckProgress.progress" :total="recheckProgress.total"></progress-bar>
         </div>
 
         <div v-if="groupedAccounts.state == 'loaded'">
@@ -93,9 +113,6 @@
                         <div class="mb-2">
                             <h4>Manage</h4>
                             <button @click="deleteBlockWrapper(group.tag)" type="button" class="btn btn-danger">Delete block</button>
-                            <!--
-                            <button type="button" class="btn btn-warning">Resize</button>
-                            -->
                             <button @click="recheckBlock(group.tag)" type="button" class="btn btn-info">Recheck</button>
                         </div>
                     </slot>
@@ -115,6 +132,11 @@
         <div v-else>
             Unchecked state of groupedAccounts: {{groupedAccounts.state}}
         </div>
+
+        <div class="modal" id="psb-account-modal">
+            <psb-account-modal v-if="view.opened == true" :account="view.account">
+            </psb-account-modal>
+        </div>
     </div>
 </template>
 
@@ -130,11 +152,15 @@
     import ToggleButton from "components/ToggleButton";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
+    import ProgressBar from "components/ProgressBar.vue";
 
     import PracticeAccountList from "./components/PracticeAccountList.vue";
+    import PsbAccountModal from "components/psb/PsbAccountModal.vue";
 
     import { FlatPsbNamedAccount, PsbAccountStatus, PsbAccountType, PsbCharacterStatus, PsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
+
+    import EventBus from "EventBus";
 
     type GroupedAccount = {
         accounts: Loading<FlatPsbNamedAccount[]>;
@@ -168,7 +194,18 @@
                     leadingZeroes: false as boolean,
                     lowercasePractice: false as boolean,
                     ovo: false as boolean
-                }
+                },
+
+                recheckProgress: {
+                    show: false as boolean,
+                    total: 0 as number,
+                    progress: 0 as number
+                },
+
+                view: {
+                    opened: false as boolean,
+                    account: null as FlatPsbNamedAccount | null
+                },
             }
         },
 
@@ -176,13 +213,57 @@
             document.title = `Honu / PSB / Practice`;
 
             this.bindData();
+
+            EventBus.$on("show-account", this.showAccount);
+        },
+
+        mounted: function(): void {
+            this.$nextTick(() => {
+                $("#psb-account-modal").on("hide.bs.modal", () => {
+                    this.view.opened = false;
+                    this.view.account = null;
+                });
+
+                EventBus.$on("rebind-accounts", async () => {
+                    console.log(`Rebinding accounts`);
+                    await this.bindData();
+
+                    if (this.view.account != null) {
+                        this.updateAccount(this.view.account.id);
+                    }
+                });
+            });
         },
 
         methods: {
-
             bindData: async function(): Promise<void> {
                 this.accounts = Loadable.loading();
                 this.accounts = await PsbNamedAccountApi.getByTypeID(PsbAccountType.PRACTICE);
+            },
+
+            showAccount: function(accountID: number): void {
+                this.updateAccount(accountID);
+                this.view.opened = true;
+                this.$nextTick(() => {
+                    this.openViewModal();
+                });
+            },
+
+            openViewModal: function(): void {
+                $("#psb-account-modal").modal("show");
+            },
+
+            updateAccount: function(accID: number): void {
+                if (this.accounts.state != "loaded") {
+                    return console.warn(`accounts.state is not loaded, cannot load ${accID}`);
+                }
+
+                const acc: FlatPsbNamedAccount | undefined = this.accounts.data.find(iter => iter.id == accID);
+                if (acc == undefined) {
+                    return console.warn(`failed to find ${accID}`);
+                }
+
+                this.view.account = acc;
             },
 
             createBlockWrapper: async function(): Promise<void> {
@@ -262,23 +343,59 @@
 
             recheckBlock: async function(tag: string): Promise<void> {
                 if (this.accounts.state != "loaded") {
-                    return console.warn(`cannot delete block ${tag}: accounts is not 'loaded'`);
+                    return console.warn(`cannot recheck block ${tag}: accounts is not 'loaded'`);
                 }
 
                 Toaster.add(`Rechecking block`, `Rechecking accounts for ${tag}`, "info");
 
+                this.recheckProgress.show = true;
+                this.recheckProgress.total = this.accounts.data.filter(iter => iter.tag == tag && iter.account.deletedAt == null).length;
+                this.recheckProgress.progress = 0;
+
                 for (const account of this.accounts.data) {
+                    if (account.account.deletedAt != null) {
+                        continue;
+                    }
+
                     if (account.tag != tag) {
                         continue;
                     }
 
                     await PsbNamedAccountApi.recheckByID(account.id);
+                    ++this.recheckProgress.progress;
                 }
 
                 Toaster.add(`Rechecked accounts for ${tag}`, `Recheck accounts`, "success");
 
                 await this.bindData();
-            }
+
+                this.recheckProgress.show = false;
+            },
+
+            recheckAll: async function(): Promise<void> {
+                if (this.accounts.state != "loaded") {
+                    return console.warn(`cannot recheck all: accounts is not 'loaded'`);
+                }
+
+                Toaster.add(`Rechecking all`, `Rechecking ${this.accounts.data.length} accounts`, "info");
+
+                this.recheckProgress.show = true;
+                this.recheckProgress.total = this.accounts.data.filter(iter => iter.account.deletedAt == null).length;
+                this.recheckProgress.progress = 0;
+
+                for (const account of this.accounts.data) {
+                    if (account.account.deletedAt != null) {
+                        continue;
+                    }
+
+                    await PsbNamedAccountApi.recheckByID(account.id);
+                    ++this.recheckProgress.progress;
+                }
+
+                await this.bindData();
+
+                this.recheckProgress.show = false;
+            },
 
         },
 
@@ -375,9 +492,8 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            ToggleButton, InfoHover,
-            Collapsible, Busy,
-            PracticeAccountList
+            ToggleButton, InfoHover, Collapsible, Busy, ProgressBar,
+            PracticeAccountList, PsbAccountModal
         }
     });
     export default PsbPractice;

@@ -13,7 +13,7 @@
 
                 <a-body v-slot="entry">
                     <!--<a href="#" @click="viewAccount(entry.id)" :class="{ 'text-danger': entry.account.deletedByID != null }">-->
-                    <a href="#" :class="{ 'text-danger': entry.account.deletedByID != null }">
+                    <a href="javascript:void(0);" :class="{ 'text-danger': entry.account.deletedByID != null }" @click="showAccount(entry.id)">
                         View {{entry.id}}
                     </a>
                 </a-body>
@@ -231,6 +231,8 @@
     import { FlatPsbNamedAccount, PsbNamedAccountApi } from "api/PsbNamedAccountApi";
     import { PsCharacter } from "api/CharacterApi";
 
+    import EventBus from "EventBus";
+
     const PsbAccountCharacterCell = Vue.extend({
         props: {
             id: { type: String, required: false },
@@ -314,7 +316,9 @@
         },
 
         methods: {
-            
+            showAccount: function(accountID: number): void {
+                EventBus.$emit("show-account", accountID);
+            }
         },
 
         components: {

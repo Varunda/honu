@@ -23,6 +23,10 @@ export class HonuAccountApi extends ApiWrapper<HonuAccount> {
         };
     }
 
+    public static async getMe(): Promise<Loading<HonuAccount>> {
+        return HonuAccountApi.get().readSingle(`/api/account/whoami`, HonuAccountApi.parse);
+    }
+
     public static async getAll(): Promise<Loading<HonuAccount[]>> {
         return HonuAccountApi.get().readList(`/api/account/`, HonuAccountApi.parse);
     }

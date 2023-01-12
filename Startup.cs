@@ -265,7 +265,7 @@ namespace watchtower {
                 endpoints.MapControllerRoute(
                     name: "psb",
                     pattern: "psb/{action}",
-                    defaults: new { controller = "Psb" }
+                    defaults: new { controller = "Psb", action = "Index" }
                 );
 
                 endpoints.MapControllerRoute(

@@ -316,8 +316,8 @@
         </a-table>
 
         <div class="modal" id="psb-account-modal">
-            <psb-named-account-modal v-if="view.opened == true" :account="view.account">
-            </psb-named-account-modal>
+            <psb-account-modal v-if="view.opened == true" :account="view.account">
+            </psb-account-modal>
         </div>
 
         <div class="modal" id="account-create-modal">
@@ -335,7 +335,7 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
-    import PsbNamedAccountModal from "./components/PsbNamedAccountModal.vue";
+    import PsbAccountModal from "components/psb/PsbAccountModal.vue";
     import PsbNamedAccountCreateModal from "./components/PsbNamedAccountCreateModal.vue";
 
     import "MomentFilter";
@@ -625,7 +625,7 @@
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
             InfoHover,
-            PsbNamedAccountModal, PsbNamedAccountCreateModal,
+            PsbAccountModal, PsbNamedAccountCreateModal,
             PsbNamedCharacterCell, PsbNamedCharacterLogin,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
