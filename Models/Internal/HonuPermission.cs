@@ -32,6 +32,9 @@ namespace watchtower.Models.Internal {
         public const string HONU_ACCOUNT_ADMIN = "Honu.Account.Admin";
         public readonly static HonuPermission HonuAccountAdmin = new(HONU_ACCOUNT_ADMIN, "Manage all accounts in Honu");
 
+        public const string HONU_DISCORD_ADMIN = "Honu.Discord.Admin";
+        public readonly static HonuPermission HonuDiscordAdmin = new(HONU_DISCORD_ADMIN, "Manage Honu's Discord bot");
+
         public const string HONU_ACCOUNT_GETALL = "Honu.Account.GetAll";
         public readonly static HonuPermission HonuAccountGetAll = new(HONU_ACCOUNT_GETALL, "Get all Honu accounts");
 

@@ -3,10 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
+using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Db.Implementations;
 using watchtower.Services.Repositories.PSB;
+using watchtower.Services.Repositories.Readers;
 
 namespace watchtower.Services.Repositories {
 
@@ -73,6 +75,9 @@ namespace watchtower.Services.Repositories {
 
             services.AddSingleton<RealtimeAlertRepository>();
             services.AddSingleton<HonuAccountPermissionRepository>();
+            services.AddSingleton<PsbDriveRepository>();
+            services.AddSingleton<PsbContactSheetRepository>();
+            services.AddSingleton<ISheetsReader<PsbContact>, PsbPracticeContactReader>();
         }
 
     }

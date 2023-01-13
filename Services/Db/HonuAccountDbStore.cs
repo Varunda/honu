@@ -84,6 +84,28 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     Get a <see cref="HonuAccount"/> by <see cref="HonuAccount.DiscordID"/>
+        /// </summary>
+        /// <param name="discordID">ID of the discord account to get the honu account of</param>
+        /// <param name="cancel">Cancellation token</param>
+        /// <returns>
+        ///     The <see cref="HonuAccount"/> with <see cref="HonuAccount.DiscordID"/> of <paramref name="discordID"/>,
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
+        public async Task<HonuAccount?> GetByDiscordID(ulong discordID, CancellationToken cancel) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM honu_account
+                    WHERE discord_id = @DiscordID;
+            ");
+
+            cmd.AddParameter("DiscordID", discordID);
+
+            return await cmd.ExecuteReadSingle(_Reader, cancel);
+        }
+
+        /// <summary>
         ///     Insert a new <see cref="HonuAccount"/>
         /// </summary>
         /// <param name="param">Parameters used to insert the new account</param>

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DSharpPlus.Entities;
+using DSharpPlus.SlashCommands;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,17 @@ namespace watchtower.Services {
             _Logger = logger;
             _Context = context;
             _HonuAccountDb = accountDb;
+        }
+
+        public async Task<HonuAccount?> GetDiscord(InteractionContext ctx) {
+            DiscordMember? caller = ctx.Member;
+            if (caller == null) {
+                return null;
+            }
+
+            HonuAccount? account = await _HonuAccountDb.GetByDiscordID(caller.Id, CancellationToken.None);
+
+            return account;
         }
 
         /// <summary>

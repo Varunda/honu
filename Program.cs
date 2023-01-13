@@ -1,17 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Drive.v3;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
@@ -29,6 +35,8 @@ namespace watchtower {
 #pragma warning disable CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
         private static IHost _Host;
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
+
+        private static ServiceAccountCredential? _GoogleCredentials = null;
 
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
