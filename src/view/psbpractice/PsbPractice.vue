@@ -46,7 +46,7 @@
             <div class="border-right px-2">
                 <h4>Recheck all</h4>
 
-                <button type="button" class="btn btn-primary">Recheck all</button>
+                <button @click="recheckAll" type="button" class="btn btn-primary">Recheck all</button>
             </div>
 
             <div class="border-right px-2">
