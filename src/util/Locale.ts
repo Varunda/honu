@@ -16,4 +16,10 @@ export default class LocaleUtil {
         });
     }
 
+    public static format(n: number, format: Intl.NumberFormat): string {
+        return format.format(n);
+    }
+
+
+
 }

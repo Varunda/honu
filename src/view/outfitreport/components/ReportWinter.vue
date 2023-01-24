@@ -179,7 +179,13 @@
                 ] as WinterCategory[],
 
                 essential: [] as WinterMetric[],
-                fun: [] as WinterMetric[]
+                fun: [] as WinterMetric[],
+
+                compatFormat: Intl.NumberFormat(undefined, {
+                    notation: "compact",
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1
+                }) as Intl.NumberFormat
             }
         },
 
@@ -244,7 +250,7 @@
                 this.makeRoadkills();
                 this.makeInfantryDamage();
                 this.makeInfantryDamagePerMinute();
-                this.makeRecon();
+                //this.makeRecon(); // BUGGED
             },
 
             makeKills: function(): void {
@@ -365,6 +371,7 @@
                 }
 
                 metric.entries = entries.sort((a, b) => b.value - a.value);
+                this.compactFormatLocale(metric, (metadata) => metadata.timeAs);
 
                 this.catKills.metrics.push(metric);
             },
@@ -398,7 +405,7 @@
                     entry.characterID = charID;
                     entry.name = this.getCharacterName(charID);
                     entry.value = score / Math.max(1, metadata.timeAs) * 60;
-                    entry.display = `${LocaleUtil.locale(entry.value, 2)} (${LocaleUtil.locale(score, 0)})`;
+                    entry.display = `${LocaleUtil.format(entry.value, this.compatFormat)} (${LocaleUtil.format(score, this.compatFormat)})`;
 
                     metric.entries.push(entry);
                 });
@@ -421,6 +428,7 @@
                 });
 
                 metric = this.generateFromMap(metric, map, (metadata) => metadata.timeAs, 0, 2);
+                this.compactFormatLocale(metric, (metadata) => metadata.timeAs);
 
                 this.catMisc.metrics.push(metric);
             },
@@ -444,7 +452,7 @@
 
                         entry.value = iter[1].totalDamage / (metadata?.timeAs || 120) * 60;
                         entry.name = this.getCharacterName(iter[0]);
-                        entry.display = `${LocaleUtil.locale(entry.value, 2)} (${LocaleUtil.locale(iter[1].totalDamage, 0)})`;
+                        entry.display = `${LocaleUtil.format(entry.value, this.compatFormat)} (${LocaleUtil.format(iter[1].totalDamage, this.compatFormat)})`;
 
                         return entry;
                     }).sort((a, b) => b.value - a.value);
@@ -575,7 +583,12 @@
                     map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
                 }
 
-                this.catMedic.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs));
+                this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs);
+                this.compactFormatLocale(metric, (metadata) => metadata.classes.medic.timeAs);
+
+                this.catMedic.metrics.push(metric);
+
+                //this.catMedic.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs));
             },
 
             makeShieldsHealed: function(): void {
@@ -604,8 +617,10 @@
                     map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
                 }
 
-                this.catMedic.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs));
+                this.generateFromMap(metric, map, (metadata) => metadata.classes.medic.timeAs);
+                this.compactFormatLocale(metric, (metadata) => metadata.classes.medic.timeAs);
 
+                this.catMedic.metrics.push(metric);
             },
 
             makeRevives: function(): void {
@@ -661,7 +676,10 @@
                     map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
                 }
 
-                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
+                this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2);
+                this.compactFormatLocale(metric, (metadata) => metadata.classes.engineer.timeAs);
+
+                this.catEngi.metrics.push(metric);
             },
 
             makeVehicleRepairHealth: function(): void {
@@ -691,7 +709,10 @@
                     map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
                 }
 
-                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
+                this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2);
+                this.compactFormatLocale(metric, (metadata) => metadata.classes.engineer.timeAs);
+
+                this.catEngi.metrics.push(metric);
             },
 
             makeTotalRepairHealth: function(): void {
@@ -727,7 +748,10 @@
                     map.set(ev.sourceID, (map.get(ev.sourceID) || 0) + amount);
                 }
 
-                this.catEngi.metrics.push(this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2));
+                this.generateFromMap(metric, map, (metadata) => metadata.classes.engineer.timeAs, 0, 2);
+                this.compactFormatLocale(metric, (metadata) => metadata.classes.engineer.timeAs);
+
+                this.catEngi.metrics.push(metric);
             },
 
             makeHardlightAssists: function(): void {
@@ -1373,6 +1397,16 @@
                     }).sort((a, b) => b.value - a.value);
 
                 return metric;
+            },
+
+            compactFormatLocale: function(metric: WinterMetric, perMinuteSelector: ((metadata: PlayerMetadata) => number)): void {
+                metric.entries.forEach((iter: WinterEntry) => {
+                    const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(iter.characterID);
+                    if (metadata != undefined) {
+                        const minutes: number = perMinuteSelector(metadata);
+                        iter.display = `${LocaleUtil.format(iter.value, this.compatFormat)} (${LocaleUtil.format(iter.value / Math.max(1, minutes) * 60, this.compatFormat)})`;
+                    }
+                });
             },
 
             /**

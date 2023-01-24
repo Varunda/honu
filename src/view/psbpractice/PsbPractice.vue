@@ -387,7 +387,11 @@
                         continue;
                     }
 
-                    await PsbNamedAccountApi.recheckByID(account.id);
+                    try {
+                        await PsbNamedAccountApi.recheckByID(account.id);
+                    } catch (err) {
+                        console.error(`error updating ${account.id}`, err);
+                    }
                     ++this.recheckProgress.progress;
                 }
 
