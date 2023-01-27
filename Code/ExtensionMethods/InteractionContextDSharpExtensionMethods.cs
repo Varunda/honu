@@ -13,7 +13,7 @@ namespace watchtower.Code.ExtensionMethods {
         /// </summary>
         /// <param name="ctx">Extension instance</param>
         /// <param name="message">Message to send</param>
-        public static Task CreateImmediateText(this InteractionContext ctx, string message) {
+        public static Task CreateImmediateText(this BaseContext ctx, string message) {
             return ctx.CreateResponseAsync(
                 InteractionResponseType.ChannelMessageWithSource,
                 new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message)
@@ -22,11 +22,11 @@ namespace watchtower.Code.ExtensionMethods {
 
         /// <summary>
         ///     Create a <see cref="InteractionResponseType.DeferredChannelMessageWithSource"/> response with a message.
-        ///     Use <see cref="EditResponseText(InteractionContext, string)"/> to edit the response
+        ///     Use <see cref="EditResponseText(BaseContext, string)"/> to edit the response
         /// </summary>
         /// <param name="ctx">Extension instance</param>
         /// <param name="message">Message to send</param>
-        public static Task CreateDeferredText(this InteractionContext ctx, string message) {
+        public static Task CreateDeferredText(this BaseContext ctx, string message) {
             return ctx.CreateResponseAsync(
                 InteractionResponseType.DeferredChannelMessageWithSource,
                 new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message)
@@ -39,7 +39,7 @@ namespace watchtower.Code.ExtensionMethods {
         /// </summary>
         /// <param name="ctx">Extension instance</param>
         /// <param name="message">Message to send</param>
-        public static Task EditResponseText(this InteractionContext ctx, string message) {
+        public static Task EditResponseText(this BaseContext ctx, string message) {
             return ctx.EditResponseAsync(new DSharpPlus.Entities.DiscordWebhookBuilder().WithContent(message));
         }
 

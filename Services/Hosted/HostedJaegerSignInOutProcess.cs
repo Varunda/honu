@@ -154,7 +154,9 @@ namespace watchtower.Services.Hosted {
                     }
 
                     if (devSeen == true && _Options.Value.AlertRoleID != null) {
-                        _DiscordQueue.Queue($"<@&{_Options.Value.AlertRoleID}> dev account has signed in");
+                        DiscordMessage msg = new();
+                        msg.Message = $"<@&{_Options.Value.AlertRoleID}> dev account has signed in";
+                        msg.Mentions.Add(new RoleDiscordMention(_Options.Value.AlertRoleID.Value));
                     }
 
                     entry.RunDuration = timer.ElapsedMilliseconds;

@@ -77,7 +77,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<HonuAccountPermissionRepository>();
             services.AddSingleton<PsbDriveRepository>();
             services.AddSingleton<PsbContactSheetRepository>();
-            services.AddSingleton<ISheetsReader<PsbContact>, PsbPracticeContactReader>();
+            services.AddSingleton<ISheetsReader<PsbPracticeContact>, PsbPracticeContactReader>();
+            services.AddSingleton<ISheetsReader<PsbOvOContact>, PsbOvOContactReader>();
         }
 
     }

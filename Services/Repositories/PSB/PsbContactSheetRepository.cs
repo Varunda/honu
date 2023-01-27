@@ -21,10 +21,12 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly ILogger<PsbContactSheetRepository> _Logger;
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY_PRACTICE_ALL = "Psb.Contacts.Practice";
+        private const string CACHE_KEY_OVO_ALL = "Psb.Contacts.OvO";
 
         private readonly IOptions<PsbDriveSettings> _Settings;
 
-        private readonly ISheetsReader<PsbContact> _Reader;
+        private readonly ISheetsReader<PsbPracticeContact> _PracticeReader;
+        private readonly ISheetsReader<PsbOvOContact> _OvOReader;
 
         private bool _Initialized = false;
         private bool _FailedInit { get { return _FailedInitReason != null; } }
@@ -35,13 +37,15 @@ namespace watchtower.Services.Repositories.PSB {
         private SheetsService? _SheetService = null;
 
         public PsbContactSheetRepository(ILogger<PsbContactSheetRepository> logger, IMemoryCache cache,
-            IOptions<PsbDriveSettings> settings, ISheetsReader<PsbContact> reader) {
+            IOptions<PsbDriveSettings> settings, ISheetsReader<PsbPracticeContact> reader,
+            ISheetsReader<PsbOvOContact> ovOReader) {
 
             _Logger = logger;
             _Cache = cache;
 
             _Settings = settings;
-            _Reader = reader;
+            _PracticeReader = reader;
+            _OvOReader = ovOReader;
         }
 
         /// <summary>
@@ -70,7 +74,7 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             if (File.Exists(_Settings.Value.CredentialFile) == false) {
-                _FailedInitReason = $"credential file '{_Settings.Value.CredentialFile}' does not exist (or not permission)";
+                _FailedInitReason = $"credential file '{_Settings.Value.CredentialFile}' does not exist (or no permission)";
                 _Logger.LogError($"Failed to initialize psb drive repository: {_FailedInitReason}");
                 return false;
             }
@@ -138,13 +142,13 @@ namespace watchtower.Services.Repositories.PSB {
         ///     Responses are cached aboslute from now for 10 minutes. Use <see cref="ClearCache"/>
         ///     if you need it sooner
         /// </remarks>
-        public async Task<List<PsbContact>?> GetPracticeContacts() {
-            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_ALL, out List<PsbContact>? contacts) == true) {
+        public async Task<List<PsbPracticeContact>> GetPracticeContacts() {
+            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_ALL, out List<PsbPracticeContact> contacts) == true) {
                 return contacts;
             }
 
             if (Initialize() == false) {
-                return null;
+                throw new SystemException($"Failed to initialize: {GetInitializeFailureReason()}");
             }
 
             if (_SheetService == null) {
@@ -154,10 +158,11 @@ namespace watchtower.Services.Repositories.PSB {
             // https://developers.google.com/sheets/api/guides/concepts#cell
             SpreadsheetsResource.ValuesResource.GetRequest sheetR = _SheetService.Spreadsheets.Values.Get(_Settings.Value.ContactSheets.Practice, "Current!A:E");
             Google.Apis.Sheets.v4.Data.ValueRange res = await sheetR.ExecuteAsync();
+            _Logger.LogDebug($"Loaded {res.Values.Count} rows from {_Settings.Value.ContactSheets.Practice}");
 
             if (res.Values.Count < 1) {
                 _Logger.LogWarning($"Getting practice rep sheet returned {res.Values} values, expected >0");
-                return null;
+                return contacts;
             }
 
             IList<object> header = res.Values[0];
@@ -177,8 +182,64 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             // skip header
-            contacts = _Reader.ReadList(res.Values.Skip(1));
+            contacts = _PracticeReader.ReadList(res.Values.Skip(1));
             _Cache.Set(CACHE_KEY_PRACTICE_ALL, contacts, new MemoryCacheEntryOptions() {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
+
+            return contacts;
+        }
+
+        public async Task<List<PsbOvOContact>> GetOvOContacts() {
+            if (_Cache.TryGetValue(CACHE_KEY_OVO_ALL, out List<PsbOvOContact> contacts) == true) {
+                return contacts;
+            }
+
+            if (Initialize() == false) {
+                throw new SystemException($"Failed to initialize: {GetInitializeFailureReason()}");
+            }
+
+            if (_SheetService == null) {
+                throw new SystemException($"sheets service is not supposed to be null");
+            }
+
+            // https://developers.google.com/sheets/api/guides/concepts#cell
+            SpreadsheetsResource.ValuesResource.GetRequest sheetR = _SheetService.Spreadsheets.Values.Get(_Settings.Value.ContactSheets.OVO, "'Contact Reps'!A:J");
+            Google.Apis.Sheets.v4.Data.ValueRange res = await sheetR.ExecuteAsync();
+
+            contacts = new();
+
+            if (res.Values.Count < 1) {
+                _Logger.LogWarning($"Getting practice rep sheet returned {res.Values} values, expected >0");
+                return contacts;
+            }
+
+            _Logger.LogDebug($"Loaded {res.Values.Count} rows from {_Settings.Value.ContactSheets.OVO}");
+
+            IList<object> header = res.Values[0];
+            if (header.Count != 10) {
+                throw new ArgumentException($"header of practice rep sheet had {header.Count} values, not 10");
+            }
+
+            List<string> validationErrors = new();
+            if (header[0].ToString() != "Group(s)") { validationErrors.Add($"Expected column one to be 'Tag', is '{header[0]}'");  }
+            if (header[1].ToString() != "In-Game Name") { validationErrors.Add($"Expected column one to be 'In-Game Name', is '{header[1]}'");  }
+            if (header[2].ToString() != "E-Mail") { validationErrors.Add($"Expected column one to be 'E-Mail', is '{header[2]}'");  }
+            if (header[3].ToString() != "Discord") { validationErrors.Add($"Expected column one to be 'Discord', is '{header[3]}'");  }
+            if (header[4].ToString() != "Actual Discord Id") { validationErrors.Add($"Expected column one to be 'Actual Discord ID', is '{header[4]}'");  }
+            if (header[5].ToString() != "Rep Type") { validationErrors.Add($"Expected column one to be 'Rep Type', is '{header[4]}'");  }
+            if (header[6].ToString() != "Account limit") { validationErrors.Add($"Expected column one to be 'Account limit', is '{header[4]}'");  }
+            if (header[7].ToString() != "Account Pings") { validationErrors.Add($"Expected column one to be 'Account Pings', is '{header[4]}'");  }
+            if (header[8].ToString() != "Base Pings") { validationErrors.Add($"Expected column one to be 'Base Pings', is '{header[4]}'");  }
+            if (header[9].ToString() != "Notes") { validationErrors.Add($"Expected column one to be 'Notes', is '{header[4]}'");  }
+
+            if (validationErrors.Count > 0) {
+                throw new ArgumentException($"Validation errors on ovo rep sheet: {string.Join("; ", validationErrors)}");
+            }
+
+            // skip header
+            contacts = _OvOReader.ReadList(res.Values.Skip(1));
+            _Cache.Set(CACHE_KEY_OVO_ALL, contacts, new MemoryCacheEntryOptions() {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
             });
 

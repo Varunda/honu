@@ -316,7 +316,8 @@ export default class TableDataSource {
         const expEvents: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(characterID, alert.timestamp, alert.end);
         if (expEvents.state == "loaded") {
             const events: ExpandedExpEvent[] = expEvents.data.filter(iter => {
-                return ids.indexOf(iter.event.experienceID) > -1 && iter.event.zoneID == alert.zoneID;
+                // allow all events in a daily alert
+                return ids.indexOf(iter.event.experienceID) > -1 && (alert.zoneID == 0 || iter.event.zoneID == alert.zoneID);
             });
 
             const supportedChars: string[] = events.map(iter => iter.event.otherID).filter((v, i, a) => a.indexOf(v) == i);

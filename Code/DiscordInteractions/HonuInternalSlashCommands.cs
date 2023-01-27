@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Internal;
 
-namespace watchtower.Code.SlashCommands {
+namespace watchtower.Code.DiscordInteractions {
 
     [SlashCommandGroup("internal", "Internal commands")]
     public class HonuInternalSlashCommands : PermissionSlashCommand {

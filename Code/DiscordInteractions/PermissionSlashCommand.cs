@@ -6,7 +6,7 @@ using watchtower.Services;
 using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.PSB;
 
-namespace watchtower.Code.SlashCommands {
+namespace watchtower.Code.DiscordInteractions {
 
     /// <summary>
     ///     Class to inherit from if executing a Discord slash command requires a specific Honu account permission

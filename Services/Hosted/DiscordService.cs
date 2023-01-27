@@ -14,10 +14,11 @@ using watchtower.Services.Queues;
 using DSharpPlus.SlashCommands;
 
 using HonuDiscord = watchtower.Models.Discord;
-using watchtower.Code.SlashCommands;
+using watchtower.Code.DiscordInteractions;
 using Newtonsoft.Json.Linq;
 using DSharpPlus.SlashCommands.EventArgs;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Models.Discord;
 
 namespace watchtower.Services.Hosted {
 
@@ -34,7 +35,7 @@ namespace watchtower.Services.Hosted {
         private bool _IsConnected = false;
         private const string SERVICE_NAME = "discord";
 
-        public DiscordService(ILogger<DiscordService> logger,
+        public DiscordService(ILogger<DiscordService> logger, ILoggerFactory loggerFactory,
             DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services) {
 
             _Logger = logger;
@@ -53,7 +54,8 @@ namespace watchtower.Services.Hosted {
             try {
                 _Discord = new DiscordClient(new DiscordConfiguration() {
                     Token = _DiscordOptions.Value.Key,
-                    TokenType = TokenType.Bot
+                    TokenType = TokenType.Bot,
+                    LoggerFactory = loggerFactory
                 });
             } catch (Exception) {
                 throw;
@@ -66,13 +68,18 @@ namespace watchtower.Services.Hosted {
                 Services = services
             });
             _SlashCommands.RegisterCommands<PingSlashCommand>(_DiscordOptions.Value.GuildId);
-            _SlashCommands.RegisterCommands<AddSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<AccessSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuInternalSlashCommands>(_DiscordOptions.Value.GuildId);
+            _SlashCommands.RegisterCommands<HonuAccountSlashCommand>(_DiscordOptions.Value.GuildId);
+            _SlashCommands.RegisterCommands<PsbDiscordInteractions>(_DiscordOptions.Value.GuildId);
 
             _SlashCommands.SlashCommandErrored += async (SlashCommandsExtension etx, SlashCommandErrorEventArgs args) => {
-                _Logger.LogError(args.Exception, $"Error executing slash command: {args.Context.CommandName}");
-                await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}");
+                _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
+                try {
+                    await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}");
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, $"error sending error message to Discord");
+                }
             };
         }
 
@@ -112,6 +119,7 @@ namespace watchtower.Services.Hosted {
 
                     DiscordMessageBuilder builder = new DiscordMessageBuilder();
 
+                    // the contents is ignored if there is any embeds
                     if (msg.Embeds.Count > 0) {
                         foreach (HonuDiscord.DiscordEmbed embed in msg.Embeds) {
                             DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder();
@@ -127,6 +135,11 @@ namespace watchtower.Services.Hosted {
                         }
                     } else {
                         builder.Content = msg.Message;
+                    }
+
+                    foreach (DiscordMention mention in msg.Mentions) {
+                        IMention m = ConvertMentionable(mention);
+                        builder.WithAllowedMention(m);
                     }
 
                     await channel.SendMessageAsync(builder);
@@ -156,17 +169,14 @@ namespace watchtower.Services.Hosted {
             }
         }
 
-        private async Task Interaction_Created(DiscordClient sender, InteractionCreateEventArgs args) {
+        private Task Interaction_Created(DiscordClient sender, InteractionCreateEventArgs args) {
             DiscordInteraction interaction = args.Interaction;
             ulong discordID = interaction.User.Id;
 
             if (interaction.Type == InteractionType.Ping) {
                 _Logger.LogDebug($"Ping interaction");
             } else if (interaction.Type == InteractionType.ApplicationCommand) {
-                string commandName = interaction.Data.Name;
-                string[] commandArgs = interaction.Data.Values;
-
-                _Logger.LogDebug($"Application command used by {discordID}: {GetCommandString(interaction.Data.Options)}");
+                _Logger.LogDebug($"Application command used by {discordID}: {interaction.Data.Name} {GetCommandString(interaction.Data.Options ?? new List<DiscordInteractionDataOption>())}");
             } else if (interaction.Type == InteractionType.AutoComplete) {
                 _Logger.LogDebug($"AutoComplete interaction");
             } else if (interaction.Type == InteractionType.Component) {
@@ -175,9 +185,29 @@ namespace watchtower.Services.Hosted {
                 _Logger.LogDebug($"ModalSubmit interaction");
             }
 
-            return;
+            return Task.CompletedTask;
         }
 
+        /// <summary>
+        ///     Convert the Honu Wrapper for a discord mention into whatever library we're using
+        /// </summary>
+        /// <param name="mention"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">If the <paramref name="mention"/>'s <see cref="DiscordMention.MentionType"/> was unhandled</exception>
+        private IMention ConvertMentionable(DiscordMention mention) {
+            if (mention.MentionType == DiscordMention.DiscordMentionType.NONE) {
+                throw new ArgumentException($"{nameof(DiscordMention)} has {nameof(DiscordMention.MentionType)} {nameof(DiscordMention.DiscordMentionType.NONE)}");
+            } else if (mention.MentionType == DiscordMention.DiscordMentionType.ROLE) {
+                return new RoleMention(((RoleDiscordMention)mention).RoleID);
+            }
+
+            throw new ArgumentException($"Unchecked {nameof(DiscordMention.MentionType)}: {mention.MentionType}");
+        }
+
+        /// <summary>
+        ///     Transform the options used in an interaction into a string that can be viewed
+        /// </summary>
+        /// <param name="options"></param>
         private string GetCommandString(IEnumerable<DiscordInteractionDataOption> options) {
             string s = "";
 

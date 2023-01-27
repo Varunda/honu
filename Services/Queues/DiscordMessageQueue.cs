@@ -18,7 +18,6 @@ namespace watchtower.Services.Queues {
         /// </summary>
         public void Queue(string message) {
             _Items.Enqueue(new DiscordMessage() {
-                Type = DiscordMessageType.TEXT,
                 Message = message
             });
             _Signal.Release();

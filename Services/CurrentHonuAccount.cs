@@ -30,7 +30,14 @@ namespace watchtower.Services {
             _HonuAccountDb = accountDb;
         }
 
-        public async Task<HonuAccount?> GetDiscord(InteractionContext ctx) {
+        /// <summary>
+        ///     Get the current user based who a <see cref="BaseContext"/>
+        /// </summary>
+        /// <param name="ctx">Context of the application command</param>
+        /// <returns>
+        ///     Null if the field <see cref="BaseContext.Member"/> is null, or null if the user doesn't have an account
+        /// </returns>
+        public async Task<HonuAccount?> GetDiscord(BaseContext ctx) {
             DiscordMember? caller = ctx.Member;
             if (caller == null) {
                 return null;

@@ -16,7 +16,7 @@ using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.PSB;
 
-namespace watchtower.Code.SlashCommands {
+namespace watchtower.Code.DiscordInteractions {
 
     /// <summary>
     ///     PSB sheet management slash command parent
@@ -58,7 +58,7 @@ namespace watchtower.Code.SlashCommands {
                         return;
                     }
 
-                    List<PsbContact>? practiceContacts = await _PsbContactRepository.GetPracticeContacts();
+                    List<PsbPracticeContact> practiceContacts = await _PsbContactRepository.GetPracticeContacts();
 
                     int psbCount = 0; // how many PSB staff users have permission to this block
                     int repCount = 0; // how many reps have permission to this block
@@ -151,8 +151,8 @@ namespace watchtower.Code.SlashCommands {
                     await ctx.EditResponseText("Found practice sheet, checking existing permissions...");
                     PsbDrivePermission? perm = await GetPermissionFromEmail(ctx, sheet.ID, email);
                     if (perm != null) {
-                        List<PsbContact>? sheetContacts = await _PsbContactRepository.GetPracticeContacts();
-                        PsbContact? existingContact = sheetContacts?.FirstOrDefault(iter => iter.Email.ToLower() == email.ToLower());
+                        List<PsbPracticeContact> sheetContacts = await _PsbContactRepository.GetPracticeContacts();
+                        PsbPracticeContact? existingContact = sheetContacts?.FirstOrDefault(iter => iter.Email.ToLower() == email.ToLower());
 
                         await ctx.EditResponseText($"Error: email {email} is already on {tag}'s practice sheet under user {(existingContact != null ? $"<@{existingContact.DiscordID}>" : perm.DisplayName)}");
                         return;
@@ -277,6 +277,44 @@ namespace watchtower.Code.SlashCommands {
                         _Logger.LogError(ex2, "Failed to update Discord slash command with exception text");
                     }
                 }
+            }
+
+            [SlashCommand("transfer-owner", "Transfer ownership of a practice block sheet from the service account to another")]
+            public async Task TransferOwnership(InteractionContext ctx,
+                [Option("tag", "Tag of the outfit")] string tag,
+                [Option("email", "Email to transfer ownership to")] string email) {
+
+                try {
+                    if (await _CheckPermission(ctx, HonuPermission.HONU_DISCORD_ADMIN) == false) {
+                        return;
+                    }
+
+                    await ctx.CreateDeferredText($"Processing command...");
+
+                    PsbDriveFile? sheet = await GetPracticeSheet(ctx, tag);
+                    if (sheet == null) {
+                        return;
+                    }
+
+                    PsbDrivePermission? perm = await GetPermissionFromEmail(ctx, sheet.ID, email);
+                    if (perm == null) {
+                        await ctx.EditResponseText($"Failed to find permission for {email} on file {sheet.Name}/{sheet.ID}");
+                        return;
+                    }
+
+                    await _PsbDrive.TransferOwnership(sheet.ID, perm.ID);
+
+                    await ctx.EditResponseText($"Success!");
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, "failed to execute Discord slash command");
+
+                    try {
+                        await ctx.EditResponseText($"Internal error: {ex.Message}");
+                    } catch(Exception ex2) {
+                        _Logger.LogError(ex2, "Failed to update Discord slash command with exception text");
+                    }
+                }
+
             }
 
             /// <summary>

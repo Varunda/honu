@@ -10,7 +10,7 @@
         /// <summary>
         ///     ID of the Discord role to @ if a known dev account is spotted signing in
         /// </summary>
-        public long? AlertRoleID { get; set; }
+        public ulong? AlertRoleID { get; set; }
 
     }
 }

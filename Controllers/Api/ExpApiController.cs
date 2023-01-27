@@ -55,6 +55,7 @@ namespace watchtower.Controllers {
         /// <param name="charID">ID of the character to get the events of</param>
         /// <param name="start">When the time period to load started</param>
         /// <param name="end">When the time period to load will end</param>
+        /// <param name="interestedEvents">List of IDs to filter for in the response. If left null, all exp events are included</param>
         /// <response code="200">
         ///     The response will contain a list of <see cref="ExpandedExpEvent"/>s for each exp event that occured
         ///     between <paramref name="start"/> and <paramref name="end"/> with a <see cref="ExpEvent.SourceID"/> of <paramref name="charID"/>
@@ -71,7 +72,10 @@ namespace watchtower.Controllers {
         ///     </ul>
         /// </resposne>
         [HttpGet("{charID}/period")]
-        public async Task<ApiResponse<List<ExpandedExpEvent>>> GetByCharacterIDAndRange(string charID, [FromQuery] DateTime start, [FromQuery] DateTime end) {
+        public async Task<ApiResponse<List<ExpandedExpEvent>>> GetByCharacterIDAndRange(string charID,
+            [FromQuery] DateTime start, [FromQuery] DateTime end,
+            [FromQuery] List<int>? interestedEvents = null) {
+
             if (end - start > TimeSpan.FromDays(1)) {
                 return ApiBadRequest<List<ExpandedExpEvent>>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
             }
@@ -80,6 +84,9 @@ namespace watchtower.Controllers {
             }
 
             List<ExpEvent> expEvents = await _ExpDbStore.GetByCharacterID(charID, start, end);
+            if (interestedEvents != null) {
+                expEvents = expEvents.Where(iter => interestedEvents.IndexOf(iter.ExperienceID) > -1).ToList();
+            }
 
             List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(expEvents.Count);
 
@@ -168,6 +175,22 @@ namespace watchtower.Controllers {
             return await GetByCharacterIDAndRange(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
         }
 
+        /// <summary>
+        ///     Get the events that took place during a session in block form. See remarks for more details.
+        /// </summary>
+        /// <remarks>
+        ///     Block form does not expanded the list of <see cref="ExpEvent"/> into <see cref="ExpandedExpEvent"/>s.
+        ///     Instead, it will create a Dictionary of characters (<see cref="ExperienceBlock.Characters"/>) populated
+        ///     by the <see cref="ExpEvent.SourceID"/> and <see cref="ExpEvent.OtherID"/>
+        /// </remarks>
+        /// <param name="sessionID">ID of the session to get the events of</param>
+        /// <response code="200">
+        ///     The response will contain a <see cref="ExperienceBlock"/>, which contains all the events that took
+        ///     place during a session, as well as information used to perform joins (such as the characters)
+        /// </response>
+        /// <response code="404">
+        ///     No <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("sessions/{sessionID}")]
         public async Task<ApiResponse<ExperienceBlock>> GetBySessionID2(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);

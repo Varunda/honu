@@ -20,6 +20,4 @@ export default class LocaleUtil {
         return format.format(n);
     }
 
-
-
 }

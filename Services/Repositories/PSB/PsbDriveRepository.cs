@@ -291,6 +291,26 @@ namespace watchtower.Services.Repositories.PSB {
             return true;
         }
 
+        public async Task<PsbDrivePermission?> TransferOwnership(string driveFileID, string permissionID) {
+            if (Initialize() == false) {
+                return null;
+            }
+
+            if (_DriveService == null) {
+                throw new SystemException($"54aekj");
+            }
+
+            Google.Apis.Drive.v3.Data.Permission perm = new();
+            perm.Role = "owner";
+
+            PermissionsResource.UpdateRequest request = _DriveService.Permissions.Update(perm, driveFileID, permissionID);
+            request.TransferOwnership = true;
+
+            Google.Apis.Drive.v3.Data.Permission response = await request.ExecuteAsync();
+
+            return Convert(driveFileID, response);
+        }
+
         public async Task<PsbDrivePermission?> AcceptOwnership(string driveFileID, string permissionID) {
             if (Initialize() == false) {
                 return null;
