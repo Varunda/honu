@@ -3,16 +3,20 @@ using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
+using watchtower.Models.Census;
 using watchtower.Models.Internal;
 using watchtower.Models.PSB;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.PSB;
 
 namespace watchtower.Code.DiscordInteractions {
@@ -23,6 +27,7 @@ namespace watchtower.Code.DiscordInteractions {
         public HonuAccountDbStore _AccountDb { set; private get; } = default!;
 
         public PsbContactSheetRepository _ContactRepository { set; private get; } = default!;
+        public FacilityRepository _FacilityRepository { set; private get; } = default!;
 
         /// <summary>
         ///     User context menu to see what reps a user has (ovo, practice, etc.)
@@ -163,6 +168,150 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "[DEBUG] Parse reservation")]
+        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
+        public async Task DebugParseReservation(ContextMenuContext ctx) {
+            await ctx.CreateDeferredText("Loading...", true);
+
+            DiscordMessage? msg = ctx.TargetMessage;
+            if (msg == null) {
+                await ctx.EditResponseText($"message is null?");
+                return;
+            }
+
+            PsbReservation res = new();
+
+            string feedback = $"Parsed message:\n";
+
+            List<string> lines = msg.Content.Split("\n").ToList();
+            foreach (string line in lines) {
+                _Logger.LogDebug($"line: '{line}'");
+
+                List<string> parts = line.Split(":").ToList();
+
+                if (parts.Count < 2) {
+                    feedback += $"Line '{line}' failed to split on ':', had {parts.Count} parts\n";
+                    continue;
+                }
+
+
+                string field = parts[0].Trim().ToLower();
+                string value = parts[1].Trim();
+                string v = string.Join(":", parts.ToArray()[1..]).Trim();
+
+                if (field == "outfit" || field == "outfits") {
+                    feedback += $"Line `{line}` as outfits\n";
+
+                    List<string> outfits = value.Split(",").ToList();
+                    feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";
+                    res.Outfits = outfits.Select(iter => iter.ToLower()).ToList();
+                } else if (field == "accounts" || field == "number of accounts") {
+                    feedback += $"Line `{line}` as account number\n";
+
+                    if (int.TryParse(value, out int accountCount) == true) {
+                        res.Accounts = accountCount;
+                        feedback += $"\tAccounts: {res.Accounts}\n";
+                    } else {
+                        feedback += $"\tFailed to parse '{value}' to a valid number\n";
+                    }
+                } else if (field.StartsWith("rep") == true) {
+                    feedback += $"Line `{line}` as rep line\n";
+
+                    List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
+                    List<DiscordUser> users = msg.MentionedUsers.ToList();
+
+                    foreach (DiscordUser user in users) {
+                        PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
+                        if (contact == null) {
+                            feedback += $"\t{user.GetPing()} {user.GetDisplay()} does not have a OvO contact entry\n";
+                        } else {
+                            feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
+                        }
+                    }
+                } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when") {
+                    feedback += $"Line `{line}` as when\n";
+
+                    DateTime? r = ParseVeryInexact(v, out string f);
+                    feedback += f;
+
+                    if (r != null) {
+                        feedback += $"\tConverted '{v}' into {r:u} (<t:{new DateTimeOffset(r.Value).ToUnixTimeSeconds()}:R>)\n";
+                    } else {
+                        feedback += $"\tFailed to convert '{v}' into a valid datetime\n";
+                    }
+
+                } else if (field == "bases") {
+                    feedback += $"Line `{line}` as bases\n";
+
+                    List<string> bases = value.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
+                    List<PsFacility> facilities = await _FacilityRepository.GetAll();
+
+                    foreach (string baseName in bases) {
+                        List<PsFacility> possibleBases = new();
+
+                        foreach (PsFacility fac in facilities) {
+                            if (fac.Name.ToLower().StartsWith(baseName) == true) {
+                                possibleBases.Add(fac);
+                            }
+                        }
+
+                        if (possibleBases.Count == 0) {
+                            feedback += $"\tFailed to find base `{baseName}`\n";
+                        } else if (possibleBases.Count > 1) {
+                            feedback += $"\tAmbigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}\n";
+                        } else if (possibleBases.Count == 1) {
+                            PsFacility fac = possibleBases[0];
+                            feedback += $"\tBase `{baseName}` found {fac.Name}/{fac.FacilityID}\n";
+                            res.Bases.Add(possibleBases[0]);
+                        }
+                    }
+                } else if (field == "details") {
+                    feedback += $"Line `{line}` as details\n";
+                    res.Details = value.Trim();
+                } else {
+                    feedback += $"Unchecked field '{field}'\n";
+                }
+            }
+
+            feedback += $"\n\n**Parsed**: ```json\n{JToken.FromObject(res)}```";
+
+            await ctx.EditResponseText(feedback);
+        }
+
+        private DateTime? ParseVeryInexact(string when, out string feedback) {
+            feedback = $"Parsing `{when}`:\n";
+
+            if (DateTime.TryParse(when, out DateTime result) == true) {
+                feedback += $"\tfound {result:u} using DateTime.TryParse\n";
+                return result;
+            }
+
+            Regex dateCommaStartDashEnd = new Regex(@"^(?<day>.*),\s*?(?<start>\d\d:\d\d)\s.*?(?<end>\d\d:\d\d).*$");
+            Match match = dateCommaStartDashEnd.Match(when);
+            if (match.Success == true) {
+                bool dayGroup = match.Groups.TryGetValue("day", out Group? day);
+                bool startGroup = match.Groups.TryGetValue("start", out Group? start);
+                bool endGroup = match.Groups.TryGetValue("end", out Group? end);
+                feedback += $"\tFound using Regex `{dateCommaStartDashEnd}`, day `{day}` ({dayGroup}), start `{start}` ({startGroup}), end `{end}` ({endGroup})\n";
+
+                if (day != null && DateTime.TryParse(day.Value, out DateTime dayValue) == true) {
+                    feedback += $"\tParsed `{day.Value}` to {dayValue:u}\n";
+                } else {
+                    feedback += $"\tFailed to parse `{day?.Value}` into a DateTime\n";
+                }
+
+                if (start != null && DateTime.TryParseExact(start.Value, "", null, System.Globalization.DateTimeStyles.AssumeUniversal, out DateTime startValue) == true) {
+                    feedback += $"Parsed `{start.Value}` to {startValue:u}\n";
+                } else {
+                    feedback += $"Failed to parse `{start?.Value}` into a DateTime\n";
+                }
+
+            } else {
+                feedback += $"\tdoes not match pattern `{dateCommaStartDashEnd}`\n";
+            }
+
+            return null;
+        }
 
     }
 }
