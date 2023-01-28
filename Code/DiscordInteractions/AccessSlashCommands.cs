@@ -37,11 +37,14 @@ namespace watchtower.Code.DiscordInteractions {
             /// <param name="ctx">Context (provided)</param>
             /// <param name="tag">Tag to use</param>
             [SlashCommand("list", "list who has permission to a PSB sheet")]
+            [RequiredRoleSlash(RequiredRoleCheck.PRACTICE_STAFF)]
             public async Task Command(InteractionContext ctx, [Option("tag", "Tag of the outfit")] string tag) {
                 try {
+                    /*
                     if (await _CheckPermission(ctx, HonuPermission.PSB_PRACTICE_GET) == false) {
                         return;
                     }
+                    */
 
                     await ctx.CreateDeferredText("Loading sheets...");
 

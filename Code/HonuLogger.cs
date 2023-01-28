@@ -8,7 +8,7 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
 
 
-/**
+/*
  * Parts of this code are lifted from dotnet runtime:
  * https://github.com/dotnet/runtime/blob/main/src/libraries/Microsoft.Extensions.Logging.Console/src/SimpleConsoleFormatter.cs
  * 

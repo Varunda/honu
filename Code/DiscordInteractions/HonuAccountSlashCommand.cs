@@ -27,15 +27,17 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task WhoAmICommand(InteractionContext ctx) {
             HonuAccount? account = await _CurrentUser.GetDiscord(ctx);
             if (account == null) {
-                await ctx.CreateImmediateText($"You do not have a Honu account");
+                await ctx.CreateImmediateText($"You do not have a Honu account", true);
                 return;
             }
+
+            await ctx.CreateDeferredText("Loading...", true);
 
             List<HonuAccountPermission> perms = await _PermissionRepository.GetByAccountID(account.ID);
             string s = $"Permissions on this account ({perms.Count}): \n";
             s += string.Join("\n", perms.Select(iter => $"`{iter.Permission}`"));
 
-            await ctx.CreateImmediateText($"Honu account ID: {account.ID}\n{s}");
+            await ctx.EditResponseText($"Honu account ID: {account.ID}\n{s}");
         }
 
         /// <summary>
@@ -47,39 +49,11 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task WhoIsCommand(InteractionContext ctx,
             [Option("user", "What user to target with this command")] DiscordUser user) {
 
-            HonuAccount? currentUser = await _CurrentUser.GetDiscord(ctx);
-            if (currentUser == null) {
-                await ctx.CreateImmediateText($"You do not have a Honu account, not executing command");
-                return;
-            }
+            await ctx.CreateDeferredText("Loading...", true);
 
             HonuAccount? targetAccount = await _AccountDb.GetByDiscordID(user.Id, CancellationToken.None);
             if (targetAccount == null) {
-                await ctx.CreateImmediateText($"Target user does not have a Honu account");
-                return;
-            }
-
-            List<HonuAccountPermission> perms = await _PermissionRepository.GetByAccountID(targetAccount.ID);
-            string s = $"Permissions on this account ({perms.Count}): \n";
-            s += string.Join("\n", perms.Select(iter => $"`{iter.Permission}"));
-
-            await ctx.CreateImmediateText($"Honu account ID: {targetAccount.ID}\n{s}");
-        }
-
-        [ContextMenu(ApplicationCommandType.UserContextMenu, "Honu account whois")]
-        public async Task WhoIsContext(ContextMenuContext ctx) {
-            DiscordMember source = ctx.Member;
-            DiscordMember target = ctx.TargetMember;
-
-            HonuAccount? currentUser = await _CurrentUser.GetDiscord(ctx);
-            if (currentUser == null) {
-                await ctx.CreateImmediateText($"You do not have a Honu account, not executing interaction");
-                return;
-            }
-
-            HonuAccount? targetAccount = await _AccountDb.GetByDiscordID(target.Id, CancellationToken.None);
-            if (targetAccount == null) {
-                await ctx.CreateImmediateText($"Target user does not have a Honu account");
+                await ctx.EditResponseText($"Target user does not have a Honu account");
                 return;
             }
 
@@ -87,9 +61,32 @@ namespace watchtower.Code.DiscordInteractions {
             string s = $"Permissions on this account ({perms.Count}): \n";
             s += string.Join("\n", perms.Select(iter => $"`{iter.Permission}`"));
 
-            await source.SendMessageAsync($"Honu account ID: {targetAccount.ID}\n{s}");
+            await ctx.EditResponseText($"Honu account ID: {targetAccount.ID}\n{s}");
+        }
 
-            await ctx.CreateImmediateText($"Sent information in a DM!");
+        /// <summary>
+        ///     Context menu command to get the Honu permissions of the target user
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        [ContextMenu(ApplicationCommandType.UserContextMenu, "Honu account whois")]
+        public async Task WhoIsContext(ContextMenuContext ctx) {
+            DiscordMember source = ctx.Member;
+            DiscordMember target = ctx.TargetMember;
+
+            await ctx.CreateDeferredText("Loading...", true);
+
+            HonuAccount? targetAccount = await _AccountDb.GetByDiscordID(target.Id, CancellationToken.None);
+            if (targetAccount == null) {
+                await ctx.EditResponseText($"Target user does not have a Honu account");
+                return;
+            }
+
+            List<HonuAccountPermission> perms = await _PermissionRepository.GetByAccountID(targetAccount.ID);
+            string s = $"Permissions on this account ({perms.Count}): \n";
+            s += string.Join("\n", perms.Select(iter => $"`{iter.Permission}`"));
+
+            await ctx.EditResponseText($"Honu account ID: {targetAccount.ID}\n{s}");
         }
 
     }

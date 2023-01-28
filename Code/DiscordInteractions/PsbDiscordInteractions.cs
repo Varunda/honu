@@ -2,6 +2,7 @@
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,22 +29,17 @@ namespace watchtower.Code.DiscordInteractions {
         /// </summary>
         /// <param name="ctx">Provided context</param>
         [ContextMenu(ApplicationCommandType.UserContextMenu, "Get rep status")]
+        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
         public async Task PsbWhoIsContext(ContextMenuContext ctx) {
             DiscordMember source = ctx.Member;
             DiscordMember target = ctx.TargetMember;
 
-            HonuAccount? currentUser = await _AccountDb.GetByDiscordID(source.Id, CancellationToken.None);
-            if (currentUser == null) {
-                await ctx.CreateImmediateText($"You do not have a Honu account");
-                return;
-            }
-
-            await ctx.CreateDeferredText($"Loading contacts...");
+            await ctx.CreateDeferredText($"Loading contacts...", true);
 
             List<PsbOvOContact> ovo = new();
             List<PsbPracticeContact> practice = new();
 
-            string feedback = $"<@{target.Id}> ({target.Username}#{target.Discriminator}/{target.Id}) is a rep for:\n";
+            string feedback = $"{target.GetPing()} {target.GetDisplay()} is a rep for:\n";
 
             try {
                 ovo = (await _ContactRepository.GetOvOContacts()).Where(iter => iter.DiscordID == target.Id).ToList();
@@ -71,13 +67,7 @@ namespace watchtower.Code.DiscordInteractions {
                 feedback += "**Practice rep**:\n" + string.Join("\n", practice.Select(iter => $"{iter.Tag}")) + "\n";
             }
 
-            try {
-                await source.SendMessageAsync(feedback);
-                await ctx.EditResponseText($"Sent PSB rep information in a DM");
-            } catch (Exception ex) {
-                _Logger.LogError(ex, $"failed to send message to {source.Id}/{source.Username}#{source.Discriminator}");
-                await ctx.EditResponseText($"failed to send response in DM");
-            }
+            await ctx.EditResponseText(feedback);
         }
 
         /// <summary>
@@ -89,26 +79,10 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task ListOvOCommand(InteractionContext ctx,
             [Option("Tag", "Outfit Tag to list the OVO reps of")] string tag) {
 
-            await ctx.CreateDeferredText($"Loading...");
-
-            // 2 ways a user has permission to use the command:
-            //      1. they have a honu account
-            //      2. they are an ovo rep for that group
-            bool hasPerm = false;
-            HonuAccount? currentUser = await _CurrentUser.GetDiscord(ctx);
-            hasPerm = (currentUser != null);
+            await ctx.CreateDeferredText($"Loading...", true);
 
             List<PsbOvOContact> contacts = (await _ContactRepository.GetOvOContacts())
                 .Where(iter => iter.Group.ToLower() == tag.ToLower()).ToList();
-
-            if (hasPerm == false) {
-                hasPerm = contacts.FirstOrDefault(iter => iter.DiscordID == ctx.Member.Id) != null;
-            }
-
-            if (hasPerm == false) {
-                await ctx.EditResponseText($"You lack permission to get the OvO reps for {tag}: You need a Honu account or to be an OvO rep of this outfit");
-                return;
-            }
 
             string feedback = $"The following users are OvO reps for {tag}:\n";
 
@@ -133,12 +107,60 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             try {
-                await ctx.Member.SendMessageAsync(feedback);
-                await ctx.EditResponseText($"Response sent in DMs");
+                await ctx.EditResponseText(feedback);
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"failed to send message to {ctx.Member.Id}/{ctx.Member.Username}#{ctx.Member.Discriminator}");
                 await ctx.EditResponseText($"failed to send response in DM");
             }
+        }
+
+        /// <summary>
+        ///     Message context menu to get the emails of the author and mentioned users in a message
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Get emails")]
+        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
+        public async Task GetEmailsContext(ContextMenuContext ctx) {
+            if (ctx.TargetMessage == null) {
+                await ctx.CreateImmediateText($"cannot execute command: target message is null?", true);
+                return;
+            }
+
+            await ctx.CreateDeferredText("Loading...", true);
+
+            DiscordMessage msg = ctx.TargetMessage;
+
+            List<DiscordUser> mentions = msg.MentionedUsers.ToList();
+            mentions.Add(ctx.TargetMessage.Author);
+
+            List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
+            List<PsbPracticeContact> practice = await _ContactRepository.GetPracticeContacts();
+
+            string feedback = $"Found {mentions.Count} users in message:";
+
+            HashSet<ulong> foundUsers = new();
+
+            foreach (DiscordUser user in mentions) {
+                if (foundUsers.Contains(user.Id)) {
+                    continue;
+                }
+                foundUsers.Add(user.Id);
+
+                PsbContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
+                if (contact == null) {
+                    contact = practice.FirstOrDefault(iter => iter.DiscordID == user.Id);
+                }
+
+                if (contact == null) {
+                    feedback += $"\n{user.GetPing()} `{user.GetDisplay()}`: no email!";
+                } else {
+                    feedback += $"\n{user.GetPing()} `{user.GetDisplay()}`: `{contact.Email}`";
+                }
+            }
+
+            await ctx.EditResponseText(feedback);
         }
 
 

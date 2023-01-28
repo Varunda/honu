@@ -42,9 +42,6 @@ using watchtower.Models.Alert;
 using watchtower.Code.Constants;
 using System.Collections.Generic;
 using watchtower.Services.Hosted.PSB;
-using Google.Apis.Drive.v3;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Services;
 
 //using honu_census;
 
@@ -146,6 +143,7 @@ namespace watchtower {
             services.Configure<CensusRealtimeHealthOptions>(Configuration.GetSection("RealtimeHealth"));
             services.Configure<DailyAlertOptions>(Configuration.GetSection("DailyAlert"));
             services.Configure<PsbDriveSettings>(Configuration.GetSection("PsbDrive"));
+            services.Configure<PsbRoleMapping>(Configuration.GetSection("PsbRoleMapping"));
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();

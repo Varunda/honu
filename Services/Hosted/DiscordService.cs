@@ -62,25 +62,21 @@ namespace watchtower.Services.Hosted {
             }
 
             _Discord.Ready += Client_Ready;
-            _Discord.InteractionCreated += Interaction_Created;
+            _Discord.InteractionCreated += Generic_Interaction_Created;
+            _Discord.ContextMenuInteractionCreated += Generic_Interaction_Created;
 
             _SlashCommands = _Discord.UseSlashCommands(new SlashCommandsConfiguration() {
                 Services = services
             });
+
+            _SlashCommands.SlashCommandErrored += Slash_Command_Errored;
+            _SlashCommands.ContextMenuErrored += Context_Menu_Errored;
+
             _SlashCommands.RegisterCommands<PingSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<AccessSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuInternalSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuAccountSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<PsbDiscordInteractions>(_DiscordOptions.Value.GuildId);
-
-            _SlashCommands.SlashCommandErrored += async (SlashCommandsExtension etx, SlashCommandErrorEventArgs args) => {
-                _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
-                try {
-                    await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}");
-                } catch (Exception ex) {
-                    _Logger.LogError(ex, $"error sending error message to Discord");
-                }
-            };
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
@@ -151,6 +147,12 @@ namespace watchtower.Services.Hosted {
             }
         }
 
+        /// <summary>
+        ///     Event handler for when the client is ready
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         private async Task Client_Ready(DiscordClient sender, ReadyEventArgs args) {
             _Logger.LogInformation($"Discord client connected");
 
@@ -169,23 +171,131 @@ namespace watchtower.Services.Hosted {
             }
         }
 
-        private Task Interaction_Created(DiscordClient sender, InteractionCreateEventArgs args) {
+        /// <summary>
+        ///     Event handler for both types of interaction (slash commands and context menu)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private Task Generic_Interaction_Created(DiscordClient sender, InteractionCreateEventArgs args) {
             DiscordInteraction interaction = args.Interaction;
-            ulong discordID = interaction.User.Id;
+            string user = interaction.User.GetDisplay();
 
-            if (interaction.Type == InteractionType.Ping) {
-                _Logger.LogDebug($"Ping interaction");
-            } else if (interaction.Type == InteractionType.ApplicationCommand) {
-                _Logger.LogDebug($"Application command used by {discordID}: {interaction.Data.Name} {GetCommandString(interaction.Data.Options ?? new List<DiscordInteractionDataOption>())}");
-            } else if (interaction.Type == InteractionType.AutoComplete) {
-                _Logger.LogDebug($"AutoComplete interaction");
-            } else if (interaction.Type == InteractionType.Component) {
-                _Logger.LogDebug($"Component interaction");
-            } else if (interaction.Type == InteractionType.ModalSubmit) {
-                _Logger.LogDebug($"ModalSubmit interaction");
+            string interactionMethod = "slash";
+
+            DiscordUser? targetMember = null;
+            DSharpPlus.Entities.DiscordMessage? targetMessage = null;
+
+
+            if (args is ContextMenuInteractionCreateEventArgs contextArgs) {
+                targetMember = contextArgs.TargetUser;
+                targetMessage = contextArgs.TargetMessage;
+                interactionMethod = "context menu";
             }
 
+            string feedback = $"{user} used '{interaction.Data.Name}' (a {interaction.Type}) as a {interactionMethod}: ";
+
+            if (targetMember != null) {
+                feedback += $"[target member: (user) {targetMember.GetDisplay()}]";
+            }
+            if (targetMessage != null) {
+                feedback += $"[target message: (channel) {targetMessage.Id}] [author: (user) {targetMessage.Author.GetDisplay()}]";
+            }
+
+            if (targetMessage == null && targetMember == null) {
+                feedback += $"{interaction.Data.Name} {GetCommandString(interaction.Data.Options)}";
+            }
+
+            _Logger.LogDebug(feedback);
+
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Event handler for when a slash command fails
+        /// </summary>
+        /// <param name="ext"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private async Task Slash_Command_Errored(SlashCommandsExtension ext, SlashCommandErrorEventArgs args) {
+            if (args.Exception is SlashExecutionChecksFailedException failedCheck) {
+                string feedback = "Check failed:\n";
+
+                foreach (SlashCheckBaseAttribute check in failedCheck.FailedChecks) {
+                    if (check is RequiredRoleSlashAttribute role) {
+                        _Logger.LogWarning($"{args.Context.User.GetDisplay()} attempted to use {args.Context.CommandName},"
+                            + $" but lacks the Discord roles: {string.Join(", ", role.Roles)}");
+                        feedback += $"You lack a required role: {string.Join(", ", role.Roles)}";
+                    } else {
+                        feedback += $"Unchecked check type: {check.GetType()}";
+                        _Logger.LogError($"Unchecked check type: {check.GetType()}");
+                    }
+                }
+
+                await args.Context.CreateImmediateText(feedback);
+
+                return;
+            }
+
+            _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
+            try {
+                // if the response has already started, this won't be null, indicating to instead update the response
+                DSharpPlus.Entities.DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
+
+                if (msg == null) {
+                    // if it is null, then no respons has been started, so one is created
+                    // if you attempt to create a response for one that already exists, then a 400 is thrown
+                    await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}");
+                } else {
+                    await args.Context.EditResponseText($"Error executing slash command: {args.Exception.Message}");
+                }
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"error sending error message to Discord");
+            }
+        }
+
+        /// <summary>
+        ///     Event handler for when a context menu command fails
+        /// </summary>
+        /// <param name="ext"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private async Task Context_Menu_Errored(SlashCommandsExtension ext, ContextMenuErrorEventArgs args) {
+            if (args.Exception is ContextMenuExecutionChecksFailedException failedCheck) {
+                string feedback = "Check failed:\n";
+
+                foreach (ContextMenuCheckBaseAttribute check in failedCheck.FailedChecks) {
+                    if (check is RequiredRoleContextAttribute role) {
+                        _Logger.LogWarning($"{args.Context.User.GetDisplay()} attempted to use {args.Context.CommandName},"
+                            + $" but lacks the Discord roles: {string.Join(", ", role.Roles)}");
+
+                        feedback += $"You lack a required role: {string.Join(", ", role.Roles)}";
+                    } else {
+                        feedback += $"Unchecked check type: {check.GetType()}";
+                        _Logger.LogError($"Unchecked check type: {check.GetType()}");
+                    }
+                }
+
+                await args.Context.CreateImmediateText(feedback);
+
+                return;
+            }
+
+            _Logger.LogError(args.Exception, $"error executing context command: {args.Context.CommandName}");
+            try {
+                // if the response has already started, this won't be null, indicating to instead update the response
+                DSharpPlus.Entities.DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
+
+                if (msg == null) {
+                    // if it is null, then no respons has been started, so one is created
+                    // if you attempt to create a response for one that already exists, then a 400 is thrown
+                    await args.Context.CreateImmediateText($"Error executing context command: {args.Exception.Message}");
+                } else {
+                    await args.Context.EditResponseText($"Error executing context command: {args.Exception.Message}");
+                }
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"error sending error message to Discord");
+            }
         }
 
         /// <summary>
@@ -208,7 +318,11 @@ namespace watchtower.Services.Hosted {
         ///     Transform the options used in an interaction into a string that can be viewed
         /// </summary>
         /// <param name="options"></param>
-        private string GetCommandString(IEnumerable<DiscordInteractionDataOption> options) {
+        private string GetCommandString(IEnumerable<DiscordInteractionDataOption>? options) {
+            if (options == null) {
+                options = new List<DiscordInteractionDataOption>();
+            }
+
             string s = "";
 
             foreach (DiscordInteractionDataOption opt in options) {

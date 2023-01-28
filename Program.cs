@@ -36,8 +36,6 @@ namespace watchtower {
         private static IHost _Host;
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-        private static ServiceAccountCredential? _GoogleCredentials = null;
-
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
 

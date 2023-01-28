@@ -13,10 +13,11 @@ namespace watchtower.Code.ExtensionMethods {
         /// </summary>
         /// <param name="ctx">Extension instance</param>
         /// <param name="message">Message to send</param>
-        public static Task CreateImmediateText(this BaseContext ctx, string message) {
+        /// <param name="ephemeral">Will the response only be shown to the person who used the command?</param>
+        public static Task CreateImmediateText(this BaseContext ctx, string message, bool ephemeral = false) {
             return ctx.CreateResponseAsync(
                 InteractionResponseType.ChannelMessageWithSource,
-                new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message)
+                new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message).AsEphemeral(ephemeral)
             );
         }
 
@@ -26,10 +27,11 @@ namespace watchtower.Code.ExtensionMethods {
         /// </summary>
         /// <param name="ctx">Extension instance</param>
         /// <param name="message">Message to send</param>
-        public static Task CreateDeferredText(this BaseContext ctx, string message) {
+        /// <param name="ephemeral">Will the response only be shown to the person who used the command?</param>
+        public static Task CreateDeferredText(this BaseContext ctx, string message, bool ephemeral = false) {
             return ctx.CreateResponseAsync(
                 InteractionResponseType.DeferredChannelMessageWithSource,
-                new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message)
+                new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent(message).AsEphemeral(ephemeral)
             );
         }
 
