@@ -28,6 +28,9 @@ namespace watchtower.Code.DiscordInteractions {
 
         public PsbContactSheetRepository _ContactRepository { set; private get; } = default!;
         public FacilityRepository _FacilityRepository { set; private get; } = default!;
+        public PsbCalendarRepository _CalendarRepository { set; private get; } = default!;
+
+        public IOptions<PsbDriveSettings> _PsbDriveSettings { set; private get; } = default!;
 
         /// <summary>
         ///     User context menu to see what reps a user has (ovo, practice, etc.)
@@ -168,6 +171,56 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
+        [SlashCommand("calendar", "Check the Jaeger Event's calendar")]
+        public async Task Calendar(InteractionContext ctx,
+            [Option("Hours", "How many hours back and forward to include")] long hours = 6) {
+
+            await ctx.CreateDeferredText("Loading...", true);
+
+            List<PsbCalendarEntry> entries = await _CalendarRepository.GetAll();
+
+            List<PsbCalendarEntry> relevant = new();
+
+            DateTime now = DateTime.UtcNow;
+            DateTime nowBack = now - TimeSpan.FromHours(hours);
+            DateTime nowForward = now + TimeSpan.FromHours(hours);
+            foreach (PsbCalendarEntry entry in entries) {
+                if ((entry.Start > nowBack && entry.End < nowForward)
+                    || (entry.Start < nowBack && entry.End > nowForward)) {
+
+                    relevant.Add(entry);
+                }
+            }
+
+            // sort based on when the reservation will start, or end if the start is the same
+            relevant.Sort((a, b) => {
+                if (a.Start == b.Start) {
+                    return a.End.CompareTo(b.End);
+                }
+                return a.Start.CompareTo(b.Start);
+            });
+
+            DiscordWebhookBuilder hookBuilder = new();
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"{relevant.Count} reservations between {nowBack.GetDiscordFullTimestamp()} and {nowForward.GetDiscordFullTimestamp()}";
+            builder.Url = $"https://docs.google.com/spreadsheets/d/{_PsbDriveSettings.Value.CalendarFileId}/";
+
+            foreach (PsbCalendarEntry entry in relevant) {
+                builder.AddField(
+                    name: $"{string.Join(", ", entry.Groups)} ({entry.Start.GetDiscordFullTimestamp()} - {entry.End.GetDiscordFullTimestamp()})",
+                    value: $"{string.Join(", ", entry.Bases.Select(iter => iter.Name))}"
+                );
+
+                if (builder.Fields.Count >= 25) {
+                    break;
+                }
+            }
+
+            hookBuilder.AddEmbed(builder);
+
+            await ctx.EditResponseAsync(hookBuilder);
+        }
+
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "[DEBUG] Parse reservation")]
         [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
         public async Task DebugParseReservation(ContextMenuContext ctx) {
@@ -193,7 +246,6 @@ namespace watchtower.Code.DiscordInteractions {
                     feedback += $"Line '{line}' failed to split on ':', had {parts.Count} parts\n";
                     continue;
                 }
-
 
                 string field = parts[0].Trim().ToLower();
                 string value = parts[1].Trim();

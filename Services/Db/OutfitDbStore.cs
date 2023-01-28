@@ -221,12 +221,13 @@ namespace watchtower.Services.Db {
         /// <param name="outfitID">ID of the outfit</param>
         /// <param name="start">Start period</param>
         /// <param name="end">End period</param>
+        /// <param name="bucketWidthSec">How wide to make each bucket</param>
         /// <returns>
         ///     A list of <see cref="OutfitActivityDbEntry"/>s for the time range given.
         ///     If there are 0 characters online during an interval within the period,
         ///         instead of an entry with a count of 0 being returned, no row will be included.
         /// </returns>
-        public async Task<List<OutfitActivityDbEntry>> GetActivity(string outfitID, DateTime start, DateTime end) {
+        public async Task<List<OutfitActivityDbEntry>> GetActivity(string outfitID, DateTime start, DateTime end, int bucketWidthSec = 3600) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             await using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT
@@ -235,12 +236,12 @@ namespace watchtower.Services.Db {
                 FROM
                     wt_session s
                 INNER JOIN
-                    generate_series(@Start, @End, '1 hour') gs
+                    generate_series(@Start, @End, @BucketWidth * '1 second'::INTERVAL) gs
                         ON (
-                            (s.start BETWEEN gs AND gs + '1 hour'::INTERVAL)
-                            OR (s.finish BETWEEN gs AND gs + '1 hour'::INTERVAL)
-                            OR (start <= gs AND finish >= gs + '1 hour'::INTERVAL)
-                            OR (start >= gs AND finish <= gs + '1 hour'::INTERVAL)
+                            (s.start BETWEEN gs AND gs + @BucketWidth * '1 second'::INTERVAL)
+                            OR (s.finish BETWEEN gs AND gs + @BucketWidth * '1 second'::INTERVAL)
+                            OR (start <= gs AND finish >= gs + @BucketWidth * '1 second'::INTERVAL)
+                            OR (start >= gs AND finish <= gs + @BucketWidth * '1 second'::INTERVAL)
                         )
                 WHERE
                     s.outfit_id = @OutfitID
@@ -252,6 +253,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("Start", start);
             cmd.AddParameter("End", end);
             cmd.AddParameter("OutfitID", outfitID);
+            cmd.AddParameter("BucketWidth", bucketWidthSec);
 
             cmd.CommandTimeout = 60;
 

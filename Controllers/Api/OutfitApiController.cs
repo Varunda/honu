@@ -281,11 +281,11 @@ namespace watchtower.Controllers.Api {
         ///     Get the activity statistics for an outfit, broken into 1 hour intervals
         /// </summary>
         /// <remarks>
-        ///     <paramref name="start"/> is truncated down to the start of the day.
-        ///         For example, 2022-07-01T23:59 would be truncated to 2022-07-01T00:00
+        ///     <paramref name="start"/> is truncated down to the current hour.
+        ///         For example, 2022-07-01T23:59 would be truncated to 2022-07-01T23:00
         ///         
-        ///     <paramref name="finish"/> is truncted up to the start of the following day.
-        ///         For example, 2022-07-02T00:01 would be truncated to 2022-07-03T00:00
+        ///     <paramref name="finish"/> is truncted up to the next hour.
+        ///         For example, 2022-07-02T00:01 would be truncated to 2022-07-03T01:00
         ///         
         ///     Because the outfit_id of a character is stored at the time of a session, this will include
         ///         characters that have changed outfits, but at the time of the session were in the outfit
@@ -340,7 +340,7 @@ namespace watchtower.Controllers.Api {
                 OutfitActivity act = new();
                 act.OutfitID = outfitID;
                 act.Timestamp = i;
-                act.IntervalSeconds = 60 * 60;
+                act.IntervalSeconds = 3600;
                 act.Count = dbEntries.FirstOrDefault(iter => iter.Timestamp == i)?.Count ?? 0;
 
                 //_Logger.LogDebug($"{i:u} {act.Count}");

@@ -18,6 +18,11 @@ namespace watchtower.Models.PSB {
         public string PracticeFolderId { get; set; } = "";
 
         /// <summary>
+        ///     ID of the file that contains the calendar
+        /// </summary>
+        public string CalendarFileId { get; set; } = "";
+
+        /// <summary>
         ///     Various contact sheets used within PSB
         /// </summary>
         public PsbDriveSettingsContactSheets ContactSheets { get; set; } = new();

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -23,6 +24,7 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using watchtower.Code;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Services;
@@ -36,8 +38,39 @@ namespace watchtower {
         private static IHost _Host;
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
+        private static void PrintD(string name, DateTime d) {
+            DateTimeOffset doo = new DateTimeOffset(d);
+            Console.WriteLine($"{name} => {d:u} ({d.Kind}) {doo:u} ({doo.Offset}) {doo.ToUnixTimeSeconds()} {d.GetDiscordFullTimestamp()}");
+        }
+
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
+
+            /*
+            string d = "1/28/2023 21:00:00";
+
+            DateTime.TryParse(d, null, DateTimeStyles.AssumeLocal, out DateTime d1);
+            DateTime.TryParse(d, null, DateTimeStyles.AssumeUniversal, out DateTime d2);
+            DateTime.TryParse(d, out DateTime d3);
+            DateTime d4 = DateTime.SpecifyKind(d3, DateTimeKind.Utc);
+            DateTime d5 = DateTime.SpecifyKind(d3, DateTimeKind.Local);
+            DateTime d6 = DateTime.SpecifyKind(d3, DateTimeKind.Unspecified);
+            DateTime d7 = DateTime.SpecifyKind(d2, DateTimeKind.Utc);
+            DateTime d8 = DateTime.SpecifyKind(d2, DateTimeKind.Local);
+            DateTime d9 = DateTime.SpecifyKind(d2, DateTimeKind.Unspecified);
+
+            PrintD("d1", d1);
+            PrintD("d2", d2);
+            PrintD("d3", d3);
+            PrintD("d4", d4);
+            PrintD("d5", d5);
+            PrintD("d6", d6);
+            PrintD("d7", d7);
+            PrintD("d8", d8);
+            PrintD("d9", d9);
+
+            return;
+            */
 
             bool hostBuilt = false;
 

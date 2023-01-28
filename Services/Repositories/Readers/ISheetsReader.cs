@@ -33,6 +33,7 @@ namespace watchtower.Services.Repositories.Readers {
 
             List<T> entries = new();
 
+            int rowIndex = 0;
             foreach (IList<object> row in values) {
                 List<string?> columns = new List<string?>(colCount);
 
@@ -62,8 +63,14 @@ namespace watchtower.Services.Repositories.Readers {
                     throw;
                 }
 
-                T entry = ReadEntry(columns);
-                entries.Add(entry);
+                try {
+                    T entry = ReadEntry(columns);
+                    entries.Add(entry);
+                } catch (Exception ex) {
+                    throw new Exception($"error parsing row {rowIndex}: '{string.Join(", ", columns)}'. Exception message: {ex.Message}", ex);
+                }
+
+                ++rowIndex;
             }
 
             return entries;
