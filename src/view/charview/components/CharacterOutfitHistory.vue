@@ -81,6 +81,8 @@
                 DISCLAIMER: this is not 100% accurate, and does contain inaccuracies. 
                 <br />
                 If a character switches outfits quickly (multiple times a week), or multiple times per session, honu will not be track that change.
+                <br />
+                This data was only collected after 2021-07-23, and does not track changes before that
             </div>
 
             <div class="flex-grow-1"></div>
