@@ -20,7 +20,7 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        <span v-if="entry.outfitID == '0'">
+                        <span v-if="entry.outfitID == '0' || entry.outfitID == ''">
                             &lt;no outfit&gt;
                         </span>
 
