@@ -1,6 +1,5 @@
 ﻿<template>
     <div>
-
         <a-table
             display-type="table" row-padding="compact" :striped="false" :hover="true"
             :entries="filteredSessions" :page-sizes="[50, 100, 200, 500]" :default-page-size="200">

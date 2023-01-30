@@ -171,6 +171,11 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
+        /// <summary>
+        ///     Slash command to get the upcoming reservations on the Jaeger calendar
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        /// <param name="hours">How many hours in both directions to include reservations in</param>
         [SlashCommand("calendar", "Check the Jaeger Event's calendar")]
         public async Task Calendar(InteractionContext ctx,
             [Option("Hours", "How many hours back and forward to include")] long hours = 6) {

@@ -84,6 +84,11 @@
                         Directives
                     </a>
                 </li>
+                <li class="nav-item" @click="selectTab('outfitHistory')">
+                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'outfithistory' }">
+                        Outfit history
+                    </a>
+                </li>
                 <li class="nav-item" @click="selectTab('extra')">
                     <a class="nav-link" :class="{ 'text-success': selectedTab != 'extra' }">
                         Fun stats
@@ -125,6 +130,7 @@
     import CharacterDirectives from "./components/CharacterDirectives.vue";
     import CharacterExtraStats from "./components/CharacterExtraStats.vue";
     import CharacterVehicleStats from "./components/CharacterVehicleStats.vue";
+    import CharacterOutfitHistory from "./components/CharacterOutfitHistory.vue";
 
     export const CharacterViewer = Vue.extend({
         beforeMount: function(): void {
@@ -168,6 +174,8 @@
                     this.selectedComponent = "CharacterExtraStats";
                 } else if (lower == "vehicle") {
                     this.selectedComponent = "CharacterVehicleStats";
+                } else if (lower == "outfithistory") {
+                    this.selectedComponent = "CharacterOutfitHistory";
                 } else {
                     throw `Unhandled tab selected '${lower}'`;
                 }
@@ -230,6 +238,7 @@
             CharacterDirectives,
             CharacterExtraStats,
             CharacterVehicleStats,
+            CharacterOutfitHistory,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });

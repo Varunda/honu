@@ -36,6 +36,7 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterStatRepository _StatRepository;
         private readonly CharacterMetadataDbStore _MetadataDb;
         private readonly CharacterFriendRepository _CharacterFriendRepository;
+        private readonly OutfitRepository _OutfitRepository;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
 
@@ -44,7 +45,8 @@ namespace watchtower.Controllers.Api {
             CharacterHistoryStatRepository histRepo, SessionDbStore sessionDb,
             CharacterItemRepository charItemRepo, ItemRepository itemRepo,
             CharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
-            CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue) {
+            CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue,
+            OutfitRepository outfitRepository) {
 
             _Logger = logger;
 
@@ -57,6 +59,8 @@ namespace watchtower.Controllers.Api {
             _StatRepository = statRepo ?? throw new ArgumentNullException(nameof(statRepo));
             _MetadataDb = metadataDb ?? throw new ArgumentNullException(nameof(metadataDb));
             _CharacterFriendRepository = charFriendRepo;
+            _OutfitRepository = outfitRepository;
+
             _UpdateQueue = queue;
         }
 
@@ -243,6 +247,52 @@ namespace watchtower.Controllers.Api {
 
             List<PsCharacterStat> stats = await _StatRepository.GetByCharacterID(charID);
             return ApiOk(stats);
+        }
+
+        [HttpGet("character/{charID}/outfit_history")]
+        public async Task<ApiResponse<OutfitHistoryBlock>> GetOutfitHistory(string charID) {
+            OutfitHistoryBlock block = new();
+            block.CharacterID = charID;
+
+            List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
+            sessions.Sort((a, b) => {
+                return a.Start.CompareTo(b.Start);
+            });
+
+            if (sessions.Count == 0) {
+                return ApiOk(block);
+            }
+
+            HashSet<string> outfitIDs = new();
+
+            OutfitHistoryEntry previous = new();
+            previous.OutfitID = sessions[0].OutfitID ?? "";
+            previous.Start = sessions[0].Start;
+            block.Entries.Add(previous);
+
+            foreach (Session s in sessions) {
+                string outfitID = s.OutfitID ?? "";
+                if (outfitIDs.Contains(outfitID) == false) {
+                    outfitIDs.Add(outfitID);
+                }
+
+                if (previous.OutfitID != outfitID) {
+                    _Logger.LogDebug($"Current outfitID {outfitID} is not {previous.OutfitID}");
+                    block.Entries[^1].End = s.End ?? DateTime.UtcNow;
+
+                    previous = new OutfitHistoryEntry();
+                    previous.OutfitID = outfitID;
+                    previous.Start = s.End ?? DateTime.UtcNow;
+                    block.Entries.Add(previous);
+                }
+            }
+
+            // cap off the last session
+            block.Entries[^1].End = DateTime.UtcNow;
+
+            block.Outfits = await _OutfitRepository.GetByIDs(outfitIDs.ToList());
+
+            return ApiOk(block);
         }
 
         /// <summary>
