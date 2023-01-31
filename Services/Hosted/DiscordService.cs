@@ -81,7 +81,12 @@ namespace watchtower.Services.Hosted {
             _SlashCommands.RegisterCommands<HonuInternalSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuAccountSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<PsbDiscordInteractions>(_DiscordOptions.Value.GuildId);
-            _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
+
+            if (_DiscordOptions.Value.RegisterGlobalCommands == true) {
+                _SlashCommands.RegisterCommands<SubscribeSlashCommand>();
+            } else {
+                _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
+            }
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {

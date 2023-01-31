@@ -27,5 +27,10 @@ namespace watchtower.Models {
         /// </summary>
         public string Key { get; set; } = "aaa";
 
+        /// <summary>
+        ///     Will the global commands be registered globally? Or just in the test server
+        /// </summary>
+        public bool RegisterGlobalCommands { get; set; } = false;
+
     }
 }
