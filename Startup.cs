@@ -137,6 +137,11 @@ namespace watchtower {
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
 
+            services.AddCors(o => o.AddDefaultPolicy(builder => {
+                builder.AllowAnyOrigin();
+                builder.AllowAnyHeader();
+            }));
+
             services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
             services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
@@ -208,7 +213,6 @@ namespace watchtower {
             //services.AddHostedService<BackCreateAlertStartupService>();
             services.AddHostedService<HostedPopulationCreatorService>();
 
-
             if (OFFLINE_MODE == true) {
                 services.AddHostedService<OfflineDataMockService>();
             } else {
@@ -264,6 +268,7 @@ namespace watchtower {
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseCors();
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(
                     name: "psb",
