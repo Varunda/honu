@@ -136,7 +136,7 @@ namespace watchtower.Services.Repositories {
         public async Task End(string charID, DateTime when) {
             TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
             if (player == null) {
-                _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
+                _Logger.LogError($"Cannot end session for {charID}, does not exist in CharacterStore");
                 return;
             }
 

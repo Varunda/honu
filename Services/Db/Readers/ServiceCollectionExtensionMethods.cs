@@ -85,6 +85,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<WeaponStatTop>, WeaponStatTopReader>();
             services.AddSingleton<IDataReader<PopulationEntry>, PopulationReader>();
             services.AddSingleton<IDataReader<PopulationCount>, PopulationCountReader>();
+
+            services.AddSingleton<IDataReader<SessionEndSubscription>, SessionEndSubscriptionReader>();
         }
 
     }

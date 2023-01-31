@@ -8,5 +8,7 @@ namespace watchtower.Services.Queues {
 
         int Count();
 
+        long Processed();
+
     }
 }

@@ -18,6 +18,11 @@ namespace watchtower.Models.Api {
         public int Count { get; set; }
 
         /// <summary>
+        ///     How many items have been removed from this queue
+        /// </summary>
+        public long Processed { get; set; }
+
+        /// <summary>
         ///     The average time to process recent items in milliseconds
         /// </summary>
         public double? Average { get; set; }

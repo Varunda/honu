@@ -11,15 +11,17 @@ namespace watchtower.Services.Queues {
     /// <summary>
     ///     Queue of messages to be sent in Discord
     /// </summary>
-    public class DiscordMessageQueue : BaseQueue<DiscordMessage> {
+    public class DiscordMessageQueue : BaseQueue<HonuDiscordMessage> {
 
-        /// <summary>
-        ///     Queue a basic text discord message
-        /// </summary>
-        public void Queue(string message) {
-            _Items.Enqueue(new DiscordMessage() {
-                Message = message
-            });
+        public new void Queue(HonuDiscordMessage msg) {
+            if ((msg.ChannelID == null || msg.ChannelID == 0)
+                && (msg.GuildID == null || msg.GuildID == 0)
+                && (msg.TargetUserID == 0 || msg.TargetUserID == 0)) {
+
+                throw new ArgumentException($"No valid target for message given. You must specify a ChannelID and GuildID, or a TargetUserID");
+            }
+
+            _Items.Enqueue(msg);
             _Signal.Release();
         }
 

@@ -19,6 +19,8 @@ using Newtonsoft.Json.Linq;
 using DSharpPlus.SlashCommands.EventArgs;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Discord;
+using static watchtower.Models.Discord.HonuDiscordMessage;
+using DSharpPlus.Exceptions;
 
 namespace watchtower.Services.Hosted {
 
@@ -34,6 +36,8 @@ namespace watchtower.Services.Hosted {
 
         private bool _IsConnected = false;
         private const string SERVICE_NAME = "discord";
+
+        private Dictionary<ulong, ulong> _CachedMembership = new();
 
         public DiscordService(ILogger<DiscordService> logger, ILoggerFactory loggerFactory,
             DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services) {
@@ -77,6 +81,7 @@ namespace watchtower.Services.Hosted {
             _SlashCommands.RegisterCommands<HonuInternalSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuAccountSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<PsbDiscordInteractions>(_DiscordOptions.Value.GuildId);
+            _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
@@ -105,11 +110,11 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
-                    HonuDiscord.DiscordMessage msg = await _MessageQueue.Dequeue(stoppingToken);
+                    HonuDiscordMessage msg = await _MessageQueue.Dequeue(stoppingToken);
+                    TargetType targetType = msg.Type;
 
-                    DiscordChannel? channel = await _Discord.GetChannelAsync(_DiscordOptions.Value.ChannelId);
-                    if (channel == null) {
-                        _Logger.LogWarning($"Failed to find channel {_DiscordOptions.Value.ChannelId}, cannot send message");
+                    if (targetType == TargetType.INVALID) {
+                        _Logger.LogError($"Invalid TargetType [ChannelID {msg.ChannelID}] [GuildID {msg.GuildID}] [TargetUserID {msg.TargetUserID}]");
                         continue;
                     }
 
@@ -117,34 +122,92 @@ namespace watchtower.Services.Hosted {
 
                     // the contents is ignored if there is any embeds
                     if (msg.Embeds.Count > 0) {
-                        foreach (HonuDiscord.DiscordEmbed embed in msg.Embeds) {
-                            DiscordEmbedBuilder embedBuilder = new DiscordEmbedBuilder();
-                            embedBuilder.Color = new DiscordColor(embed.Color);
-                            embedBuilder.Description = embed.Description;
-                            embedBuilder.Title = embed.Description;
-
-                            foreach (HonuDiscord.DiscordEmbedField field in embed.Fields) {
-                                embedBuilder.AddField(field.Name, field.Value, field.Inline);
-                            }
-
-                            builder.AddEmbed(embedBuilder.Build());
+                        foreach (DSharpPlus.Entities.DiscordEmbed embed in msg.Embeds) {
+                            builder.AddEmbed(embed);
                         }
                     } else {
                         builder.Content = msg.Message;
                     }
 
-                    foreach (DiscordMention mention in msg.Mentions) {
-                        IMention m = ConvertMentionable(mention);
-                        builder.WithAllowedMention(m);
+                    foreach (IMention mention in msg.Mentions) {
+                        builder.WithAllowedMention(mention);
                     }
 
-                    await channel.SendMessageAsync(builder);
+                    if (targetType == TargetType.CHANNEL) {
+                        DiscordGuild? guild = null;
+                        try {
+                            guild = await _Discord.GetGuildAsync(msg.GuildID!.Value);
+                        } catch (NotFoundException) {
+                            _Logger.LogError($"Failed to find guild {msg.GuildID} (404)");
+                            continue;
+                        }
+
+                        if (guild == null) {
+                            _Logger.LogError($"Failed to get guild {msg.GuildID} (null)");
+                            continue;
+                        }
+
+                        DiscordChannel? channel = guild.GetChannel(msg.ChannelID!.Value);
+                        if (channel == null) {
+                            _Logger.LogError($"Failed to get channel {msg.ChannelID} in guild {msg.GuildID}");
+                            continue;
+                        }
+
+                        await channel.SendMessageAsync(builder);
+                    } else if (targetType == TargetType.USER) {
+                        DiscordMember? member = await GetDiscordMember(msg.TargetUserID!.Value);
+                        if (member == null) {
+                            _Logger.LogWarning($"Failed to find {msg.TargetUserID}");
+                            continue;
+                        }
+
+                        await member.SendMessageAsync(builder);
+                    }
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
-                    _Logger.LogError(ex, "Error while caching character");
+                    _Logger.LogError(ex, "error sending message");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopping {SERVICE_NAME} with {_MessageQueue.Count()} left");
                 }
             }
+        }
+
+        /// <summary>
+        ///     Get a <see cref="DiscordMember"/> from an ID
+        /// </summary>
+        /// <param name="memberID">ID of the Discord member to get</param>
+        /// <returns>
+        ///     The <see cref="DiscordMember"/> with the corresponding ID, or <c>null</c>
+        ///     if the user could not be found in any guild the bot is a part of
+        /// </returns>
+        private async Task<DiscordMember?> GetDiscordMember(ulong memberID) {
+            if (_CachedMembership.TryGetValue(memberID, out ulong guildID) == true) {
+                DiscordGuild? guild = await _Discord.GetGuildAsync(guildID);
+                if (guild == null) {
+                    _Logger.LogWarning($"Failed to get guild {guildID} from cached membership for member {memberID}");
+                } else {
+                    DiscordMember? member = await guild.GetMemberAsync(memberID);
+                    if (member == null) {
+                        _Logger.LogWarning($"Failed to get member {memberID} from guild {guildID}");
+                        _CachedMembership.Remove(memberID);
+                    } else {
+                        _Logger.LogDebug($"Found member {memberID} from guild {guildID} (cached)");
+                        return member;
+                    }
+                }
+            }
+
+            foreach (KeyValuePair<ulong, DiscordGuild> entry in _Discord.Guilds) {
+                DiscordMember? member = await entry.Value.GetMemberAsync(memberID);
+                if (member != null) {
+                    _Logger.LogDebug($"Found member {memberID} from guild {entry.Value.Id}");
+                    _CachedMembership[memberID] = entry.Value.Id;
+                    return member;
+                }
+            }
+
+            _Logger.LogWarning($"Cannot get member {memberID}, not cached and not in any guilds");
+
+            return null;
         }
 
         /// <summary>
@@ -185,7 +248,6 @@ namespace watchtower.Services.Hosted {
 
             DiscordUser? targetMember = null;
             DSharpPlus.Entities.DiscordMessage? targetMessage = null;
-
 
             if (args is ContextMenuInteractionCreateEventArgs contextArgs) {
                 targetMember = contextArgs.TargetUser;

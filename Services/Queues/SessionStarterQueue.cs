@@ -39,6 +39,8 @@ namespace watchtower.Services.Queues {
                 _Pending.Remove(entry!.CharacterID);
             }
 
+            ++_ProcessedCount;
+
             return entry!;
         }
 

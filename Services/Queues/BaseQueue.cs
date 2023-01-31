@@ -15,6 +15,8 @@ namespace watchtower.Services.Queues {
 
         internal ConcurrentQueue<long> _ProcessTime = new ConcurrentQueue<long>();
 
+        internal long _ProcessedCount = 0;
+
         /// <summary>
         ///     Get the next item in the list. This will block until there is one available
         /// </summary>
@@ -22,6 +24,7 @@ namespace watchtower.Services.Queues {
         public async Task<T> Dequeue(CancellationToken cancel) {
             await _Signal.WaitAsync(cancel);
             _Items.TryDequeue(out T? entry);
+            ++_ProcessedCount;
 
             return entry!;
         }
@@ -82,6 +85,14 @@ namespace watchtower.Services.Queues {
         /// <returns></returns>
         public int Count() {
             return _Items.Count;
+        }
+
+        /// <summary>
+        ///     Return how many items have been removed from this queue
+        /// </summary>
+        /// <returns></returns>
+        public long Processed() {
+            return _ProcessedCount;
         }
 
         /// <summary>

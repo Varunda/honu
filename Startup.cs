@@ -201,6 +201,7 @@ namespace watchtower {
             services.AddHostedService<HostedWatchtowerRecentCleanup>();
             services.AddHostedService<HostedBackgroundWeaponStatQueue>();
             services.AddHostedService<HostedPsbAccountPlaytimeQueue>();
+            services.AddHostedService<SessionEndQueueProcessService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();

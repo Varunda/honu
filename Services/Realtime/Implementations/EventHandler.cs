@@ -25,6 +25,9 @@ using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Realtime;
 using watchtower.Services.Repositories;
+using watchtower.Models.Discord;
+using Microsoft.Extensions.Options;
+using watchtower.Models.PSB;
 
 namespace watchtower.Realtime {
 
@@ -51,6 +54,7 @@ namespace watchtower.Realtime {
         private readonly LogoutUpdateBuffer _LogoutQueue;
         private readonly JaegerSignInOutQueue _JaegerQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
+        private readonly SessionEndQueue _SessionEndQueue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly MapCollection _MapCensus;
@@ -63,6 +67,8 @@ namespace watchtower.Realtime {
 
         private readonly RealtimeAlertEventHandler _NexusHandler;
         private readonly RealtimeAlertRepository _MatchRepository;
+
+        private readonly IOptions<JaegerNsaOptions> _NsaOptions;
 
         private readonly List<string> _Recent;
         private DateTime _MostRecentProcess = DateTime.UtcNow;
@@ -81,7 +87,8 @@ namespace watchtower.Realtime {
             AlertPlayerDataRepository participantDataRepository, WorldTagManager tagManager,
             ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
             RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository,
-            WeaponUpdateQueue weaponUpdateQueue) {
+            WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
+            SessionEndQueue sessionEndQueue) {
 
             _Logger = logger;
 
@@ -117,6 +124,8 @@ namespace watchtower.Realtime {
             _NexusHandler = nexusHandler;
             _MatchRepository = matchRepository;
             _WeaponUpdateQueue = weaponUpdateQueue;
+            _NsaOptions = nsaOptions;
+            _SessionEndQueue = sessionEndQueue;
         }
 
         public DateTime MostRecentProcess() {
@@ -332,6 +341,7 @@ namespace watchtower.Realtime {
             if (ev.KilledVehicleID == Vehicle.SUNDERER && ev.WorldID == World.Jaeger) {
                 List<ExpEvent> possibleEvents = RecentSundererDestroyExpStore.Get().GetList();
                 ExpEvent? expEvent = null;
+                _Logger.LogDebug($"Bus on Jaeger killed!");
 
                 foreach (ExpEvent exp in possibleEvents) {
                     if (exp.SourceID == ev.AttackerCharacterID && exp.Timestamp == ev.Timestamp) {
@@ -374,7 +384,11 @@ namespace watchtower.Realtime {
                             msg += $"Last used: {(int) (DateTime.UtcNow - lastUsed).TotalSeconds} seconds ago";
                         }
 
-                        _MessageQueue.Queue(msg);
+                        _MessageQueue.Queue(new HonuDiscordMessage() {
+                            ChannelID = _NsaOptions.Value.ChannelID,
+                            GuildID = _NsaOptions.Value.GuildID,
+                            Message = msg
+                        });
                     } catch (Exception ex) {
                         _Logger.LogError(ex, $"error in background tracked sunderer death handler");
                     }
@@ -607,6 +621,13 @@ namespace watchtower.Realtime {
 
             if (p != null) {
                 if (World.IsTrackedWorld(p.WorldID)) {
+                    _SessionEndQueue.Queue(new SessionEndQueueEntry() {
+                        CharacterID = p.ID,
+                        Timestamp = timestamp,
+                        SessionID = p.SessionID
+                    });
+
+                    // Queue the character for an update
                     // Null if Honu was started when the character was online
                     if (p.LastLogin != null) {
                         // Intentionally discard, we do not care about the result of this
@@ -617,9 +638,12 @@ namespace watchtower.Realtime {
                     } else {
                         _WeaponQueue.Queue(charID);
                     }
+
+                    /*
                     using (Activity? db = HonuActivitySource.Root.StartActivity("db")) {
                         await _SessionRepository.End(p.ID, timestamp);
                     }
+                    */
                 }
 
                 // Reset team of the NSO player as they're now offline
@@ -1245,7 +1269,6 @@ namespace watchtower.Realtime {
             if (total > 100 && Logging.EventProcess == true) {
                 _Logger.LogDebug($"Total: {total}\nQueue: {queueMs}, Read: {readValuesMs}, create: {createEventMs}, process: {processCharMs}, DB {dbInsertMs}, revive {reviveMs}");
             }
-
         }
 
         private async Task _ProcessItemAdded(JToken payload) {

@@ -4,7 +4,7 @@ import * as moment from "moment";
 Vue.filter("duration", (data: number): string => {
 
     if (data <= 10) {
-        return `${data}ms`;
+        return `${data.toPrecision(2)}ms`;
     }
 
     if (data <= 1_000) {

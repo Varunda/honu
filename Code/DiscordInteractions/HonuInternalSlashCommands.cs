@@ -46,10 +46,12 @@ namespace watchtower.Code.DiscordInteractions {
         [SlashCommand("ping-flippers", "Test command to ensure role pings work")]
         [RequiredHonuPermissionContext(HonuPermission.HONU_DISCORD_ADMIN)]
         public async Task PingFlippersCommand(InteractionContext ctx) {
-            Models.Discord.DiscordMessage msg = new();
+            HonuDiscordMessage msg = new();
             msg.Message = $"ping! <@&{_NsaOptions.Value.AlertRoleID}>";
+            msg.ChannelID = _NsaOptions.Value.ChannelID;
+            msg.GuildID = _NsaOptions.Value.GuildID;
 
-            DiscordMention mention = new RoleDiscordMention((ulong)(_NsaOptions.Value.AlertRoleID ?? 0));
+            RoleMention mention = new RoleMention(_NsaOptions.Value.AlertRoleID ?? 0);
             msg.Mentions.Add(mention);
 
             _Discord.Queue(msg);
@@ -78,6 +80,37 @@ namespace watchtower.Code.DiscordInteractions {
             builder.AddEmbed(embed.Build());
 
             await ctx.CreateResponseAsync(builder);
+        }
+
+        [SlashCommand("test-channel-msg", "Send a test message to a channel")]
+        [RequiredHonuPermissionSlash(HonuPermission.HONU_DISCORD_ADMIN)]
+        public async Task DebugMessageChannel(InteractionContext ctx,
+            [Option("GuildID", "guild id")] string guildID,
+            [Option("ChannelID", "channel id")] string channelID) {
+
+            HonuDiscordMessage msg = new();
+            msg.ChannelID = ulong.Parse(channelID);
+            msg.GuildID = ulong.Parse(guildID);
+            msg.Message = $"Test message from {ctx.User.Id}";
+
+            _Discord.Queue(msg);
+
+            await ctx.CreateImmediateText($"sent", true);
+        }
+
+        [SlashCommand("test-user-msg", "send a test message to a user")]
+        [RequiredHonuPermissionSlash(HonuPermission.HONU_DISCORD_ADMIN)]
+        public async Task DebugMessageUser(InteractionContext ctx,
+            [Option("Member", "Target member")] DiscordUser member) {
+
+            HonuDiscordMessage msg = new();
+            msg.TargetUserID = member.Id;
+
+            msg.Message = $"Test message from {ctx.User.Id}";
+
+            _Discord.Queue(msg);
+
+            await ctx.CreateImmediateText("sent", true);
         }
 
     }

@@ -33,13 +33,15 @@ namespace watchtower.Controllers.Api {
         private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
+        private readonly SessionEndQueue _SessionEndQueue;
 
         public HealthApiController(ILogger<HealthApiController> logger, IMemoryCache cache,
             CensusRealtimeHealthRepository realtimeHealthRepository, CharacterCacheQueue characterCache,
             SessionStarterQueue sessionQueue, CharacterUpdateQueue weaponQueue,
             CensusRealtimeEventQueue taskQueue, WeaponPercentileCacheQueue percentileQueue,
             DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
-            RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue) {
+            RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue,
+            SessionEndQueue sessionEndQueue) {
 
             _Logger = logger;
             _Cache = cache;
@@ -55,6 +57,7 @@ namespace watchtower.Controllers.Api {
             _DiscordQueue = discordQueue;
             _ReconnectDb = reconnectDb;
             _WeaponUpdateQueue = weaponUpdateQueue;
+            _SessionEndQueue = sessionEndQueue;
         }
 
         /// <summary>
@@ -85,9 +88,10 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount percentile = _MakeCount("weapon_percentile_cache_queue", _PercentileQueue);
                 ServiceQueueCount discord = _MakeCount("discord_message_queue", _DiscordQueue);
                 ServiceQueueCount weaponUpdate = _MakeCount("weapon_update_queue", _WeaponUpdateQueue);
+                ServiceQueueCount sessionEnd = _MakeCount("session_end_queue", _SessionEndQueue);
 
                 health.Queues = new List<ServiceQueueCount>() {
-                    task, session, c, weapon, weaponUpdate, percentile, discord
+                    task, session, c, weapon, weaponUpdate, percentile, discord, sessionEnd
                 };
 
                 _Cache.Set("Honu.Health", health, new MemoryCacheEntryOptions() {
@@ -101,7 +105,8 @@ namespace watchtower.Controllers.Api {
         private ServiceQueueCount _MakeCount(string name, IProcessQueue queue) {
             ServiceQueueCount c = new() {
                 QueueName = name,
-                Count = queue.Count() 
+                Count = queue.Count() ,
+                Processed = queue.Processed()
             };
 
             List<long> times = queue.GetProcessTime();

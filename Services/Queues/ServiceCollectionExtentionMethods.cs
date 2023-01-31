@@ -19,6 +19,7 @@ namespace watchtower.Services.Queues {
             services.AddSingleton<JaegerSignInOutQueue>();
             services.AddSingleton<WeaponUpdateQueue>();
             services.AddSingleton<PsbAccountPlaytimeUpdateQueue>();
+            services.AddSingleton<SessionEndQueue>();
         }
 
     }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DSharpPlus.Entities;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -93,6 +94,9 @@ namespace watchtower.Services.Hosted {
                         List<PsCharacter> chars = await _CharacterRepository.GetByIDs(both.ToList(), CensusEnvironment.PC, fast: false);
 
                         string msg = $"<https://wt.honu.pw/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}>\n";
+                        HonuDiscordMessage hMsg = new();
+                        hMsg.GuildID = _Options.Value.GuildID;
+                        hMsg.ChannelID = _Options.Value.ChannelID;
 
                         msg += "```diff\n";
 
@@ -110,7 +114,8 @@ namespace watchtower.Services.Hosted {
 
                             // Prevent messages that are too long from being sent, and break them into multiple messages
                             if (msg.Length + part.Length + "```".Length >= messageLimit) {
-                                _DiscordQueue.Queue(msg + "```");
+                                hMsg.Message = msg + "```";
+                                _DiscordQueue.Queue(hMsg);
                                 msg = "```diff\n";
                             }
 
@@ -127,7 +132,8 @@ namespace watchtower.Services.Hosted {
                             string part = $"-[{s.Timestamp:u}] {c?.GetDisplayName() ?? $"<missing {s.CharacterID}>"}\n";
 
                             if (msg.Length + part.Length + "```".Length >= messageLimit) {
-                                _DiscordQueue.Queue(msg + "```");
+                                hMsg.Message = msg + "```";
+                                _DiscordQueue.Queue(hMsg);
                                 msg = "```diff\n";
                             }
 
@@ -149,14 +155,21 @@ namespace watchtower.Services.Hosted {
 
                         msg += "```\n";
 
-                        _DiscordQueue.Queue(msg);
+                        _DiscordQueue.Queue(new HonuDiscordMessage() {
+                            GuildID = _Options.Value.GuildID,
+                            ChannelID = _Options.Value.ChannelID,
+                            Message = msg
+                        });
                         _Queue.Clear();
                     }
 
                     if (devSeen == true && _Options.Value.AlertRoleID != null) {
-                        DiscordMessage msg = new();
+                        HonuDiscordMessage msg = new();
                         msg.Message = $"<@&{_Options.Value.AlertRoleID}> dev account has signed in";
-                        msg.Mentions.Add(new RoleDiscordMention(_Options.Value.AlertRoleID.Value));
+                        msg.Mentions.Add(new RoleMention(_Options.Value.AlertRoleID.Value));
+                        msg.GuildID = _Options.Value.GuildID;
+                        msg.ChannelID = _Options.Value.ChannelID;
+                        _DiscordQueue.Queue(msg);
                     }
 
                     entry.RunDuration = timer.ElapsedMilliseconds;

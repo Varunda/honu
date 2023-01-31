@@ -31,6 +31,7 @@
                             <tr class="table-secondary">
                                 <th>Queue</th>
                                 <th>Length</th>
+                                <th>Processed</th>
                                 <th>Average</th>
                                 <th>Median</th>
                                 <th>Min</th>
@@ -42,6 +43,7 @@
                             <tr v-for="queue in health.data.queues">
                                 <td>{{queue.queueName}}</td>
                                 <td>{{queue.count}}</td>
+                                <td :title="queue.processed | locale">{{queue.processed | compact}}</td>
 
                                 <td>
                                     <span v-if="queue.average != null">
@@ -170,6 +172,7 @@
     import "filters/WorldNameFilter";
     import "filters/LocaleFilter";
     import "filters/DurationFilter";
+    import "filters/CompactFilter";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
