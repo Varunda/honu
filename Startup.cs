@@ -65,6 +65,14 @@ namespace watchtower {
             string stuff = ((IConfigurationRoot)Configuration).GetDebugView();
             Console.WriteLine(stuff);
 
+            services.AddLogging(builder => {
+                builder.AddFile("logs/honu-{0:yyyy}-{0:MM}-{0:dd}.log", options => {
+                    options.FormatLogFileName = fName => {
+                        return string.Format(fName, DateTime.UtcNow);
+                    };
+                });
+            });
+
             services.AddRouting();
 
             if (OFFLINE_MODE == false) {

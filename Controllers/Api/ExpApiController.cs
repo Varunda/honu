@@ -151,9 +151,9 @@ namespace watchtower.Controllers {
         [HttpGet("{charID}/period2")]
         public async Task<ApiResponse<ExperienceBlock>> GetByCharacterIDAndRange2(string charID,
             [FromQuery] DateTime start, [FromQuery] DateTime end,
-            [FromQuery] bool includeCharacters = true,
-            [FromQuery] bool includeExpTypes = true,
-            List<int>? interestedEvents = null) {
+            [FromQuery] bool? includeCharacters = true,
+            [FromQuery] bool? includeExpTypes = true,
+            [FromQuery] List<int>? interestedEvents = null) {
 
             if (end - start > TimeSpan.FromDays(1)) {
                 return ApiBadRequest<ExperienceBlock>($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");

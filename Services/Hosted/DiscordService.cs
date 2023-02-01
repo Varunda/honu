@@ -139,14 +139,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     if (targetType == TargetType.CHANNEL) {
-                        DiscordGuild? guild = null;
-                        try {
-                            guild = await _Discord.GetGuildAsync(msg.GuildID!.Value);
-                        } catch (NotFoundException) {
-                            _Logger.LogError($"Failed to find guild {msg.GuildID} (404)");
-                            continue;
-                        }
-
+                        DiscordGuild? guild = await _Discord.TryGetGuild(msg.GuildID!.Value);
                         if (guild == null) {
                             _Logger.LogError($"Failed to get guild {msg.GuildID} (null)");
                             continue;
@@ -185,12 +178,14 @@ namespace watchtower.Services.Hosted {
         ///     if the user could not be found in any guild the bot is a part of
         /// </returns>
         private async Task<DiscordMember?> GetDiscordMember(ulong memberID) {
+            // check if cached
             if (_CachedMembership.TryGetValue(memberID, out ulong guildID) == true) {
-                DiscordGuild? guild = await _Discord.GetGuildAsync(guildID);
+                DiscordGuild? guild = await _Discord.TryGetGuild(guildID);
                 if (guild == null) {
                     _Logger.LogWarning($"Failed to get guild {guildID} from cached membership for member {memberID}");
                 } else {
-                    DiscordMember? member = await guild.GetMemberAsync(memberID);
+                    DiscordMember? member = await guild.TryGetMember(memberID);
+                    // if the member is null, and was cached, then cache is bad
                     if (member == null) {
                         _Logger.LogWarning($"Failed to get member {memberID} from guild {guildID}");
                         _CachedMembership.Remove(memberID);
@@ -201,8 +196,10 @@ namespace watchtower.Services.Hosted {
                 }
             }
 
+            // check each guild and see if it contains the target member
             foreach (KeyValuePair<ulong, DiscordGuild> entry in _Discord.Guilds) {
-                DiscordMember? member = await entry.Value.GetMemberAsync(memberID);
+                DiscordMember? member = await entry.Value.TryGetMember(memberID);
+
                 if (member != null) {
                     _Logger.LogDebug($"Found member {memberID} from guild {entry.Value.Id}");
                     _CachedMembership[memberID] = entry.Value.Id;

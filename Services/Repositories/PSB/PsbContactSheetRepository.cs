@@ -222,7 +222,7 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             List<string> validationErrors = new();
-            if (header[0].ToString() != "Group(s)") { validationErrors.Add($"Expected column one to be 'Tag', is '{header[0]}'");  }
+            if (header[0].ToString() != "Group(s)") { validationErrors.Add($"Expected column one to be 'Group(s)', is '{header[0]}'");  }
             if (header[1].ToString() != "In-Game Name") { validationErrors.Add($"Expected column one to be 'In-Game Name', is '{header[1]}'");  }
             if (header[2].ToString() != "E-Mail") { validationErrors.Add($"Expected column one to be 'E-Mail', is '{header[2]}'");  }
             if (header[3].ToString() != "Discord") { validationErrors.Add($"Expected column one to be 'Discord', is '{header[3]}'");  }
