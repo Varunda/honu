@@ -322,7 +322,7 @@
 
         <div id="generation-progress" class="collapse">
             <div v-if="isMaking == true" class="text-center">
-                <h2 v-if="reportState == 'not_stated'">
+                <h2 v-if="reportState == 'not_started'">
                     <busy class="honu-busy-lg"></busy>
                     Pending report createion
                 </h2>
