@@ -44,5 +44,15 @@ namespace watchtower.Code.Commands {
             _Queue.Queue(token);
         }
 
+        public void WorldFilter(short worldID) {
+            if (worldID == 0) {
+                Logging.WorldIDFilter = null;
+                _Logger.LogInformation($"Cleared world ID filter");
+            } else {
+                Logging.WorldIDFilter = worldID;
+                _Logger.LogInformation($"World ID filter set to {worldID}");
+            }
+        }
+
     }
 }

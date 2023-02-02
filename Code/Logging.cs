@@ -6,5 +6,7 @@
 
         public static bool EventProcess = false;
 
+        public static short? WorldIDFilter = null;
+
     }
 }

@@ -248,6 +248,10 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
+            if (Logging.WorldIDFilter != null && ev.WorldID != Logging.WorldIDFilter) {
+                return;
+            }
+
             if (ev.AttackerCharacterID == "0" && ev.KilledCharacterID == "0") {
                 return;
             }
@@ -553,6 +557,10 @@ namespace watchtower.Realtime {
                     CharacterID = charID,
                     Timestamp = timestamp
                 });
+            }
+
+            if (Logging.WorldIDFilter != null && worldID != Logging.WorldIDFilter) {
+                return;
             }
 
             CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
@@ -986,6 +994,10 @@ namespace watchtower.Realtime {
                 AttackerVehicleID = payload.GetInt32("attacker_vehicle_id", 0),
                 IsHeadshot = (payload.Value<string?>("is_headshot") ?? "0") != "0"
             };
+            
+            if (Logging.WorldIDFilter != null && ev.WorldID != Logging.WorldIDFilter) {
+                return;
+            }
 
             traceDeath?.AddTag("World", ev.WorldID);
             traceDeath?.AddTag("Zone", ev.ZoneID);
@@ -1128,6 +1140,10 @@ namespace watchtower.Realtime {
                 WorldID = worldID,
                 ZoneID = zoneID
             };
+
+            if (Logging.WorldIDFilter != null && ev.WorldID != Logging.WorldIDFilter) {
+                return;
+            }
 
             long createEventMs = timer.ElapsedMilliseconds; timer.Restart();
 
