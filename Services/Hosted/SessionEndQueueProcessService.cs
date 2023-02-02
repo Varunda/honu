@@ -1,12 +1,14 @@
 ﻿using DSharpPlus.Entities;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Discord;
@@ -27,9 +29,12 @@ namespace watchtower.Services.Hosted {
         private readonly SessionEndSubscriptionDbStore _SessionSubscriptionDb;
         private readonly CharacterRepository _CharacterRepository;
 
+        private readonly IOptions<DiscordOptions> _Options;
+
         public SessionEndQueueProcessService(ILogger<SessionEndQueueProcessService> logger, SessionEndQueue queue,
             SessionRepository sessionRepository, SessionEndSubscriptionDbStore sessionSubscriptionDb,
-            CharacterRepository characterRepository, DiscordMessageQueue discordMessageQueue) {
+            CharacterRepository characterRepository, DiscordMessageQueue discordMessageQueue,
+            IOptions<DiscordOptions> options) {
 
             _Logger = logger;
             _Queue = queue;
@@ -38,6 +43,7 @@ namespace watchtower.Services.Hosted {
             _SessionSubscriptionDb = sessionSubscriptionDb;
             _CharacterRepository = characterRepository;
             _DiscordMessageQueue = discordMessageQueue;
+            _Options = options;
         }
 
         protected async override Task ExecuteAsync(CancellationToken cancel) {
@@ -68,12 +74,10 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
-                    /*
-                    if ((session.End ?? DateTime.UtcNow) - session.Start <= TimeSpan.FromMinutes(10)) {
+                    if ((session.End ?? DateTime.UtcNow) - session.Start <= TimeSpan.FromSeconds(_Options.Value.SessionEndSubscriptionDuration)) {
                         _Logger.LogDebug($"session {session.ID} is too short, not sending to subscriptions");
                         continue;
                     }
-                    */
 
                     PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID, CensusEnvironment.PC, fast: true);
 

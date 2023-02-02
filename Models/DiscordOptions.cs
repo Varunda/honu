@@ -32,5 +32,10 @@ namespace watchtower.Models {
         /// </summary>
         public bool RegisterGlobalCommands { get; set; } = false;
 
+        /// <summary>
+        ///     How many seconds a session must be to be sent
+        /// </summary>
+        public int SessionEndSubscriptionDuration { get; set; } = 60 * 10;
+
     }
 }
