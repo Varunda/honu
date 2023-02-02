@@ -295,6 +295,10 @@
                 </session-action-log>
             </collapsible>
 
+            <collapsible header-text="Item added">
+                <session-item-added :session="session.data"></session-item-added>
+            </collapsible>
+
         </div>
     </div>
 </template>
@@ -317,6 +321,7 @@
     import SessionViewerSpawns from "./components/SessionViewerSpawns.vue";
     import SessionViewerExpBreakdown from "./components/SessionViewerExpBreakdown.vue";
     import SessionAchievementsEarned from "./components/SessionAchievementsEarned.vue";
+    import SessionItemAdded from "./components/SessionItemAdded.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
     import InfoHover from "components/InfoHover.vue";
@@ -519,7 +524,8 @@
         },
 
         components: {
-            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog, SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned,
+            SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog,
+            SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned, SessionItemAdded,
             ChartTimestamp,
             InfoHover,
             Busy,

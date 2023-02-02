@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -12,9 +14,15 @@ namespace watchtower.Services.Db {
         private readonly ILogger<ItemAddedDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
 
-        public ItemAddedDbStore(ILogger<ItemAddedDbStore> logger, IDbHelper dbHelper) {
+        private readonly IDataReader<ItemAddedEvent> _Reader;
+
+        public ItemAddedDbStore(ILogger<ItemAddedDbStore> logger,
+            IDbHelper dbHelper, IDataReader<ItemAddedEvent> reader) {
+
             _Logger = logger;
+
             _DbHelper = dbHelper;
+            _Reader = reader;
         }
 
         /// <summary>
@@ -45,6 +53,25 @@ namespace watchtower.Services.Db {
             long ID = await cmd.ExecuteInt64(CancellationToken.None);
 
             return ID;
+        }
+
+        public async Task<List<ItemAddedEvent>> GetByCharacterAndPeriod(string charID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM item_added
+                    WHERE character_id = @CharID
+                        AND timestamp BETWEEN @Start and @End;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+            cmd.AddParameter("Start", start);
+            cmd.AddParameter("End", end);
+
+            List<ItemAddedEvent> events = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return events;
         }
 
     }
