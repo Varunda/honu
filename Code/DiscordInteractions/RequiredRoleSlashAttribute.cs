@@ -18,6 +18,8 @@ namespace watchtower.Code.DiscordInteractions {
 
         public const string OVO_ADMIN = "ovo-admin";
 
+        public const string OVO_REP = "ovo-rep";
+
         public const string PRACTICE_STAFF = "practice-staff";
 
         public const string PRACTICE_ADMIN = "practice-admin";

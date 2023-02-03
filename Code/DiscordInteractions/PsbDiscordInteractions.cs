@@ -228,7 +228,7 @@ namespace watchtower.Code.DiscordInteractions {
         }
 
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "[DEBUG] Parse reservation")]
-        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
+        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF, RequiredRoleCheck.OVO_REP)]
         public async Task DebugParseReservation(ContextMenuContext ctx) {
             await ctx.CreateDeferred(true);
 
@@ -288,7 +288,7 @@ namespace watchtower.Code.DiscordInteractions {
                             feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
                         }
                     }
-                } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when") {
+                } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when" || field.StartsWith("date/time")) {
                     feedback += $"Line `{line}` as when\n";
 
                     (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out string f);
@@ -302,7 +302,7 @@ namespace watchtower.Code.DiscordInteractions {
                         errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{f}");
                     }
 
-                } else if (field == "bases") {
+                } else if (field.StartsWith("base")) {
                     feedback += $"Line `{line}` as bases\n";
 
                     List<string> bases = value.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
