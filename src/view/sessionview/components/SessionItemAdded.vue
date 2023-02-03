@@ -5,7 +5,8 @@
         <table v-show="showTable" class="table">
             <thead class="table-secondary">
                 <tr>
-                    <th colspan="2">Achievement</th>
+                    <th colspan="2">Item</th>
+                    <th>Context</th>
                     <th>Continent</th>
                     <th>Timestamp</th>
                 </tr>
@@ -27,6 +28,10 @@
                         <div v-else style="height: 64px;">
                             &lt;unknown item {{ev.event.itemID}}&gt;
                         </div>
+                    </td>
+
+                    <td class="align-middle">
+                        {{ev.event.context}}
                     </td>
 
                     <td class="align-middle">

@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using DSharpPlus.ButtonCommands;
+using DSharpPlus.Entities;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Code.DiscordInteractions;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -84,13 +86,17 @@ namespace watchtower.Services.Hosted {
                     HonuDiscordMessage msg = new();
                     DiscordEmbedBuilder builder = new();
                     builder.Title = $"Session end: {c?.GetDisplayName() ?? $"missing {entry.CharacterID}"}";
-                    builder.Description = $"https://wt.honu.pw/s/{entry.SessionID}";
+                    builder.Description = $"https://wt.honu.pw/s/{entry.SessionID} \n\n"
+                        + $"To stop recieving session end alerts about this character, press Unsubscribe below, or type `/subscribe remove {c?.Name}`";
                     builder.Url = $"https://wt.honu.pw/s/{entry.SessionID}";
                     builder.Footer = new DiscordEmbedBuilder.EmbedFooter();
                     builder.Footer.Text = $"Session ended at";
                     builder.Timestamp = entry.Timestamp;
                     builder.Color = DiscordColor.Purple;
-                    msg.Embeds.Add(builder.Build());
+
+                    msg.Components.Add(SubscribeButtonCommands.REMOVE_CHAR_SUB(entry.CharacterID));
+
+                    msg.Embeds.Add(builder);
 
                     foreach (SessionEndSubscription sub in subs) {
                         msg.TargetUserID = sub.DiscordID;

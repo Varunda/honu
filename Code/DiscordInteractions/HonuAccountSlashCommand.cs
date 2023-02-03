@@ -31,7 +31,7 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             List<HonuAccountPermission> perms = await _PermissionRepository.GetByAccountID(account.ID);
             string s = $"Permissions on this account ({perms.Count}): \n";
@@ -49,7 +49,7 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task WhoIsCommand(InteractionContext ctx,
             [Option("user", "What user to target with this command")] DiscordUser user) {
 
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             HonuAccount? targetAccount = await _AccountDb.GetByDiscordID(user.Id, CancellationToken.None);
             if (targetAccount == null) {
@@ -74,7 +74,7 @@ namespace watchtower.Code.DiscordInteractions {
             DiscordMember source = ctx.Member;
             DiscordMember target = ctx.TargetMember;
 
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             HonuAccount? targetAccount = await _AccountDb.GetByDiscordID(target.Id, CancellationToken.None);
             if (targetAccount == null) {

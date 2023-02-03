@@ -34,6 +34,7 @@ namespace watchtower.Models.Discord {
             Message = other.Message;
             Embeds = new List<DSharpPlus.Entities.DiscordEmbed>(other.Embeds);
             Mentions = new List<IMention>(other.Mentions);
+            Components = new List<DiscordComponent>(other.Components);
         }
 
         public ulong? GuildID { get; set; }
@@ -56,6 +57,8 @@ namespace watchtower.Models.Discord {
         ///     Get the mentions this message contains
         /// </summary>
         public List<IMention> Mentions { get; set; } = new();
+
+        public List<DiscordComponent> Components { get; set; } = new();
 
         /// <summary>
         ///     Get the <see cref="TargetType"/> of this message

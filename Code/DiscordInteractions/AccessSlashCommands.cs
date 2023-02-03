@@ -46,7 +46,7 @@ namespace watchtower.Code.DiscordInteractions {
                     }
                     */
 
-                    await ctx.CreateDeferredText("Loading sheets...");
+                    await ctx.CreateDeferred();
 
                     PsbDriveFile? sheet = await GetPracticeSheet(ctx, tag);
                     if (sheet == null) {
@@ -144,7 +144,7 @@ namespace watchtower.Code.DiscordInteractions {
                     }
 
                     // find the sheet, lets us get the permissions
-                    await ctx.CreateDeferredText("Processing command...");
+                    await ctx.CreateDeferred();
                     PsbDriveFile? sheet = await GetPracticeSheet(ctx, tag);
                     if (sheet == null) {
                         return;
@@ -191,7 +191,7 @@ namespace watchtower.Code.DiscordInteractions {
                         return;
                     }
 
-                    await ctx.CreateDeferredText("Processing command...");
+                    await ctx.CreateDeferred();
 
                     // find the PsbContact of the user, which has the user's email
                     await ctx.EditResponseText($"Found practice sheet, checking permissions...");
@@ -239,7 +239,7 @@ namespace watchtower.Code.DiscordInteractions {
                     }
 
                     // get the practice sheets
-                    await ctx.CreateDeferredText($"Removing {email} from all practice sheets...");
+                    await ctx.CreateDeferred();
                     List<PsbDriveFile>? files = await _PsbDrive.GetPracticeSheets();
                     if (files == null) {
                         await ctx.EditResponseText($"Error: failed to load practice sheets: {_PsbDrive.GetInitializeFailureReason()}");
@@ -292,7 +292,7 @@ namespace watchtower.Code.DiscordInteractions {
                         return;
                     }
 
-                    await ctx.CreateDeferredText($"Processing command...");
+                    await ctx.CreateDeferred();
 
                     PsbDriveFile? sheet = await GetPracticeSheet(ctx, tag);
                     if (sheet == null) {
@@ -334,7 +334,7 @@ namespace watchtower.Code.DiscordInteractions {
                         return;
                     }
 
-                    await ctx.CreateDeferredText("Transfering ownership");
+                    await ctx.CreateDeferred();
                     PsbDriveFile? practiceSheet = await GetPracticeSheet(ctx, tag);
                     if (practiceSheet == null) {
                         await ctx.EditResponseText($"No practice sheet");
@@ -375,7 +375,7 @@ namespace watchtower.Code.DiscordInteractions {
                         return;
                     }
 
-                    await ctx.CreateDeferredText("Processing command...");
+                    await ctx.CreateDeferred();
 
                     List<PsbDriveFile>? files = await _PsbDrive.GetPracticeSheets();
                     if (files == null) {

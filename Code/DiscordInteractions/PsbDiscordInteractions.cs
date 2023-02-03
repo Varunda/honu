@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -42,7 +43,7 @@ namespace watchtower.Code.DiscordInteractions {
             DiscordMember source = ctx.Member;
             DiscordMember target = ctx.TargetMember;
 
-            await ctx.CreateDeferredText($"Loading contacts...", true);
+            await ctx.CreateDeferred(true);
 
             List<PsbOvOContact> ovo = new();
             List<PsbPracticeContact> practice = new();
@@ -87,7 +88,7 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task ListOvOCommand(InteractionContext ctx,
             [Option("Tag", "Outfit Tag to list the OVO reps of")] string tag) {
 
-            await ctx.CreateDeferredText($"Loading...", true);
+            await ctx.CreateDeferred(true);
 
             List<PsbOvOContact> contacts = (await _ContactRepository.GetOvOContacts())
                 .Where(iter => iter.Group.ToLower() == tag.ToLower()).ToList();
@@ -136,7 +137,7 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             DiscordMessage msg = ctx.TargetMessage;
 
@@ -180,7 +181,7 @@ namespace watchtower.Code.DiscordInteractions {
         public async Task Calendar(InteractionContext ctx,
             [Option("Hours", "How many hours back and forward to include")] long hours = 6) {
 
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             List<PsbCalendarEntry> entries = await _CalendarRepository.GetAll();
 
@@ -229,7 +230,7 @@ namespace watchtower.Code.DiscordInteractions {
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "[DEBUG] Parse reservation")]
         [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
         public async Task DebugParseReservation(ContextMenuContext ctx) {
-            await ctx.CreateDeferredText("Loading...", true);
+            await ctx.CreateDeferred(true);
 
             DiscordMessage? msg = ctx.TargetMessage;
             if (msg == null) {
@@ -238,6 +239,8 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             PsbReservation res = new();
+
+            List<string> errors = new();
 
             string feedback = $"Parsed message:\n";
 
@@ -248,7 +251,7 @@ namespace watchtower.Code.DiscordInteractions {
                 List<string> parts = line.Split(":").ToList();
 
                 if (parts.Count < 2) {
-                    feedback += $"Line '{line}' failed to split on ':', had {parts.Count} parts\n";
+                    errors.Add($"Line `{line}`, failed to split on ':', has {parts.Count}");
                     continue;
                 }
 
@@ -269,7 +272,7 @@ namespace watchtower.Code.DiscordInteractions {
                         res.Accounts = accountCount;
                         feedback += $"\tAccounts: {res.Accounts}\n";
                     } else {
-                        feedback += $"\tFailed to parse '{value}' to a valid number\n";
+                        errors.Add($"Failed to parse `{value}` to a valid number");
                     }
                 } else if (field.StartsWith("rep") == true) {
                     feedback += $"Line `{line}` as rep line\n";
@@ -280,7 +283,7 @@ namespace watchtower.Code.DiscordInteractions {
                     foreach (DiscordUser user in users) {
                         PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
                         if (contact == null) {
-                            feedback += $"\t{user.GetPing()} {user.GetDisplay()} does not have a OvO contact entry\n";
+                            errors.Add($"{user.GetPing()} {user.GetDisplay()} does not have a OvO contact entry");
                         } else {
                             feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
                         }
@@ -288,13 +291,15 @@ namespace watchtower.Code.DiscordInteractions {
                 } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when") {
                     feedback += $"Line `{line}` as when\n";
 
-                    DateTime? r = ParseVeryInexact(v, out string f);
+                    (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out string f);
                     feedback += f;
 
-                    if (r != null) {
-                        feedback += $"\tConverted '{v}' into {r:u} (<t:{new DateTimeOffset(r.Value).ToUnixTimeSeconds()}:R>)\n";
+                    if (r != null && r2 != null) {
+                        feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
+                        res.Start = r.Value;
+                        res.End = r2.Value;
                     } else {
-                        feedback += $"\tFailed to convert '{v}' into a valid datetime\n";
+                        errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{f}");
                     }
 
                 } else if (field == "bases") {
@@ -313,9 +318,9 @@ namespace watchtower.Code.DiscordInteractions {
                         }
 
                         if (possibleBases.Count == 0) {
-                            feedback += $"\tFailed to find base `{baseName}`\n";
+                            errors.Add($"Failed to find base `{baseName}`");
                         } else if (possibleBases.Count > 1) {
-                            feedback += $"\tAmbigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}\n";
+                            errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
                         } else if (possibleBases.Count == 1) {
                             PsFacility fac = possibleBases[0];
                             feedback += $"\tBase `{baseName}` found {fac.Name}/{fac.FacilityID}\n";
@@ -330,44 +335,142 @@ namespace watchtower.Code.DiscordInteractions {
                 }
             }
 
-            feedback += $"\n\n**Parsed**: ```json\n{JToken.FromObject(res)}```";
+            string m = "Parsed reservation:\n";
 
-            await ctx.EditResponseText(feedback);
+            m += $"Groups in reservation: {string.Join(", ", res.Outfits)}\n";
+            m += $"Accounts requested: {res.Accounts}\n";
+            m += $"Start time: {res.Start.GetDiscordFullTimestamp()}/{res.Start:u}\n";
+            m += $"End time: {res.End.GetDiscordFullTimestamp()}/{res.End:u}\n";
+            m += $"Bases: {string.Join(", ", res.Bases.Select(iter => iter.Name))}\n";
+            m += $"Details: {res.Details}\n";
+
+            if (errors.Count > 0) {
+                m += $"\n**Errors occured during parsing!**\n{string.Join("\n", errors)}";
+            }
+
+            m += $"\n\n**Extra debug**:\n{feedback}";
+
+            await ctx.EditResponseText(m);
         }
 
-        private DateTime? ParseVeryInexact(string when, out string feedback) {
+        /// <summary>
+        ///     this code is awful
+        /// </summary>
+        /// <param name="when"></param>
+        /// <param name="feedback"></param>
+        /// <returns></returns>
+        public static (DateTime? start, DateTime? end) ParseVeryInexact(string when, out string feedback) {
+            when = when.Replace(".", "").Replace(",", "").Replace("(", "").Replace(")", "");
             feedback = $"Parsing `{when}`:\n";
 
-            if (DateTime.TryParse(when, out DateTime result) == true) {
-                feedback += $"\tfound {result:u} using DateTime.TryParse\n";
-                return result;
+            string[] dayFormats = new string[] {
+                "YYYY-MM-DD",
+                "dddd MMMM d",
+                "dddd MMM d",
+            };
+
+            string[] timeFormats = new string[] {
+                "HH:mm",
+                "H:mm",
+                "HH",
+            };
+
+            DateTime? startDay = null;
+            DateTime? endDay = null;
+
+            // yes, assume local is correct, idk why
+            DateTimeStyles style = DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowTrailingWhite 
+                | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal;
+
+            string[] regexs = new string[] {
+                @"^(?<day>.*?\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
+                @"^(?<day>\d{4}-\d\d-\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
+            };
+
+            foreach (string reg in regexs) {
+                Regex r = new Regex(reg);
+                Match match = r.Match(when);
+
+                if (match.Success == true) {
+                    bool dayGroup = match.Groups.TryGetValue("day", out Group? day);
+                    bool startGroup = match.Groups.TryGetValue("start", out Group? start);
+                    bool endGroup = match.Groups.TryGetValue("end", out Group? end);
+                    feedback += $"\tFound using Regex `{reg}`, day `{day}`, start `{start}`, end `{end}`\n";
+
+                    if (day != null) {
+                        if (DateTime.TryParse(day.Value, null, style, out DateTime d) == true) {
+                            startDay = DateTime.SpecifyKind(d, DateTimeKind.Utc);
+                            endDay = new DateTime(startDay.Value.Ticks, DateTimeKind.Utc);
+                            feedback += $"\tParsed date of {day.Value} to {startDay:u}\n";
+                        }
+
+                        if (startDay != null) {
+                            foreach (string format in dayFormats) {
+                                if (DateTime.TryParseExact(day.Value, format, null, style, out DateTime iter) == true) {
+                                    feedback += $"\tParsed date of `{day.Value}` using format `{format}` => {iter:u}\n";
+                                    startDay = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
+                                    endDay = new DateTime(startDay.Value.Ticks, DateTimeKind.Utc);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (startDay == null || endDay == null) {
+                        feedback += $"Not parsing time, no day\n";
+                        continue;
+                    }
+
+                    bool parsedStart = false;
+                    if (start != null) {
+                        foreach (string format in timeFormats) {
+                            if (DateTime.TryParseExact(start.Value.PadLeft(2, '0'), format, null, style, out DateTime iter) == true) {
+                                parsedStart = true;
+                                iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
+                                feedback += $"\tParsed time of `{start.Value}` using format `{format}` => {iter:u}\n";
+
+                                startDay = startDay.Value.AddHours(iter.Hour);
+                                startDay = startDay.Value.AddMinutes(iter.Minute);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (parsedStart == false) {
+                        feedback += $"failed to parse a start time\n";
+                        startDay = endDay = null;
+                        continue;
+                    }
+
+                    bool parsedEnd = false;
+                    if (end != null) {
+                        foreach (string format in timeFormats) {
+                            feedback += $"\t\tparsing {end.Value} using {format}\n";
+                            if (DateTime.TryParseExact(end.Value.PadLeft(2, '0'), format, null, style, out DateTime iter) == true) {
+                                parsedEnd = true;
+                                iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
+                                feedback += $"\tParsed time of `{end.Value}` using format `{format}` => {iter:u}\n";
+
+                                endDay = endDay.Value.AddHours(iter.Hour);
+                                endDay = endDay.Value.AddMinutes(iter.Minute);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (parsedEnd == false) {
+                        feedback += $"failed to parse end time\n";
+                        startDay = endDay = null;
+                        continue;
+                    }
+
+                    break;
+                } else {
+                    feedback += $"\tnot match using Regex `{reg}`, not match\n";
+                }
             }
 
-            Regex dateCommaStartDashEnd = new Regex(@"^(?<day>.*),\s*?(?<start>\d\d:\d\d)\s.*?(?<end>\d\d:\d\d).*$");
-            Match match = dateCommaStartDashEnd.Match(when);
-            if (match.Success == true) {
-                bool dayGroup = match.Groups.TryGetValue("day", out Group? day);
-                bool startGroup = match.Groups.TryGetValue("start", out Group? start);
-                bool endGroup = match.Groups.TryGetValue("end", out Group? end);
-                feedback += $"\tFound using Regex `{dateCommaStartDashEnd}`, day `{day}` ({dayGroup}), start `{start}` ({startGroup}), end `{end}` ({endGroup})\n";
-
-                if (day != null && DateTime.TryParse(day.Value, out DateTime dayValue) == true) {
-                    feedback += $"\tParsed `{day.Value}` to {dayValue:u}\n";
-                } else {
-                    feedback += $"\tFailed to parse `{day?.Value}` into a DateTime\n";
-                }
-
-                if (start != null && DateTime.TryParseExact(start.Value, "", null, System.Globalization.DateTimeStyles.AssumeUniversal, out DateTime startValue) == true) {
-                    feedback += $"Parsed `{start.Value}` to {startValue:u}\n";
-                } else {
-                    feedback += $"Failed to parse `{start?.Value}` into a DateTime\n";
-                }
-
-            } else {
-                feedback += $"\tdoes not match pattern `{dateCommaStartDashEnd}`\n";
-            }
-
-            return null;
+            return (startDay, endDay);
         }
 
     }

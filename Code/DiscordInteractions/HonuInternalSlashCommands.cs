@@ -2,13 +2,16 @@
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Models.Census;
 using watchtower.Models.Discord;
 using watchtower.Models.Internal;
 using watchtower.Models.PSB;
 using watchtower.Services.Queues;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Code.DiscordInteractions {
 
@@ -22,6 +25,9 @@ namespace watchtower.Code.DiscordInteractions {
 
         public DiscordMessageQueue _Discord { set; private get; } = default!;
 
+        public CharacterRepository _CharacterRepository { set; private get; } = default!;
+        public SessionEndQueue _SessionEndQueue { set; private get; } = default!;
+
         /// <summary>
         ///     Slash command to refresh commands
         /// </summary>
@@ -31,7 +37,7 @@ namespace watchtower.Code.DiscordInteractions {
         [RequiredHonuPermissionSlash(HonuPermission.HONU_DISCORD_ADMIN)]
         public async Task ReloadCommands(InteractionContext ctx) {
             int commandCount = ctx.Client.GetSlashCommands().RegisteredCommands.Count;
-            await ctx.CreateDeferredText($"Reloading {commandCount} commands...", true);
+            await ctx.CreateDeferred(true);
 
             await ctx.Client.GetSlashCommands().RefreshCommands();
 
@@ -111,6 +117,26 @@ namespace watchtower.Code.DiscordInteractions {
             _Discord.Queue(msg);
 
             await ctx.CreateImmediateText("sent", true);
+        }
+
+        [SlashCommand("test-session-end", "create a session end entry to test ")]
+        [RequiredHonuPermissionSlash(HonuPermission.HONU_DISCORD_ADMIN)]
+        public async Task DebugSessionEnd(InteractionContext ctx,
+            [Option("Character", "Character name")] string name) {
+
+            await ctx.CreateDeferred(true);
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByName(name);
+
+            foreach (PsCharacter c in chars) {
+                _SessionEndQueue.Queue(new Models.Queues.SessionEndQueueEntry() {
+                    CharacterID = c.ID,
+                    Timestamp = DateTime.UtcNow,
+                    SessionID = 9534660
+                });
+            }
+
+            await ctx.EditResponseText($"Added session end for {chars.Count} characters");
         }
 
     }

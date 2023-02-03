@@ -21,6 +21,9 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Discord;
 using static watchtower.Models.Discord.HonuDiscordMessage;
 using DSharpPlus.Exceptions;
+using DSharpPlus.ButtonCommands.Extensions;
+using DSharpPlus.ButtonCommands;
+using DSharpPlus.ButtonCommands.EventArgs;
 
 namespace watchtower.Services.Hosted {
 
@@ -32,6 +35,7 @@ namespace watchtower.Services.Hosted {
 
         private readonly DiscordClient _Discord;
         private readonly SlashCommandsExtension _SlashCommands;
+        private readonly ButtonCommandsExtension _ButtonCommands;
         private IOptions<DiscordOptions> _DiscordOptions;
 
         private bool _IsConnected = false;
@@ -87,6 +91,14 @@ namespace watchtower.Services.Hosted {
             } else {
                 _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
             }
+
+            _ButtonCommands = _Discord.UseButtonCommands(new ButtonCommandsConfiguration() {
+                Services = services
+            });
+            _ButtonCommands.RegisterButtons<SubscribeButtonCommands>();
+
+            _ButtonCommands.ButtonCommandExecuted += Button_Command_Executed;
+            _ButtonCommands.ButtonCommandErrored += Button_Command_Error;
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
@@ -136,6 +148,10 @@ namespace watchtower.Services.Hosted {
 
                     foreach (IMention mention in msg.Mentions) {
                         builder.WithAllowedMention(mention);
+                    }
+
+                    if (msg.Components.Count > 0) {
+                        builder.AddComponents(msg.Components);
                     }
 
                     if (targetType == TargetType.CHANNEL) {
@@ -249,7 +265,7 @@ namespace watchtower.Services.Hosted {
             string interactionMethod = "slash";
 
             DiscordUser? targetMember = null;
-            DSharpPlus.Entities.DiscordMessage? targetMessage = null;
+            DiscordMessage? targetMessage = null;
 
             if (args is ContextMenuInteractionCreateEventArgs contextArgs) {
                 targetMember = contextArgs.TargetUser;
@@ -271,6 +287,29 @@ namespace watchtower.Services.Hosted {
             }
 
             _Logger.LogDebug(feedback);
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Event handler for when a button command is executed
+        /// </summary>
+        /// <param name="ext"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private Task Button_Command_Executed(ButtonCommandsExtension ext, ButtonCommandExecutionEventArgs args) {
+            _Logger.LogDebug($"{args.Context.User.GetDisplay()} used '{args.CommandName}': {args.ButtonId}");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        ///     Event handler for when an exception is thrown during the execution of a button command
+        /// </summary>
+        /// <param name="ext"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private Task Button_Command_Error(ButtonCommandsExtension ext, ButtonCommandErrorEventArgs args) {
+            _Logger.LogError($"Error executing {args.CommandName}: {args.Exception.Message} :: {args.Exception.InnerException?.Message}");
 
             return Task.CompletedTask;
         }
@@ -304,7 +343,7 @@ namespace watchtower.Services.Hosted {
             _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
             try {
                 // if the response has already started, this won't be null, indicating to instead update the response
-                DSharpPlus.Entities.DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
+                DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
 
                 if (msg == null) {
                     // if it is null, then no respons has been started, so one is created
@@ -348,7 +387,7 @@ namespace watchtower.Services.Hosted {
             _Logger.LogError(args.Exception, $"error executing context command: {args.Context.CommandName}");
             try {
                 // if the response has already started, this won't be null, indicating to instead update the response
-                DSharpPlus.Entities.DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
+                DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
 
                 if (msg == null) {
                     // if it is null, then no respons has been started, so one is created

@@ -24,6 +24,7 @@ using OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using watchtower.Code;
+using watchtower.Code.DiscordInteractions;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Models;
@@ -43,8 +44,34 @@ namespace watchtower {
             Console.WriteLine($"{name} => {d:u} ({d.Kind}) {doo:u} ({doo.Offset}) {doo.ToUnixTimeSeconds()} {d.GetDiscordFullTimestamp()}");
         }
 
+
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
+
+            string[] dates = new string[] {
+                "Thursday Feb 2, 01:00 - 03:00",
+                "Thursday Feb 2, 01 - 03",
+                "Thursday, Feb. 2, 01:00 - 03:00",
+                "Thursday, Feb. 2nd, 01 - 03",
+                "Thursday, Feb. 2nd, 01:00 - 03:00",
+                "2023-02-02 01:00 - 03:00",
+                "2023-02-02 01 - 03",
+                "2023-02-02 1 - 3",
+                "February 4th 19:00  - 21:00 UTC",
+                "Thursday, February 2nd 19:00-21:00 UTC",
+                "February 3rd @ 00:30-02:00 UTC",
+                "Saturday, February 4th @ 1:30 - 3:30 UTC "
+            };
+
+            foreach (string d in dates) {
+                (DateTime? start, DateTime? end) = PsbDiscordInteractions.ParseVeryInexact(d, out string feedback);
+                if (start != null && end != null) {
+                    Console.WriteLine($"{d} => {start:u} to {end:u}");
+                }
+
+                Console.WriteLine(feedback);
+                Console.WriteLine("\n========================================================");
+            }
 
             /*
             string d = "1/28/2023 21:00:00";
