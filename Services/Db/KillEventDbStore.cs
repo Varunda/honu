@@ -348,10 +348,13 @@ namespace watchtower.Services.Db {
         /// <summary>
         ///     Get all the kills and deaths of a character between a period
         /// </summary>
-        /// <param name="charID"></param>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns></returns>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="start">When the start period is</param>
+        /// <param name="end">When the end period is</param>
+        /// <returns>
+        ///     A list <see cref="KillEvent"/>s that have <paramref name="charID"/> as either
+        ///     <see cref="KillEvent.AttackerCharacterID"/> or <see cref="KillEvent.KilledCharacterID"/>
+        /// </returns>
         public async Task<List<KillEvent>> GetKillsByCharacterID(string charID, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

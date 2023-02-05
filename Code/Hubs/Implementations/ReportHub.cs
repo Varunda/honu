@@ -155,13 +155,13 @@ namespace watchtower.Code.Hubs.Implementations {
                 foreach (string charID in parms.CharacterIDs) {
                     List<Session> s = await _SessionDb.GetByRangeAndCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
                     sessions.AddRange(s);
-                    _Logger.LogTrace($"Loaded {s.Count} sessions for {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    _Logger.LogTrace($"Loaded {s.Count} sessions for char {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
                 }
 
                 foreach (string outfitID in parms.OutfitIDs) {
                     List<Session> s = await _SessionDb.GetByRangeAndOutfit(outfitID, parms.PeriodStart, parms.PeriodEnd);
                     sessions.AddRange(s);
-                    _Logger.LogTrace($"Loaded {s.Count} sessions for {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    _Logger.LogTrace($"Loaded {s.Count} sessions for outfit {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
                 }
 
                 report.Sessions = sessions;
@@ -186,24 +186,29 @@ namespace watchtower.Code.Hubs.Implementations {
                     try {
                         List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
 
-                        List<KillEvent> kills = killDeaths.Where(iter => {
-                            return //iter.AttackerTeamID == parms.TeamID
-                                chars.Contains(iter.AttackerCharacterID)
-                                && iter.KilledTeamID != parms.TeamID;
-                        }).ToList();
+                        IEnumerable<KillEvent> kills = killDeaths.Where(iter => chars.Contains(iter.AttackerCharacterID));
+                        if (parms.IncludeTeamkills == false) {
+                            kills = kills.Where(iter => iter.KilledTeamID != parms.TeamID);
+                            _Logger.LogDebug($"not including tks");
+                        }
+
                         report.Kills.AddRange(kills);
 
-                        await Clients.Caller.SendKills(charID, kills);
+                        await Clients.Caller.SendKills(charID, kills.ToList());
 
-                        List<KillEvent> deaths = killDeaths.Where(iter => {
-                            return // (iter.KilledTeamID == parms.TeamID || iter.KilledTeamID == 4)
-                                chars.Contains(iter.KilledCharacterID)
-                                && (iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4)
-                                && iter.RevivedEventID == null;
-                        }).ToList();
+                        IEnumerable<KillEvent> deaths = killDeaths.Where(iter => chars.Contains(iter.KilledCharacterID));
+                        if (parms.IncludeRevivedDeaths == false) {
+                            deaths = deaths.Where(iter => iter.RevivedEventID == null);
+                            _Logger.LogDebug($"not including revived deaths");
+                        }
+                        if (parms.IncludeTeamkilled == false) {
+                            deaths = deaths.Where(iter => iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4);
+                            _Logger.LogDebug($"not including tked");
+                        }
+
                         report.Deaths.AddRange(deaths);
 
-                        await Clients.Caller.SendDeaths(charID, deaths);
+                        await Clients.Caller.SendDeaths(charID, deaths.ToList());
                     } catch (Exception ex) {
                         _Logger.LogError(ex, $"error loading kill//death events for {charID}");
                         await Clients.Caller.SendError($"error while getting kill and death events for {charID}: {ex.Message}");

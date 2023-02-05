@@ -55,7 +55,9 @@ namespace watchtower.Services.Repositories {
 
             READING_SKIPPED,
 
-            READING_ID
+            READING_ID,
+
+            READING_OPTION
 
         }
 
@@ -74,8 +76,6 @@ namespace watchtower.Services.Repositories {
         ///     For example, setting the team ID to -1 can be parse, but is not valid
         /// </exception>
         public async Task<OutfitReportParameters> ParseGenerator(string input) {
-            List<string> ignored = new List<string>();
-
             GenState state = GenState.GET_START;
             OutfitReportParameters parms = new();
             parms.Timestamp = DateTime.UtcNow;
@@ -147,6 +147,8 @@ namespace watchtower.Services.Repositories {
                         state = GenState.READING_SKIPPED;
                     } else if (i == '#') {
                         state = GenState.READING_ID;
+                    } else if (i == '$') {
+                        state = GenState.READING_OPTION;
                     } else {
                         throw new FormatException($"In state READ_NEXT, unhandled token {i}");
                     }
@@ -198,6 +200,32 @@ namespace watchtower.Services.Repositories {
                         } else {
                             throw new FormatException($"Failed to parse '{word}' to a valid Guid");
                         }
+                        word = "";
+                        state = GenState.READ_NEXT;
+                    } else {
+                        word += i;
+                    }
+                } else if (state == GenState.READING_OPTION) {
+                    if (i == ';') {
+                        string[] parts = word.Split("=");
+                        if (parts.Length != 2) {
+                            throw new ArgumentException($"Failed to split '{word}' using '=' (expected 2 parts, got {parts.Length})");
+                        }
+
+                        string key = parts[0];
+                        string value = parts[1];
+
+                        //_Logger.LogDebug($"Option {key} => {value}");
+
+                        if (key == "rd" && value == "1") {
+                            parms.IncludeRevivedDeaths = true;
+                        } else if (key == "itk" && value == "1") {
+                            parms.IncludeTeamkilled = true;
+                            parms.IncludeTeamkills = true;
+                        } else {
+                            throw new ArgumentException($"Unchecked key '{key}' in READING_OPTION (value = {value})");
+                        }
+
                         word = "";
                         state = GenState.READ_NEXT;
                     } else {

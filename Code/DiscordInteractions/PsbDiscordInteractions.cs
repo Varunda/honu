@@ -383,7 +383,7 @@ namespace watchtower.Code.DiscordInteractions {
                 | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal;
 
             string[] regexs = new string[] {
-                @"^(?<day>.*?\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
+                @"^(?<day>.*?\d{1,2}).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
                 @"^(?<day>\d{4}-\d\d-\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
             };
 

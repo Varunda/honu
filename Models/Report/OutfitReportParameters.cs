@@ -34,6 +34,21 @@ namespace watchtower.Models.Report {
         public uint? ZoneID { get; set; } = null;
 
         /// <summary>
+        ///     Will kills against the same team be included?
+        /// </summary>
+        public bool IncludeTeamkills { get; set; } = false;
+
+        /// <summary>
+        ///     Will deaths that were revived be included?
+        /// </summary>
+        public bool IncludeRevivedDeaths { get; set; } = false;
+
+        /// <summary>
+        ///     Will deaths from the same team be included?
+        /// </summary>
+        public bool IncludeTeamkilled { get; set; } = false;
+
+        /// <summary>
         ///     What character IDs were included, this does not include the characters in outfits,
         ///     only the ones added by the generator string
         /// </summary>
