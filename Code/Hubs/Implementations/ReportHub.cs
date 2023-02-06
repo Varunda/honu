@@ -189,7 +189,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         IEnumerable<KillEvent> kills = killDeaths.Where(iter => chars.Contains(iter.AttackerCharacterID));
                         if (parms.IncludeTeamkills == false) {
                             kills = kills.Where(iter => iter.KilledTeamID != parms.TeamID);
-                            _Logger.LogDebug($"not including tks");
+                            //_Logger.LogDebug($"not including tks");
                         }
 
                         report.Kills.AddRange(kills);
@@ -199,11 +199,11 @@ namespace watchtower.Code.Hubs.Implementations {
                         IEnumerable<KillEvent> deaths = killDeaths.Where(iter => chars.Contains(iter.KilledCharacterID));
                         if (parms.IncludeRevivedDeaths == false) {
                             deaths = deaths.Where(iter => iter.RevivedEventID == null);
-                            _Logger.LogDebug($"not including revived deaths");
+                            //_Logger.LogDebug($"not including revived deaths");
                         }
                         if (parms.IncludeTeamkilled == false) {
                             deaths = deaths.Where(iter => iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4);
-                            _Logger.LogDebug($"not including tked");
+                            //_Logger.LogDebug($"not including tked");
                         }
 
                         report.Deaths.AddRange(deaths);
