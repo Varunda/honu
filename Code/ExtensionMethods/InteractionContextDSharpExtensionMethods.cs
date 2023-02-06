@@ -34,6 +34,10 @@ namespace watchtower.Code.ExtensionMethods {
             );
         }
 
+        public static Task EditResponseEmbed(this BaseContext ctx, DiscordEmbed embed) {
+            return ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
+        }
+
         /// <summary>
         ///     Edit a deferred response started with <see cref="CreateDeferred(BaseContext, bool)"/>
         ///     with a text message

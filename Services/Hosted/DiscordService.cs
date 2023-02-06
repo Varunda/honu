@@ -335,7 +335,7 @@ namespace watchtower.Services.Hosted {
                     }
                 }
 
-                await args.Context.CreateImmediateText(feedback);
+                await args.Context.CreateImmediateText(feedback, true);
 
                 return;
             }
@@ -348,7 +348,7 @@ namespace watchtower.Services.Hosted {
                 if (msg == null) {
                     // if it is null, then no respons has been started, so one is created
                     // if you attempt to create a response for one that already exists, then a 400 is thrown
-                    await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}");
+                    await args.Context.CreateImmediateText($"Error executing slash command: {args.Exception.Message}", true);
                 } else {
                     await args.Context.EditResponseText($"Error executing slash command: {args.Exception.Message}");
                 }

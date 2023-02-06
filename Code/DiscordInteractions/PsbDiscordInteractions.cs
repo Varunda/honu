@@ -227,9 +227,29 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseAsync(hookBuilder);
         }
 
-        [ContextMenu(ApplicationCommandType.MessageContextMenu, "[DEBUG] Parse reservation")]
+        /// <summary>
+        ///     message context menu to check how honu will parse a reservation
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "(debug) Check reservation")]
         [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF, RequiredRoleCheck.OVO_REP)]
-        public async Task DebugParseReservation(ContextMenuContext ctx) {
+        public Task DebugParseReservation(ContextMenuContext ctx) => ParseReservationInternal(ctx, true);
+
+        /// <summary>
+        ///     message context menu to check how honu will parse a reservation
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        [ContextMenu(ApplicationCommandType.MessageContextMenu, "Check reservation")]
+        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF, RequiredRoleCheck.OVO_REP)]
+        public Task ParseReservation(ContextMenuContext ctx) => ParseReservationInternal(ctx, false);
+
+        /// <summary>
+        ///     Parse a message containing a reservation
+        /// </summary>
+        /// <param name="ctx">Context menu</param>
+        /// <param name="debug">If extra debug info will be printed</param>
+        /// <returns></returns>
+        private async Task ParseReservationInternal(ContextMenuContext ctx, bool debug) {
             await ctx.CreateDeferred(true);
 
             DiscordMessage? msg = ctx.TargetMessage;
@@ -241,6 +261,8 @@ namespace watchtower.Code.DiscordInteractions {
             PsbReservation res = new();
 
             List<string> errors = new();
+
+            string timefeedback = "";
 
             string feedback = $"Parsed message:\n";
 
@@ -283,36 +305,39 @@ namespace watchtower.Code.DiscordInteractions {
                     foreach (DiscordUser user in users) {
                         PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
                         if (contact == null) {
-                            errors.Add($"{user.GetPing()} {user.GetDisplay()} does not have a OvO contact entry");
+                            errors.Add($"{user.GetPing()} is not an OvO rep!");
                         } else {
                             feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
+                            res.Contacts.Add(contact);
                         }
                     }
                 } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when" || field.StartsWith("date/time")) {
                     feedback += $"Line `{line}` as when\n";
 
-                    (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out string f);
-                    feedback += f;
+                    (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out timefeedback);
+
+                    feedback += timefeedback;
 
                     if (r != null && r2 != null) {
                         feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
                         res.Start = r.Value;
                         res.End = r2.Value;
                     } else {
-                        errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{f}");
+                        errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{timefeedback}");
                     }
 
                 } else if (field.StartsWith("base")) {
                     feedback += $"Line `{line}` as bases\n";
 
-                    List<string> bases = value.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
+                    List<string> bases = v.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
                     List<PsFacility> facilities = await _FacilityRepository.GetAll();
 
                     foreach (string baseName in bases) {
                         List<PsFacility> possibleBases = new();
 
                         foreach (PsFacility fac in facilities) {
-                            if (fac.Name.ToLower().StartsWith(baseName) == true) {
+                            string facName = $"{fac.Name} {fac.TypeName}".ToLower();
+                            if (facName.StartsWith(baseName) == true) {
                                 possibleBases.Add(fac);
                             }
                         }
@@ -335,22 +360,84 @@ namespace watchtower.Code.DiscordInteractions {
                 }
             }
 
-            string m = "Parsed reservation:\n";
+            // misc errors
+            if (res.Contacts.Count == 0) {
+                errors.Add($"0 contacts were given in this reservation");
+            } else {
+                errors.AddRange(await CheckReps(res));
+            }
+            if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
+            if (res.End <= res.Start) { errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)"); }
 
-            m += $"Groups in reservation: {string.Join(", ", res.Outfits)}\n";
-            m += $"Accounts requested: {res.Accounts}\n";
-            m += $"Start time: {res.Start.GetDiscordFullTimestamp()}/{res.Start:u}\n";
-            m += $"End time: {res.End.GetDiscordFullTimestamp()}/{res.End:u}\n";
-            m += $"Bases: {string.Join(", ", res.Bases.Select(iter => iter.Name))}\n";
-            m += $"Details: {res.Details}\n";
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"Reservation";
 
             if (errors.Count > 0) {
-                m += $"\n**Errors occured during parsing!**\n{string.Join("\n", errors)}";
+                builder.Color = DiscordColor.Red;
+                builder.Description = $"**Reservation parsed with errors:**\n{string.Join("\n", errors.Select(iter => $"- {iter}"))}";
+            } else {
+                builder.Color = DiscordColor.HotPink;
+                builder.Description = $"Reservation parsed successfully, but this does not mean the information is correct! Double check it!";
             }
 
-            m += $"\n\n**Extra debug**:\n{feedback}";
+            builder.AddField("Groups in reservation", string.Join(", ", res.Outfits));
+            builder.AddField("Accounts requested", $"{res.Accounts}");
+            builder.AddField("Start time", $"`{res.Start:u}` ({res.Start.GetDiscordFullTimestamp()} - {res.Start.GetDiscordRelativeTimestamp()})");
+            builder.AddField("End time", $"`{res.End:u}` ({res.End.GetDiscordFullTimestamp()} - {res.End.GetDiscordRelativeTimestamp()})");
+            if (res.Bases.Count > 0) {
+                builder.AddField("Bases", string.Join(", ", res.Bases.Select(iter => iter.Name)));
+            }
+            if (res.Details.Length > 0) {
+                builder.AddField("Details", res.Details);
+            }
 
-            await ctx.EditResponseText(m);
+            if (debug == true) {
+                builder.Description += "\n\n" + feedback;
+                if (builder.Description.Length > 2000) {
+                    builder.Description = builder.Description[..1994] + "...";
+                }
+            }
+
+            await ctx.EditResponseEmbed(builder);
+        }
+
+        private async Task<List<string>> CheckReps(PsbReservation res) {
+            List<string> errors = new();
+
+            if (res.Contacts.Count == 0) {
+                errors.Add($"given 0 contacts");
+                return errors;
+            }
+
+            List<string> groups = new(res.Outfits);
+            List<PsbOvOContact> contacts = new(res.Contacts);
+
+            List<PsbOvOContact> allContacts = await _ContactRepository.GetOvOContacts();
+
+            foreach (string group in groups) {
+                _Logger.LogTrace($"finding rep for '{group}'");
+
+                List<PsbOvOContact> groupContacts = contacts.Where(iter => iter.Group.Trim().ToLower() == group.ToLower().Trim()).ToList();
+                _Logger.LogTrace($"found {groupContacts.Count} contacts for {group}: {string.Join(", ", groupContacts.Select(iter => iter.DiscordID))}");
+
+                if (groupContacts.Count == 0) {
+                    errors.Add($"No contact for {group} found");
+                    continue;
+                }
+            }
+
+            foreach (PsbOvOContact contact in contacts) {
+                _Logger.LogTrace($"Checking if {contact.DiscordID} is in a group in the reservation");
+
+                List<string> contactGroups = groups.Where(iter => iter.ToLower().Trim() == contact.Group.ToLower().Trim()).ToList();
+                _Logger.LogTrace($"{contact.DiscordID} is in these groups: {string.Join(", ", contactGroups)}");
+
+                if (contactGroups.Count == 0) {
+                    errors.Add($"<@{contact.DiscordID}> is not a rep for any of the groups in this reservation");
+                }
+            }
+
+            return errors;
         }
 
         /// <summary>
@@ -395,7 +482,7 @@ namespace watchtower.Code.DiscordInteractions {
                     bool dayGroup = match.Groups.TryGetValue("day", out Group? day);
                     bool startGroup = match.Groups.TryGetValue("start", out Group? start);
                     bool endGroup = match.Groups.TryGetValue("end", out Group? end);
-                    feedback += $"\tFound using Regex `{reg}`, day `{day}`, start `{start}`, end `{end}`\n";
+                    feedback += $"Found using Regex `{reg}`, day `{day}`, start `{start}`, end `{end}`\n";
 
                     if (day != null) {
                         if (DateTime.TryParse(day.Value, null, style, out DateTime d) == true) {
@@ -445,7 +532,6 @@ namespace watchtower.Code.DiscordInteractions {
                     bool parsedEnd = false;
                     if (end != null) {
                         foreach (string format in timeFormats) {
-                            feedback += $"\t\tparsing {end.Value} using {format}\n";
                             if (DateTime.TryParseExact(end.Value.PadLeft(2, '0'), format, null, style, out DateTime iter) == true) {
                                 parsedEnd = true;
                                 iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
@@ -453,6 +539,13 @@ namespace watchtower.Code.DiscordInteractions {
 
                                 endDay = endDay.Value.AddHours(iter.Hour);
                                 endDay = endDay.Value.AddMinutes(iter.Minute);
+
+                                // for reservation that go over a utc day, they'll be input as @ 23 - 01 UTC
+                                // which would be the previous day, so we take one away from the day
+                                if (startDay != null && endDay <= startDay) {
+                                    endDay = endDay.Value.AddDays(1);
+                                }
+
                                 break;
                             }
                         }
@@ -466,7 +559,7 @@ namespace watchtower.Code.DiscordInteractions {
 
                     break;
                 } else {
-                    feedback += $"\tnot match using Regex `{reg}`, not match\n";
+                    feedback += $"no match using Regex `{reg}`\n";
                 }
             }
 
