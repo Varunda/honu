@@ -232,7 +232,6 @@ namespace watchtower.Code.DiscordInteractions {
         /// </summary>
         /// <param name="ctx">Provided context</param>
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "(debug) Check reservation")]
-        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF, RequiredRoleCheck.OVO_REP)]
         public Task DebugParseReservation(ContextMenuContext ctx) => ParseReservationInternal(ctx, true);
 
         /// <summary>
@@ -240,7 +239,6 @@ namespace watchtower.Code.DiscordInteractions {
         /// </summary>
         /// <param name="ctx">Provided context</param>
         [ContextMenu(ApplicationCommandType.MessageContextMenu, "Check reservation")]
-        [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF, RequiredRoleCheck.OVO_REP)]
         public Task ParseReservation(ContextMenuContext ctx) => ParseReservationInternal(ctx, false);
 
         /// <summary>
@@ -281,7 +279,7 @@ namespace watchtower.Code.DiscordInteractions {
                 string value = parts[1].Trim();
                 string v = string.Join(":", parts.ToArray()[1..]).Trim();
 
-                if (field == "outfit" || field == "outfits") {
+                if (field.StartsWith("outfit") || field.StartsWith("team") || field.StartsWith("group")) {
                     feedback += $"Line `{line}` as outfits\n";
 
                     List<string> outfits = value.Split(",").ToList();
@@ -328,6 +326,10 @@ namespace watchtower.Code.DiscordInteractions {
 
                 } else if (field.StartsWith("base")) {
                     feedback += $"Line `{line}` as bases\n";
+
+                    if (v.Trim().ToLower().StartsWith("any")) {
+                        continue;
+                    }
 
                     List<string> bases = v.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
                     List<PsFacility> facilities = await _FacilityRepository.GetAll();
@@ -380,7 +382,11 @@ namespace watchtower.Code.DiscordInteractions {
                 builder.Description = $"Reservation parsed successfully, but this does not mean the information is correct! Double check it!";
             }
 
-            builder.AddField("Groups in reservation", string.Join(", ", res.Outfits));
+            if (res.Outfits.Count > 0) {
+                builder.AddField("Groups in reservation", string.Join(", ", res.Outfits));
+            } else {
+                builder.AddField("Groups in reservation", "**missing**");
+            }
             builder.AddField("Accounts requested", $"{res.Accounts}");
             builder.AddField("Start time", $"`{res.Start:u}` ({res.Start.GetDiscordFullTimestamp()} - {res.Start.GetDiscordRelativeTimestamp()})");
             builder.AddField("End time", $"`{res.End:u}` ({res.End.GetDiscordFullTimestamp()} - {res.End.GetDiscordRelativeTimestamp()})");
