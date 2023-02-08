@@ -1,6 +1,7 @@
 ﻿using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Services;
@@ -94,6 +95,14 @@ namespace watchtower.Code.ExtensionMethods {
         /// <param name="builder">Embed builder</param>
         public static Task EditResponseEmbed(this DiscordInteraction ctx, DiscordEmbedBuilder builder) {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbed(builder));
+        }
+
+        public static Task EditResponseEmbed(this DiscordInteraction ctx, params DiscordEmbed[] embeds) {
+            return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbeds(embeds));
+        }
+
+        public static Task EditResponseEmbed(this DiscordInteraction ctx, IReadOnlyList<DiscordEmbed> embeds) {
+            return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbeds(embeds));
         }
 
         /// <summary>

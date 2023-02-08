@@ -40,6 +40,11 @@
         public const string GETTING_VEHICLE_DESTROY = "getting_vehicle_destroy";
 
         /// <summary>
+        ///     
+        /// </summary>
+        public const string GETTING_ACHIEVEMENT_EARNED = "getting_achievement_earned";
+
+        /// <summary>
         ///     Report has vehicle destroy, getting player control events
         /// </summary>
         public const string GETTING_PLAYER_CONTROL = "getting_player_control";

@@ -13,6 +13,11 @@ namespace watchtower.Models {
 
         public ConcurrentDictionary<string, TrackedPlayer> Players = new ConcurrentDictionary<string, TrackedPlayer>();
 
+        /// <summary>
+        ///     Get a <see cref="TrackedPlayer"/>, locking as needed
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <returns></returns>
         public TrackedPlayer? GetByCharacterID(string charID) {
             TrackedPlayer? player;
 

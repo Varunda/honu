@@ -18,6 +18,16 @@ namespace watchtower.Models {
         public ulong ChannelId { get; set; }
 
         /// <summary>
+        ///     What channel reservations will be posted to by users to be parsed by Spark
+        /// </summary>
+        public ulong ReservationChannelId { get; set; }
+
+        /// <summary>
+        ///     What channel Spark will post parsed reservations to
+        /// </summary>
+        public ulong ParsedChannelId { get; set; }
+
+        /// <summary>
         ///     What Guild Spark is at "home" in
         /// </summary>
         public ulong GuildId { get; set; }

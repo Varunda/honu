@@ -24,6 +24,8 @@ using DSharpPlus.Exceptions;
 using DSharpPlus.ButtonCommands.Extensions;
 using DSharpPlus.ButtonCommands;
 using DSharpPlus.ButtonCommands.EventArgs;
+using watchtower.Services.Repositories.PSB;
+using watchtower.Models.PSB;
 
 namespace watchtower.Services.Hosted {
 
@@ -32,6 +34,7 @@ namespace watchtower.Services.Hosted {
         private readonly ILogger<DiscordService> _Logger;
 
         private readonly DiscordMessageQueue _MessageQueue;
+        private readonly PsbReservationRepository _ReservationRepository;
 
         private readonly DiscordClient _Discord;
         private readonly SlashCommandsExtension _SlashCommands;
@@ -44,7 +47,8 @@ namespace watchtower.Services.Hosted {
         private Dictionary<ulong, ulong> _CachedMembership = new();
 
         public DiscordService(ILogger<DiscordService> logger, ILoggerFactory loggerFactory,
-            DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services) {
+            DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services,
+            PsbReservationRepository reservationRepository) {
 
             _Logger = logger;
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
@@ -72,6 +76,7 @@ namespace watchtower.Services.Hosted {
             _Discord.Ready += Client_Ready;
             _Discord.InteractionCreated += Generic_Interaction_Created;
             _Discord.ContextMenuInteractionCreated += Generic_Interaction_Created;
+            _Discord.MessageCreated += Message_Created;
 
             _SlashCommands = _Discord.UseSlashCommands(new SlashCommandsConfiguration() {
                 Services = services
@@ -88,17 +93,21 @@ namespace watchtower.Services.Hosted {
 
             if (_DiscordOptions.Value.RegisterGlobalCommands == true) {
                 _SlashCommands.RegisterCommands<SubscribeSlashCommand>();
+                _SlashCommands.RegisterCommands<LookupSlashCommand>();
             } else {
                 _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
+                _SlashCommands.RegisterCommands<LookupSlashCommand>(_DiscordOptions.Value.GuildId);
             }
 
             _ButtonCommands = _Discord.UseButtonCommands(new ButtonCommandsConfiguration() {
                 Services = services
             });
             _ButtonCommands.RegisterButtons<SubscribeButtonCommands>();
+            _ButtonCommands.RegisterButtons<LookupButtonCommands>();
 
             _ButtonCommands.ButtonCommandExecuted += Button_Command_Executed;
             _ButtonCommands.ButtonCommandErrored += Button_Command_Error;
+            _ReservationRepository = reservationRepository;
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
@@ -399,6 +408,38 @@ namespace watchtower.Services.Hosted {
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"error sending error message to Discord");
             }
+        }
+
+        /// <summary>
+        ///     Event handler for when a message is posted to the reservation channel in PSB discord
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private async Task Message_Created(DiscordClient client, MessageCreateEventArgs args) {
+            if (args.Guild.Id != _DiscordOptions.Value.GuildId || args.Channel.Id != _DiscordOptions.Value.ReservationChannelId) {
+                return;
+            }
+
+            // ignore interactions such as reponses to messages
+            if (args.Message.Interaction != null) {
+                return;
+            }
+
+            DiscordGuild? guild = await client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (guild == null) {
+                _Logger.LogError($"cannot parse reservation: failed to find guild {_DiscordOptions.Value.GuildId}");
+                return;
+            }
+
+            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ParsedChannelId);
+            if (channel == null) {
+                _Logger.LogError($"cannot parse reservation: failed to find channel {_DiscordOptions.Value.ParsedChannelId} in guild {guild.Id}");
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(args.Message);
+            _ReservationRepository.Send(parsed, false);
         }
 
         /// <summary>

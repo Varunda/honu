@@ -57,6 +57,8 @@ namespace watchtower.Code.Hubs {
 
         Task SendPlayerControl(string charID, List<PlayerControlEvent> events);
 
+        Task SendAchievementEarned(string charID, List<AchievementEarnedEvent> events);
+
         /// <summary>
         ///     Sent when all character IDs have been populated
         /// </summary>
@@ -100,6 +102,10 @@ namespace watchtower.Code.Hubs {
         Task UpdateItemCategories(List<ItemCategory> cats);
 
         Task UpdateExperienceTypes(List<ExperienceType> types);
+
+        Task UpdateAchievementEarned(List<AchievementEarnedEvent> events);
+
+        Task UpdateAchievements(List<Achievement> achs);
 
         /// <summary>
         ///     Sent when outfits have been populated

@@ -29,6 +29,7 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Services;
+using watchtower.Services.Repositories.PSB;
 
 namespace watchtower {
 
@@ -44,10 +45,10 @@ namespace watchtower {
             Console.WriteLine($"{name} => {d:u} ({d.Kind}) {doo:u} ({doo.Offset}) {doo.ToUnixTimeSeconds()} {d.GetDiscordFullTimestamp()}");
         }
 
-
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
 
+            /* i have no tests so i put them here lol
             string[] dates = new string[] {
                 "Thursday Feb 2, 01:00 - 03:00",
                 "Thursday Feb 2, 01 - 03",
@@ -64,7 +65,7 @@ namespace watchtower {
             };
 
             foreach (string d in dates) {
-                (DateTime? start, DateTime? end) = PsbDiscordInteractions.ParseVeryInexact(d, out string feedback);
+                (DateTime? start, DateTime? end) = PsbReservationRepository.ParseVeryInexact(d, out string feedback);
                 if (start != null && end != null) {
                     Console.WriteLine($"{d} => {start:u} to {end:u}");
                 }
@@ -72,6 +73,7 @@ namespace watchtower {
                 Console.WriteLine(feedback);
                 Console.WriteLine("\n========================================================");
             }
+            */
 
             /*
             string d = "1/28/2023 21:00:00";

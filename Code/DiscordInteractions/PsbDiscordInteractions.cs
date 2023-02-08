@@ -1,5 +1,7 @@
 ﻿using DSharpPlus;
+using DSharpPlus.ButtonCommands;
 using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -30,8 +32,10 @@ namespace watchtower.Code.DiscordInteractions {
         public PsbContactSheetRepository _ContactRepository { set; private get; } = default!;
         public FacilityRepository _FacilityRepository { set; private get; } = default!;
         public PsbCalendarRepository _CalendarRepository { set; private get; } = default!;
+        public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
 
         public IOptions<PsbDriveSettings> _PsbDriveSettings { set; private get; } = default!;
+        public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
 
         /// <summary>
         ///     User context menu to see what reps a user has (ovo, practice, etc.)
@@ -256,321 +260,17 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            PsbReservation res = new();
-
-            List<string> errors = new();
-
-            string timefeedback = "";
-
-            string feedback = $"Parsed message:\n";
-
-            List<string> lines = msg.Content.Split("\n").ToList();
-            foreach (string line in lines) {
-                _Logger.LogDebug($"line: '{line}'");
-
-                List<string> parts = line.Split(":").ToList();
-
-                if (parts.Count < 2) {
-                    errors.Add($"Line `{line}`, failed to split on ':', has {parts.Count}");
-                    continue;
-                }
-
-                string field = parts[0].Trim().ToLower();
-                string value = parts[1].Trim();
-                string v = string.Join(":", parts.ToArray()[1..]).Trim();
-
-                if (field.StartsWith("outfit") || field.StartsWith("team") || field.StartsWith("group")) {
-                    feedback += $"Line `{line}` as outfits\n";
-
-                    List<string> outfits = value.Split(",").ToList();
-                    feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";
-                    res.Outfits = outfits.Select(iter => iter.ToLower()).ToList();
-                } else if (field == "accounts" || field == "number of accounts") {
-                    feedback += $"Line `{line}` as account number\n";
-
-                    if (int.TryParse(value, out int accountCount) == true) {
-                        res.Accounts = accountCount;
-                        feedback += $"\tAccounts: {res.Accounts}\n";
-                    } else {
-                        errors.Add($"Failed to parse `{value}` to a valid number");
-                    }
-                } else if (field.StartsWith("rep") == true) {
-                    feedback += $"Line `{line}` as rep line\n";
-
-                    List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
-                    List<DiscordUser> users = msg.MentionedUsers.ToList();
-
-                    foreach (DiscordUser user in users) {
-                        PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
-                        if (contact == null) {
-                            errors.Add($"{user.GetPing()} is not an OvO rep!");
-                        } else {
-                            feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
-                            res.Contacts.Add(contact);
-                        }
-                    }
-                } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when" || field.StartsWith("date/time")) {
-                    feedback += $"Line `{line}` as when\n";
-
-                    (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out timefeedback);
-
-                    feedback += timefeedback;
-
-                    if (r != null && r2 != null) {
-                        feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
-                        res.Start = r.Value;
-                        res.End = r2.Value;
-                    } else {
-                        errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{timefeedback}");
-                    }
-
-                } else if (field.StartsWith("base")) {
-                    feedback += $"Line `{line}` as bases\n";
-
-                    if (v.Trim().ToLower().StartsWith("any")) {
-                        continue;
-                    }
-
-                    List<string> bases = v.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
-                    List<PsFacility> facilities = await _FacilityRepository.GetAll();
-
-                    foreach (string baseName in bases) {
-                        List<PsFacility> possibleBases = new();
-
-                        foreach (PsFacility fac in facilities) {
-                            string facName = $"{fac.Name} {fac.TypeName}".ToLower();
-                            if (facName.StartsWith(baseName) == true) {
-                                possibleBases.Add(fac);
-                            }
-                        }
-
-                        if (possibleBases.Count == 0) {
-                            errors.Add($"Failed to find base `{baseName}`");
-                        } else if (possibleBases.Count > 1) {
-                            errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
-                        } else if (possibleBases.Count == 1) {
-                            PsFacility fac = possibleBases[0];
-                            feedback += $"\tBase `{baseName}` found {fac.Name}/{fac.FacilityID}\n";
-                            res.Bases.Add(possibleBases[0]);
-                        }
-                    }
-                } else if (field == "details") {
-                    feedback += $"Line `{line}` as details\n";
-                    res.Details = value.Trim();
-                } else {
-                    feedback += $"Unchecked field '{field}'\n";
-                }
-            }
-
-            // misc errors
-            if (res.Contacts.Count == 0) {
-                errors.Add($"0 contacts were given in this reservation");
-            } else {
-                errors.AddRange(await CheckReps(res));
-            }
-            if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
-            if (res.End <= res.Start) { errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)"); }
-
-            DiscordEmbedBuilder builder = new();
-            builder.Title = $"Reservation";
-
-            if (errors.Count > 0) {
-                builder.Color = DiscordColor.Red;
-                builder.Description = $"**Reservation parsed with errors:**\n{string.Join("\n", errors.Select(iter => $"- {iter}"))}";
-            } else {
-                builder.Color = DiscordColor.HotPink;
-                builder.Description = $"Reservation parsed successfully, but this does not mean the information is correct! Double check it!";
-            }
-
-            if (res.Outfits.Count > 0) {
-                builder.AddField("Groups in reservation", string.Join(", ", res.Outfits));
-            } else {
-                builder.AddField("Groups in reservation", "**missing**");
-            }
-            builder.AddField("Accounts requested", $"{res.Accounts}");
-            builder.AddField("Start time", $"`{res.Start:u}` ({res.Start.GetDiscordFullTimestamp()} - {res.Start.GetDiscordRelativeTimestamp()})");
-            builder.AddField("End time", $"`{res.End:u}` ({res.End.GetDiscordFullTimestamp()} - {res.End.GetDiscordRelativeTimestamp()})");
-            if (res.Bases.Count > 0) {
-                builder.AddField("Bases", string.Join(", ", res.Bases.Select(iter => iter.Name)));
-            }
-            if (res.Details.Length > 0) {
-                builder.AddField("Details", res.Details);
-            }
-
-            if (debug == true) {
-                builder.Description += "\n\n" + feedback;
-                if (builder.Description.Length > 2000) {
-                    builder.Description = builder.Description[..1994] + "...";
-                }
-            }
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(ctx.TargetMessage);
+            DiscordEmbedBuilder builder = parsed.Build(debug);
 
             await ctx.EditResponseEmbed(builder);
         }
 
-        private async Task<List<string>> CheckReps(PsbReservation res) {
-            List<string> errors = new();
+    }
 
-            if (res.Contacts.Count == 0) {
-                errors.Add($"given 0 contacts");
-                return errors;
-            }
+    public class PsbButtonCommands : ButtonCommandModule {
 
-            List<string> groups = new(res.Outfits);
-            List<PsbOvOContact> contacts = new(res.Contacts);
-
-            List<PsbOvOContact> allContacts = await _ContactRepository.GetOvOContacts();
-
-            foreach (string group in groups) {
-                _Logger.LogTrace($"finding rep for '{group}'");
-
-                List<PsbOvOContact> groupContacts = contacts.Where(iter => iter.Group.Trim().ToLower() == group.ToLower().Trim()).ToList();
-                _Logger.LogTrace($"found {groupContacts.Count} contacts for {group}: {string.Join(", ", groupContacts.Select(iter => iter.DiscordID))}");
-
-                if (groupContacts.Count == 0) {
-                    errors.Add($"No contact for {group} found");
-                    continue;
-                }
-            }
-
-            foreach (PsbOvOContact contact in contacts) {
-                _Logger.LogTrace($"Checking if {contact.DiscordID} is in a group in the reservation");
-
-                List<string> contactGroups = groups.Where(iter => iter.ToLower().Trim() == contact.Group.ToLower().Trim()).ToList();
-                _Logger.LogTrace($"{contact.DiscordID} is in these groups: {string.Join(", ", contactGroups)}");
-
-                if (contactGroups.Count == 0) {
-                    errors.Add($"<@{contact.DiscordID}> is not a rep for any of the groups in this reservation");
-                }
-            }
-
-            return errors;
-        }
-
-        /// <summary>
-        ///     this code is awful
-        /// </summary>
-        /// <param name="when"></param>
-        /// <param name="feedback"></param>
-        /// <returns></returns>
-        public static (DateTime? start, DateTime? end) ParseVeryInexact(string when, out string feedback) {
-            when = when.Replace(".", "").Replace(",", "").Replace("(", "").Replace(")", "");
-            feedback = $"Parsing `{when}`:\n";
-
-            string[] dayFormats = new string[] {
-                "YYYY-MM-DD",
-                "dddd MMMM d",
-                "dddd MMM d",
-            };
-
-            string[] timeFormats = new string[] {
-                "HH:mm",
-                "H:mm",
-                "HH",
-            };
-
-            DateTime? startDay = null;
-            DateTime? endDay = null;
-
-            // yes, assume local is correct, idk why
-            DateTimeStyles style = DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowTrailingWhite 
-                | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal;
-
-            string[] regexs = new string[] {
-                @"^(?<day>.*?\d{1,2}).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
-                @"^(?<day>\d{4}-\d\d-\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$",
-            };
-
-            foreach (string reg in regexs) {
-                Regex r = new Regex(reg);
-                Match match = r.Match(when);
-
-                if (match.Success == true) {
-                    bool dayGroup = match.Groups.TryGetValue("day", out Group? day);
-                    bool startGroup = match.Groups.TryGetValue("start", out Group? start);
-                    bool endGroup = match.Groups.TryGetValue("end", out Group? end);
-                    feedback += $"Found using Regex `{reg}`, day `{day}`, start `{start}`, end `{end}`\n";
-
-                    if (day != null) {
-                        if (DateTime.TryParse(day.Value, null, style, out DateTime d) == true) {
-                            startDay = DateTime.SpecifyKind(d, DateTimeKind.Utc);
-                            endDay = new DateTime(startDay.Value.Ticks, DateTimeKind.Utc);
-                            feedback += $"\tParsed date of {day.Value} to {startDay:u}\n";
-                        }
-
-                        if (startDay != null) {
-                            foreach (string format in dayFormats) {
-                                if (DateTime.TryParseExact(day.Value, format, null, style, out DateTime iter) == true) {
-                                    feedback += $"\tParsed date of `{day.Value}` using format `{format}` => {iter:u}\n";
-                                    startDay = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
-                                    endDay = new DateTime(startDay.Value.Ticks, DateTimeKind.Utc);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (startDay == null || endDay == null) {
-                        feedback += $"Not parsing time, no day\n";
-                        continue;
-                    }
-
-                    bool parsedStart = false;
-                    if (start != null) {
-                        foreach (string format in timeFormats) {
-                            if (DateTime.TryParseExact(start.Value.PadLeft(2, '0'), format, null, style, out DateTime iter) == true) {
-                                parsedStart = true;
-                                iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
-                                feedback += $"\tParsed time of `{start.Value}` using format `{format}` => {iter:u}\n";
-
-                                startDay = startDay.Value.AddHours(iter.Hour);
-                                startDay = startDay.Value.AddMinutes(iter.Minute);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (parsedStart == false) {
-                        feedback += $"failed to parse a start time\n";
-                        startDay = endDay = null;
-                        continue;
-                    }
-
-                    bool parsedEnd = false;
-                    if (end != null) {
-                        foreach (string format in timeFormats) {
-                            if (DateTime.TryParseExact(end.Value.PadLeft(2, '0'), format, null, style, out DateTime iter) == true) {
-                                parsedEnd = true;
-                                iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
-                                feedback += $"\tParsed time of `{end.Value}` using format `{format}` => {iter:u}\n";
-
-                                endDay = endDay.Value.AddHours(iter.Hour);
-                                endDay = endDay.Value.AddMinutes(iter.Minute);
-
-                                // for reservation that go over a utc day, they'll be input as @ 23 - 01 UTC
-                                // which would be the previous day, so we take one away from the day
-                                if (startDay != null && endDay <= startDay) {
-                                    endDay = endDay.Value.AddDays(1);
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-
-                    if (parsedEnd == false) {
-                        feedback += $"failed to parse end time\n";
-                        startDay = endDay = null;
-                        continue;
-                    }
-
-                    break;
-                } else {
-                    feedback += $"no match using Regex `{reg}`\n";
-                }
-            }
-
-            return (startDay, endDay);
-        }
 
     }
+
 }

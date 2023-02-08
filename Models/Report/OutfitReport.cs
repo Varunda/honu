@@ -46,6 +46,9 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<ExpEvent> Experience { get; set; } = new List<ExpEvent>();
 
+        /// <summary>
+        ///     Vehicle destroy events that tracked characters got during the period of the report
+        /// </summary>
         public List<VehicleDestroyEvent> VehicleDestroy { get; set; } = new();
 
         /// <summary>
@@ -58,6 +61,13 @@ namespace watchtower.Models.Report {
         ///     the tracked character participated in
         /// </summary>
         public List<PlayerControlEvent> PlayerControl { get; set; } = new List<PlayerControlEvent>();
+
+        /// <summary>
+        ///     List of achievements earned by tracked characters
+        /// </summary>
+        public List<AchievementEarnedEvent> AchievementsEarned { get; set; } = new();
+
+        public List<Achievement> Achievements { get; set; } = new();
 
         /// <summary>
         ///     Lise of all facilities that may show up in a report, used to save API calls

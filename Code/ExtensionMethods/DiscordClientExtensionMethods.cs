@@ -42,5 +42,16 @@ namespace watchtower.Code.ExtensionMethods {
             }
         }
 
+        /// <summary>
+        ///     Try to get a <see cref="DiscordChannel"/> of a <see cref="DiscordGuild"/>
+        ///     returning <c>null</c> if it isn't found
+        /// </summary>
+        /// <param name="guild"></param>
+        /// <param name="channelID"></param>
+        /// <returns></returns>
+        public static DiscordChannel? TryGetChannel(this DiscordGuild guild, ulong channelID) {
+            return guild.GetChannel(channelID);
+        }
+
     }
 }

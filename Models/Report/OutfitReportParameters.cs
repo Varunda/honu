@@ -48,6 +48,8 @@ namespace watchtower.Models.Report {
         /// </summary>
         public bool IncludeTeamkilled { get; set; } = false;
 
+        public bool IncludeAchievementsEarned { get; set; } = false;
+
         /// <summary>
         ///     What character IDs were included, this does not include the characters in outfits,
         ///     only the ones added by the generator string

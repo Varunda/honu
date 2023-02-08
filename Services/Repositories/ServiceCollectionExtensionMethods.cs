@@ -81,6 +81,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ISheetsReader<PsbPracticeContact>, PsbPracticeContactReader>();
             services.AddSingleton<ISheetsReader<PsbOvOContact>, PsbOvOContactReader>();
             services.AddSingleton<ISheetsReader<PsbCalendarEntry>, PsbCalendarEntryReader>();
+            services.AddSingleton<PsbReservationRepository>();
         }
 
     }

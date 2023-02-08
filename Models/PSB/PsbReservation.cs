@@ -45,4 +45,17 @@ namespace watchtower.Models.PSB {
         public string Details { get; set; } = "";
 
     }
+
+    public class PsbBaseBooking {
+
+        public int FacilityID { get; set; }
+
+        public PsFacility? Facility { get; set; } = null;
+
+        public DateTime Start { get; set; }
+
+        public DateTime End { get; set; }
+
+    }
+
 }

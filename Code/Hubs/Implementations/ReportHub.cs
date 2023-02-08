@@ -42,6 +42,8 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly RealtimeReconnectDbStore _ReconnectDb;
         private readonly VehicleDestroyDbStore _VehicleDestroyDb;
         private readonly ExperienceTypeRepository _ExperienceTypeRepository;
+        private readonly AchievementEarnedDbStore _AchievementEarnedDbStore;
+        private readonly AchievementRepository _AchievementRepository;
         private readonly IEventHandler _EventHandler;
 
         private readonly ReportRepository _ReportRepository;
@@ -54,7 +56,8 @@ namespace watchtower.Code.Hubs.Implementations {
             FacilityPlayerControlDbStore playerControlDb, IFacilityDbStore facDb,
             ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb,
             ItemCategoryRepository itemCategoryRepository, VehicleDestroyDbStore vehicleDestroyDb,
-            IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository) {
+            IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository,
+            AchievementEarnedDbStore achievementEarnedDbStore, AchievementRepository achievementRepository) {
 
             _Logger = logger;
             _Cache = cache;
@@ -75,6 +78,8 @@ namespace watchtower.Code.Hubs.Implementations {
             _VehicleDestroyDb = vehicleDestroyDb;
             _EventHandler = eventHandler;
             _ExperienceTypeRepository = experienceTypeRepository;
+            _AchievementEarnedDbStore = achievementEarnedDbStore;
+            _AchievementRepository = achievementRepository;
         }
 
         public async Task GenerateReport(string generator) {
@@ -126,6 +131,10 @@ namespace watchtower.Code.Hubs.Implementations {
                     await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
                     await Clients.Caller.UpdateFacilities(report.Facilities);
                     await Clients.Caller.UpdateReconnects(report.Reconnects);
+                    if (report.Parameters.IncludeAchievementsEarned == true) {
+                        await Clients.Caller.UpdateAchievementEarned(report.AchievementsEarned);
+                        await Clients.Caller.UpdateAchievements(report.Achievements);
+                    }
                     await Clients.Caller.UpdateState(OutfitReportState.DONE);
                     return;
                 }
@@ -232,6 +241,28 @@ namespace watchtower.Code.Hubs.Implementations {
                         _Logger.LogError(ex, $"error loading vehicle destroy events for {charID}");
                         await Clients.Caller.SendError($"error while getting vehicle destroy events for {charID}: {ex.Message}");
                     }
+                }
+                
+                if (report.Parameters.IncludeAchievementsEarned == true) {
+                    await Clients.Caller.UpdateState(OutfitReportState.GETTING_ACHIEVEMENT_EARNED);
+
+                    HashSet<int> achievementIDs = new();
+                    foreach (string charID in chars) {
+                        try {
+                            List<AchievementEarnedEvent> events = await _AchievementEarnedDbStore.GetByCharacterIDAndRange(charID, parms.PeriodStart, parms.PeriodEnd);
+                            foreach (AchievementEarnedEvent ev in events) {
+                                achievementIDs.Add(ev.AchievementID);
+                            }
+                            await Clients.Caller.SendAchievementEarned(charID, events);
+                            report.AchievementsEarned.AddRange(events);
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"error loading achievements earned for {charID}");
+                            await Clients.Caller.SendError($"error while getting achievements earned for {charID}: {ex.Message}");
+                        }
+                    }
+
+                    report.Achievements = (await _AchievementRepository.GetAll()).Where(iter => achievementIDs.Contains(iter.ID)).ToList();
+                    await Clients.Caller.UpdateAchievements(report.Achievements);
                 }
 
                 // Get player control
