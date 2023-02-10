@@ -45,11 +45,14 @@ namespace watchtower.Models.PSB {
         /// </summary>
         public string DebugText { get; set; } = "";
 
+        public string MessageLink { get; set; } = "";
+
         public DiscordEmbedBuilder Build(bool debug) {
             DiscordEmbedBuilder builder = new();
             builder.Title = $"Reservation";
+            builder.Url = MessageLink;
 
-            builder.Description = $"Posted by <@{PosterUserId}>\n\n";
+            builder.Description = $"Posted by <@{PosterUserId}>\nLink: {MessageLink}\n\n";
 
             if (Errors.Count > 0) {
                 builder.Color = DiscordColor.Red;

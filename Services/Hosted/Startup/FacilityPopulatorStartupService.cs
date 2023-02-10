@@ -22,7 +22,6 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly ILogger<FacilityPopulatorStartupService> _Logger;
         private readonly FacilityCollection _FacilityCollection;
         private readonly IFacilityDbStore _FacilityDb;
-
         private readonly MapCollection _MapCollection;
         private readonly IMapDbStore _MapDb;
 
@@ -58,6 +57,15 @@ namespace watchtower.Services.Hosted.Startup {
 
                 foreach (PsFacilityLink link in links) {
                     await _MapDb.UpsertLink(link);
+                }
+
+                List<PsMapHex> hexes = await _MapCollection.GetHexes();
+                List<PsMapHex> dbHexes = await _MapDb.GetHexes();
+
+                _Logger.LogInformation($"Census has {hexes.Count} hexes, DB has {dbHexes.Count} hexes");
+
+                foreach (PsMapHex hex in hexes) {
+                    await _MapDb.UpsertHex(hex);
                 }
 
                 _Logger.LogDebug($"Finished in {timer.ElapsedMilliseconds}ms");

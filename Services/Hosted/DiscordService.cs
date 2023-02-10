@@ -417,7 +417,7 @@ namespace watchtower.Services.Hosted {
         /// <param name="args"></param>
         /// <returns></returns>
         private async Task Message_Created(DiscordClient client, MessageCreateEventArgs args) {
-            if (args.Guild.Id != _DiscordOptions.Value.GuildId || args.Channel.Id != _DiscordOptions.Value.ReservationChannelId) {
+            if (args.Guild == null || args.Guild.Id != _DiscordOptions.Value.GuildId || args.Channel.Id != _DiscordOptions.Value.ReservationChannelId) {
                 return;
             }
 

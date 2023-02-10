@@ -20,11 +20,13 @@ namespace watchtower.Services.Census {
             ICensusQueryFactory census, ICensusReader<DirectiveTier> reader)
             : base (logger, "directive_tier", census, reader) {
 
+            /*
             _PatchFile = "./census-patches/directive_tier.json";
             _KeyFunc = (entry) => $"{entry.TreeID}:{entry.TierID}";
             _CopyFunc = (oldEntry, newEntry) => {
                 newEntry.RewardSetID = oldEntry.RewardSetID;
             };
+            */
         }
 
     }

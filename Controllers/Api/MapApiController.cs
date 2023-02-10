@@ -44,7 +44,7 @@ namespace watchtower.Controllers.Api {
             List<PsFacilityLink> links = (await _MapRepository.GetFacilityLinks()).Where(iter => iter.ZoneID == zoneID).ToList();
             List<PsFacility> facs = (await _MapRepository.GetFacilities()).Where(iter => iter.ZoneID == zoneID).ToList();
 
-            ZoneMap map = new ZoneMap() {
+            ZoneMap map = new() {
                 Hexes = hexes,
                 Facilities = facs,
                 Links = links

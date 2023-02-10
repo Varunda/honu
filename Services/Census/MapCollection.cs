@@ -111,15 +111,25 @@ namespace watchtower.Services.Census {
         /// </summary>
         public async Task<List<PsMapHex>> GetHexes() {
             CensusQuery query = _Census.Create("map_hex");
-            query.SetLimit(10000);
+            query.SetLimit(5000);
 
             List<PsMapHex> hexes = new List<PsMapHex>();
 
-            IEnumerable<JToken> result = await query.GetListAsync();
+            for (int i = 0; i < 10; ++i) {
+                query.SetStart(i * 5000);
 
-            foreach (JToken token in result) {
-                PsMapHex hex = _ParseHex(token);
-                hexes.Add(hex);
+                IEnumerable<JToken> result = await query.GetListAsync();
+
+                _Logger.LogDebug($"loaded {result.Count()} on iteration {i}");
+
+                foreach (JToken token in result) {
+                    PsMapHex hex = _ParseHex(token);
+                    hexes.Add(hex);
+                }
+
+                if (result.Count() < 5000) {
+                    break;
+                }
             }
 
             return hexes;
@@ -130,7 +140,7 @@ namespace watchtower.Services.Census {
         /// </summary>
         public async Task<List<PsFacilityLink>> GetFacilityLinks() {
             CensusQuery query = _Census.Create("facility_link");
-            query.SetLimit(10000);
+            query.SetLimit(5000);
 
             List<PsFacilityLink> hexes = new List<PsFacilityLink>();
 
@@ -141,6 +151,7 @@ namespace watchtower.Services.Census {
                 hexes.Add(hex);
             }
 
+            /* Census updated :pogu:
             do {
                 string patch = File.ReadAllText(LINK_PATCH_FILE);
                 JToken json = JToken.Parse(patch);
@@ -158,6 +169,7 @@ namespace watchtower.Services.Census {
                     hexes.Add(hex);
                 }
             } while (false);
+            */
 
             return hexes;
         }

@@ -19,8 +19,10 @@ namespace watchtower.Services.Census {
             ICensusQueryFactory census, ICensusReader<DirectiveTree> reader)
             : base(logger, "directive_tree", census, reader) {
 
+            /*
             _PatchFile = "./census-patches/directive_tree.json";
             _KeyFunc = (entry) => $"{entry.ID}";
+            */
         }
 
     }
