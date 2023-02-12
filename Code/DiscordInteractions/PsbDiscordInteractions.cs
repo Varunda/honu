@@ -270,6 +270,48 @@ namespace watchtower.Code.DiscordInteractions {
 
     public class PsbButtonCommands : ButtonCommandModule {
 
+        public static DiscordButtonComponent REFRESH_RESERVATION(ulong msgID) => new(ButtonStyle.Secondary, $"@refresh-reservation.{msgID}", "Refresh");
+
+        public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
+        public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
+        public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
+
+        [ButtonCommand("refresh-reservation")]
+        public async Task RefreshReservation(ButtonContext ctx, ulong msgID) {
+            await ctx.Interaction.CreateDeferred(true);
+
+            if (ctx.Message == null) {
+                _Logger.LogError($"missing message for refresh-reservation");
+                await ctx.Interaction.EditResponseText($"Error: missing message?");
+                return;
+            }
+
+            DiscordGuild? guild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (guild == null) {
+                _Logger.LogWarning($"cannot refresh-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
+                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
+                return;
+            }
+
+            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ReservationChannelId);
+            if (channel == null) {
+                _Logger.LogWarning($"cannot refresh-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} was not found");
+                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} is null");
+                return;
+            }
+
+            DiscordMessage? msg = await channel.TryGetMessage(msgID);
+            if (msg == null) {
+                _Logger.LogWarning($"cannot refresh-reservation {msgID}: message was null");
+                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: message was null");
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
+
+            await ctx.Message.ModifyAsync(Optional.FromValue(parsed.Build(false).Build()));
+            await ctx.Interaction.EditResponseText("Refreshed!");
+        }
 
     }
 

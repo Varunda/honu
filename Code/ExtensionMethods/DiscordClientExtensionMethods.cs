@@ -53,5 +53,13 @@ namespace watchtower.Code.ExtensionMethods {
             return guild.GetChannel(channelID);
         }
 
+        public static async Task<DiscordMessage?> TryGetMessage(this DiscordChannel channel, ulong msgID) {
+            try {
+                return await channel.GetMessageAsync(msgID);
+            } catch (NotFoundException) {
+                return null;
+            }
+        }
+
     }
 }

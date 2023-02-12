@@ -16,6 +16,11 @@ namespace watchtower.Models.PSB {
         public string Input { get; set; } = "";
 
         /// <summary>
+        ///     ID of the message that this reservation was created for
+        /// </summary>
+        public ulong MessageId { get; set; }
+
+        /// <summary>
         ///     ID of the discord user that made the post
         /// </summary>
         public ulong PosterUserId { get; set; }

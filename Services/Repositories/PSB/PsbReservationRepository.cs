@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using watchtower.Code.DiscordInteractions;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -66,6 +67,7 @@ namespace watchtower.Services.Repositories.PSB {
             ParsedPsbReservation parsed = new();
             parsed.Reservation = res;
             parsed.Input = message.Content;
+            parsed.MessageId = message.Id;
             parsed.PosterUserId = message.Author.Id;
             parsed.MessageLink = message.JumpLink.ToString();
 
@@ -126,9 +128,15 @@ namespace watchtower.Services.Repositories.PSB {
                     feedback += timefeedback;
 
                     if (r != null && r2 != null) {
-                        feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
                         res.Start = r.Value;
                         res.End = r2.Value;
+
+                        if (res.End < res.Start) {
+                            feedback += $"\tend is before start, adding a day\n";
+                            res.End = res.End.AddDays(1);
+                        }
+
+                        feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
                     } else {
                         errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{timefeedback}");
                     }
@@ -182,6 +190,7 @@ namespace watchtower.Services.Repositories.PSB {
             msg.GuildID = _DiscordOptions.Value.GuildId;
 
             msg.Embeds.Add(parsed.Build(debug));
+            msg.Components.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
 
             _DiscordMessageQueue.Queue(msg);
         }
@@ -421,8 +430,7 @@ namespace watchtower.Services.Repositories.PSB {
                     iter = DateTime.SpecifyKind(iter, DateTimeKind.Utc);
                     feedback += $"\tParsed time of `{time}` using format `{format}` => {iter:u}\n";
 
-                    iter = day.AddHours(iter.Hour);
-                    iter = iter.AddMinutes(iter.Minute);
+                    iter = day.AddHours(iter.Hour).AddMinutes(iter.Minute);
 
                     return iter;
                 }

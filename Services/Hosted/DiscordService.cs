@@ -104,6 +104,7 @@ namespace watchtower.Services.Hosted {
             });
             _ButtonCommands.RegisterButtons<SubscribeButtonCommands>();
             _ButtonCommands.RegisterButtons<LookupButtonCommands>();
+            _ButtonCommands.RegisterButtons<PsbButtonCommands>();
 
             _ButtonCommands.ButtonCommandExecuted += Button_Command_Executed;
             _ButtonCommands.ButtonCommandErrored += Button_Command_Error;
@@ -318,7 +319,7 @@ namespace watchtower.Services.Hosted {
         /// <param name="args"></param>
         /// <returns></returns>
         private Task Button_Command_Error(ButtonCommandsExtension ext, ButtonCommandErrorEventArgs args) {
-            _Logger.LogError($"Error executing {args.CommandName}: {args.Exception.Message} :: {args.Exception.InnerException?.Message}");
+            _Logger.LogError($"Error executing {args.CommandName}: {args.Exception} :: {args.Exception.InnerException?.Message}");
 
             return Task.CompletedTask;
         }
