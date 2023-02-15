@@ -270,12 +270,24 @@ namespace watchtower.Code.DiscordInteractions {
 
     public class PsbButtonCommands : ButtonCommandModule {
 
+        /// <summary>
+        ///     Button that when pressed will refresh the message the button is attached to
+        ///     with a re-parsed reservation from the <see cref="DiscordMessage"/> with
+        ///     <see cref="SnowflakeObject.Id"/> of <paramref name="msgID"/>
+        /// </summary>
+        /// <param name="msgID">ID of the message to pull the information from</param>
+        /// <returns></returns>
         public static DiscordButtonComponent REFRESH_RESERVATION(ulong msgID) => new(ButtonStyle.Secondary, $"@refresh-reservation.{msgID}", "Refresh");
 
         public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
 
+        /// <summary>
+        ///     Button command to refresh the parsing of a reservation. Uses the configured reservations channel
+        /// </summary>
+        /// <param name="ctx">provided context</param>
+        /// <param name="msgID">ID of the message to be re-parsed</param>
         [ButtonCommand("refresh-reservation")]
         public async Task RefreshReservation(ButtonContext ctx, ulong msgID) {
             await ctx.Interaction.CreateDeferred(true);

@@ -318,10 +318,23 @@ namespace watchtower.Services.Hosted {
         /// <param name="ext"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        private Task Button_Command_Error(ButtonCommandsExtension ext, ButtonCommandErrorEventArgs args) {
-            _Logger.LogError($"Error executing {args.CommandName}: {args.Exception} :: {args.Exception.InnerException?.Message}");
+        private async Task Button_Command_Error(ButtonCommandsExtension ext, ButtonCommandErrorEventArgs args) {
+            _Logger.LogError($"Error executing button command {args.CommandName}: {args.Exception} :: {args.Exception.InnerException?.Message}");
 
-            return Task.CompletedTask;
+            try {
+                // if the response has already started, this won't be null, indicating to instead update the response
+                DiscordMessage? msg = await args.Context.Interaction.GetOriginalResponseAsync();
+
+                if (msg == null) {
+                    // if it is null, then no respons has been started, so one is created
+                    // if you attempt to create a response for one that already exists, then a 400 is thrown
+                    await args.Context.Interaction.CreateImmediateText($"Error executing button command: {args.Exception.Message}", true);
+                } else {
+                    await args.Context.Interaction.EditResponseText($"Error executing button command: {args.Exception.Message}");
+                }
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"error updating interaction response with error");
+            }
         }
 
         /// <summary>

@@ -117,6 +117,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
             if (_Cache.TryGetValue(cacheKey, out OutfitReport? report) == true) {
                 if (report != null) {
+                    await Clients.Caller.SendMessage($"report is cached");
                     //_Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");
                     await Clients.Caller.SendParameters(report.Parameters);
                     await Clients.Caller.UpdateSessions(report.Sessions);
@@ -137,11 +138,17 @@ namespace watchtower.Code.Hubs.Implementations {
                     }
                     await Clients.Caller.UpdateState(OutfitReportState.DONE);
                     return;
+                } else {
+                    await Clients.Caller.SendMessage($"report {cacheKey} was cached, but returned null from cache?");
                 }
             }
 
             report = new OutfitReport();
             report.Parameters = parms;
+
+            // will the report be cached after generation? 
+            // set to false when a caught exception occurs during generation
+            bool doCache = true;
 
             try {
                 bool isValid = await IsValid(parms);
@@ -178,7 +185,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateSessions(report.Sessions);
 
                 if (report.Sessions.Count == 0) {
-                    await Clients.Caller.SendError($"found 0 sessions, not data to load");
+                    await Clients.Caller.SendError($"found 0 sessions, no data to load");
                     return;
                 }
 
@@ -219,6 +226,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                         await Clients.Caller.SendDeaths(charID, deaths.ToList());
                     } catch (Exception ex) {
+                        doCache = false;
                         _Logger.LogError(ex, $"error loading kill//death events for {charID}");
                         await Clients.Caller.SendError($"error while getting kill and death events for {charID}: {ex.Message}");
                     }
@@ -238,6 +246,7 @@ namespace watchtower.Code.Hubs.Implementations {
                         await Clients.Caller.SendVehicleDestroy(charID, events);
                         report.VehicleDestroy.AddRange(events);
                     } catch (Exception ex) {
+                        doCache = false;
                         _Logger.LogError(ex, $"error loading vehicle destroy events for {charID}");
                         await Clients.Caller.SendError($"error while getting vehicle destroy events for {charID}: {ex.Message}");
                     }
@@ -256,6 +265,7 @@ namespace watchtower.Code.Hubs.Implementations {
                             await Clients.Caller.SendAchievementEarned(charID, events);
                             report.AchievementsEarned.AddRange(events);
                         } catch (Exception ex) {
+                            doCache = false;
                             _Logger.LogError(ex, $"error loading achievements earned for {charID}");
                             await Clients.Caller.SendError($"error while getting achievements earned for {charID}: {ex.Message}");
                         }
@@ -319,6 +329,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
                 await Clients.Caller.UpdateFacilities(report.Facilities);
 
+                // load the world this report is on by using the first character's world ID
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_RECONNETS);
                 short? worldID = null;
                 foreach (PsCharacter c in report.Characters) {
@@ -334,9 +345,15 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 await Clients.Caller.UpdateState(OutfitReportState.DONE);
 
-                _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
-                    SlidingExpiration = TimeSpan.FromMinutes(30)
-                });
+                // don't cache reports that didn't fully generate, as the data is not complete
+                if (doCache == true) {
+                    await Clients.Caller.SendMessage($"report will be cached for future calls");
+                    _Cache.Set(cacheKey, report, new MemoryCacheEntryOptions() {
+                        SlidingExpiration = TimeSpan.FromMinutes(30)
+                    });
+                } else {
+                    await Clients.Caller.SendMessage($"report is not cached: an exception was thrown while loading the data");
+                }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"generic error in report generation. using generator string '{generator}'");
                 await Clients.Caller.SendError(ex.Message);

@@ -53,6 +53,15 @@ namespace watchtower.Code.ExtensionMethods {
             return guild.GetChannel(channelID);
         }
 
+        /// <summary>
+        ///     Try to get a message within a client, catching <see cref="NotFoundException"/> and returning null instead
+        /// </summary>
+        /// <param name="channel">Extension instance</param>
+        /// <param name="msgID">ID of the message to load</param>
+        /// <returns>
+        ///     A <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/> of <paramref name="msgID"/>,
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
         public static async Task<DiscordMessage?> TryGetMessage(this DiscordChannel channel, ulong msgID) {
             try {
                 return await channel.GetMessageAsync(msgID);

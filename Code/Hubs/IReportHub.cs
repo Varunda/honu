@@ -53,10 +53,28 @@ namespace watchtower.Code.Hubs {
         /// <returns></returns>
         Task SendExp(string characterID, List<ExpEvent> events);
 
+        /// <summary>
+        ///     Send the <see cref="VehicleDestroyEvent"/>s a single character performed
+        /// </summary>
+        /// <param name="characterID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
         Task SendVehicleDestroy(string characterID, List<VehicleDestroyEvent> events);
 
+        /// <summary>
+        ///     Send the <see cref="PlayerControlEvent"/>s a single character did
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
         Task SendPlayerControl(string charID, List<PlayerControlEvent> events);
 
+        /// <summary>
+        ///     Send the <see cref="AchievementEarnedEvent"/>s a single character earned
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="events"></param>
+        /// <returns></returns>
         Task SendAchievementEarned(string charID, List<AchievementEarnedEvent> events);
 
         /// <summary>
@@ -132,6 +150,13 @@ namespace watchtower.Code.Hubs {
         /// </summary>
         /// <param name="err">Error to be sent</param>
         Task SendError(string err);
+
+        /// <summary>
+        ///     Send a message to the client
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
+        Task SendMessage(string msg);
 
     }
 }

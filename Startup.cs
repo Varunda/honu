@@ -42,6 +42,7 @@ using watchtower.Models.Alert;
 using watchtower.Code.Constants;
 using System.Collections.Generic;
 using watchtower.Services.Hosted.PSB;
+using watchtower.Code.DiscordInteractions;
 
 //using honu_census;
 
@@ -213,6 +214,7 @@ namespace watchtower {
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddHostedService<DiscordService>();
+                services.AddHonuDiscord();
             }
 
             services.AddTransient<CurrentHonuAccount>();
