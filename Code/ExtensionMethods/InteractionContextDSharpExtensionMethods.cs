@@ -8,6 +8,9 @@ using watchtower.Services;
 
 namespace watchtower.Code.ExtensionMethods {
 
+    /// <summary>
+    ///     helper extensions to make responses easier
+    /// </summary>
     public static class InteractionContextDSharpExtensionMethods {
 
         /// <summary>
@@ -35,6 +38,11 @@ namespace watchtower.Code.ExtensionMethods {
             );
         }
 
+        /// <summary>
+        ///     Edit a response with an embed
+        /// </summary>
+        /// <param name="ctx">extension instance</param>
+        /// <param name="embed">embed to edit into the response</param>
         public static Task EditResponseEmbed(this BaseContext ctx, DiscordEmbed embed) {
             return ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(embed));
         }
@@ -97,10 +105,20 @@ namespace watchtower.Code.ExtensionMethods {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbed(builder));
         }
 
+        /// <summary>
+        ///     Edit a response with a list of embeds
+        /// </summary>
+        /// <param name="ctx">extension instance</param>
+        /// <param name="embeds">embeds to edit into the response</param>
         public static Task EditResponseEmbed(this DiscordInteraction ctx, params DiscordEmbed[] embeds) {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbeds(embeds));
         }
 
+        /// <summary>
+        ///     Edit a response with a list of embeds
+        /// </summary>
+        /// <param name="ctx">extension instance</param>
+        /// <param name="embeds">embeds to edit into the response</param>
         public static Task EditResponseEmbed(this DiscordInteraction ctx, IReadOnlyList<DiscordEmbed> embeds) {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbeds(embeds));
         }
@@ -118,10 +136,9 @@ namespace watchtower.Code.ExtensionMethods {
         /// <summary>
         ///     Edit a deferred response with an error message as an embed
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="error"></param>
-        /// <param name="title"></param>
-        /// <returns></returns>
+        /// <param name="ctx">extension instance</param>
+        /// <param name="error">description of the error, goes into the description of the embed</param>
+        /// <param name="title">optional title, defaults to "Error"</param>
         public static Task EditResponseErrorEmbed(this DiscordInteraction ctx, string error, string? title = null) {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbed(
                 new DiscordEmbedBuilder()

@@ -11,7 +11,8 @@ using watchtower.Services.Db;
 namespace watchtower.Services.Queues {
 
     /// <summary>
-    ///     A database buffer of characters to perform updates on, after Census has updated their data
+    ///     A database buffer of characters to perform updates on, after Census has updated their data.
+    ///     This is different from usual queues, as this one is stored in a DB, not in memory
     /// </summary>
     public class LogoutUpdateBuffer {
 

@@ -1,4 +1,5 @@
-﻿using DSharpPlus.ButtonCommands;
+﻿using DSharpPlus;
+using DSharpPlus.ButtonCommands;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.Extensions.Logging;
@@ -84,12 +85,12 @@ namespace watchtower.Code.DiscordInteractions {
         }
 
         public enum StatusWorlds : int {
-            [ChoiceName("Connery")] Connery = 1,
-            [ChoiceName("Emerald")] Emerald = 17,
-            [ChoiceName("Cobalt")] Cobalt = 10,
-            [ChoiceName("Miller")] Miller = 13,
-            [ChoiceName("SolTech")] SolTech = 40,
-            [ChoiceName("Jaeger")] Jaeger = 19
+            [ChoiceName("Connery")] Connery = World.Connery,
+            [ChoiceName("Emerald")] Emerald = World.Emerald,
+            [ChoiceName("Cobalt")] Cobalt = World.Cobalt,
+            [ChoiceName("Miller")] Miller = World.Miller,
+            [ChoiceName("SolTech")] SolTech = World.SolTech,
+            [ChoiceName("Jaeger")] Jaeger = World.Jaeger
         }
 
         /// <summary>
@@ -317,11 +318,16 @@ namespace watchtower.Code.DiscordInteractions {
                 }
             }
 
-
             interactionBuilder.AddEmbed(builder);
+
+            // only add the dropdown to remove a subscription if there are subs to remove
+            //      if they are in DMs
+            //     or if in a channel, only if they have manage channel perms
             if (options.Count > 0) {
-                DiscordSelectComponent select = new("@remove-sub", "Remove subscription", options);
-                interactionBuilder.AddComponents(select);
+                if (ctx.Channel == null || (ctx.Member != null && ctx.Channel != null && ctx.Member.Permissions.HasFlag(Permissions.ManageChannels))) {
+                    DiscordSelectComponent select = new("@remove-sub", "Remove subscription", options);
+                    interactionBuilder.AddComponents(select);
+                }
             }
 
             await ctx.EditResponseAsync(interactionBuilder);
