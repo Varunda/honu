@@ -5,30 +5,32 @@ using System.Threading.Tasks;
 
 namespace watchtower.Code.Constants {
 
+    /// <summary>
+    ///     metagame event constants
+    /// </summary>
     public class MetagameEvent {
 
         public const int AERIAL_ANOMALY_INDAR = 228;
-
         public const int AERIAL_ANOMALY_HOSSIN = 229;
-
         public const int AERIAL_ANOMALY_AMERISH = 230;
-
         public const int AERIAL_ANOMALY_ESAMIR = 231;
-
         public const int AERIAL_ANOMALY_OSHUR = 232;
 
         public const int GHOST_BASTION_INDAR = 242;
-
         public const int GHOST_BASTION_HOSSIN = 243;
-
         public const int GHOST_BASTION_AMERISH = 244;
-
         public const int GHOST_BASTION_ESAMIR = 245;
-
         public const int GHOST_BASTION_OSHUR = 246; // probably
 
+        public const int SUDDEN_DEATH_INDAR = 236;
+        public const int SUDDEN_DEATH_HOSSIN = 237;
+        public const int SUDDEN_DEATH_AMERISH = 238;
+        public const int SUDDEN_DEATH_ESAMIR = 239;
+        public const int SUDDEN_DEATH_OSHUR = 240;
+        public const int SUDDEN_DEATH_UNKNOWN = 241;
+
         /// <summary>
-        /// Get how long a metagame event will last
+        ///     Get how long a metagame event will last
         /// </summary>
         /// <param name="metagameEventID">ID of the metagame event</param>
         /// <returns>
@@ -42,6 +44,10 @@ namespace watchtower.Code.Constants {
 
             if (IsAerialAnomaly(metagameEventID)) {
                 return TimeSpan.FromMinutes(30);
+            }
+
+            if (IsSuddentDeath(metagameEventID)) {
+                return TimeSpan.FromMinutes(15);
             }
 
             return metagameEventID switch {
@@ -72,12 +78,31 @@ namespace watchtower.Code.Constants {
                 || metagameEventID == AERIAL_ANOMALY_OSHUR;
         }
 
+        /// <summary>
+        ///     Is this metagame event for a ghost bastion?
+        /// </summary>
+        /// <param name="metagameEventID"></param>
+        /// <returns></returns>
         public static bool IsGhostBastion(int metagameEventID) {
             return metagameEventID == GHOST_BASTION_INDAR
                 || metagameEventID == GHOST_BASTION_HOSSIN
                 || metagameEventID == GHOST_BASTION_AMERISH
                 || metagameEventID == GHOST_BASTION_ESAMIR
                 || metagameEventID == GHOST_BASTION_OSHUR;
+        }
+
+        /// <summary>
+        ///     Is this metagame event for a suddent death?
+        /// </summary>
+        /// <param name="metagameEventID"></param>
+        /// <returns></returns>
+        public static bool IsSuddentDeath(int metagameEventID) {
+            return metagameEventID == SUDDEN_DEATH_INDAR
+                || metagameEventID == SUDDEN_DEATH_HOSSIN
+                || metagameEventID == SUDDEN_DEATH_AMERISH
+                || metagameEventID == SUDDEN_DEATH_ESAMIR
+                || metagameEventID == SUDDEN_DEATH_OSHUR
+                || metagameEventID == SUDDEN_DEATH_UNKNOWN;
         }
 
     }

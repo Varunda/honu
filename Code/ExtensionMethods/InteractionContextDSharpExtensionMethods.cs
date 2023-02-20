@@ -115,5 +115,22 @@ namespace watchtower.Code.ExtensionMethods {
             return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().WithContent(message));
         }
 
+        /// <summary>
+        ///     Edit a deferred response with an error message as an embed
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="error"></param>
+        /// <param name="title"></param>
+        /// <returns></returns>
+        public static Task EditResponseErrorEmbed(this DiscordInteraction ctx, string error, string? title = null) {
+            return ctx.EditOriginalResponseAsync(new DiscordWebhookBuilder().AddEmbed(
+                new DiscordEmbedBuilder()
+                    .WithTitle(title ?? "Error")
+                    .WithDescription(error)
+                    .WithColor(DiscordColor.Red)
+                )
+            );
+        }
+
     }
 }

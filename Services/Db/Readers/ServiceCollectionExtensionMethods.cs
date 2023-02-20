@@ -88,6 +88,8 @@ namespace watchtower.Services.Db.Readers {
 
             services.AddSingleton<IDataReader<SessionEndSubscription>, SessionEndSubscriptionReader>();
             services.AddSingleton<IDataReader<ItemAddedEvent>, ItemAddedEventReader>();
+            services.AddSingleton<IDataReader<AlertEndSubscription>, AlertEndSubscriptionReader>();
+            services.AddSingleton<IDataReader<ContinentLockEntry>, ContinentLockEntryReader>();
         }
 
     }

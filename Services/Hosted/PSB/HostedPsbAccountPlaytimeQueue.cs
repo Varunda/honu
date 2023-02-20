@@ -40,7 +40,6 @@ namespace watchtower.Services.Hosted.PSB {
 
                     _Logger.LogTrace($"updating playtime for {entry.AccountID}");
 
-                    //PsbNamedAccount? account = await _PsbAccountDb.GetByID(entry.AccountID);
                     PsbAccount? account = await _PsbAccountRepository.GetByID(entry.AccountID);
                     if (account == null) {
                         _Logger.LogError($"Missing {nameof(PsbAccount)} {entry.AccountID} when updating playtime");
@@ -55,8 +54,10 @@ namespace watchtower.Services.Hosted.PSB {
                     _Logger.LogTrace($"account {account.ID} has played {account.SecondsUsage} seconds");
 
                     await _PsbAccountRepository.UpdateByID(account.ID, account);
-                } catch (Exception ex) {
+                } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"error while updating psb account playtime");
+                } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
+                    _Logger.LogInformation($"Stop requested with {_Queue.Count} entries left");
                 }
             }
         }

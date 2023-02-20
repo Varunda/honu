@@ -68,6 +68,13 @@ namespace watchtower.Code.ExtensionMethods {
             return unchecked((ulong)reader.GetInt64(field));
         }
 
+        public static ulong? GetNullableUInt64(this NpgsqlDataReader reader, string field) {
+            if (reader.IsDBNull(field)) {
+                return null;
+            }
+            return unchecked((ulong)reader.GetInt64(field));
+        }
+
         /// <summary>
         /// Get a <see cref="uint"/> from a column
         /// </summary>

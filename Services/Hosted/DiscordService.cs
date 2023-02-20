@@ -253,7 +253,7 @@ namespace watchtower.Services.Hosted {
             if (guild == null) {
                 _Logger.LogError($"Failed to get guild {_DiscordOptions.Value.GuildId} (what was passed in the options)");
             } else {
-                _Logger.LogInformation($"Successfully found {guild.Name}/{guild.Id}");
+                _Logger.LogInformation($"Successfully found home guild '{guild.Name}'/{guild.Id}");
             }
 
             DiscordChannel? channel = await sender.GetChannelAsync(_DiscordOptions.Value.ChannelId);
@@ -366,7 +366,12 @@ namespace watchtower.Services.Hosted {
             _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
             try {
                 // if the response has already started, this won't be null, indicating to instead update the response
-                DiscordMessage? msg = await args.Context.GetOriginalResponseAsync();
+                DiscordMessage? msg = null;
+                try {
+                    msg = await args.Context.GetOriginalResponseAsync();
+                } catch (NotFoundException) {
+                    msg = null;
+                }
 
                 if (msg == null) {
                     // if it is null, then no respons has been started, so one is created

@@ -57,6 +57,15 @@ namespace watchtower.Services.Hosted {
                     CharacterSessionStartQueueEntry entry = await _Queue.Dequeue(stoppingToken);
                     timer.Restart();
 
+                    // if the character is already online, no need to start the session (which will set Online true)
+                    // while the queue doesn't allow duplicate character IDs, there is a period of time where the entry is queued,
+                    //      that character performs and event while not in the queue, and gets queued again
+                    TrackedPlayer? p = CharacterStore.Get().GetByCharacterID(entry.CharacterID);
+                    if (p != null && p.Online == true) {
+                        //_Logger.LogTrace($"character {entry.CharacterID} is already online, dropping from queue. Session ID {p.SessionID}");
+                        continue;
+                    }
+
                     // If Honu has a single entry in the queue, don't constantly loop thru it, take a breather
                     if (_LastCharacterId == entry.CharacterID) {
                         await Task.Delay(100, stoppingToken);

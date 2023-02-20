@@ -2,6 +2,9 @@
 
 namespace watchtower.Models.Db {
 
+    /// <summary>
+    ///     When a Discord user would like to get notifications about a session ending, they will have one of these
+    /// </summary>
     public class SessionEndSubscription {
 
         /// <summary>

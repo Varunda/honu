@@ -89,6 +89,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<WeaponStatTopDbStore>();
             services.AddSingleton<PopulationDbStore>();
             services.AddSingleton<SessionEndSubscriptionDbStore>();
+            services.AddSingleton<AlertEndSubscriptionDbStore>();
+            services.AddSingleton<ContinentLockDbStore>();
         }
 
     }

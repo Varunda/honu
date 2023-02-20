@@ -112,6 +112,7 @@ namespace watchtower.Services.Repositories {
             if (total > 10 && counts.Count > 0) {
                 KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();
 
+                // if one faction a number of facilities equal to the number of facilities in a zone, they own it
                 // Esamir has 2 disabled regions
                 if (majority.Value >= total - 2) {
                     return majority.Key;

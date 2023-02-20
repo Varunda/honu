@@ -15,6 +15,9 @@ namespace watchtower.Services.Repositories {
 
         private readonly ILogger<WorldDataRepository> _Logger;
 
+        /// <summary>
+        ///     Cache of world data, following the format {WORLD_ID}#{DURATION}, where DURATION is 60/120
+        /// </summary>
         private ConcurrentDictionary<string, WorldData> _WorldData = new();
 
         public WorldDataRepository(ILogger<WorldDataRepository> logger) {

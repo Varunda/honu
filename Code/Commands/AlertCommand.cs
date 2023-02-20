@@ -9,6 +9,7 @@ using watchtower.Models.Alert;
 using watchtower.Models.Census;
 using watchtower.Models.RealtimeAlert;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Commands {
@@ -24,6 +25,7 @@ namespace watchtower.Code.Commands {
         private readonly AlertPopulationDbStore _PopulationDb;
         private readonly AlertPopulationRepository _PopulationRepository;
         private readonly RealtimeAlertRepository _RealtimeAlertRepository;
+        private readonly AlertEndQueue _AlertEndQueue;
 
         public AlertCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<AlertCommand>>();
@@ -34,6 +36,7 @@ namespace watchtower.Code.Commands {
             _PopulationDb = services.GetRequiredService<AlertPopulationDbStore>();
             _PopulationRepository = services.GetRequiredService<AlertPopulationRepository>();
             _RealtimeAlertRepository = services.GetRequiredService<RealtimeAlertRepository>();
+            _AlertEndQueue = services.GetRequiredService<AlertEndQueue>();
         }
 
         public async Task Rebuild(long alertID) {
@@ -115,6 +118,18 @@ namespace watchtower.Code.Commands {
         public void RealtimeClear() {
             _RealtimeAlertRepository.Clear();
             _Logger.LogInformation($"Cleared realtime alert matches");
+        }
+
+        public async Task FakeEnd(long ID) {
+            PsAlert? alert = await _AlertRepository.GetByID(ID);
+            if (alert == null) {
+                _Logger.LogWarning($"failed to find alert {ID}");
+                return;
+            }
+
+            _AlertEndQueue.Queue(new() {
+                Alert = alert
+            });
         }
 
     }

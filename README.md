@@ -31,7 +31,7 @@ PostgreSQL | database
     - `git clone https://github.com/varunda/honu.git`
 1. download and install PostgreSQL 13.3 or higher
     - earlier versions probably work but I haven't tested them
-1. setup a `ps2` database for carl-wt to create all the tables for
+1. setup a `ps2` database for honu to create all the tables for
     - Linux:
         - log into user that has permissions in the default psql server 
             - `$ sudo -iu postgres` 
@@ -55,7 +55,7 @@ PostgreSQL | database
     - done!
 1. build the backend server
     - `dotnet build`
-1. run carl-wt
+1. run honu
     - `dotnet run`
 
 There is (ideally) no configuration beyond this needed. All database tables will be created automatically as part of the startup process. A default service ID of `asdf` has been provided, you can change this in `Startup.cs`, in the function `services.AddCensusServices()`

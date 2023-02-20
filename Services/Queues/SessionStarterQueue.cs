@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -15,6 +16,12 @@ namespace watchtower.Services.Queues {
     /// </summary>
     public class SessionStarterQueue : BaseQueue<CharacterSessionStartQueueEntry> {
 
+        private readonly ILogger<SessionStarterQueue> _Logger;
+
+        public SessionStarterQueue(ILogger<SessionStarterQueue> logger) {
+            _Logger = logger;
+        }
+
         private readonly HashSet<string> _Pending = new HashSet<string>();
 
         public new void Queue(CharacterSessionStartQueueEntry entry) {
@@ -26,6 +33,7 @@ namespace watchtower.Services.Queues {
                 if (_Pending.Contains(entry.CharacterID)) {
                     return;
                 }
+                _Pending.Add(entry.CharacterID);
             }
 
             base.Queue(entry);

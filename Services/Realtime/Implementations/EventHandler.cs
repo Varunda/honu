@@ -46,6 +46,7 @@ namespace watchtower.Realtime {
         private readonly AchievementEarnedDbStore _AchievementEarnedDb;
         private readonly AlertDbStore _AlertDb;
         private readonly AlertPlayerDataRepository _ParticipantDataRepository;
+        private readonly ContinentLockDbStore _ContinentLockDb;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -55,6 +56,7 @@ namespace watchtower.Realtime {
         private readonly JaegerSignInOutQueue _JaegerQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
         private readonly SessionEndQueue _SessionEndQueue;
+        private readonly AlertEndQueue _AlertEndQueue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly MapCollection _MapCensus;
@@ -88,7 +90,7 @@ namespace watchtower.Realtime {
             ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
             RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository,
             WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
-            SessionEndQueue sessionEndQueue) {
+            SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb, AlertEndQueue alertEndQueue) {
 
             _Logger = logger;
 
@@ -101,6 +103,7 @@ namespace watchtower.Realtime {
             _FacilityPlayerDb = fpDb ?? throw new ArgumentNullException(nameof(fpDb));
             _VehicleDestroyDb = vehicleDestroyDb ?? throw new ArgumentNullException(nameof(vehicleDestroyDb));
             _AlertDb = alertDb ?? throw new ArgumentNullException(nameof(alertDb));
+            _ContinentLockDb = continentLockDb;
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -126,6 +129,7 @@ namespace watchtower.Realtime {
             _WeaponUpdateQueue = weaponUpdateQueue;
             _NsaOptions = nsaOptions;
             _SessionEndQueue = sessionEndQueue;
+            _AlertEndQueue = alertEndQueue;
         }
 
         public DateTime MostRecentProcess() {
@@ -193,7 +197,7 @@ namespace watchtower.Realtime {
                 } else if (eventName == "ContinentUnlock") {
                     _ProcessContinentUnlock(payloadToken);
                 } else if (eventName == "ContinentLock") {
-                    _ProcessContinentLock(payloadToken);
+                    await _ProcessContinentLock(payloadToken);
                 } else if (eventName == "BattleRankUp") {
                     await _ProcessBattleRankUp(payloadToken);
                 } else if (eventName == "MetagameEvent") {
@@ -751,7 +755,7 @@ namespace watchtower.Realtime {
                     _Logger.LogWarning($"Failed to find a duration for MetagameEvent {metagameEventID}");
                 }
 
-                PsAlert alert = new PsAlert();
+                PsAlert alert = new();
                 alert.Timestamp = timestamp;
                 alert.ZoneID = zoneID;
                 alert.WorldID = worldID;
@@ -890,18 +894,11 @@ namespace watchtower.Realtime {
                         }
                     }
 
-                    new Thread(async () => {
-                        try {
-                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, creating participation data...");
-                            List<AlertPlayerDataEntry> parts = await _ParticipantDataRepository.GetByAlert(toRemove, CancellationToken.None);
-
-                            toRemove.Participants = parts.Count;
-                            await _AlertDb.UpdateByID(toRemove.ID, toRemove);
-                            _Logger.LogInformation($"Alert {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID} ended, {parts.Count} participant data created");
-                        } catch (Exception ex) {
-                            _Logger.LogError(ex, $"failed to create alert data for {toRemove.ID}/{toRemove.WorldID}-{toRemove.InstanceID}");
-                        }
-                    }).Start();
+                    // finally, now that all of the immediate information that could change (such as facility ownership) has been saved
+                    //      to the DB, lets queue the alert creation, which includes creating the alert player data and sending Discord alerts
+                    _AlertEndQueue.Queue(new AlertEndQueueEntry() {
+                        Alert = toRemove
+                    });
                 } else {
                     _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}\nCurrent alerts: {string.Join(", ", alerts.Select(iter => $"{iter.WorldID}.{iter.ZoneID}"))}");
                 }
@@ -910,6 +907,7 @@ namespace watchtower.Realtime {
             }
         }
 
+        // these events are actually never sent, and looks like they were removed from the docs
         private void _ProcessContinentUnlock(JToken payload) {
             short worldID = payload.GetWorldID();
             uint zoneID = payload.GetZoneID();
@@ -932,7 +930,7 @@ namespace watchtower.Realtime {
             //_Logger.LogDebug($"OPENED In world {worldID} zone {zoneID} was opened");
         }
 
-        private void _ProcessContinentLock(JToken payload) {
+        private async Task _ProcessContinentLock(JToken payload) {
             short worldID = payload.GetWorldID();
             uint zoneID = payload.GetZoneID();
 
@@ -953,7 +951,17 @@ namespace watchtower.Realtime {
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }
 
-            //_Logger.LogDebug($" CLOSE In world {worldID} zone {zoneID} was closed");
+            // don't save tutorial2 zones, as they generate lock events everytime someone finishes the tutorial
+            // not useful for our data
+            if ((zoneID & 0xFFFF) != Zone.Tutorial2) {
+                await _ContinentLockDb.Upsert(new Models.Db.ContinentLockEntry() {
+                    ZoneID = zoneID,
+                    WorldID = worldID,
+                    Timestamp = payload.CensusTimestamp("timestamp")
+                });
+            }
+
+            _Logger.LogInformation($"continent locked in world {worldID}, zone {zoneID}/{Zone.GetName(zoneID)}");
         }
 
         private async Task _ProcessDeath(JToken payload) {
