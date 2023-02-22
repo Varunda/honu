@@ -154,7 +154,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             // if this subscription is going into a channel, ensure they have the manage channel permission
             if (ctx.Channel != null && ctx.Member != null) {
-                if (ctx.Member.Permissions.HasFlag(DSharpPlus.Permissions.ManageChannels) == false) {
+                if (ctx.Member.Permissions.HasFlag(Permissions.ManageChannels) == false) {
                     await ctx.EditResponseEmbed(new DiscordEmbedBuilder()
                         .WithTitle("Error: no permission")
                         .WithDescription($"You need the `Manage Channels` permission to execute this command")
@@ -168,7 +168,7 @@ namespace watchtower.Code.DiscordInteractions {
             sub.WorldID = (short)world;
             sub.WorldCharacterMinimum = worldCharMin == null ? 0 : worldCharMin.Value;
 
-            if (ctx.Channel != null) {
+            if (ctx.Member != null && ctx.Channel != null) {
                 sub.ChannelID = ctx.Channel.Id;
                 sub.GuildID = ctx.Channel.GuildId;
             }
@@ -231,7 +231,7 @@ namespace watchtower.Code.DiscordInteractions {
             sub.WorldCharacterMinimum = worldCharMin == null ? 0 : worldCharMin.Value;
             sub.OutfitCharacterMinimum = outfitCharMin == null ? 1 : outfitCharMin.Value;
 
-            if (ctx.Channel != null) {
+            if (ctx.Member != null && ctx.Channel != null) {
                 sub.ChannelID = ctx.Channel.Id;
                 sub.GuildID = ctx.Channel.GuildId;
             }
@@ -289,7 +289,7 @@ namespace watchtower.Code.DiscordInteractions {
             DiscordEmbedBuilder builder = new();
 
             builder.Title = $"Subscriptions ({sessionSubs.Count + alertSubs.Count})";
-            if (ctx.Channel == null) {
+            if (ctx.Member == null) {
                 builder.Description = $"Here are the subscriptions Honu will send in your DMs:\n";
             } else {
                 builder.Description = $"Here are the subscriptions Honu will post in this channel:\n";
@@ -324,7 +324,7 @@ namespace watchtower.Code.DiscordInteractions {
             //      if they are in DMs
             //     or if in a channel, only if they have manage channel perms
             if (options.Count > 0) {
-                if (ctx.Channel == null || (ctx.Member != null && ctx.Channel != null && ctx.Member.Permissions.HasFlag(Permissions.ManageChannels))) {
+                if (ctx.Member == null || (ctx.Member != null && ctx.Channel != null && ctx.Member.Permissions.HasFlag(Permissions.ManageChannels))) {
                     DiscordSelectComponent select = new("@remove-sub", "Remove subscription", options);
                     interactionBuilder.AddComponents(select);
                 }
@@ -392,14 +392,14 @@ namespace watchtower.Code.DiscordInteractions {
         ///     Create button to list the sessions
         /// </summary>
         /// <returns></returns>
-        public static DiscordButtonComponent LIST_SUBS() => new(DSharpPlus.ButtonStyle.Secondary, "@sub-list", "List subscriptions");
+        public static DiscordButtonComponent LIST_SUBS() => new(ButtonStyle.Secondary, "@sub-list", "List subscriptions");
 
         /// <summary>
         ///     Create a button to remove a user's subscription to a character session end
         /// </summary>
         /// <param name="charID"></param>
         /// <returns></returns>
-        public static DiscordButtonComponent REMOVE_CHAR_SUB(string charID) => new(DSharpPlus.ButtonStyle.Danger, $"@sub-char-remove.{charID}", "Unsubscribe");
+        public static DiscordButtonComponent REMOVE_CHAR_SUB(string charID) => new(ButtonStyle.Danger, $"@sub-char-remove.{charID}", "Unsubscribe");
 
         public ILogger<SubscribeButtonCommands> _Logger { set; private get; } = default!;
 

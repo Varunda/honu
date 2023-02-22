@@ -182,8 +182,9 @@ namespace watchtower.Services.Hosted {
             builder.Title = $"Alert {alert.WorldID}-{alert.InstanceID} ended";
             builder.Url = $"https://wt.honu.pw/alert/{alert.ID}/";
             builder.Description = $"Alert {alert.WorldID}-{alert.InstanceID} ended with {playerCount} unique players\n\n";
-            builder.Description += $"**Winner: **{(alert.VictorFactionID == null ? "none" : Faction.GetName(alert.VictorFactionID.Value))}\n";
-            builder.Description += $"**Continent: **{Zone.GetName(alert.ZoneID)}";
+            builder.Description += $"**Server**: {World.GetName(alert.WorldID)}\n";
+            builder.Description += $"**Continent: **{Zone.GetName(alert.ZoneID)}\n";
+            builder.Description += $"**Winner: **{((alert.VictorFactionID == null || alert.VictorFactionID.Value == 0) ? "none" : Faction.GetName(alert.VictorFactionID.Value))}\n";
 
             if (alert.VictorFactionID == Faction.VS) {
                 builder.Color = DiscordColor.Magenta;
@@ -218,7 +219,7 @@ namespace watchtower.Services.Hosted {
 
             builder.AddField("Kills", $"{kills}", true);
             builder.AddField("Deaths", $"{deaths}", true);
-            builder.AddField("K/D", $"{(kills / Math.Max(0m, deaths)):F2}", true);
+            builder.AddField("K/D", $"{(kills / Math.Max(1m, deaths)):F2}", true);
 
             if (heals > 0 || revives > 0 || shieldReps > 0) {
                 builder.AddField("Heals", $"{heals}", true);
