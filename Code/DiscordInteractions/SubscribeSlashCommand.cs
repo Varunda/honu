@@ -264,7 +264,7 @@ namespace watchtower.Code.DiscordInteractions {
             List<SessionEndSubscription> sessionSubs = new();
             List<AlertEndSubscription> alertSubs = new();
 
-            if (ctx.Channel != null) {
+            if (ctx.Member != null) {
                 alertSubs = await _AlertEndSubscriptionDb.GetByChannelID(ctx.Channel.Id);
             } else {
                 sessionSubs = await _SessionSubscriptionDb.GetByDiscordID(ctx.User.Id);

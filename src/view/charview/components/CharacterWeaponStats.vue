@@ -55,7 +55,7 @@
                             style="position: absolute; text-align: center; height: 100%; right: 0;" class="mr-1">
                         </census-image>
 
-                        <a :href="'/i/' + entry.itemID" class="ml-1"
+                        <a :href="entry.itemID != 0 ? ('/i/' + entry.itemID) : 'javascript:void(0);'" class="ml-1"
                             style="
                                 position: absolute;
                                 text-shadow: -1px -1px 2px rgb(32, 32, 32), -1px 1px 2px rgb(32, 32, 32), 1px -1px 2px rgb(32, 32, 32), 1px 1px 2px rgb(32, 32, 32);

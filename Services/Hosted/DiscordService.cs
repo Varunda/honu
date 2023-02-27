@@ -325,12 +325,17 @@ namespace watchtower.Services.Hosted {
                 // if the response has already started, this won't be null, indicating to instead update the response
                 DiscordMessage? msg = await args.Context.Interaction.GetOriginalResponseAsync();
 
+                string error = $"Error executing button command `{args.CommandName}`: {args.Exception.GetType().Name} - {args.Exception.Message}";
+                if (args.Exception.InnerException != null) {
+                    error += $". Caused by: {args.Exception.InnerException.GetType().Name} - {args.Exception.InnerException.Message}";
+                }
+
                 if (msg == null) {
                     // if it is null, then no respons has been started, so one is created
                     // if you attempt to create a response for one that already exists, then a 400 is thrown
-                    await args.Context.Interaction.CreateImmediateText($"Error executing button command: {args.Exception.Message}", true);
+                    await args.Context.Interaction.CreateImmediateText(error, true);
                 } else {
-                    await args.Context.Interaction.EditResponseText($"Error executing button command: {args.Exception.Message}");
+                    await args.Context.Interaction.EditResponseText(error);
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"error updating interaction response with error");

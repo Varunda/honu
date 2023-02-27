@@ -276,12 +276,16 @@ namespace watchtower.Code.DiscordInteractions {
         ///     <see cref="SnowflakeObject.Id"/> of <paramref name="msgID"/>
         /// </summary>
         /// <param name="msgID">ID of the message to pull the information from</param>
-        /// <returns></returns>
         public static DiscordButtonComponent REFRESH_RESERVATION(ulong msgID) => new(ButtonStyle.Secondary, $"@refresh-reservation.{msgID}", "Refresh");
+
+        public static DiscordButtonComponent ACCEPT_RESERVATION(ulong msgID) => new(ButtonStyle.Primary, $"@approve-reservation.{msgID}", "Approve");
 
         public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
+        public PsbOvOSheetRepository _SheetRepository { set; private get; } = default!;
+
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
+        public IOptions<PsbRoleMapping> _RoleMapping { set; private get; } = default!;
 
         /// <summary>
         ///     Button command to refresh the parsing of a reservation. Uses the configured reservations channel
@@ -323,6 +327,57 @@ namespace watchtower.Code.DiscordInteractions {
 
             await ctx.Message.ModifyAsync(Optional.FromValue(parsed.Build(false).Build()));
             await ctx.Interaction.EditResponseText("Refreshed!");
+        }
+
+        [ButtonCommand("approve-reservation")]
+        public async Task ApproveReservation(ButtonContext ctx, ulong msgID) {
+            await ctx.Interaction.CreateDeferred(true);
+
+            if (ctx.Member == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"member was null");
+                return;
+            }
+
+            if (_RoleMapping.Value.Mappings.TryGetValue("ovo-staff", out ulong staffID) == false) {
+                await ctx.Interaction.EditResponseErrorEmbed("role mapping for `ovo-staff` is missing");
+                return;
+            }
+
+            if (ctx.Member.Roles.FirstOrDefault(iter => iter.Id == staffID) == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"you lack the ovo-staff role");
+                return;
+            }
+
+            DiscordGuild? guild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (guild == null) {
+                _Logger.LogWarning($"cannot approve-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
+                await ctx.Interaction.EditResponseErrorEmbed($"guild {_DiscordOptions.Value.GuildId} was not found (is null)");
+                return;
+            }
+
+            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ReservationChannelId);
+            if (channel == null) {
+                _Logger.LogWarning($"cannot approve-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} was not found");
+                await ctx.Interaction.EditResponseErrorEmbed($"channel {_DiscordOptions.Value.ReservationChannelId} was not found (is null)");
+                return;
+            }
+
+            DiscordMessage? msg = await channel.TryGetMessage(msgID);
+            if (msg == null) {
+                _Logger.LogWarning($"cannot approve-reservation {msgID}: message was null");
+                await ctx.Interaction.EditResponseErrorEmbed("message was null");
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
+
+            string fileID = await _SheetRepository.CreateSheet(parsed.Reservation);
+
+            await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
+                .WithTitle("Success")
+                .WithDescription($"Successfully created sheet for reservation at `{fileID}`")
+                .WithColor(DiscordColor.Green)
+            );
         }
 
     }

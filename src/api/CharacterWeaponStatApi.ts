@@ -87,7 +87,7 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 			vehicleID: elem.stat.vehicleID,
 			vehicle: (elem.vehicle == null) ? null : { ...elem.vehicle },
 			item: (elem.item == null) ? null : { ...elem.item },
-			itemName: (elem.item) ? elem.item.name : `<missing ${elem.itemID}>`,
+			itemName: (elem.item) ? elem.item.name : (elem.itemID == 0) ? "no weapon" : `<missing ${elem.itemID}>`,
 			kills: elem.stat.kills,
 			deaths: elem.stat.deaths,
 			vehicleKills: elem.stat.vehicleKills,

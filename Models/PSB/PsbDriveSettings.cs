@@ -23,6 +23,16 @@ namespace watchtower.Models.PSB {
         public string CalendarFileId { get; set; } = "";
 
         /// <summary>
+        ///     ID of the folder for ovo stuff. Where the TemplateFileId is found, and where created sheets will go
+        /// </summary>
+        public string OvORootFolderId { get; set; } = "";
+
+        /// <summary>
+        ///     ID of the file that contains the template used for reservations
+        /// </summary>
+        public string TemplateFileId { get; set; } = "";
+
+        /// <summary>
         ///     Various contact sheets used within PSB
         /// </summary>
         public PsbDriveSettingsContactSheets ContactSheets { get; set; } = new();

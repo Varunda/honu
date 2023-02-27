@@ -75,6 +75,9 @@ namespace watchtower.Services.Repositories.PSB {
             string timefeedback = "";
             string feedback = $"Parsed message:\n";
 
+
+            _Logger.LogDebug($"{message.MentionedUsers.Count} mentioned users: {string.Join(", ", message.MentionedUsers.Select(iter => iter.Id))}");
+
             List<string> lines = message.Content.Split("\n").ToList();
             foreach (string line in lines) {
                 _Logger.LogDebug($"line: '{line}'");
@@ -93,7 +96,7 @@ namespace watchtower.Services.Repositories.PSB {
                 if (field.StartsWith("outfit") || field.StartsWith("team") || field.StartsWith("group")) {
                     feedback += $"Line `{line}` as outfits\n";
 
-                    List<string> outfits = value.Split(",").ToList();
+                    List<string> outfits = value.Split(new string[] { ",", "&" }, StringSplitOptions.None).ToList();
                     feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";
                     res.Outfits = outfits.Select(iter => iter.ToLower()).ToList();
                 } else if (field == "accounts" || field == "number of accounts") {
@@ -109,18 +112,32 @@ namespace watchtower.Services.Repositories.PSB {
                     feedback += $"Line `{line}` as rep line\n";
 
                     List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
-                    List<DiscordUser> users = message.MentionedUsers.ToList();
+                    List<PsbPracticeContact> practice = await _ContactRepository.GetPracticeContacts();
 
-                    foreach (DiscordUser user in users) {
-                        PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == user.Id);
+                    // matches <@1234> or <@68043274232803328>, which are the text of a discord @
+                    Regex mentions = new("<@(?<user>\\d*)>");
+                    MatchCollection mentionMatches = mentions.Matches(message.Content);
+
+                    foreach (Match match in mentionMatches) {
+                        if (match.Groups.TryGetValue("user", out Group? userID) == false) {
+                            errors.Add($"failed to get user from {match.Value}");
+                            continue;
+                        }
+
+                        if (ulong.TryParse(userID.Value, out ulong id) == false) {
+                            errors.Add($"failed to pser {userID.Value} to a valid UInt64");
+                            continue;
+                        }
+
+                        PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == id);
                         if (contact == null) {
-                            errors.Add($"{user.GetPing()} is not an OvO rep!");
+                            errors.Add($"failed to find a contact for <@{id}>: not a rep, or not a user");
                         } else {
-                            feedback += $"\tFound OvO contact for {user.GetPing()}: {contact.Group}\n";
+                            feedback += $"\tFound OvO contact for <@{id}>: {contact.Group}\n";
                             res.Contacts.Add(contact);
                         }
                     }
-                } else if (field.StartsWith("date and time") || field == "time" || field == "date" || field == "when" || field.StartsWith("date/time")) {
+                } else if (field.Contains("date") || field.Contains("time") || field.Contains("when") || field.Contains("day")) {
                     feedback += $"Line `{line}` as when\n";
 
                     (DateTime? r, DateTime? r2) = ParseVeryInexact(v, out timefeedback);
@@ -148,7 +165,11 @@ namespace watchtower.Services.Repositories.PSB {
                         continue;
                     }
 
-                    List<string> bases = v.ToLower().Split(",").Select(iter => iter.Trim()).ToList();
+                    BaseParseResult bases = await ParseBases(parsed, string.Join(":", parts[1..]).Split(",").ToList());
+
+                    res.Bases = bases.Bookings;
+                    errors.AddRange(bases.Errors);
+                    feedback += bases.Feedback;
                 } else if (field == "details") {
                     feedback += $"Line `{line}` as details\n";
                     res.Details = value.Trim();
@@ -191,11 +212,23 @@ namespace watchtower.Services.Repositories.PSB {
 
             msg.Embeds.Add(parsed.Build(debug));
             msg.Components.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
+            //msg.Components.Add(PsbButtonCommands.ACCEPT_RESERVATION(parsed.MessageId));
 
             _DiscordMessageQueue.Queue(msg);
         }
 
-        public async Task<List<PsbBaseBooking>> ParseBases(ParsedPsbReservation parsed, List<string> names) {
+        class BaseParseResult {
+
+            public List<PsbBaseBooking> Bookings { get; set; } = new();
+
+            public List<string> Errors { get; set; } = new();
+
+            public string Feedback { get; set; } = "";
+
+        }
+
+        private async Task<BaseParseResult> ParseBases(ParsedPsbReservation parsed, List<string> names) {
+            BaseParseResult result = new();
             List<PsbBaseBooking> bookings = new();
 
             bool providedTime = false;
@@ -208,11 +241,13 @@ namespace watchtower.Services.Repositories.PSB {
             List<PsFacility> facilities = await _FacilityRepository.GetAll();
 
             foreach (string name in names) {
+                _Logger.LogDebug($"matching {name}");
                 Match match = r.Match(name);
 
-                string baseName = name;
+                string baseName = name.Trim().ToLower();
 
                 if (match.Success == true) {
+                    _Logger.LogDebug($"provided time {name}");
                     providedTime = true;
                     _ = match.Groups.TryGetValue("base", out Group? baseGroup);
                     if (baseGroup != null) {
@@ -236,10 +271,10 @@ namespace watchtower.Services.Repositories.PSB {
                 }
 
                 if (possibleBases.Count == 0) {
-                    parsed.Errors.Add($"Failed to find base `{baseName}`");
+                    result.Errors.Add($"Failed to find base `{baseName}`");
                     continue;
                 } else if (possibleBases.Count > 1) {
-                    parsed.Errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
+                    result.Errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
                     continue;
                 }
 
@@ -247,15 +282,60 @@ namespace watchtower.Services.Repositories.PSB {
                 book.Facility = possibleBases[0];
                 book.FacilityID = book.Facility.FacilityID;
 
-                if (providedTime == true) {
+                _Logger.LogDebug($"found {book.Facility.Name}/{book.FacilityID}");
 
+                if (providedTime == true) {
+                    bool hasStart = match.Groups.TryGetValue("start", out Group? startGroup);
+                    bool hasEnd = match.Groups.TryGetValue("end", out Group? endGroup);
+
+                    if (hasStart == true && hasEnd == true && startGroup != null && endGroup != null) {
+                        DateTime? startTime = ParseTimeInexact(startGroup.Value, parsed.Reservation.Start.Date, out string sf);
+                        if (startTime == null) {
+                            result.Errors.Add($"Failed to parse `{startGroup.Value}` to a valid time");
+                        } else {
+                            _Logger.LogDebug($"{startGroup.Value} => {startTime}");
+                            if (startTime.Value < parsed.Reservation.Start) {
+                                book.Start = startTime.Value.AddDays(1);
+                            } else {
+                                book.Start = startTime.Value;
+                            }
+                        }
+
+                        DateTime? endTime = ParseTimeInexact(endGroup.Value, parsed.Reservation.Start.Date, out string ef);
+                        if (endTime == null) {
+                            result.Errors.Add($"Failed to parse `{endGroup.Value}` to a valid time");
+                        } else {
+                            _Logger.LogDebug($"{endGroup.Value} => {endTime}");
+                            if (endTime.Value < parsed.Reservation.Start) {
+                                book.End = endTime.Value.AddDays(1);
+                            } else {
+                                book.End = endTime.Value;
+                            }
+                        }
+                    } else {
+                        result.Errors.Add($"Failed to get start and end values from `{name}`");
+                    }
                 }
 
-                //feedback += $"\tBase `{baseName}` found {fac.Name}/{fac.FacilityID}\n";
-                //bookings.Add(possibleBases[0]);
+                bookings.Add(book);
             }
 
-            return bookings;
+            if (providedTime == false && bookings.Count > 0) {
+                int baseCount = bookings.Count;
+                TimeSpan reservationDuration = parsed.Reservation.End - parsed.Reservation.Start;
+                TimeSpan per = reservationDuration / baseCount;
+
+                _Logger.LogDebug($"the reservation lasts: {reservationDuration}, have {baseCount} bases booked, each will take up ");
+
+                for (int i = 0; i < bookings.Count; ++i) {
+                    bookings[i].Start = parsed.Reservation.Start + (per * i);
+                    bookings[i].End = parsed.Reservation.Start + (per * (i + 1));
+                }
+            }
+
+            result.Bookings = bookings;
+
+            return result;
         }
 
         /// <summary>

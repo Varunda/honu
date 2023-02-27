@@ -79,7 +79,7 @@ namespace watchtower.Models.PSB {
             builder.AddField("Start time", $"`{Reservation.Start:u}` ({Reservation.Start.GetDiscordFullTimestamp()} - {Reservation.Start.GetDiscordRelativeTimestamp()})");
             builder.AddField("End time", $"`{Reservation.End:u}` ({Reservation.End.GetDiscordFullTimestamp()} - {Reservation.End.GetDiscordRelativeTimestamp()})");
             if (Reservation.Bases.Count > 0) {
-                builder.AddField("Bases", string.Join(", ", Reservation.Bases.Select(iter => iter.Name)));
+                builder.AddField("Bases", string.Join("\n", Reservation.Bases.Select(iter => iter.GetDiscordPretty())));
             }
             if (Reservation.Details.Length > 0) {
                 builder.AddField("Details", Reservation.Details);

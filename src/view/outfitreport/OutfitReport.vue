@@ -34,8 +34,10 @@
                     </tr>
 
                     <tr>
-                        <td>&nbsp;</td>
                         <td></td>
+                        <td>
+                            <a href="javascript:void(0);" @click="editReport">Edit</a>
+                        </td>
                     </tr>
                 </table>
 
@@ -493,6 +495,7 @@
     import Busy from "components/Busy.vue";
 
     import { InfantryDamage, InfantryDamageEntry } from "./InfantryDamage";
+    import Toaster from "Toaster";
 
     type Message = {
         when: Date;
@@ -620,6 +623,46 @@
                 } else {
                     this.show.gen = true;
                 }
+            },
+
+            /**
+             * copy the parameters of a report into the UI values so the report can be recreated with new people
+             */
+            editReport: function(): void {
+                this.periodStart = this.report.parameters.periodStart;
+                this.periodEnd = this.report.parameters.periodEnd;
+                this.teamID = this.report.parameters.teamID;
+
+                for (const outfitID of this.report.parameters.outfitIDs) {
+                    if (this.outfits.find(iter => iter.id == outfitID) != null) {
+                        console.log(`not adding outfit ${outfitID} to this.outfits: already there`);
+                        continue;
+                    }
+
+                    const outfit: PsOutfit | undefined = this.report.outfits.get(outfitID);
+                    if (outfit == undefined) {
+                        Toaster.add(`Error!`, `Failed to find outfit ID "${outfitID}"`, "danger");
+                    } else {
+                        this.outfits.push(outfit);
+                    }
+                }
+
+                for (const charID of this.report.parameters.characterIDs) {
+                    if (this.characters.find(iter => iter.id == charID) != null) {
+                        console.log(`not adding character ${charID} to this.characters: already there`);
+                        continue;
+                    }
+
+                    const c: PsCharacter | undefined = this.report.characters.get(charID);
+                    if (c == undefined) {
+                        Toaster.add(`Error!`, `Failed to find character ID "${charID}"`, "danger");
+                    } else {
+                        this.characters.push(c);
+                    }
+                }
+
+                this.show.controls = true;
+                this.show.gen = true;
             },
 
             searchOutfitTag: async function(): Promise<void> {
@@ -762,13 +805,16 @@
 
                 this.connection.on("SendParameters", this.onSendParameters);
                 this.connection.on("SendError", this.onSendError);
+                this.connection.on("SendMessage", this.onSendMessage);
                 this.connection.on("UpdateState", this.onUpdateState);
+
                 this.connection.on("SendCharacterIDs", this.onSendCharacterIDs);
                 this.connection.on("SendKills", this.onSendKills);
                 this.connection.on("SendDeaths", this.onSendDeaths);
                 this.connection.on("SendExp", this.onSendExp);
                 this.connection.on("SendVehicleDestroy", this.onSendVehicleDestroy);
                 this.connection.on("SendPlayerControl", this.onSendPlayerControl);
+
                 this.connection.on("UpdateKills", this.onUpdateKills);
                 this.connection.on("UpdateDeaths", this.onUpdateDeaths);
                 this.connection.on("UpdateExp", this.onUpdateExp);
@@ -914,6 +960,10 @@
                 if (conf == true) {
                     location.href = "/report";
                 }
+            },
+
+            onSendMessage: function(msg: string): void {
+                this.log("INFO: " + msg);
             },
 
             onSendError: function(err: string): void {

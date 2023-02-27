@@ -137,6 +137,11 @@ namespace watchtower.Services.Hosted {
                     msg.Embeds.Add(builder);
 
                 } else if (sub.SourceType == AlertEndSubscriptionSourceType.WORLD) {
+                    WorldAlertEndSubscription wSub = new(sub);
+                    if (entry.Alert.WorldID != wSub.WorldID) {
+                        continue;
+                    }
+
                     DiscordEmbedBuilder builder = StartMessage(entry.Alert, parts.Count);
 
                     AddFields(parts, ref builder);
