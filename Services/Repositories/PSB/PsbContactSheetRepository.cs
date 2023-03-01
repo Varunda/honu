@@ -133,6 +133,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         public void ClearCache() {
             _Cache.Remove(CACHE_KEY_PRACTICE_ALL);
+            _Cache.Remove(CACHE_KEY_OVO_ALL);
         }
 
         /// <summary>
@@ -227,11 +228,11 @@ namespace watchtower.Services.Repositories.PSB {
             if (header[2].ToString() != "E-Mail") { validationErrors.Add($"Expected column one to be 'E-Mail', is '{header[2]}'");  }
             if (header[3].ToString() != "Discord") { validationErrors.Add($"Expected column one to be 'Discord', is '{header[3]}'");  }
             if (header[4].ToString() != "Actual Discord Id") { validationErrors.Add($"Expected column one to be 'Actual Discord ID', is '{header[4]}'");  }
-            if (header[5].ToString() != "Rep Type") { validationErrors.Add($"Expected column one to be 'Rep Type', is '{header[4]}'");  }
-            if (header[6].ToString() != "Account limit") { validationErrors.Add($"Expected column one to be 'Account limit', is '{header[4]}'");  }
-            if (header[7].ToString() != "Account Pings") { validationErrors.Add($"Expected column one to be 'Account Pings', is '{header[4]}'");  }
-            if (header[8].ToString() != "Base Pings") { validationErrors.Add($"Expected column one to be 'Base Pings', is '{header[4]}'");  }
-            if (header[9].ToString() != "Notes") { validationErrors.Add($"Expected column one to be 'Notes', is '{header[4]}'");  }
+            if (header[5].ToString() != "Rep Type") { validationErrors.Add($"Expected column one to be 'Rep Type', is '{header[5]}'");  }
+            if (header[6].ToString() != "Account limit") { validationErrors.Add($"Expected column one to be 'Account limit', is '{header[6]}'");  }
+            if (header[7].ToString() != "Account Pings") { validationErrors.Add($"Expected column one to be 'Account Pings', is '{header[7]}'");  }
+            if (header[8].ToString() != "Base Pings") { validationErrors.Add($"Expected column one to be 'Base Pings', is '{header[8]}'");  }
+            if (header[9].ToString() != "Notes") { validationErrors.Add($"Expected column one to be 'Notes', is '{header[9]}'");  }
 
             if (validationErrors.Count > 0) {
                 throw new ArgumentException($"Validation errors on ovo rep sheet: {string.Join("; ", validationErrors)}");

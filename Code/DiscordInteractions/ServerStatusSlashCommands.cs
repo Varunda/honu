@@ -141,7 +141,7 @@ namespace watchtower.Code.DiscordInteractions {
                 PsAlert? zoneAlert = alerts.FirstOrDefault(iter => iter.ZoneID == zoneID);
                 if (zoneAlert != null) {
                     DateTime alertEnd = zoneAlert.Timestamp + TimeSpan.FromSeconds(zoneAlert.Duration);
-                    builder.Description = $"Alert: {alertEnd.GetDiscordTimestamp("t")} ({alertEnd.GetDiscordRelativeTimestamp()})\n";
+                    builder.Description += $"Alert: {alertEnd.GetDiscordTimestamp("t")} ({alertEnd.GetDiscordRelativeTimestamp()})\n";
                 }
 
                 ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);

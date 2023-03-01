@@ -90,8 +90,20 @@
                     All
                     <info-hover text="This are box whisker plots, which show the min, Q1/25%, Q2/median, Q3/75% and max of a dataset. The dot is the mean/average"></info-hover>
                 </h5>
-                <chart-box-whisker :data="allKPM"></chart-box-whisker>
-                <chart-box-whisker :data="allKD"></chart-box-whisker>
+
+                <div class="input-grid-col2" style="grid-template-columns: min-content 1fr">
+                    <div class="input-cell mr-1">
+                        KPM
+                    </div>
+
+                    <chart-box-whisker :data="allKPM" class="input-cell"></chart-box-whisker>
+
+                    <div class="input-cell mr-1">
+                        KD
+                    </div>
+
+                    <chart-box-whisker :data="allKD" class="input-cell"></chart-box-whisker>
+                </div>
             </div>
 
             <div class="col-12 col-lg-2 border-right">

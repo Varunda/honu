@@ -478,26 +478,19 @@ namespace watchtower.Code.DiscordInteractions {
             public PsbContactSheetRepository _PsbContactRepository { private get; set; } = default!;
 
             /// <summary>
-            ///     Clear a cached rep sheet
+            ///     Clear the cached rep sheets
             /// </summary>
             /// <param name="ctx">Context (provided)</param>
-            /// <param name="which">Which rep sheet will be removed from cache</param>
-            [SlashCommand("clear", "Clear a cached response")]
-            public async Task ClearCacheCommand(InteractionContext ctx,
-                [Choice("Practice", "practice")]
-                [Option("sheet", "Which sheet to clear the cached value from")] string which) {
+            [SlashCommand("clear", "Clear cached rep sheets")]
+            public async Task ClearCacheCommand(InteractionContext ctx) {
 
                 try {
                     if (await _CheckPermission(ctx, HonuPermission.PSB_NAMED_MANAGE, HonuPermission.PSB_PRACTICE_MANAGE) == false) {
                         return;
                     } 
 
-                    if (which == "practice") {
-                        _PsbContactRepository.ClearCache();
-                        await ctx.CreateImmediateText($"Cleared {which} cache");
-                    } else {
-                        await ctx.CreateImmediateText($"Unknown value '{which}'. No cache cleared");
-                    }
+                    _PsbContactRepository.ClearCache();
+                    await ctx.CreateImmediateText($"Cleared rep cache");
                 } catch (Exception ex) {
                     _Logger.LogError(ex, "failed to execute Discord slash command");
 
