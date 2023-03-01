@@ -11,6 +11,7 @@ namespace watchtower.Code.DiscordInteractions {
         public static void AddHonuDiscord(this IServiceCollection services) {
             services.AddSingleton<LookupDiscordInteractions>();
             services.AddSingleton<SubscribeDiscordInteractions>();
+            services.AddSingleton<ServerStatusInteractions>();
         }
 
     }

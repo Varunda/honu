@@ -6,7 +6,10 @@
                 <th title="Per Players (Total)">Kills</th>
                 <th title="Revives remove a death, like in game">Deaths</th>
                 <th title="Kills / Deaths">K/D</th>
-                <th>Characters</th>
+                <th title="Characters who have been online (characters currently online)">
+                    Characters
+                    <info-hover text="How many characters have gotten kills in the period, and how many are currently only. The currently online can be higher as it includes people who have not gotten kills"></info-hover>
+                </th>
             </tr>
         </thead>
 
@@ -30,7 +33,12 @@
                 <td>
                     {{(entry.kills / (entry.deaths || 1)).toFixed(2)}}
                 </td>
-                <td>{{entry.members}}</td>
+                <td>
+                    {{entry.members}}
+                    <span title="Members currently online">
+                        ({{entry.membersOnline}})
+                    </span>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -44,6 +52,8 @@
 
     import { PopperModalData } from "popper/PopperModalData";
     import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
+
+    import InfoHover from "components/InfoHover.vue";
 
     export const OutfitKillData = Vue.extend({
         props: {
@@ -99,6 +109,10 @@
                 EventBus.$emit("set-modal-data", modalData);
             }
         },
+
+        components: {
+            InfoHover
+        }
     });
     export default OutfitKillData;
 </script>

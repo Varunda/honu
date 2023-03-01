@@ -85,18 +85,23 @@ namespace watchtower.Services.Hosted {
             _SlashCommands.SlashCommandErrored += Slash_Command_Errored;
             _SlashCommands.ContextMenuErrored += Context_Menu_Errored;
 
+            // these commands can only be used in the "home guild", for live it's currently PSB
             _SlashCommands.RegisterCommands<PingSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<AccessSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuInternalSlashCommands>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<HonuAccountSlashCommand>(_DiscordOptions.Value.GuildId);
             _SlashCommands.RegisterCommands<PsbDiscordInteractions>(_DiscordOptions.Value.GuildId);
 
+            // these commands are global when ran in live, but to test them locally
+            //      they are setup in the home server as well (quicker to update)
             if (_DiscordOptions.Value.RegisterGlobalCommands == true) {
                 _SlashCommands.RegisterCommands<SubscribeSlashCommand>();
                 _SlashCommands.RegisterCommands<LookupSlashCommand>();
+                _SlashCommands.RegisterCommands<ServerStatusSlashCommands>();
             } else {
                 _SlashCommands.RegisterCommands<SubscribeSlashCommand>(_DiscordOptions.Value.GuildId);
                 _SlashCommands.RegisterCommands<LookupSlashCommand>(_DiscordOptions.Value.GuildId);
+                _SlashCommands.RegisterCommands<ServerStatusSlashCommands>(_DiscordOptions.Value.GuildId);
             }
 
             _ButtonCommands = _Discord.UseButtonCommands(new ButtonCommandsConfiguration() {
@@ -105,6 +110,7 @@ namespace watchtower.Services.Hosted {
             _ButtonCommands.RegisterButtons<SubscribeButtonCommands>();
             _ButtonCommands.RegisterButtons<LookupButtonCommands>();
             _ButtonCommands.RegisterButtons<PsbButtonCommands>();
+            _ButtonCommands.RegisterButtons<ServerStatusButtonCommands>();
 
             _ButtonCommands.ButtonCommandExecuted += Button_Command_Executed;
             _ButtonCommands.ButtonCommandErrored += Button_Command_Error;

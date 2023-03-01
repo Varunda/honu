@@ -14,6 +14,7 @@ using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
+using static watchtower.Code.DiscordInteractions.DiscordInteractionEnums;
 
 namespace watchtower.Code.DiscordInteractions {
 
@@ -82,15 +83,6 @@ namespace watchtower.Code.DiscordInteractions {
             [ChoiceName("15 minutes")] MIN_15 = 900,
             [ChoiceName("30 minutes")] MIN_30 = 1800,
             [ChoiceName("1 hour")] MIN_60 = 3600
-        }
-
-        public enum StatusWorlds : int {
-            [ChoiceName("Connery")] Connery = World.Connery,
-            [ChoiceName("Emerald")] Emerald = World.Emerald,
-            [ChoiceName("Cobalt")] Cobalt = World.Cobalt,
-            [ChoiceName("Miller")] Miller = World.Miller,
-            [ChoiceName("SolTech")] SolTech = World.SolTech,
-            [ChoiceName("Jaeger")] Jaeger = World.Jaeger
         }
 
         /// <summary>

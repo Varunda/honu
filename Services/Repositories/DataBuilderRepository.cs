@@ -69,7 +69,6 @@ namespace watchtower.Services.Repositories {
         /// <param name="duration">How many minutes back to make the data</param>
         /// <param name="stoppingToken">Cancellation token</param>
         public async Task<WorldData> Build(short worldID, int duration, CancellationToken? stoppingToken) {
-
             using var processTrace = HonuActivitySource.Root.StartActivity("Realtime Activity");
             processTrace?.AddTag("worldID", worldID);
 
@@ -206,17 +205,19 @@ namespace watchtower.Services.Repositories {
 
                 await Task.WhenAll(
                     GetTopKillers(vsKillOptions, players).ContinueWith(t => data.VS.PlayerKills.Entries = t.Result),
-                    GetTopOutfitKillers(vsKillOptions).ContinueWith(t => data.VS.OutfitKills = t.Result),
+                    GetTopOutfitKillers(vsKillOptions, players).ContinueWith(t => data.VS.OutfitKills = t.Result),
                     GetTopWeapons(vsKillOptions).ContinueWith(t => data.VS.WeaponKills = t.Result),
 
                     GetTopKillers(ncKillOptions, players).ContinueWith(t => data.NC.PlayerKills.Entries = t.Result),
-                    GetTopOutfitKillers(ncKillOptions).ContinueWith(t => data.NC.OutfitKills = t.Result),
+                    GetTopOutfitKillers(ncKillOptions, players).ContinueWith(t => data.NC.OutfitKills = t.Result),
                     GetTopWeapons(ncKillOptions).ContinueWith(t => data.NC.WeaponKills = t.Result),
 
                     GetTopKillers(trKillOptions, players).ContinueWith(t => data.TR.PlayerKills.Entries = t.Result),
-                    GetTopOutfitKillers(trKillOptions).ContinueWith(t => data.TR.OutfitKills = t.Result),
+                    GetTopOutfitKillers(trKillOptions, players).ContinueWith(t => data.TR.OutfitKills = t.Result),
                     GetTopWeapons(trKillOptions).ContinueWith(t => data.TR.WeaponKills = t.Result)
                 );
+
+
             }
 
             long timeToGetTopKills = time.ElapsedMilliseconds;
@@ -444,29 +445,32 @@ namespace watchtower.Services.Repositories {
             return block;
         }
 
-        private async Task<OutfitKillBlock> GetTopOutfitKillers(KillDbOptions options) {
+        private async Task<OutfitKillBlock> GetTopOutfitKillers(KillDbOptions options, Dictionary<string, TrackedPlayer> players) {
             OutfitKillBlock block = new OutfitKillBlock();
 
-            List<KillDbOutfitEntry> topOutfits = await _KillEventDb.GetTopOutfitKillers(options);
+            List<KillDbOutfitEntry> topOutfits = (await _KillEventDb.GetTopOutfitKillers(options))
+                .Where(iter => iter.Members > 4)
+                .OrderByDescending(iter => iter.Kills / Math.Max(1m, iter.Members))
+                .Take(5).ToList();
+
+            Dictionary<string, PsOutfit> outfits = (await _OutfitRepository.GetByIDs(topOutfits.Select(iter => iter.OutfitID).ToList()))
+                .ToDictionary(iter => iter.ID);
+
             foreach (KillDbOutfitEntry iter in topOutfits) {
-                PsOutfit? outfit = await _OutfitRepository.GetByID(iter.OutfitID);
+                _ = outfits.TryGetValue(iter.OutfitID, out PsOutfit? outfit);
 
                 TrackedOutfit tracked = new TrackedOutfit() {
                     ID = iter.OutfitID,
                     Kills = iter.Kills,
                     Deaths = iter.Deaths,
-                    MembersOnline = iter.Members,
                     Members = iter.Members,
-                    Name = outfit?.Name ?? $"Missing {iter.OutfitID}",
+                    MembersOnline = players.Count(i => i.Value.Online == true && i.Value.OutfitID == iter.OutfitID),
                     Tag = outfit?.Tag,
+                    Name = outfit?.Name ?? $"Missing {iter.OutfitID}",
                 };
 
                 block.Entries.Add(tracked);
             }
-
-            block.Entries = block.Entries.Where(iter => iter.Members > 4)
-                .OrderByDescending(iter => iter.Kills / Math.Max(1, iter.MembersOnline))
-                .Take(5).ToList();
 
             return block;
         }

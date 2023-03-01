@@ -61,10 +61,18 @@ namespace watchtower.Services.Repositories {
                 if (outfit == null || HasExpired(outfit) == true) {
                     // If the outfit is in DB but not Census, might as well return from DB
                     //      Useful if census is down, or outfit is deleted
-                    PsOutfit? censusOutfit = await _Census.GetByID(outfitID);
-                    if (censusOutfit != null) {
-                        outfit = await _Census.GetByID(outfitID);
-                        await _Db.Upsert(censusOutfit);
+                    try {
+                        PsOutfit? censusOutfit = await _Census.GetByID(outfitID);
+                        if (censusOutfit != null) {
+                            outfit = await _Census.GetByID(outfitID);
+                            await _Db.Upsert(censusOutfit);
+                        }
+                    } catch (Exception ex) {
+                        if (outfit == null) {
+                            throw;
+                        } else {
+                            _Logger.LogWarning(ex, $"error getting outfit {outfitID} from Census (falling back to DB)");
+                        }
                     }
                 }
 
@@ -148,8 +156,8 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            _Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} outfits. "
-                + $"In cache: {inCache}, db: {inDb}, census: {inCensus}, left: {IDs.Count}");
+            //_Logger.LogDebug($"Found {inCache + inDb + inCensus}/{total} outfits. "
+                //+ $"In cache: {inCache}, db: {inDb}, census: {inCensus}, left: {IDs.Count}");
 
             return outfits;
         }
