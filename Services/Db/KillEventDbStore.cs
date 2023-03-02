@@ -214,22 +214,19 @@ namespace watchtower.Services.Db {
         public async Task<List<KillDbEntry>> GetTopKillers(KillDbOptions options) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                WITH top_killers AS (
-                    SELECT attacker_character_id
-                        FROM wt_recent_kills
-                        WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
-                            AND world_id = @WorldID
-                            AND attacker_team_id = @FactionID
-                            AND attacker_team_id != killed_team_id
-                        GROUP BY attacker_character_id
-                        ORDER BY count(attacker_character_id) DESC
-                        LIMIT 8
-                ), evs AS (
+                WITH evs AS (
                     SELECT ID, attacker_character_id, killed_character_id, revived_event_id, attacker_team_id, killed_team_id
                         FROM wt_recent_kills
                         WHERE timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                             AND world_id = @WorldID
                             AND attacker_team_id != killed_team_id
+                ), top_killers AS (
+                    SELECT attacker_character_id
+                        FROM evs
+                        WHERE attacker_team_id = @FactionID
+                        GROUP BY attacker_character_id
+                        ORDER BY count(attacker_character_id) DESC
+                        LIMIT 8
                 ), exp as (
                     SELECT id, source_character_id
                         FROM wt_recent_exp 
