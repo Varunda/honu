@@ -231,6 +231,98 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseAsync(hookBuilder);
         }
 
+        [RequiredRoleSlash("ovo-staff")]
+        [SlashCommand("audit-ovo-reps", "Check which ovo reps are still in the Discord")]
+        public async Task AuditOvOContacts(InteractionContext ctx,
+            [Option("offset", "offset to start from")] long? offset = 0) {
+            await ctx.CreateDeferred(false);
+
+            List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
+
+            DiscordWebhookBuilder interactionBuilder = new();
+            DiscordEmbedBuilder builder = new();
+
+            DiscordGuild? homeGuild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (homeGuild == null) {
+                builder.Title = $"Error";
+                builder.Color = DiscordColor.Red;
+                builder.Description = $"Error: failed to find guild id {_DiscordOptions.Value.GuildId}";
+                await ctx.EditResponseEmbed(builder);
+                return;
+            }
+
+            builder.Title = $"OvO reps not in Discord";
+            builder.Color = DiscordColor.Red;
+
+            for (int i = 0; i < ovo.Count; ++i) {
+                if (i < offset) {
+                    continue;
+                }
+
+                PsbOvOContact contact = ovo[i];
+
+                DiscordMember? member = await homeGuild.TryGetMember(contact.DiscordID);
+                if (member != null) {
+                    continue;
+                }
+
+                builder.Description += $"{i} :: [{contact.Group}] {contact.Email}/{contact.DiscordID} <@{contact.DiscordID}>\n";
+
+                if (builder.Description.Length > 1500) {
+                    builder.Description += $"{ovo.Count - i} more...";
+                    break;
+                }
+            }
+
+            await ctx.EditResponseEmbed(builder);
+        }
+
+        [RequiredRoleSlash("practice-staff")]
+        [SlashCommand("audit-practice-reps", "Check which practice reps are still in the Discord")]
+        public async Task AuditPracticeContacts(InteractionContext ctx,
+            [Option("offset", "offset to start from")] long? offset = 0) {
+            await ctx.CreateDeferred(false);
+
+            List<PsbPracticeContact> ovo = await _ContactRepository.GetPracticeContacts();
+
+            DiscordWebhookBuilder interactionBuilder = new();
+            DiscordEmbedBuilder builder = new();
+
+            DiscordGuild? homeGuild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (homeGuild == null) {
+                builder.Title = $"Error";
+                builder.Color = DiscordColor.Red;
+                builder.Description = $"Error: failed to find guild id {_DiscordOptions.Value.GuildId}";
+                await ctx.EditResponseEmbed(builder);
+                return;
+            }
+
+            builder.Title = $"OvO reps not in Discord";
+            builder.Color = DiscordColor.Red;
+
+            for (int i = 0; i < ovo.Count; ++i) {
+                if (i < offset) {
+                    continue;
+                }
+
+                PsbPracticeContact contact = ovo[i];
+
+                DiscordMember? member = await homeGuild.TryGetMember(contact.DiscordID);
+                if (member != null) {
+                    continue;
+                }
+
+                builder.Description += $"{i} :: [{contact.Tag}] {contact.Email}/{contact.DiscordID} <@{contact.DiscordID}>\n";
+
+                if (builder.Description.Length > 1500) {
+                    builder.Description += $"use the offset parameter to show others";
+                    break;
+                }
+            }
+
+            await ctx.EditResponseEmbed(builder);
+        }
+
         /// <summary>
         ///     message context menu to check how honu will parse a reservation
         /// </summary>
