@@ -113,7 +113,7 @@ namespace watchtower {
                 try {
                     using TracerProvider trace = Sdk.CreateTracerProviderBuilder()
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
-                        .AddNpgsql()
+                        //.AddNpgsql()
                         .AddJaegerExporter(config => {
 
                         })

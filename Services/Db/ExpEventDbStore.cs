@@ -59,9 +59,9 @@ namespace watchtower.Services.Db {
         public async Task<long> Insert(ExpEvent ev) {
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "exp insert", enlist: false);
 
-            using Activity? openConn = HonuActivitySource.Root.StartActivity("open conn");
+            //using Activity? openConn = HonuActivitySource.Root.StartActivity("open conn");
             await conn.OpenAsync();
-            openConn?.Stop();
+            //openConn?.Stop();
 
             // Is there a way to save the Parameters and share it between the commands? 
             await using NpgsqlBatch batch = new NpgsqlBatch(conn) {
@@ -94,9 +94,9 @@ namespace watchtower.Services.Db {
 
             await batch.PrepareAsync();
 
-            using Activity? dbExec = HonuActivitySource.Root.StartActivity("insert into wt_exp//wt_recent_exp");
+            //using Activity? dbExec = HonuActivitySource.Root.StartActivity("insert into wt_exp//wt_recent_exp");
             object? IDobj = await batch.ExecuteScalarAsync();
-            await conn.CloseAsync();
+            //await conn.CloseAsync();
             if (IDobj == null) {
                 throw new NullReferenceException($"The scalar returned when inserting a kill was null");
             }
@@ -179,6 +179,11 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character");
+            trace?.AddTag("characterID", charID);
+            trace?.AddTag("start", $"{start:u}");
+            trace?.AddTag("end", $"{end:u}");
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
@@ -209,6 +214,11 @@ namespace watchtower.Services.Db {
         ///     A list of <see cref="ExpEvent"/>
         /// </returns>
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character");
+            trace?.AddTag("characterID", IDs);
+            trace?.AddTag("start", $"{start:u}");
+            trace?.AddTag("end", $"{end:u}");
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
