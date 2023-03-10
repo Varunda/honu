@@ -88,6 +88,23 @@
                         but reporting will be behind
                     </div>
                 </div>
+
+                <div v-if="worldData.lastError != null" class="alert alert-warning text-center h5">
+                    An error occured during the last update: {{worldData.lastError.type}}
+
+                    <div class="h6">
+                        honu will automatically try again
+                    </div>
+
+                    <a href="javascript:void(0);" @click="showErrorDetails = !showErrorDetails">Toggle details</a>
+                    <div class="d-flex">
+                        <div class="flex-grow-1"></div>
+                        <div v-if="showErrorDetails" class="h6 mt-2 mb-1 text-left flex-grow-0">
+                            <pre>{{worldData.lastError.detail}}</pre>
+                        </div>
+                        <div class="flex-grow-1"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid-continent-population">
@@ -581,6 +598,8 @@
                 modalData: new PopperModalData() as PopperModalData,
 
                 popperInstance: null as Instance | null,
+
+                showErrorDetails: false as boolean,
 
                 expSources: {
                     charHeal: ExpStatApi.getCharacterHealEntries,

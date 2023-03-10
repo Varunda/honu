@@ -161,7 +161,7 @@ namespace watchtower.Controllers.Api {
 
             HonuAccount? account = await _CurrentUser.Get();
             if (account == null) {
-                return ApiInternalError("Failed to get current user");
+                return ApiInternalError(new Exception("Failed to get current user"));
             }
 
             await _NamedRepository.DeleteByID(ID, account.ID);

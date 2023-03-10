@@ -33,7 +33,7 @@ namespace watchtower.Controllers {
 
         protected ApiResponse ApiNotFound(string err) => new ApiResponse(404, err);
 
-        protected ApiResponse ApiInternalError(string err) => new ApiResponse(500, err);
+        protected ApiResponse ApiInternalError(Exception ex) => new ApiResponse(500, ex);
 
     }
 }

@@ -22,6 +22,7 @@ using watchtower.Services.Repositories;
 using watchtower.Code.Hubs;
 using watchtower.Code.Constants;
 using watchtower.Code;
+using Microsoft.AspNetCore.Mvc;
 
 namespace watchtower.Services {
 
@@ -92,12 +93,25 @@ namespace watchtower.Services {
                             }
 
                             Stopwatch worldTime = Stopwatch.StartNew();
+
+                            WorldData? data = _WorldDataRepository.Get(worldID, duration);
                             try {
-                                WorldData data = await _DataBuilder.Build(worldID, duration, stoppingToken);
+                                data = await _DataBuilder.Build(worldID, duration, stoppingToken);
+                                data.LastError = null;
                                 msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms; ";
-                                _WorldDataRepository.Set(worldID, data);
                             } catch (Exception ex) {
+                                if (data != null) {
+                                    data.LastError = new ProblemDetails() {
+                                        Detail = ex.ToString(),
+                                        Title = $"error building {worldID}#{duration}",
+                                        Type = ex.Message
+                                    };
+                                }
                                 _Logger.LogError(ex, $"error while building realtime activity for {worldID}#{duration}");
+                            }
+
+                            if (data != null) {
+                                _WorldDataRepository.Set(worldID, data);
                             }
 
                             if (stoppingToken.IsCancellationRequested) {

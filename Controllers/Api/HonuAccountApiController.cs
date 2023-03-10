@@ -137,7 +137,7 @@ namespace watchtower.Controllers.Api {
 
             HonuAccount? currentUser = await _CurrentUser.Get();
             if (currentUser == null) {
-                return ApiInternalError($"current account is null?");
+                return ApiInternalError(new Exception($"current account is null?"));
             }
 
             await _AccountDb.Delete(accountID, currentUser.ID, CancellationToken.None);

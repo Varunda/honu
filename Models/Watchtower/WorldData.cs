@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -80,6 +81,8 @@ namespace watchtower.Models {
         ///     How many seconds behind Honu is when processing events
         /// </summary>
         public int ProcessLag { get; set; } = 0;
+
+        public ProblemDetails? LastError { get; set; } = null;
 
     }
 

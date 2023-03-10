@@ -43,6 +43,8 @@ using watchtower.Code.Constants;
 using System.Collections.Generic;
 using watchtower.Services.Hosted.PSB;
 using watchtower.Code.DiscordInteractions;
+using Newtonsoft.Json.Linq;
+using watchtower.Code;
 
 //using honu_census;
 
@@ -259,9 +261,13 @@ namespace watchtower {
 
             app.UseForwardedHeaders();
 
+            app.UseMiddleware<ExceptionHandlerMiddleware>();
+
+            /*
             if (env.IsDevelopment()) {
                 app.UseDeveloperExceptionPage();
             }
+            */
 
             logger.LogInformation($"Environment: {env.EnvironmentName}");
 
