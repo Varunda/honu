@@ -216,8 +216,6 @@ namespace watchtower.Services.Repositories {
                     GetTopOutfitKillers(trKillOptions, players).ContinueWith(t => data.TR.OutfitKills = t.Result),
                     GetTopWeapons(trKillOptions).ContinueWith(t => data.TR.WeaponKills = t.Result)
                 );
-
-
             }
 
             long timeToGetTopKills = time.ElapsedMilliseconds;

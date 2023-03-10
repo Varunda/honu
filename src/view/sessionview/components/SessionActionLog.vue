@@ -3,16 +3,25 @@
         <div>
             <h4>Filters</h4>
             <div class="btn-group w-100 mb-3">
-                <toggle-button v-model="show.kills">Kills</toggle-button>
-                <toggle-button v-model="show.deaths">Deaths</toggle-button>
-                <toggle-button v-model="show.vehicleDestroy">Vehicle destroy</toggle-button>
-                <toggle-button v-model="show.assists">Assists</toggle-button>
-                <toggle-button v-model="show.revives">Revives</toggle-button>
-                <toggle-button v-model="show.heals">Heals</toggle-button>
-                <toggle-button v-model="show.shieldRepairs">Shield repairs</toggle-button>
-                <toggle-button v-model="show.maxRepairs">MAX repairs</toggle-button>
-                <toggle-button v-model="show.resupplies">Resupplies</toggle-button>
-                <toggle-button v-model="show.expOther">Other exp events</toggle-button>
+                <toggle-button v-model="show.kills" class="flex-grow-0">Kills</toggle-button>
+                <toggle-button v-model="show.deaths" class="flex-grow-0">Deaths</toggle-button>
+                <toggle-button v-model="show.vehicleDestroy" class="flex-grow-0">Vehicle destroy</toggle-button>
+                <toggle-button v-model="show.assists" class="flex-grow-0">Assists</toggle-button>
+                <toggle-button v-model="show.revives" class="flex-grow-0">Revives</toggle-button>
+                <toggle-button v-model="show.heals" class="flex-grow-0">Heals</toggle-button>
+                <toggle-button v-model="show.shieldRepairs" class="flex-grow-0">Shield repairs</toggle-button>
+                <toggle-button v-model="show.maxRepairs" class="flex-grow-0">MAX repairs</toggle-button>
+                <toggle-button v-model="show.resupplies" class="flex-grow-0">Resupplies</toggle-button>
+                <toggle-button v-model="show.expOther" class="flex-grow-0">Other exp events</toggle-button>
+                <toggle-button v-model="show.expNpc" class="flex-grow-0">Other exp npc events</toggle-button>
+                <toggle-button v-model="show.expSelf" class="flex-grow-0">Other exp self events</toggle-button>
+            </div>
+        </div>
+
+        <div>
+            <h4>Options</h4>
+            <div class="btn-group w-100 mb-3">
+                <toggle-button v-model="options.useNpcID" class="flex-grow-0">Show NPC ID</toggle-button>
             </div>
         </div>
 
@@ -87,7 +96,7 @@
     import "filters/LocaleFilter";
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
-    import { ExpandedExpEvent, Experience, ExperienceBlock, ExpEvent } from "api/ExpStatApi";
+    import { ExpandedExpEvent, Experience, ExperienceBlock, ExperienceType, ExpEvent } from "api/ExpStatApi";
     import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
@@ -144,9 +153,18 @@
 
                     ["resupply", "Resupply"],
                     ["max_repair", "MAX repair"],
+
+                    ["exp_other", "Experience (other)"],
+                    ["exp_npc", "Experience (NPC)"],
+                    ["exp_self", "Experience (self)"],
+
                 ]) as Map<string, string>,
 
                 assistScoreMult: 1 as number,
+
+                options: {
+                    useNpcID: false as boolean
+                },
 
                 show: {
                     kills: true as boolean,
@@ -158,7 +176,9 @@
                     resupplies: false as boolean,
                     maxRepairs: false as boolean,
                     vehicleDestroy: true as boolean,
-                    expOther: false as boolean
+                    expOther: false as boolean,
+                    expNpc: false as boolean,
+                    expSelf: false as boolean
                 },
 
                 vehicles: Loadable.idle() as Loading<PsVehicle[]>
@@ -166,7 +186,7 @@
         },
 
         created: function(): void {
-            this.makeAll();
+            this.setAll();
         },
 
         methods: {
@@ -176,17 +196,23 @@
                 this.vehicles = await VehicleApi.getAll();
             },
 
-            makeAll: async function(): Promise<void> {
+            setAll: async function(): Promise<void> {
+                this.entries = await this.makeAll();
+            },
+
+            makeAll: async function(): Promise<ActionLogEntry[]> {
                 await this.bindVehicles();
 
-                this.makeKills();
-                this.makeDeaths();
-                this.makeExp();
-                this.makeZoneChange();
-                this.makeVehicleDestroy();
+                const entries: ActionLogEntry[] = [];
+
+                entries.push(...this.makeKills());
+                entries.push(...this.makeDeaths());
+                entries.push(...this.makeExp());
+                entries.push(...this.makeZoneChange());
+                entries.push(...this.makeVehicleDestroy());
 
                 // Add the session start and end
-                this.entries.push({
+                entries.push({
                     type: "start",
                     parts: [{ html: "<b>Session started</b>" }],
                     timestamp: new Date(this.session.start.getTime() - 50), // If the session started because of an event, have the session start before that event
@@ -197,7 +223,7 @@
                 if (this.session.end != null) {
                     const end: Date = this.session.end ?? new Date();
 
-                    this.entries.push({
+                    entries.push({
                         type: "finish",
                         parts: [{ html: `<b>Session finished</b> - lasted ${TimeUtils.duration((end.getTime() - this.session.start.getTime()) / 1000)}` }],
                         timestamp: this.session.end ?? new Date(),
@@ -205,7 +231,7 @@
                         otherID: null
                     });
                 } else {
-                    this.entries.push({
+                    entries.push({
                         type: "finish",
                         parts: [{ html: `<span class="text-warning">Session has not ended</span>` }],
                         timestamp: this.session.end ?? new Date(),
@@ -214,15 +240,17 @@
                     });
                 }
 
-                this.entries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+                entries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+                return entries;
             },
 
-            makeKills: function(): void {
-                this.entries.push(...this.makeDeathEventEntries(this.kills, true));
+            makeKills: function(): ActionLogEntry[] {
+                return this.makeDeathEventEntries(this.kills, true);
             },
 
-            makeDeaths: function(): void {
-                this.entries.push(...this.makeDeathEventEntries(this.deaths, false));
+            makeDeaths: function(): ActionLogEntry[] {
+                return this.makeDeathEventEntries(this.deaths, false);
             },
 
             /**
@@ -243,7 +271,7 @@
                             { html: `killed` },
                             this.createLoadoutIcon(iter.event.killedLoadoutID),
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
-                            { html: `using` },
+                            { html: `using a` },
                             { html: (iter.event.weaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.weaponID}&gt;`, `/i/${iter.event.weaponID}`) },
                         ],
                         timestamp: iter.event.timestamp,
@@ -274,7 +302,9 @@
             /**
              * Make action log entries for experience events
              */
-            makeExp: function(): void {
+            makeExp: function(): ActionLogEntry[] {
+                const entries: ActionLogEntry[] = [];
+
                 let scoreMult: number = 1;
 
                 for (const ev of this.exp.events) {
@@ -303,12 +333,16 @@
 
                 let prev: ActionLogEntry | null = null;
 
+                const typeMap: Map<number, ExperienceType> = new Map(this.exp.experienceTypes.map(iter => [iter.id, iter]));
+
                 for (let i = 0; i < this.exp.events.length; ++i) {
                     const iter: ExpEvent = this.exp.events[i];
 
                     const expID: number = iter.experienceID;
+                    const expType: ExperienceType | undefined = typeMap.get(expID);
+                    const expDesc: string = expType?.name ?? `unknown ${expID}`;
 
-                    let type: string = `other - experience ${expID}`;
+                    let type: string = `Other (${expType?.name ?? `unknown ${expID}`})`;
 
                     const source: PsCharacter | null = this.exp.characters.find(c => c.id == iter.sourceID) || null;
                     const other: PsCharacter | null = this.exp.characters.find(c => c.id == iter.otherID) || null;
@@ -318,7 +352,11 @@
                         this.createCharacterLink(source, iter.sourceID)
                     ];
 
-                    if (Experience.isMaxRepair(expID)) {
+                    if (Experience.isKill(expID) || expID == Experience.HEADSHOT) {
+                        // skip exp for kill events, we have a Kill event for it
+                        // same with headshot, already shown in a Kill event
+                        continue;
+                    } else if (Experience.isMaxRepair(expID)) {
                         parts.push({ html: `repaired` });
                         type = "max_repair";
 
@@ -332,72 +370,61 @@
                         parts.push({
                             html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s shield`
                         });
-                    } else if (Experience.isVehicleKill(expID)) {
-                        // Done thru another method now
-                        /*
-                        parts.push(this.createLogText("destroyed a"));
-                        type = "vehicle_destroy";
-
-                        let vehicleName: string = "unknown vehicle";
+                    } else if (Experience.isAssist(expID)) {
+                        // For assist events, the amount of score gained is relative to the % of damage dealt (i think)
+                        let baseAssistAmount: number = 0;
 
                         switch (expID) {
-                            case Experience.VKILL_FLASH: vehicleName = "Flash"; break;
-                            case Experience.VKILL_CHIMERA: vehicleName = "Chimera"; break;
-                            case Experience.VKILL_COLOSSUS: vehicleName = "Colossus"; break;
-                            case Experience.VKILL_DERVISH: vehicleName = "Dervish"; break;
-                            case Experience.VKILL_ANT: vehicleName = "ANT"; break;
-                            case Experience.VKILL_GALAXY: vehicleName = "Galaxy"; break;
-                            case Experience.VKILL_HARASSER: vehicleName = "Harasser"; break;
-                            case Experience.VKILL_JAVELIN: vehicleName = "Javline"; break;
-                            case Experience.VKILL_LIBERATOR: vehicleName = "Liberator"; break;
-                            case Experience.VKILL_LIGHTNING: vehicleName = "Lightning"; break;
-                            case Experience.VKILL_MAGRIDER: vehicleName = "Magrider"; break;
-                            case Experience.VKILL_MOSQUITO: vehicleName = "Mosquito"; break;
-                            case Experience.VKILL_PROWLER: vehicleName = "Prowler"; break;
-                            case Experience.VKILL_REAVER: vehicleName = "Reaver"; break;
-                            case Experience.VKILL_SCYTHE: vehicleName = "Scythe"; break;
-                            case Experience.VKILL_VALKYRIE: vehicleName = "Valkyrie"; break;
-                            case Experience.VKILL_VANGUARD: vehicleName = "Vanguard"; break;
+                            case Experience.ASSIST: baseAssistAmount = 100; break;
+                            case Experience.PRIORITY_ASSIST: baseAssistAmount = 150; break;
+                            case Experience.HIGH_PRIORITY_ASSIST: baseAssistAmount = 300; break;
+                            case Experience.SPAWN_ASSIST: break;
                         }
 
-                        parts.push(this.createLogText(vehicleName));
-                        */
-                    } else {
-                        let verb: string = "supported (generic)";
+                        parts.push({
+                            html: `(${((iter.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
+                        });
+                    } else if (Experience.isHeal(expID)) {
+                        type = "heal";
 
-                        if (Experience.isHeal(expID)) {
-                            type = "heal"; verb = "healed";
-                        } else if (Experience.isRevive(expID)) {
-                            type = "revive"; verb = "revived";
-                        } else if (Experience.isAssist(expID)) {
-                            type = "assist"; verb = "assisted in killing";
-                        } else if (Experience.isResupply(expID)) {
-                            type = "resupply"; verb = "resupplied";
-                        }
-
-                        parts.push(this.createLogText(verb));
+                        parts.push(this.createLogText("healed"));
                         parts.push(this.createCharacterLink(other, iter.otherID));
+                    } else if (Experience.isRevive(expID)) {
+                        type = "revive";
 
-                        // For assist events, the amount of score gained is relative to the % of damage dealt (i think)
-                        if (Experience.isAssist(expID)) {
-                            let baseAssistAmount: number = 0;
+                        parts.push(this.createLogText("revived"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                    } else if (Experience.isAssist(expID)) {
+                        type = "assist";
 
-                            switch (expID) {
-                                case Experience.ASSIST: baseAssistAmount = 100; break;
-                                case Experience.PRIORITY_ASSIST: baseAssistAmount = 150; break;
-                                case Experience.HIGH_PRIORITY_ASSIST: baseAssistAmount = 300; break;
-                                case Experience.SPAWN_ASSIST: break;
-                            }
+                        parts.push(this.createLogText("assisted in killing"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                    } else if (Experience.isResupply(expID)) {
+                        type = "resupply";
 
-                            parts.push({
-                                html: `(${((iter.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
-                            });
+                        parts.push(this.createLogText("resupplied"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                    } else if (iter.otherID.length == 19) {
+                        type = "exp_other";
+
+                        parts.push(this.createLogText("interacted with"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                        parts.push(this.createLogText(`to earn ${expDesc}`));
+                    } else if (iter.otherID.length > 0 && iter.otherID != "0") {
+                        type = "exp_npc";
+
+                        if (this.options.useNpcID == true) {
+                            parts.push(this.createLogText(`interacted with NPC ${iter.otherID} to earn ${expDesc}`));
+                        } else {
+                            parts.push(this.createLogText(`interacted with an NPC to earn ${expDesc}`));
                         }
+                    } else {
+                        type = "exp_self";
+
+                        parts.push(this.createLogText(`earned ${expDesc}`));
                     }
 
-                    //parts.push(this.createLogText(`as a`));
-                    //parts.push(this.createLoadoutName(iter.loadoutID));
-
+                    // if the previous action log entry added is the same type and otherID, instead increment the count
                     if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
                         ++prev.count;
                     } else {
@@ -409,16 +436,18 @@
                             otherID: iter.otherID
                         };
 
-                        this.entries.push(entry);
+                        entries.push(entry);
                         prev = entry;
                     }
                 }
+
+                return entries;
             },
 
             /**
              * Make log entries for vehicle kills/deaths
              */
-            makeVehicleDestroy: function(): void {
+            makeVehicleDestroy: function(): ActionLogEntry[] {
                 const entries: ActionLogEntry[] = this.VehicleDestroy.map(iter => {
                     const killedColor: string = ColorUtils.getFactionColor(iter.killed?.factionID ?? iter.event.killedFactionID);
 
@@ -432,8 +461,6 @@
                             this.createLogText(`using the`),
                             this.createLogText((iter.event.attackerVehicleID == "0") ? "": `${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
                             { html: (iter.event.attackerWeaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.attackerWeaponID}&gt;`, `/i/${iter.event.attackerWeaponID}`) },
-                            //this.createLogText("as a"),
-                            //this.createLoadoutName(iter.event.attackerLoadoutID)
                         ],
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
@@ -444,13 +471,15 @@
                     return entry;
                 });
 
-                this.entries.push(...entries);
+                return entries;
             },
 
             /**
              * Make the log entries for continent changes
              */
-            makeZoneChange: function(): void {
+            makeZoneChange: function(): ActionLogEntry[] {
+                const entries: ActionLogEntry[] = [];
+
                 const zonedEvents: ZonedEvent[] = [];
 
                 zonedEvents.push(...this.kills.map((iter) => {
@@ -471,7 +500,7 @@
 
                 for (const ev of zonedEvents) {
                     if (ev.zoneID != currentZoneID) {
-                        this.entries.push({
+                        entries.push({
                             type: "zone_change",
                             // Since events are created on a zone change, and then the actual event is included in the action list,
                             //      the timestamps would be the same. To ensure a zone change shows up before the event that caused it,
@@ -487,6 +516,8 @@
                         currentZoneID = ev.zoneID;
                     }
                 }
+
+                return entries;
             },
 
             /**
@@ -623,7 +654,15 @@
                         return true;
                     }
 
-                    if (iter.type.startsWith("other - ") && this.show.expOther == true) {
+                    if (iter.type == "exp_other" && this.show.expOther == true) {
+                        return true;
+                    }
+
+                    if (iter.type == "exp_npc" && this.show.expNpc) {
+                        return true;
+                    }
+
+                    if (iter.type == "exp_self" && this.show.expSelf) {
                         return true;
                     }
 
@@ -644,6 +683,13 @@
                 return options;
             }
         },
+
+        watch: {
+            "options.useNpcID": function(): void {
+                // this option is only used duration generation, so we'll need to reset it
+                this.setAll();
+            }
+        }
 
     });
     export default SessionActionLog;

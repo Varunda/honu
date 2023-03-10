@@ -53,6 +53,7 @@ export class Experience {
     public static KILL: number = 1;
     public static PRIORITY_KILL: number = 278;
     public static HIGH_PRIORITY_KILL: number = 279;
+    public static HEADSHOT: number = 37;
 
     public static ASSIST: number = 2;
     public static SPAWN_ASSIST: number = 3;
@@ -183,6 +184,14 @@ export class Experience {
         Experience.SQUAD_REPAIR_ANT, Experience.SQUAD_REPAIR_COLOSSUS, Experience.SQUAD_REPAIR_JAVELIN,
         Experience.SQUAD_REPAIR_CHIMERA, Experience.SQUAD_REPAIR_DERVISH
     ];
+
+    /**
+     * Is this exp ID a kill event?
+     */
+    public static isKill(expID: number): boolean {
+        return expID == this.KILL || expID == this.PRIORITY_KILL
+            || expID == this.HIGH_PRIORITY_KILL;
+    }
 
     /**
      * Is this exp ID an assist event?

@@ -142,7 +142,7 @@ namespace watchtower.Services.Hosted.Startup {
                 List<ExperienceType> dbExpType = await _ExpTypeDb.GetAll();
 
                 _Logger.LogDebug($"ExperienceType: got {censusExpType.Count} from Census, have {dbExpType.Count} in DB");
-                foreach (ExperienceType expt in dbExpType) {
+                foreach (ExperienceType expt in censusExpType) {
                     await _ExpTypeDb.Upsert(expt);
                 }
 

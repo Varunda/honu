@@ -54,7 +54,7 @@
                 </div>
             </div>
 
-            <collapsible header-text="Session">
+            <collapsible header-text="Session" id="session-info">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
                         <td><b>ID</b></td>
@@ -191,7 +191,7 @@
                                 {{achievementsEarned.state}}
                             </span>
                             <span v-if="achievementsEarned.state == 'loaded'">
-                                ({{achievementsEarned.data.length}})
+                                ({{achievementsEarned.data.events.length}})
                             </span>
                         </td>
                     </tr>
@@ -213,7 +213,7 @@
                 </table>
             </collapsible>
 
-            <collapsible header-text="General">
+            <collapsible header-text="General" id="session-general">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -224,7 +224,7 @@
                 </session-viewer-general>
             </collapsible>
 
-            <collapsible header-text="Kills">
+            <collapsible header-text="Kills" id="session-kills">
                 <div v-if="killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -235,7 +235,7 @@
                 </session-viewer-kills>
             </collapsible>
 
-            <collapsible v-if="showFullExp == true" header-text="Experience breakdown">
+            <collapsible v-if="showFullExp == true" header-text="Experience breakdown" id="session-expb">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -244,7 +244,7 @@
                 <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp-breakdown>
             </collapsible>
 
-            <collapsible header-text="Experience">
+            <collapsible header-text="Experience" id="session-exp">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -253,7 +253,7 @@
                 <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp>
             </collapsible>
 
-            <collapsible header-text="Achievements earned">
+            <collapsible header-text="Achievements earned" id="session-achievement">
                 <div v-if="achievementsEarned.state == 'loading'">
                     <busy class="honu-busy"></busy>
                     Loading...
@@ -262,7 +262,7 @@
                 <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'" :session="session.data" :earned="achievementsEarned.data"></session-achievements-earned>
             </collapsible>
 
-            <collapsible header-text="Trends">
+            <collapsible header-text="Trends" id="session-trends">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -273,7 +273,7 @@
                 </session-viewer-trends>
             </collapsible>
 
-            <collapsible header-text="Routers & Sunderers">
+            <collapsible header-text="Routers & Sunderers" id="session-spawns">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -284,7 +284,7 @@
                 </session-viewer-spawns>
             </collapsible>
 
-            <collapsible header-text="Action log">
+            <collapsible header-text="Action log" id="session-action-log">
                 <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading' || vehicleDestroy.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -295,7 +295,7 @@
                 </session-action-log>
             </collapsible>
 
-            <collapsible header-text="Item added">
+            <collapsible header-text="Item added" id="session-item-added">
                 <session-item-added :session="session.data"></session-item-added>
             </collapsible>
 
@@ -400,6 +400,7 @@
                 this.session = await SessionApi.getBySessionID(this.sessionID);
 
                 if (this.session.state == "loaded") {
+
                     const fullStart: Date = new Date("2022-07-31T00:00");
                     this.showFullExp = this.session.data.start.getTime() > fullStart.getTime();
 
@@ -427,21 +428,25 @@
             bindExp: async function(): Promise<void> {
                 this.exp = Loadable.loading();
                 this.exp = await ExpStatApi.getBySessionID(this.sessionID);
+                this.checkAllAndScroll();
             },
 
             bindKills: async function(): Promise<void> {
                 this.killsOrDeaths = Loadable.loading();
                 this.killsOrDeaths = await KillStatApi.getSessionKills(this.sessionID);
+                this.checkAllAndScroll();
             },
 
             bindVehicleDestroy: async function(): Promise<void> {
                 this.vehicleDestroy = Loadable.loading();
                 this.vehicleDestroy = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+                this.checkAllAndScroll();
             },
 
             bindAchievementsEarned: async function(): Promise<void> {
                 this.achievementsEarned = Loadable.loading();
                 this.achievementsEarned = await AchievementEarnedApi.getBlockBySessionID(this.sessionID);
+                this.checkAllAndScroll();
             },
 
             bindReconnects: async function(): Promise<void> {
@@ -455,6 +460,23 @@
                 if (this.reconnects.state == "loaded" && this.character.state == "loaded") {
                     this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == this.character.data.worldID);
                 }
+            },
+
+            checkAllAndScroll: function(): void {
+                if (this.killsOrDeaths.state != "loaded" || this.vehicleDestroy.state != "loaded"
+                    || this.achievementsEarned.state != "loaded" || this.exp.state != "loaded") {
+
+                    return;
+                }
+
+                // let vue update and render the elements
+                this.$nextTick(async () => {
+                    // wait 1000ms for all children to render
+                    // TODO: there's gotta be a better way to let all children render first lol
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    const id: string = location.hash.slice(1); // .hash includes the #, remove it
+                    document.getElementById(id)?.scrollIntoView();
+                });
             }
 
         },

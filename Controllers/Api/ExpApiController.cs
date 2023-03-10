@@ -415,6 +415,19 @@ namespace watchtower.Controllers {
             return ApiOk(list);
         }
 
+        /// <summary>
+        ///     Get all the <see cref="ExperienceType"/>s stored
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExperienceType"/>s
+        /// </response>
+        [HttpGet("types")]
+        public async Task<ApiResponse<List<ExperienceType>>> GetExperienceTypes() {
+            List<ExperienceType> types = await _ExperienceTypeRepository.GetAll();
+
+            return ApiOk(types);
+        }
+
         private async Task<List<CharacterExpSupportEntry>> CharacterSpawns(string charID, bool useShort) {
             List<ExpEvent> events = await _ExpDbStore.GetRecentByCharacterID(charID, useShort == true ? 60 : 120);
 

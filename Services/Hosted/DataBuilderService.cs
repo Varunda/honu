@@ -92,9 +92,13 @@ namespace watchtower.Services {
                             }
 
                             Stopwatch worldTime = Stopwatch.StartNew();
-                            WorldData data = await _DataBuilder.Build(worldID, duration, stoppingToken);
-                            msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms; ";
-                            _WorldDataRepository.Set(worldID, data);
+                            try {
+                                WorldData data = await _DataBuilder.Build(worldID, duration, stoppingToken);
+                                msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms; ";
+                                _WorldDataRepository.Set(worldID, data);
+                            } catch (Exception ex) {
+                                _Logger.LogError(ex, $"error while building realtime activity for {worldID}#{duration}");
+                            }
 
                             if (stoppingToken.IsCancellationRequested) {
                                 _Logger.LogDebug($"Stopping token sent, disabling early");
