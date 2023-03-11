@@ -5,9 +5,11 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -83,6 +85,7 @@ namespace watchtower.Code.Hubs.Implementations {
         }
 
         public async Task GenerateReport(string generator) {
+
             await Clients.Caller.UpdateState(OutfitReportState.NOT_STARTED);
 
             OutfitReportParameters parms = new();
@@ -143,6 +146,17 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
             }
 
+            Activity? rootTrace = HonuActivitySource.Root.StartActivity("Generate report");
+            rootTrace?.AddTag("generator", parms.Generator);
+            rootTrace?.AddTag("parameters.id", parms.ID);
+            rootTrace?.AddTag("parameters.include-achievements", parms.IncludeAchievementsEarned);
+            rootTrace?.AddTag("parameters.include-revived-deaths", parms.IncludeRevivedDeaths);
+            rootTrace?.AddTag("parameters.include-teamkilled", parms.IncludeTeamkilled);
+            rootTrace?.AddTag("parameters.include-teamkills", parms.IncludeTeamkills);
+            rootTrace?.AddTag("parameters.start", $"{parms.PeriodStart:u}");
+            rootTrace?.AddTag("parameters.end", $"{parms.PeriodEnd:u}");
+            rootTrace?.AddTag("parameters.teamID", parms.TeamID);
+
             report = new OutfitReport();
             report.Parameters = parms;
 
@@ -166,23 +180,25 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_SESSIONS);
 
-                List<Session> sessions = new();
+                using (Activity? sessionTrace = HonuActivitySource.Root.StartActivity("report - load sessions")) {
+                    List<Session> sessions = new();
 
-                foreach (string charID in parms.CharacterIDs) {
-                    List<Session> s = await _SessionDb.GetByRangeAndCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
-                    sessions.AddRange(s);
-                    _Logger.LogTrace($"Loaded {s.Count} sessions for char {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    foreach (string charID in parms.CharacterIDs) {
+                        List<Session> s = await _SessionDb.GetByRangeAndCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
+                        sessions.AddRange(s);
+                        _Logger.LogTrace($"Loaded {s.Count} sessions for char {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    }
+
+                    foreach (string outfitID in parms.OutfitIDs) {
+                        List<Session> s = await _SessionDb.GetByRangeAndOutfit(outfitID, parms.PeriodStart, parms.PeriodEnd);
+                        sessions.AddRange(s);
+                        _Logger.LogTrace($"Loaded {s.Count} sessions for outfit {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    }
+
+                    report.Sessions = sessions;
+                    _Logger.LogTrace($"Loaded a TOTAL of {report.Sessions.Count} sessions between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
+                    await Clients.Caller.UpdateSessions(report.Sessions);
                 }
-
-                foreach (string outfitID in parms.OutfitIDs) {
-                    List<Session> s = await _SessionDb.GetByRangeAndOutfit(outfitID, parms.PeriodStart, parms.PeriodEnd);
-                    sessions.AddRange(s);
-                    _Logger.LogTrace($"Loaded {s.Count} sessions for outfit {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
-                }
-
-                report.Sessions = sessions;
-                _Logger.LogTrace($"Loaded a TOTAL of {report.Sessions.Count} sessions between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
-                await Clients.Caller.UpdateSessions(report.Sessions);
 
                 if (report.Sessions.Count == 0) {
                     await Clients.Caller.SendError($"found 0 sessions, no data to load");
@@ -198,149 +214,170 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get kills//deaths
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_KILLDEATHS);
-                foreach (string charID in chars) {
-                    try {
-                        List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
+                using (Activity? killDeathActivity = HonuActivitySource.Root.StartActivity("report - kill/deaths")) {
+                    foreach (string charID in chars) {
+                        try {
+                            List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
 
-                        IEnumerable<KillEvent> kills = killDeaths.Where(iter => chars.Contains(iter.AttackerCharacterID));
-                        if (parms.IncludeTeamkills == false) {
-                            kills = kills.Where(iter => iter.KilledTeamID != parms.TeamID);
-                            //_Logger.LogDebug($"not including tks");
+                            IEnumerable<KillEvent> kills = killDeaths.Where(iter => chars.Contains(iter.AttackerCharacterID));
+                            if (parms.IncludeTeamkills == false) {
+                                kills = kills.Where(iter => iter.KilledTeamID != parms.TeamID);
+                                //_Logger.LogDebug($"not including tks");
+                            }
+
+                            report.Kills.AddRange(kills);
+
+                            await Clients.Caller.SendKills(charID, kills.ToList());
+
+                            IEnumerable<KillEvent> deaths = killDeaths.Where(iter => chars.Contains(iter.KilledCharacterID));
+                            if (parms.IncludeRevivedDeaths == false) {
+                                deaths = deaths.Where(iter => iter.RevivedEventID == null);
+                                //_Logger.LogDebug($"not including revived deaths");
+                            }
+                            if (parms.IncludeTeamkilled == false) {
+                                deaths = deaths.Where(iter => iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4);
+                                //_Logger.LogDebug($"not including tked");
+                            }
+
+                            report.Deaths.AddRange(deaths);
+
+                            await Clients.Caller.SendDeaths(charID, deaths.ToList());
+                        } catch (Exception ex) {
+                            killDeathActivity?.AddEvent(new ActivityEvent($"exception loading {charID}"));
+                            doCache = false;
+                            _Logger.LogError(ex, $"error loading kill//death events for {charID}");
+                            await Clients.Caller.SendError($"error while getting kill and death events for {charID}: {ex.Message}");
                         }
-
-                        report.Kills.AddRange(kills);
-
-                        await Clients.Caller.SendKills(charID, kills.ToList());
-
-                        IEnumerable<KillEvent> deaths = killDeaths.Where(iter => chars.Contains(iter.KilledCharacterID));
-                        if (parms.IncludeRevivedDeaths == false) {
-                            deaths = deaths.Where(iter => iter.RevivedEventID == null);
-                            //_Logger.LogDebug($"not including revived deaths");
-                        }
-                        if (parms.IncludeTeamkilled == false) {
-                            deaths = deaths.Where(iter => iter.KilledTeamID != iter.AttackerTeamID || iter.KilledTeamID == 4);
-                            //_Logger.LogDebug($"not including tked");
-                        }
-
-                        report.Deaths.AddRange(deaths);
-
-                        await Clients.Caller.SendDeaths(charID, deaths.ToList());
-                    } catch (Exception ex) {
-                        doCache = false;
-                        _Logger.LogError(ex, $"error loading kill//death events for {charID}");
-                        await Clients.Caller.SendError($"error while getting kill and death events for {charID}: {ex.Message}");
                     }
                 }
 
                 // Get exp
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
-                List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
-                report.Experience = expEvents;
-                await Clients.Caller.UpdateExp(expEvents);
+                using (Activity? expTrace = HonuActivitySource.Root.StartActivity("report - exp")) {
+                    List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+                    report.Experience = expEvents;
+                    await Clients.Caller.UpdateExp(expEvents);
+                }
 
                 // Get vehicle destroy
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_VEHICLE_DESTROY);
-                foreach (string charID in chars) {
-                    try {
-                        List<VehicleDestroyEvent> events = await _VehicleDestroyDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
-                        await Clients.Caller.SendVehicleDestroy(charID, events);
-                        report.VehicleDestroy.AddRange(events);
-                    } catch (Exception ex) {
-                        doCache = false;
-                        _Logger.LogError(ex, $"error loading vehicle destroy events for {charID}");
-                        await Clients.Caller.SendError($"error while getting vehicle destroy events for {charID}: {ex.Message}");
+                using (Activity? vehicleDestroyTrace = HonuActivitySource.Root.StartActivity("report - vehicle destroy")) {
+                    foreach (string charID in chars) {
+                        try {
+                            List<VehicleDestroyEvent> events = await _VehicleDestroyDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
+                            await Clients.Caller.SendVehicleDestroy(charID, events);
+                            report.VehicleDestroy.AddRange(events);
+                        } catch (Exception ex) {
+                            doCache = false;
+                            _Logger.LogError(ex, $"error loading vehicle destroy events for {charID}");
+                            await Clients.Caller.SendError($"error while getting vehicle destroy events for {charID}: {ex.Message}");
+                        }
                     }
                 }
                 
                 if (report.Parameters.IncludeAchievementsEarned == true) {
                     await Clients.Caller.UpdateState(OutfitReportState.GETTING_ACHIEVEMENT_EARNED);
 
-                    HashSet<int> achievementIDs = new();
-                    foreach (string charID in chars) {
-                        try {
-                            List<AchievementEarnedEvent> events = await _AchievementEarnedDbStore.GetByCharacterIDAndRange(charID, parms.PeriodStart, parms.PeriodEnd);
-                            foreach (AchievementEarnedEvent ev in events) {
-                                achievementIDs.Add(ev.AchievementID);
+                    using (Activity? achievementActivity = HonuActivitySource.Root.StartActivity("report - achievement")) {
+                        HashSet<int> achievementIDs = new();
+                        foreach (string charID in chars) {
+                            try {
+                                List<AchievementEarnedEvent> events = await _AchievementEarnedDbStore.GetByCharacterIDAndRange(charID, parms.PeriodStart, parms.PeriodEnd);
+                                foreach (AchievementEarnedEvent ev in events) {
+                                    achievementIDs.Add(ev.AchievementID);
+                                }
+                                await Clients.Caller.SendAchievementEarned(charID, events);
+                                report.AchievementsEarned.AddRange(events);
+                            } catch (Exception ex) {
+                                doCache = false;
+                                _Logger.LogError(ex, $"error loading achievements earned for {charID}");
+                                await Clients.Caller.SendError($"error while getting achievements earned for {charID}: {ex.Message}");
                             }
-                            await Clients.Caller.SendAchievementEarned(charID, events);
-                            report.AchievementsEarned.AddRange(events);
-                        } catch (Exception ex) {
-                            doCache = false;
-                            _Logger.LogError(ex, $"error loading achievements earned for {charID}");
-                            await Clients.Caller.SendError($"error while getting achievements earned for {charID}: {ex.Message}");
                         }
-                    }
 
-                    report.Achievements = (await _AchievementRepository.GetAll()).Where(iter => achievementIDs.Contains(iter.ID)).ToList();
-                    await Clients.Caller.UpdateAchievements(report.Achievements);
+                        report.Achievements = (await _AchievementRepository.GetAll()).Where(iter => achievementIDs.Contains(iter.ID)).ToList();
+                        await Clients.Caller.UpdateAchievements(report.Achievements);
+                    }
                 }
 
                 // Get player control
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_PLAYER_CONTROL);
-                List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+                using (Activity? playerControlTrace = HonuActivitySource.Root.StartActivity("report - player control")) {
+                    List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
 
-                // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
-                //      and load the characters that were present
-                await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITY_CONTROL);
-                List<FacilityControlEvent> control = new List<FacilityControlEvent>();
-                foreach (PlayerControlEvent ev in pcEvents) {
-                    if (control.FirstOrDefault(iter => iter.ID == ev.ControlID) != null) {
-                        continue;
+                    // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
+                    //      and load the characters that were present
+                    await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITY_CONTROL);
+                    List<FacilityControlEvent> control = new List<FacilityControlEvent>();
+                    foreach (PlayerControlEvent ev in pcEvents) {
+                        if (control.FirstOrDefault(iter => iter.ID == ev.ControlID) != null) {
+                            continue;
+                        }
+
+                        FacilityControlEvent? controlEvent = await _ControlDb.GetByID(ev.ControlID);
+                        if (controlEvent != null) {
+                            control.Add(controlEvent);
+                        }
+
+                        List<PlayerControlEvent> playerEvents = await _PlayerControlDb.GetByEventID(ev.ControlID);
+                        report.PlayerControl.AddRange(playerEvents);
                     }
-
-                    FacilityControlEvent? controlEvent = await _ControlDb.GetByID(ev.ControlID);
-                    if (controlEvent != null) {
-                        control.Add(controlEvent);
-                    }
-
-                    List<PlayerControlEvent> playerEvents = await _PlayerControlDb.GetByEventID(ev.ControlID);
-                    report.PlayerControl.AddRange(playerEvents);
+                    report.Control = control;
+                    await Clients.Caller.UpdateControls(report.Control);
+                    await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
                 }
-                report.Control = control;
-                await Clients.Caller.UpdateControls(report.Control);
-                await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
 
                 // Get characters
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);
-                HashSet<string> charsToLoad = GetUniqueCharacters(report);
-                report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), CensusEnvironment.PC, fast: true);
-                await Clients.Caller.UpdateCharacters(report.Characters);
+                using (Activity? charTrace = HonuActivitySource.Root.StartActivity("report - characters")) {
+                    HashSet<string> charsToLoad = GetUniqueCharacters(report);
+                    report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), CensusEnvironment.PC, fast: true);
+                    await Clients.Caller.UpdateCharacters(report.Characters);
+                }
 
                 // Get outfits
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_OUTFITS);
-                HashSet<string> outfits = GetUniqueOutfits(report);
-                report.Outfits = await _OutfitRepository.GetByIDs(outfits.ToList());
-                await Clients.Caller.UpdateOutfits(report.Outfits);
+                using (Activity? outfitTrace = HonuActivitySource.Root.StartActivity("report - outfit")) {
+                    HashSet<string> outfits = GetUniqueOutfits(report);
+                    report.Outfits = await _OutfitRepository.GetByIDs(outfits.ToList());
+                    await Clients.Caller.UpdateOutfits(report.Outfits);
+                }
 
                 // Get the items
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_ITEMS);
-                HashSet<int> items = GetUniqueItems(report);
-                report.Items = (await _ItemRepository.GetAll()).Where(iter => items.Contains(iter.ID)).ToList();
-                await Clients.Caller.UpdateItems(report.Items);
+                using (Activity? itemTrace = HonuActivitySource.Root.StartActivity("report - items")) {
+                    HashSet<int> items = GetUniqueItems(report);
+                    report.Items = (await _ItemRepository.GetAll()).Where(iter => items.Contains(iter.ID)).ToList();
+                    await Clients.Caller.UpdateItems(report.Items);
+                }
 
                 // Get the facilities
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITIES);
-                HashSet<int> facilities = GetUniqueFacilities(report);
-                foreach (int facID in facilities) {
-                    PsFacility? fac = await _FacilityDb.GetByFacilityID(facID);
-                    if (fac != null) {
-                        report.Facilities.Add(fac);
+                using (Activity? facTrace = HonuActivitySource.Root.StartActivity("report - facilities")) {
+                    HashSet<int> facilities = GetUniqueFacilities(report);
+                    foreach (int facID in facilities) {
+                        PsFacility? fac = await _FacilityDb.GetByFacilityID(facID);
+                        if (fac != null) {
+                            report.Facilities.Add(fac);
+                        }
                     }
+                    await Clients.Caller.UpdateFacilities(report.Facilities);
                 }
-                await Clients.Caller.UpdateFacilities(report.Facilities);
 
                 // load the world this report is on by using the first character's world ID
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_RECONNETS);
-                short? worldID = null;
-                foreach (PsCharacter c in report.Characters) {
-                    worldID = c.WorldID;
-                    break;
-                }
+                using (Activity? reconnectTrace = HonuActivitySource.Root.StartActivity("report - reconnects")) {
+                    short? worldID = null;
+                    foreach (PsCharacter c in report.Characters) {
+                        worldID = c.WorldID;
+                        break;
+                    }
 
-                if (worldID != null) {
-                    List<RealtimeReconnectEntry> reconnects = await _ReconnectDb.GetByInterval(worldID.Value, parms.PeriodStart, parms.PeriodEnd);
-                    report.Reconnects = reconnects;
-                    await Clients.Caller.UpdateReconnects(reconnects);
+                    if (worldID != null) {
+                        List<RealtimeReconnectEntry> reconnects = await _ReconnectDb.GetByInterval(worldID.Value, parms.PeriodStart, parms.PeriodEnd);
+                        report.Reconnects = reconnects;
+                        await Clients.Caller.UpdateReconnects(reconnects);
+                    }
                 }
 
                 await Clients.Caller.UpdateState(OutfitReportState.DONE);

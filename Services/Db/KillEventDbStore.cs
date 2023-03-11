@@ -375,11 +375,11 @@ namespace watchtower.Services.Db {
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT *
-                    FROM wt_kills
-                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
-                        AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID);
-            ");
+                    SELECT *
+                        FROM wt_kills
+                        WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                            AND (attacker_character_id = @CharacterID OR killed_character_id = @CharacterID);
+                ");
 
             cmd.AddParameter("CharacterID", charID);
             cmd.AddParameter("PeriodStart", start);

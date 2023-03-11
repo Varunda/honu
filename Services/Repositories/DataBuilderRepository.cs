@@ -69,8 +69,9 @@ namespace watchtower.Services.Repositories {
         /// <param name="duration">How many minutes back to make the data</param>
         /// <param name="stoppingToken">Cancellation token</param>
         public async Task<WorldData> Build(short worldID, int duration, CancellationToken? stoppingToken) {
-            using var processTrace = HonuActivitySource.Root.StartActivity("Realtime Activity");
+            using var processTrace = HonuActivitySource.Root.StartActivity("build realtime activity");
             processTrace?.AddTag("worldID", worldID);
+            processTrace?.AddTag("duration", duration);
 
             Stopwatch time = Stopwatch.StartNew();
 

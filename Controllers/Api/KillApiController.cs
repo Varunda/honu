@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using watchtower.Code.Constants;
+using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
@@ -71,6 +73,12 @@ namespace watchtower.Controllers {
         /// </response>
         [HttpGet("session/{sessionID}")]
         public async Task<ApiResponse<List<ExpandedKillEvent>>> GetBySessionID(long sessionID) {
+            using var trace = HonuActivitySource.Root.StartActivity("get kills by session");
+            if (trace == null) {
+                _Logger.LogDebug($"no trace for get kills by session");
+            }
+            trace?.AddTag("sessionID", sessionID);
+
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {
                 return ApiNotFound<List<ExpandedKillEvent>>($"{nameof(Session)} {sessionID}");
@@ -113,6 +121,22 @@ namespace watchtower.Controllers {
             }
 
             return ApiOk(expanded);
+        }
+
+        [HttpGet("test-method")]
+        public async Task<ApiResponse<int>> TestMethod() {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("test-method");
+            if (trace == null) {
+                _Logger.LogDebug($"trace is null!");
+            }
+
+            await _KillDbStore.GetTopWeapons(new KillDbOptions() {
+                WorldID = 1,
+                Interval = 120,
+                FactionID = 1
+            });
+
+            return ApiOk(0);
         }
 
         /// <summary>

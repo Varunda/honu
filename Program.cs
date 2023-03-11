@@ -111,8 +111,14 @@ namespace watchtower {
             //      not after the server is done running
             _ = Task.Run(async () => {
                 try {
-                    using TracerProvider trace = Sdk.CreateTracerProviderBuilder()
+                    using TracerProvider? trace = Sdk.CreateTracerProviderBuilder()
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
+                        .AddAspNetCoreInstrumentation(options => {
+                            // only profile api calls
+                            options.Filter = (c) => {
+                                return c.Request.Path.StartsWithSegments("/api");
+                            };
+                        })
                         //.AddNpgsql()
                         .AddJaegerExporter(config => {
 

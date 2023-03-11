@@ -118,3 +118,13 @@ disable a hosted service:
 
 enable a hosted service:
 - `service enable $ServiceName`
+
+### Tracing
+
+honu uses OpenTelemetry to do profiling with a Jaeger exporter. (Not Planetside 2 Jaeger)
+
+to run the tracing, run the command:
+
+`docker compose -f jaeger-docker-compose.yml up`
+
+if these Docker services aren't running, profiling will not take place

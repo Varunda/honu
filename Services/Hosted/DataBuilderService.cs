@@ -23,6 +23,7 @@ using watchtower.Code.Hubs;
 using watchtower.Code.Constants;
 using watchtower.Code;
 using Microsoft.AspNetCore.Mvc;
+using watchtower.Code.Tracking;
 
 namespace watchtower.Services {
 

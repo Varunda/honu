@@ -159,10 +159,10 @@ namespace watchtower.Realtime {
                 _Recent.RemoveAt(0);
             }
 
-            using var processTrace = HonuActivitySource.Root.StartActivity("EventProcess");
+            //using var processTrace = HonuActivitySource.Root.StartActivity("EventProcess");
 
             string? type = ev.Value<string?>("type");
-            processTrace?.AddTag("type", type);
+            //processTrace?.AddTag("type", type);
 
             if (type == "serviceMessage") {
                 JToken? payloadToken = ev.SelectToken("payload");
@@ -176,7 +176,7 @@ namespace watchtower.Realtime {
                 }
 
                 string? eventName = payloadToken.Value<string?>("event_name");
-                processTrace?.AddTag("eventName", eventName);
+                //processTrace?.AddTag("eventName", eventName);
 
                 if (eventName == null) {
                     _Logger.LogWarning($"Missing 'event_name' from {ev}");
@@ -552,7 +552,7 @@ namespace watchtower.Realtime {
                 return;
             }
 
-            using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogin");
+            //using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogin");
 
             DateTime timestamp = payload.CensusTimestamp("timestamp");
             short worldID = payload.GetWorldID();
@@ -606,8 +606,8 @@ namespace watchtower.Realtime {
                 return;
             }
 
-            using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogout");
-            logoutRoot?.AddTag("CharacterID", charID);
+            //using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogout");
+            //logoutRoot?.AddTag("CharacterID", charID);
 
             DateTime timestamp = payload.CensusTimestamp("timestamp");
 
@@ -965,7 +965,7 @@ namespace watchtower.Realtime {
         }
 
         private async Task _ProcessDeath(JToken payload) {
-            using Activity? traceDeath = HonuActivitySource.Root.StartActivity("Death");
+            //using Activity? traceDeath = HonuActivitySource.Root.StartActivity("Death");
 
             string attackerID = payload.Value<string?>("attacker_character_id") ?? "0";
             string charID = payload.Value<string?>("character_id") ?? "0";
@@ -1007,8 +1007,8 @@ namespace watchtower.Realtime {
                 return;
             }
 
-            traceDeath?.AddTag("World", ev.WorldID);
-            traceDeath?.AddTag("Zone", ev.ZoneID);
+            //traceDeath?.AddTag("World", ev.WorldID);
+            //traceDeath?.AddTag("Zone", ev.ZoneID);
 
             CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(ev.WorldID);
             if (env == null) {
@@ -1022,7 +1022,7 @@ namespace watchtower.Realtime {
 
             //_Logger.LogTrace($"Processing death: {payload}");
 
-            using Activity? processDeath = HonuActivitySource.Root.StartActivity("process CharacterStore");
+            //using Activity? processDeath = HonuActivitySource.Root.StartActivity("process CharacterStore");
             lock (CharacterStore.Get().Players) {
                 // The default value for Online must be false, else when a new TrackedPlayer is constructed,
                 //      the session will never start, as the handler already sees the character online,
@@ -1089,12 +1089,12 @@ namespace watchtower.Realtime {
                 killed.LatestEventTimestamp = nowSeconds;
                 killed.LatestDeath = ev;
             }
-            processDeath?.Stop();
+            //processDeath?.Stop();
 
             if (World.IsTrackedWorld(ev.WorldID)) {
-                using Activity? insertDeath = HonuActivitySource.Root.StartActivity("insert");
+                //using Activity? insertDeath = HonuActivitySource.Root.StartActivity("insert");
                 ev.ID = await _KillEventDb.Insert(ev);
-                insertDeath?.Stop();
+                //insertDeath?.Stop();
 
                 _WeaponUpdateQueue.Queue(ev.WeaponID); // If a weapon gets a kill, it'll be good to update it's stats at some point
             }
@@ -1112,7 +1112,7 @@ namespace watchtower.Realtime {
                 return;
             }
 
-            using Activity? rootExp = HonuActivitySource.Root.StartActivity("GainExperience");
+            //using Activity? rootExp = HonuActivitySource.Root.StartActivity("GainExperience");
 
             Stopwatch timer = Stopwatch.StartNew();
 
@@ -1157,7 +1157,7 @@ namespace watchtower.Realtime {
 
             TrackedPlayer? otherPlayer = null;
 
-            using Activity? processExp = HonuActivitySource.Root.StartActivity("process CharacterStore");
+            //using Activity? processExp = HonuActivitySource.Root.StartActivity("process CharacterStore");
             lock (CharacterStore.Get().Players) {
                 // Default false for |Online| to ensure a session is started
                 TrackedPlayer p = CharacterStore.Get().Players.GetOrAdd(charID, new TrackedPlayer() {
@@ -1215,7 +1215,7 @@ namespace watchtower.Realtime {
                 }
                 */
             }
-            processExp?.Stop();
+            //processExp?.Stop();
 
             long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
 
