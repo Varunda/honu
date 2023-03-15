@@ -219,6 +219,47 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get all the sessions a character has, including the outfits used
+        /// </summary>
+        /// <remarks>
+        ///     Session tracking only started 2021-07-23
+        /// </remarks>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="limit">
+        ///     Limit how many sessions will be returned. If provided a value and greater than 0,
+        ///     that many sessions will be returned with most recent first
+        /// </param>
+        /// <response code="200">
+        ///     The response will contain a <see cref="SessionBlock"/>, which will contain
+        ///     a list of sessions for the character, and a list of outfits those sessions were in
+        /// </response> 
+        /// <response code="404">
+        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
+        /// </response>
+        [HttpGet("character/{charID}/sessions-block")]
+        public async Task<ApiResponse<SessionBlock>> GetSessionsBlock(string charID, [FromQuery] int? limit = null) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
+            if (c == null) {
+                return ApiNotFound<SessionBlock>($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
+
+            if (limit != null && limit.Value > 0) {
+                sessions = sessions.OrderByDescending(iter => iter.Start).Take(limit.Value).ToList();
+            }
+
+            List<string> outfitIDs = sessions.Where(iter => iter.OutfitID != null).Select(iter => iter.OutfitID!).Distinct().ToList();
+
+            SessionBlock block = new();
+            block.CharacterID = charID;
+            block.Sessions = sessions;
+            block.Outfits = await _OutfitRepository.GetByIDs(outfitIDs);
+
+            return ApiOk(block);
+        }
+
+        /// <summary>
         ///     Get the items a PC character owns
         /// </summary>
         /// <remarks>
@@ -303,17 +344,25 @@ namespace watchtower.Controllers.Api {
                 return ApiOk(block);
             }
 
-            HashSet<string> outfitIDs = new();
-
             OutfitHistoryEntry previous = new();
             previous.OutfitID = sessions[0].OutfitID ?? "";
             previous.Start = sessions[0].Start;
             block.Entries.Add(previous);
 
+            Dictionary<string, PsOutfit?> outfits = new();
+
             foreach (Session s in sessions) {
                 string outfitID = s.OutfitID ?? "";
-                if (outfitIDs.Contains(outfitID) == false) {
-                    outfitIDs.Add(outfitID);
+
+                if (outfits.ContainsKey(outfitID) == false) {
+                    outfits.Add(outfitID, await _OutfitRepository.GetByID(outfitID));
+                }
+
+                outfits.TryGetValue(outfitID, out PsOutfit? outfit);
+
+                if (outfit != null && outfit.DateCreated > s.Start) {
+                    _Logger.LogDebug($"character {charID} was in {outfitID} before it was created! ({outfit.DateCreated:u} > {s.Start:u})");
+                    continue;
                 }
 
                 if (previous.OutfitID != outfitID) {
@@ -330,7 +379,7 @@ namespace watchtower.Controllers.Api {
             // cap off the last session
             block.Entries[^1].End = DateTime.UtcNow;
 
-            block.Outfits = await _OutfitRepository.GetByIDs(outfitIDs.ToList());
+            block.Outfits = outfits.Values.Where(iter => iter != null).Select(iter => iter!).ToList();
 
             return ApiOk(block);
         }

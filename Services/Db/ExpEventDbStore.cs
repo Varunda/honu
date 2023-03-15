@@ -200,8 +200,6 @@ namespace watchtower.Services.Db {
             List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
             await conn.CloseAsync();
 
-            trace?.Stop();
-
             return events;
         }
 

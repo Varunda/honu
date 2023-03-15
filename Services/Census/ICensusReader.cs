@@ -37,7 +37,7 @@ namespace watchtower.Services.Census {
         public async Task<List<T>> ReadList(CensusQuery query) {
             using Activity? start = HonuActivitySource.Root.StartActivity("Census");
             start?.AddTag("url", query.GetUri());
-            start?.AddTag("service namespace", query.ServiceNamespace);
+            start?.AddTag("service_id", query.ServiceId);
 
             using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
             IEnumerable<JToken> tokens = await query.GetListAsync();

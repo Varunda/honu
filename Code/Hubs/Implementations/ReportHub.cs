@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.Tracking;
@@ -25,10 +26,14 @@ namespace watchtower.Code.Hubs.Implementations {
 
     public class ReportHub : Hub<IReportHub> {
 
+        private static int _InstanceCount = 0;
+
         private readonly ILogger<ReportHub> _Logger;
 
         private readonly IMemoryCache _Cache;
         private const string CACHE_KEY = "Report.{0}"; // {0} => Generator hash
+
+        private const string TRACE_KEY = "report -";
 
         private readonly OutfitRepository _OutfitRepository;
         private readonly CharacterRepository _CharacterRepository;
@@ -50,6 +55,22 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly ReportRepository _ReportRepository;
 
+        static ReportHub() {
+            // create a listener that cares about these report activites being created
+            ActivitySource.AddActivityListener(new ActivityListener() {
+                ShouldListenTo = (source) => {
+                    return source.Name == HonuActivitySource.ActivitySourceName;
+                },
+                Sample = (ref ActivityCreationOptions<ActivityContext> context) => {
+                    if (context.Name.StartsWith("report - ") == true) {
+                        return ActivitySamplingResult.AllDataAndRecorded;
+                    } else {
+                        return ActivitySamplingResult.None;
+                    }
+                }
+            });
+        }
+
         public ReportHub(ILogger<ReportHub> logger, IMemoryCache cache,
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             SessionDbStore sessionDb, KillEventDbStore killDb,
@@ -61,8 +82,12 @@ namespace watchtower.Code.Hubs.Implementations {
             IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository,
             AchievementEarnedDbStore achievementEarnedDbStore, AchievementRepository achievementRepository) {
 
+            Interlocked.Increment(ref _InstanceCount);
+
             _Logger = logger;
             _Cache = cache;
+
+            _Logger.LogDebug($"ReportHub ctor instance count: {_InstanceCount}");
 
             _OutfitRepository = outfitRepo;
             _CharacterRepository = charRepo;
@@ -146,17 +171,6 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
             }
 
-            Activity? rootTrace = HonuActivitySource.Root.StartActivity("Generate report");
-            rootTrace?.AddTag("generator", parms.Generator);
-            rootTrace?.AddTag("parameters.id", parms.ID);
-            rootTrace?.AddTag("parameters.include-achievements", parms.IncludeAchievementsEarned);
-            rootTrace?.AddTag("parameters.include-revived-deaths", parms.IncludeRevivedDeaths);
-            rootTrace?.AddTag("parameters.include-teamkilled", parms.IncludeTeamkilled);
-            rootTrace?.AddTag("parameters.include-teamkills", parms.IncludeTeamkills);
-            rootTrace?.AddTag("parameters.start", $"{parms.PeriodStart:u}");
-            rootTrace?.AddTag("parameters.end", $"{parms.PeriodEnd:u}");
-            rootTrace?.AddTag("parameters.teamID", parms.TeamID);
-
             report = new OutfitReport();
             report.Parameters = parms;
 
@@ -164,9 +178,22 @@ namespace watchtower.Code.Hubs.Implementations {
             // set to false when a caught exception occurs during generation
             bool doCache = true;
 
+            // these traces will be created in the context of the signalR connection, which is not useful
+            // by setting the Current activity to null, then starting our activity, a new root trace is created
+            // https://opentelemetry.io/docs/instrumentation/net/manual/#creating-new-root-activities
+            //
+            // we do have to remember to set Activity.Current back to what is was before
+            Activity? previousCurrent = Activity.Current;
+            Activity.Current = null;
+
+            Activity? rootTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} start", ActivityKind.Internal);
+            report.TraceSpanID = rootTrace?.SpanId.ToString();
+
             try {
                 bool isValid = await IsValid(parms);
                 if (isValid == false) {
+                    rootTrace?.Stop();
+                    Activity.Current = previousCurrent;
                     return;
                 }
 
@@ -176,11 +203,26 @@ namespace watchtower.Code.Hubs.Implementations {
                     await _ReportParametersDb.Insert(parms);
                 }
 
+                if (rootTrace == null) {
+                    _Logger.LogDebug($"no trace created for report");
+                } else {
+                    _Logger.LogDebug($"tracing ID {rootTrace.Id} span ID {rootTrace.SpanId} parent ID {rootTrace.ParentId} parent span ID {rootTrace.ParentSpanId}");
+                }
+                rootTrace?.AddTag("generator", parms.Generator);
+                rootTrace?.AddTag("parameters.id", parms.ID);
+                rootTrace?.AddTag("parameters.include-achievements", parms.IncludeAchievementsEarned);
+                rootTrace?.AddTag("parameters.include-revived-deaths", parms.IncludeRevivedDeaths);
+                rootTrace?.AddTag("parameters.include-teamkilled", parms.IncludeTeamkilled);
+                rootTrace?.AddTag("parameters.include-teamkills", parms.IncludeTeamkills);
+                rootTrace?.AddTag("parameters.start", $"{parms.PeriodStart:u}");
+                rootTrace?.AddTag("parameters.end", $"{parms.PeriodEnd:u}");
+                rootTrace?.AddTag("parameters.teamID", parms.TeamID);
+
                 await Clients.Caller.SendParameters(parms);
 
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_SESSIONS);
 
-                using (Activity? sessionTrace = HonuActivitySource.Root.StartActivity("report - load sessions")) {
+                using (Activity? sessionTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} load sessions")) {
                     List<Session> sessions = new();
 
                     foreach (string charID in parms.CharacterIDs) {
@@ -202,6 +244,8 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 if (report.Sessions.Count == 0) {
                     await Clients.Caller.SendError($"found 0 sessions, no data to load");
+                    rootTrace?.Stop();
+                    Activity.Current = previousCurrent;
                     return;
                 }
 
@@ -214,7 +258,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get kills//deaths
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_KILLDEATHS);
-                using (Activity? killDeathActivity = HonuActivitySource.Root.StartActivity("report - kill/deaths")) {
+                using (Activity? killDeathActivity = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} kill/deaths")) {
                     foreach (string charID in chars) {
                         try {
                             List<KillEvent> killDeaths = await _KillDb.GetKillsByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
@@ -253,7 +297,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get exp
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
-                using (Activity? expTrace = HonuActivitySource.Root.StartActivity("report - exp")) {
+                using (Activity? expTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} exp")) {
                     List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
                     report.Experience = expEvents;
                     await Clients.Caller.UpdateExp(expEvents);
@@ -278,7 +322,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 if (report.Parameters.IncludeAchievementsEarned == true) {
                     await Clients.Caller.UpdateState(OutfitReportState.GETTING_ACHIEVEMENT_EARNED);
 
-                    using (Activity? achievementActivity = HonuActivitySource.Root.StartActivity("report - achievement")) {
+                    using (Activity? achievementActivity = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} achievement")) {
                         HashSet<int> achievementIDs = new();
                         foreach (string charID in chars) {
                             try {
@@ -302,7 +346,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get player control
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_PLAYER_CONTROL);
-                using (Activity? playerControlTrace = HonuActivitySource.Root.StartActivity("report - player control")) {
+                using (Activity? playerControlTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} player control")) {
                     List<PlayerControlEvent> pcEvents = await _PlayerControlDb.GetByCharacterIDsPeriod(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
 
                     // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
@@ -329,7 +373,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get characters
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);
-                using (Activity? charTrace = HonuActivitySource.Root.StartActivity("report - characters")) {
+                using (Activity? charTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} characters")) {
                     HashSet<string> charsToLoad = GetUniqueCharacters(report);
                     report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), CensusEnvironment.PC, fast: true);
                     await Clients.Caller.UpdateCharacters(report.Characters);
@@ -337,7 +381,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get outfits
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_OUTFITS);
-                using (Activity? outfitTrace = HonuActivitySource.Root.StartActivity("report - outfit")) {
+                using (Activity? outfitTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} outfit")) {
                     HashSet<string> outfits = GetUniqueOutfits(report);
                     report.Outfits = await _OutfitRepository.GetByIDs(outfits.ToList());
                     await Clients.Caller.UpdateOutfits(report.Outfits);
@@ -345,7 +389,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get the items
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_ITEMS);
-                using (Activity? itemTrace = HonuActivitySource.Root.StartActivity("report - items")) {
+                using (Activity? itemTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} items")) {
                     HashSet<int> items = GetUniqueItems(report);
                     report.Items = (await _ItemRepository.GetAll()).Where(iter => items.Contains(iter.ID)).ToList();
                     await Clients.Caller.UpdateItems(report.Items);
@@ -353,7 +397,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // Get the facilities
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITIES);
-                using (Activity? facTrace = HonuActivitySource.Root.StartActivity("report - facilities")) {
+                using (Activity? facTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} facilities")) {
                     HashSet<int> facilities = GetUniqueFacilities(report);
                     foreach (int facID in facilities) {
                         PsFacility? fac = await _FacilityDb.GetByFacilityID(facID);
@@ -366,7 +410,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                 // load the world this report is on by using the first character's world ID
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_RECONNETS);
-                using (Activity? reconnectTrace = HonuActivitySource.Root.StartActivity("report - reconnects")) {
+                using (Activity? reconnectTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} reconnects")) {
                     short? worldID = null;
                     foreach (PsCharacter c in report.Characters) {
                         worldID = c.WorldID;
@@ -391,9 +435,14 @@ namespace watchtower.Code.Hubs.Implementations {
                 } else {
                     await Clients.Caller.SendMessage($"report is not cached: an exception was thrown while loading the data");
                 }
+
+                rootTrace?.Stop();
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"generic error in report generation. using generator string '{generator}'");
                 await Clients.Caller.SendError(ex.Message);
+            } finally {
+                rootTrace?.Stop();
+                Activity.Current = previousCurrent;
             }
         }
 

@@ -22,6 +22,11 @@ namespace watchtower.Models.Report {
         public DateTime Timestamp { get; set; }
 
         /// <summary>
+        ///     ID of the tracing span used to generate this report
+        /// </summary>
+        public string? TraceSpanID { get; set; } = "";
+
+        /// <summary>
         ///     List of outfits that were tracked
         /// </summary>
         public List<PsOutfit> TrackedOutfits { get; set; } = new List<PsOutfit>();
@@ -67,6 +72,9 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<AchievementEarnedEvent> AchievementsEarned { get; set; } = new();
 
+        /// <summary>
+        ///     List of all <see cref="Achievement"/>s that may show up in the report
+        /// </summary>
         public List<Achievement> Achievements { get; set; } = new();
 
         /// <summary>

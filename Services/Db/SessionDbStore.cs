@@ -4,10 +4,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
@@ -135,6 +137,11 @@ namespace watchtower.Services.Db {
                 _Logger.LogWarning($"Warning, start comes after end, {start} > {end}");
             }
 
+            using Activity? trace = HonuActivitySource.Root.StartActivity("session get by character id and range");
+            trace?.AddTag("characterID", charID);
+            trace?.AddTag("start", $"{start:u}");
+            trace?.AddTag("end", $"{end:u}");
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
@@ -208,6 +215,11 @@ namespace watchtower.Services.Db {
             if (start > end) {
                 _Logger.LogWarning($"Warning, start comes after end, {start} > {end}");
             }
+
+            using Activity? trace = HonuActivitySource.Root.StartActivity("session get by outfit id and range");
+            trace?.AddTag("outfitID", outfitID);
+            trace?.AddTag("start", $"{start:u}");
+            trace?.AddTag("end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

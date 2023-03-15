@@ -629,6 +629,11 @@
              * copy the parameters of a report into the UI values so the report can be recreated with new people
              */
             editReport: function(): void {
+                this.progress.killdeath = 0;
+                this.progress.exp = 0;
+                this.progress.playerControl = 0;
+                this.progress.vehicleDestroy = 0;
+
                 this.periodStart = this.report.parameters.periodStart;
                 this.periodEnd = this.report.parameters.periodEnd;
                 this.teamID = this.report.parameters.teamID;

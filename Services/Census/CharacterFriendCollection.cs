@@ -5,10 +5,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Models.Census;
 
 namespace watchtower.Services.Census {
@@ -30,6 +32,9 @@ namespace watchtower.Services.Census {
         /// </summary>
         /// <param name="charID">ID of the character to get the friends of</param>
         public async Task<List<CharacterFriend>> GetByCharacterID(string charID) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("character friends - get by character id");
+            trace?.AddTag("characterID", charID);
+
             CensusQuery query = _Census.Create("characters_friend");
             query.Where("character_id").Equals(charID);
 

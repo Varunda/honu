@@ -10,7 +10,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    {{entry.start | moment}}
+                    {{entry.session.start | moment}}
                 </a-body>
             </a-col>
 
@@ -20,8 +20,8 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.end">
-                        {{entry.end | moment}}
+                    <span v-if="entry.session.end">
+                        {{entry.session.end | moment}}
                     </span>
                 </a-body>
             </a-col>
@@ -38,12 +38,36 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.end == null">
+                    <span v-if="entry.session.end == null">
                         &lt;in progress&gt;
                     </span>
 
                     <span v-else>
-                        {{(entry.end.getTime() - entry.start.getTime()) / 1000 | mduration}}
+                        {{(entry.session.end.getTime() - entry.session.start.getTime()) / 1000 | mduration}}
+                    </span>
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Outfit</b>
+
+                    <info-hover text="What outfit this character was in during this session. Not 100% accurate!"></info-hover>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <span v-if="entry.session.outfitID == null">
+                        &lt;no outfit&gt;
+                    </span>
+                    <span v-else>
+                        <a :href="'/o/' + entry.session.outfitID">
+                            <span v-if="entry.outfit == null">
+                                &lt;missing outfit {{entry.session.outfitID}}&gt;
+                            </span>
+                            <span v-else>
+                                [{{entry.outfit.tag}}] {{entry.outfit.name}}
+                            </span>
+                        </a>
                     </span>
                 </a-body>
             </a-col>
@@ -54,7 +78,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <a :href="'/s/' + entry.id">
+                    <a :href="'/s/' + entry.session.id">
                         View
                     </a>
                 </a-body>
@@ -81,7 +105,13 @@
     import "filters/FixedFilter";
 
     import { PsCharacter } from "api/CharacterApi";
-    import { Session, SessionApi } from "api/SessionApi";
+    import { PsOutfit } from "api/OutfitApi";
+    import { Session, SessionBlock, SessionApi } from "api/SessionApi";
+
+    type SessionOutfit = {
+        session: Session;
+        outfit: PsOutfit | null;
+    }
 
     export const CharacterSessions = Vue.extend({
         props: {
@@ -90,7 +120,7 @@
 
         data: function() {
             return {
-                sessions: Loadable.idle() as Loading<Session[]>,
+                block: Loadable.idle() as Loading<SessionBlock>,
 
                 showAll: false as boolean
             }
@@ -102,29 +132,47 @@
 
         methods: {
             loadSessions: async function(): Promise<void> {
-                this.sessions = Loadable.loading();
-                this.sessions = await SessionApi.getByCharacterID(this.character.id);
-                if (this.sessions.state == "loaded") {
-                    this.sessions.data = this.sessions.data.sort((a, b) => b.id - a.id);
+                this.block = Loadable.loading();
+                this.block = await SessionApi.getBlockByCharacterID(this.character.id);
+                if (this.block.state == "loaded") {
+                    this.block.data.sessions = this.block.data.sessions.sort((a, b) => b.id - a.id);
                 }
             }
         },
 
         computed: {
-            filteredSessions: function(): Loading<Session[]> {
-                if (this.sessions.state != "loaded") {
-                    return this.sessions;
+            filteredSessions: function(): Loading<SessionOutfit[]> {
+                if (this.block.state != "loaded") {
+                    return Loadable.rewrap(this.block);
                 }
+
+                let sessions: Session[] = [];
 
                 if (this.showAll == true) {
-                    return this.sessions;
+                    sessions = this.block.data.sessions;
+                } else {
+                    sessions = this.block.data.sessions.filter(iter => {
+                        // always show in progress sessions, even if it's only say a second old
+                        if (iter.end == null) {
+                            return true;
+                        }
+
+                        const end: number = (iter.end ?? new Date()).getTime();
+                        const start: number = iter.start.getTime();
+
+                        return (end - start) > 1000 * 60 * 5;
+                    });
                 }
 
-                return Loadable.loaded(this.sessions.data.filter(iter => {
-                    const end: number = (iter.end ?? new Date()).getTime();
-                    const start: number = iter.start.getTime();
+                return Loadable.loaded(sessions.map(iter => {
+                    if (this.block.state != "loaded") {
+                        throw `how did block get unloaded?`;
+                    }
 
-                    return (end - start) > 1000 * 60 * 5;
+                    return {
+                        session: iter,
+                        outfit: iter.outfitID == null ? null : (this.block.data.outfits.get(iter.outfitID) ?? null)
+                    };
                 }));
             }
         },

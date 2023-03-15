@@ -4,9 +4,11 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Models.CharacterViewer.WeaponStats;
 
 namespace watchtower.Services.Census {
@@ -34,6 +36,9 @@ namespace watchtower.Services.Census {
         ///     A list from census of all the <see cref="WeaponStatEntry"/>s that exist
         /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("character weapoon stat - get by character id");
+            trace?.AddTag("characterID", charID);
+
             List<WeaponStat> weaponStats = await GetWeaponStatByCharacterIDAsync(charID);
             List<WeaponStatByFactionEntry> byFaction = await GetWeaponStatByFactionByCharacterIDAsync(charID);
 

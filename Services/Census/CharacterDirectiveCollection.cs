@@ -5,10 +5,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Models.Census;
 
 namespace watchtower.Services.Census {
@@ -28,6 +30,9 @@ namespace watchtower.Services.Census {
         }
 
         public async Task<List<CharacterDirective>> GetByCharacterID(string charID) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("character directive - get by character id");
+            trace?.AddTag("characterID", charID);
+
             CensusQuery query = _Census.Create("characters_directive");
             query.SetLimit(10_000);
             query.Where("character_id").Equals(charID);

@@ -2,6 +2,7 @@
 import ApiWrapper from "api/ApiWrapper";
 
 import { CharacterApi, PsCharacter } from "api/CharacterApi";
+import { PsOutfit, OutfitApi } from "api/OutfitApi";
 
 export class Session {
 	public id: number = 0;
@@ -10,6 +11,12 @@ export class Session {
 	public end: Date | null = null;
 	public outfitID: string | null = null;
 	public teamID: number = 0;
+}
+
+export class SessionBlock {
+	public characterID: string = "";
+	public sessions: Session[] = [];
+	public outfits: Map<string, PsOutfit> = new Map();
 }
 
 export class ExpandedSession {
@@ -36,9 +43,27 @@ export class SessionApi extends ApiWrapper<Session> {
 		};
     }
 
+	public static parseBlock(elem: any): SessionBlock {
+		const block: SessionBlock = new SessionBlock();
+
+		block.characterID = elem.characterID;
+		block.sessions = elem.sessions.map((iter: any) => SessionApi.parse(iter));
+
+		const outfits: PsOutfit[] = elem.outfits.map((iter: any) => OutfitApi.parse(iter));
+		for (const outfit of outfits) {
+			block.outfits.set(outfit.id, outfit);
+        }
+
+		return block;
+    }
+
 	public static async getByCharacterID(charID: string): Promise<Loading<Session[]>> {
 		return SessionApi.get().readList(`/api/character/${charID}/sessions`, SessionApi.parse);
 	}
+
+	public static async getBlockByCharacterID(charID: string): Promise<Loading<SessionBlock>> {
+		return SessionApi.get().readSingle(`/api/character/${charID}/sessions-block`, SessionApi.parseBlock);
+    }
 
 	public static async getBySessionID(sessionID: number): Promise<Loading<Session>> {
 		return SessionApi.get().readSingle(`/api/session/${sessionID}`, SessionApi.parse);
