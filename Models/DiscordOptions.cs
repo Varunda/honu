@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Discord;
 
 namespace watchtower.Models {
 
@@ -43,9 +44,10 @@ namespace watchtower.Models {
         public bool RegisterGlobalCommands { get; set; } = false;
 
         /// <summary>
-        ///     How many seconds a session must be to be sent
+        ///     How many seconds long a ps2 session must be in to qualify to be sent to the user
         /// </summary>
         public int SessionEndSubscriptionDuration { get; set; } = 60 * 10;
 
     }
+
 }

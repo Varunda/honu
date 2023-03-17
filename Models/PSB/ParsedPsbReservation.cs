@@ -52,6 +52,8 @@ namespace watchtower.Models.PSB {
 
         public string MessageLink { get; set; } = "";
 
+        public PsbParsedReservationMetadata Metadata { get; set; } = new();
+
         public DiscordEmbedBuilder Build(bool debug) {
             DiscordEmbedBuilder builder = new();
             builder.Title = $"Reservation";
@@ -87,9 +89,17 @@ namespace watchtower.Models.PSB {
 
             if (debug == true) {
                 builder.Description += "\n\n" + DebugText;
-                if (builder.Description.Length > 2000) {
+                if (builder.Description.Length > 1994) {
                     builder.Description = builder.Description[..1994] + "...";
                 }
+            }
+
+            if (Metadata.AccountSheetApprovedById != null) {
+                builder.AddField("Accounts approved by", $"<@{Metadata.AccountSheetApprovedById}>");
+            }
+
+            if (Metadata.BookingApprovedById != null) {
+                builder.AddField("Base booking approved by", $"<@{Metadata.BookingApprovedById}>");
             }
 
             return builder;

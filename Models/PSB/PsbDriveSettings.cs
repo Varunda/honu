@@ -33,6 +33,11 @@ namespace watchtower.Models.PSB {
         public string TemplateFileId { get; set; } = "";
 
         /// <summary>
+        ///     ID of the channel in the home guilde that debug information will be sent to
+        /// </summary>
+        public ulong? DebugChannelId { get; set; }
+
+        /// <summary>
         ///     Various contact sheets used within PSB
         /// </summary>
         public PsbDriveSettingsContactSheets ContactSheets { get; set; } = new();

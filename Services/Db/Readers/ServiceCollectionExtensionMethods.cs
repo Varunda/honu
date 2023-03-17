@@ -90,6 +90,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<ItemAddedEvent>, ItemAddedEventReader>();
             services.AddSingleton<IDataReader<AlertEndSubscription>, AlertEndSubscriptionReader>();
             services.AddSingleton<IDataReader<ContinentLockEntry>, ContinentLockEntryReader>();
+            services.AddSingleton<IDataReader<PsbParsedReservationMetadata>, PsbParsedReservationReader>();
         }
 
     }

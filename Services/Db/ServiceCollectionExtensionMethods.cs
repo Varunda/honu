@@ -91,6 +91,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<SessionEndSubscriptionDbStore>();
             services.AddSingleton<AlertEndSubscriptionDbStore>();
             services.AddSingleton<ContinentLockDbStore>();
+            services.AddSingleton<PsbParsedReservationDbStore>();
         }
 
     }

@@ -13,6 +13,7 @@ using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Discord;
 using watchtower.Models.PSB;
+using watchtower.Services.Db;
 using watchtower.Services.Queues;
 
 namespace watchtower.Services.Repositories.PSB {
@@ -23,16 +24,20 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly PsbContactSheetRepository _ContactRepository;
         private readonly FacilityRepository _FacilityRepository;
         private readonly PsbCalendarRepository _CalendarRepository;
+        private readonly PsbParsedReservationDbStore _MetadataDb;
 
         private readonly DiscordMessageQueue _DiscordMessageQueue;
         private readonly IOptions<DiscordOptions> _DiscordOptions;
+
+        public static bool BookingEnabled = false;
+
+        public static bool AccountEnabled = false;
 
         private static readonly string[] TIME_FORMATS = new string[] {
             "HH:mm",
             "H:mm",
             "HH",
         };
-
 
         private static readonly string[] DAY_FORMATS = new string[] {
             "YYYY-MM-DD",
@@ -43,7 +48,7 @@ namespace watchtower.Services.Repositories.PSB {
         public PsbReservationRepository(ILogger<PsbReservationRepository> logger,
             PsbContactSheetRepository contactRepository, FacilityRepository facilityRepository,
             IOptions<DiscordOptions> discordOptions, DiscordMessageQueue discordMessageQueue,
-            PsbCalendarRepository calendarRepository) {
+            PsbCalendarRepository calendarRepository, PsbParsedReservationDbStore metadataDb) {
 
             _Logger = logger;
 
@@ -52,6 +57,7 @@ namespace watchtower.Services.Repositories.PSB {
             _DiscordOptions = discordOptions;
             _DiscordMessageQueue = discordMessageQueue;
             _CalendarRepository = calendarRepository;
+            _MetadataDb = metadataDb;
         }
 
         /// <summary>
@@ -74,7 +80,6 @@ namespace watchtower.Services.Repositories.PSB {
             List<string> errors = new();
             string timefeedback = "";
             string feedback = $"Parsed message:\n";
-
 
             _Logger.LogDebug($"{message.MentionedUsers.Count} mentioned users: {string.Join(", ", message.MentionedUsers.Select(iter => iter.Id))}");
 
@@ -192,10 +197,15 @@ namespace watchtower.Services.Repositories.PSB {
             if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
             if (res.End <= res.Start) { errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)"); }
 
+            if (res.Bases.Count > 0) {
+                errors.AddRange(await CheckBaseBookings(res));
+            }
+
             parsed.Errors = errors;
             parsed.ContactErrors = repErrors;
             parsed.DebugText = feedback;
             parsed.TimeFeedback = timefeedback;
+            parsed.Metadata = await _MetadataDb.GetOrCreate(message.Id);
 
             return parsed;
         }
@@ -205,14 +215,31 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="parsed">Parsed reservation</param>
         /// <param name="debug">Will debug output be included?</param>
-        public void Send(ParsedPsbReservation parsed, bool debug) {
+        public async Task Send(ParsedPsbReservation parsed, bool debug) {
             HonuDiscordMessage msg = new();
             msg.ChannelID = _DiscordOptions.Value.ParsedChannelId;
             msg.GuildID = _DiscordOptions.Value.GuildId;
 
             msg.Embeds.Add(parsed.Build(debug));
             msg.Components.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
-            //msg.Components.Add(PsbButtonCommands.ACCEPT_RESERVATION(parsed.MessageId));
+
+            PsbParsedReservationMetadata meta = await _MetadataDb.GetOrCreate(parsed.MessageId);
+
+            if (BookingEnabled == true) {
+                DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
+                if (meta.BookingApprovedById != null || parsed.Errors.Count != 0) {
+                    bookingBtn.Disable();
+                }
+                msg.Components.Add(bookingBtn);
+            }
+
+            if (AccountEnabled == true) {
+                DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
+                if (meta.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
+                    accountBtn.Disable();
+                }
+                msg.Components.Add(accountBtn);
+            }
 
             _DiscordMessageQueue.Queue(msg);
         }
@@ -279,10 +306,9 @@ namespace watchtower.Services.Repositories.PSB {
                 }
 
                 PsbBaseBooking book = new();
-                book.Facility = possibleBases[0];
-                book.FacilityID = book.Facility.FacilityID;
+                book.Facilities = new List<PsFacility>() { possibleBases[0] };
 
-                _Logger.LogDebug($"found {book.Facility.Name}/{book.FacilityID}");
+                _Logger.LogDebug($"found {possibleBases[0].Name}/{possibleBases[0].FacilityID}");
 
                 if (providedTime == true) {
                     bool hasStart = match.Groups.TryGetValue("start", out Group? startGroup);
@@ -323,13 +349,29 @@ namespace watchtower.Services.Repositories.PSB {
             if (providedTime == false && bookings.Count > 0) {
                 int baseCount = bookings.Count;
                 TimeSpan reservationDuration = parsed.Reservation.End - parsed.Reservation.Start;
-                TimeSpan per = reservationDuration / baseCount;
 
-                _Logger.LogDebug($"the reservation lasts: {reservationDuration}, have {baseCount} bases booked, each will take up ");
+                // if there is a greater number of bases than there is hours in a reservation,
+                //      lets assume they want to book all the bases for the whole duration
+                if ((double)baseCount > reservationDuration.TotalHours && bookings.Count > 1) {
+                    _Logger.LogDebug($"Reservation has {baseCount} bases, but only {reservationDuration.TotalHours}, assuming all bases for full duration");
 
-                for (int i = 0; i < bookings.Count; ++i) {
-                    bookings[i].Start = parsed.Reservation.Start + (per * i);
-                    bookings[i].End = parsed.Reservation.Start + (per * (i + 1));
+                    // put all the bases into one booking
+                    for (int i = 1; i < bookings.Count; ++i) {
+                        bookings[0].Facilities.AddRange(bookings[i].Facilities);
+                    }
+
+                    bookings[0].Start = parsed.Reservation.Start;
+                    bookings[0].End = parsed.Reservation.End;
+                    bookings = bookings.Take(1).ToList();
+                } else {
+                    TimeSpan per = reservationDuration / baseCount;
+
+                    _Logger.LogDebug($"the reservation lasts: {reservationDuration}, have {baseCount} bases booked, each will take up {per}");
+
+                    for (int i = 0; i < bookings.Count; ++i) {
+                        bookings[i].Start = parsed.Reservation.Start + (per * i);
+                        bookings[i].End = parsed.Reservation.Start + (per * (i + 1));
+                    }
                 }
             }
 
@@ -382,24 +424,55 @@ namespace watchtower.Services.Repositories.PSB {
             return errors;
         }
 
+        /// <summary>
+        ///     check if the reservation has any conflicting base bookings
+        /// </summary>
+        /// <param name="res">reservation to check against</param>
+        /// <returns>
+        ///     a list of conflicting bookings
+        /// </returns>
         private async Task<List<string>> CheckBaseBookings(PsbReservation res) {
             List<string> errors = new();
 
             try {
                 List<PsbCalendarEntry> entries = await _CalendarRepository.GetAll();
 
-                List<PsbCalendarEntry> colliding = entries.Where(iter => {
-                    if (iter.Valid == false) {
-                        return false;
+                foreach (PsbBaseBooking booking in res.Bases) {
+                    foreach (PsbCalendarEntry iter in entries) {
+                        if (iter.Valid == false) {
+                            continue;
+                        }
+
+                        bool broke = false;
+                        foreach (string outfit in res.Outfits) {
+                            if (iter.Groups.Select(iter => iter.ToLower()).Contains(outfit.ToLower())) {
+                                broke = true;
+                                break;
+                            }
+                        }
+
+                        if (broke == true) {
+                            break;
+                        }
+
+                        List<PsFacility> facilities = iter.Bases.SelectMany(iter => iter.PossibleBases).ToList();
+                        foreach (PsFacility fac in booking.Facilities) {
+                            if (facilities.FirstOrDefault(iter => iter.FacilityID == fac.FacilityID) != null) {
+                                if ((booking.Start >= iter.Start && booking.Start <= iter.End)
+                                    || (booking.End >= iter.Start && booking.End <= iter.End)
+                                    || (booking.Start <= iter.Start && booking.End >= iter.End)) {
+
+                                    errors.Add($"{fac.Name} is in use by {string.Join(", ", iter.Groups)} from {iter.Start:u} to {iter.End:u}");
+                                    broke = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (broke == true) {
+                            break;
+                        }
                     }
-
-                    return false;
-                }).ToList();
-
-                if (colliding.Count > 0) {
-                    errors.AddRange(colliding.Select(iter => {
-                        return $"";
-                    }));
                 }
             } catch (Exception ex) {
                 errors.Add($"failed to check calendar: {ex.Message}");

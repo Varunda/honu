@@ -83,6 +83,30 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
+        //[SlashCommand("toggle-account-automation", "Toggle account automation")]
+        [RequiredRoleSlash("ovo-admin")]
+        public async Task ToggleAccountAutomation(InteractionContext ctx) {
+            PsbReservationRepository.AccountEnabled = !PsbReservationRepository.AccountEnabled;
+
+            if (PsbReservationRepository.AccountEnabled == true) {
+                await ctx.CreateImmediateText("Account automation enabled");
+            } else {
+                await ctx.CreateImmediateText("Account automation disabled");
+            }
+        }
+
+        [SlashCommand("toggle-booking-automation", "Toggle booking automation")]
+        [RequiredRoleSlash("ovo-admin")]
+        public async Task ToggleBookingAutomation(InteractionContext ctx) {
+            PsbReservationRepository.BookingEnabled = !PsbReservationRepository.BookingEnabled;
+
+            if (PsbReservationRepository.BookingEnabled == true) {
+                await ctx.CreateImmediateText("Booking automation enabled");
+            } else {
+                await ctx.CreateImmediateText("Booking automation disabled");
+            }
+        }
+
         /// <summary>
         ///     Slash command to list the ovo reps of an outfit
         /// </summary>
@@ -370,14 +394,56 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="msgID">ID of the message to pull the information from</param>
         public static DiscordButtonComponent REFRESH_RESERVATION(ulong msgID) => new(ButtonStyle.Secondary, $"@refresh-reservation.{msgID}", "Refresh");
 
-        public static DiscordButtonComponent ACCEPT_RESERVATION(ulong msgID) => new(ButtonStyle.Primary, $"@approve-reservation.{msgID}", "Approve");
+        public static DiscordButtonComponent APPROVE_BOOKING(ulong msgID) => new(ButtonStyle.Primary, $"@approve-booking.{msgID}", "Approve booking");
+
+        public static DiscordButtonComponent APPROVE_ACCOUNTS(ulong msgID) => new(ButtonStyle.Primary, $"@approve-accounts.{msgID}", "Approve accounts");
 
         public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
         public PsbOvOSheetRepository _SheetRepository { set; private get; } = default!;
+        public PsbCalendarRepository _CalendarRepository { set; private get; } = default!;
+        public PsbParsedReservationDbStore _MetadataDb { set; private get; } = default!;
 
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
         public IOptions<PsbRoleMapping> _RoleMapping { set; private get; } = default!;
+
+        /// <summary>
+        ///     Helper method to get the message of a reservation based on only the ID. The guild and channel are assumed
+        ///     based on the options provided. Additionally, the error response is handled, so if the return value is null,
+        ///     all you need to do is return, as the response was already handled
+        /// </summary>
+        /// <param name="ctx">context the interaction is being performed in</param>
+        /// <param name="action">what action is being done. This is just to make the errors a bit more descripive</param>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
+        /// <returns>
+        ///     The <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/> of <paramref name="msgID"/>,
+        ///     or <c>null</c> if it doesn't exist. If null is returned, the interaction will also be edited with
+        ///     an error explaining why
+        /// </returns>
+        private async Task<DiscordMessage?> GetReservationMessage(ButtonContext ctx, string action, ulong msgID) {
+            DiscordGuild? guild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
+            if (guild == null) {
+                _Logger.LogWarning($"cannot {action} {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
+                await ctx.Interaction.EditResponseText($"cannot {action} {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
+                return null;
+            }
+
+            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ReservationChannelId);
+            if (channel == null) {
+                _Logger.LogWarning($"cannot {action} {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} was not found");
+                await ctx.Interaction.EditResponseText($"cannot {action} {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} is null");
+                return null;
+            }
+
+            DiscordMessage? msg = await channel.TryGetMessage(msgID);
+            if (msg == null) {
+                _Logger.LogWarning($"cannot {action} {msgID}: message was null");
+                await ctx.Interaction.EditResponseText($"cannot {action} {msgID}: message was null");
+                return null;
+            }
+
+            return msg;
+        }
 
         /// <summary>
         ///     Button command to refresh the parsing of a reservation. Uses the configured reservations channel
@@ -394,44 +460,62 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            DiscordGuild? guild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
-            if (guild == null) {
-                _Logger.LogWarning($"cannot refresh-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
-                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
-                return;
-            }
-
-            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ReservationChannelId);
-            if (channel == null) {
-                _Logger.LogWarning($"cannot refresh-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} was not found");
-                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} is null");
-                return;
-            }
-
-            DiscordMessage? msg = await channel.TryGetMessage(msgID);
+            DiscordMessage? msg = await GetReservationMessage(ctx, "refresh-reservation", msgID);
             if (msg == null) {
-                _Logger.LogWarning($"cannot refresh-reservation {msgID}: message was null");
-                await ctx.Interaction.EditResponseText($"cannot refresh-reservation {msgID}: message was null");
                 return;
             }
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
 
-            await ctx.Message.ModifyAsync(Optional.FromValue(parsed.Build(false).Build()));
+            DiscordMessageBuilder builder = new();
+            builder.AddEmbed(parsed.Build(false));
+
+            List<DiscordComponent> comps = new();
+            comps.Add(PsbButtonCommands.REFRESH_RESERVATION(msgID));
+
+            if (PsbReservationRepository.BookingEnabled == true) {
+                DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
+                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0) {
+                    bookingBtn.Disable();
+                }
+                comps.Add(bookingBtn);
+            }
+
+            if (PsbReservationRepository.AccountEnabled == true) {
+                DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_ACCOUNTS(parsed.MessageId);
+                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
+                    accountBtn.Disable();
+                }
+                comps.Add(accountBtn);
+            }
+
+            builder.AddComponents(comps);
+
+            await ctx.Message.ModifyAsync(builder);
             await ctx.Interaction.EditResponseText("Refreshed!");
         }
 
-        [ButtonCommand("approve-reservation")]
-        public async Task ApproveReservation(ButtonContext ctx, ulong msgID) {
+        /// <summary>
+        ///     button command to accept the base booking of a reservation
+        /// </summary>
+        /// <param name="ctx">provided context</param>
+        /// <param name="msgID">ID of the message that will contain the reservation</param>
+        [ButtonCommand("approve-booking")]
+        public async Task ApproveBooking(ButtonContext ctx, ulong msgID) {
             await ctx.Interaction.CreateDeferred(true);
 
+            if (PsbReservationRepository.BookingEnabled == false) {
+                await ctx.Interaction.EditResponseText($"bot booking approvals are disabled. Have an admin user `/toggle-booking-automation` to toggle");
+                return;
+            }
+
             if (ctx.Member == null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"member was null");
+                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: member was null");
                 return;
             }
 
             if (_RoleMapping.Value.Mappings.TryGetValue("ovo-staff", out ulong staffID) == false) {
-                await ctx.Interaction.EditResponseErrorEmbed("role mapping for `ovo-staff` is missing");
+                await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-staff` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-staff $ROLE_ID`");
                 return;
             }
 
@@ -440,24 +524,57 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            DiscordGuild? guild = await ctx.Client.TryGetGuild(_DiscordOptions.Value.GuildId);
-            if (guild == null) {
-                _Logger.LogWarning($"cannot approve-reservation {msgID}: guild {_DiscordOptions.Value.GuildId} is null");
-                await ctx.Interaction.EditResponseErrorEmbed($"guild {_DiscordOptions.Value.GuildId} was not found (is null)");
-                return;
-            }
-
-            DiscordChannel? channel = guild.TryGetChannel(_DiscordOptions.Value.ReservationChannelId);
-            if (channel == null) {
-                _Logger.LogWarning($"cannot approve-reservation {msgID}: channel {_DiscordOptions.Value.ReservationChannelId} was not found");
-                await ctx.Interaction.EditResponseErrorEmbed($"channel {_DiscordOptions.Value.ReservationChannelId} was not found (is null)");
-                return;
-            }
-
-            DiscordMessage? msg = await channel.TryGetMessage(msgID);
+            DiscordMessage? msg = await GetReservationMessage(ctx, "approve-booking", msgID);
             if (msg == null) {
-                _Logger.LogWarning($"cannot approve-reservation {msgID}: message was null");
-                await ctx.Interaction.EditResponseErrorEmbed("message was null");
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
+            if (parsed.Metadata.BookingApprovedById != null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approved base booking\nAlready approved by <@{parsed.Metadata.BookingApprovedById}>");
+                return;
+            }
+
+            foreach (PsbBaseBooking booking in parsed.Reservation.Bases) {
+                await _CalendarRepository.Insert(parsed, booking);
+            }
+
+            parsed.Metadata.BookingApprovedById = ctx.User.Id;
+            await _MetadataDb.Upsert(parsed.Metadata);
+
+            await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
+                .WithTitle("Success")
+                .WithDescription($"Successfully booked {parsed.Reservation.Bases.Count} bases")
+                .WithColor(DiscordColor.Green)
+            );
+        }
+
+        //[ButtonCommand("approve-accounts")]
+        public async Task ApproveAccounts(ButtonContext ctx, ulong msgID) {
+            await ctx.Interaction.CreateDeferred(true);
+
+            if (PsbReservationRepository.AccountEnabled == false) {
+                await ctx.Interaction.EditResponseText($"bot account approvals are disabled. Have an admin user `/toggle-account-automation` to toggle");
+                return;
+            }
+
+            if (ctx.Member == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: member was null");
+                return;
+            }
+
+            if (_RoleMapping.Value.Mappings.TryGetValue("ovo-staff", out ulong staffID) == false) {
+                await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-staff` is missing");
+                return;
+            }
+
+            if (ctx.Member.Roles.FirstOrDefault(iter => iter.Id == staffID) == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"you lack the ovo-staff role");
+                return;
+            }
+
+            DiscordMessage? msg = await GetReservationMessage(ctx, "approve-accounts", msgID);
+            if (msg == null) {
                 return;
             }
 
@@ -467,7 +584,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
                 .WithTitle("Success")
-                .WithDescription($"Successfully created sheet for reservation at `{fileID}`")
+                .WithDescription($"Successfully created account sheet for reservation at `{fileID}`")
                 .WithColor(DiscordColor.Green)
             );
         }

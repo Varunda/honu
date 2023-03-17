@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
@@ -49,16 +50,28 @@ namespace watchtower.Models.PSB {
 
     public class PsbBaseBooking {
 
-        public int FacilityID { get; set; }
+        public PsbBaseBooking() {
 
-        public PsFacility? Facility { get; set; } = null;
+        }
+
+        /// <summary>
+        ///     copy ctor
+        /// </summary>
+        /// <param name="other"></param>
+        public PsbBaseBooking(PsbBaseBooking other) {
+            Facilities = new List<PsFacility>(other.Facilities);
+            Start = other.Start;
+            End = other.End;
+        }
+
+        public List<PsFacility> Facilities { get; set; } = new();
 
         public DateTime Start { get; set; }
 
         public DateTime End { get; set; }
 
         public string GetDiscordPretty() {
-            return $"{Facility?.Name ?? $"<missing {FacilityID}>"}: {Start.GetDiscordFullTimestamp()} - {End.GetDiscordFullTimestamp()}";
+            return $"{string.Join(", ", Facilities.Select(iter => iter.Name))}: {Start.GetDiscordFullTimestamp()} - {End.GetDiscordFullTimestamp()}";
         }
 
     }
