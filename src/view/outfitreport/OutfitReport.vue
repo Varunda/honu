@@ -1056,10 +1056,12 @@
 
             onUpdatePlayerControls: function(ev: PlayerControlEvent[]): void {
                 this.report.playerControl = ev.map(iter => PlayerControlEventApi.parse(iter));
+                this.log(`Loaded ${this.report.playerControl.length} facility player control events`);
             },
 
             onUpdateControls: function(ev: FacilityControlEvent[]): void {
                 this.report.control = ev.map(iter => FacilityControlEventApi.parse(iter));
+                this.log(`Loaded ${this.report.control.length} facility control events`);
             },
 
             onUpdateFacilities: function(ev: PsFacility[]): void {

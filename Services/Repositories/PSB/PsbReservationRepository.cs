@@ -215,7 +215,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="parsed">Parsed reservation</param>
         /// <param name="debug">Will debug output be included?</param>
-        public async Task Send(ParsedPsbReservation parsed, bool debug) {
+        public void Send(ParsedPsbReservation parsed, bool debug) {
             HonuDiscordMessage msg = new();
             msg.ChannelID = _DiscordOptions.Value.ParsedChannelId;
             msg.GuildID = _DiscordOptions.Value.GuildId;
@@ -223,11 +223,9 @@ namespace watchtower.Services.Repositories.PSB {
             msg.Embeds.Add(parsed.Build(debug));
             msg.Components.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
 
-            PsbParsedReservationMetadata meta = await _MetadataDb.GetOrCreate(parsed.MessageId);
-
             if (BookingEnabled == true) {
                 DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (meta.BookingApprovedById != null || parsed.Errors.Count != 0) {
+                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0) {
                     bookingBtn.Disable();
                 }
                 msg.Components.Add(bookingBtn);
@@ -235,7 +233,7 @@ namespace watchtower.Services.Repositories.PSB {
 
             if (AccountEnabled == true) {
                 DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (meta.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
+                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
                     accountBtn.Disable();
                 }
                 msg.Components.Add(accountBtn);

@@ -394,9 +394,23 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="msgID">ID of the message to pull the information from</param>
         public static DiscordButtonComponent REFRESH_RESERVATION(ulong msgID) => new(ButtonStyle.Secondary, $"@refresh-reservation.{msgID}", "Refresh");
 
+        /// <summary>
+        ///     Button that when pressed when approve the base bookings of a reservation
+        ///     that can be found in the <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/>
+        ///     of <paramref name="msgID"/>
+        /// </summary>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
         public static DiscordButtonComponent APPROVE_BOOKING(ulong msgID) => new(ButtonStyle.Primary, $"@approve-booking.{msgID}", "Approve booking");
 
+        /// <summary>
+        ///     Button that when pressed will approve the account request of a reservation
+        ///     that can be found in the <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/>
+        ///     of <paramref name="msgID"/>
+        /// </summary>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
         public static DiscordButtonComponent APPROVE_ACCOUNTS(ulong msgID) => new(ButtonStyle.Primary, $"@approve-accounts.{msgID}", "Approve accounts");
+
+        public static DiscordButtonComponent RESET_RESERVATION(ulong msgID) => new(ButtonStyle.Danger, $"@reset-reservation.{msgID}", "Reset (DANGER)");
 
         public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
@@ -488,6 +502,8 @@ namespace watchtower.Code.DiscordInteractions {
                 }
                 comps.Add(accountBtn);
             }
+
+            comps.Add(PsbButtonCommands.RESET_RESERVATION(msgID));
 
             builder.AddComponents(comps);
 
@@ -587,6 +603,40 @@ namespace watchtower.Code.DiscordInteractions {
                 .WithDescription($"Successfully created account sheet for reservation at `{fileID}`")
                 .WithColor(DiscordColor.Green)
             );
+        }
+
+        [ButtonCommand("reset-reservation")]
+        public async Task ResetReservation(ButtonContext ctx, ulong msgID) {
+            await ctx.Interaction.CreateDeferred(true);
+
+            if (ctx.Member == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: member was null");
+                return;
+            }
+
+            if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong staffID) == false) {
+                await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing");
+                return;
+            }
+
+            if (ctx.Member.Roles.FirstOrDefault(iter => iter.Id == staffID) == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"you lack the ovo-admin role");
+                return;
+            }
+
+            DiscordMessage? msg = await GetReservationMessage(ctx, "refresh-reservation", msgID);
+            if (msg == null) {
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
+
+            parsed.Metadata.AccountSheetApprovedById = null;
+            parsed.Metadata.AccountSheetId = null;
+            parsed.Metadata.BookingApprovedById = null;
+            await _MetadataDb.Upsert(parsed.Metadata);
+
+            await ctx.Interaction.EditResponseText($"Reset reservation");
         }
 
     }

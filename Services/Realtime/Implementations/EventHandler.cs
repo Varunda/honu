@@ -416,7 +416,7 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
-            //_Logger.LogTrace($"Facility control: {payload}");
+            _Logger.LogTrace($"Facility control: {payload}");
 
             ushort defID = (ushort) (ev.ZoneID & 0xFFFF);
             ushort instanceID = (ushort) ((ev.ZoneID & 0xFFFF0000) >> 4);
@@ -470,9 +470,7 @@ namespace watchtower.Realtime {
                         ev.Players = events.Count;
                     }
 
-                    if (ev.Players == 0) {
-                        return;
-                    }
+                    long ID = await _ControlDb.Insert(ev);
 
                     Stopwatch timer = Stopwatch.StartNew();
                     UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
@@ -480,10 +478,11 @@ namespace watchtower.Realtime {
 
                     ev.UnstableState = state;
 
-                    long ID = await _ControlDb.Insert(ev);
+                    if (ev.Players >= 0) {
+                        await _FacilityPlayerDb.InsertMany(ID, events);
+                    }
 
                     timer.Restart();
-                    await _FacilityPlayerDb.InsertMany(ID, events);
                     //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
                     //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: with {ev.Players} players, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}/{stat2}, {ev.Timestamp}");
 

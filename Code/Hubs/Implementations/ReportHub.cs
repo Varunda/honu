@@ -87,7 +87,7 @@ namespace watchtower.Code.Hubs.Implementations {
             _Logger = logger;
             _Cache = cache;
 
-            _Logger.LogDebug($"ReportHub ctor instance count: {_InstanceCount}");
+            //_Logger.LogDebug($"ReportHub ctor instance count: {_InstanceCount}");
 
             _OutfitRepository = outfitRepo;
             _CharacterRepository = charRepo;
@@ -352,8 +352,10 @@ namespace watchtower.Code.Hubs.Implementations {
                     // Load each FacilityControlEvent that the tracked characters participated in, load the facility,
                     //      and load the characters that were present
                     await Clients.Caller.UpdateState(OutfitReportState.GETTING_FACILITY_CONTROL);
-                    List<FacilityControlEvent> control = new List<FacilityControlEvent>();
+                    List<FacilityControlEvent> control = new();
+
                     foreach (PlayerControlEvent ev in pcEvents) {
+                        // don't load the same facility control event multiple times
                         if (control.FirstOrDefault(iter => iter.ID == ev.ControlID) != null) {
                             continue;
                         }
@@ -361,12 +363,15 @@ namespace watchtower.Code.Hubs.Implementations {
                         FacilityControlEvent? controlEvent = await _ControlDb.GetByID(ev.ControlID);
                         if (controlEvent != null) {
                             control.Add(controlEvent);
+                        } else {
+                            _Logger.LogWarning($"Failed to find control event {ev.ControlID}, but had a player control event for it");
                         }
 
                         List<PlayerControlEvent> playerEvents = await _PlayerControlDb.GetByEventID(ev.ControlID);
                         report.PlayerControl.AddRange(playerEvents);
                     }
                     report.Control = control;
+
                     await Clients.Caller.UpdateControls(report.Control);
                     await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
                 }

@@ -80,6 +80,10 @@ namespace watchtower.Services.Repositories {
                     _Cache.Set(key, outfit, new MemoryCacheEntryOptions() {
                         SlidingExpiration = TimeSpan.FromMinutes(20)
                     });
+                } else {
+                    _Cache.Set(key, outfit, new MemoryCacheEntryOptions() {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1)
+                    });
                 }
             }
 
@@ -142,7 +146,7 @@ namespace watchtower.Services.Repositories {
             }
 
             int inCensus = 0;
-            List<PsOutfit> censusOutfits = await _Db.GetByIDs(IDs);
+            List<PsOutfit> censusOutfits = await _Census.GetByIDs(IDs);
             foreach (PsOutfit outfit in censusOutfits) {
                 outfits.Add(outfit);
                 IDs.Remove(outfit.ID);
