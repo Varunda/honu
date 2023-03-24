@@ -128,3 +128,51 @@ to run the tracing, run the command:
 `docker compose -f jaeger-docker-compose.yml up`
 
 if these Docker services aren't running, profiling will not take place
+
+### Report Generator
+
+honu uses a specific string format to specify the parameters for an outfit report.
+
+a generator string can be two different forms:
+- ID form: only the id of a previously used generator string is given. A db lookup is then performed to load the generator string, which is in options form
+- Options form: the options are provided in this form
+
+#### ID form
+
+`#{GUID};`
+- GUID: GUID - A valid globally unique identifer
+
+#### Options form
+
+`{START},{END},{TEAM_ID};{ENTITIES};`
+
+- START: int - the unix epoch (in seconds) for when the report starts. cannot come after END
+- END: int - the unix epoch (in seconds) for when the report ends. cannot come before START
+- TEAM_ID: short - an optional short to filter the team_id of events. used for NSO outfits, or outfits with NSO. this is optional as often a valid team_id can be infered from the outfits are characters being added
+- ENTITIES: many - there are many different entities that can be given, some change what characters are included in an outfit, some include extra information
+
+##### ENTITIES
+
+the following are valid entities to use within an options form generator string. each entity must end with `;`.
+
+- `o{OUTFIT_ID};`: ID of an outfit to include in the report. note sessions are saved with the outfit_id a character is currently in, and if someone leaves an outfit in the future, it will not change previous reports
+    - Example: `o37588782541444244;`: Include the outfit with ID `37588782541444244` (honu, the outfit)
+- `+{CHARACTER_ID};`: ID of a character to include in the report
+    - Example: `+5429109374092411329;`: Include the character with ID `5429109374092411329` (honu, the character)
+- `-{CHARACTER_ID};`: ID of a character to exclude from a report. useful in large outfits where not everyone was participating
+- `${OPTION}={VALUE};`: Extra options that change what data is included in a report. Valid options are:
+    - `$rd=[1|0]`: Include revived deaths or not
+    - `$itk=[1|0]`: Include team kills
+    - `$iae=[1|0]`: Include achievements earned
+
+#### Examples
+
+Examples of valid generator strings
+
+`#91ee7652-6ede-4e52-b32f-3646b14e8887;`: use the db saved generator string with the ID of `91ee7652-6ede-4e52-b32f-3646b14e8887`
+
+`1640055600,1640062800;o37567362753122235;+5428011263335537297;-5428345446430485649;`: 
+- start the report at `1640055600` (`2021-12-21T03:00:00.000Z`), and go till `1640062800` (`2021-12-21T05:00:00.000Z`)
+- include all characters in the outfit `37567362753122235` ([T1DE] Tide)
+- include the character `5428011263335537297` (Wrel)
+- exclude the character `5428345446430485649` (varunda)t
