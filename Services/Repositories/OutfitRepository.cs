@@ -130,7 +130,7 @@ namespace watchtower.Services.Repositories {
             foreach (string ID in IDs.ToList()) {
                 string cacheKey = string.Format(_CacheKeyID, ID);
 
-                if (_Cache.TryGetValue(cacheKey, out PsOutfit outfit) == true) {
+                if (_Cache.TryGetValue(cacheKey, out PsOutfit? outfit) == true && outfit != null) {
                     outfits.Add(outfit);
                     IDs.Remove(ID);
                     ++inCache;
