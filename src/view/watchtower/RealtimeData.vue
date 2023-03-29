@@ -512,7 +512,7 @@
 
                     <tr v-for="entry in worldData.topSpawns.entries">
                         <td :style="{ color: getFactionColor(entry.factionID) }">
-                            <a :href="'/c/' + entry.ownerID" :style="{ color: getFactionColor(entry.factionID) }">
+                            <a :href="'/c/' + entry.ownerID" :style="'color: ' + getFactionColor(entry.factionID) + '!important'">
                                 {{entry.owner}}
                             </a>
                         </td>
