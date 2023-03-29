@@ -56,7 +56,7 @@
                 </a-header>
 
                 <a-body v-slot="entry">
-                    <span v-if="entry.session.outfitID == null">
+                    <span v-if="entry.session.outfitID == null || entry.session.outfitID == 0">
                         &lt;no outfit&gt;
                     </span>
                     <span v-else>

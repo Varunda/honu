@@ -502,6 +502,12 @@
         message: string;
     };
 
+    function FilterVrTrainingEvents(event: { zoneID: number }): boolean {
+        return event.zoneID != 96
+            && event.zoneID != 97
+            && event.zoneID != 98;
+    }
+
     export const OutfitReport = Vue.extend({
         data: function() {
             return {
@@ -1005,24 +1011,24 @@
             },
 
             onSendKills: function(charID: string, events: KillEvent[]): void {
-                events = events.map(iter => KillStatApi.parseKillEvent(iter));
+                events = events.map(iter => KillStatApi.parseKillEvent(iter)).filter(FilterVrTrainingEvents);
                 this.report.kills.push(...events);
                 ++this.progress.killdeath;
             },
 
             onSendDeaths: function(charID: string, events: KillEvent[]): void {
-                events = events.map(iter => KillStatApi.parseKillEvent(iter));
+                events = events.map(iter => KillStatApi.parseKillEvent(iter)).filter(FilterVrTrainingEvents);
                 this.report.deaths.push(...events);
             },
 
             onSendExp: function(charID: string, events: ExpEvent[]): void {
-                events = events.map(iter => ExpStatApi.parseExpEvent(iter));
+                events = events.map(iter => ExpStatApi.parseExpEvent(iter)).filter(FilterVrTrainingEvents);
                 this.report.experience.push(...events);
                 ++this.progress.exp;
             },
 
             onSendVehicleDestroy: function(charID: string, events: VehicleDestroyEvent[]): void {
-                events = events.map(iter => VehicleDestroyEventApi.parse(iter));
+                events = events.map(iter => VehicleDestroyEventApi.parse(iter)).filter(FilterVrTrainingEvents);
                 this.report.vehicleDestroy.push(...events);
                 ++this.progress.vehicleDestroy;
             },
@@ -1034,23 +1040,23 @@
             },
 
             onUpdateKills: function(ev: KillEvent[]): void {
-                this.report.kills = ev.map(iter => KillStatApi.parseKillEvent(iter));
+                this.report.kills = ev.map(iter => KillStatApi.parseKillEvent(iter)).filter(FilterVrTrainingEvents);
                 this.log(`Loaded ${this.report.kills.length} kill`);
             },
 
             onUpdateDeaths: function(ev: KillEvent[]): void {
-                this.report.deaths = ev.map(iter => KillStatApi.parseKillEvent(iter));
+                this.report.deaths = ev.map(iter => KillStatApi.parseKillEvent(iter)).filter(FilterVrTrainingEvents);
                 this.log(`Loaded ${this.report.deaths.length} deaths`);
             },
 
             onUpdateExp: function(ev: ExpEvent[]): void {
-                this.report.experience = ev.map(iter => ExpStatApi.parseExpEvent(iter));
+                this.report.experience = ev.map(iter => ExpStatApi.parseExpEvent(iter)).filter(FilterVrTrainingEvents);
                 this.log(`Loaded ${this.report.experience.length} experience events`);
                 this.progress.exp = this.trackedCharacters.length;
             },
 
             onUpdateVehicleDestroy: function(ev: VehicleDestroyEvent[]): void {
-                this.report.vehicleDestroy = ev.map(iter => VehicleDestroyEventApi.parse(iter));
+                this.report.vehicleDestroy = ev.map(iter => VehicleDestroyEventApi.parse(iter)).filter(FilterVrTrainingEvents);
                 this.log(`Loaded ${this.report.vehicleDestroy.length} vehicle destroy events`);
             },
 

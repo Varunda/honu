@@ -371,6 +371,8 @@
                             html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s shield`
                         });
                     } else if (Experience.isAssist(expID)) {
+                        type = "assist";
+
                         // For assist events, the amount of score gained is relative to the % of damage dealt (i think)
                         let baseAssistAmount: number = 0;
 
@@ -381,6 +383,8 @@
                             case Experience.SPAWN_ASSIST: break;
                         }
 
+                        parts.push(this.createLogText("assisted in killing"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
                         parts.push({
                             html: `(${((iter.amount / scoreMult) / Math.max(1, baseAssistAmount) * 100).toFixed(0)}% of damage)`
                         });
@@ -393,11 +397,6 @@
                         type = "revive";
 
                         parts.push(this.createLogText("revived"));
-                        parts.push(this.createCharacterLink(other, iter.otherID));
-                    } else if (Experience.isAssist(expID)) {
-                        type = "assist";
-
-                        parts.push(this.createLogText("assisted in killing"));
                         parts.push(this.createCharacterLink(other, iter.otherID));
                     } else if (Experience.isResupply(expID)) {
                         type = "resupply";
