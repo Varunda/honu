@@ -14,6 +14,14 @@ namespace watchtower.Models {
 
     public class SpawnEntry {
 
+        /// <summary>
+        ///     ID of the character who this spawn entry is for
+        /// </summary>
+        public string OwnerID { get; set; } = "";
+
+        /// <summary>
+        ///     Display string of the owner
+        /// </summary>
         public string Owner { get; set; } = "";
 
         public NpcType NpcType { get; set; } = NpcType.Unknown;

@@ -138,9 +138,9 @@ namespace watchtower.Services.Db {
             }
 
             using Activity? trace = HonuActivitySource.Root.StartActivity("session get by character id and range");
-            trace?.AddTag("characterID", charID);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.characterID", charID);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -217,9 +217,9 @@ namespace watchtower.Services.Db {
             }
 
             using Activity? trace = HonuActivitySource.Root.StartActivity("session get by outfit id and range");
-            trace?.AddTag("outfitID", outfitID);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.outfitID", outfitID);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -325,7 +325,6 @@ namespace watchtower.Services.Db {
         /// <remarks>
         ///     This is used for creating population data
         /// </remarks>
-        /// <returns></returns>
         public async Task<Session?> GetFirstSession() {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

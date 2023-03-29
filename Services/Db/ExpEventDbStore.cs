@@ -113,6 +113,8 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<List<ExpDbEntry>> GetEntries(ExpEntryOptions parameters) {
             using NpgsqlConnection conn = _DbHelper.Connection();
+
+            // exclude VR training events (96, 97 and 98)
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT source_character_id AS id, COUNT(source_character_id) AS count
 	                FROM wt_recent_exp
@@ -120,6 +122,7 @@ namespace watchtower.Services.Db {
                         AND world_id = @WorldID
 		                AND experience_id = ANY(@ExperienceIDs)
                         AND source_team_id = @FactionID
+                        AND zone_id NOT IN (96, 97, 98)
 	                GROUP BY source_character_id
 	                ORDER BY COUNT(source_character_id) DESC
 	                LIMIT 5;
@@ -180,9 +183,9 @@ namespace watchtower.Services.Db {
 
         public async Task<List<ExpEvent>> GetByCharacterID(string charID, DateTime start, DateTime end) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character");
-            trace?.AddTag("characterID", charID);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.characterID", charID);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
@@ -215,9 +218,9 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character");
-            trace?.AddTag("characterID", IDs);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.characterID", IDs);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"

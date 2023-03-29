@@ -57,7 +57,7 @@ namespace watchtower.Services.Hosted.PSB {
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"error while updating psb account playtime");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"Stop requested with {_Queue.Count} entries left");
+                    _Logger.LogInformation($"Stop requested with {_Queue.Count()} entries left");
                 }
             }
         }

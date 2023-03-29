@@ -36,8 +36,7 @@ namespace watchtower.Services.Census {
         /// </returns>
         public async Task<List<T>> ReadList(CensusQuery query) {
             using Activity? start = HonuActivitySource.Root.StartActivity("Census");
-            start?.AddTag("url", query.GetUri());
-            start?.AddTag("service_id", query.ServiceId);
+            start?.AddTag("honu.census.url", query.GetUri());
 
             using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
             IEnumerable<JToken> tokens = await query.GetListAsync();
@@ -66,8 +65,7 @@ namespace watchtower.Services.Census {
         /// </returns>
         public async Task<T?> ReadSingle(CensusQuery query) {
             using (Activity? start = HonuActivitySource.Root.StartActivity("Census")) {
-                start?.AddTag("url", query.GetUri());
-                start?.AddTag("service namespace", query.ServiceNamespace);
+                start?.AddTag("honu.census.url", query.GetUri());
 
                 using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
                 JToken token = await query.GetAsync();

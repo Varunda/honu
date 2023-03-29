@@ -117,7 +117,7 @@ namespace watchtower.Services.Hosted {
                     CharacterMetadata? metadata = await _MetadataDb.GetByCharacterID(entry.CharacterID);
 
                     using Activity? rootTrace = HonuActivitySource.Root.StartActivity("update character");
-                    rootTrace?.AddTag("characterID", entry.CharacterID);
+                    rootTrace?.AddTag("honu.characterID", entry.CharacterID);
 
                     if (_Random.Next(1001) >= 995) {
                         entry.Print = true;
@@ -248,7 +248,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
-                            span?.AddTag("length", itemStats.Count);
+                            span?.AddTag("honu.count", itemStats.Count);
                             try {
                                 if (itemStats.Count > 0) {
                                     await _ItemDb.Set(entry.CharacterID, itemStats);
@@ -262,7 +262,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
-                            span?.AddTag("length", statEntries.Count);
+                            span?.AddTag("honu.count", statEntries.Count);
                             try {
                                 if (statEntries.Count > 0) {
                                     await _StatDb.Set(entry.CharacterID, statEntries);
@@ -276,7 +276,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db friends")) {
-                            span?.AddTag("length", charFriends.Count);
+                            span?.AddTag("honu.count", charFriends.Count);
                             try {
                                 if (charFriends.Count > 0) {
                                     await _FriendDb.Set(entry.CharacterID, charFriends);
@@ -290,7 +290,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive")) {
-                            span?.AddTag("length", charDirs.Count);
+                            span?.AddTag("honu.count", charDirs.Count);
                             try {
                                 await _CharacterDirectiveDb.UpsertMany(entry.CharacterID, charDirs);
                             } catch (Exception ex) {
@@ -302,7 +302,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tree")) {
-                            span?.AddTag("length", charTreeDirs.Count);
+                            span?.AddTag("honu.count", charTreeDirs.Count);
                             foreach (CharacterDirectiveTree tree in charTreeDirs) {
                                 try {
                                     await _CharacterDirectiveTreeDb.Upsert(entry.CharacterID, tree);
@@ -316,7 +316,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tier")) {
-                            span?.AddTag("length", charTierDirs.Count);
+                            span?.AddTag("honu.count", charTierDirs.Count);
                             foreach (CharacterDirectiveTier tier in charTierDirs) {
                                 try {
                                     await _CharacterDirectiveTierDb.Upsert(entry.CharacterID, tier);
@@ -330,7 +330,7 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
 
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive objective")) {
-                            span?.AddTag("length", charObjDirs.Count);
+                            span?.AddTag("honu.count", charObjDirs.Count);
                             foreach (CharacterDirectiveObjective obj in charObjDirs) {
                                 try {
                                     await _CharacterDirectiveObjectiveDb.Upsert(entry.CharacterID, obj);

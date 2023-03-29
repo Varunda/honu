@@ -103,6 +103,28 @@ namespace watchtower {
 
             bool hostBuilt = false;
 
+            CancellationTokenSource stopSource = new();
+
+            /*
+            using TracerProvider? trace = Sdk.CreateTracerProviderBuilder()
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
+                .AddAspNetCoreInstrumentation(options => {
+                    // only profile api calls
+                    options.Filter = (c) => {
+                        return c.Request.Path.StartsWithSegments("/api");
+                    };
+                })
+                //.AddNpgsql()
+                .AddJaegerExporter(config => {
+
+                })
+                .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
+                .AddSource(HonuActivitySource.ActivitySourceName)
+                .Build();
+
+            Task hostTask = CreateHostBuilder(args).RunConsoleAsync();
+            */
+
             // Honu must be started in a background thread, as _Host.RunAsync will block until the whole server
             //      shuts down. If we were to await this Task, then it would be blocked until the server is done
             //      running, at which point then the command bus stuff would start
@@ -110,6 +132,7 @@ namespace watchtower {
             // That's not useful, because we want to be able to input commands while the server is running,
             //      not after the server is done running
             _ = Task.Run(async () => {
+                ILogger<Program>? logger = null;
                 try {
                     using TracerProvider? trace = Sdk.CreateTracerProviderBuilder()
                         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
@@ -128,13 +151,29 @@ namespace watchtower {
                         .Build();
 
                     Stopwatch timer = Stopwatch.StartNew();
+
                     _Host = CreateHostBuilder(args).Build();
+                    logger = _Host.Services.GetService(typeof(ILogger<Program>)) as ILogger<Program>;
                     hostBuilt = true;
                     Console.WriteLine($"Took {timer.ElapsedMilliseconds}ms to build Honu");
                     timer.Stop();
-                    await _Host.RunAsync();
                 } catch (Exception ex) {
-                    Console.WriteLine($"Fatal error starting Honu:\n{ex}");
+                    if (logger != null) {
+                        logger.LogError(ex, "fatal error starting Honu");
+                    } else {
+                        Console.WriteLine($"Fatal error starting Honu:\n{ex}");
+                    }
+                }
+
+                try {
+                    //await _Host.RunConsoleAsync();
+                    await _Host.RunAsync(stopSource.Token);
+                } catch (Exception ex) {
+                    if (logger != null) {
+                        logger.LogError(ex, $"error while running honu");
+                    } else {
+                        Console.WriteLine($"error while running honu:\n{ex}");
+                    }
                 }
             });
 
@@ -150,11 +189,15 @@ namespace watchtower {
                 return;
             }
 
+            ILogger<Program> logger = _Host.Services.GetRequiredService<ILogger<Program>>();
+
             CommandBus? commands = _Host.Services.GetService(typeof(CommandBus)) as CommandBus;
             if (commands == null) {
+                logger.LogError($"missing CommandBus");
                 Console.Error.WriteLine($"Missing ICommandBus");
             }
 
+            logger.LogInformation($"ran host");
             Console.WriteLine($"Ran host");
 
             string? line = "";
@@ -168,20 +211,30 @@ namespace watchtower {
                     }
                     break;
                 } else {
+                    if (commands == null) {
+                        logger.LogError($"Missing {nameof(CommandBus)} from host, cannot execute '{line}'");
+                        Console.Error.WriteLine($"Missing {nameof(CommandBus)} from host, cannot execute '{line}'");
+                    }
                     if (line != null && commands != null) {
                         await commands.Execute(line);
                     }
                 }
             }
 
-            CancellationTokenSource cts = new CancellationTokenSource();
             if (fastStop == true) {
+                logger.LogInformation($"stopping from 1'000ms");
+                Console.WriteLine($"stopping after 1'000ms");
+
+                CancellationTokenSource cts = new();
                 cts.CancelAfter(1000 * 1);
+                await _Host.StopAsync(cts.Token);
+                //stopSource.CancelAfter(1 * 1000);
             } else {
-                cts.CancelAfter(1000 * 60);
+                Console.WriteLine($"stopping without a token");
+                //stopSource.Cancel();
+                await _Host.StopAsync();
             }
 
-            await _Host.StopAsync(cts.Token);
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) {

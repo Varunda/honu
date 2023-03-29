@@ -33,7 +33,7 @@ namespace watchtower.Services.Census {
         /// <param name="charID">ID of the character to get the friends of</param>
         public async Task<List<CharacterFriend>> GetByCharacterID(string charID) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("character friends - get by character id");
-            trace?.AddTag("characterID", charID);
+            trace?.AddTag("honu.characterID", charID);
 
             CensusQuery query = _Census.Create("characters_friend");
             query.Where("character_id").Equals(charID);

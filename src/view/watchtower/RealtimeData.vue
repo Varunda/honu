@@ -511,7 +511,11 @@
                     </tr>
 
                     <tr v-for="entry in worldData.topSpawns.entries">
-                        <td :style="{ color: getFactionColor(entry.factionID) }">{{entry.owner}}</td>
+                        <td :style="{ color: getFactionColor(entry.factionID) }">
+                            <a :href="'/c/' + entry.ownerID" :style="{ color: getFactionColor(entry.factionID) }">
+                                {{entry.owner}}
+                            </a>
+                        </td>
                         <td>
                             <span v-if="entry.npcType == 1" title="Sunderer">
                                 S

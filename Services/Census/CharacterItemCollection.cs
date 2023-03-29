@@ -36,7 +36,7 @@ namespace watchtower.Services.Census {
         /// <param name="charID">ID of the character</param>
         public Task<List<CharacterItem>> GetByID(string charID) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("character items - get by character id");
-            trace?.AddTag("characterID", charID);
+            trace?.AddTag("honu.characterID", charID);
 
             CensusQuery query = _Census.Create("characters_item");
             query.Where("character_id").Equals(charID);

@@ -37,7 +37,7 @@ namespace watchtower.Services.Census {
         /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("character weapoon stat - get by character id");
-            trace?.AddTag("characterID", charID);
+            trace?.AddTag("honu.characterID", charID);
 
             List<WeaponStat> weaponStats = await GetWeaponStatByCharacterIDAsync(charID);
             List<WeaponStatByFactionEntry> byFaction = await GetWeaponStatByFactionByCharacterIDAsync(charID);

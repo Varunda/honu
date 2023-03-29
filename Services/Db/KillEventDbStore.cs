@@ -213,9 +213,9 @@ namespace watchtower.Services.Db {
         /// <returns></returns>
         public async Task<List<KillDbEntry>> GetTopKillers(KillDbOptions options) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("get top killers");
-            trace?.AddTag("worldID", options.WorldID);
-            trace?.AddTag("factionID", options.FactionID);
-            trace?.AddTag("duration", options.Interval);
+            trace?.AddTag("honu.worldID", options.WorldID);
+            trace?.AddTag("honu.factionID", options.FactionID);
+            trace?.AddTag("honu.duration", options.Interval);
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -278,9 +278,9 @@ namespace watchtower.Services.Db {
         /// <returns></returns>
         public async Task<List<KillDbOutfitEntry>> GetTopOutfitKillers(KillDbOptions options) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("get top outift killers");
-            trace?.AddTag("worldID", options.WorldID);
-            trace?.AddTag("factionID", options.FactionID);
-            trace?.AddTag("duration", options.Interval);
+            trace?.AddTag("honu.worldID", options.WorldID);
+            trace?.AddTag("honu.factionID", options.FactionID);
+            trace?.AddTag("honu.duration", options.Interval);
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -327,9 +327,9 @@ namespace watchtower.Services.Db {
         /// <returns></returns>
         public async Task<List<KillItemEntry>> GetTopWeapons(KillDbOptions options) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("get top weapons");
-            trace?.AddTag("worldID", options.WorldID);
-            trace?.AddTag("factionID", options.FactionID);
-            trace?.AddTag("duration", options.Interval);
+            trace?.AddTag("honu.worldID", options.WorldID);
+            trace?.AddTag("honu.factionID", options.FactionID);
+            trace?.AddTag("honu.duration", options.Interval);
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -369,9 +369,9 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<List<KillEvent>> GetKillsByCharacterID(string charID, DateTime start, DateTime end) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("kills by character id");
-            trace?.AddTag("characterID", charID);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.characterID", charID);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -400,9 +400,9 @@ namespace watchtower.Services.Db {
         /// <returns></returns>
         public async Task<List<KillEvent>> GetKillsByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("kills by character ids");
-            trace?.AddTag("characterID", IDs);
-            trace?.AddTag("start", $"{start:u}");
-            trace?.AddTag("end", $"{end:u}");
+            trace?.AddTag("honu.characterID", IDs);
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

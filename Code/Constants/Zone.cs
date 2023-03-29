@@ -20,7 +20,15 @@ namespace watchtower.Constants {
 
         public const uint Koltyr = 14;
 
+        public const uint VrTrainingNc = 96;
+
+        public const uint VrTrainingTr = 97;
+
+        public const uint VrTrainingVs = 98;
+
         public const uint Oshur = 344;
+
+        public const uint Desolation = 361;
 
         public const uint Sancutary = 362;
 
@@ -45,12 +53,12 @@ namespace watchtower.Constants {
                 case Esamir: return "Esamir";
                 case Oshur: return "Oshur";
                 case Koltyr: return "Koltyr";
-                case 361: return (instanceID > 0) ? $"Desolation (instance {instanceID})" : "Desolation";
+                case Desolation: return (instanceID > 0) ? $"Desolation (instance {instanceID})" : "Desolation";
                 case Sancutary: return "Sancutary";
                 case Tutorial2: return (instanceID > 0) ? $"Tutorial 2 (instance {instanceID})" : "Tutorial 2";
-                case 96: return "VR training (NC)";
-                case 97: return "VR training (TR)";
-                case 98: return "VR training (VS)";
+                case VrTrainingNc: return "VR training (NC)";
+                case VrTrainingTr: return "VR training (TR)";
+                case VrTrainingVs: return "VR training (VS)";
                 default: break;
             }
 

@@ -109,6 +109,11 @@ namespace watchtower.Code.Hubs.Implementations {
             _AchievementRepository = achievementRepository;
         }
 
+        /// <summary>
+        ///     Generate a report based on a generator string passed. You can pass a parameter with just an ID,
+        ///     and it will get the generator of that ID
+        /// </summary>
+        /// <param name="generator">String containing the generator</param>
         public async Task GenerateReport(string generator) {
 
             await Clients.Caller.UpdateState(OutfitReportState.NOT_STARTED);
@@ -208,15 +213,17 @@ namespace watchtower.Code.Hubs.Implementations {
                 } else {
                     _Logger.LogDebug($"tracing ID {rootTrace.Id} span ID {rootTrace.SpanId} parent ID {rootTrace.ParentId} parent span ID {rootTrace.ParentSpanId}");
                 }
-                rootTrace?.AddTag("generator", parms.Generator);
-                rootTrace?.AddTag("parameters.id", parms.ID);
-                rootTrace?.AddTag("parameters.include-achievements", parms.IncludeAchievementsEarned);
-                rootTrace?.AddTag("parameters.include-revived-deaths", parms.IncludeRevivedDeaths);
-                rootTrace?.AddTag("parameters.include-teamkilled", parms.IncludeTeamkilled);
-                rootTrace?.AddTag("parameters.include-teamkills", parms.IncludeTeamkills);
-                rootTrace?.AddTag("parameters.start", $"{parms.PeriodStart:u}");
-                rootTrace?.AddTag("parameters.end", $"{parms.PeriodEnd:u}");
-                rootTrace?.AddTag("parameters.teamID", parms.TeamID);
+                rootTrace?.AddTag("honu.generator", parms.Generator);
+                rootTrace?.AddTag("honu.parameters.id", parms.ID);
+                rootTrace?.AddTag("honu.parameters.include_achievements", parms.IncludeAchievementsEarned);
+                rootTrace?.AddTag("honu.parameters.include_revived_deaths", parms.IncludeRevivedDeaths);
+                rootTrace?.AddTag("honu.parameters.include_teamkilled", parms.IncludeTeamkilled);
+                rootTrace?.AddTag("honu.parameters.include_teamkills", parms.IncludeTeamkills);
+                rootTrace?.AddTag("honu.parameters.start", $"{parms.PeriodStart:u}");
+                rootTrace?.AddTag("honu.parameters.end", $"{parms.PeriodEnd:u}");
+                rootTrace?.AddTag("honu.parameters.teamID", parms.TeamID);
+                rootTrace?.AddTag("honu.parameters.characterIDs", $"[{string.Join(", ", parms.CharacterIDs)}]");
+                rootTrace?.AddTag("honu.parameters.outfitIDs", $"[{string.Join(", ", parms.OutfitIDs)}]");
 
                 await Clients.Caller.SendParameters(parms);
 
@@ -225,18 +232,21 @@ namespace watchtower.Code.Hubs.Implementations {
                 using (Activity? sessionTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} load sessions")) {
                     List<Session> sessions = new();
 
+                    sessionTrace?.AddTag("honu.character_count", parms.CharacterIDs.Count);
                     foreach (string charID in parms.CharacterIDs) {
                         List<Session> s = await _SessionDb.GetByRangeAndCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
                         sessions.AddRange(s);
                         _Logger.LogTrace($"Loaded {s.Count} sessions for char {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
                     }
 
+                    sessionTrace?.AddTag("honu.outfit_count", parms.OutfitIDs.Count);
                     foreach (string outfitID in parms.OutfitIDs) {
                         List<Session> s = await _SessionDb.GetByRangeAndOutfit(outfitID, parms.PeriodStart, parms.PeriodEnd);
                         sessions.AddRange(s);
                         _Logger.LogTrace($"Loaded {s.Count} sessions for outfit {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
                     }
 
+                    sessionTrace?.AddTag("honu.session_count", sessions.Count);
                     report.Sessions = sessions;
                     _Logger.LogTrace($"Loaded a TOTAL of {report.Sessions.Count} sessions between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
                     await Clients.Caller.UpdateSessions(report.Sessions);
@@ -293,19 +303,26 @@ namespace watchtower.Code.Hubs.Implementations {
                             await Clients.Caller.SendError($"error while getting kill and death events for {charID}: {ex.Message}");
                         }
                     }
+                    killDeathActivity?.AddTag("honu.count", report.Kills.Count + report.Deaths.Count);
                 }
 
                 // Get exp
+                // while other operations are done per character, this one is done with all characters at once.
+                // getting the events one by one is often much more time consuming than all at once,
+                //      often taking 5 times longer doing it 1 by 1
+                // so why don't others take a long time too? i haven't checked it out all the way, but i suspect
+                //      it's due to the amount of data per page, and how much filtering is necessary
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_EXP);
                 using (Activity? expTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} exp")) {
                     List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
                     report.Experience = expEvents;
+                    expTrace?.AddTag("honu.count", expEvents.Count);
                     await Clients.Caller.UpdateExp(expEvents);
                 }
 
                 // Get vehicle destroy
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_VEHICLE_DESTROY);
-                using (Activity? vehicleDestroyTrace = HonuActivitySource.Root.StartActivity("report - vehicle destroy")) {
+                using (Activity? vehicleDestroyTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} vehicle destroy")) {
                     foreach (string charID in chars) {
                         try {
                             List<VehicleDestroyEvent> events = await _VehicleDestroyDb.GetByCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
@@ -317,6 +334,7 @@ namespace watchtower.Code.Hubs.Implementations {
                             await Clients.Caller.SendError($"error while getting vehicle destroy events for {charID}: {ex.Message}");
                         }
                     }
+                    vehicleDestroyTrace?.AddTag("honu.count", report.VehicleDestroy.Count);
                 }
                 
                 if (report.Parameters.IncludeAchievementsEarned == true) {

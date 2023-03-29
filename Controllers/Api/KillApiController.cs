@@ -77,7 +77,7 @@ namespace watchtower.Controllers {
             if (trace == null) {
                 _Logger.LogDebug($"no trace for get kills by session");
             }
-            trace?.AddTag("sessionID", sessionID);
+            trace?.AddTag("honu.sessionID", sessionID);
 
             Session? session = await _SessionDb.GetByID(sessionID);
             if (session == null) {

@@ -31,7 +31,7 @@ namespace watchtower.Services.Census {
 
         public async Task<List<CharacterDirectiveTier>> GetByCharacterID(string charID) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("character directive tier - get by character id");
-            trace?.AddTag("characterID", charID);
+            trace?.AddTag("honu.characterID", charID);
 
             CensusQuery query = _Census.Create("characters_directive_tier");
             query.SetLimit(10_000);

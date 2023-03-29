@@ -38,6 +38,7 @@ export class SpawnEntries {
 }
 
 export class SpawnEntry {
+	public ownerID: string = "";
 	public owner: string = "";
 	public spawnCount: number = 0;
 	public secondsAlive: number = 0;

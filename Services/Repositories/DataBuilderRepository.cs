@@ -70,8 +70,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="stoppingToken">Cancellation token</param>
         public async Task<WorldData> Build(short worldID, int duration, CancellationToken? stoppingToken) {
             using var processTrace = HonuActivitySource.Root.StartActivity("build realtime activity");
-            processTrace?.AddTag("worldID", worldID);
-            processTrace?.AddTag("duration", duration);
+            processTrace?.AddTag("honu.worldID", worldID);
+            processTrace?.AddTag("honu.duration", duration);
 
             Stopwatch time = Stopwatch.StartNew();
 
@@ -245,7 +245,8 @@ namespace watchtower.Services.Repositories {
                         SecondsAlive = (int)(DateTime.UtcNow - iter.FirstSeenAt).TotalSeconds,
                         SpawnCount = iter.SpawnCount,
                         FactionID = c?.FactionID ?? Faction.UNKNOWN,
-                        Owner = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {iter.OwnerID}"
+                        Owner = (c != null) ? $"{(c.OutfitTag != null ? $"[{c.OutfitTag}] " : "")}{c.Name}" : $"Missing {iter.OwnerID}",
+                        OwnerID = iter.OwnerID
                     };
                 }).Select(iter => iter.Result).ToList();
 
