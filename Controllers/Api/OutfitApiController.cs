@@ -92,6 +92,10 @@ namespace watchtower.Controllers.Api {
         /// <param name="IDs">List of outfit IDs to get the outfits of</param>
         [HttpGet("many")]
         public async Task<ApiResponse<List<PsOutfit>>> GetByIDs([FromQuery] List<string> IDs) {
+            if (IDs.Count > 200) {
+                return ApiBadRequest<List<PsOutfit>>($"cannot request more than 200 outfits in this API method");
+            }
+
             List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(IDs);
 
             return ApiOk(outfits);

@@ -416,8 +416,6 @@ namespace watchtower.Realtime {
                 Timestamp = payload.CensusTimestamp("timestamp")
             };
 
-            _Logger.LogTrace($"Facility control: {payload}");
-
             ushort defID = (ushort) (ev.ZoneID & 0xFFFF);
             ushort instanceID = (ushort) ((ev.ZoneID & 0xFFFF0000) >> 4);
 
@@ -447,17 +445,31 @@ namespace watchtower.Realtime {
                 return;
             }
 
+            _Logger.LogTrace($"Facility control: {payload}");
+
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
 
             new Thread(async () => {
                 try {
                     PsFacility? fac = await _FacilityRepository.GetByID(ev.FacilityID);
-                    // Wait a second for all the PlayerCapture and PlayerDefend events to come in
-                    await Task.Delay(1000);
+
+                    // wait for the player control events to be processed
+                    // 2 seconds in case the facility event comes in at like 0.999, and the player events come at 1.000
+                    DateTime waitFor = ev.Timestamp + TimeSpan.FromSeconds(2);
+
+                    int waitCount = 0;
+                    while (_MostRecentProcess < waitFor) {
+                        await Task.Delay(1000);
+
+                        if (waitCount++ > 10) {
+                            _Logger.LogError($"Failed to wait for player control events after {waitCount} times. "
+                                + $"Wanted to wait for {waitFor:u}, _MostRecentProcess is {_MostRecentProcess:u}");
+                            break;
+                        }
+                    }
 
                     List<PlayerControlEvent> events;
-
                     lock (PlayerFacilityControlStore.Get().Events) {
                         // Clean up is handled in a period hosted service
                         events = PlayerFacilityControlStore.Get().Events.Where(iter => {
@@ -471,6 +483,9 @@ namespace watchtower.Realtime {
                     }
 
                     long ID = await _ControlDb.Insert(ev);
+                    ev.ID = ID;
+
+                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control {ev.ID}");
 
                     Stopwatch timer = Stopwatch.StartNew();
                     UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
@@ -478,9 +493,17 @@ namespace watchtower.Realtime {
 
                     ev.UnstableState = state;
 
+                    // insert them 1 by 1, instead of inserting many in one DB call.
+                    // i think i changed to an insert many update when trying to figure out why psql was
+                    //      slow on inserts. now that it's been fixed, inserting one by one is fine
+                    foreach (PlayerControlEvent playerControl in events) {
+                        await _FacilityPlayerDb.Insert(ID, playerControl);
+                    }
+                    /*
                     if (ev.Players >= 0) {
                         await _FacilityPlayerDb.InsertMany(ID, events);
                     }
+                    */
 
                     timer.Restart();
                     //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
@@ -726,7 +749,7 @@ namespace watchtower.Realtime {
 
                             string s = $"ALERT ended in {worldID}, current owners:\n";
 
-                            foreach (uint zoneID in Zone.All) {
+                            foreach (uint zoneID in Zone.StaticZones) {
                                 short? owner = _MapRepository.GetZoneMapOwner(worldID, zoneID);
 
                                 s += $"{zoneID} => {owner}\n";

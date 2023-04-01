@@ -2,7 +2,7 @@
 
 import * as moment from "moment";
 
-function vueMoment(input: Date | string | null | undefined, format: string = "YYYY-MM-DD hh:mmA") {
+function vueMoment(input: Date | string | number | null | undefined, format: string = "YYYY-MM-DD hh:mmA") {
     // Who knew that you could assign properties to a function
     if (typeof (vueMoment as any).tz == "undefined") {
         (vueMoment as any).tz = new Date().getTimezoneOffset();
@@ -31,6 +31,8 @@ function vueMoment(input: Date | string | null | undefined, format: string = "YY
             input += "Z";
         }
         return moment(input).format(format) + " " + tzname;
+    } else if (typeof input == "number") {
+        return moment(new Date(input)).format(format) + " " + tzname;
     } else if (input instanceof Date) {
         return moment(input).format(format) + " " + tzname;
         //return moment(input).add(-(vueMoment as any).tz, "minutes").format(format);

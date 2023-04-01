@@ -1,7 +1,11 @@
 ﻿import Vue from "vue";
 import * as moment from "moment";
 
-Vue.filter("timeAgo", (date: Date): string => {
+Vue.filter("timeAgo", (date: Date | number): string => {
+	if (typeof date == "number") {
+		date = new Date(date);
+    }
+
 	const m = moment(date);
 	const now = moment(Date.now()).utc();
 

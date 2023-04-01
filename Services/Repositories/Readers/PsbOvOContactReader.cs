@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using watchtower.Models.PSB;
 
 namespace watchtower.Services.Repositories.Readers {
@@ -8,7 +9,7 @@ namespace watchtower.Services.Repositories.Readers {
         public override PsbOvOContact ReadEntry(List<string?> values) {
             PsbOvOContact contact = new();
 
-            contact.Group = values.GetRequiredString(0);
+            contact.Groups = values.GetRequiredString(0).ToLower().Split("/").Select(iter => iter.ToLower()).ToList();
             contact.Name = values.GetRequiredString(1);
             contact.Email = values.GetRequiredString(2);
             contact.DiscordID = values.GetRequiredUInt64(4);

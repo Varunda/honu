@@ -16,7 +16,7 @@ export const ApiError = Vue.extend({
                     return "unknown";
                 }
 
-                if ("message" in this.error) {
+                if ("title" in this.error) {
                     return "problems";
                 }
             }
@@ -27,20 +27,26 @@ export const ApiError = Vue.extend({
 
     template: `
         <div>
-            <div v-if="getErrorType == 'string'>
+            <div v-if="getErrorType == 'string'">
                 error: {{error}}
             </div>
 
-            <div v-else-if="getErrorType == 'problems'>
+            <div v-else-if="getErrorType == 'problems'">
+                <div>
+                    An error occured in this API request: <code>{{error.title}}
+                </div>
 
+                <div>
+                    Erroring URL: <code>{{error.type}}</code>
+                </div>
             </div>
 
-            <div v-else-if="getErrorType == 'unknown'>
-
+            <div v-else-if="getErrorType == 'unknown'">
+                unknown error format: {{error}}
             </div>
 
             <div v-else>
-
+                unchecked error type: {{getErrorType}}
             </div>
         </div>
     `

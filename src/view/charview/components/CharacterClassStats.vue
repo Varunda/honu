@@ -1,6 +1,6 @@
 ﻿<template>
     <table class="table table-sm w-auto d-inline-block">
-        <tr class="table-secondary">
+        <tr class="table-secondary th-border-top-0">
             <td><b>{{title}}</b></td>
             <td><b>Time as</b></td>
             <td><b>Score</b></td>

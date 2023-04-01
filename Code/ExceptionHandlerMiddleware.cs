@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using Npgsql;
 using System;
 using System.Threading.Tasks;
@@ -12,6 +14,12 @@ namespace watchtower.Code {
     ///     middleware to handle uncaught exceptions and format them into the problems format
     /// </summary>
     public class ExceptionHandlerMiddleware {
+
+        private static JsonSerializer _JsonSeralizer = new() {
+            ContractResolver = new DefaultContractResolver() {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            }
+        };
 
         private readonly RequestDelegate _Next;
 
@@ -44,7 +52,8 @@ namespace watchtower.Code {
                 context.Response.ContentType = "application/problem+json";
                 context.Response.StatusCode = 500;
 
-                await context.Response.WriteAsync(JToken.FromObject(dets).ToString());
+
+                await context.Response.WriteAsync(JToken.FromObject(dets, _JsonSeralizer).ToString());
             }
         }
 

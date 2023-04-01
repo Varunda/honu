@@ -45,7 +45,7 @@ namespace watchtower.Services.Repositories {
 
                 foreach (WorldOverview world in worlds) {
                     lock (ZoneStateStore.Get().Zones) {
-                        foreach (uint zoneID in Zone.All) {
+                        foreach (uint zoneID in Zone.StaticZones) {
                             ZoneState? zs = ZoneStateStore.Get().GetZone(world.WorldID, zoneID);
 
                             if (zs != null) {
@@ -58,7 +58,7 @@ namespace watchtower.Services.Repositories {
                         }
                     }
 
-                    foreach (uint zoneID in Zone.All) {
+                    foreach (uint zoneID in Zone.StaticZones) {
                         PsZone? zone = _MapRepository.GetZone(world.WorldID, zoneID);
                         ZoneState? state = world.Zones.FirstOrDefault(iter => iter.ZoneID == zoneID);
                         if (zone != null && state != null) {

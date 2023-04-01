@@ -1,15 +1,33 @@
-﻿/**
+﻿
+/**
  * Wrapper around an external resource being loaded (usually from the API) 
  */
 export type Loading<T> =
     { state: "loading", data: null }
     | { state: "loaded", data: T }
-    | { state: "error", message: string }
+    | { state: "error", problem: ProblemDetails }
     | { state: "nocontent", data: null }
     | { state: "notfound", message: string }
     | { state: "idle", data: null }
     | { state: "saving", data: T }
     ;
+
+export class ProblemDetails {
+    public type: string = "";
+    public title: string = "";
+    public status: number = 0;
+    public detail: string = "";
+    public instance: string = "";
+};
+
+function isProblemDetails(obj: object): obj is ProblemDetails {
+    const pd: ProblemDetails = obj as ProblemDetails;
+    return pd.type !== undefined
+        && pd.title !== undefined
+        && pd.status !== undefined
+        && pd.detail !== undefined
+        && pd.instance !== undefined;
+}
 
 /**
  * Helper class to generating Loading instances
@@ -44,8 +62,42 @@ export class Loadable {
      * 
      * @param err Error that occured while attemping to load this external resource
      */
-    public static error<T>(err: string): Loading<T> {
-        return { state: "error", message: err };
+    public static error<T>(err: string | object | ProblemDetails): Loading<T> {
+        if (typeof err == "string") {
+            try {
+                const pb: ProblemDetails = JSON.parse(err);
+
+                return {
+                    state: "error",
+                    problem: pb
+                };
+            } catch (ex) {
+                console.log(`failed to parse ${err} to a valid json object: ${ex}`);
+                return {
+                    state: "error",
+                    problem: {
+                        type: "generic-error",
+                        title: `generic error: ${err}`,
+                        status: 0,
+                        detail: "",
+                        instance: ""
+                    }
+                };
+            }
+        } else if (isProblemDetails(err)) {
+            return { state: "error", problem: err };
+        } else {
+            return {
+                state: "error",
+                problem: {
+                    type: "generic-error",
+                    title: "generic error",
+                    status: 0,
+                    detail: JSON.stringify(err),
+                    instance: ""
+                }
+            };
+        }
     }
 
     /**
@@ -87,7 +139,7 @@ export class Loadable {
         } else if (wrap.state == "notfound") {
             return Loadable.notFound(wrap.message);
         } else if (wrap.state == "error") {
-            return Loadable.error(wrap.message);
+            return Loadable.error(wrap.problem);
         }
 
         if (wrap.state == "loaded") {

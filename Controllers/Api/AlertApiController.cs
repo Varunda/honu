@@ -287,7 +287,7 @@ namespace watchtower.Controllers.Api {
             if (World.All.IndexOf(parameters.WorldID) == -1) {
                 errors.Add($"Invalid world {parameters.WorldID}");
             }
-            if (parameters.ZoneID != 0 && Zone.All.IndexOf(parameters.ZoneID) == -1) {
+            if (parameters.ZoneID != 0 && Zone.StaticZones.IndexOf(parameters.ZoneID) == -1) {
                 errors.Add($"Invalid zone {parameters.ZoneID}");
             }
 

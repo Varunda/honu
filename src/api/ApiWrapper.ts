@@ -59,7 +59,7 @@ export default class ApiWrapper<T> {
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
-			return Loadable.error(`internal server error: ${response.data}`);
+			return Loadable.error(response.data);
 		} else if (response.status == 524) {
 			return Loadable.error(`timeout from cloudflare`);
         }
@@ -177,7 +177,7 @@ export default class ApiWrapper<T> {
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
-			return Loadable.error(`internal server error: ${response.data}`);
+			return Loadable.error(response.data);
         } else if (response.status == 524) {
             return Loadable.error(`timeout from cloudflare`);
 		}

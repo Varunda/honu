@@ -34,7 +34,10 @@ namespace watchtower.Constants {
 
         public const uint Tutorial2 = 364;
 
-        public static List<uint> All = new List<uint>() {
+        /// <summary>
+        ///     List of all static zones
+        /// </summary>
+        public static readonly List<uint> StaticZones = new() {
             Indar, Hossin, Amerish, Esamir, Oshur
         };
 

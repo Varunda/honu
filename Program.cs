@@ -48,59 +48,6 @@ namespace watchtower {
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
 
-            /* i have no tests so i put them here lol
-            string[] dates = new string[] {
-                "Thursday Feb 2, 01:00 - 03:00",
-                "Thursday Feb 2, 01 - 03",
-                "Thursday, Feb. 2, 01:00 - 03:00",
-                "Thursday, Feb. 2nd, 01 - 03",
-                "Thursday, Feb. 2nd, 01:00 - 03:00",
-                "2023-02-02 01:00 - 03:00",
-                "2023-02-02 01 - 03",
-                "2023-02-02 1 - 3",
-                "February 4th 19:00  - 21:00 UTC",
-                "Thursday, February 2nd 19:00-21:00 UTC",
-                "February 3rd @ 00:30-02:00 UTC",
-                "Saturday, February 4th @ 1:30 - 3:30 UTC "
-            };
-
-            foreach (string d in dates) {
-                (DateTime? start, DateTime? end) = PsbReservationRepository.ParseVeryInexact(d, out string feedback);
-                if (start != null && end != null) {
-                    Console.WriteLine($"{d} => {start:u} to {end:u}");
-                }
-
-                Console.WriteLine(feedback);
-                Console.WriteLine("\n========================================================");
-            }
-            */
-
-            /*
-            string d = "1/28/2023 21:00:00";
-
-            DateTime.TryParse(d, null, DateTimeStyles.AssumeLocal, out DateTime d1);
-            DateTime.TryParse(d, null, DateTimeStyles.AssumeUniversal, out DateTime d2);
-            DateTime.TryParse(d, out DateTime d3);
-            DateTime d4 = DateTime.SpecifyKind(d3, DateTimeKind.Utc);
-            DateTime d5 = DateTime.SpecifyKind(d3, DateTimeKind.Local);
-            DateTime d6 = DateTime.SpecifyKind(d3, DateTimeKind.Unspecified);
-            DateTime d7 = DateTime.SpecifyKind(d2, DateTimeKind.Utc);
-            DateTime d8 = DateTime.SpecifyKind(d2, DateTimeKind.Local);
-            DateTime d9 = DateTime.SpecifyKind(d2, DateTimeKind.Unspecified);
-
-            PrintD("d1", d1);
-            PrintD("d2", d2);
-            PrintD("d3", d3);
-            PrintD("d4", d4);
-            PrintD("d5", d5);
-            PrintD("d6", d6);
-            PrintD("d7", d7);
-            PrintD("d8", d8);
-            PrintD("d9", d9);
-
-            return;
-            */
-
             bool hostBuilt = false;
 
             CancellationTokenSource stopSource = new();

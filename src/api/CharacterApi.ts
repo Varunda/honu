@@ -1,6 +1,8 @@
 ﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
+import { KillEvent } from "api/KillStatApi";
+
 export class PsCharacter {
 	public id: string = "";
 	public name: string = "";
@@ -19,6 +21,20 @@ export class PsCharacter {
 	public dateCreated: Date = new Date();
 	public dateLastLogin: Date = new Date();
 	public dateLastSave: Date = new Date();
+}
+
+export class HonuCharacterData {
+	public id: string = "";
+	public outfitID: string | null = null;
+	public factionID: number = 0;
+	public teamID: number = 0;
+	public worldID: number = 0;
+	public online: boolean = false;
+	public zoneID: number = 0;
+	public latestEventTimestamp: number = 0;
+	public latestDeath: KillEvent | null = null;
+	public sessionID: number | null = null;
+	public lastLogin: Date | null = null;
 }
 
 export class MinimalCharacter {
@@ -49,6 +65,14 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 		};
     }
 
+	public static parseHonuData(elem: any): HonuCharacterData {
+		return {
+			...elem,
+			lastLogin: (elem.lastLogin == null) ? null : new Date(elem.lastLogin),
+			latestDeath: null
+        }
+    }
+
 	public static async getByID(charID: string): Promise<Loading<PsCharacter>> {
 		return CharacterApi.get().readSingle(`/api/character/${charID}`, CharacterApi.parse);
 	}
@@ -69,5 +93,9 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	public static async searchByName(name: string, censusTimeout: boolean = true): Promise<Loading<PsCharacter[]>> {
 		return CharacterApi.get().readList(`/api/characters/search/${name}?censusTimeout=${censusTimeout}`, CharacterApi.parse);
 	}
+
+	public static async getHonuData(charID: string): Promise<Loading<HonuCharacterData>> {
+		return CharacterApi.get().readSingle(`/api/character/${charID}/honu-data`, CharacterApi.parseHonuData);
+    }
 
 }

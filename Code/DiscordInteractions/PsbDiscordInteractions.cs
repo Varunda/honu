@@ -69,7 +69,7 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (ovo.Count > 0) {
-                feedback += "**Community rep**:\n" + string.Join("\n", ovo.Select(iter => $"{iter.RepType} for {iter.Group}")) + "\n";
+                feedback += "**Community rep**:\n" + string.Join("\n", ovo.Select(iter => $"{iter.RepType} for: {string.Join(", ", iter.Groups)}")) + "\n";
             }
 
             if (practice.Count > 0) {
@@ -119,7 +119,7 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.CreateDeferred(true);
 
             List<PsbOvOContact> contacts = (await _ContactRepository.GetOvOContacts())
-                .Where(iter => iter.Group.ToLower() == tag.ToLower()).ToList();
+                .Where(iter => iter.Groups.Contains(tag)).ToList();
 
             string feedback = $"The following users are OvO reps for {tag}:\n";
 
@@ -290,7 +290,7 @@ namespace watchtower.Code.DiscordInteractions {
                     continue;
                 }
 
-                builder.Description += $"{i} :: [{contact.Group}] {contact.Email}/{contact.DiscordID} <@{contact.DiscordID}>\n";
+                builder.Description += $"{i} :: [{string.Join("/", contact.Groups)}] {contact.Email}/{contact.DiscordID} <@{contact.DiscordID}>\n";
 
                 if (builder.Description.Length > 1500) {
                     builder.Description += $"{ovo.Count - i} more...";

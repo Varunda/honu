@@ -46,51 +46,51 @@
         </div>
 
         <div v-else-if="character.state == 'loaded'">
-            <character-header :character="character.data"></character-header>
+            <character-header :character="character.data" :honu-data="honuData"></character-header>
 
-            <ul class="nav nav-tabs mb-2">
+            <ul class="nav nav-tabs border-bottom mb-2">
                 <li class="nav-item" @click="selectTab('overview')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'overview' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'overview', 'bg-info': selectedTab == 'overview' }">
                         Overview
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('weapons')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'weapons' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'weapons', 'bg-info': selectedTab == 'weapons' }">
                         Weapon stats
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('vehicle')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'vehicle' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'vehicle', 'bg-info': selectedTab == 'vehicle' }">
                         Vehicle stats
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('sessions')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'sessions' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'sessions', 'bg-info': selectedTab == 'sessions' }">
                         Sessions
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('items')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'items' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'items', 'bg-info': selectedTab == 'items' }">
                         Unlocks
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('friends')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'friends' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'friends', 'bg-info': selectedTab == 'friends' }">
                         Friends
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('directives')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'directives' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'directives', 'bg-info': selectedTab == 'directives' }">
                         Directives
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('outfitHistory')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'outfithistory' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'outfithistory', 'bg-info': selectedTab == 'outfithistory' }">
                         Outfit history
                     </a>
                 </li>
                 <li class="nav-item" @click="selectTab('extra')">
-                    <a class="nav-link" :class="{ 'text-success': selectedTab != 'extra' }">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'extra', 'bg-info': selectedTab == 'extra' }">
                         Fun stats
                     </a>
                 </li>
@@ -114,7 +114,7 @@
 <script lang="ts">
     import Vue from "vue";
 
-    import { PsCharacter, CharacterApi } from "api/CharacterApi";
+    import { PsCharacter, CharacterApi, HonuCharacterData } from "api/CharacterApi";
     import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
     import { Loadable, Loading } from "Loading";
 
@@ -142,6 +142,7 @@
                 charID: "" as string,
                 character: Loadable.idle() as Loading<PsCharacter>,
                 metadata: Loadable.idle() as Loading<CharacterMetadata>,
+                honuData: Loadable.idle() as Loading<HonuCharacterData>,
 
                 selectedTab: "overview" as string,
                 selectedComponent: "CharacterOverview" as string
@@ -204,6 +205,11 @@
                 this.metadata = Loadable.loading();
                 CharacterMetadataApi.getByID(this.charID).then((data: Loading<CharacterMetadata>) => {
                     this.metadata = data;
+                });
+
+                this.honuData = Loadable.loading();
+                CharacterApi.getHonuData(this.charID).then((data: Loading<HonuCharacterData>) => {
+                    this.honuData = data;
                 });
 
                 this.character = Loadable.loading();

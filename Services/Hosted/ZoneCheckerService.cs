@@ -51,7 +51,7 @@ namespace watchtower.Services.Hosted.Startup {
 
                         List<PsMap> maps = await GetMaps(worldID);
 
-                        foreach (uint zoneID in Zone.All) {
+                        foreach (uint zoneID in Zone.StaticZones) {
                             List<PsMap> zoneMap = maps.Where(iter => iter.ZoneID == zoneID).ToList();
                             short? owner = _MapCollection.GetZoneMapOwner(worldID, zoneID, zoneMap);
 
@@ -100,7 +100,7 @@ namespace watchtower.Services.Hosted.Startup {
             List<PsMap> maps;
 
             try {
-                maps = await _MapCollection.GetZoneMaps(worldID, Zone.All);
+                maps = await _MapCollection.GetZoneMaps(worldID, Zone.StaticZones);
             } catch (Exception ex) when (ex is CensusException || ex is CensusConnectionException || ex is CensusServiceUnavailableException) {
                 _Logger.LogWarning($"Got timeout, trying {tries} more times");
                 if (tries > 0) {

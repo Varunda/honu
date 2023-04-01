@@ -1,4 +1,6 @@
-﻿namespace watchtower.Models.PSB {
+﻿using System.Collections.Generic;
+
+namespace watchtower.Models.PSB {
 
     public class PsbOvOContact : PsbContact {
 
@@ -15,7 +17,7 @@
         /// <summary>
         ///     What group this contact is a rep for. Can be an outfit tag or a community
         /// </summary>
-        public string Group { get; set; } = "";
+        public List<string> Groups { get; set; } = new();
 
         /// <summary>
         ///     What type of representation this contact is for

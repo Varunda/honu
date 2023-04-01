@@ -25,6 +25,7 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly FacilityRepository _FacilityRepository;
         private readonly PsbCalendarRepository _CalendarRepository;
         private readonly PsbParsedReservationDbStore _MetadataDb;
+        private readonly MapRepository _MapRepository;
 
         private readonly DiscordMessageQueue _DiscordMessageQueue;
         private readonly IOptions<DiscordOptions> _DiscordOptions;
@@ -48,7 +49,7 @@ namespace watchtower.Services.Repositories.PSB {
         public PsbReservationRepository(ILogger<PsbReservationRepository> logger,
             PsbContactSheetRepository contactRepository, FacilityRepository facilityRepository,
             IOptions<DiscordOptions> discordOptions, DiscordMessageQueue discordMessageQueue,
-            PsbCalendarRepository calendarRepository, PsbParsedReservationDbStore metadataDb) {
+            PsbCalendarRepository calendarRepository, PsbParsedReservationDbStore metadataDb, MapRepository mapRepository) {
 
             _Logger = logger;
 
@@ -58,6 +59,7 @@ namespace watchtower.Services.Repositories.PSB {
             _DiscordMessageQueue = discordMessageQueue;
             _CalendarRepository = calendarRepository;
             _MetadataDb = metadataDb;
+            _MapRepository = mapRepository;
         }
 
         /// <summary>
@@ -102,10 +104,16 @@ namespace watchtower.Services.Repositories.PSB {
                     feedback += $"Line `{line}` as outfits\n";
 
                     List<string> outfits = value.Split(new string[] { ",", "&" }, StringSplitOptions.None).ToList();
+                    res.Outfits = outfits.Select(iter => iter.Trim().ToLower()).ToList();
+
                     feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";
-                    res.Outfits = outfits.Select(iter => iter.ToLower()).ToList();
                 } else if (field == "accounts" || field == "number of accounts") {
                     feedback += $"Line `{line}` as account number\n";
+
+                    if (value.ToLower() == "none") {
+                        feedback += $"\tAccounts: none\n";
+                        continue;
+                    }
 
                     if (int.TryParse(value, out int accountCount) == true) {
                         res.Accounts = accountCount;
@@ -138,7 +146,7 @@ namespace watchtower.Services.Repositories.PSB {
                         if (contact == null) {
                             errors.Add($"failed to find a contact for <@{id}>: not a rep, or not a user");
                         } else {
-                            feedback += $"\tFound OvO contact for <@{id}>: {contact.Group}\n";
+                            feedback += $"\tFound OvO contact for <@{id}>: {string.Join("/", contact.Groups)}\n";
                             res.Contacts.Add(contact);
                         }
                     }
@@ -153,11 +161,6 @@ namespace watchtower.Services.Repositories.PSB {
                         res.Start = r.Value;
                         res.End = r2.Value;
 
-                        if (res.End < res.Start) {
-                            feedback += $"\tend is before start, adding a day\n";
-                            res.End = res.End.AddDays(1);
-                        }
-
                         feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
                     } else {
                         errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{timefeedback}");
@@ -166,7 +169,8 @@ namespace watchtower.Services.Repositories.PSB {
                 } else if (field.StartsWith("base")) {
                     feedback += $"Line `{line}` as bases\n";
 
-                    if (v.Trim().ToLower().StartsWith("any")) {
+                    string vLower = v.Trim().ToLower();
+                    if (vLower.Length <= 1 || vLower.StartsWith("any") || vLower.StartsWith("none")) {
                         continue;
                     }
 
@@ -347,10 +351,10 @@ namespace watchtower.Services.Repositories.PSB {
             if (providedTime == false && bookings.Count > 0) {
                 int baseCount = bookings.Count;
                 TimeSpan reservationDuration = parsed.Reservation.End - parsed.Reservation.Start;
+                TimeSpan per = reservationDuration / baseCount;
 
-                // if there is a greater number of bases than there is hours in a reservation,
-                //      lets assume they want to book all the bases for the whole duration
-                if ((double)baseCount > reservationDuration.TotalHours && bookings.Count > 1) {
+                // if each base would take up less than 30 minutes, assume they wanted the bases for the whole duration
+                if (per < TimeSpan.FromMinutes(30) && bookings.Count > 1) {
                     _Logger.LogDebug($"Reservation has {baseCount} bases, but only {reservationDuration.TotalHours}, assuming all bases for full duration");
 
                     // put all the bases into one booking
@@ -362,8 +366,6 @@ namespace watchtower.Services.Repositories.PSB {
                     bookings[0].End = parsed.Reservation.End;
                     bookings = bookings.Take(1).ToList();
                 } else {
-                    TimeSpan per = reservationDuration / baseCount;
-
                     _Logger.LogDebug($"the reservation lasts: {reservationDuration}, have {baseCount} bases booked, each will take up {per}");
 
                     for (int i = 0; i < bookings.Count; ++i) {
@@ -399,7 +401,7 @@ namespace watchtower.Services.Repositories.PSB {
             foreach (string group in groups) {
                 _Logger.LogTrace($"finding rep for '{group}'");
 
-                List<PsbOvOContact> groupContacts = contacts.Where(iter => iter.Group.Trim().ToLower() == group.ToLower().Trim()).ToList();
+                List<PsbOvOContact> groupContacts = contacts.Where(iter => iter.Groups.Contains(group.ToLower().Trim())).ToList();
                 _Logger.LogTrace($"found {groupContacts.Count} contacts for {group}: {string.Join(", ", groupContacts.Select(iter => iter.DiscordID))}");
 
                 if (groupContacts.Count == 0) {
@@ -411,10 +413,15 @@ namespace watchtower.Services.Repositories.PSB {
             foreach (PsbOvOContact contact in contacts) {
                 _Logger.LogTrace($"Checking if {contact.DiscordID} is in a group in the reservation");
 
-                List<string> contactGroups = groups.Where(iter => iter.ToLower().Trim() == contact.Group.ToLower().Trim()).ToList();
-                _Logger.LogTrace($"{contact.DiscordID} is in these groups: {string.Join(", ", contactGroups)}");
+                bool contactHasGroup = false;
+                foreach (string group in contact.Groups) {
+                    if (groups.Contains(group)) {
+                        contactHasGroup = true;
+                        break;
+                    }
+                }
 
-                if (contactGroups.Count == 0) {
+                if (contactHasGroup == false) {
                     errors.Add($"<@{contact.DiscordID}> is not a rep for any of the groups in this reservation");
                 }
             }
@@ -423,7 +430,7 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     check if the reservation has any conflicting base bookings
+        ///     check if the reservation has any conflicting base bookings, or if 
         /// </summary>
         /// <param name="res">reservation to check against</param>
         /// <returns>
@@ -432,15 +439,48 @@ namespace watchtower.Services.Repositories.PSB {
         private async Task<List<string>> CheckBaseBookings(PsbReservation res) {
             List<string> errors = new();
 
+            // load all facility links into a dictionary for those quicker look ups!
+            List<PsFacilityLink> links = await _MapRepository.GetFacilityLinks();
+            Dictionary<int, List<PsFacilityLink>> linksDict = new();
+            foreach (PsFacilityLink link in links) {
+                if (linksDict.ContainsKey(link.FacilityA) == false) {
+                    linksDict.Add(link.FacilityA, new List<PsFacilityLink>());
+                }
+
+                linksDict[link.FacilityA].Add(link);
+            }
+
+            Dictionary<int, PsFacility> facs = (await _MapRepository.GetFacilities()).ToDictionary(iter => iter.FacilityID);
+
             try {
                 List<PsbCalendarEntry> entries = await _CalendarRepository.GetAll();
 
                 foreach (PsbBaseBooking booking in res.Bases) {
+
+                    // get the bases of this booking, and the bases that are adjacent to it
+                    List<PsFacility> bookingFacilities = new(booking.Facilities);
+                    foreach (PsFacility fac in booking.Facilities) {
+                        if (linksDict.TryGetValue(fac.FacilityID, out List<PsFacilityLink>? baseLinks) == false) {
+                            continue;
+                        }
+
+                        foreach (PsFacilityLink link in baseLinks) {
+                            if (facs.TryGetValue(link.FacilityB, out PsFacility? adjacentFac) == false) {
+                                _Logger.LogError($"Failed to find facility {link.FacilityB} which is linked to facility {link.FacilityA}");
+                                continue;
+                            }
+                            bookingFacilities.Add(adjacentFac);
+                        }
+                    }
+
+                    _Logger.LogDebug($"Checking for no conflict on these bases: {string.Join(", ", bookingFacilities.Select(iter => iter.Name))}");
+
                     foreach (PsbCalendarEntry iter in entries) {
                         if (iter.Valid == false) {
                             continue;
                         }
 
+                        // if this base is already booked by the same group who wants to book the base, this reservation is fine
                         bool broke = false;
                         foreach (string outfit in res.Outfits) {
                             if (iter.Groups.Select(iter => iter.ToLower()).Contains(outfit.ToLower())) {
@@ -454,19 +494,34 @@ namespace watchtower.Services.Repositories.PSB {
                         }
 
                         List<PsFacility> facilities = iter.Bases.SelectMany(iter => iter.PossibleBases).ToList();
-                        foreach (PsFacility fac in booking.Facilities) {
-                            if (facilities.FirstOrDefault(iter => iter.FacilityID == fac.FacilityID) != null) {
-                                if ((booking.Start >= iter.Start && booking.Start <= iter.End)
-                                    || (booking.End >= iter.Start && booking.End <= iter.End)
-                                    || (booking.Start <= iter.Start && booking.End >= iter.End)) {
 
-                                    errors.Add($"{fac.Name} is in use by {string.Join(", ", iter.Groups)} from {iter.Start:u} to {iter.End:u}");
-                                    broke = true;
-                                    break;
+                        // for each facility in the booking, make sure it's not already booked
+                        foreach (PsFacility fac in bookingFacilities) {
+                            if (facilities.FirstOrDefault(iter => iter.FacilityID == fac.FacilityID) == null) {
+                                continue;
+                            }
+
+                            _Logger.LogDebug($"Checking if {iter.Start:u} to {iter.End:u} at {string.Join(", ", facilities.Select(iter => iter.Name))} overlaps with {booking.Start:u} - {booking.End:u}");
+
+                            if ((booking.Start >= iter.Start && booking.Start <= iter.End)
+                                || (booking.End >= iter.Start && booking.End <= iter.End)
+                                || (booking.Start <= iter.Start && booking.End >= iter.End)) {
+
+                                string err = $"{fac.Name} ";
+
+                                if (booking.Facilities.FirstOrDefault(iter => fac.FacilityID == iter.FacilityID) == null) {
+                                    err += $"(adjacent to a booked base)";
                                 }
+
+                                err += $" is in use by {string.Join(", ", iter.Groups)} from {iter.Start:u} to {iter.End:u}";
+
+                                errors.Add(err);
+                                broke = true;
+                                break;
                             }
                         }
 
+                        // if there was already a conflict, no need to check further, there was one
                         if (broke == true) {
                             break;
                         }
@@ -499,6 +554,7 @@ namespace watchtower.Services.Repositories.PSB {
             string[] regexs = new string[] {
                 @"^(?<day>.*?\d{1,2}).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // Month Day - Time
                 @"^(?<day>\d{4}-\d\d-\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // yyyy-mm-dd hh:mm
+                @"^(?<day>\d{4}/\d\d/\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // yyyy/mm/dd hh:mm
             };
 
             foreach (string reg in regexs) {
@@ -565,6 +621,10 @@ namespace watchtower.Services.Repositories.PSB {
                 } else {
                     feedback += $"no match using Regex `{reg}`\n";
                 }
+            }
+
+            if (startDay != null && endDay != null && endDay < startDay) {
+                endDay = endDay.Value.AddDays(1);
             }
 
             return (startDay, endDay);

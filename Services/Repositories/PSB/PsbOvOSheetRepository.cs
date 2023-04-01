@@ -37,7 +37,7 @@ namespace watchtower.Services.Repositories.PSB {
             string date = $"{res.Start.Date:yyyy-MM-dd}";
 
             FilesResource.CopyRequest gReq = _GRepository.GetDriveService().Files.Copy(new Google.Apis.Drive.v3.Data.File() {
-                Name = $"{date} [{string.Join("/", res.Contacts.Select(iter => iter.Group))}]",
+                Name = $"{date} [{string.Join("/", res.Outfits)}]",
                 Parents = new List<string> { _Options.Value.OvORootFolderId }
             }, _Options.Value.TemplateFileId);
 

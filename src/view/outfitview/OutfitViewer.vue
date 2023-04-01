@@ -16,8 +16,12 @@
                     &lt;Loading...&gt;
                 </span>
 
-                <span v-else>
+                <span v-else-if="outfit.state == 'loaded'">
                     {{outfit.data.name}}
+                </span>
+
+                <span v-else>
+                    &lt;ERROR&gt;
                 </span>
             </li>
         </honu-menu>
@@ -28,7 +32,7 @@
             Loading...
         </div>
 
-        <div v-if="outfit.state == 'loaded'">
+        <div v-else-if="outfit.state == 'loaded'">
             <table class="table table-sm w-auto d-inline-block mr-2" style="vertical-align: top;">
                 <tr>
                     <td><b>Tag</b></td>
@@ -158,13 +162,17 @@
             </table>
         </div>
 
+        <div v-else-if="outfit.state == 'error'">
+            <api-error :error="outfit.problem"></api-error>
+        </div>
+
         <collapsible header-text="Activity" class="mb-3">
             <outfit-activity-graph :outfit-id="outfitID">
 
             </outfit-activity-graph>
         </collapsible>
 
-        <collapsible header-text="Members">
+        <collapsible :header-text="'Members' + ((simpleMembers.state == 'loaded') ? (' (' + simpleMembers.data.length + ')') : '')">
             <div v-if="members.state == 'loading' && simpleMembers.state == 'loaded'" class="alert alert-info text-center">
                 <busy class="honu-busy-sm"></busy>
                 Stats have not finished loading! Displaying only the outfit member list
@@ -231,8 +239,13 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        {{entry.memberSince | moment}}
-                        ({{entry.memberSince | timeAgo}})
+                        <span v-if="entry.memberSince.getTime() == 0">
+                            &lt;unknown&gt;
+                        </span>
+                        <span v-else>
+                            {{entry.memberSince | moment}}
+                            ({{entry.memberSince | timeAgo}})
+                        </span>
                     </a-body>
                 </a-col>
 
@@ -242,8 +255,13 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        {{entry.lastLogin | moment}}
-                        ({{entry.lastLogin | timeAgo}})
+                        <span v-if="entry.lastLogin.getTime() == 0">
+                            &lt;unknown&gt;
+                        </span>
+                        <span v-else>
+                            {{entry.lastLogin | moment}}
+                            ({{entry.lastLogin | timeAgo}})
+                        </span>
                     </a-body>
                 </a-col>
 
@@ -322,6 +340,7 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import Collapsible from "components/Collapsible.vue";
     import Busy from "components/Busy.vue";
+    import ApiError from "components/ApiError";
 
     const QuickNumber = Vue.extend({
         props: {
@@ -416,10 +435,11 @@
                 this.members = await OutfitApi.getMembersFlat(this.outfitID);
 
                 if (this.members.state == "loaded") {
-                    const logins: Date[] = this.members.data.filter(iter => iter.lastLogin != null).map(iter => iter.lastLogin!);
-                    const sum: number = logins.map(iter => iter.getTime()).reduce((acc, iter) => acc += iter, 0);
-                    const avg: number = sum / logins.length;
-                    this.meanLoginDate = new Date(avg);
+                    // use BigInt to avoid truncation issues
+                    const logins: Date[] = this.members.data.filter(iter => iter.lastLogin != null && iter.lastLogin.getTime() > 0).map(iter => iter.lastLogin!);
+                    const sum: bigint = logins.map(iter => iter.getTime()).reduce((acc, iter) => acc += BigInt(iter), BigInt(0));
+                    const avg: bigint = sum / BigInt(logins.length);
+                    this.meanLoginDate = new Date(Number(avg));
                 }
             }
 
@@ -526,7 +546,8 @@
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             Collapsible,
             OutfitActivityGraph,
-            Busy
+            Busy,
+            ApiError
         }
 
     });

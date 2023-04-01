@@ -29,7 +29,7 @@ namespace watchtower.Services.Db {
                 INSERT INTO wt_ledger_player (
                     control_id, character_id, outfit_id, facility_id, timestamp
                 ) VALUES (
-                    @ControlID, @CharacterID, @OutfitID, @FacilityID, NOW() AT TIME ZONE 'utc'
+                    @ControlID, @CharacterID, @OutfitID, @FacilityID, @Timestamp
                 );
             ");
 
@@ -37,6 +37,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CharacterID", ev.CharacterID);
             cmd.AddParameter("OutfitID", ev.OutfitID);
             cmd.AddParameter("FacilityID", ev.FacilityID);
+            cmd.AddParameter("Timestamp", ev.Timestamp);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
@@ -94,7 +95,7 @@ namespace watchtower.Services.Db {
                 INSERT INTO wt_ledger_player (
                     control_id, character_id, outfit_id, facility_id, timestamp
                 ) VALUES
-                    {string.Join(",\n", ev.Select((_, index) => $"(@ControlID, @CharacterID_{index}, @OutfitID_{index}, @FacilityID, NOW() AT TIME ZONE 'utc')"))}
+                    {string.Join(",\n", ev.Select((_, index) => $"(@ControlID, @CharacterID_{index}, @OutfitID_{index}, @FacilityID, @Timestamp_{index})"))}
                 ;
             ");
 
@@ -105,6 +106,7 @@ namespace watchtower.Services.Db {
             for (int i = 0; i < ev.Count; ++i) {
                 cmd.AddParameter($"CharacterID_{i}", ev[i].CharacterID);
                 cmd.AddParameter($"OutfitID_{i}", ev[i].OutfitID);
+                cmd.AddParameter($"Timestamp_{i}", ev[i].Timestamp);
             }
 
             //_Logger.LogDebug(cmd.Print());

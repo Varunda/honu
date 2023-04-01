@@ -1,10 +1,8 @@
 ﻿<template>
     <div>
-        <hr class="border" />
-
         <div class="d-flex">
             <table class="table table-sm w-auto d-inline-block mr-5">
-                <tr class="table-secondary">
+                <tr class="table-secondary th-border-top-0">
                     <td colspan="2"><b>General</b></td>
                 </tr>
 
@@ -94,7 +92,7 @@
 
             <table class="table table-sm w-auto d-inline-block mr-4" v-if="history.state == 'loaded'">
                 <thead>
-                    <tr class="table-secondary">
+                    <tr class="table-secondary th-border-top-0">
                         <td colspan="2"><b>Lifetime stats</b></td>
                     </tr>
                 </thead>
@@ -153,7 +151,7 @@
 
             <table class="table table-sm w-auto d-inline-block mr-4">
                 <thead>
-                    <tr class="table-secondary">
+                    <tr class="table-secondary th-border-top-0">
                         <td colspan="2"><b>30 day stats</b></td>
                     </tr>
                 </thead>
@@ -230,15 +228,15 @@
             </character-class-stats>
         </div>
 
-        <h2 class="wt-header">History stats</h2>
-
-        <character-history-stats v-if="history.state == 'loaded' && history.data.length > 0" :stats="history.data"></character-history-stats>
-        <div v-else-if="history.state == 'loaded' && history.data.length == 0">
-            Historical stats do not exist
-        </div>
-        <div v-else-if="history.state == 'loading'">
-            <busy style="max-width: 5rem;"></busy>
-        </div>
+        <collapsible header-text="History stats">
+            <character-history-stats v-if="history.state == 'loaded' && history.data.length > 0" :stats="history.data"></character-history-stats>
+            <div v-else-if="history.state == 'loaded' && history.data.length == 0">
+                Historical stats do not exist
+            </div>
+            <div v-else-if="history.state == 'loading'">
+                <busy style="max-width: 5rem;"></busy>
+            </div>
+        </collapsible>
 
         <hr class="border" />
 
@@ -283,16 +281,17 @@
     import "filters/WorldNameFilter";
     import "filters/TimeAgoFilter";
     import "MomentFilter";
-    import InfoHover from "components/InfoHover.vue";
 
     import { PsCharacter } from "api/CharacterApi";
     import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
     import { CharacterStat, CharacterStatApi } from "api/CharacterStatApi";
     import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
 
+    import InfoHover from "components/InfoHover.vue";
+    import Busy from "components/Busy.vue";
+    import Collapsible from "components/Collapsible.vue";
     import CharacterClassStats from "./CharacterClassStats.vue";
     import CharacterHistoryStats from "./CharacterHistoryStats.vue";
-    import Busy from "components/Busy.vue";
 
     export const CharacterOverview = Vue.extend({
         props: {
@@ -356,7 +355,8 @@
             CharacterClassStats,
             CharacterHistoryStats,
             Busy,
-            InfoHover
+            InfoHover,
+            Collapsible
         }
 
     });
