@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace watchtower.Models.PSB {
 
@@ -34,6 +35,14 @@ namespace watchtower.Models.PSB {
         public bool BasePings { get; set; }
 
         public string Notes { get; set; } = "";
+
+        /// <summary>
+        ///     Check if a contact is a rep for a group
+        /// </summary>
+        /// <param name="group">name of the group</param>
+        public bool IsRepFor(string group) {
+            return Groups.FirstOrDefault(iter => iter.ToLower() == group.ToLower().Trim()) != null;
+        }
 
     }
 }

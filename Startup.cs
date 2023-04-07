@@ -160,6 +160,9 @@ namespace watchtower {
             services.Configure<DailyAlertOptions>(Configuration.GetSection("DailyAlert"));
             services.Configure<PsbDriveSettings>(Configuration.GetSection("PsbDrive"));
             services.Configure<PsbRoleMapping>(Configuration.GetSection("PsbRoleMapping"));
+            services.Configure<InstanceOptions>(Configuration.GetSection("Instance"));
+
+            services.AddSingleton<InstanceInfo>();
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();
             services.AddSingleton<IDbHelper, DbHelper>();

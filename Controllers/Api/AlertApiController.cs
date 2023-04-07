@@ -245,7 +245,6 @@ namespace watchtower.Controllers.Api {
                     Event = ev,
                     Outfit = (ev.NewFactionID != ev.OldFactionID && ev.OutfitID != "0" && ev.OutfitID != null) ? await _OutfitRepository.GetByID(ev.OutfitID) : null,
                     Facility = await _FacilityRepository.GetByID(ev.FacilityID)
-
                 });
             }
 

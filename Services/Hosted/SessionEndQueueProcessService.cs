@@ -30,13 +30,14 @@ namespace watchtower.Services.Hosted {
         private readonly SessionRepository _SessionRepository;
         private readonly SessionEndSubscriptionDbStore _SessionSubscriptionDb;
         private readonly CharacterRepository _CharacterRepository;
+        private readonly InstanceInfo _Instance;
 
         private readonly IOptions<DiscordOptions> _Options;
 
         public SessionEndQueueProcessService(ILogger<SessionEndQueueProcessService> logger, SessionEndQueue queue,
             SessionRepository sessionRepository, SessionEndSubscriptionDbStore sessionSubscriptionDb,
             CharacterRepository characterRepository, DiscordMessageQueue discordMessageQueue,
-            IOptions<DiscordOptions> options) {
+            IOptions<DiscordOptions> options, InstanceInfo instance) {
 
             _Logger = logger;
             _Queue = queue;
@@ -46,6 +47,7 @@ namespace watchtower.Services.Hosted {
             _CharacterRepository = characterRepository;
             _DiscordMessageQueue = discordMessageQueue;
             _Options = options;
+            _Instance = instance;
         }
 
         protected async override Task ExecuteAsync(CancellationToken cancel) {
@@ -86,9 +88,9 @@ namespace watchtower.Services.Hosted {
                     HonuDiscordMessage msg = new();
                     DiscordEmbedBuilder builder = new();
                     builder.Title = $"Session end: {c?.GetDisplayName() ?? $"missing {entry.CharacterID}"}";
-                    builder.Description = $"https://wt.honu.pw/s/{entry.SessionID} \n\n"
+                    builder.Description = $"https://{_Instance.GetHost()}/s/{entry.SessionID} \n\n"
                         + $"To stop recieving session end alerts about this character, press Unsubscribe below, or type `/subscribe remove {c?.Name}`";
-                    builder.Url = $"https://wt.honu.pw/s/{entry.SessionID}";
+                    builder.Url = $"https://{_Instance.GetHost()}/s/{entry.SessionID}";
                     builder.Footer = new DiscordEmbedBuilder.EmbedFooter();
                     builder.Footer.Text = $"Session ended at";
                     builder.Timestamp = entry.Timestamp;

@@ -30,8 +30,14 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly DiscordMessageQueue _DiscordMessageQueue;
         private readonly IOptions<DiscordOptions> _DiscordOptions;
 
-        public static bool BookingEnabled = false;
+        /// <summary>
+        ///     Is automated base bookings enabled?
+        /// </summary>
+        public static bool BookingEnabled = true;
 
+        /// <summary>
+        ///     Is automated account sheet creation enabled?
+        /// </summary>
         public static bool AccountEnabled = false;
 
         private static readonly string[] TIME_FORMATS = new string[] {
@@ -215,35 +221,43 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         /// <summary>
-        ///     Send a parsed reservation to the parsed reservation channel ID
+        ///     Create a discord message builder that represents the information in a <see cref="ParsedPsbReservation"/>
         /// </summary>
-        /// <param name="parsed">Parsed reservation</param>
-        /// <param name="debug">Will debug output be included?</param>
-        public void Send(ParsedPsbReservation parsed, bool debug) {
-            HonuDiscordMessage msg = new();
-            msg.ChannelID = _DiscordOptions.Value.ParsedChannelId;
-            msg.GuildID = _DiscordOptions.Value.GuildId;
+        /// <param name="parsed">Reservation to build the message builder for</param>
+        /// <param name="debug">If the debug output will be included</param>
+        /// <returns>
+        ///     A new <see cref="DiscordMessageBuilder"/> that contains all of the embeds and components
+        ///     necessary to manage a reservation
+        /// </returns>
+        public DiscordMessageBuilder CreateMessage(ParsedPsbReservation parsed, bool debug) {
+            DiscordMessageBuilder builder = new();
+            builder.AddEmbed(parsed.Build(debug));
 
-            msg.Embeds.Add(parsed.Build(debug));
-            msg.Components.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
+            List<DiscordComponent> comps = new();
 
-            if (BookingEnabled == true) {
+            comps.Add(PsbButtonCommands.REFRESH_RESERVATION(parsed.MessageId));
+
+            if (PsbReservationRepository.BookingEnabled == true) {
                 DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
                 if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0) {
                     bookingBtn.Disable();
                 }
-                msg.Components.Add(bookingBtn);
+                comps.Add(bookingBtn);
             }
 
-            if (AccountEnabled == true) {
+            if (PsbReservationRepository.AccountEnabled == true) {
                 DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
                 if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
                     accountBtn.Disable();
                 }
-                msg.Components.Add(accountBtn);
+                comps.Add(accountBtn);
             }
 
-            _DiscordMessageQueue.Queue(msg);
+            comps.Add(PsbButtonCommands.RESET_RESERVATION(parsed.MessageId));
+
+            builder.AddComponents(comps);
+
+            return builder;
         }
 
         class BaseParseResult {

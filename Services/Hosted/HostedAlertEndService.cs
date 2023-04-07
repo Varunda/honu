@@ -32,11 +32,13 @@ namespace watchtower.Services.Hosted {
         private readonly DiscordMessageQueue _DiscordMessageQueue;
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
+        private readonly InstanceInfo _Instance;
 
         public HostedAlertEndService(ILogger<HostedAlertEndService> logger, AlertEndQueue queue,
             AlertDbStore alertDb, AlertPlayerDataRepository alertPlayerRepository,
             AlertEndSubscriptionDbStore alertEndSubscriptionDb, DiscordMessageQueue discordMessageQueue,
-            CharacterRepository characterRepository, OutfitRepository outfitRepository) {
+            CharacterRepository characterRepository, OutfitRepository outfitRepository,
+            InstanceInfo instance) {
 
             _Logger = logger;
             _Queue = queue;
@@ -47,6 +49,7 @@ namespace watchtower.Services.Hosted {
             _DiscordMessageQueue = discordMessageQueue;
             _CharacterRepository = characterRepository;
             _OutfitRepository = outfitRepository;
+            _Instance = instance;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -185,7 +188,7 @@ namespace watchtower.Services.Hosted {
         private DiscordEmbedBuilder StartMessage(PsAlert alert, int playerCount) {
             DiscordEmbedBuilder builder = new();
             builder.Title = $"Alert {alert.WorldID}-{alert.InstanceID} ended";
-            builder.Url = $"https://wt.honu.pw/alert/{alert.ID}/";
+            builder.Url = $"https://{_Instance.GetHost()}/alert/{alert.ID}/";
             builder.Description = $"Alert {alert.WorldID}-{alert.InstanceID} ended with {playerCount} unique players\n\n";
             builder.Description += $"**Server**: {World.GetName(alert.WorldID)}\n";
             builder.Description += $"**Continent: **{Zone.GetName(alert.ZoneID)}\n";

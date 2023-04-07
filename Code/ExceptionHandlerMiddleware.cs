@@ -35,6 +35,7 @@ namespace watchtower.Code {
                 dets.Type = context.Request.Path.Value;
                 dets.Title = $"internal server error: {ex.Message}";
 
+                // specially handle database time outs
                 if (ex is NpgsqlException && ex.InnerException is TimeoutException) {
                     dets.Title = $"internal server error: Database timeout";
                 }

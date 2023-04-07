@@ -83,6 +83,18 @@ namespace watchtower.Code.ExtensionMethods {
         }
 
         /// <summary>
+        ///     Create a deferred response to a component interaction
+        /// </summary>
+        /// <param name="ctx">extension instance</param>
+        /// <param name="ephemeral">will this response be ephemeral?</param>
+        public static Task CreateComponentDeferred(this DiscordInteraction ctx, bool ephemeral = true) {
+            return ctx.CreateResponseAsync(
+                InteractionResponseType.DeferredMessageUpdate,
+                new DiscordInteractionResponseBuilder().AsEphemeral(ephemeral)
+            );
+        }
+
+        /// <summary>
         ///     Create an immediate response with an embed builder
         /// </summary>
         /// <param name="ctx">Extension instance</param>

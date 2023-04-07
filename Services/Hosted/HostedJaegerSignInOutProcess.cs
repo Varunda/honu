@@ -30,6 +30,7 @@ namespace watchtower.Services.Hosted {
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
         private readonly PsbAccountRepository _AccountRepository;
         private readonly PsbAccountPlaytimeUpdateQueue _PlaytimeQueue;
+        private readonly InstanceInfo _Instance;
 
         private readonly IOptions<JaegerNsaOptions> _Options;
 
@@ -52,7 +53,7 @@ namespace watchtower.Services.Hosted {
             JaegerSignInOutQueue queue, CharacterRepository charRepo,
             DiscordMessageQueue discordQueue, IServiceHealthMonitor healthMon,
             IOptions<JaegerNsaOptions> options, PsbAccountRepository accountRepository,
-            PsbAccountPlaytimeUpdateQueue playtimeQueue) {
+            PsbAccountPlaytimeUpdateQueue playtimeQueue, InstanceInfo instance) {
 
             _Logger = logger;
             _Queue = queue;
@@ -63,6 +64,7 @@ namespace watchtower.Services.Hosted {
 
             _Options = options;
             _PlaytimeQueue = playtimeQueue;
+            _Instance = instance;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -93,7 +95,7 @@ namespace watchtower.Services.Hosted {
 
                         List<PsCharacter> chars = await _CharacterRepository.GetByIDs(both.ToList(), CensusEnvironment.PC, fast: false);
 
-                        string msg = $"<https://wt.honu.pw/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}>\n";
+                        string msg = $"<https://{_Instance.GetHost()}/jaegernsa/{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}>\n";
                         HonuDiscordMessage hMsg = new();
                         hMsg.GuildID = _Options.Value.GuildID;
                         hMsg.ChannelID = _Options.Value.ChannelID;

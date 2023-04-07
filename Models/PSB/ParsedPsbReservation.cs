@@ -1,4 +1,5 @@
 ﻿using DSharpPlus.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using watchtower.Code.ExtensionMethods;
@@ -50,10 +51,20 @@ namespace watchtower.Models.PSB {
         /// </summary>
         public string DebugText { get; set; } = "";
 
+        /// <summary>
+        ///     Link to the message
+        /// </summary>
         public string MessageLink { get; set; } = "";
 
         public PsbParsedReservationMetadata Metadata { get; set; } = new();
 
+        /// <summary>
+        ///     Turn the information of a reservation into a Discord embed
+        /// </summary>
+        /// <param name="debug">Will debug information be included or not?</param>
+        /// <returns>
+        ///     A <see cref="DiscordEmbedBuilder"/> that can be attached to a message to represent a reservation
+        /// </returns>
         public DiscordEmbedBuilder Build(bool debug) {
             DiscordEmbedBuilder builder = new();
             builder.Title = $"Reservation";
@@ -73,7 +84,20 @@ namespace watchtower.Models.PSB {
             }
 
             if (Reservation.Outfits.Count > 0) {
-                builder.AddField("Groups in reservation", string.Join(", ", Reservation.Outfits));
+                string v = "";
+
+                // include what rep from each outfit is represented
+                foreach (string outfit in Reservation.Outfits) {
+                    List<PsbOvOContact> contacts = Reservation.Contacts.Where(iter => iter.IsRepFor(outfit)).ToList();
+                    if (contacts.Count == 0) {
+                        v += $"- {outfit} (no reps given!)\n";
+
+                    } else {
+                        v += $"- {outfit} ({string.Join(" & ", contacts.Select(iter => $"{iter.Name}/<@{iter.DiscordID}>"))})\n";
+                    }
+                }
+
+                builder.AddField("Groups in reservation", v);
             } else {
                 builder.AddField("Groups in reservation", "**missing**");
             }
@@ -101,6 +125,9 @@ namespace watchtower.Models.PSB {
             if (Metadata.BookingApprovedById != null) {
                 builder.AddField("Base booking approved by", $"<@{Metadata.BookingApprovedById}>");
             }
+
+            builder.WithFooter($"Last updated");
+            builder.WithTimestamp(DateTime.UtcNow);
 
             return builder;
         }

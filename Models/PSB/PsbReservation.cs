@@ -11,6 +11,12 @@ namespace watchtower.Models.PSB {
     /// </summary>
     public class PsbReservation {
 
+        public string Name {
+            get {
+                return $"{Start:yyyy-MM-dd}: {string.Join(" / ", Outfits)}";
+            }
+        }
+
         /// <summary>
         ///     What outfits are participating
         /// </summary>

@@ -469,7 +469,18 @@ namespace watchtower.Services.Hosted {
             }
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(args.Message);
-            _ReservationRepository.Send(parsed, false);
+
+            try {
+                string reservationName = $"{parsed.Reservation.Start:yyyy-MM-dd}: {string.Join(" / ", parsed.Reservation.Outfits)}";
+
+                DiscordThreadChannel thread = await args.Message.CreateThreadAsync(reservationName, AutoArchiveDuration.Day);
+                _Logger.LogDebug($"type: {thread.Type}");
+
+                DiscordMessageBuilder builder = _ReservationRepository.CreateMessage(parsed, false);
+                await thread.SendMessageAsync(builder);
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"failed to create thread for reservation {args.Message.Id}");
+            }
         }
 
         /// <summary>

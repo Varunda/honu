@@ -114,12 +114,12 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="tag">Tag to find the reps for</param>
         [SlashCommand("ovo-rep", "List the OvO reps of an outfit")]
         public async Task ListOvOCommand(InteractionContext ctx,
-            [Option("Tag", "Outfit Tag to list the OVO reps of")] string tag) {
+            [Option("Tag", "Outfit Tag to list the OvO reps of")] string tag) {
 
             await ctx.CreateDeferred(true);
 
             List<PsbOvOContact> contacts = (await _ContactRepository.GetOvOContacts())
-                .Where(iter => iter.Groups.Contains(tag)).ToList();
+                .Where(iter => iter.Groups.Contains(tag.ToLower())).ToList();
 
             string feedback = $"The following users are OvO reps for {tag}:\n";
 
@@ -255,6 +255,14 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseAsync(hookBuilder);
         }
 
+        /// <summary>
+        ///     Slash command to audit the ovo reps to make sure they are still in the Discord
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        /// <param name="offset">
+        ///     When there are more missing reps than there are characters in a single message,
+        ///     need a way to offset into the data
+        /// </param>
         [RequiredRoleSlash("ovo-staff")]
         [SlashCommand("audit-ovo-reps", "Check which ovo reps are still in the Discord")]
         public async Task AuditOvOContacts(InteractionContext ctx,
@@ -301,6 +309,11 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseEmbed(builder);
         }
 
+        /// <summary>
+        ///     Audit practice account reps to ensure they are still in the discord
+        /// </summary>
+        /// <param name="ctx">Provide context</param>
+        /// <param name="offset">Offset into the data</param>
         [RequiredRoleSlash("practice-staff")]
         [SlashCommand("audit-practice-reps", "Check which practice reps are still in the Discord")]
         public async Task AuditPracticeContacts(InteractionContext ctx,
@@ -466,7 +479,7 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="msgID">ID of the message to be re-parsed</param>
         [ButtonCommand("refresh-reservation")]
         public async Task RefreshReservation(ButtonContext ctx, ulong msgID) {
-            await ctx.Interaction.CreateDeferred(true);
+            await ctx.Interaction.CreateComponentDeferred(true);
 
             if (ctx.Message == null) {
                 _Logger.LogError($"missing message for refresh-reservation");
@@ -480,35 +493,17 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
-
-            DiscordMessageBuilder builder = new();
-            builder.AddEmbed(parsed.Build(false));
-
-            List<DiscordComponent> comps = new();
-            comps.Add(PsbButtonCommands.REFRESH_RESERVATION(msgID));
-
-            if (PsbReservationRepository.BookingEnabled == true) {
-                DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0) {
-                    bookingBtn.Disable();
-                }
-                comps.Add(bookingBtn);
-            }
-
-            if (PsbReservationRepository.AccountEnabled == true) {
-                DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_ACCOUNTS(parsed.MessageId);
-                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
-                    accountBtn.Disable();
-                }
-                comps.Add(accountBtn);
-            }
-
-            comps.Add(PsbButtonCommands.RESET_RESERVATION(msgID));
-
-            builder.AddComponents(comps);
+            DiscordMessageBuilder builder = _ReservationRepository.CreateMessage(parsed, false);
 
             await ctx.Message.ModifyAsync(builder);
-            await ctx.Interaction.EditResponseText("Refreshed!");
+
+            if (ctx.Channel.Type == ChannelType.PublicThread) {
+                if (ctx.Channel.Name != parsed.Reservation.Name) {
+                    await ctx.Channel.ModifyAsync(channel => {
+                        channel.Name = parsed.Reservation.Name;
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -521,7 +516,7 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.Interaction.CreateDeferred(true);
 
             if (PsbReservationRepository.BookingEnabled == false) {
-                await ctx.Interaction.EditResponseText($"bot booking approvals are disabled. Have an admin user `/toggle-booking-automation` to toggle");
+                await ctx.Interaction.EditResponseText($"bot booking approvals are disabled. Have an admin use `/toggle-booking-automation` to toggle");
                 return;
             }
 
@@ -570,7 +565,7 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.Interaction.CreateDeferred(true);
 
             if (PsbReservationRepository.AccountEnabled == false) {
-                await ctx.Interaction.EditResponseText($"bot account approvals are disabled. Have an admin user `/toggle-account-automation` to toggle");
+                await ctx.Interaction.EditResponseText($"bot account approvals are disabled. Have an admin use `/toggle-account-automation` to toggle");
                 return;
             }
 

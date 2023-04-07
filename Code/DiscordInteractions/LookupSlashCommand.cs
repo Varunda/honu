@@ -11,6 +11,7 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Services;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.DiscordInteractions {
@@ -78,15 +79,16 @@ namespace watchtower.Code.DiscordInteractions {
         /// <summary>
         ///     Button link to a character
         /// </summary>
-        public static DiscordLinkButtonComponent LINK_CHARACTER(string charID, string title = "Honu") => new($"https://wt.honu.pw/c/{charID}", title);
+        public static DiscordLinkButtonComponent LINK_CHARACTER(string host, string charID, string title = "Honu") => new($"https://{host}/c/{charID}", title);
 
         /// <summary>
         ///     Button link to an outfit
         /// </summary>
-        public static DiscordLinkButtonComponent LINK_OUTFIT(string outfitID, string title = "Honu") => new($"https://wt.honu.pw/o/{outfitID}", title);
+        public static DiscordLinkButtonComponent LINK_OUTFIT(string host, string outfitID, string title = "Honu") => new($"https://{host}/o/{outfitID}", title);
 
         public ILogger<LookupButtonCommands> _Logger { set; private get; } = default!;
         public LookupDiscordInteractions _LookupInteractions { set; private get; } = default!;
+        public InstanceInfo _Instance { set; private get; } = default!;
 
         /// <summary>
         ///     Button command to take the embed of a message and print it. Useful for ephemeral messages
@@ -141,16 +143,18 @@ namespace watchtower.Code.DiscordInteractions {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly CharacterHistoryStatRepository _CharacterHistoryStatRepository;
+        private readonly InstanceInfo _Instance;
 
         public LookupDiscordInteractions(ILogger<LookupDiscordInteractions> logger,
             CharacterRepository characterRepository, OutfitRepository outfitRepository,
-            CharacterHistoryStatRepository characterHistoryStatRepository) {
+            CharacterHistoryStatRepository characterHistoryStatRepository, InstanceInfo instance) {
 
             _Logger = logger;
 
             _CharacterRepository = characterRepository;
             _OutfitRepository = outfitRepository;
             _CharacterHistoryStatRepository = characterHistoryStatRepository;
+            _Instance = instance;
         }
 
         /// <summary>
@@ -209,7 +213,7 @@ namespace watchtower.Code.DiscordInteractions {
             PsCharacterHistoryStat? timeStat = stats.FirstOrDefault(iter => iter.Type == "time");
 
             builder.Title = $"Character: {c.GetDisplayName()}";
-            builder.Url = $"https://wt.honu.pw/c/{c.ID}";
+            builder.Url = $"https://{_Instance.GetHost()}/c/{c.ID}";
 
             if (c.OutfitID != null) {
                 builder.AddField("Outfit", $"[{c.OutfitTag}] {c.OutfitName}");
@@ -258,7 +262,7 @@ namespace watchtower.Code.DiscordInteractions {
                 if (c.OutfitID != null) {
                     comps.Add(LookupButtonCommands.SHOW_OUTFIT(c.ID));
                 }
-                comps.Add(LookupButtonCommands.LINK_CHARACTER(c.ID));
+                comps.Add(LookupButtonCommands.LINK_CHARACTER(_Instance.GetHost(), c.ID));
             }
 
             interactionBuilder.AddComponents(comps);
@@ -339,7 +343,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             builder.Title = $"Outfit: {outfit.Name}";
 
-            builder.Url = $"https://wt.honu.pw/o/{outfit.ID}";
+            builder.Url = $"https://{_Instance.GetHost()}/o/{outfit.ID}";
             if (outfit.Tag != null) {
                 builder.AddField("Tag", outfit.Tag, true);
             }
@@ -359,7 +363,7 @@ namespace watchtower.Code.DiscordInteractions {
                 comps.Add(LookupButtonCommands.LINK_CHARACTER(leader.ID, "Leader"));
             }
 
-            comps.Add(LookupButtonCommands.LINK_OUTFIT(outfit.ID));
+            comps.Add(LookupButtonCommands.LINK_OUTFIT(_Instance.GetHost(), outfit.ID));
 
             interactionBuilder.AddComponents(comps);
             interactionBuilder.AddEmbed(builder);

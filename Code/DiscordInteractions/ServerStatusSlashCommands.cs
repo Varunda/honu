@@ -12,6 +12,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
+using watchtower.Services;
 using watchtower.Services.Db;
 using static watchtower.Code.DiscordInteractions.DiscordInteractionEnums;
 
@@ -81,16 +82,18 @@ namespace watchtower.Code.DiscordInteractions {
 
         private readonly ILogger<ServerStatusInteractions> _Logger;
         private readonly ContinentLockDbStore _ContinentLockDb;
+        private readonly InstanceInfo _Instance;
 
         public static readonly List<uint> InterestedZoneIDs = new() {
             Zone.Indar, Zone.Hossin, Zone.Amerish, Zone.Esamir, Zone.Oshur
         };
 
         public ServerStatusInteractions(ILogger<ServerStatusInteractions> logger,
-            ContinentLockDbStore continentLockDb) {
+            ContinentLockDbStore continentLockDb, InstanceInfo instance) {
 
             _Logger = logger;
             _ContinentLockDb = continentLockDb;
+            _Instance = instance;
         }
 
         /// <summary>
@@ -114,7 +117,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             DiscordEmbedBuilder builder = new();
             builder.Title = $"{World.GetName(worldID)}";
-            builder.Url = $"https://wt.honu.pw/view/{worldID}";
+            builder.Url = $"https://{_Instance.GetHost()}/view/{worldID}";
 
             if (entries.Count == 0) {
                 builder.Description = $"No entries provided?";
