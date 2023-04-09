@@ -60,14 +60,13 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="worldID">ID of the world to refresh. Is an int, as shorts are not parsed</param>
         [ButtonCommand("refresh-world")]
         public async Task RefreshWorld(ButtonContext ctx, int worldID) {
-            await ctx.Interaction.CreateDeferred(true);
+            await ctx.Interaction.CreateComponentDeferred(true);
 
             DiscordEmbed response = await _Interactions.GeneralStatus((short)worldID);
 
             if (ctx.Message != null) {
                 _Logger.LogDebug($"putting refreshed message into id {ctx.Message.Id}");
                 await ctx.Message.ModifyAsync(Optional.FromValue(response));
-                await ctx.Interaction.EditResponseText($"Refreshed!");
             } else {
                 await ctx.Interaction.EditResponseErrorEmbed($"message provided in context was null?");
             }
@@ -139,7 +138,24 @@ namespace watchtower.Code.DiscordInteractions {
                     builder.Description += $"Last locked: unknown (missing from db!)\n";
                 }
 
-                builder.Description += $"Players: {players.Values.Count(iter => iter.ZoneID == zoneID)}\n";
+                List<TrackedPlayer> inZone = players.Values.Where(iter => iter.ZoneID == zoneID).ToList();
+
+                builder.Description += $"Players: {inZone.Count}\n";
+
+                if (inZone.Count > 0) {
+                    int vsCount = inZone.Count(iter => iter.TeamID == Faction.VS);
+                    int ncCount = inZone.Count(iter => iter.TeamID == Faction.NC);
+                    int trCount = inZone.Count(iter => iter.TeamID == Faction.TR);
+
+                    builder.Description += $":purple_square: `VS: {vsCount} / {(vsCount / (decimal)inZone.Count * 100m):n2}%`\n";
+                    builder.Description += $":blue_square: `NC: {ncCount} / {(ncCount / (decimal)inZone.Count * 100m):n2}%`\n";
+                    builder.Description += $":red_square: `TR: {trCount} / {(trCount / (decimal)inZone.Count * 100m):n2}%`\n";
+
+                    int nsCount = inZone.Count(iter => iter.TeamID == Faction.NS || iter.TeamID == Faction.UNKNOWN);
+                    if (nsCount > 0) {
+                        builder.Description += $":grey_square: `NS: {nsCount} / {(nsCount / (decimal)inZone.Count * 100m):n2}%`\n";
+                    }
+                }
 
                 PsAlert? zoneAlert = alerts.FirstOrDefault(iter => iter.ZoneID == zoneID);
                 if (zoneAlert != null) {
@@ -159,7 +175,6 @@ namespace watchtower.Code.DiscordInteractions {
 
             return builder;
         }
-
 
     }
 

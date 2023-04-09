@@ -60,7 +60,7 @@ export default class ApiWrapper<T> {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
 			return Loadable.error(response.data);
-		} else if (response.status == 524) {
+		} else if (response.status == 524 || response.status == 504) {
 			return Loadable.error(`timeout from cloudflare`);
         }
 
@@ -85,7 +85,7 @@ export default class ApiWrapper<T> {
                 return Loadable.notFound(response.data);
             } else if (response.status == 500) {
                 return Loadable.error(`internal server error: ${response.data}`);
-            } else if (response.status == 524) {
+            } else if (response.status == 524 || response.status == 504) {
                 return Loadable.error(`timeout from cloudflare`);
             }
 
@@ -107,7 +107,7 @@ export default class ApiWrapper<T> {
 				return Loadable.notFound(responseData);
 			} else if (responseCode == 500) {
 				return Loadable.error(`internal server error: ${responseData}`);
-			} else if (responseCode == 524) {
+			} else if (responseCode == 524 || responseCode == 504) {
 				return Loadable.error(`timeout from cloudflare`);
 			}
 
@@ -130,8 +130,8 @@ export default class ApiWrapper<T> {
             } else if (response.status == 404) {
                 return Loadable.notFound(response.data);
             } else if (response.status == 500) {
-                return Loadable.error(`internal server error: ${response.data}`);
-            } else if (response.status == 524) {
+				return Loadable.error(`internal server error: ${response.data}`);
+			} else if (response.status == 524 || response.status == 504) {
                 return Loadable.error(`timeout from cloudflare`);
             }
 
@@ -153,7 +153,7 @@ export default class ApiWrapper<T> {
 				return Loadable.notFound(responseData);
 			} else if (responseCode == 500) {
 				return Loadable.error(`internal server error: ${responseData}`);
-			} else if (responseCode == 524) {
+			} else if (responseCode == 524 || responseCode == 504) {
 				return Loadable.error(`timeout from cloudflare`);
 			}
 
@@ -178,7 +178,7 @@ export default class ApiWrapper<T> {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 500) {
 			return Loadable.error(response.data);
-        } else if (response.status == 524) {
+        } else if (response.status == 524 || response.status == 504) {
             return Loadable.error(`timeout from cloudflare`);
 		}
 

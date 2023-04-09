@@ -170,7 +170,7 @@ namespace watchtower.Controllers {
             return View();
         }
 
-        public IActionResult OutfitSankey() {
+        public IActionResult OutfitSankey(string outfitID) {
             return View();
         }
 

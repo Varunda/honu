@@ -82,8 +82,10 @@ namespace watchtower.Services.Repositories.PSB {
             parsed.Reservation = res;
             parsed.Input = message.Content;
             parsed.MessageId = message.Id;
-            parsed.PosterUserId = message.Author.Id;
             parsed.MessageLink = message.JumpLink.ToString();
+            if (message.Author != null) {
+                parsed.PosterUserId = message.Author.Id;
+            }
 
             List<string> errors = new();
             string timefeedback = "";

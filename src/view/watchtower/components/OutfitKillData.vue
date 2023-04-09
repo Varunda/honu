@@ -8,7 +8,7 @@
                 <th title="Kills / Deaths">K/D</th>
                 <th title="Characters who have been online (characters currently online)">
                     Characters
-                    <info-hover text="How many characters have gotten kills in the period, and how many are currently only. The currently online can be higher as it includes people who have not gotten kills"></info-hover>
+                    <info-hover text="How many characters have gotten kills in the period, and how many are currently online. The currently online can be higher as it includes people who have not gotten kills"></info-hover>
                 </th>
             </tr>
         </thead>

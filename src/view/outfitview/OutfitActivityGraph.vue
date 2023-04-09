@@ -7,7 +7,7 @@
             <div v-else-if="activity.state == 'error'">
                 Error loading outfit activity:
                 <br />
-                {{activity.message}}
+                <api-error :error="activity.problem"></api-error>
             </div>
 
             <canvas v-else-if="activity.state == 'loaded'" :id="'outfit-activity-graph-' + ID"
@@ -39,6 +39,7 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import ApiError from "components/ApiError";
 
     import { Loading, Loadable } from "Loading";
     import { OutfitActivity, OutfitApi } from "api/OutfitApi";
@@ -46,7 +47,6 @@
     import Chart from "chart.js/auto/auto.esm";
 
     import Busy from "components/Busy.vue";
-    import DateTimePicker from "components/DateTimePicker.vue";
     import DateTimeInput from "components/DateTimeInput.vue";
 
     import TimeUtils from "util/Time";
@@ -189,8 +189,8 @@
         },
 
         components: {
-            Busy,
-            DateTimeInput, DateTimePicker
+            Busy, ApiError,
+            DateTimeInput
         }
     });
 

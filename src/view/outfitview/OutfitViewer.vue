@@ -512,7 +512,7 @@
                 const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentKPM != null && iter.recentKPM > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentKPM!, 0);
 
-                return acc / set.length;
+                return acc / Math.max(1, set.length);
             },
 
             recentKD: function(): number {
@@ -523,7 +523,7 @@
                 const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentKD != null && iter.recentKD > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentKD!, 0);
 
-                return acc / set.length;
+                return acc / Math.max(1, set.length);
             },
 
             recentSPM: function(): number {
@@ -534,7 +534,7 @@
                 const set: FlatExpandedOutfitMember[] = this.active30d.filter(iter => iter.recentSPM != null && iter.recentSPM > 0);
                 const acc: number = set.reduce((acc, iter) => acc += iter.recentSPM!, 0);
 
-                return acc / set.length;
+                return acc / Math.max(1, set.length);
             },
 
         },

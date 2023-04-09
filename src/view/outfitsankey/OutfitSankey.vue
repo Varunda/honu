@@ -28,7 +28,9 @@
             </progress-bar>
         </div>
 
+        <!--
         <div id="d3_canvas"></div>
+        -->
 
         <div id="chart" style="width: 100%; height: 100vh;">
 
@@ -90,6 +92,8 @@
 
         data: function() {
             return {
+                outfitID: "" as string,
+
                 outfit: Loadable.idle() as Loading<PsOutfit>,
                 sessions: Loadable.idle() as Loading<Session[]>,
                 outfits: Loadable.idle() as Loading<PsOutfit[]>,
@@ -112,11 +116,12 @@
 
         created: function(): void {
             document.title = "Honu / Sankey";
+            this.parseOutfitIDFromUrl();
         },
 
         mounted: function(): void {
             this.$nextTick(async () => {
-                this.d3s();
+                //this.d3s();
                 await this.getSessions();
                 await this.getOutfits();
                 this.makeData();
@@ -125,8 +130,23 @@
         },
 
         methods: {
-            d3s: function(): void {
 
+            parseOutfitIDFromUrl: function(): void {
+                const parts: string[] = location.pathname.split("/");
+                if (parts.length < 3) {
+                    throw `Invalid pathname passed: '${location.pathname}. Expected 3 splits after '/', got ${parts}'`;
+                }
+
+                const outfitID: number = Number.parseInt(parts[2]);
+                if (Number.isNaN(outfitID) == false) {
+                    this.outfitID = parts[2];
+                    console.log(`outfit id is ${this.outfitID}`);
+                } else {
+                    throw `Failed to parse parts[2] '${parts[2]}' into a number, got ${outfitID}`;
+                }
+            },
+
+            d3s: function(): void {
                 const svg = d3.select("#d3_canvas").append("svg")
                     .attr("width", 1920)
                     .attr("height", 1080)
@@ -224,7 +244,7 @@
 
                 const all: Session[] = [];
 
-                const s: Loading<Session[]> = await SessionApi.getByOutfit("37567362753122235");
+                const s: Loading<Session[]> = await SessionApi.getByOutfit(this.outfitID);
                 if (s.state != "loaded") {
                     return;
                 }

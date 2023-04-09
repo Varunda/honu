@@ -1,7 +1,13 @@
 ﻿<template>
     <div style="display: grid; grid-template-rows: min-content 1fr; grid-template-columns: min-content 1fr;">
         <h1 style="grid-column-start: 1; grid-row-start: 1;">
-            <span v-if="HonuData.state != 'loaded'">
+            <span v-if="HonuData.state == 'nocontent'">
+                <span style="color: red;" title="Offline">
+                    ●
+                </span>
+            </span>
+
+            <span v-else-if="HonuData.state != 'loaded'">
                 <span style="color: grey;" title="Unknown if online or offline">
                     ●
                 </span>
@@ -42,10 +48,19 @@
         <div v-if="HonuData.state == 'loaded'" style="grid-row-start: 2; grid-column-start: 2;">
             <h4>
                 <span v-if="HonuData.data.online == true">
-                    Online: last seen on {{HonuData.data.zoneID | zone}}
+                    Online: 
+
+                    <span v-if="HonuData.data.zoneID != 0">
+                        last seen on {{HonuData.data.zoneID | zone}}
+                    </span>
+                    <span v-else>
+                        not seen on a continent yet
+                    </span>
+                    
                     <span v-if="HonuData.data.factionID == 4">
                         fighting for {{HonuData.data.teamID | faction}}
                     </span>
+
                     {{HonuData.data.latestEventTimestamp | timeAgo}} ago ({{HonuData.data.latestEventTimestamp | moment}}).
                 </span>
 
