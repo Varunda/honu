@@ -21,6 +21,7 @@ namespace watchtower.Services.Queues {
             services.AddSingleton<PsbAccountPlaytimeUpdateQueue>();
             services.AddSingleton<SessionEndQueue>();
             services.AddSingleton<AlertEndQueue>();
+            services.AddSingleton<WrappedGenerationQueue>();
         }
 
     }

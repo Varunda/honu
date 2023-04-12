@@ -82,6 +82,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<ItemCategoryDbStore>();
             services.AddSingleton<IStaticDbStore<ExperienceType>, ExperienceTypeDbStore>();
             services.AddSingleton<ExperienceTypeDbStore>();
+            services.AddSingleton<IStaticDbStore<FireGroupToFireMode>, FireGroupToFireModeDbStore>();
+            services.AddSingleton<FireGroupToFireModeDbStore>();
 
             services.AddSingleton<WeaponStatSnapshotDbStore>();
             services.AddSingleton<HonuAccountPermissionDbStore>();
@@ -92,6 +94,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<AlertEndSubscriptionDbStore>();
             services.AddSingleton<ContinentLockDbStore>();
             services.AddSingleton<PsbParsedReservationDbStore>();
+            services.AddSingleton<WrappedDbStore>();
         }
 
     }

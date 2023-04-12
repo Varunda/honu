@@ -10,6 +10,7 @@ using watchtower.Models.Health;
 using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
+using watchtower.Models.Wrapped;
 using watchtower.Services.Census.Readers;
 using watchtower.Services.Db.Implementations;
 using watchtower.Services.Db.Readers.Alert;
@@ -91,6 +92,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<AlertEndSubscription>, AlertEndSubscriptionReader>();
             services.AddSingleton<IDataReader<ContinentLockEntry>, ContinentLockEntryReader>();
             services.AddSingleton<IDataReader<PsbParsedReservationMetadata>, PsbParsedReservationReader>();
+            services.AddSingleton<IDataReader<WrappedEntry>, WrappedEntryReader>();
+            services.AddSingleton<IDataReader<FireGroupToFireMode>, FireGroupToFireModeReader>();
         }
 
     }

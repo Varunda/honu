@@ -130,7 +130,6 @@
         },
 
         methods: {
-
             parseOutfitIDFromUrl: function(): void {
                 const parts: string[] = location.pathname.split("/");
                 if (parts.length < 3) {

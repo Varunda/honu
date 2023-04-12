@@ -53,6 +53,8 @@ namespace watchtower.Services.Census {
             services.AddSingleton<AchievementCollection>();
             services.AddSingleton<IStaticCollection<ExperienceType>, ExperienceTypeCollection>();
             services.AddSingleton<ExperienceTypeCollection>();
+            services.AddSingleton<IStaticCollection<FireGroupToFireMode>, FireGroupToFireModeCollection>();
+            services.AddSingleton<FireGroupToFireModeCollection>();
         }
 
     }

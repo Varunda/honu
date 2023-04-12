@@ -11,8 +11,9 @@
                                 <tr class="table-secondary th-border-top-0">
                                     <th>Weapon</th>
                                     <th>Kills</th>
-                                    <th>HS kills</th>
-                                    <th>HSR</th>
+                                    <th>HSR (%)</th>
+                                    <th>Hip (%)</th>
+                                    <th>ADS (%)</th>
                                     <th>%</th>
                                 </tr>
                             </thead>
@@ -35,11 +36,18 @@
                                     </td>
 
                                     <td>
-                                        {{entry[1].filter(iter => iter.isHeadshot == true).length}}
+                                        {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
+                                        ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
                                     </td>
 
                                     <td>
-                                        {{entry[1].filter(iter => iter.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%
+                                        {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
+                                        ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
+                                    </td>
+
+                                    <td>
+                                        {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
+                                        ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
                                     </td>
 
                                     <td>
@@ -56,7 +64,7 @@
                                         {{kills.length | locale}}
                                     </td>
 
-                                    <td colspan="3">
+                                    <td colspan="4">
                                         {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
                                     </td>
                                 </tr>
@@ -415,9 +423,9 @@
         },
 
         computed: {
-            groupedKillEvents: function(): Map<number, KillEvent[]> {
+            groupedKillEvents: function(): Map<number, ExpandedKillEvent[]> {
                 return this.kills.reduce(
-                    (entryMap: Map<number, KillEvent[]>, event: ExpandedKillEvent) => entryMap.set(event.event.weaponID, [...entryMap.get(event.event.weaponID) || [], event.event]),
+                    (entryMap: Map<number, KillEvent[]>, event: ExpandedKillEvent) => entryMap.set(event.event.weaponID, [...entryMap.get(event.event.weaponID) || [], event]),
                     new Map()
                 );
             },

@@ -55,6 +55,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<DirectiveTreeRepository>();
             services.AddSingleton<DirectiveTierRepository>();
             services.AddSingleton<DirectiveTreeCategoryRepository>();
+            services.AddSingleton<FireGroupToFireModeRepository>();
 
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();

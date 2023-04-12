@@ -30,6 +30,7 @@ namespace watchtower.Controllers {
         private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly OutfitRepository _OutfitRepository;
+        private readonly FireGroupToFireModeRepository _FireGroupToFireModeRepository;
 
         private readonly KillEventDbStore _KillDbStore;
         private readonly SessionDbStore _SessionDb;
@@ -37,7 +38,7 @@ namespace watchtower.Controllers {
         public KillApiController(ILogger<KillApiController> logger,
             CharacterRepository charRepo, KillEventDbStore killDb,
             ItemRepository itemRepo, OutfitRepository outfitRepo,
-            SessionDbStore sessionDb) {
+            SessionDbStore sessionDb, FireGroupToFireModeRepository fireGroupToFireModeRepository) {
 
             _Logger = logger;
 
@@ -47,6 +48,7 @@ namespace watchtower.Controllers {
 
             _KillDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
+            _FireGroupToFireModeRepository = fireGroupToFireModeRepository;
         }
 
         /// <summary>
@@ -116,6 +118,7 @@ namespace watchtower.Controllers {
                 ex.Attacker = attacker;
                 ex.Killed = killed;
                 ex.Item = items[ev.WeaponID];
+                ex.FireGroupToFireMode = (await _FireGroupToFireModeRepository.GetByFireModeID(ev.AttackerFireModeID)).ElementAtOrDefault(0);
 
                 expanded.Add(ex);
             }

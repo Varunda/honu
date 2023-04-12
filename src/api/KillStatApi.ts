@@ -4,6 +4,7 @@ import ApiWrapper from "api/ApiWrapper";
 
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsItem, ItemApi } from "api/ItemApi";
+import { FireGroupToFireMode } from "./FireGroupToFireModeApi";
 
 export class CharacterWeaponKillEntry {
     public weaponID: number = 0;
@@ -40,6 +41,7 @@ export class ExpandedKillEvent {
     public killed: PsCharacter | null = null;
     public attacker: PsCharacter | null = null;
     public item: PsItem | null = null;
+    public fireGroupToFireMode: FireGroupToFireMode | null = null;
 }
 
 export class KillStatApi extends ApiWrapper<KillEvent> {
@@ -76,7 +78,8 @@ export class KillStatApi extends ApiWrapper<KillEvent> {
             event: KillStatApi.parseKillEvent(elem.event),
             attacker: elem.attacker == null ? null : CharacterApi.parse(elem.attacker),
             killed: elem.killed == null ? null : CharacterApi.parse(elem.killed),
-            item: elem.item == null ? null : ItemApi.parse(elem.item)
+            item: elem.item == null ? null : ItemApi.parse(elem.item),
+            fireGroupToFireMode: elem.fireGroupToFireMode == null ? null : { ...elem.fireGroupToFireMode }
         }
     }
 

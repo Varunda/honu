@@ -205,6 +205,7 @@ namespace watchtower {
             services.AddHostedService<RealtimeNetworkBuilderService>();
             //services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
             services.AddHostedService<RealtimeAlertBroadcastServer>();
+            services.AddHostedService<HostedWrappedGenerationProcess>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -244,6 +245,8 @@ namespace watchtower {
                 //services.AddHostedService<CharacterDatesFixerStartupService>();
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
             }
+
+            services.AddTransient<WrappedHub>();
 
             //services.AddHostedService<KilledTeamIDFixerService>();
 
@@ -388,6 +391,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "wrapped",
+                    pattern: "/wrapped/{id}/{*.}",
+                    defaults: new { controller = "Home", action = "Wrapped" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );
@@ -398,6 +407,7 @@ namespace watchtower {
                 endpoints.MapHub<RealtimeMapHub>("/ws/realtime-map");
                 endpoints.MapHub<RealtimeNetworkHub>("/ws/realtime-network");
                 endpoints.MapHub<RealtimeAlertHub>("/ws/realtime-alert");
+                endpoints.MapHub<WrappedHub>("/ws/wrapped");
 
                 endpoints.MapSwagger();
             });

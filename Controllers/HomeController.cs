@@ -178,5 +178,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Wrapped(Guid? id) {
+            return View();
+        }
+
     }
 }

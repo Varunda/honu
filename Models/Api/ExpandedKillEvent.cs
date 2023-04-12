@@ -17,5 +17,7 @@ namespace watchtower.Models.Api {
 
         public PsItem? Item { get; set; }
 
+        public FireGroupToFireMode? FireGroupToFireMode { get; set; }
+
     }
 }
