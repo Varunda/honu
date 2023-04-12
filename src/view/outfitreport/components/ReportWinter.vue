@@ -238,7 +238,9 @@
                 this.makeLightningKills();
                 this.makeMBTKills();
                 this.makeESFKills();
+                this.makeValkKills();
                 this.makeLiberatorKills();
+                this.makeGalaxyKills();
 
                 this.makeMostUniqueWeapons();
                 this.makeC4Kills();
@@ -1172,6 +1174,19 @@
                 );
             },
 
+            makeValkKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Valkyrie kills";
+                metric.funName = "Valkyire kills";
+                metric.description = "Most valkyire kills (per hour)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_VALKYRIE],
+                    (metadata) => metadata.timeAs / 60)
+                );
+            },
+
             makeLiberatorKills: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Liberator kills";
@@ -1181,6 +1196,19 @@
                 this.catVehicleKills.metrics.push(this.generateExperience(
                     metric,
                     [Experience.VKILL_LIBERATOR],
+                    (metadata) => metadata.timeAs / 60)
+                );
+            },
+
+            makeGalaxyKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Galaxy kills";
+                metric.funName = "Galaxy  kills";
+                metric.description = "Most galaxy kills (per hour)";
+
+                this.catVehicleKills.metrics.push(this.generateExperience(
+                    metric,
+                    [Experience.VKILL_GALAXY],
                     (metadata) => metadata.timeAs / 60)
                 );
             },
