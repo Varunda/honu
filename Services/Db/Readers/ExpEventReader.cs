@@ -15,6 +15,8 @@ namespace watchtower.Services.Db.Readers {
         public override ExpEvent ReadEntry(NpgsqlDataReader reader) {
             ExpEvent ev = new ExpEvent();
 
+            ev.ID = reader.GetUInt64("id");
+
             ev.SourceID = reader.GetString("source_character_id");
             ev.ExperienceID = reader.GetInt32("experience_id");
             ev.LoadoutID = reader.GetInt16("source_loadout_id");

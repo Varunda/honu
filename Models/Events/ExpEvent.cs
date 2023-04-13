@@ -7,6 +7,8 @@ namespace watchtower.Models.Events {
 
     public class ExpEvent {
 
+        public ulong ID { get; set; }
+
         public string SourceID { get; set; } = "";
 
         public int ExperienceID { get; set; }

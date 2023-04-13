@@ -218,7 +218,7 @@ namespace watchtower.Services.Db {
         /// </returns>
         public async Task<List<ExpEvent>> GetByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character");
-            trace?.AddTag("honu.characterID", IDs);
+            trace?.AddTag("honu.characterIDs", string.Join(", ", IDs));
             trace?.AddTag("honu.start", $"{start:u}");
             trace?.AddTag("honu.end", $"{end:u}");
 
@@ -228,6 +228,42 @@ namespace watchtower.Services.Db {
                     FROM wt_exp
                     WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
                         AND source_character_id = ANY(@IDs)
+            ");
+
+            cmd.CommandTimeout = Math.Min(300, IDs.Count * 20);
+
+            cmd.AddParameter("IDs", IDs);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            List<ExpEvent> events = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return events;
+        }
+
+        /// <summary>
+        ///     Get all <see cref="ExpEvent"/>s that have a <see cref="ExpEvent.OtherID"/>
+        ///     within <paramref name="IDs"/> and occured between <paramref name="start"/> and <paramref name="end"/>
+        /// </summary>
+        /// <param name="IDs">List of character IDs</param>
+        /// <param name="start">Start range to include the events of</param>
+        /// <param name="end">End range to include the events of</param>
+        /// <returns>
+        ///     A list of <see cref="ExpEvent"/>
+        /// </returns>
+        public async Task<List<ExpEvent>> GetOtherByCharacterIDs(List<string> IDs, DateTime start, DateTime end) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("exp by character - other");
+            trace?.AddTag("honu.characterIDs", string.Join(", ", IDs));
+            trace?.AddTag("honu.start", $"{start:u}");
+            trace?.AddTag("honu.end", $"{end:u}");
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    FROM wt_exp
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                        AND other_id = ANY(@IDs)
             ");
 
             cmd.CommandTimeout = Math.Min(300, IDs.Count * 20);

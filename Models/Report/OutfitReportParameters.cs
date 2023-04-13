@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using watchtower.Models.Events;
 
 namespace watchtower.Models.Report {
 
@@ -48,7 +49,15 @@ namespace watchtower.Models.Report {
         /// </summary>
         public bool IncludeTeamkilled { get; set; } = false;
 
+        /// <summary>
+        ///     Will achivements earned during the period by tracked characters be included?
+        /// </summary>
         public bool IncludeAchievementsEarned { get; set; } = false;
+
+        /// <summary>
+        ///     Will <see cref="ExpEvent"/> with a <see cref="ExpEvent.OtherID"/> of a tracked character be included?
+        /// </summary>
+        public bool IncludeOtherIdExpEvents { get; set; } = false;
 
         /// <summary>
         ///     What character IDs were included, this does not include the characters in outfits,

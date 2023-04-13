@@ -51,6 +51,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly ExperienceTypeRepository _ExperienceTypeRepository;
         private readonly AchievementEarnedDbStore _AchievementEarnedDbStore;
         private readonly AchievementRepository _AchievementRepository;
+        private readonly FireGroupToFireModeRepository _FireGroupRepository;
         private readonly IEventHandler _EventHandler;
 
         private readonly ReportRepository _ReportRepository;
@@ -80,7 +81,8 @@ namespace watchtower.Code.Hubs.Implementations {
             ReportRepository reportRepo, RealtimeReconnectDbStore reconnectDb,
             ItemCategoryRepository itemCategoryRepository, VehicleDestroyDbStore vehicleDestroyDb,
             IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository,
-            AchievementEarnedDbStore achievementEarnedDbStore, AchievementRepository achievementRepository) {
+            AchievementEarnedDbStore achievementEarnedDbStore, AchievementRepository achievementRepository,
+            FireGroupToFireModeRepository fireGroupRepository) {
 
             Interlocked.Increment(ref _InstanceCount);
 
@@ -107,6 +109,7 @@ namespace watchtower.Code.Hubs.Implementations {
             _ExperienceTypeRepository = experienceTypeRepository;
             _AchievementEarnedDbStore = achievementEarnedDbStore;
             _AchievementRepository = achievementRepository;
+            _FireGroupRepository = fireGroupRepository;
         }
 
         /// <summary>
@@ -154,6 +157,9 @@ namespace watchtower.Code.Hubs.Implementations {
                     //_Logger.LogDebug($"OutfitReport '{cacheKey}' is cached");
                     await Clients.Caller.SendParameters(report.Parameters);
                     await Clients.Caller.UpdateSessions(report.Sessions);
+
+                    // this will include the revived and teamkill ones as they are modify the data retrieve,
+                    //      not what data is retrieved 
                     await Clients.Caller.UpdateKills(report.Kills);
                     await Clients.Caller.UpdateDeaths(report.Deaths);
                     await Clients.Caller.UpdateExp(report.Experience);
@@ -317,6 +323,26 @@ namespace watchtower.Code.Hubs.Implementations {
                     List<ExpEvent> expEvents = await _ExpDb.GetByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
                     report.Experience = expEvents;
                     expTrace?.AddTag("honu.count", expEvents.Count);
+
+                    if (parms.IncludeOtherIdExpEvents == true) {
+                        List<ExpEvent> otherExp = await _ExpDb.GetOtherByCharacterIDs(chars.ToList(), parms.PeriodStart, parms.PeriodEnd);
+
+                        // if the event is already included (for example some assists), don't double count it
+                        int duplicate = 0;
+                        HashSet<ulong> alreadyPresent = new(expEvents.Select(iter => iter.ID));
+                        foreach (ExpEvent e in otherExp) {
+                            if (alreadyPresent.Contains(e.ID)) {
+                                ++duplicate;
+                                continue;
+                            }
+
+                            report.Experience.Add(e);
+                        }
+
+                        expTrace?.AddTag("honu.other_duplicate_count", duplicate);
+                        expTrace?.AddTag("honu.other_unique_count", expEvents.Count - duplicate);
+                    }
+
                     await Clients.Caller.UpdateExp(expEvents);
                 }
 

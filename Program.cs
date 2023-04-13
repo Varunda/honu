@@ -52,7 +52,6 @@ namespace watchtower {
 
             CancellationTokenSource stopSource = new();
 
-            /*
             using TracerProvider? trace = Sdk.CreateTracerProviderBuilder()
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
                 .AddAspNetCoreInstrumentation(options => {
@@ -69,9 +68,6 @@ namespace watchtower {
                 .AddSource(HonuActivitySource.ActivitySourceName)
                 .Build();
 
-            Task hostTask = CreateHostBuilder(args).RunConsoleAsync();
-            */
-
             // Honu must be started in a background thread, as _Host.RunAsync will block until the whole server
             //      shuts down. If we were to await this Task, then it would be blocked until the server is done
             //      running, at which point then the command bus stuff would start
@@ -81,22 +77,6 @@ namespace watchtower {
             _ = Task.Run(async () => {
                 ILogger<Program>? logger = null;
                 try {
-                    using TracerProvider? trace = Sdk.CreateTracerProviderBuilder()
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("npgsql"))
-                        .AddAspNetCoreInstrumentation(options => {
-                            // only profile api calls
-                            options.Filter = (c) => {
-                                return c.Request.Path.StartsWithSegments("/api");
-                            };
-                        })
-                        //.AddNpgsql()
-                        .AddJaegerExporter(config => {
-
-                        })
-                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
-                        .AddSource(HonuActivitySource.ActivitySourceName)
-                        .Build();
-
                     Stopwatch timer = Stopwatch.StartNew();
 
                     _Host = CreateHostBuilder(args).Build();
@@ -144,6 +124,7 @@ namespace watchtower {
                 Console.Error.WriteLine($"Missing ICommandBus");
             }
 
+            // print both incase the logger is misconfigured or something
             logger.LogInformation($"ran host");
             Console.WriteLine($"Ran host");
 

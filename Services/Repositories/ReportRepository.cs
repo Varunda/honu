@@ -224,6 +224,8 @@ namespace watchtower.Services.Repositories {
                             parms.IncludeTeamkills = true;
                         } else if (key == "iae" && value == "1") {
                             parms.IncludeAchievementsEarned = true;
+                        } else if (key == "ioe" && value == "1") {
+                            parms.IncludeOtherIdExpEvents = true;
                         } else {
                             throw new ArgumentException($"Unchecked key '{key}' in READING_OPTION (value = {value})");
                         }
