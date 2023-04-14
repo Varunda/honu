@@ -174,7 +174,7 @@ namespace watchtower.Services.Hosted {
                         int length = (int)(e - b).TotalSeconds;
 
                         entry.SecondsPlayed += length;
-                        sessionLengths.Add((int)(session.Start - e).TotalSeconds);
+                        sessionLengths.Add((int)(e - session.Start).TotalSeconds);
                     }
 
                     entry.AverageSessionLength = (sessionLengths.Count == 0) ? 0 : (int)sessionLengths.Average();
