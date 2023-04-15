@@ -10,6 +10,7 @@ import { PsFacility } from "api/MapApi";
 import { RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
 import { ItemCategory } from "api/ItemCategoryApi";
 import { VehicleDestroyEvent } from "api/VehicleDestroyEventApi";
+import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
 
 import LoadoutUtils from "util/Loadout";
 import { InfantryDamageEntry } from "./InfantryDamage";
@@ -47,6 +48,7 @@ export default class Report {
 	public characters: Map<string, PsCharacter> = new Map();
 	public outfits: Map<string, PsOutfit> = new Map();
 	public facilities: Map<number, PsFacility> = new Map();
+	public fireModeXrefs: Map<number, FireGroupToFireMode[]> = new Map();
 
 	// These are added and calculated on the frontend
 	public playerMetadata: Map<string, PlayerMetadata> = new Map();

@@ -145,6 +145,8 @@ namespace watchtower.Code.Hubs {
 
         Task UpdateReconnects(List<RealtimeReconnectEntry> entries);
 
+        Task UpdateFireGroupXrefs(List<FireGroupToFireMode> xrefs);
+
         /// <summary>
         ///     Sent when an error occurs while generating the report. It is expected the client closes the connection after
         /// </summary>

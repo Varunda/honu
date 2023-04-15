@@ -111,7 +111,7 @@ namespace watchtower.Services.Repositories.PSB {
                 if (field.StartsWith("outfit") || field.StartsWith("team") || field.StartsWith("group")) {
                     feedback += $"Line `{line}` as outfits\n";
 
-                    List<string> outfits = value.Split(new string[] { ",", "&" }, StringSplitOptions.None).ToList();
+                    List<string> outfits = value.Split(new string[] { ",", "&", "/", ";" }, StringSplitOptions.None).ToList();
                     res.Outfits = outfits.Select(iter => iter.Trim().ToLower()).ToList();
 
                     feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";

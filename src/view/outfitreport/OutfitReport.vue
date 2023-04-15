@@ -470,6 +470,7 @@
     import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
     import { ItemCategory } from "api/ItemCategoryApi";
     import { VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
+    import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
 
     import Report, { ReportParameters, PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
@@ -840,6 +841,7 @@
                 this.connection.on("UpdateFacilities", this.onUpdateFacilities);
                 this.connection.on("UpdateReconnects", this.onUpdateReconnect);
                 this.connection.on("UpdateExperienceTypes", this.onUpdateExperienceTypes);
+                this.connection.on("UpdateFireGroupXrefs", this.onUpdateFireGroupXrefs);
 
                 this.connection.start().then(() => {
                     if (this.makeOnConnection == true && this.generator != "") {
@@ -1130,6 +1132,33 @@
                 for (const entry of types) {
                     this.report.experienceTypes.set(entry.id, entry);
                 }
+                this.log(`Loaded ${this.report.experienceTypes.size} exp types`);
+            },
+
+            onUpdateFireGroupXrefs: function(refs: FireGroupToFireMode[]): void {
+                for (const entry of refs) {
+                    if (this.report.fireModeXrefs.has(entry.fireModeID) == false) {
+                        this.report.fireModeXrefs.set(entry.fireModeID, []);
+                    }
+
+                    // force is safe, created above
+                    this.report.fireModeXrefs.get(entry.fireModeID)!.push(entry);
+                }
+
+                this.report.fireModeXrefs.forEach((fireGroups: FireGroupToFireMode[], fireModeID: number) => {
+                    if (fireGroups.length == 0) {
+                        return;
+                    }
+
+                    const fireModeIndex: number = fireGroups[0].fireModeIndex;
+                    for (const group of fireGroups) {
+                        if (group.fireModeIndex != fireModeIndex) {
+                            console.warn(`inconsistent fire mode index found for fire mode ${fireModeID}! group: ${JSON.stringify(group)}, base group: ${JSON.stringify(fireGroups[0])}`);
+                        }
+                    }
+                });
+
+                this.log(`Loaded ${this.report.fireModeXrefs.size} fire mode refs`);
             }
         },
 

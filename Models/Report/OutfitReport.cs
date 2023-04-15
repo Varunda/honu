@@ -112,6 +112,8 @@ namespace watchtower.Models.Report {
         /// </summary>
         public List<RealtimeReconnectEntry> Reconnects { get; set; } = new();
 
+        public List<FireGroupToFireMode> FireGroupXref { get; set; } = new();
+
     }
 
 

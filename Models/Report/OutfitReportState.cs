@@ -1,4 +1,6 @@
-﻿namespace watchtower.Models.Report {
+﻿using watchtower.Models.Census;
+
+namespace watchtower.Models.Report {
 
     /// <summary>
     ///     Has the states of making an outfit report
@@ -65,11 +67,25 @@
         /// </summary>
         public const string GETTING_ITEMS = "getting_items";
 
+        /// <summary>
+        ///     getting outfits that may be used in the report
+        /// </summary>
         public const string GETTING_OUTFITS = "getting_outfits";
 
+        /// <summary>
+        ///     getting facilities that may be used in the report
+        /// </summary>
         public const string GETTING_FACILITIES = "getting_facilities";
 
+        /// <summary>
+        ///     getting the reconnects that occured during the report
+        /// </summary>
         public const string GETTING_RECONNETS = "getting_reconnects";
+
+        /// <summary>
+        ///     getting <see cref="FireGroupToFireMode"/> data
+        /// </summary>
+        public const string GETTING_FIRE_GROUP_XREF = "getting_fire_group_xref";
 
         public const string DONE = "done";
 

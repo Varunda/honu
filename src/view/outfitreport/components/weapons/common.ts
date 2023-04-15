@@ -4,4 +4,6 @@ export type WeaponBreakdownEntry = {
     name: string;
     kills: number;
     headshotKills: number;
+    hipKills: number;
+    adsKills: number;
 };

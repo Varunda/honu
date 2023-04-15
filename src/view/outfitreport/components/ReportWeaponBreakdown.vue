@@ -1,8 +1,12 @@
 ﻿<template>
     <collapsible header-text="Weapons">
 
+        <h3 class="wt-header" style="background-color: var(--cyan);">
+            Kills
+        </h3>
+
         <div class="row">
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <h4>
                     Weapon kills
                     <info-hover text="What weapons the tracked players got kills with during the time period"></info-hover>
@@ -13,7 +17,7 @@
                 </weapon-breakdown>
             </div>
 
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <h4>
                     Weapon type kills
                 </h4>
@@ -24,8 +28,12 @@
             </div>
         </div>
 
+        <h3 class="wt-header" style="background-color: var(--red);">
+            Deaths
+        </h3>
+
         <div class="row">
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <h4>
                     Weapon deaths
                     <info-hover text="What weapons tracked characters died to"></info-hover>
@@ -36,7 +44,7 @@
                 </weapon-breakdown>
             </div>
 
-            <div class="col-12 col-xl-6">
+            <div class="col-12">
                 <h4>
                     Weapon type deaths
                 </h4>
@@ -57,6 +65,7 @@
     import { KillEvent } from "api/KillStatApi";
     import { PsItem } from "api/ItemApi";
     import { ItemCategory } from "api/ItemCategoryApi";
+    import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
 
     import "filters/LocaleFilter";
 
@@ -134,7 +143,9 @@
                             id: typeID,
                             name: typeID == 0 ? "<unknown weapon>" : `${(cat?.name ?? `<missing ${typeID}>`)}`,
                             kills: 0,
-                            headshotKills: 0
+                            headshotKills: 0,
+                            hipKills: 0,
+                            adsKills: 0
                         };
 
                         map.set(entry.id, entry);
@@ -144,6 +155,21 @@
                     ++entry.kills;
                     if (kill.isHeadshot == true) {
                         ++entry.headshotKills;
+                    }
+
+                    const fireModes: FireGroupToFireMode[] | undefined = this.report.fireModeXrefs.get(kill.attackerFireModeID);
+                    if (fireModes != undefined && fireModes.length > 0) {
+                        const fireModeIndex: number = fireModes[0].fireModeIndex;
+
+                        if (fireModeIndex == 0) {
+                            ++entry.hipKills;
+                        } else if (fireModeIndex == 1) {
+                            ++entry.adsKills;
+                        } else {
+                            console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
+                        }
+                    } else {
+                        console.warn(`missing or have 0 fireModes orfor ${kill.attackerFireModeID} (fireModes: ${fireModes})`);
                     }
 
                     map.set(entry.id, entry);
@@ -163,7 +189,9 @@
                     id: 0,
                     name: "<no weapon>",
                     kills: 0,
-                    headshotKills: 0
+                    headshotKills: 0,
+                    adsKills: 0,
+                    hipKills: 0
                 };
                 map.set(0, noWeapon);
 
@@ -173,7 +201,9 @@
                             id: kill.weaponID,
                             name: this.report.items.get(kill.weaponID)?.name ?? `<missing ${kill.weaponID}>`,
                             kills: 0,
-                            headshotKills: 0
+                            headshotKills: 0,
+                            adsKills: 0,
+                            hipKills: 0
                         };
 
                         map.set(entry.id, entry);
@@ -183,6 +213,21 @@
                     ++entry.kills;
                     if (kill.isHeadshot == true) {
                         ++entry.headshotKills;
+                    }
+
+                    const fireModes: FireGroupToFireMode[] | undefined = this.report.fireModeXrefs.get(kill.attackerFireModeID);
+                    if (fireModes != undefined && fireModes.length > 0) {
+                        const fireModeIndex: number = fireModes[0].fireModeIndex;
+
+                        if (fireModeIndex == 0) {
+                            ++entry.hipKills;
+                        } else if (fireModeIndex == 1) {
+                            ++entry.adsKills;
+                        } else {
+                            console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
+                        }
+                    } else {
+                        console.warn(`missing or have 0 fireModes orfor ${kill.attackerFireModeID} (fireModes: ${fireModes})`);
                     }
 
                     map.set(entry.id, entry);

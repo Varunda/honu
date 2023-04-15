@@ -171,6 +171,7 @@ namespace watchtower.Code.Hubs.Implementations {
                     await Clients.Caller.UpdatePlayerControls(report.PlayerControl);
                     await Clients.Caller.UpdateFacilities(report.Facilities);
                     await Clients.Caller.UpdateReconnects(report.Reconnects);
+                    await Clients.Caller.UpdateFireGroupXrefs(report.FireGroupXref);
                     if (report.Parameters.IncludeAchievementsEarned == true) {
                         await Clients.Caller.UpdateAchievementEarned(report.AchievementsEarned);
                         await Clients.Caller.UpdateAchievements(report.Achievements);
@@ -225,6 +226,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 rootTrace?.AddTag("honu.parameters.include_revived_deaths", parms.IncludeRevivedDeaths);
                 rootTrace?.AddTag("honu.parameters.include_teamkilled", parms.IncludeTeamkilled);
                 rootTrace?.AddTag("honu.parameters.include_teamkills", parms.IncludeTeamkills);
+                rootTrace?.AddTag("honu.parameters.include_other_id_exp", parms.IncludeOtherIdExpEvents);
                 rootTrace?.AddTag("honu.parameters.start", $"{parms.PeriodStart:u}");
                 rootTrace?.AddTag("honu.parameters.end", $"{parms.PeriodEnd:u}");
                 rootTrace?.AddTag("honu.parameters.teamID", parms.TeamID);
@@ -363,6 +365,7 @@ namespace watchtower.Code.Hubs.Implementations {
                     vehicleDestroyTrace?.AddTag("honu.count", report.VehicleDestroy.Count);
                 }
                 
+                // get achievements earned if requested
                 if (report.Parameters.IncludeAchievementsEarned == true) {
                     await Clients.Caller.UpdateState(OutfitReportState.GETTING_ACHIEVEMENT_EARNED);
 
@@ -471,6 +474,19 @@ namespace watchtower.Code.Hubs.Implementations {
                         report.Reconnects = reconnects;
                         await Clients.Caller.UpdateReconnects(reconnects);
                     }
+                }
+
+                // load fire group xrefs used
+                await Clients.Caller.UpdateState(OutfitReportState.GETTING_FIRE_GROUP_XREF);
+                using (Activity? trace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} fire group xref")) {
+                    HashSet<int> fireModes = new(report.Kills.Select(iter => iter.AttackerFireModeID).Union(report.Deaths.Select(iter => iter.AttackerFireModeID)));
+
+                    foreach (int fireModeID in fireModes) {
+                        List<FireGroupToFireMode> xrefs = await _FireGroupRepository.GetByFireModeID(fireModeID);
+                        report.FireGroupXref.AddRange(xrefs);
+                    }
+
+                    await Clients.Caller.UpdateFireGroupXrefs(report.FireGroupXref);
                 }
 
                 await Clients.Caller.UpdateState(OutfitReportState.DONE);
