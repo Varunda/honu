@@ -255,7 +255,7 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        <span v-if="entry.lastLogin.getTime() == 0">
+                        <span v-if="entry.lastLogin == null || entry.lastLogin.getTime() == 0">
                             &lt;unknown&gt;
                         </span>
                         <span v-else>
