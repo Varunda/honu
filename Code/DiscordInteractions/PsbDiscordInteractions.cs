@@ -433,6 +433,7 @@ namespace watchtower.Code.DiscordInteractions {
 
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
         public IOptions<PsbRoleMapping> _RoleMapping { set; private get; } = default!;
+        public IOptions<PsbDriveSettings> _DriveSettings { set; private get; } = default!;
 
         /// <summary>
         ///     Helper method to get the message of a reservation based on only the ID. The guild and channel are assumed
@@ -542,7 +543,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
             if (parsed.Metadata.BookingApprovedById != null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approved base booking\nAlready approved by <@{parsed.Metadata.BookingApprovedById}>");
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve base booking\nAlready approved by <@{parsed.Metadata.BookingApprovedById}>");
                 return;
             }
 
@@ -557,10 +558,11 @@ namespace watchtower.Code.DiscordInteractions {
                 .WithTitle("Success")
                 .WithDescription($"Successfully booked {parsed.Reservation.Bases.Count} bases")
                 .WithColor(DiscordColor.Green)
+                .WithUrl($"https://docs.google.com/spreadsheets/d/{_DriveSettings.Value.CalendarFileId}/")
             );
         }
 
-        //[ButtonCommand("approve-accounts")]
+        [ButtonCommand("approve-accounts")]
         public async Task ApproveAccounts(ButtonContext ctx, ulong msgID) {
             await ctx.Interaction.CreateDeferred(true);
 
@@ -591,11 +593,19 @@ namespace watchtower.Code.DiscordInteractions {
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
 
-            string fileID = await _SheetRepository.CreateSheet(parsed.Reservation);
+            if (parsed.Metadata.AccountSheetApprovedById != null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts\nAlready approved by <@{parsed.Metadata.AccountSheetApprovedById}>");
+            }
+
+            string fileID = await _SheetRepository.ApproveAccounts(parsed);
+
+            parsed.Metadata.AccountSheetApprovedById = ctx.User.Id;
+            await _MetadataDb.Upsert(parsed.Metadata);
 
             await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
                 .WithTitle("Success")
                 .WithDescription($"Successfully created account sheet for reservation at `{fileID}`")
+                .WithUrl($"https://docs.google.com/spreadsheets/d/{fileID}")
                 .WithColor(DiscordColor.Green)
             );
         }

@@ -38,14 +38,20 @@ namespace watchtower.Services.Repositories.PSB {
         /// <summary>
         ///     Is automated account sheet creation enabled?
         /// </summary>
-        public static bool AccountEnabled = false;
+        public static bool AccountEnabled = true;
 
+        /// <summary>
+        ///     Possible time formats that can be used
+        /// </summary>
         private static readonly string[] TIME_FORMATS = new string[] {
             "HH:mm",
             "H:mm",
             "HH",
         };
 
+        /// <summary>
+        ///     possible formats a day is parsed from
+        /// </summary>
         private static readonly string[] DAY_FORMATS = new string[] {
             "YYYY-MM-DD",
             "dddd MMMM d",
@@ -55,7 +61,8 @@ namespace watchtower.Services.Repositories.PSB {
         public PsbReservationRepository(ILogger<PsbReservationRepository> logger,
             PsbContactSheetRepository contactRepository, FacilityRepository facilityRepository,
             IOptions<DiscordOptions> discordOptions, DiscordMessageQueue discordMessageQueue,
-            PsbCalendarRepository calendarRepository, PsbParsedReservationDbStore metadataDb, MapRepository mapRepository) {
+            PsbCalendarRepository calendarRepository, PsbParsedReservationDbStore metadataDb,
+            MapRepository mapRepository) {
 
             _Logger = logger;
 
@@ -241,15 +248,15 @@ namespace watchtower.Services.Repositories.PSB {
 
             if (PsbReservationRepository.BookingEnabled == true) {
                 DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0) {
+                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Bases.Count == 0) {
                     bookingBtn.Disable();
                 }
                 comps.Add(bookingBtn);
             }
 
             if (PsbReservationRepository.AccountEnabled == true) {
-                DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0) {
+                DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_ACCOUNTS(parsed.MessageId);
+                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Accounts == 0) {
                     accountBtn.Disable();
                 }
                 comps.Add(accountBtn);
@@ -289,7 +296,9 @@ namespace watchtower.Services.Repositories.PSB {
                 _Logger.LogDebug($"matching {name}");
                 Match match = r.Match(name);
 
-                string baseName = name.Trim().ToLower();
+                Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+                string baseName = rgx.Replace(name.Trim().ToLower(), "");
+                //string baseName = name.Trim().ToLower();
 
                 if (match.Success == true) {
                     _Logger.LogDebug($"provided time {name}");
@@ -303,14 +312,22 @@ namespace watchtower.Services.Repositories.PSB {
                 List<PsFacility> possibleBases = new();
 
                 foreach (PsFacility fac in facilities) {
+                    string strippedName = "";
+                    foreach (char c in fac.Name) {
+                        if (char.IsNumber(c) || char.IsLetter(c) || c == ' ') {
+                            strippedName += c;
+                        }
+                    }
+
                     // if the name of a base is a perfect match, then they probably meant that one
-                    if (fac.Name.ToLower() == baseName) {
+                    if (fac.Name.ToLower() == strippedName) {
                         possibleBases.Add(fac);
                         break;
                     }
 
-                    string facName = $"{fac.Name} {fac.TypeName}".ToLower();
-                    if (facName.StartsWith(baseName) == true) {
+                    string facName = $"{strippedName} {fac.TypeName}".ToLower();
+                    // accept pluralized names, such as chac fusion labs
+                    if (facName.StartsWith(baseName) == true || (facName + "s").StartsWith(baseName) == true) {
                         possibleBases.Add(fac);
                     }
                 }

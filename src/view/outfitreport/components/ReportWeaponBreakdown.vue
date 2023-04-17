@@ -157,19 +157,15 @@
                         ++entry.headshotKills;
                     }
 
-                    const fireModes: FireGroupToFireMode[] | undefined = this.report.fireModeXrefs.get(kill.attackerFireModeID);
-                    if (fireModes != undefined && fireModes.length > 0) {
-                        const fireModeIndex: number = fireModes[0].fireModeIndex;
-
-                        if (fireModeIndex == 0) {
-                            ++entry.hipKills;
-                        } else if (fireModeIndex == 1) {
-                            ++entry.adsKills;
-                        } else {
-                            console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
-                        }
+                    const fireModeIndex: number | null = this.getFireModeIndex(kill.attackerFireModeID);
+                    if (fireModeIndex == 0) {
+                        ++entry.hipKills;
+                    } else if (fireModeIndex == 1) {
+                        ++entry.adsKills;
+                    } else if (fireModeIndex != null) {
+                        console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
                     } else {
-                        console.warn(`missing or have 0 fireModes orfor ${kill.attackerFireModeID} (fireModes: ${fireModes})`);
+                        console.warn(`missing or have 0 fireModes for ${kill.attackerFireModeID}`);
                     }
 
                     map.set(entry.id, entry);
@@ -215,19 +211,15 @@
                         ++entry.headshotKills;
                     }
 
-                    const fireModes: FireGroupToFireMode[] | undefined = this.report.fireModeXrefs.get(kill.attackerFireModeID);
-                    if (fireModes != undefined && fireModes.length > 0) {
-                        const fireModeIndex: number = fireModes[0].fireModeIndex;
-
-                        if (fireModeIndex == 0) {
-                            ++entry.hipKills;
-                        } else if (fireModeIndex == 1) {
-                            ++entry.adsKills;
-                        } else {
-                            console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
-                        }
+                    const fireModeIndex: number | null = this.getFireModeIndex(kill.attackerFireModeID);
+                    if (fireModeIndex == 0) {
+                        ++entry.hipKills;
+                    } else if (fireModeIndex == 1) {
+                        ++entry.adsKills;
+                    } else if (fireModeIndex != null) {
+                        console.log(`got unchecked fireModeIndex ${fireModeIndex} from fire mode ${kill.attackerFireModeID}: ${JSON.stringify(kill)}`);
                     } else {
-                        console.warn(`missing or have 0 fireModes orfor ${kill.attackerFireModeID} (fireModes: ${fireModes})`);
+                        console.warn(`missing or have 0 fireModes for ${kill.attackerFireModeID}`);
                     }
 
                     map.set(entry.id, entry);
@@ -238,6 +230,17 @@
                         || b.headshotKills - a.headshotKills
                         || b.name.localeCompare(a.name);
                 });
+            },
+
+            getFireModeIndex: function(fireModeID: number): number | null {
+                const fireModes: FireGroupToFireMode[] | undefined = this.report.fireModeXrefs.get(fireModeID);
+                if (fireModes != undefined && fireModes.length > 0) {
+                    const fireModeIndex: number = fireModes[0].fireModeIndex;
+
+                    return fireModeIndex;
+                }
+
+                return null;
             }
         },
 

@@ -118,12 +118,16 @@ namespace watchtower.Models.PSB {
                 }
             }
 
-            if (Metadata.AccountSheetApprovedById != null) {
-                builder.AddField("Accounts approved by", $"<@{Metadata.AccountSheetApprovedById}>");
+            if (Reservation.Accounts == 0) {
+                builder.AddField("Accounts", "no accounts requested");
+            } else if (Metadata.AccountSheetApprovedById != null) {
+                builder.AddField("Accounts", $"approved by <@{Metadata.AccountSheetApprovedById}>");
             }
 
-            if (Metadata.BookingApprovedById != null) {
-                builder.AddField("Base booking approved by", $"<@{Metadata.BookingApprovedById}>");
+            if (Reservation.Bases.Count == 0) {
+                builder.AddField("Base booking", $"no bases requested");
+            } else if (Metadata.BookingApprovedById != null) {
+                builder.AddField("Base booking", $"approved by <@{Metadata.BookingApprovedById}>");
             }
 
             builder.WithFooter($"Last updated");

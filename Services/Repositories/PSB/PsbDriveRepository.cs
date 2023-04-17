@@ -156,7 +156,7 @@ namespace watchtower.Services.Repositories.PSB {
             string? nextPage = null;
             int backupLimit = 100;
 
-            files = new();
+            files = new List<PsbDriveFile>();
 
             do {
                 list.PageToken = nextPage ?? "";

@@ -85,6 +85,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<PsbReservationRepository>();
             services.AddSingleton<PsbOvOSheetRepository>();
             services.AddSingleton<GDriveRepository>();
+            services.AddSingleton<PsbOvOAccountRepository>();
         }
 
     }

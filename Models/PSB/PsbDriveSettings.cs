@@ -38,6 +38,11 @@ namespace watchtower.Models.PSB {
         public ulong? DebugChannelId { get; set; }
 
         /// <summary>
+        ///     ID of the folder that contains the account master for OvO
+        /// </summary>
+        public string OvOAccountFolderId { get; set; } = "";
+
+        /// <summary>
         ///     Various contact sheets used within PSB
         /// </summary>
         public PsbDriveSettingsContactSheets ContactSheets { get; set; } = new();
