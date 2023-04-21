@@ -201,6 +201,10 @@ namespace watchtower.Services.Hosted {
             }
         }
 
+        public DiscordClient GetClient() {
+            return _Discord;
+        }
+
         /// <summary>
         ///     Get a <see cref="DiscordMember"/> from an ID
         /// </summary>

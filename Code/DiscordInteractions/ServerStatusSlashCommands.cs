@@ -23,6 +23,11 @@ namespace watchtower.Code.DiscordInteractions {
         public ILogger<ServerStatusSlashCommands> _Logger { set; private get; } = default!;
         public ServerStatusInteractions _Interactions { set; private get; } = default!;
 
+        /// <summary>
+        ///     Get some basic information about a server
+        /// </summary>
+        /// <param name="ctx">provided context</param>
+        /// <param name="world">ID of the world to get the status of</param>
         [SlashCommand("server", "Get a server's status")]
         public async Task ServerStatus(InteractionContext ctx,
             [Option("server", "Server")] StatusWorlds world) {
@@ -153,7 +158,7 @@ namespace watchtower.Code.DiscordInteractions {
 
                     int nsCount = inZone.Count(iter => iter.TeamID == Faction.NS || iter.TeamID == Faction.UNKNOWN);
                     if (nsCount > 0) {
-                        builder.Description += $":grey_square: `NS: {nsCount} / {(nsCount / (decimal)inZone.Count * 100m):n2}%`\n";
+                        builder.Description += $":grey_question: `NS: {nsCount} / {(nsCount / (decimal)inZone.Count * 100m):n2}%`\n";
                     }
                 }
 

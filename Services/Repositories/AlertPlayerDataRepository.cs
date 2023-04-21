@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,9 @@ namespace watchtower.Services.Repositories {
     public class AlertPlayerDataRepository {
 
         private readonly ILogger<AlertPlayerDataRepository> _Logger;
+        private readonly IMemoryCache _Cache;
+
+        private const string CACHE_KEY_DAILY_CHARACTER = "DailyAlerts.Character.{0}.{1}.{2}"; // {0} => char ID, {1} => start, {2} => end
 
         private readonly KillEventDbStore _KillDb;
         private readonly ExpEventDbStore _ExpDb;
@@ -31,11 +35,14 @@ namespace watchtower.Services.Repositories {
         private Dictionary<long, Task<List<AlertPlayerDataEntry>>> _PendingCreate = new();
 
         public AlertPlayerDataRepository(ILogger<AlertPlayerDataRepository> logger,
-                KillEventDbStore killDb, ExpEventDbStore expDb,
-                AlertDbStore alertDb, SessionDbStore sessionDb,
-                AlertPlayerDataDbStore participantDataDb, AlertPlayerProfileDataDbStore profileDataDb) {
+            KillEventDbStore killDb, ExpEventDbStore expDb,
+            AlertDbStore alertDb, SessionDbStore sessionDb,
+            AlertPlayerDataDbStore participantDataDb, AlertPlayerProfileDataDbStore profileDataDb,
+            IMemoryCache cache) {
 
             _Logger = logger;
+            _Cache = cache;
+
             _KillDb = killDb;
             _ExpDb = expDb;
             _AlertDb = alertDb;
@@ -334,6 +341,7 @@ namespace watchtower.Services.Repositories {
             List<AlertPlayerDataEntry> entries = data.Values.ToList();
 
             foreach (AlertPlayerDataEntry entry in entries) {
+                entry.Timestamp = alert.Timestamp;
                 entry.ID = await _ParticipantDataDb.Insert(entry);
 
                 if (profileData.TryGetValue(entry.CharacterID, out List<AlertPlayerProfileData>? profiles) == true) {
@@ -346,6 +354,31 @@ namespace watchtower.Services.Repositories {
             _Logger.LogDebug($"{alert.ID}/{alert.Name} took {timer.ElapsedMilliseconds}ms to build alert data");
 
             return entries;
+        }
+
+        /// <summary>
+        ///     Get the player data for a character in daily alerts
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="start">Start range</param>
+        /// <param name="end">End range</param>
+        /// <returns></returns>
+        public async Task<List<AlertPlayerDataEntry>> GetDailyByCharacterIDAndTimestamp(string charID, DateTime start, DateTime end) {
+            if (start >= end) {
+                throw new ArgumentException($"start cannot come after end ({start:u} > {end:u})");
+            }
+
+            string cacheKey = string.Format(CACHE_KEY_DAILY_CHARACTER, charID, $"{start:u}", $"{end:u}");
+
+            if (_Cache.TryGetValue(cacheKey, out List<AlertPlayerDataEntry> data) == false) {
+                data = await _ParticipantDataDb.GetDailyByCharacterIDAndTimestamp(charID, start, end);
+
+                _Cache.Set(cacheKey, data, new MemoryCacheEntryOptions() {
+                    SlidingExpiration = TimeSpan.FromMinutes(15)
+                });
+            }
+
+            return data;
         }
 
     }

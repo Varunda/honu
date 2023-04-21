@@ -274,6 +274,35 @@ namespace watchtower.Controllers.Api {
             return ApiOk(pops);
         }
 
+        /// <summary>
+        ///     Get the daily alerts a player participated in between a time period
+        /// </summary>
+        /// <param name="charID">ID of the character to get the data of</param>
+        /// <param name="start">When to start the range. If left blank, this will default to 30 days before <paramref name="end"/></param>
+        /// <param name="end">When to end the range. If left blank, this will default to the current time</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="AlertPlayerDataEntry"/> for each daily alert the
+        ///     character has participated in that took place between <paramref name="start"/> and <paramref name="end"/>
+        /// </response>
+        /// <response code="400">
+        ///     <paramref name="start"/> came after <paramref name="end"/>
+        /// </response>
+        [HttpGet("daily/{charID}")]
+        public async Task<ApiResponse<List<AlertPlayerDataEntry>>> GetDailyByCharacterIDAndPeriod(
+            string charID, [FromQuery] DateTime? start = null, [FromQuery] DateTime? end = null) {
+
+            end ??= DateTime.UtcNow;
+            start ??= (end.Value - TimeSpan.FromDays(30));
+
+            if (start >= end) {
+                return ApiBadRequest<List<AlertPlayerDataEntry>>($"start cannot come after end ({start.Value:u} > {end.Value:u})");
+            }
+
+            List<AlertPlayerDataEntry> data = await _ParticipantDataRepository.GetDailyByCharacterIDAndTimestamp(charID, start.Value, end.Value);
+
+            return ApiOk(data);
+        }
+
         [HttpPost]
         [PermissionNeeded(HonuPermission.ALERT_CREATE)]
         [Authorize]

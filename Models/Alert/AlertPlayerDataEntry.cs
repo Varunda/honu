@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace watchtower.Models.Alert {
 
@@ -15,6 +16,8 @@ namespace watchtower.Models.Alert {
         public string? OutfitID { get; set; } = null;
 
         public int SecondsOnline { get; set; }
+
+        public DateTime Timestamp { get; set; }
 
         // Kills
 

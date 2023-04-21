@@ -445,7 +445,7 @@ namespace watchtower.Realtime {
                 return;
             }
 
-            _Logger.LogTrace($"Facility control: {payload}");
+            //_Logger.LogTrace($"Facility control: {payload}");
 
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: {ev.Players}, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}, {ev.Timestamp}");
             //_Logger.LogDebug($"CONTROL> {ev.FacilityID} {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}");
@@ -485,7 +485,7 @@ namespace watchtower.Realtime {
                     long ID = await _ControlDb.Insert(ev);
                     ev.ID = ID;
 
-                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control {ev.ID}");
+                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control {ev.ID} [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
 
                     Stopwatch timer = Stopwatch.StartNew();
                     UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
@@ -499,11 +499,6 @@ namespace watchtower.Realtime {
                     foreach (PlayerControlEvent playerControl in events) {
                         await _FacilityPlayerDb.Insert(ID, playerControl);
                     }
-                    /*
-                    if (ev.Players >= 0) {
-                        await _FacilityPlayerDb.InsertMany(ID, events);
-                    }
-                    */
 
                     timer.Restart();
                     //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");

@@ -83,7 +83,7 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
-        //[SlashCommand("toggle-account-automation", "Toggle account automation")]
+        [SlashCommand("toggle-account-automation", "Toggle account automation")]
         [RequiredRoleSlash("ovo-admin")]
         public async Task ToggleAccountAutomation(InteractionContext ctx) {
             PsbReservationRepository.AccountEnabled = !PsbReservationRepository.AccountEnabled;
@@ -532,7 +532,7 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (ctx.Member.Roles.FirstOrDefault(iter => iter.Id == staffID) == null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"you lack the ovo-staff role");
+                await ctx.Interaction.EditResponseErrorEmbed($"You cannot approve base bookings! You are not an OvO staff member");
                 return;
             }
 
@@ -577,12 +577,12 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (_RoleMapping.Value.Mappings.TryGetValue("ovo-staff", out ulong staffID) == false) {
-                await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-staff` is missing");
+                await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-staff` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-staff $ROLE_ID`");
                 return;
             }
 
             if (ctx.Member.Roles.FirstOrDefault(iter => iter.Id == staffID) == null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"you lack the ovo-staff role");
+                await ctx.Interaction.EditResponseErrorEmbed($"You cannot approve accounts! You are not an OvO staff member");
                 return;
             }
 

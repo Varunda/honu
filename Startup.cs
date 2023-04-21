@@ -220,6 +220,7 @@ namespace watchtower {
             services.AddHostedService<HostedAlertEndService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
+                services.AddSingleton<DiscordService>();
                 services.AddHostedService<DiscordService>();
                 services.AddHonuDiscord();
             }

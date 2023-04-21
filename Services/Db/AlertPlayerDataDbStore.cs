@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,18 +36,19 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO alert_participant_data (
                     alert_id,
-                    character_id, outfit_id, seconds_online,
+                    character_id, outfit_id, seconds_online, timestamp,
                     kills, deaths, vehicle_kills,
                     heals, revives, shield_repairs, resupplies, spawns, repairs
                 ) VALUES (
                     @AlertID,
-                    @CharacterID, @OutfitID, @SecondsOnline,
+                    @CharacterID, @OutfitID, @SecondsOnline, @Timestamp,
                     @Kills, @Deaths, @VehicleKills,
                     @Heals, @Revives, @ShieldRepairs, @Resupplies, @Spawns, @Repairs
                 ) RETURNING id;
             ");
 
             cmd.AddParameter("AlertID", entry.AlertID);
+            cmd.AddParameter("Timestamp", entry.Timestamp);
             cmd.AddParameter("CharacterID", entry.CharacterID);
             cmd.AddParameter("OutfitID", entry.OutfitID);
             cmd.AddParameter("SecondsOnline", entry.SecondsOnline);
@@ -84,6 +86,36 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("AlertID", alertID);
 
             List<AlertPlayerDataEntry> entries = await _Reader.ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return entries;
+        }
+
+        /// <summary>
+        ///     Get the daily alerts a character has participated in within a time span
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="start">Start range</param>
+        /// <param name="end">End range</param>
+        /// <returns>
+        ///     A list of <see cref="AlertPlayerDataEntry"/>s that represent the fake daily alerts created
+        /// </returns>
+        public async Task<List<AlertPlayerDataEntry>> GetDailyByCharacterIDAndTimestamp(string charID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT apd.*
+                    FROM alert_participant_data apd
+                        LEFT JOIN alerts a ON a.id = apd.alert_id
+                    WHERE character_id = @CharacterID
+                        AND apd.timestamp BETWEEN @Start AND @End
+                        AND a.zone_id = 0;
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("Start", start);
+            cmd.AddParameter("End", end);
+
+            List<AlertPlayerDataEntry> entries = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
 
             return entries;

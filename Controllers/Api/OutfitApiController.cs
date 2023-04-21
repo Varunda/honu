@@ -336,7 +336,12 @@ namespace watchtower.Controllers.Api {
 
             _Logger.LogInformation($"getting activity for {outfitID}/{outfit.Name} between {start:u} and {finish:u}");
 
-            List<OutfitActivityDbEntry> dbEntries = await _OutfitDb.GetActivity(outfitID, start, finish);
+            List<OutfitActivityDbEntry> dbEntries;
+            try {
+                dbEntries = await _OutfitDb.GetActivity(outfitID, start, finish);
+            } catch (TimeoutException) {
+                return ApiInternalError<List<OutfitActivity>>(new TimeoutException("DB timeout occured"));
+            }
 
             List<OutfitActivity> ret = new();
 

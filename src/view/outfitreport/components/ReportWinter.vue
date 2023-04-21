@@ -223,6 +223,7 @@
                 this.makeVehicleRepairHealth();
                 this.makeVehicleResupply();
                 this.makeHardlightAssists();
+                this.makeManaKills();
 
                 this.makeSpawns();
                 this.makeSundySpawns();
@@ -766,6 +767,19 @@
                 this.catEngi.metrics.push(this.generateExperience(metric, [1393], (metadata) => metadata.classes.engineer.timeAs));
             },
 
+            makeManaKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "MANA AI kills";
+                metric.funName = "Bastion RP";
+                metric.description = "Most kills on a MANA AI turret";
+
+                this.catEngi.metrics.push(this.generateWeaponKills(
+                    metric,
+                    [555, 6005423, 556, 554], // nc, ns, tr, vs
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
             makeShieldRepairs: function(): void {
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Shield repairs";
@@ -1038,6 +1052,7 @@
                 metric.name = "Headshots";
                 metric.funName = "Head popper";
                 metric.description = "Highest HSR";
+                metric.helpText = "Minimum 25 kills";
 
                 for (const player of this.report.trackedCharacters) {
                     const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);
@@ -1066,7 +1081,7 @@
                 metric.name = "KDR";
                 metric.funName = "KDR";
                 metric.description = "Highest KDR";
-                metric.helpText = "Revives remove a death (like in game)";
+                metric.helpText = "Revives remove a death (like in game). Minimum 25 kills";
 
                 for (const player of this.report.trackedCharacters) {
                     const kills: KillEvent[] = this.report.kills.filter(iter => iter.attackerCharacterID == player);

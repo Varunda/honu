@@ -12,6 +12,7 @@ namespace watchtower.Services.Db.Readers.Alert {
 
             entry.ID = reader.GetInt64("id");
             entry.AlertID = reader.GetInt64("alert_id");
+            entry.Timestamp = reader.GetDateTime("timestamp");
 
             entry.CharacterID = reader.GetString("character_id");
             entry.OutfitID = reader.GetNullableString("outfit_id");

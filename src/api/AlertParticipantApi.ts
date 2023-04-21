@@ -12,6 +12,7 @@ export class AlertParticipantDataEntry {
     public characterID: string = "";
     public outfitID: string | null = null;
     public secondsOnline: number = 0;
+    public timestamp: Date = new Date();
 
     public kills: number = 0;
     public deaths: number = 0;
@@ -84,7 +85,8 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
 
     public static readEntry(elem: any): AlertParticipantDataEntry {
         return {
-            ...elem
+            ...elem,
+            timestamp: new Date(elem.timestamp)
         };
     }
 
