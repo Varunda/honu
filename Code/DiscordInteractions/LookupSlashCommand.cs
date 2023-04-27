@@ -67,24 +67,24 @@ namespace watchtower.Code.DiscordInteractions {
         /// </summary>
         /// <param name="charID">ID of the character to show the outfit of</param>
         /// <param name="title">Title to show on the button. Defaults to 'Outfit'</param>
-        public static DiscordButtonComponent SHOW_OUTFIT(string charID, string title = "Outfit") => new(DSharpPlus.ButtonStyle.Primary, $"@show-outfit.{charID}", title);
+        public static DiscordButtonComponent SHOW_OUTFIT(string charID, string title) => new(DSharpPlus.ButtonStyle.Primary, $"@show-outfit.{charID}", title);
 
         /// <summary>
         ///     Button to show a character
         /// </summary>
         /// <param name="charID">ID of the character</param>
         /// <param name="title">Title to show on the button. Defaults to 'Character'</param>
-        public static DiscordButtonComponent SHOW_CHARACTER(string charID, string title = "Character") => new(DSharpPlus.ButtonStyle.Primary, $"@show-char.{charID}", title);
+        public static DiscordButtonComponent SHOW_CHARACTER(string charID, string title) => new(DSharpPlus.ButtonStyle.Primary, $"@show-char.{charID}", title);
 
         /// <summary>
         ///     Button link to a character
         /// </summary>
-        public static DiscordLinkButtonComponent LINK_CHARACTER(string host, string charID, string title = "Honu") => new($"https://{host}/c/{charID}", title);
+        public static DiscordLinkButtonComponent LINK_CHARACTER(string host, string charID, string title) => new($"https://{host}/c/{charID}", title);
 
         /// <summary>
         ///     Button link to an outfit
         /// </summary>
-        public static DiscordLinkButtonComponent LINK_OUTFIT(string host, string outfitID, string title = "Honu") => new($"https://{host}/o/{outfitID}", title);
+        public static DiscordLinkButtonComponent LINK_OUTFIT(string host, string outfitID, string title) => new($"https://{host}/o/{outfitID}", title);
 
         public ILogger<LookupButtonCommands> _Logger { set; private get; } = default!;
         public LookupDiscordInteractions _LookupInteractions { set; private get; } = default!;
@@ -260,9 +260,9 @@ namespace watchtower.Code.DiscordInteractions {
             comps.Add(LookupButtonCommands.PRINT_EMBED());
             if (c != null) {
                 if (c.OutfitID != null) {
-                    comps.Add(LookupButtonCommands.SHOW_OUTFIT(c.ID));
+                    comps.Add(LookupButtonCommands.SHOW_OUTFIT(c.ID, "Outfit"));
                 }
-                comps.Add(LookupButtonCommands.LINK_CHARACTER(_Instance.GetHost(), c.ID));
+                comps.Add(LookupButtonCommands.LINK_CHARACTER(_Instance.GetHost(), c.ID, "Honu"));
             }
 
             interactionBuilder.AddComponents(comps);
@@ -360,10 +360,10 @@ namespace watchtower.Code.DiscordInteractions {
                 builder.AddField($"Leader", leader.GetDisplayName(), true);
                 builder.AddField("Server", World.GetName(leader.WorldID), true);
                 comps.Add(LookupButtonCommands.SHOW_CHARACTER(leader.ID, "Leader"));
-                comps.Add(LookupButtonCommands.LINK_CHARACTER(leader.ID, "Leader"));
+                comps.Add(LookupButtonCommands.LINK_CHARACTER(_Instance.GetHost(), leader.ID, "Leader"));
             }
 
-            comps.Add(LookupButtonCommands.LINK_OUTFIT(_Instance.GetHost(), outfit.ID));
+            comps.Add(LookupButtonCommands.LINK_OUTFIT(_Instance.GetHost(), outfit.ID, "Honu"));
 
             interactionBuilder.AddComponents(comps);
             interactionBuilder.AddEmbed(builder);
