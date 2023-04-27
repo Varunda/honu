@@ -293,12 +293,18 @@ namespace watchtower.Services.Repositories.PSB {
             List<PsFacility> facilities = await _FacilityRepository.GetAll();
 
             foreach (string name in names) {
-                _Logger.LogDebug($"matching {name}");
                 Match match = r.Match(name);
 
                 Regex rgx = new Regex("[^a-zA-Z0-9 -]");
                 string baseName = rgx.Replace(name.Trim().ToLower(), "");
                 //string baseName = name.Trim().ToLower();
+
+                _Logger.LogDebug($"matching '{name}' => '{baseName}'");
+
+                if (name.Trim().Length <= 2) {
+                    result.Errors.Add($"3 or more characters must be provided. Only got {name.Trim().Length} from `{name.Trim()}`");
+                    continue;
+                }
 
                 if (match.Success == true) {
                     _Logger.LogDebug($"provided time {name}");
@@ -309,28 +315,7 @@ namespace watchtower.Services.Repositories.PSB {
                     }
                 }
 
-                List<PsFacility> possibleBases = new();
-
-                foreach (PsFacility fac in facilities) {
-                    string strippedName = "";
-                    foreach (char c in fac.Name) {
-                        if (char.IsNumber(c) || char.IsLetter(c) || c == ' ') {
-                            strippedName += c;
-                        }
-                    }
-
-                    // if the name of a base is a perfect match, then they probably meant that one
-                    if (fac.Name.ToLower() == strippedName) {
-                        possibleBases.Add(fac);
-                        break;
-                    }
-
-                    string facName = $"{strippedName} {fac.TypeName}".ToLower();
-                    // accept pluralized names, such as chac fusion labs
-                    if (facName.StartsWith(baseName) == true || (facName + "s").StartsWith(baseName) == true) {
-                        possibleBases.Add(fac);
-                    }
-                }
+                List<PsFacility> possibleBases = await _FacilityRepository.SearchByName(baseName);
 
                 if (possibleBases.Count == 0) {
                     result.Errors.Add($"Failed to find base `{baseName}`");
