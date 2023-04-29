@@ -689,10 +689,10 @@
 
                         iterCmd += `${owner.facilityID}`;
 
-                        if (currentCommand.length + iterCmd.length + 2 > 120) {
+                        if (currentCommand.length + iterCmd.length + 3 > 120) {
                             this.flip.commands.push(currentCommand);
 
-                            currentCommand = `/${iterCmd}`;
+                            currentCommand = `/${iterCmd};`;
                         } else {
                             currentCommand += `${iterCmd};`;
                         }
