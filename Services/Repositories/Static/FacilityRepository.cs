@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Services.Db;
@@ -78,14 +79,19 @@ namespace watchtower.Services.Repositories {
         ///     A list of all possible <see cref="PsFacility"/>s that match the name passed
         /// </returns>
         public async Task<List<PsFacility>> SearchByName(string name) {
-            name = name.ToLower();
+            Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+            string baseName = rgx.Replace(name.Trim().ToLower(), "");
 
             List<PsFacility> facilities = await GetAll();
             List<PsFacility> possibleBases = new();
 
+            if (baseName != name.Trim().ToLower()) {
+                _Logger.LogDebug($"Text stripped from input: [name='{name}'] [baseName='{baseName}']");
+            }
+
             foreach (PsFacility fac in facilities) {
                 // if the name of a base is a perfect match, then they probably meant that one
-                if (fac.Name.ToLower() == name) {
+                if (fac.Name.ToLower() == baseName || fac.Name.ToLower() == name) {
                     _Logger.LogTrace($"exact match {name}");
                     possibleBases.Add(fac);
                     break;
@@ -105,12 +111,12 @@ namespace watchtower.Services.Repositories {
                 //      2. the name, but plural (Chac Fusion Lab / Chac Fusion Labs)
                 //      3. the name, but with 'the' in front of it (The Bastion / Bastion)
                 string facName = $"{strippedName} {fac.TypeName}".ToLower();
-                if (facName.StartsWith(name) == true
-                    || (facName + "s").StartsWith(name) == true
-                    || facName.StartsWith("the " + name) == true
+                if (facName.StartsWith(baseName) == true
+                    || (facName + "s").StartsWith(baseName) == true
+                    || facName.StartsWith("the " + baseName) == true
                     ) {
 
-                    _Logger.LogDebug($"{facName} => {name}");
+                    _Logger.LogDebug($"{facName} => {baseName}");
 
                     possibleBases.Add(fac);
                 }

@@ -476,12 +476,7 @@
         },
 
         components: {
-            ATable,
-            AFilter,
-            AHeader,
-            ABody,
-            ACol,
-            ARank,
+            ATable, AFilter, AHeader, ABody, ACol, ARank,
             ToggleButton
         }
     });

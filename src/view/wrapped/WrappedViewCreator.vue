@@ -231,6 +231,7 @@
 
                 if (id.state == "loaded") {
                     window.history.pushState({ path: `/wrapped/${id.data}` }, '', `/wrapped/${id.data}`);
+                    this.$emit("update-wrapped-id", id.data);
                 } else {
                     console.log(`unchecked state of id after insert: ${id.state}`);
                 }

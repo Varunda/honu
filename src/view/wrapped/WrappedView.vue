@@ -13,11 +13,11 @@
         </div>
 
         <div v-if="wrappedID == ''" >
-            <wrapped-view-creator></wrapped-view-creator>
+            <wrapped-view-creator @update-wrapped-id="onUpdateWrappedID"></wrapped-view-creator>
         </div>
 
         <div v-else>
-            <wrapped-view-entry></wrapped-view-entry>
+            <wrapped-view-entry :wrapped-id="wrappedID"></wrapped-view-entry>
         </div>
     </div>
 </template>
@@ -54,10 +54,14 @@
                     throw `Invalid pathname passed: '${location.pathname}. Expected 3 splits after '/', got ${parts}'`;
                 }
 
-                this.wrappedID = parts[2];
+                this.wrappedID = parts[2] ?? "";
                 console.log(`loading wrappedID ${this.wrappedID}`);
-            }
+            },
 
+            onUpdateWrappedID: function(wrappedID: string): void {
+                this.wrappedID = wrappedID;
+                console.log(`wrappedID updated: ${this.wrappedID}`);
+            }
         },
 
         components: {

@@ -126,8 +126,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="env">Which census environment, such as PC, PS4 EU or PS4 US</param>
         /// <param name="fast">If only characters from DB will be loaded, and any characters not in the DB will be queued for retrieval</param>
         /// <returns></returns>
-        public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, CensusEnvironment env, bool fast = false) {
-            if (IDs.Count == 0) {
+        public async Task<List<PsCharacter>> GetByIDs(IEnumerable<string> IDs, CensusEnvironment env, bool fast = false) {
+            if (!IDs.Any()) {
                 return new List<PsCharacter>();
             }
 
@@ -136,7 +136,7 @@ namespace watchtower.Services.Repositories {
             List<string> localIDs = new List<string>(IDs);
             List<PsCharacter> chars = new List<PsCharacter>(localIDs.Count);
 
-            int total = IDs.Count;
+            int total = IDs.Count();
             int found = 0;
 
             //_Logger.LogTrace($"Loading {total} characters");

@@ -35,6 +35,12 @@ namespace watchtower.Services.Repositories {
             CACHE_KEY_MAP = $"{typeof(T).Name}.Map";
         }
 
+        /// <summary>
+        ///     Get all the static data in this repository
+        /// </summary>
+        /// <returns>
+        ///     A list of static PS2 data
+        /// </returns>
         public async Task<List<T>> GetAll() {
             if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<T> entries) == false) {
                 entries = await _Db.GetAll();
@@ -56,6 +62,14 @@ namespace watchtower.Services.Repositories {
             return entries;
         }
 
+        /// <summary>
+        ///     Get a single <typeparamref name="T"/> by its <see cref="IKeyedObject.ID"/>
+        /// </summary>
+        /// <param name="ID">ID of the <typeparamref name="T"/> to get</param>
+        /// <returns>
+        ///     The <typeparamref name="T"/> with <see cref="IKeyedObject.ID"/> of <paramref name="ID"/>,
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
         public async Task<T?> GetByID(int ID) {
             // In cases where there are thousands of entries, such as directives and objectives,
             //      using .FirstOrDefault() on a list can take too long, esp when iterating thru a list
@@ -78,6 +92,12 @@ namespace watchtower.Services.Repositories {
             entries.TryGetValue(ID, out T? entry);
             return entry;
         }
+
+
+        public async Task<List<T>> GetByIDs(IEnumerable<int> IDs) {
+            return (await GetAll()).Where(iter => IDs.Contains(iter.ID)).ToList();
+        }
+
     }
 
 }

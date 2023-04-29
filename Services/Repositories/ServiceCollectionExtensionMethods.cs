@@ -7,6 +7,7 @@ using watchtower.Models.PSB;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Db.Implementations;
+using watchtower.Services.Hosted;
 using watchtower.Services.Repositories.PSB;
 using watchtower.Services.Repositories.Readers;
 
@@ -86,6 +87,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<PsbOvOSheetRepository>();
             services.AddSingleton<GDriveRepository>();
             services.AddSingleton<PsbOvOAccountRepository>();
+            services.AddSingleton<WrappedSavedCharacterDataFileRepository>();
+            services.AddSingleton<HostedWrappedGenerationProcess>();
         }
 
     }

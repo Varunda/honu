@@ -2,53 +2,93 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Models.Census;
+using watchtower.Models.Events;
+using watchtower.Models.Wrapped;
+using watchtower.Services.Db;
+using watchtower.Services.Hosted;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
 
     public class WrappedHub : Hub<IWrappedHub> {
 
         private readonly ILogger<WrappedHub> _Logger;
+        private readonly WrappedSavedCharacterDataFileRepository _WrappedDataRepository;
+        private readonly WrappedDbStore _WrappedDb;
+        private readonly HostedWrappedGenerationProcess _WrappedProcessor;
 
-        public WrappedHub(ILogger<WrappedHub> logger) {
+        public WrappedHub(ILogger<WrappedHub> logger,
+            WrappedSavedCharacterDataFileRepository wrappedDataRepository, WrappedDbStore wrappedDb,
+            HostedWrappedGenerationProcess wrappedProcessor) {
+
             _Logger = logger;
+            _WrappedDataRepository = wrappedDataRepository;
+            _WrappedDb = wrappedDb;
+            _WrappedProcessor = wrappedProcessor;
         }
 
-        /// <summary>
-        ///     Update the status of a wrapped entry being generated
-        /// </summary>
-        /// <param name="ID">ID of the report being updated</param>
-        /// <param name="status">new status</param>
-        public async Task UpdateStatus(Guid ID, string status) => await Clients.Group($"wrapped-{ID}").UpdateStatus(status);
+        public async Task JoinGroup(Guid ID) {
+            string connId = Context.ConnectionId;
+            await Groups.AddToGroupAsync(connId, $"wrapped-{ID}");
 
-        /// <summary>
-        ///     Send a message to the clients of a wrapped entry
-        /// </summary>
-        /// <param name="ID">ID of the wrapped entry</param>
-        /// <param name="msg">message to be sent</param>
-        public async Task SendMessage(Guid ID, string msg) => await Clients.Group($"wrapped-{ID}").SendMessage(msg);
+            WrappedEntry? entry = await _WrappedDb.GetByID(ID);
 
-        /// <summary>
-        ///     Send a warning message to the clients of a wrapped entry
-        /// </summary>
-        /// <param name="ID">ID of the wrapped entry</param>
-        /// <param name="msg">message to be sent</param>
-        public async Task SendWarning(Guid ID, string msg) => await Clients.Group($"wrapped-{ID}").SendWarning(msg);
+            if (entry == null) {
+                await Clients.Caller.SendError($"{nameof(WrappedEntry)} {ID} does not exist");
+                return;
+            }
 
-        /// <summary>
-        ///     Send an error message to the clients of a wrapped entry
-        /// </summary>
-        /// <param name="ID">ID of the wrapped entry</param>
-        /// <param name="msg">message to be sent</param>
-        public async Task SendError(Guid ID, string msg) => await Clients.Group($"wrapped-{ID}").SendError(msg);
+            IWrappedHub group = Clients.Group($"wrapped-{entry.ID}");
 
-        /// <summary>
-        ///     Update the input characters to a wrapped entry
-        /// </summary>
-        /// <param name="ID">ID of the wrapped entry</param>
-        /// <param name="chars">characters that will be included in the wrapped entry</param>
-        public async Task UpdateInputCharacters(Guid ID, List<PsCharacter> chars) => await Clients.Group($"wrapped-{ID}").UpdateInputCharacters(chars);
+            await group.SendWrappedEntry(entry);
+
+            _Logger.LogDebug($"ConnectionId {connId} joined group {ID}, which has status {entry.Status}");
+
+            // NOT STARTED
+            if (entry.Status == WrappedEntryStatus.NOT_STARTED) {
+                return;
+            }
+
+            // IN PROGRESS
+            if (entry.Status == WrappedEntryStatus.IN_PROGRESS) {
+                return;
+            }
+
+            // DONE
+            if (entry.Status == WrappedEntryStatus.DONE) {
+                _Logger.LogDebug($"Loading {entry.InputCharacterIDs.Count} characters in report {entry.ID}");
+                foreach (string charID in entry.InputCharacterIDs) {
+                    WrappedSavedCharacterData? data = await _WrappedDataRepository.Get(entry.Timestamp.AddYears(-1), charID);
+                    if (data == null) {
+                        _Logger.LogError($"Missing character {charID} from {nameof(WrappedEntry)} {entry.ID}");
+                        continue;
+                    }
+
+                    entry.Kills.AddRange(data.Kills);
+                    entry.Deaths.AddRange(data.Deaths);
+                    entry.Experience.AddRange(data.Experience);
+                    entry.VehicleDestroy.AddRange(data.VehicleDestroy);
+                    entry.ControlEvents.AddRange(data.ControlEvents);
+                    entry.ItemAddedEvents.AddRange(data.ItemAddedEvents);
+                    entry.AchievementEarned.AddRange(data.AchievementEarned);
+                    entry.Sessions.AddRange(data.Sessions);
+                }
+
+                await _WrappedProcessor.SendEventData(entry);
+
+                await _WrappedProcessor.SendStaticData(entry);
+
+                await Clients.Group($"wrapped-{entry.ID}").UpdateStatus(WrappedStatus.DONE);
+
+                return;
+            }
+
+            throw new Exception($"Unchecked status of {nameof(WrappedEntry)} {ID}: {entry.Status}");
+        }
 
     }
 }

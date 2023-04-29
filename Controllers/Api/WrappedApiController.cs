@@ -8,6 +8,7 @@ using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Wrapped;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Controllers.Api {
@@ -20,14 +21,17 @@ namespace watchtower.Controllers.Api {
 
         private readonly WrappedDbStore _WrappedDb;
         private readonly CharacterRepository _CharacterRepository;
+        private readonly WrappedGenerationQueue _Queue;
 
         public WrappedApiController(ILogger<WrappedApiController> logger,
-            WrappedDbStore wrappedDb, CharacterRepository characterRepository) {
+            WrappedDbStore wrappedDb, CharacterRepository characterRepository,
+            WrappedGenerationQueue queue) {
 
             _Logger = logger;
 
             _WrappedDb = wrappedDb;
             _CharacterRepository = characterRepository;
+            _Queue = queue;
         }
 
         /// <summary>
@@ -90,10 +94,13 @@ namespace watchtower.Controllers.Api {
             }
 
             WrappedEntry entry = new();
-            entry.ID = new Guid();
+            entry.ID = Guid.NewGuid();
             entry.InputCharacterIDs = IDs;
+            entry.Status = WrappedEntryStatus.NOT_STARTED;
 
             await _WrappedDb.Insert(entry);
+
+            _Queue.Queue(entry);
 
             return ApiOk(entry.ID);
         }

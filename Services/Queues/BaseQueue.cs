@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 namespace watchtower.Services.Queues {
 
     public class BaseQueue<T> : IProcessQueue {
-        
+
         internal ConcurrentQueue<T> _Items = new ConcurrentQueue<T>();
 
         internal SemaphoreSlim _Signal = new SemaphoreSlim(0);

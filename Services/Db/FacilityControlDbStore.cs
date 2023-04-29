@@ -81,6 +81,14 @@ namespace watchtower.Services.Db {
             return entries;
         }
 
+        /// <summary>
+        ///     Get a single <see cref="FacilityControlEvent"/> by ID
+        /// </summary>
+        /// <param name="ID">ID of the event</param>
+        /// <returns>
+        ///     The <see cref="FacilityControlEvent"/> with <see cref="FacilityControlEvent.ID"/> of <paramref name="ID"/>,
+        ///     or <c>null</c> if it does not exist
+        /// </returns>
         public async Task<FacilityControlEvent?> GetByID(long ID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -95,6 +103,27 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
 
             return ev;
+        }
+
+        /// <summary>
+        ///     Get a list of events by ID
+        /// </summary>
+        /// <param name="IDs">List of IDs to get</param>
+        /// <returns></returns>
+        public async Task<List<FacilityControlEvent>> GetByIDs(List<long> IDs) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_ledger
+                    WHERE id = ANY(@IDs);
+            ");
+
+            cmd.AddParameter("IDs", IDs);
+
+            List<FacilityControlEvent> evs = await _ControlReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
         }
 
         /// <summary>

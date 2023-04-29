@@ -12,6 +12,8 @@ namespace watchtower.Services.Db.Readers {
 
             entry.ID = reader.GetGuid("id");
             entry.InputCharacterIDs = reader.GetString("input_character_ids").Split(",").ToList();
+            entry.Timestamp = reader.GetDateTime("timestamp");
+            entry.Status = reader.GetInt32("status");
 
             return entry;
         }

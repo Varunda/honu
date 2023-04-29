@@ -17,5 +17,9 @@ namespace watchtower.Services.Repositories {
             IMemoryCache cache)
             : base(loggerFactory, census, db, cache) { }
 
+        public async Task<List<PsItem>> GetByIDs(IEnumerable<int> ids) {
+            return (await GetAll()).Where(iter => ids.Contains(iter.ID)).ToList();
+        }
+
     }
 }

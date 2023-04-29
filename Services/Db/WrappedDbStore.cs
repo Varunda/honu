@@ -57,20 +57,46 @@ namespace watchtower.Services.Db {
         /// </exception>
         public async Task Insert(WrappedEntry entry) {
             if (entry.ID == Guid.Empty) {
-                throw new ArgumentException($"blank ID provided for {string.Join(", ", entry.InputCharacterIDs)}");
+                throw new ArgumentException($"not inserting {nameof(WrappedEntry)}: blank ID provided for characters: {string.Join(", ", entry.InputCharacterIDs)}");
             }
 
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wrapped_entries (
-                    id, input_character_ids, timestamp
+                    id, input_character_ids, timestamp, status
                 ) VALUES (
-                    @ID, @IDs, NOW() AT TIME ZONE 'utc'
+                    @ID, @IDs, NOW() AT TIME ZONE 'utc', @Status
                 );
             ");
 
             cmd.AddParameter("ID", entry.ID);
             cmd.AddParameter("IDs", string.Join(",", entry.InputCharacterIDs));
+            cmd.AddParameter("Status", entry.Status);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
+        /// <summary>
+        ///     Update the <see cref="WrappedEntry.Status"/> of a <see cref="WrappedEntry"/>
+        /// </summary>
+        /// <param name="ID">ID of the entry to update. Cannot be <see cref="Guid.Empty"/></param>
+        /// <param name="status">New status to use</param>
+        /// <exception cref="ArgumentException">If <paramref name="ID"/> is <see cref="Guid.Empty"/></exception>
+        public async Task UpdateStatus(Guid ID, int status) {
+            if (ID == Guid.Empty) {
+                throw new ArgumentException($"not updated status of {nameof(WrappedEntry)}: provided ID is 0 ({ID})");
+            }
+
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wrapped_entries
+                    SET status = @Status
+                    WHERE id = @ID;
+            ");
+
+            cmd.AddParameter("ID", ID);
+            cmd.AddParameter("Status", status);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

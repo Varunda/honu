@@ -83,6 +83,10 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText(feedback);
         }
 
+        /// <summary>
+        ///     toggle allowing account request automation. only usable by users with ovo-admin role
+        /// </summary>
+        /// <param name="ctx">provide context</param>
         [SlashCommand("toggle-account-automation", "Toggle account automation")]
         [RequiredRoleSlash("ovo-admin")]
         public async Task ToggleAccountAutomation(InteractionContext ctx) {
@@ -95,6 +99,10 @@ namespace watchtower.Code.DiscordInteractions {
             }
         }
 
+        /// <summary>
+        ///     toggle allowing base booking automation. only usable by users with ovo-admin role
+        /// </summary>
+        /// <param name="ctx">provided context</param>
         [SlashCommand("toggle-booking-automation", "Toggle booking automation")]
         [RequiredRoleSlash("ovo-admin")]
         public async Task ToggleBookingAutomation(InteractionContext ctx) {
@@ -391,6 +399,49 @@ namespace watchtower.Code.DiscordInteractions {
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(ctx.TargetMessage);
             DiscordEmbedBuilder builder = parsed.Build(debug);
+
+            await ctx.EditResponseEmbed(builder);
+        }
+
+        /// <summary>
+        ///     Search a base by name
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        [SlashCommand("search-base", "Search bases")]
+        public async Task SearchByName(InteractionContext ctx,
+            [Option("name", "Base name")] string name) {
+
+            await ctx.CreateDeferred(true);
+
+            if (name.Length > 100) {
+                await ctx.EditResponseText($"Error: input cannot be more than 100 characters");
+                return;
+            }
+
+            List<PsFacility> bases = await _FacilityRepository.SearchByName(name);
+
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"Found {bases.Count} matches: `{name}`";
+            builder.Description = "";
+
+            if (bases.Count > 0) {
+                builder.Color = DiscordColor.Turquoise;
+                foreach (PsFacility fac in bases) {
+                    string line = $"{fac.Name} / `{fac.FacilityID}`\n";
+
+                    if (builder.Description.Length + line.Length > 1900) {
+                        builder.Description += $"... (too many!)";
+                        break;
+                    }
+
+                    builder.Description += line;
+                }
+            } else {
+                builder.Color = DiscordColor.Red;
+                builder.Description = $"<no bases match>";
+            }
 
             await ctx.EditResponseEmbed(builder);
         }
