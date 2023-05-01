@@ -80,5 +80,21 @@ namespace watchtower.Services.Db {
             return events;
         }
 
+        public async Task<List<AchievementEarnedEvent>> LoadWrapped(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from achievement_earned_{year:yyyy}
+                    WHERE character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<AchievementEarnedEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
     }
 }

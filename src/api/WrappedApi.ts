@@ -22,7 +22,9 @@ export class WrappedEntry {
 
     public sessions: Session[] = [];
     public kills: KillEvent[] = [];
+    public teamkills: KillEvent[] = [];
     public deaths: KillEvent[] = [];
+    public teamdeaths: KillEvent[] = [];
     public exp: ExpEvent[] = [];
     public vehicleDestroy: VehicleDestroyEvent[] = [];
     public controlEvents: FacilityControlEvent[] = [];

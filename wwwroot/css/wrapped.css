@@ -1,0 +1,16 @@
+﻿
+.bright-150 {
+    filter: brightness(150%);
+}
+
+:root {
+    --p-red-1: rgb(231, 76, 60);
+    --p-red-2: rgb(234, 103, 46);
+    --p-red-3: rgb(238, 130, 32);
+    --p-red-4: rgb(243, 158, 18);
+
+    --p-green-1: #6bff72;
+    --p-green-2: #6bffa4;
+    --p-green-3: #93ff6b;
+}
+

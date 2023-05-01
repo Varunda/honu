@@ -43,6 +43,7 @@
 
         created: function(): void {
             this.getWrappedIdFromUrl();
+            document.title = "Honu / Wrapped";
         },
 
         methods: {

@@ -350,6 +350,28 @@ namespace watchtower.Services.Db {
             return evs;
         }
 
+        /// <summary>
+        ///     Load wrapped exp data for a character in a year
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="year"></param>
+        /// <returns></returns>
+        public async Task<List<ExpEvent>> LoadWrapped(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from wt_exp_{year:yyyy}
+                    WHERE source_character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<ExpEvent> evs = await _ExpDataReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
         public override ExpDbEntry ReadEntry(NpgsqlDataReader reader) {
             ExpDbEntry entry = new ExpDbEntry();
 

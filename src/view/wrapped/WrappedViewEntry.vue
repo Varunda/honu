@@ -9,50 +9,79 @@
             connected! started...
         </div>
 
-        <div v-else-if="status == 'loading_static'">
-            Loading static data...
-        </div>
-
         <div v-else-if="status == 'loading_events'">
+            <busy class="honu-busy honu-busy-lg"></busy>
             Loading events...
         </div>
 
+        <div v-else-if="status == 'loading_static'">
+            <busy class="honu-busy honu-busy-lg"></busy>
+            Loading static data...
+        </div>
+
+        <div v-else-if="status == 'building_data'">
+            <busy class="honu-busy honu-busy-lg"></busy>
+            Generating data...
+        </div>
+
         <div v-else-if="status == 'done'">
-            Loaded!
 
-            <wrapped-view-header :wrapped="wrapped" class="mb-2"></wrapped-view-header>
+            <wrapped-view-header :wrapped="filteredWrapped" @update-filters="updateFilters" class="mb-2"></wrapped-view-header>
 
-            <wrapped-view-general :wrapped="wrapped" class="mb-2"></wrapped-view-general>
+            <wrapped-view-general :wrapped="filteredWrapped" class="mb-2"></wrapped-view-general>
 
-            <wrapped-view-character-interactions :wrapped="wrapped" class="mb-2"></wrapped-view-character-interactions>
+            <div class="d-flex flex-row w-100" style="">
+                <div style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--red), var(--yellow))" >
 
+                </div>
+
+                <div style="flex-grow: 1;">
+                    <wrapped-view-character-interactions :wrapped="filteredWrapped" class="mb-2"></wrapped-view-character-interactions>
+                </div>
+            </div>
+
+            <wrapped-view-classes :wrapped="filteredWrapped" class="mb-2"></wrapped-view-classes>
+
+            <wrapped-view-weapons :wrapped="filteredWrapped" class="mb-2"></wrapped-view-weapons>
+
+            <wrapped-view-sessions :wrapped="filteredWrapped" class="mb-2"></wrapped-view-sessions>
         </div>
     </div>
 </template>
 
 <script lang="ts">
+    // general
     import Vue from "vue";
     import * as sR from "signalR";
     import { Loading, Loadable } from "Loading";
 
+    // models
     import { WrappedApi, WrappedEntry } from "api/WrappedApi";
+    import { WrappedFilters } from "./common";
     import { KillEvent, KillStatApi } from "api/KillStatApi";
     import { ExperienceType, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
     import { ItemAddedEvent, ItemAddedEventApi } from "api/ItemAddedEventApi";
     import { VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
-    import { PsCharacter } from "api/CharacterApi";
+    import { CharacterApi, PsCharacter } from "api/CharacterApi";
     import { PsItem } from "api/ItemApi";
     import { AchievementEarned, AchievementEarnedApi } from "api/AchievementEarnedApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { Achievement } from "api/AchievementApi";
     import { PsFacility } from "api/FacilityApi";
+    import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
+    import { PsOutfit } from "api/OutfitApi";
 
+    // components
+    import Busy from "components/Busy.vue";
+
+    // wrapped specific components
     import WrappedViewHeader from "./components/WrappedViewHeader.vue";
     import WrappedViewGeneral from "./components/WrappedViewGeneral.vue";
     import WrappedViewCharacterInteractions from "./components/WrappedViewCharacterInteractions.vue";
-import { FireGroupToFireMode } from "../../api/FireGroupToFireModeApi";
-import { PsOutfit } from "../../api/OutfitApi";
+    import WrappedViewSessions from "./components/WrappedViewSessions.vue";
+    import WrappedViewClasses from "./components/WrappedViewClasses.vue";
+    import WrappedViewWeapons from "./components/WrappedViewWeapons.vue";
 
     export const WrappedViewEntry = Vue.extend({
         props: {
@@ -65,7 +94,8 @@ import { PsOutfit } from "../../api/OutfitApi";
 
                 status: "" as string,
 
-                wrapped: new WrappedEntry() as WrappedEntry
+                wrapped: new WrappedEntry() as WrappedEntry,
+                filters: new WrappedFilters() as WrappedFilters,
             }
         },
 
@@ -75,6 +105,15 @@ import { PsOutfit } from "../../api/OutfitApi";
         },
 
         methods: {
+            updateFilters: function(filters: WrappedFilters): void {
+                console.log(`updating filters: ${JSON.stringify(filters)}`);
+                this.status = "building_data";
+                this.$nextTick(() => {
+                    this.filters = filters;
+                    this.status = "done";
+                });
+            },
+
             connect: async function(): Promise<void> {
                 if (this.connection != null) {
                     this.connection.stop();
@@ -141,14 +180,24 @@ import { PsOutfit } from "../../api/OutfitApi";
             onSendKills: function(events: KillEvent[]): void {
                 for (const ev of events) {
                     const event: KillEvent = KillStatApi.parseKillEvent(ev);
-                    this.wrapped.kills.push(event);
+
+                    if (event.attackerTeamID == event.killedTeamID) {
+                        this.wrapped.teamkills.push(event);
+                    } else {
+                        this.wrapped.kills.push(event);
+                    }
                 }
             },
 
             onSendDeaths: function(events: KillEvent[]): void {
                 for (const ev of events) {
                     const event: KillEvent = KillStatApi.parseKillEvent(ev);
-                    this.wrapped.deaths.push(event);
+
+                    if (event.attackerTeamID == event.killedTeamID) {
+                        this.wrapped.teamdeaths.push(event);
+                    } else {
+                        this.wrapped.deaths.push(event);
+                    }
                 }
             },
 
@@ -189,7 +238,8 @@ import { PsOutfit } from "../../api/OutfitApi";
 
             onUpdateCharacters: function(chars: PsCharacter[]): void {
                 for (const c of chars) {
-                    this.wrapped.characters.set(c.id, c);
+                    const character: PsCharacter = CharacterApi.parse(c);
+                    this.wrapped.characters.set(c.id, character);
                 }
             },
 
@@ -206,15 +256,21 @@ import { PsOutfit } from "../../api/OutfitApi";
             },
 
             onUpdateAchievements: function(achs: Achievement[]): void {
-
+                for (const ach of achs) {
+                    this.wrapped.achivements.set(ach.id, ach);
+                }
             },
 
             onUpdateExpTypes: function(expTypes: ExperienceType[]): void {
-
+                for (const expType of expTypes) {
+                    this.wrapped.expTypes.set(expType.id, expType);
+                }
             },
 
             onUpdateFacilities: function(facs: PsFacility[]): void {
-
+                for (const f of facs) {
+                    this.wrapped.facilities.set(f.id, f);
+                }
             },
 
             onUpdateFireGroupXrefs: function(refs: FireGroupToFireMode[]): void {
@@ -245,8 +301,25 @@ import { PsOutfit } from "../../api/OutfitApi";
 
         },
 
+        computed: {
+            filteredWrapped: function(): WrappedEntry {
+
+                if (this.filters.class.infil == false
+                    || this.filters.class.lightAssault == false
+                    || this.filters.class.medic == false
+                    || this.filters.class.engi == false
+                    || this.filters.class.heavy == false
+                    || this.filters.class.max == false) {
+
+                }
+
+                return this.wrapped;
+            }
+        },
+
         components: {
-            WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions
+            Busy,
+            WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons
         }
     });
     export default WrappedViewEntry;

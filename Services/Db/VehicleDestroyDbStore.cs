@@ -116,5 +116,37 @@ namespace watchtower.Services.Db {
             return await cmd.ExecuteInt64(cancel);
         }
 
+        public async Task<List<VehicleDestroyEvent>> LoadWrappedKills(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from vehicle_destroy_kill_{year:yyyy}
+                    WHERE attacker_character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
+        public async Task<List<VehicleDestroyEvent>> LoadWrappedDeaths(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from vehicle_destroy_kill_{year:yyyy}
+                    WHERE killed_character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
     }
 }

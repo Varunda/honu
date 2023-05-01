@@ -62,6 +62,8 @@ namespace watchtower.Code.Hubs.Implementations {
             if (entry.Status == WrappedEntryStatus.DONE) {
                 _Logger.LogDebug($"Loading {entry.InputCharacterIDs.Count} characters in report {entry.ID}");
                 foreach (string charID in entry.InputCharacterIDs) {
+                    // timestamp is when the entry was created, which would be for the previous year
+                    // so if it was generated in 2023, then we want the data from 2022
                     WrappedSavedCharacterData? data = await _WrappedDataRepository.Get(entry.Timestamp.AddYears(-1), charID);
                     if (data == null) {
                         _Logger.LogError($"Missing character {charID} from {nameof(WrappedEntry)} {entry.ID}");

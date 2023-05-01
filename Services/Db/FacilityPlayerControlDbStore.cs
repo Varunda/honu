@@ -132,5 +132,22 @@ namespace watchtower.Services.Db {
             return evs;
         }
 
+        public async Task<List<PlayerControlEvent>> LoadWrapped(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT p.*, l.old_faction_id, l.new_faction_id, l.world_id, l.zone_id
+                    FROM wt_ledger_player_{year:yyyy} p
+                        INNER JOIN wt_ledger l ON l.id = p.control_id
+                    WHERE character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<PlayerControlEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
     }
 }

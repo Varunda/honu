@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Constants;
+using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 
@@ -447,11 +448,14 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Get all kills of an outfit
+        ///     Get all kills of an outfit based on who is currently within the outfit
         /// </summary>
-        /// <param name="outfitID"></param>
-        /// <param name="interval"></param>
-        /// <returns></returns>
+        /// <param name="outfitID">ID of outfit</param>
+        /// <param name="interval">How many minutes back to go</param>
+        /// <returns>
+        ///     A list of all <see cref="KillEvent"/>s characters within the <see cref="PsOutfit.ID"/>
+        ///     of <paramref name="outfitID"/> within the last <paramref name="interval"/> minutes
+        /// </returns>
         public async Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -505,6 +509,57 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WorldID", worldID);
 
             await cmd.PrepareAsync();
+
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
+        /// <summary>
+        ///     Get the wrapped kills of a character for a single year
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="year">Year of the data of. Only the year part is used</param>
+        /// <returns>
+        ///     A list of <see cref="KillEvent"/> that occured within the year of <paramref name="charID"/>
+        ///     with a <see cref="KillEvent.AttackerCharacterID"/> of <paramref name="charID"/>
+        /// </returns>
+        public async Task<List<KillEvent>> LoadWrappedKills(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from wt_kills_{year:yyyy}
+                    WHERE attacker_character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<KillEvent> kills = await _KillEventReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return kills;
+        }
+
+        /// <summary>
+        ///     Get the wrapped deaths of a character for a single year
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="year">Year to get the data of. Only the year part is used</param>
+        /// <returns>
+        ///     A list of <see cref="KillEvent"/>s that occured during the year of <paramref name="year"/>
+        ///     with a <see cref="KillEvent.KilledCharacterID"/> of <paramref name="charID"/>
+        /// </returns>
+        public async Task<List<KillEvent>> LoadWrappedDeaths(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from wt_deaths_{year:yyyy}
+                    WHERE killed_character_id = @CharID
+                        AND revived_event_id IS NULL;
+            ");
+
+            cmd.AddParameter("CharID", charID);
 
             List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
             await conn.CloseAsync();

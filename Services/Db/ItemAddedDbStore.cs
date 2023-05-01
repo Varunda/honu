@@ -55,6 +55,16 @@ namespace watchtower.Services.Db {
             return ID;
         }
 
+        /// <summary>
+        ///     Get the <see cref="ItemAddedEvent"/> events that occured for a character within a time period
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="start">Start of the period</param>
+        /// <param name="end">End of the period</param>
+        /// <returns>
+        ///     A list of <see cref="ItemAddedEvent"/>s with <see cref="ItemAddedEvent.CharacterID"/> of <paramref name="charID"/>,
+        ///     and with a <see cref="ItemAddedEvent.Timestamp"/> between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
         public async Task<List<ItemAddedEvent>> GetByCharacterAndPeriod(string charID, DateTime start, DateTime end) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -72,6 +82,28 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
 
             return events;
+        }
+
+        /// <summary>
+        ///     Load the wrapped data for a character in a given year
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="year"></param>
+        /// <returns></returns>
+        public async Task<List<ItemAddedEvent>> LoadWrapped(string charID, DateTime year) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    from item_added_{year:yyyy}
+                    WHERE character_id = @CharID;
+            ");
+
+            cmd.AddParameter("CharID", charID);
+
+            List<ItemAddedEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
         }
 
     }

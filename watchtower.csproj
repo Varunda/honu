@@ -16,7 +16,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="logs\**" />
+    <Compile Remove="wrapped\**" />
+    <Content Remove="logs\**" />
+    <Content Remove="wrapped\**" />
+    <EmbeddedResource Remove="logs\**" />
+    <EmbeddedResource Remove="wrapped\**" />
+    <None Remove="logs\**" />
+    <None Remove="wrapped\**" />
+    <TypeScriptCompile Remove="logs\**" />
     <TypeScriptCompile Remove="node_modules\**" />
+    <TypeScriptCompile Remove="wrapped\**" />
   </ItemGroup>
 
   <ItemGroup>
