@@ -153,7 +153,12 @@
                     console.error(`error on start: ${err}`);
                 }
 
-                this.connection.invoke("JoinGroup", this.WrappedId);
+                this.connection.invoke("JoinGroup", this.WrappedId).then(() => {
+                    if (this.connection != null) {
+                        this.connection.stop();
+                        this.connection = null;
+                    }
+                });
             },
 
             onSendWrappedEntry: function(entry: WrappedEntry): void {
