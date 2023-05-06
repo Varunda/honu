@@ -7,8 +7,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
+using watchtower.Code.Tracking;
 using watchtower.Models;
+using watchtower.Models.Queues;
+using watchtower.Realtime;
 using watchtower.Services.Db;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Services {
@@ -29,14 +33,19 @@ namespace watchtower.Services {
 
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;
         private readonly SessionRepository _SessionRepository;
+        private readonly IEventHandler _EventHandler;
+        private readonly SessionEndQueue _SessionEndQueue;
 
         public EventCleanupService(ILogger<EventCleanupService> logger,
-            IServiceHealthMonitor healthMon, SessionRepository sessionRepository) {
+            IServiceHealthMonitor healthMon, SessionRepository sessionRepository,
+            IEventHandler eventHandler, SessionEndQueue sessionEndQueue) {
 
             _Logger = logger;
 
             _ServiceHealthMonitor = healthMon ?? throw new ArgumentNullException(nameof(healthMon));
             _SessionRepository = sessionRepository;
+            _EventHandler = eventHandler;
+            _SessionEndQueue = sessionEndQueue;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -46,11 +55,21 @@ namespace watchtower.Services {
 
             while (!stoppingToken.IsCancellationRequested) {
                 try {
-                    long currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    long adjustedTime = currentTime - (_KeepPeriod * 1000);
-                    long sundyAdjustedTime = currentTime - (_SundyKeepPeriod * 1000);
-                    long afkAdjustedTime = currentTime - (_AfkPeriod * 1000);
-                    long controlAdjustedTime = currentTime - (_ControlPeriod * 1000);
+                    using Activity? rootTrace = HonuActivitySource.Root.StartActivity("periodic cleanup - start");
+                    DateTime now = _EventHandler.MostRecentProcess();
+                    DateTimeOffset nowOffset = new(now);
+                    long nowTime = nowOffset.ToUnixTimeMilliseconds();
+                    //long currentTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    long sundyAdjustedTime = nowTime - (_SundyKeepPeriod * 1000);
+                    long afkAdjustedTime = nowTime - (_AfkPeriod * 1000);
+                    long controlAdjustedTime = nowTime - (_ControlPeriod * 1000);
+
+                    rootTrace?.AddTag("honu.now", $"{DateTime.UtcNow:u}");
+                    rootTrace?.AddTag("honu.event-time-date", $"{now:u}");
+                    rootTrace?.AddTag("honu.event-time", nowTime);
+                    rootTrace?.AddTag("honu.sundy-time", sundyAdjustedTime);
+                    rootTrace?.AddTag("honu.afk-time", afkAdjustedTime);
+                    rootTrace?.AddTag("honu.control-time", controlAdjustedTime);
 
                     Stopwatch time = Stopwatch.StartNew();
 
@@ -61,44 +80,83 @@ namespace watchtower.Services {
                         };
                     }
 
-                    lock (CharacterStore.Get().Players) {
-                        foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
-                            if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
-                                //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
-                                _ = _SessionRepository.End(entry.Value.ID, DateTime.UtcNow);
+                    // character cleanup
+                    using (Activity? trace = HonuActivitySource.Root.StartActivity("periodic cleanup - characters")) {
+                        int count = 0;
+                        int total = 0;
+                        lock (CharacterStore.Get().Players) {
+                            foreach (KeyValuePair<string, TrackedPlayer> entry in CharacterStore.Get().Players) {
+                                ++total;
+                                if (entry.Value.LatestEventTimestamp <= afkAdjustedTime && entry.Value.Online == true) {
+                                    //_Logger.LogDebug($"Setting {entry.Value.ID} to offline, latest event was at {entry.Value.LatestEventTimestamp}, needed {afkAdjustedTime}");
+                                    //_ = _SessionRepository.End(entry.Value.ID, DateTime.UtcNow);
+                                    _SessionEndQueue.Queue(new SessionEndQueueEntry() {
+                                        CharacterID = entry.Value.ID,
+                                        Timestamp = now,
+                                        SessionID = entry.Value.SessionID
+                                    });
+                                    ++count;
+                                }
                             }
                         }
+                        trace?.AddTag("honu.total", total);
+                        trace?.AddTag("honu.count", count);
                     }
 
-                    lock (NpcStore.Get().Npcs) {
-                        List<string> toRemove = new List<string>();
-                        foreach (KeyValuePair<string, TrackedNpc> entry in NpcStore.Get().Npcs) {
-                            if (entry.Value.LatestEventAt < sundyAdjustedTime) {
-                                // Don't want to delete keys while iterating, save the ones to delete
-                                //_Logger.LogDebug($"NPC {entry.Value.NpcID}, latest: {entry.Value.LatestEventAt}, need: {sundyAdjustedTime}");
-                                toRemove.Add(entry.Key);
+                    // sundy cleanup
+                    using (Activity? trace = HonuActivitySource.Root.StartActivity("periodic cleanup - sundies")) {
+                        int count = 0;
+                        int total = 0;
+                        lock (NpcStore.Get().Npcs) {
+                            List<string> toRemove = new List<string>();
+                            foreach (KeyValuePair<string, TrackedNpc> entry in NpcStore.Get().Npcs) {
+                                ++total;
+                                if (entry.Value.LatestEventAt < sundyAdjustedTime) {
+                                    // Don't want to delete keys while iterating, save the ones to delete
+                                    //_Logger.LogDebug($"NPC {entry.Value.NpcID}, latest: {entry.Value.LatestEventAt}, need: {sundyAdjustedTime}");
+                                    toRemove.Add(entry.Key);
+                                }
+                            }
+
+                            foreach (string key in toRemove) {
+                                ++count;
+                                NpcStore.Get().Npcs.TryRemove(key, out _);
                             }
                         }
+                        trace?.AddTag("honu.total", total);
+                        trace?.AddTag("honu.count", count);
+                    }
 
-                        foreach (string key in toRemove) {
-                            NpcStore.Get().Npcs.TryRemove(key, out _);
+                    // player control cleanup 
+                    using (Activity? trace = HonuActivitySource.Root.StartActivity("periodic cleanup - player control")) {
+                        int count = 0;
+                        int before = 0;
+                        lock (PlayerFacilityControlStore.Get().Events) {
+                            before = PlayerFacilityControlStore.Get().Events.Count;
+                            PlayerFacilityControlStore.Get().Events = PlayerFacilityControlStore.Get().Events.Where(iter => {
+                                long timestamp = new DateTimeOffset(iter.Timestamp).ToUnixTimeMilliseconds();
+                                return timestamp >= controlAdjustedTime;
+                            }).ToList();
+                            int after = PlayerFacilityControlStore.Get().Events.Count;
+                            count = before - after;
                         }
+                        trace?.AddTag("honu.total", before);
+                        trace?.AddTag("honu.count", count);
                     }
 
-                    lock (PlayerFacilityControlStore.Get().Events) {
-                        PlayerFacilityControlStore.Get().Events = PlayerFacilityControlStore.Get().Events.Where(iter => {
-                            long timestamp = new DateTimeOffset(iter.Timestamp).ToUnixTimeMilliseconds();
-                            return timestamp <= controlAdjustedTime;
-                        }).ToList();
+                    // sundy destroy cleanup
+                    using (Activity? trace = HonuActivitySource.Root.StartActivity("periodic cleanup - sundy destroy")) {
+                        DateTime removeBefore = now - TimeSpan.FromSeconds(_ControlPeriod);
+                        int count = RecentSundererDestroyExpStore.Get().Clean(removeBefore);
+                        trace?.AddTag("honu.count", count);
                     }
-
-                    RecentSundererDestroyExpStore.Get().Clean(_VehicleDestroyPeriod);
 
                     time.Stop();
 
                     healthEntry.LastRan = DateTime.UtcNow;
                     healthEntry.RunDuration = time.ElapsedMilliseconds;
                     _ServiceHealthMonitor.Set(SERVICE_NAME, healthEntry);
+                    rootTrace?.Stop();
 
                     await Task.Delay(_CleanupDelay * 1000, stoppingToken);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested) {

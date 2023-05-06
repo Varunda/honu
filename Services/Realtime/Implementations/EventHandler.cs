@@ -477,7 +477,10 @@ namespace watchtower.Realtime {
                             return iter.FacilityID == ev.FacilityID
                                 && iter.WorldID == ev.WorldID
                                 && iter.ZoneID == ev.ZoneID
-                                && iter.Timestamp == ev.Timestamp;
+                                && (iter.Timestamp == ev.Timestamp
+                                    || (iter.Timestamp + TimeSpan.FromSeconds(1)) == ev.Timestamp
+                                    || iter.Timestamp == (ev.Timestamp + TimeSpan.FromSeconds(1)
+                                ));
                         }).ToList();
 
                         ev.Players = events.Count;

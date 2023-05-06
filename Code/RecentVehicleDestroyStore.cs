@@ -26,10 +26,20 @@ namespace watchtower.Code {
             return recent;
         }
 
-        public void Clean(int secondsBack) {
+        /// <summary>
+        ///     Cleanup all events stored in this store that occured before a timestamp
+        /// </summary>
+        /// <param name="when">Only events after this time are included</param>
+        /// <returns>How many events were removed from this store</returns>
+        public int Clean(DateTime when) {
+            int count = 0;
             lock (_Recent) {
-                _Recent = _Recent.Where(iter => DateTime.UtcNow - iter.Timestamp <= TimeSpan.FromSeconds(secondsBack)).ToList();
+                int before = _Recent.Count;
+                _Recent = _Recent.Where(iter => iter.Timestamp >= when).ToList();
+                int after = _Recent.Count;
+                count = before - after;
             }
+            return count;
         }
 
     }
