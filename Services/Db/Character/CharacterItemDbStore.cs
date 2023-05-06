@@ -38,6 +38,29 @@ namespace watchtower.Services.Db {
             return items;
         }
 
+        public async Task Upsert(CharacterItem item) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                INSERT INTO character_items (
+                    character_id, item_id, account_level, stack_count
+                ) VALUES (
+                    @CharacterID, @ItemID, @AccountLevel, @StackCount
+                ) ON CONFLICT (character_id, item_id) 
+                    DO UPDATE SET
+                        account_level = @AccountLevel,
+                        stack_count = @StackCount;
+            ");
+
+            cmd.AddParameter("CharacterID", item.CharacterID);
+            cmd.AddParameter("ItemID", item.ItemID);
+            cmd.AddParameter("AccountLevel", item.AccountLevel);
+            cmd.AddParameter("StackCount", item.StackCount);
+            await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
         public async Task Set(string charID, List<CharacterItem> items) {
             if (items.Count == 0) {
                 return;

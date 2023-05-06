@@ -15,6 +15,7 @@ import { FacilityControlEvent } from "api/FacilityControlEventApi";
 import { PsOutfit } from "api/OutfitApi";
 import { PsVehicle } from "api/VehicleApi";
 import { FireGroupToFireMode } from "./FireGroupToFireModeApi";
+import { WrappedExtraData } from "../view/wrapped/common";
 
 export class WrappedEntry {
     public id: string = ""; // guid
@@ -39,6 +40,8 @@ export class WrappedEntry {
     public achivements: Map<number, Achievement> = new Map();
     public expTypes: Map<number, ExperienceType> = new Map();
     public fireModeXrefs: Map<number, FireGroupToFireMode[]> = new Map();
+
+    public extra: WrappedExtraData = new WrappedExtraData();
 
     public static getFireModeIndex(wrapped: WrappedEntry, fireModeID: number): number | null {
         const fireModes: FireGroupToFireMode[] | undefined = wrapped.fireModeXrefs.get(fireModeID);

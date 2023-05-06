@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
 using watchtower.Models.Db;
@@ -26,6 +27,7 @@ namespace watchtower.Services.Hosted {
         private const string SERVICE_NAME = "background_character_cache";
 
         private readonly ILogger<HostedBackgroundCharacterWeaponStatQueue> _Logger;
+        private readonly IServiceHealthMonitor _ServiceHealthMonitor;
         private readonly CharacterUpdateQueue _Queue;
 
         private readonly CharacterMetadataDbStore _MetadataDb;
@@ -73,7 +75,7 @@ namespace watchtower.Services.Hosted {
             CharacterDirectiveTreeCollection charDirTreeCensus, CharacterDirectiveTreeDbStore charDirTreeDb,
             CharacterDirectiveTierCollection charDirTierCensus, CharacterDirectiveTierDbStore charDirTierDb,
             CharacterDirectiveObjectiveCollection charDirObjectiveCensus, CharacterDirectiveObjectiveDbStore charDirObjectiveDb,
-            CharacterFriendDbStore friendDb) {
+            CharacterFriendDbStore friendDb, IServiceHealthMonitor serviceHealthMonitor) {
 
             _Logger = logger;
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
@@ -100,6 +102,7 @@ namespace watchtower.Services.Hosted {
             _CharacterDirectiveTierDb = charDirTierDb;
             _CharacterDirectiveObjectiveCensus = charDirObjectiveCensus;
             _CharacterDirectiveObjectiveDb = charDirObjectiveDb;
+            _ServiceHealthMonitor = serviceHealthMonitor;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -109,6 +112,13 @@ namespace watchtower.Services.Hosted {
             Stopwatch timer = Stopwatch.StartNew();
 
             while (stoppingToken.IsCancellationRequested == false) {
+
+                ServiceHealthEntry health = _ServiceHealthMonitor.Get(SERVICE_NAME) ?? new ServiceHealthEntry() { Name = SERVICE_NAME };
+                if (health.Enabled == false) {
+                    await Task.Delay(1000, stoppingToken);
+                    continue;
+                }
+
                 timer.Restart();
                 CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
 
@@ -119,15 +129,19 @@ namespace watchtower.Services.Hosted {
                     using Activity? rootTrace = HonuActivitySource.Root.StartActivity("update character");
                     rootTrace?.AddTag("honu.characterID", entry.CharacterID);
 
-                    if (_Random.Next(1001) >= 995) {
-                        entry.Print = true;
-                    }
+                    int randomValue = _Random.Next(1001);
+
+                    entry.Print = randomValue >= 995;
+                    bool batchDbUpdate = randomValue % 2 == 0;
+
+                    rootTrace?.AddTag("honu.batch-db-update", batchDbUpdate);
 
                     if (censusChar == null) {
                         try {
                             censusChar = await _CharacterCensus.GetByID(entry.CharacterID, CensusEnvironment.PC);
-                        } catch (CensusConnectionException) {
-                            _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, delaying 30 seconds, requeueing and retrying");
+                        } catch (CensusConnectionException ex) {
+                            rootTrace?.AddExceptionEvent(ex);
+                            _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, delaying 30 seconds, requeueing and retrying [Message='{ex.Message}']");
                             await Task.Delay(30 * 1000, stoppingToken);
                             _Queue.Queue(entry);
                             continue;
@@ -150,15 +164,18 @@ namespace watchtower.Services.Hosted {
                     //      3. The character was found in census, and the character is logged in since the last time stats were updated
                     if (censusChar == null) {
                         ++metadata.NotFoundCount;
+                        rootTrace?.AddTag("honu.result", "not found");
                     } else if (censusChar.DateLastLogin < metadata.LastUpdated && entry.Force == false) {
                         if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
                             _Logger.LogTrace($"{entry.CharacterID}/{censusChar.Name} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), skipping update");
                         }
                         metadata.NotFoundCount = 0;
+                        rootTrace?.AddTag("honu.result", "not update needed");
                     } else if (censusChar.DateLastLogin >= metadata.LastUpdated || entry.Force == true) {
                         if (_Peepers.Contains(entry.CharacterID) || entry.Print == true) {
                             _Logger.LogTrace($"{entry.CharacterID}/{censusChar.Name} last login: {censusChar.DateLastLogin:u}, last update: {metadata.LastUpdated:u} ({metadata.LastUpdated - censusChar.DateLastLogin}), PERFORMING UPDATE");
                         }
+                        rootTrace?.AddTag("honu.result", "updated");
                         metadata.NotFoundCount = 0;
                         metadata.LastUpdated = DateTime.UtcNow;
 
@@ -174,6 +191,7 @@ namespace watchtower.Services.Hosted {
 
                         await _CharacterDb.Upsert(censusChar);
 
+                        using Activity? censusTrace = HonuActivitySource.Root.StartActivity("update character - census root");
                         try {
                             await Task.WhenAll(
                                 // Update the characters weapon stats
@@ -198,11 +216,13 @@ namespace watchtower.Services.Hosted {
                                 _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
                             );
                         } catch (AggregateException ex) when (ex.InnerException is CensusConnectionException) {
+                            rootTrace?.AddExceptionEvent(ex);
                             _Logger.LogWarning($"Got timeout when getting data for {entry.CharacterID}, requeuing");
                             _Queue.Queue(entry);
                             await Task.Delay(1000 * 15, stoppingToken);
                             continue;
                         }
+                        censusTrace?.Stop();
 
                         long censusTime = timer.ElapsedMilliseconds;
                         timer.Restart();
@@ -221,10 +241,20 @@ namespace watchtower.Services.Hosted {
                             );
                         }
 
+                        using Activity? dbTrace = HonuActivitySource.Root.StartActivity("update character - db root");
+
+                        // DB WEAPON STATS
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
+                            span?.AddTag("honu.count", weaponStats.Count);
                             if (weaponStats.Count > 0) {
                                 try {
-                                    await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
+                                    if (batchDbUpdate == true) {
+                                        await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
+                                    } else {
+                                        foreach (WeaponStatEntry iter in weaponStats) {
+                                            await _WeaponStatDb.Upsert(iter);
+                                        }
+                                    }
                                 } catch (Exception ex) {
                                     span?.AddExceptionEvent(ex);
                                     _Logger.LogError(ex, $"error updating character weapon stat data for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
@@ -234,8 +264,11 @@ namespace watchtower.Services.Hosted {
                         stoppingToken.ThrowIfCancellationRequested();
                         long dbWeapon = timer.ElapsedMilliseconds; timer.Restart();
 
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
+                        // DB HISTORY STATS
+                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db history stats")) {
+                            span?.AddTag("honu.count", historyStats.Count);
                             try {
+                                span?.AddTag("honu.batch", "ignored");
                                 foreach (PsCharacterHistoryStat stat in historyStats) {
                                     await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
                                 }
@@ -247,12 +280,24 @@ namespace watchtower.Services.Hosted {
                         long dbHistory = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
+                        // DB ITEM UNLOCKS
+                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db item unlocks")) {
                             span?.AddTag("honu.count", itemStats.Count);
                             try {
                                 if (itemStats.Count > 0) {
                                     await _ItemDb.Set(entry.CharacterID, itemStats);
                                 }
+                                /*
+                                if (batchDbUpdate == true) {
+                                    if (itemStats.Count > 0) {
+                                        await _ItemDb.Set(entry.CharacterID, itemStats);
+                                    }
+                                } else {
+                                    foreach (CharacterItem iter in itemStats) {
+                                        await _ItemDb.Upsert(iter);
+                                    }
+                                }
+                                */
                             } catch (Exception ex) {
                                 span?.AddExceptionEvent(ex);
                                 _Logger.LogError(ex, $"error updating item stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
@@ -261,7 +306,8 @@ namespace watchtower.Services.Hosted {
                         long dbItem = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
+                        // DB STATS
+                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db stats")) {
                             span?.AddTag("honu.count", statEntries.Count);
                             try {
                                 if (statEntries.Count > 0) {
@@ -275,6 +321,7 @@ namespace watchtower.Services.Hosted {
                         long dbStats = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        // DB FRIENDS
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db friends")) {
                             span?.AddTag("honu.count", charFriends.Count);
                             try {
@@ -289,6 +336,7 @@ namespace watchtower.Services.Hosted {
                         long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        // DB DIRECTIVE
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive")) {
                             span?.AddTag("honu.count", charDirs.Count);
                             try {
@@ -301,6 +349,7 @@ namespace watchtower.Services.Hosted {
                         long dbCharDir = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        // DB DIRECTIVE TREE
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tree")) {
                             span?.AddTag("honu.count", charTreeDirs.Count);
                             foreach (CharacterDirectiveTree tree in charTreeDirs) {
@@ -315,6 +364,7 @@ namespace watchtower.Services.Hosted {
                         long dbCharDirTree = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        // DB DIRECTIVE TIER
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tier")) {
                             span?.AddTag("honu.count", charTierDirs.Count);
                             foreach (CharacterDirectiveTier tier in charTierDirs) {
@@ -329,6 +379,7 @@ namespace watchtower.Services.Hosted {
                         long dbCharDirTier = timer.ElapsedMilliseconds; timer.Restart();
                         stoppingToken.ThrowIfCancellationRequested();
 
+                        // DB DIRECTIVE OBJECTIVE
                         using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive objective")) {
                             span?.AddTag("honu.count", charObjDirs.Count);
                             foreach (CharacterDirectiveObjective obj in charObjDirs) {
@@ -361,6 +412,8 @@ namespace watchtower.Services.Hosted {
                             _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbSum}ms to update DB data");
                         }
 
+                        dbTrace?.Stop();
+
                         _Queue.AddProcessTime(censusTime + dbSum);
                     }
 
@@ -385,6 +438,10 @@ namespace watchtower.Services.Hosted {
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopped {SERVICE_NAME} with {_Queue.Count()} left");
                 }
+
+                health.LastRan = DateTime.UtcNow;
+
+                _ServiceHealthMonitor.Set(SERVICE_NAME, health);
             }
         }
 

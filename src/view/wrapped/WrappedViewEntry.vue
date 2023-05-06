@@ -12,11 +12,141 @@
         <div v-else-if="status == 'loading_events'">
             <busy class="honu-busy honu-busy-lg"></busy>
             Loading events...
+
+            <div>
+                Kills: 
+                <span v-if="steps.kills == true">
+                    Loaded {{wrapped.kills.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Deaths: 
+                <span v-if="steps.deaths == true">
+                    Loaded {{wrapped.deaths.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Exp: 
+                <span v-if="steps.exp == true">
+                    Loaded {{wrapped.exp.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Vehicle destroy: 
+                <span v-if="steps.vehicleDestroy == true">
+                    Loaded {{wrapped.vehicleDestroy.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Facility control: 
+                <span v-if="steps.deaths == true">
+                    Loaded {{wrapped.deaths.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Achievement earned: 
+                <span v-if="steps.achievementEarned == true">
+                    Loaded {{wrapped.achievementEarned.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+            <div>
+                Item added: 
+                <span v-if="steps.itemAdded == true">
+                    Loaded {{wrapped.itemAdded.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Sessions: 
+                <span v-if="steps.sessions == true">
+                    Loaded {{wrapped.sessions.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
         </div>
 
         <div v-else-if="status == 'loading_static'">
             <busy class="honu-busy honu-busy-lg"></busy>
             Loading static data...
+
+            <div>
+                Characters: 
+                <span v-if="steps.characters == true">
+                    Loaded {{wrapped.characters.size}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Outfits: 
+                <span v-if="steps.outfits == true">
+                    Loaded {{wrapped.outfits.size}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Items: 
+                <span v-if="steps.items == true">
+                    Loaded {{wrapped.items.size}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Facilities: 
+                <span v-if="steps.facilities == true">
+                    Loaded {{wrapped.facilities.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Experience types: 
+                <span v-if="steps.expTypes == true">
+                    Loaded {{wrapped.expTypes.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
         </div>
 
         <div v-else-if="status == 'building_data'">
@@ -25,26 +155,56 @@
         </div>
 
         <div v-else-if="status == 'done'">
-
-            <wrapped-view-header :wrapped="filteredWrapped" @update-filters="updateFilters" class="mb-2"></wrapped-view-header>
-
-            <wrapped-view-general :wrapped="filteredWrapped" class="mb-2"></wrapped-view-general>
-
-            <div class="d-flex flex-row w-100" style="">
-                <div style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--red), var(--yellow))" >
-
-                </div>
-
-                <div style="flex-grow: 1;">
-                    <wrapped-view-character-interactions :wrapped="filteredWrapped" class="mb-2"></wrapped-view-character-interactions>
-                </div>
+            <div class="mb-2 w-100">
+                <button v-if="showFull == false" @click="showFull = true" class="btn btn-primary w-100">
+                    Show all (laggy and resource intensive!)
+                </button>
+                <button v-else @click="showFull = false" class="btn btn-secondary w-100">
+                    Show highlights
+                </button>
             </div>
 
-            <wrapped-view-classes :wrapped="filteredWrapped" class="mb-2"></wrapped-view-classes>
+            <div v-if="showFull == false">
+                <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
+            </div>
 
-            <wrapped-view-weapons :wrapped="filteredWrapped" class="mb-2"></wrapped-view-weapons>
+            <div v-else-if="showFull == true">
+                <wrapped-view-header :wrapped="filteredWrapped" @update-filters="updateFilters" class="mb-2"></wrapped-view-header>
 
-            <wrapped-view-sessions :wrapped="filteredWrapped" class="mb-2"></wrapped-view-sessions>
+                <wrapped-view-general :wrapped="filteredWrapped" class="mb-2"></wrapped-view-general>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--red), var(--yellow))"></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-character-interactions :wrapped="filteredWrapped"></wrapped-view-character-interactions>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--blue), var(--purple))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-classes :wrapped="filteredWrapped"></wrapped-view-classes>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--green), var(--yellow))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-weapons :wrapped="filteredWrapped"></wrapped-view-weapons>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--yellow), var(--purple))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-sessions :wrapped="filteredWrapped"></wrapped-view-sessions>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -57,7 +217,7 @@
 
     // models
     import { WrappedApi, WrappedEntry } from "api/WrappedApi";
-    import { WrappedFilters } from "./common";
+    import { WrappedExtraData, WrappedFilters } from "./common";
     import { KillEvent, KillStatApi } from "api/KillStatApi";
     import { ExperienceType, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
@@ -82,6 +242,7 @@
     import WrappedViewSessions from "./components/WrappedViewSessions.vue";
     import WrappedViewClasses from "./components/WrappedViewClasses.vue";
     import WrappedViewWeapons from "./components/WrappedViewWeapons.vue";
+    import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
 
     export const WrappedViewEntry = Vue.extend({
         props: {
@@ -93,6 +254,24 @@
                 connection: null as sR.HubConnection | null,
 
                 status: "" as string,
+
+                showFull: true as boolean,
+
+                steps: {
+                    kills: false as boolean,
+                    deaths: false as boolean,
+                    exp: false as boolean,
+                    vehicleDestroy: false as boolean,
+                    achievementEarned: false as boolean,
+                    itemAdded: false as boolean,
+                    sessions: false as boolean,
+
+                    characters: false as boolean,
+                    outfits: false as boolean,
+                    items: false as boolean,
+                    facilities: false as boolean,
+                    expTypes: false as boolean,
+                },
 
                 wrapped: new WrappedEntry() as WrappedEntry,
                 filters: new WrappedFilters() as WrappedFilters,
@@ -172,6 +351,12 @@
 
             onUpdateStatus: function(status: string): void {
                 console.log(`new status: ${status}`);
+
+                if (status == "done") {
+                    console.log(`loaded ${this.WrappedId}`);
+                    this.wrapped.extra = WrappedExtraData.build(this.wrapped);
+                }
+
                 this.status = status;
             },
 
@@ -180,6 +365,7 @@
                     const session: Session = SessionApi.parse(s);
                     this.wrapped.sessions.push(session);
                 }
+                this.steps.sessions = true;
             },
 
             onSendKills: function(events: KillEvent[]): void {
@@ -192,6 +378,7 @@
                         this.wrapped.kills.push(event);
                     }
                 }
+                this.steps.kills = true;
             },
 
             onSendDeaths: function(events: KillEvent[]): void {
@@ -204,6 +391,7 @@
                         this.wrapped.deaths.push(event);
                     }
                 }
+                this.steps.deaths = true;
             },
 
             onSendExp: function(events: ExpEvent[]): void {
@@ -211,6 +399,7 @@
                     const event: ExpEvent = ExpStatApi.parseExpEvent(ev);
                     this.wrapped.exp.push(event);
                 }
+                this.steps.exp = true;
             },
 
             onSendAchievementEarned: function(events: AchievementEarned[]): void {
@@ -218,6 +407,7 @@
                     const event: AchievementEarned = AchievementEarnedApi.parse(ev);
                     this.wrapped.achievementEarned.push(event);
                 }
+                this.steps.achievementEarned = true;
             },
 
             onSendFacilityControl: function(events: FacilityControlEvent[]): void {
@@ -232,6 +422,7 @@
                     const event: ItemAddedEvent = ItemAddedEventApi.parse(ev);
                     this.wrapped.itemAdded.push(event);
                 }
+                this.steps.itemAdded = true;
             },
 
             onSendVehicleDestroy: function(events: VehicleDestroyEvent[]): void {
@@ -239,6 +430,7 @@
                     const event: VehicleDestroyEvent = VehicleDestroyEventApi.parse(ev);
                     this.wrapped.vehicleDestroy.push(event);
                 }
+                this.steps.vehicleDestroy = true;
             },
 
             onUpdateCharacters: function(chars: PsCharacter[]): void {
@@ -246,18 +438,21 @@
                     const character: PsCharacter = CharacterApi.parse(c);
                     this.wrapped.characters.set(c.id, character);
                 }
+                this.steps.characters = true;
             },
 
             onUpdateOutfits: function(outfits: PsOutfit[]): void {
                 for (const o of outfits) {
                     this.wrapped.outfits.set(o.id, o);
                 }
+                this.steps.outfits = true;
             },
 
             onUpdateItems: function(items: PsItem[]): void {
                 for (const item of items) {
                     this.wrapped.items.set(item.id, item);
                 }
+                this.steps.items = true;
             },
 
             onUpdateAchievements: function(achs: Achievement[]): void {
@@ -324,7 +519,8 @@
 
         components: {
             Busy,
-            WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons
+            WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons,
+            WrappedViewHighlight
         }
     });
     export default WrappedViewEntry;

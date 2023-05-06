@@ -371,8 +371,11 @@ namespace watchtower.Services.Repositories.PSB {
                 TimeSpan reservationDuration = parsed.Reservation.End - parsed.Reservation.Start;
                 TimeSpan per = reservationDuration / baseCount;
 
+                bool isLanesmash = parsed.Reservation.Details.Contains("Lanesmash", StringComparison.InvariantCultureIgnoreCase);
+                _Logger.LogDebug($"isLanesmash: {isLanesmash} / {parsed.Reservation.Details}");
+
                 // if each base would take up less than 30 minutes, assume they wanted the bases for the whole duration
-                if (per < TimeSpan.FromMinutes(30) && bookings.Count > 1) {
+                if (isLanesmash == true || (per < TimeSpan.FromMinutes(30) && bookings.Count > 1)) {
                     _Logger.LogDebug($"Reservation has {baseCount} bases, but only {reservationDuration.TotalHours}, assuming all bases for full duration");
 
                     // put all the bases into one booking

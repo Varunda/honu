@@ -1,17 +1,17 @@
 ﻿<template>
     <div>
         <collapsible header-text="Weapons">
-
             <div>
-                <h3 class="wt-header" style="background-color: var(--purple)">
+                <h3 class="wt-header mb-0 border-0" style="background-color: var(--purple)">
                     Weapons
                 </h3>
 
-                <a-table
-                         :entries="weaponData"
-                         :paginate="true" :show-filters="true"
+                <a-table :entries="weaponData"
+                         :paginate="true" :show-filters="false"
                          :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
-                         default-sort-field="kills" default-sort-order="desc">
+                         default-sort-field="kills" default-sort-order="desc"
+                         class="border-top-0"
+                >
 
                     <a-col sort-field="name">
                         <a-header>
@@ -48,13 +48,13 @@
                         </a-body>
                     </a-col>
 
-                    <a-col sort-field="adsKills">
+                    <a-col sort-field="headshotRatio">
                         <a-header>
-                            ADS kills
+                            HSR%
                         </a-header>
 
                         <a-body v-slot="entry">
-                            {{entry.adsKills | locale}}
+                            {{entry.headshotRatio | locale(2)}}%
                         </a-body>
                     </a-col>
 
@@ -65,6 +65,36 @@
 
                         <a-body v-slot="entry">
                             {{entry.hipKills | locale}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="hipKillRatio">
+                        <a-header>
+                            Hip%
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.hipKillRatio | locale(2)}}%
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="adsKills">
+                        <a-header>
+                            ADS kills
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.adsKills | locale}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="adsKillRatio">
+                        <a-header>
+                            ADS%
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.adsKillRatio | locale(2)}}%
                         </a-body>
                     </a-col>
 
@@ -101,8 +131,12 @@
 
         public kills: number = 0;
         public headshots: number = 0;
+        public headshotRatio: number = 0;
+
         public adsKills: number = 0;
+        public adsKillRatio: number = 0;
         public hipKills: number = 0;
+        public hipKillRatio: number = 0;
     }
 
     export const WrappedViewWeapons = Vue.extend({
@@ -167,6 +201,13 @@
 
                     map.set(ev.weaponID, data);
                 }
+
+                const arr: WrappedWeaponData[] = Array.from(map.values()).map((iter: WrappedWeaponData) => {
+                    iter.headshotRatio = iter.headshots / Math.max(1, iter.kills) * 100;
+                    iter.adsKillRatio = iter.adsKills / Math.max(1, iter.kills) * 100;
+                    iter.hipKillRatio = iter.hipKills / Math.max(1, iter.kills) * 100;
+                    return iter;
+                });
 
                 this.weaponData = Loadable.loaded(Array.from(map.values()));
             }

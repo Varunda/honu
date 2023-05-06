@@ -3,11 +3,11 @@
         <collapsible header-text="Class stats">
 
             <div>
-                <h3 class="wt-header" style="background-color: var(--blue)">
+                <h3 class="wt-header mb-0 border-0" style="background-color: var(--blue)">
                     General
                 </h3>
 
-                <table class="table">
+                <table class="table border-top-0">
                     <thead class="table-secondary">
                         <tr>
                             <th>Class</th>
@@ -117,7 +117,7 @@
             },
 
             makeClassGeneralStats: function(): void {
-                this.general = WrappedClassStats.generate(this.wrapped);
+                this.general = this.wrapped.extra.classStats;
             }
         },
 

@@ -122,6 +122,7 @@ namespace watchtower.Services.Repositories {
         ///     that is an element of <paramref name="IDs"/>
         /// </returns>
         public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+
             List<PsOutfit> outfits = new List<PsOutfit>(IDs.Count);
 
             int total = IDs.Count;

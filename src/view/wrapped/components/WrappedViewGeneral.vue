@@ -26,6 +26,14 @@
             </div>
 
             <div>
+                Teamkills: {{this.wrapped.teamkills.length | locale(0)}}
+            </div>
+
+            <div>
+                Teamdeaths: {{this.wrapped.teamdeaths.length | locale(0)}}
+            </div>
+
+            <div>
                 Experience earned: {{totalScore | locale(0)}}
             </div>
 

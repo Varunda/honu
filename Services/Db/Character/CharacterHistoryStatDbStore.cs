@@ -183,6 +183,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("Month10", stat.Month10);
             cmd.AddParameter("Month11", stat.Month11);
             cmd.AddParameter("Month12", stat.Month12);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

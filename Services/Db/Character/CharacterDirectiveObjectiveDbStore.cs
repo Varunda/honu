@@ -59,6 +59,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("ObjectiveGroupID", dir.ObjectiveGroupID);
             cmd.AddParameter("Status", dir.Status);
             cmd.AddParameter("StateData", dir.StateData);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

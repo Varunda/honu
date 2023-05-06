@@ -57,6 +57,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("StartDate", ach.StartDate);
             cmd.AddParameter("FinishDate", ach.FinishDate);
             cmd.AddParameter("LastSaveDate", ach.LastSaveDate);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

@@ -342,7 +342,7 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            builder.Title = $"OvO reps not in Discord";
+            builder.Title = $"Practice reps not in Discord";
             builder.Color = DiscordColor.Red;
 
             for (int i = 0; i < ovo.Count; ++i) {

@@ -457,6 +457,7 @@ namespace watchtower.Realtime {
                     // wait for the player control events to be processed
                     // 2 seconds in case the facility event comes in at like 0.999, and the player events come at 1.000
                     DateTime waitFor = ev.Timestamp + TimeSpan.FromSeconds(2);
+                    UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
 
                     int waitCount = 0;
                     while (_MostRecentProcess < waitFor) {
@@ -482,16 +483,14 @@ namespace watchtower.Realtime {
                         ev.Players = events.Count;
                     }
 
+                    ev.UnstableState = state;
                     long ID = await _ControlDb.Insert(ev);
                     ev.ID = ID;
 
                     _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control {ev.ID} [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
 
                     Stopwatch timer = Stopwatch.StartNew();
-                    UnstableState state = _MapRepository.GetUnstableState(ev.WorldID, ev.ZoneID);
                     timer.Stop();
-
-                    ev.UnstableState = state;
 
                     // insert them 1 by 1, instead of inserting many in one DB call.
                     // i think i changed to an insert many update when trying to figure out why psql was

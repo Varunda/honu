@@ -104,11 +104,7 @@ namespace watchtower.Services.Db {
                         kpm = @KPM,
                         acc = @ACC,
                         hsr = @HSR,
-                        vkpm = @VKPM
-                    WHERE
-                        weapon_stats.character_id = @CharID
-                        AND weapon_stats.item_id = @ItemID
-                        AND weapon_stats.vehicle_id = @VehicleID;
+                        vkpm = @VKPM;
             ");
 
             decimal kd = entry.Kills / Math.Max(1m, entry.Deaths);
@@ -132,6 +128,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("ACC", acc);
             cmd.AddParameter("HSR", hsr);
             cmd.AddParameter("VKPM", vkpm);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

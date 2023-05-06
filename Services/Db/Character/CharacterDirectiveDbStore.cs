@@ -59,6 +59,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("DirectiveID", dir.DirectiveID);
             cmd.AddParameter("DirectiveTreeID", dir.TreeID);
             cmd.AddParameter("CompletionDate", dir.CompletionDate);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

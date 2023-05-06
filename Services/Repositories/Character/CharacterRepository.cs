@@ -131,6 +131,34 @@ namespace watchtower.Services.Repositories {
                 return new List<PsCharacter>();
             }
 
+            const int BLOCK_SIZE = 2000;
+
+            if (IDs.Count() <= BLOCK_SIZE) {
+                return await GetByIDsInternal(IDs, env, fast);
+            }
+
+            int BLOCK_COUNT = (int)Math.Ceiling((double) IDs.Count() / BLOCK_SIZE);
+
+            _Logger.LogDebug($"Encounted large character request size of {IDs.Count()}, breaking into {BLOCK_COUNT} blocks of {BLOCK_SIZE}");
+
+            List<PsCharacter> chars = new List<PsCharacter>(IDs.Count());
+            for (int i = 0; i < BLOCK_COUNT; ++i) {
+                List<string> block = IDs.Skip(i * BLOCK_SIZE).Take(BLOCK_SIZE).ToList();
+                if (block.Count == 0) {
+                    continue;
+                }
+
+                chars.AddRange(await GetByIDsInternal(block, env, fast));
+            }
+
+            return chars;
+        }
+
+        private async Task<List<PsCharacter>> GetByIDsInternal(IEnumerable<string> IDs, CensusEnvironment env, bool fast = false) {
+            if (!IDs.Any()) {
+                return new List<PsCharacter>();
+            }
+
             // Make a copy of the IDs as this list gets modified, and if the passed list is modified,
             //      that could affect whatever is calling this method
             List<string> localIDs = new List<string>(IDs);

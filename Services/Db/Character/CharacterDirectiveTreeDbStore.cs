@@ -57,6 +57,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CurrentTier", dir.CurrentTier);
             cmd.AddParameter("CurrentLevel", dir.CurrentLevel);
             cmd.AddParameter("CompletionDate", dir.CompletionDate);
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

@@ -1,5 +1,10 @@
 ﻿import { WrappedEntry } from "api/WrappedApi";
 import LoadoutUtils from "util/Loadout";
+import { Session } from "api/SessionApi";
+import { KillEvent } from "../../api/KillStatApi";
+import { ExpEvent } from "../../api/ExpStatApi";
+import { PsCharacter } from "../../api/CharacterApi";
+import { WrappedEntityInteraction } from "./data/interactions";
 
 export class WrappedFilters {
     public class = {
@@ -91,37 +96,24 @@ export class EntitySupported {
 
 }
 
-type DateEvent = {
-    action: "event";
-    timestamp: Date;
-    loadoutID: number;
-}
+type PsEvent = KillEvent & { type: "kill" }
+    | KillEvent & { type: "death" }
+    | ExpEvent & { type: "exp" }
+    | Session & { type: "session_start", timestamp: Date }
+    | Session & { type: "session_end", timestamp: Date };
 
-type SessionStartEvent = {
-    action: "start";
-    timestamp: Date;
-}
+export class WrappedExtraData {
 
-type SessionEndEvent = {
-    action: "end";
-    timestamp: Date;
-}
+    public classStats: WrappedClassStats[] = [];
+    public sessions: WrappedSession[] = [];
+    public characterFight: EntityFought[] = [];
+    public outfitFight: EntityFought[] = [];
+    public characterSupport: EntitySupported[] = [];
+    public outfitSupport: EntitySupported[] = [];
 
-type TimestampedEvent = DateEvent | SessionStartEvent | SessionEndEvent;
+    public static build(wrapped: WrappedEntry): WrappedExtraData {
+        const extra: WrappedExtraData = new WrappedExtraData();
 
-export class WrappedClassStats {
-
-    constructor(name?: string) {
-        this.name = name ?? "";
-    }
-
-    public name: string = "";
-    public kills: number = 0;
-    public deaths: number = 0;
-    public exp: number = 0;
-    public timeAs: number = 0;
-
-    public static generate(wrapped: WrappedEntry): WrappedClassStats[] {
         const infil: WrappedClassStats = new WrappedClassStats("Infiltrator");
         const lightAssault: WrappedClassStats = new WrappedClassStats("Light Assault");
         const medic: WrappedClassStats = new WrappedClassStats("Combat Medic");
@@ -147,16 +139,15 @@ export class WrappedClassStats {
             throw `unchecked loadoutID ${loadoutID}`;
         }
 
-        const timestampEvents: TimestampedEvent[] = [];
+        const events: PsEvent[] = [];
 
         for (const ev of wrapped.kills) {
             const classStats: WrappedClassStats = getClassStats(ev.attackerLoadoutID);
             ++classStats.kills;
 
-            timestampEvents.push({
-                action: "event",
-                timestamp: ev.timestamp,
-                loadoutID: ev.attackerLoadoutID
+            events.push({
+                type: "kill",
+                ...ev
             });
         }
 
@@ -164,10 +155,9 @@ export class WrappedClassStats {
             const classStats: WrappedClassStats = getClassStats(ev.killedLoadoutID);
             ++classStats.deaths;
 
-            timestampEvents.push({
-                action: "event",
-                timestamp: ev.timestamp,
-                loadoutID: ev.killedLoadoutID
+            events.push({
+                type: "death",
+                ...ev
             });
         }
 
@@ -175,10 +165,9 @@ export class WrappedClassStats {
             const classStats: WrappedClassStats = getClassStats(ev.loadoutID);
             classStats.exp += ev.amount;
 
-            timestampEvents.push({
-                action: "event",
-                timestamp: ev.timestamp,
-                loadoutID: ev.loadoutID
+            events.push({
+                type: "exp",
+                ...ev
             });
         }
 
@@ -187,62 +176,133 @@ export class WrappedClassStats {
                 continue;
             }
 
-            timestampEvents.push({
-                action: "start",
-                timestamp: session.start
+            // in cases where an event starts a session, not a login, ensure the session start comes first
+            events.push({
+                type: "session_start",
+                timestamp: new Date(session.start.getTime() - 50),
+                ...session
             });
 
-            timestampEvents.push({
-                action: "end",
-                timestamp: session.end
+            events.push({
+                type: "session_end",
+                timestamp: session.end,
+                ...session,
             });
         }
 
-        if (timestampEvents.length <= 0) {
-            return [];
+        if (events.length <= 0) {
+            return extra;
         }
 
-        timestampEvents.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        events.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
-        let inSession: boolean = false;
+        let currentSession: WrappedSession = new WrappedSession();
+        let sessionID: number | null = null;
         let lastLoadoutID: number = 0;
-        let lastTimestamp: Date = timestampEvents[0].timestamp;
-        for (const ev of timestampEvents) {
-            if (ev.action == "start") {
-                if (inSession == true) {
-                    console.warn(`already started a session`);
+
+        let lastTimestamp: Date = events[0].timestamp;
+        for (const ev of events) {
+            if (ev.type == "session_start") {
+                if (sessionID != null) {
+                    console.warn(`already in session ${sessionID}, closing it`);
+                    extra.sessions.push(currentSession);
+                    currentSession.duration = (ev.timestamp.getTime() - currentSession.session.start.getTime()) / 1000;
+                    currentSession = new WrappedSession();
                 }
 
-                inSession = true;
+                currentSession.session = ev;
+                currentSession.start = ev.timestamp;
+                currentSession.characterID = ev.characterID;
+                currentSession.character = wrapped.characters.get(ev.characterID) ?? null;
+
+                sessionID = ev.id;
                 lastTimestamp = ev.timestamp;
-            } else if (ev.action == "end") {
-                if (inSession == false) {
+            } else if (ev.type == "session_end") {
+                if (sessionID == null) {
                     console.warn(`not in a session at ${ev.timestamp.toISOString()}`);
+                } else {
+                    currentSession.duration = (ev.timestamp.getTime() - currentSession.session.start.getTime()) / 1000;
+                    extra.sessions.push(currentSession);
+                    currentSession = new WrappedSession();
                 }
 
-                inSession = false;
+                sessionID = null;
                 lastTimestamp = ev.timestamp;
-            } else if (ev.action == "event") {
-                if (inSession == false) {
+            } else if (ev.type == "kill" || ev.type == "death" || ev.type == "exp") {
+                if (sessionID == null) {
                     console.warn(`event at ${ev.timestamp.toISOString()} occured not within a session`);
+                    continue;
                 }
 
-                if (lastLoadoutID == ev.loadoutID) {
+                let eventLoadoutID: number;
+                if (ev.type == "kill") {
+                    eventLoadoutID = ev.attackerLoadoutID;
+                    ++currentSession.kills;
+                } else if (ev.type == "death") {
+                    eventLoadoutID = ev.killedLoadoutID;
+                    ++currentSession.deaths;
+                } else if (ev.type == "exp") {
+                    eventLoadoutID = ev.loadoutID;
+                    currentSession.exp += ev.amount;
+                } else {
+                    throw `invalid state, event was not kill|death|exp: ${(ev as any).type}`;
+                }
+
+                if (lastLoadoutID == eventLoadoutID) {
                     continue;
                 }
 
                 const timespan: number = ev.timestamp.getTime() - lastTimestamp.getTime();
 
-                const classStats: WrappedClassStats = getClassStats(ev.loadoutID);
-                classStats.timeAs += timespan;
+                if (timespan >= 60000) {
+                    //console.log(`${LoadoutUtils.getLoadoutName(eventLoadoutID)} ${timespan} ${ev.timestamp.toISOString()} ${lastTimestamp.toISOString()}!!`);
+                }
+
+                // fail safe, don't include events that are 30 minutes apart
+                if (timespan <= 1000 * 60 * 30) {
+                    const classStats: WrappedClassStats = getClassStats(eventLoadoutID);
+                    classStats.timeAs += timespan;
+                }
 
                 lastTimestamp = ev.timestamp;
             }
         }
 
-        return [
+        extra.classStats = [
             infil, lightAssault, medic, engi, heavy, max
         ];
+
+        const interactions: WrappedEntityInteraction = WrappedEntityInteraction.generate(wrapped);
+        extra.characterFight = interactions.characterFight;
+        extra.outfitFight = interactions.outfitFight;
+        extra.characterSupport = interactions.characterSupport;
+        extra.outfitSupport = interactions.outfitSupport;
+
+        return extra;
     }
 
+}
+
+export class WrappedClassStats {
+    constructor(name?: string) {
+        this.name = name ?? "";
+    }
+
+    public name: string = "";
+    public kills: number = 0;
+    public deaths: number = 0;
+    public exp: number = 0;
+    public timeAs: number = 0;
+}
+
+export class WrappedSession {
+    public session: Session = new Session();
+    public characterID: string = "";
+    public duration: number = 0;
+    public start: Date = new Date();
+    public character: PsCharacter | null = null;
+
+    public kills: number = 0;
+    public deaths: number = 0;
+    public exp: number = 0;
 }

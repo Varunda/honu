@@ -212,7 +212,7 @@ namespace watchtower.Services.Hosted {
             await HubUpdateStatus(entry, WrappedStatus.LOADING_STATIC_DATA);
 
             // LOADING CHARACTERS
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(idSet.Characters, CensusEnvironment.PC);
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(idSet.Characters, CensusEnvironment.PC, fast: true);
             entry.Characters = chars.ToDictionary(iter => iter.ID);
 
             // LOADING OUTFITS
@@ -221,6 +221,7 @@ namespace watchtower.Services.Hosted {
             entry.Outfits = outfits.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateOutfits(outfits);
 
+            // also load the leaders of the outfits, as it's how the world and faction of an outfit is loaded
             HashSet<string> leaderOutfitIDs = new(outfits.Select(iter => iter.LeaderID));
             List<PsCharacter> outfitLeaders = await _CharacterRepository.GetByIDs(leaderOutfitIDs, CensusEnvironment.PC);
             foreach (PsCharacter leader in outfitLeaders) {
