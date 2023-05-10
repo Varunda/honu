@@ -120,6 +120,7 @@ export class WrappedExtraData {
         const engi: WrappedClassStats = new WrappedClassStats("Engineer");
         const heavy: WrappedClassStats = new WrappedClassStats("Heavy Assault");
         const max: WrappedClassStats = new WrappedClassStats("MAX");
+        const other: WrappedClassStats = new WrappedClassStats("Other");
 
         const getClassStats = (loadoutID: number): WrappedClassStats => {
             if (LoadoutUtils.isInfiltrator(loadoutID) == true) {
@@ -136,7 +137,7 @@ export class WrappedExtraData {
                 return max;
             }
 
-            throw `unchecked loadoutID ${loadoutID}`;
+            return other;
         }
 
         const events: PsEvent[] = [];
