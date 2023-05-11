@@ -57,6 +57,7 @@ namespace watchtower.Realtime {
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
         private readonly SessionEndQueue _SessionEndQueue;
         private readonly AlertEndQueue _AlertEndQueue;
+        private readonly FacilityControlEventProcessQueue _FacilityControlQueue;
 
         private readonly CharacterRepository _CharacterRepository;
         private readonly MapCollection _MapCensus;
@@ -90,7 +91,8 @@ namespace watchtower.Realtime {
             ItemAddedDbStore itemAddedDb, AchievementEarnedDbStore achievementEarnedDb,
             RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository,
             WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
-            SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb, AlertEndQueue alertEndQueue) {
+            SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb,
+            AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue) {
 
             _Logger = logger;
 
@@ -130,6 +132,7 @@ namespace watchtower.Realtime {
             _NsaOptions = nsaOptions;
             _SessionEndQueue = sessionEndQueue;
             _AlertEndQueue = alertEndQueue;
+            _FacilityControlQueue = facilityControlQueue;
         }
 
         public DateTime MostRecentProcess() {
@@ -487,24 +490,16 @@ namespace watchtower.Realtime {
                     }
 
                     ev.UnstableState = state;
-                    long ID = await _ControlDb.Insert(ev);
-                    ev.ID = ID;
 
-                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control {ev.ID} [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
+                    // so why is a queue used when we're already in a background thread?
+                    // when a zone closes, there are like 50-70 events at once, and if poorly timed,
+                    //      all of them are inserted into db at the same time.
+                    // we do not want to use 50-70 connections and starve any other short lived operation,
+                    //      so we get all the information we need, then send it to a queue to actually be inserted into the db
+                    FacilityControlEventQueueEntry entry = new(ev, events);
+                    _FacilityControlQueue.Queue(entry);
 
-                    Stopwatch timer = Stopwatch.StartNew();
-                    timer.Stop();
-
-                    // insert them 1 by 1, instead of inserting many in one DB call.
-                    // i think i changed to an insert many update when trying to figure out why psql was
-                    //      slow on inserts. now that it's been fixed, inserting one by one is fine
-                    foreach (PlayerControlEvent playerControl in events) {
-                        await _FacilityPlayerDb.Insert(ID, playerControl);
-                    }
-
-                    timer.Restart();
-                    //_Logger.LogTrace($"CONTROL> Took {timer.ElapsedMilliseconds}ms to insert {events.Count} entries");
-                    //_Logger.LogDebug($"CONTROL> {ev.FacilityID} :: with {ev.Players} players, {ev.OldFactionID} => {ev.NewFactionID}, {ev.WorldID}:{instanceID:X}.{defID:X}, state: {ev.UnstableState}/{stat2}, {ev.Timestamp}");
+                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
 
                     RecentFacilityControlStore.Get().Add(ev.WorldID, ev);
                 } catch (Exception ex) {

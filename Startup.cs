@@ -203,9 +203,10 @@ namespace watchtower {
             services.AddHostedService<AlertLoadStartupService>();
             services.AddHostedService<RealtimeNetworkBroadcastService>();
             services.AddHostedService<RealtimeNetworkBuilderService>();
-            //services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>();
+            //services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>(); // replaced with background weapon stat queue
             services.AddHostedService<RealtimeAlertBroadcastServer>();
             services.AddHostedService<HostedWrappedGenerationProcess>();
+            services.AddHostedService<HostedBackgroundFacilityControlEventProcessQueue>(); // what a doozy of a name
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -251,7 +252,7 @@ namespace watchtower {
 
             //services.AddHostedService<KilledTeamIDFixerService>();
 
-            // Needed to Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
+            // Needed for Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownProxies.Add(IPAddress.Parse("64.227.19.86"));

@@ -22,6 +22,7 @@ namespace watchtower.Services.Queues {
             services.AddSingleton<SessionEndQueue>();
             services.AddSingleton<AlertEndQueue>();
             services.AddSingleton<WrappedGenerationQueue>();
+            services.AddSingleton<FacilityControlEventProcessQueue>();
         }
 
     }

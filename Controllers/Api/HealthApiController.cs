@@ -34,6 +34,8 @@ namespace watchtower.Controllers.Api {
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
         private readonly SessionEndQueue _SessionEndQueue;
+        private readonly WrappedGenerationQueue _WrappedQueue;
+        private readonly FacilityControlEventProcessQueue _FacilityControlQueue;
 
         public HealthApiController(ILogger<HealthApiController> logger, IMemoryCache cache,
             CensusRealtimeHealthRepository realtimeHealthRepository, CharacterCacheQueue characterCache,
@@ -41,7 +43,8 @@ namespace watchtower.Controllers.Api {
             CensusRealtimeEventQueue taskQueue, WeaponPercentileCacheQueue percentileQueue,
             DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
             RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue,
-            SessionEndQueue sessionEndQueue) {
+            SessionEndQueue sessionEndQueue, WrappedGenerationQueue wrappedQueue,
+            FacilityControlEventProcessQueue facilityControlQueue) {
 
             _Logger = logger;
             _Cache = cache;
@@ -58,6 +61,8 @@ namespace watchtower.Controllers.Api {
             _ReconnectDb = reconnectDb;
             _WeaponUpdateQueue = weaponUpdateQueue;
             _SessionEndQueue = sessionEndQueue;
+            _WrappedQueue = wrappedQueue;
+            _FacilityControlQueue = facilityControlQueue;
         }
 
         /// <summary>
@@ -89,9 +94,12 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount discord = _MakeCount("discord_message_queue", _DiscordQueue);
                 ServiceQueueCount weaponUpdate = _MakeCount("weapon_update_queue", _WeaponUpdateQueue);
                 ServiceQueueCount sessionEnd = _MakeCount("session_end_queue", _SessionEndQueue);
+                ServiceQueueCount wrapped = _MakeCount("wrapped_generation", _WrappedQueue);
+                ServiceQueueCount facility = _MakeCount("facility_control", _FacilityControlQueue);
 
                 health.Queues = new List<ServiceQueueCount>() {
-                    task, session, c, weapon, weaponUpdate, percentile, discord, sessionEnd
+                    task, session, c, weapon, weaponUpdate, percentile,
+                    discord, sessionEnd, wrapped, facility
                 };
 
                 _Cache.Set("Honu.Health", health, new MemoryCacheEntryOptions() {
