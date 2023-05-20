@@ -24,7 +24,7 @@ namespace watchtower.Services.Hosted {
 
     public class HostedBackgroundCharacterWeaponStatQueue : BackgroundService {
 
-        private const string SERVICE_NAME = "background_character_cache";
+        private const string SERVICE_NAME = "backgroud_character_cache";
 
         private readonly ILogger<HostedBackgroundCharacterWeaponStatQueue> _Logger;
         private readonly IServiceHealthMonitor _ServiceHealthMonitor;

@@ -67,7 +67,13 @@ namespace watchtower.Services.Hosted {
                     continue;
                 }
 
-                CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
+                _Logger.LogDebug($"peaking next entry");
+                CharacterUpdateQueueEntry entry = await _Queue.Peak(stoppingToken);
+                _Logger.LogDebug($"peaked next entry {entry.CharacterID}");
+                string cID1 = entry.CharacterID;
+                _Logger.LogDebug($"peaking again, expect to see {cID1}");
+                entry = await _Queue.Peak(stoppingToken);
+                _Logger.LogDebug($"match? {cID1 == entry.CharacterID}, got {entry.CharacterID} from queue (expected {cID1})");
                 timer.Restart();
                 _Logger.LogDebug($"priority updating {entry.CharacterID}");
 
@@ -84,7 +90,6 @@ namespace watchtower.Services.Hosted {
                         rootTrace?.AddExceptionEvent(ex);
                         _Logger.LogWarning($"Got timeout when loading {entry.CharacterID} from census, delaying 30 seconds, requeueing and retrying [Message='{ex.Message}']");
                         await Task.Delay(30 * 1000, stoppingToken);
-                        _Queue.Queue(entry);
                         continue;
                     }
 
@@ -117,7 +122,6 @@ namespace watchtower.Services.Hosted {
                         } catch (AggregateException ex) when (ex.InnerException is CensusConnectionException) {
                             rootTrace?.AddExceptionEvent(ex);
                             _Logger.LogWarning($"Got timeout when getting data for {entry.CharacterID}, requeuing");
-                            _Queue.Queue(entry);
                             await Task.Delay(1000 * 15, stoppingToken);
                             continue;
                         }
@@ -130,6 +134,10 @@ namespace watchtower.Services.Hosted {
                     rootTrace?.Stop();
 
                     _Logger.LogDebug($"updated {entry.CharacterID} in {timer.ElapsedMilliseconds}ms");
+
+                    _Logger.LogDebug($"dequeue next entry, expect to see {cID1} right away");
+                    CharacterUpdateQueueEntry popped = await _Queue.Dequeue(stoppingToken);
+                    _Logger.LogDebug($"dequeued {popped.CharacterID}, expected {cID1}, match? {cID1 == popped.CharacterID}");
 
                     errorCount = 0;
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {

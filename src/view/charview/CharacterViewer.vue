@@ -32,6 +32,36 @@
             </small>
         </div>
 
+        <div v-if="queue.data.state == 'loaded'">
+            <div v-if="queue.index > -1">
+                <h4 class="text-info text-center">
+                    This character is
+                    <span v-if="queue.index == 0">
+                        currently being
+                    </span>
+                    <span v-else>
+                        in queue to be
+                    </span>
+                    updated
+                    <button title="Refresh" class="btn btn-link p-0" @click="loadQueuePosition" :class=" {'spin': queue.data.state != 'loaded'}">
+                        <span>&#x21bb;</span>
+                    </button>
+                </h4>
+                <div class="text-center d-block">
+                    This character is in position {{queue.index + 1}} of {{queue.data.data.length}}.
+                    <span v-if="queue.processingTime != null">
+                        Estimated time: {{(queue.processingTime * (queue.index + 1)) / 1000 | mduration}}
+                    </span>
+                </div>
+            </div>
+
+            <div v-else-if="queue.wasInQueue == true">
+                <h4 class="text-success text-center btn-link" @click="loadCharacterID">
+                    This character was updated. Click here to reload character data
+                </h4>
+            </div>
+        </div>
+
         <div v-if="character.state == 'idle'"></div>
 
         <div v-else-if="character.state == 'loading'">
@@ -116,6 +146,7 @@
 
     import { PsCharacter, CharacterApi, HonuCharacterData } from "api/CharacterApi";
     import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
+    import { HonuHealth, HonuHealthApi, ServiceQueueCount } from "api/HonuHealthApi";
     import { Loadable, Loading } from "Loading";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
@@ -133,16 +164,20 @@
     import CharacterOutfitHistory from "./components/CharacterOutfitHistory.vue";
 
     export const CharacterViewer = Vue.extend({
-        beforeMount: function(): void {
-            this.loadCharacterID();
-        },
-
         data: function() {
             return {
                 charID: "" as string,
                 character: Loadable.idle() as Loading<PsCharacter>,
                 metadata: Loadable.idle() as Loading<CharacterMetadata>,
                 honuData: Loadable.idle() as Loading<HonuCharacterData>,
+
+                queue: {
+                    data: Loadable.idle() as Loading<string[]>,
+                    index: 0 as number,
+                    processingTime: null as number | null,
+                    wasInQueue: false as boolean,
+                    intervalId: -1 as number
+                },
 
                 selectedTab: "overview" as string,
                 selectedComponent: "CharacterOverview" as string
@@ -151,6 +186,31 @@
 
         created: function(): void {
             document.title = `Honu / Char / <loading...>`;
+        },
+
+        beforeMount: function(): void {
+            this.loadCharacterID();
+
+            this.$nextTick(async () => {
+                console.log(`doing first queue check`);
+                await this.loadQueuePosition();
+                console.log(`loaded queue position, at ${this.queue.index}`);
+
+                if (this.queue.wasInQueue == true) {
+                    this.queue.intervalId = setInterval(async () => {
+                        if (this.queue.wasInQueue == true) {
+                            console.log(`character is in update queue, updating queue position`);
+                            await this.loadQueuePosition();
+                            console.log(`character is in position ${this.queue.index} (exiting on -1)`);
+
+                            if (this.queue.index == -1) {
+                                console.log(`no longer in queue, stopping background queue check`);
+                                clearInterval(this.queue.intervalId);
+                            }
+                        }
+                    }, 6000) as unknown as number;
+                }
+            });
         },
 
         methods: {
@@ -190,13 +250,15 @@
             },
 
             loadCharacterID: async function(): Promise<void> {
+                this.queue.wasInQueue = false;
+
                 const parts: string[] = location.pathname.split("/");
                 if (parts.length < 3) {
                     throw `Invalid URL passed '${location.pathname}': Expected at least 3 parts after split on '/'`;
                 }
 
                 if (parts[1] != "c") {
-                    throw `Expected 'c' in parts[1]`;
+                    throw `Expected 'c' in parts[1], got '${parts[1]}' instead`;
                 }
 
                 this.charID = parts[2];
@@ -228,6 +290,33 @@
                 if (parts.length >= 4) {
                     console.log(`viewing tab: '${parts[3]}'`);
                     this.selectTab(parts[3]);
+                }
+            },
+
+            loadQueuePosition: async function(): Promise<void> {
+                this.queue.data = await CharacterMetadataApi.getQueue();
+                if (this.queue.data.state != "loaded") {
+                    return;
+                }
+
+                this.queue.index = this.queue.data.data.findIndex((iter: string) => iter == this.charID);
+                if (this.queue.index == -1) {
+                    this.queue.index = -1;
+                    this.queue.processingTime = null;
+                    return;
+                }
+
+                this.queue.wasInQueue = true;
+
+                const health: Loading<HonuHealth> = await HonuHealthApi.getHealth();
+                if (health.state == "loaded") {
+                    const queue: ServiceQueueCount | undefined = health.data.queues.find((iter) => iter.queueName == "character_prio_queue");
+                    if (queue == undefined) {
+                        this.queue.processingTime = null;
+                        return;
+                    }
+
+                    this.queue.processingTime = queue.median;
                 }
             }
 

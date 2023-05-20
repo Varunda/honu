@@ -31,5 +31,9 @@ export class CharacterMetadataApi extends ApiWrapper<CharacterMetadata> {
 		return CharacterMetadataApi.get().readList(`/api/character/many/metadata?${params.toString()}`, CharacterMetadataApi.parse);
     }
 
+	public static async getQueue(): Promise<Loading<string[]>> {
+		return CharacterMetadataApi.get().readList(`/api/services/character_priority_queue`, (elem: any) => elem as string);
+    }
+
 }
 

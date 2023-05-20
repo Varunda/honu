@@ -12,12 +12,24 @@ namespace watchtower.Services.Queues {
 
         internal ILogger _Logger;
 
+        /// <summary>
+        ///     queue of the items to be pulled out
+        /// </summary>
         internal ConcurrentQueue<T> _Items = new ConcurrentQueue<T>();
 
+        /// <summary>
+        ///     a signal for when an item is in the queue
+        /// </summary>
         internal SemaphoreSlim _Signal = new SemaphoreSlim(0);
 
+        /// <summary>
+        ///     how long it takes each item in the queue to be processed in some way
+        /// </summary>
         internal ConcurrentQueue<long> _ProcessTime = new ConcurrentQueue<long>();
 
+        /// <summary>
+        ///     how many items have been processed in this queue
+        /// </summary>
         internal long _ProcessedCount = 0;
 
         public BaseQueue(ILoggerFactory factory) {
@@ -32,6 +44,21 @@ namespace watchtower.Services.Queues {
             await _Signal.WaitAsync(cancel);
             _Items.TryDequeue(out T? entry);
             ++_ProcessedCount;
+
+            return entry!;
+        }
+
+        /// <summary>
+        ///     Peak at the next item in the queue. This will block until there is one available.
+        ///     DO NOT USE THIS WITH MULTIPLER WORKERS. If you have multiple background processors using Peak,
+        ///     they will be working on the same <typeparamref name="T"/>!
+        /// </summary>
+        /// <param name="cancel">Stopping token</param>
+        /// <returns></returns>
+        public async Task<T> Peak(CancellationToken cancel) {
+            await _Signal.WaitAsync(cancel);
+            _Items.TryPeek(out T? entry);
+            _Signal.Release();
 
             return entry!;
         }

@@ -93,8 +93,27 @@ namespace watchtower.Services.Repositories {
             return entry;
         }
 
+        /// <summary>
+        ///     Get multiple entries based on its ID
+        /// </summary>
+        /// <param name="IDs">List of IDs to get the data of</param>
+        /// <returns>
+        ///     A list of <typeparamref name="T"/> that contain a <see cref="IKeyedObject.ID"/>
+        ///     within <paramref name="IDs"/>
+        /// </returns>
         public async Task<List<T>> GetByIDs(IEnumerable<int> IDs) {
             return (await GetAll()).Where(iter => IDs.Contains(iter.ID)).ToList();
+        }
+
+        /// <summary>
+        ///     Remove the cached data, forcing a Census call the next time 
+        /// </summary>
+        /// <returns>
+        ///     A task when this operation is complete
+        /// </returns>
+        public void FlushCache() {
+            _Cache.Remove(CACHE_KEY_ALL);
+            _Cache.Remove(CACHE_KEY_MAP);
         }
 
     }

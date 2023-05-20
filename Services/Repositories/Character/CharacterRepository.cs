@@ -378,6 +378,20 @@ namespace watchtower.Services.Repositories {
             return character.LastUpdated < DateTime.UtcNow + TimeSpan.FromHours(24);
         }
 
+        /// <summary>
+        ///     Upsert (update/insert) a character into the repository. Takes care of removing cached data
+        /// </summary>
+        /// <param name="c">Character to upsert</param>
+        /// <returns>
+        ///     A task when the operation is complete
+        /// </returns>
+        public async Task Upsert(PsCharacter c) {
+            string key = string.Format(CACHE_KEY_ID, c.ID);
+            _Cache.Remove(key);
+
+            await _Db.Upsert(c);
+        }
+
     }
 
     public static class ICharacterRepositoryExtensions {

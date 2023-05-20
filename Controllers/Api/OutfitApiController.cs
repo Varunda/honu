@@ -339,7 +339,7 @@ namespace watchtower.Controllers.Api {
             List<OutfitActivityDbEntry> dbEntries;
             try {
                 dbEntries = await _OutfitDb.GetActivity(outfitID, start, finish);
-            } catch (TimeoutException) {
+            } catch (NpgsqlException ex) when (ex.InnerException is TimeoutException) {
                 return ApiInternalError<List<OutfitActivity>>(new TimeoutException("DB timeout occured"));
             }
 

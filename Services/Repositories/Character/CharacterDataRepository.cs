@@ -10,6 +10,7 @@ using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.WeaponStats;
+using watchtower.Models.Db;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -24,6 +25,9 @@ namespace watchtower.Services.Repositories {
 
         private readonly CharacterCollection _CharacterCensus;
         private readonly CharacterDbStore _CharacterDb;
+        private readonly CharacterMetadataDbStore _CharacterMetadataDb;
+        private readonly CharacterRepository _CharacterRepository;
+
         private readonly CharacterWeaponStatCollection _WeaponCensus;
         private readonly CharacterWeaponStatDbStore _WeaponStatDb;
         private readonly CharacterHistoryStatCollection _HistoryCensus;
@@ -54,7 +58,8 @@ namespace watchtower.Services.Repositories {
             CharacterDirectiveTreeCollection charDirTreeCensus, CharacterDirectiveTreeDbStore charDirTreeDb,
             CharacterDirectiveTierCollection charDirTierCensus, CharacterDirectiveTierDbStore charDirTierDb,
             CharacterDirectiveObjectiveCollection charDirObjectiveCensus, CharacterDirectiveObjectiveDbStore charDirObjectiveDb,
-            CharacterFriendDbStore friendDb) {
+            CharacterFriendDbStore friendDb, CharacterMetadataDbStore characterMetadataDb,
+            CharacterRepository characterRepository) {
 
             _Logger = logger;
 
@@ -80,6 +85,8 @@ namespace watchtower.Services.Repositories {
             _CharacterDirectiveTierDb = charDirTierDb;
             _CharacterDirectiveObjectiveCensus = charDirObjectiveCensus;
             _CharacterDirectiveObjectiveDb = charDirObjectiveDb;
+            _CharacterMetadataDb = characterMetadataDb;
+            _CharacterRepository = characterRepository;
         }
 
         public async Task UpdateCharacter(string charID, CancellationToken stoppingToken, bool batchUpdate = false) {
@@ -269,10 +276,25 @@ namespace watchtower.Services.Repositories {
             stoppingToken.ThrowIfCancellationRequested();
 
             PsCharacter? character = await _CharacterCensus.GetByID(charID, CensusEnvironment.PC);
-
             if (character != null) {
-                await _CharacterDb.Upsert(character);
+                character.LastUpdated = DateTime.UtcNow;
+                // update on the character repo so if they are cached it stays up to date
+                await _CharacterRepository.Upsert(character);
+
+                CharacterMetadata? metadata = await _CharacterMetadataDb.GetByCharacterID(charID);
+                if (metadata == null) {
+                    metadata = new CharacterMetadata() {
+                        ID = charID,
+                        LastUpdated = DateTime.UtcNow,
+                        NotFoundCount = 0
+                    };
+                }
+
+                metadata.LastUpdated = DateTime.UtcNow;
+                metadata.NotFoundCount = 0;
+                await _CharacterMetadataDb.Upsert(charID, metadata);
             }
+
         }
 
     }
