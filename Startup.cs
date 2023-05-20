@@ -239,6 +239,7 @@ namespace watchtower {
                 services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
                 services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
+                services.AddHostedService<HostedBackgroundCharacterPriorityUpdateQueue>();
 
                 if (Configuration.GetValue<bool>("StartupServices:AlertPlayer") != false) {
                     services.AddHostedService<AlertParticipantBuilder>();

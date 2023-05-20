@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ namespace watchtower.Services.Queues {
     public class WrappedGenerationQueue : BaseQueue<WrappedEntry> {
 
         private readonly HashSet<Guid> _Pending = new();
+
+        public WrappedGenerationQueue(ILoggerFactory factory) : base(factory) { }
 
         public new void Queue(WrappedEntry entry) {
             lock (_Pending) {

@@ -34,24 +34,8 @@ namespace watchtower.Services.Hosted {
 
         private readonly CharacterCollection _CharacterCensus;
         private readonly CharacterDbStore _CharacterDb;
-        private readonly CharacterWeaponStatCollection _WeaponCensus;
-        private readonly CharacterWeaponStatDbStore _WeaponStatDb;
-        private readonly CharacterHistoryStatCollection _HistoryCensus;
-        private readonly CharacterHistoryStatDbStore _HistoryDb;
-        private readonly CharacterItemCollection _ItemCensus;
-        private readonly CharacterItemDbStore _ItemDb;
-        private readonly CharacterStatCollection _StatCensus;
-        private readonly CharacterStatDbStore _StatDb;
-        private readonly CharacterFriendCollection _FriendCensus;
-        private readonly CharacterFriendDbStore _FriendDb;
-        private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
-        private readonly CharacterDirectiveDbStore _CharacterDirectiveDb;
-        private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
-        private readonly CharacterDirectiveTreeDbStore _CharacterDirectiveTreeDb;
-        private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
-        private readonly CharacterDirectiveTierDbStore _CharacterDirectiveTierDb;
-        private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
-        private readonly CharacterDirectiveObjectiveDbStore _CharacterDirectiveObjectiveDb;
+
+        private readonly CharacterDataRepository _CharacterDataRepository;
 
         private static int _Count = 0;
 
@@ -64,18 +48,9 @@ namespace watchtower.Services.Hosted {
         };
 
         public HostedBackgroundCharacterWeaponStatQueue(ILogger<HostedBackgroundCharacterWeaponStatQueue> logger,
-            CharacterUpdateQueue queue,
-            CharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
-            CharacterHistoryStatDbStore hDb, CharacterHistoryStatCollection hColl,
-            CharacterItemCollection itemCensus, CharacterItemDbStore itemDb,
-            CharacterStatCollection statCensus, CharacterStatDbStore statDb,
-            CharacterMetadataDbStore metadataDb, CharacterCollection charColl,
-            CharacterDbStore charDb, CharacterFriendCollection friendCensus,
-            CharacterDirectiveCollection charDirCensus, CharacterDirectiveDbStore charDirDb,
-            CharacterDirectiveTreeCollection charDirTreeCensus, CharacterDirectiveTreeDbStore charDirTreeDb,
-            CharacterDirectiveTierCollection charDirTierCensus, CharacterDirectiveTierDbStore charDirTierDb,
-            CharacterDirectiveObjectiveCollection charDirObjectiveCensus, CharacterDirectiveObjectiveDbStore charDirObjectiveDb,
-            CharacterFriendDbStore friendDb, IServiceHealthMonitor serviceHealthMonitor) {
+            CharacterUpdateQueue queue, CharacterMetadataDbStore metadataDb,
+            CharacterCollection charColl, CharacterDbStore charDb,
+            IServiceHealthMonitor serviceHealthMonitor, CharacterDataRepository characterDataRepository) {
 
             _Logger = logger;
             _Queue = queue ?? throw new ArgumentNullException(nameof(queue));
@@ -84,25 +59,8 @@ namespace watchtower.Services.Hosted {
 
             _CharacterCensus = charColl;
             _CharacterDb = charDb;
-            _WeaponStatDb = db ?? throw new ArgumentNullException(nameof(db));
-            _WeaponCensus = weaponColl ?? throw new ArgumentNullException(nameof(weaponColl));
-            _HistoryCensus = hColl;
-            _HistoryDb = hDb;
-            _ItemCensus = itemCensus;
-            _ItemDb = itemDb;
-            _StatCensus = statCensus;
-            _StatDb = statDb;
-            _FriendCensus = friendCensus;
-            _FriendDb = friendDb;
-            _CharacterDirectiveCensus = charDirCensus;
-            _CharacterDirectiveDb = charDirDb;
-            _CharacterDirectiveTreeCensus = charDirTreeCensus;
-            _CharacterDirectiveTreeDb = charDirTreeDb;
-            _CharacterDirectiveTierCensus = charDirTierCensus;
-            _CharacterDirectiveTierDb = charDirTierDb;
-            _CharacterDirectiveObjectiveCensus = charDirObjectiveCensus;
-            _CharacterDirectiveObjectiveDb = charDirObjectiveDb;
             _ServiceHealthMonitor = serviceHealthMonitor;
+            _CharacterDataRepository = characterDataRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -119,8 +77,8 @@ namespace watchtower.Services.Hosted {
                     continue;
                 }
 
-                timer.Restart();
                 CharacterUpdateQueueEntry entry = await _Queue.Dequeue(stoppingToken);
+                timer.Restart();
 
                 try {
                     PsCharacter? censusChar = entry.CensusCharacter;
@@ -179,42 +137,10 @@ namespace watchtower.Services.Hosted {
                         metadata.NotFoundCount = 0;
                         metadata.LastUpdated = DateTime.UtcNow;
 
-                        List<WeaponStatEntry> weaponStats = new();
-                        List<PsCharacterHistoryStat> historyStats = new();
-                        List<CharacterItem> itemStats = new();
-                        List<PsCharacterStat> statEntries = new();
-                        List<CharacterFriend> charFriends = new();
-                        List<CharacterDirective> charDirs = new();
-                        List<CharacterDirectiveTree> charTreeDirs = new();
-                        List<CharacterDirectiveTier> charTierDirs = new();
-                        List<CharacterDirectiveObjective> charObjDirs = new();
-
                         await _CharacterDb.Upsert(censusChar);
 
-                        using Activity? censusTrace = HonuActivitySource.Root.StartActivity("update character - census root");
                         try {
-                            await Task.WhenAll(
-                                // Update the characters weapon stats
-                                _WeaponCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => weaponStats = result.Result),
-
-                                // Update the characters history stats
-                                _HistoryCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => historyStats = result.Result),
-
-                                // Update the items the character has
-                                _ItemCensus.GetByID(entry.CharacterID).ContinueWith(result => itemStats = result.Result),
-
-                                // Get the character stats (not the history ones)
-                                _StatCensus.GetByID(entry.CharacterID).ContinueWith(result => statEntries = result.Result),
-
-                                // Get the character's friends
-                                _FriendCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charFriends = result.Result),
-
-                                // Get the character's directive data
-                                _CharacterDirectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charDirs = result.Result),
-                                _CharacterDirectiveTreeCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTreeDirs = result.Result),
-                                _CharacterDirectiveTierCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charTierDirs = result.Result),
-                                _CharacterDirectiveObjectiveCensus.GetByCharacterID(entry.CharacterID).ContinueWith(result => charObjDirs = result.Result)
-                            );
+                            await _CharacterDataRepository.UpdateCharacter(entry.CharacterID, stoppingToken, batchUpdate: batchDbUpdate);
                         } catch (AggregateException ex) when (ex.InnerException is CensusConnectionException) {
                             rootTrace?.AddExceptionEvent(ex);
                             _Logger.LogWarning($"Got timeout when getting data for {entry.CharacterID}, requeuing");
@@ -222,199 +148,8 @@ namespace watchtower.Services.Hosted {
                             await Task.Delay(1000 * 15, stoppingToken);
                             continue;
                         }
-                        censusTrace?.Stop();
 
-                        long censusTime = timer.ElapsedMilliseconds;
-                        timer.Restart();
-
-                        if (entry.Print == true) {
-                            _Logger.LogDebug($"{entry.CharacterID}> Took {censusTime}ms to get data from Census.\n"
-                                + $"\tWeapons: {weaponStats.Count}\n"
-                                + $"\tHistory stats: {historyStats.Count}\n"
-                                + $"\tItems: {itemStats.Count}\n"
-                                + $"\tStat entries: {statEntries.Count}\n"
-                                + $"\tFriends: {charFriends.Count}\n"
-                                + $"\tDirectives: {charDirs.Count}\n"
-                                + $"\tDirective trees: {charTreeDirs.Count}\n"
-                                + $"\tDirective tiers: {charTierDirs.Count}\n"
-                                + $"\tDirective objectives: {charObjDirs.Count}\n"
-                            );
-                        }
-
-                        using Activity? dbTrace = HonuActivitySource.Root.StartActivity("update character - db root");
-
-                        // DB WEAPON STATS
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
-                            span?.AddTag("honu.count", weaponStats.Count);
-                            if (weaponStats.Count > 0) {
-                                try {
-                                    if (batchDbUpdate == true) {
-                                        await _WeaponStatDb.UpsertMany(entry.CharacterID, weaponStats);
-                                    } else {
-                                        foreach (WeaponStatEntry iter in weaponStats) {
-                                            await _WeaponStatDb.Upsert(iter);
-                                        }
-                                    }
-                                } catch (Exception ex) {
-                                    span?.AddExceptionEvent(ex);
-                                    _Logger.LogError(ex, $"error updating character weapon stat data for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
-                                }
-                            }
-                        }
-                        stoppingToken.ThrowIfCancellationRequested();
-                        long dbWeapon = timer.ElapsedMilliseconds; timer.Restart();
-
-                        // DB HISTORY STATS
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db history stats")) {
-                            span?.AddTag("honu.count", historyStats.Count);
-                            try {
-                                span?.AddTag("honu.batch", "ignored");
-                                foreach (PsCharacterHistoryStat stat in historyStats) {
-                                    await _HistoryDb.Upsert(entry.CharacterID, stat.Type, stat);
-                                }
-                            } catch (Exception ex) {
-                                span?.AddExceptionEvent(ex);
-                                _Logger.LogError(ex, $"error updating history stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
-                            }
-                        }
-                        long dbHistory = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB ITEM UNLOCKS
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db item unlocks")) {
-                            span?.AddTag("honu.count", itemStats.Count);
-                            try {
-                                if (itemStats.Count > 0) {
-                                    await _ItemDb.Set(entry.CharacterID, itemStats);
-                                }
-                                /*
-                                if (batchDbUpdate == true) {
-                                    if (itemStats.Count > 0) {
-                                        await _ItemDb.Set(entry.CharacterID, itemStats);
-                                    }
-                                } else {
-                                    foreach (CharacterItem iter in itemStats) {
-                                        await _ItemDb.Upsert(iter);
-                                    }
-                                }
-                                */
-                            } catch (Exception ex) {
-                                span?.AddExceptionEvent(ex);
-                                _Logger.LogError(ex, $"error updating item stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
-                            }
-                        }
-                        long dbItem = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB STATS
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db stats")) {
-                            span?.AddTag("honu.count", statEntries.Count);
-                            try {
-                                if (statEntries.Count > 0) {
-                                    await _StatDb.Set(entry.CharacterID, statEntries);
-                                }
-                            } catch (Exception ex) {
-                                span?.AddExceptionEvent(ex);
-                                _Logger.LogError(ex, $"error updating stats for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
-                            }
-                        }
-                        long dbStats = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB FRIENDS
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db friends")) {
-                            span?.AddTag("honu.count", charFriends.Count);
-                            try {
-                                if (charFriends.Count > 0) {
-                                    await _FriendDb.Set(entry.CharacterID, charFriends);
-                                }
-                            } catch (Exception ex) {
-                                span?.AddExceptionEvent(ex);
-                                _Logger.LogError(ex, $"error updating friends for {entry.CharacterID}/{entry.CensusCharacter?.Name}");
-                            }
-                        }
-                        long dbFriends = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB DIRECTIVE
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive")) {
-                            span?.AddTag("honu.count", charDirs.Count);
-                            try {
-                                await _CharacterDirectiveDb.UpsertMany(entry.CharacterID, charDirs);
-                            } catch (Exception ex) {
-                                span?.AddExceptionEvent(ex);
-                                _Logger.LogError(ex, $"Error updating character directive data for {entry.CharacterID}");
-                            }
-                        }
-                        long dbCharDir = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB DIRECTIVE TREE
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tree")) {
-                            span?.AddTag("honu.count", charTreeDirs.Count);
-                            foreach (CharacterDirectiveTree tree in charTreeDirs) {
-                                try {
-                                    await _CharacterDirectiveTreeDb.Upsert(entry.CharacterID, tree);
-                                } catch (Exception ex) {
-                                    span?.AddExceptionEvent(ex);
-                                    _Logger.LogError(ex, $"Error upserting character directive trees for {entry.CharacterID}");
-                                }
-                            }
-                        }
-                        long dbCharDirTree = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB DIRECTIVE TIER
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tier")) {
-                            span?.AddTag("honu.count", charTierDirs.Count);
-                            foreach (CharacterDirectiveTier tier in charTierDirs) {
-                                try {
-                                    await _CharacterDirectiveTierDb.Upsert(entry.CharacterID, tier);
-                                } catch (Exception ex) {
-                                    span?.AddExceptionEvent(ex);
-                                    _Logger.LogError(ex, $"Error upserting character directive tiers for {entry.CharacterID}");
-                                }
-                            }
-                        }
-                        long dbCharDirTier = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        // DB DIRECTIVE OBJECTIVE
-                        using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive objective")) {
-                            span?.AddTag("honu.count", charObjDirs.Count);
-                            foreach (CharacterDirectiveObjective obj in charObjDirs) {
-                                try {
-                                    await _CharacterDirectiveObjectiveDb.Upsert(entry.CharacterID, obj);
-                                } catch (Exception ex) {
-                                    span?.AddExceptionEvent(ex);
-                                    _Logger.LogError(ex, $"Error upserting character directive objectives for {entry.CharacterID}");
-                                }
-                            }
-                        }
-                        long dbCharDirObj = timer.ElapsedMilliseconds; timer.Restart();
-                        stoppingToken.ThrowIfCancellationRequested();
-
-                        long dbSum = dbWeapon + dbHistory + dbItem + dbStats + dbFriends + dbCharDir + dbCharDirTree + dbCharDirTier + dbCharDirObj;
-
-                        if (entry.Print == true) {
-                            _Logger.LogDebug($"{entry.CharacterID}/{censusChar.Name}> Took {dbSum}ms to update\n"
-                                + $"\tWeapon: {dbWeapon}ms\n"
-                                + $"\tHistory stats: {dbHistory}ms\n"
-                                + $"\tItem unlocks: {dbItem}ms\n"
-                                + $"\tStat entries: {dbStats}ms\n"
-                                + $"\tFriends: {dbFriends}ms\n"
-                                + $"\tDirectives: {dbCharDir}ms\n"
-                                + $"\tDirective trees: {dbCharDirTree}ms\n"
-                                + $"\tDirective tiers: {dbCharDirTier}ms\n"
-                                + $"\tDirective objs: {dbCharDirObj}ms"
-                            );
-
-                            _Logger.LogDebug($"Took {censusTime}ms to get data from census, {dbSum}ms to update DB data");
-                        }
-
-                        dbTrace?.Stop();
-
-                        _Queue.AddProcessTime(censusTime + dbSum);
+                        _Queue.AddProcessTime(timer.ElapsedMilliseconds);
                     }
 
                     await _MetadataDb.Upsert(entry.CharacterID, metadata);

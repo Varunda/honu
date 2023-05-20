@@ -10,6 +10,8 @@ namespace watchtower.Services.Queues {
 
     public class BaseQueue<T> : IProcessQueue {
 
+        internal ILogger _Logger;
+
         internal ConcurrentQueue<T> _Items = new ConcurrentQueue<T>();
 
         internal SemaphoreSlim _Signal = new SemaphoreSlim(0);
@@ -17,6 +19,10 @@ namespace watchtower.Services.Queues {
         internal ConcurrentQueue<long> _ProcessTime = new ConcurrentQueue<long>();
 
         internal long _ProcessedCount = 0;
+
+        public BaseQueue(ILoggerFactory factory) {
+            _Logger = factory.CreateLogger($"watchtower.Services.Queues.BaseQueue<{typeof(T).Name}>");
+        }
 
         /// <summary>
         ///     Get the next item in the list. This will block until there is one available

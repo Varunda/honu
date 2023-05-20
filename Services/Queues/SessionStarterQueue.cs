@@ -16,9 +16,10 @@ namespace watchtower.Services.Queues {
     /// </summary>
     public class SessionStarterQueue : BaseQueue<CharacterSessionStartQueueEntry> {
 
-        private readonly ILogger<SessionStarterQueue> _Logger;
+        private new readonly ILogger<SessionStarterQueue> _Logger;
 
-        public SessionStarterQueue(ILogger<SessionStarterQueue> logger) {
+        public SessionStarterQueue(ILogger<SessionStarterQueue> logger, ILoggerFactory factory)
+                : base (factory) {
             _Logger = logger;
         }
 

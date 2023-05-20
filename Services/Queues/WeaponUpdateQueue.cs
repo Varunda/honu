@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,6 +14,8 @@ namespace watchtower.Services.Queues {
 
         private readonly HashSet<long> _Pending = new HashSet<long>();
         private long? _Last;
+
+        public WeaponUpdateQueue(ILoggerFactory factory) : base(factory) { }
 
         public new void Queue(long id) {
             lock (_Pending) {

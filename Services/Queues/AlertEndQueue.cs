@@ -1,4 +1,5 @@
-﻿using watchtower.Models.Queues;
+﻿using Microsoft.Extensions.Logging;
+using watchtower.Models.Queues;
 
 namespace watchtower.Services.Queues {
 
@@ -6,6 +7,8 @@ namespace watchtower.Services.Queues {
     ///     Queue for alerts ending
     /// </summary>
     public class AlertEndQueue : BaseQueue<AlertEndQueueEntry> {
+
+        public AlertEndQueue(ILoggerFactory factory) : base(factory) { }
 
     }
 

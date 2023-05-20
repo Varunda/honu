@@ -116,6 +116,27 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
         }
 
+        public async Task Upsert(CharacterDirective dir) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                INSERT INTO character_directives (
+                    character_id, directive_id, directive_tree_id, completion_date
+                ) VALUES (
+                    @CharacterID, @DirectiveID, @DirectiveTreeID, @CompletionDate
+                ) ON CONFLICT (character_id, directive_id)
+                    DO UPDATE SET directive_tree_id = @DirectiveTreeID,
+                        completion_date = @CompletionDate;
+            ");
+
+            cmd.AddParameter("CharacterID", dir.CharacterID);
+            cmd.AddParameter("DirectiveID", dir.DirectiveID);
+            cmd.AddParameter("DirectiveTreeID", dir.TreeID);
+            cmd.AddParameter("CompletionDate", dir.CompletionDate);
+            await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
     }
 
 }

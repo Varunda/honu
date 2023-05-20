@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace watchtower.Services.Queues {
     ///     Queue for events from Census' realtime sockets
     /// </summary>
     public class CensusRealtimeEventQueue : BaseQueue<JToken> {
+
+        public CensusRealtimeEventQueue(ILoggerFactory factory) : base(factory) { }
 
     }
 

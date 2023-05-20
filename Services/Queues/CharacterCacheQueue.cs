@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ namespace watchtower.Services.Queues {
         private readonly HashSet<string> _Pending = new HashSet<string>();
 
         private readonly ConcurrentDictionary<string, DateTime> _CachedAt = new ();
+
+        public CharacterCacheQueue(ILoggerFactory factory) : base(factory) { }
 
         /// <summary>
         ///     Queue a new character for caching

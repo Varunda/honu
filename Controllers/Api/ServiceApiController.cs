@@ -2,10 +2,13 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Models.Api;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Queues;
 
@@ -30,13 +33,15 @@ namespace watchtower.Controllers.Api {
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly LogoutUpdateBuffer _LogoutQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
+        private readonly PriorityCharacterUpdateQueue _CharacterPriorityQueue;
 
         public ServiceApiController(ILogger<ServiceApiController> logger,
             IServiceHealthMonitor mon,
             CharacterCacheQueue charQueue, SessionStarterQueue session,
             CharacterUpdateQueue weapon, CensusRealtimeEventQueue task,
             WeaponPercentileCacheQueue percentile, DiscordMessageQueue discord,
-            LogoutUpdateBuffer logoutQueue, WeaponUpdateQueue weaponUpdateQueue) {
+            LogoutUpdateBuffer logoutQueue, WeaponUpdateQueue weaponUpdateQueue,
+            PriorityCharacterUpdateQueue characterPriorityQueue) {
 
             _Logger = logger;
 
@@ -50,6 +55,7 @@ namespace watchtower.Controllers.Api {
             _DiscordQueue = discord;
             _LogoutQueue = logoutQueue;
             _WeaponUpdateQueue = weaponUpdateQueue;
+            _CharacterPriorityQueue = characterPriorityQueue;
         }
 
         /// <summary>
@@ -114,6 +120,19 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(queued);
+        }
+
+        [HttpGet("character_priority_queue")]
+        public ApiResponse<List<string>> GetPriorityCharacterUpdateQueue() {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("get character priority queue");
+            List<CharacterUpdateQueueEntry> queued = _CharacterPriorityQueue.ToList();
+
+            CharacterUpdateQueueEntry? entry = _CharacterPriorityQueue.GetMostRecentDequeued();
+            if (entry != null) {
+                queued.Insert(0, entry);
+            }
+
+            return ApiOk(queued.Select(iter => iter.CharacterID).ToList());
         }
 
     }

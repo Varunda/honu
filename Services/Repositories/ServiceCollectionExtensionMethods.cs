@@ -34,6 +34,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<CharacterDirectiveTierRepository>();
             services.AddSingleton<CharacterDirectiveObjectiveRepository>();
             services.AddSingleton<CharacterAchievementRepository>();
+            services.AddSingleton<CharacterDataRepository>();
 
             // Static repos
             services.AddSingleton<IStaticRepository<PsItem>, ItemRepository>();

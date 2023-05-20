@@ -145,6 +145,12 @@
 
                 if (this.item.state == "loaded") {
                     document.title = `Honu / Item / ${(this.item as any).data.name}`;
+
+                    const url = new URL(location.href);
+                    url.searchParams.set("name", this.item.data.name);
+
+                    history.pushState({ path: url.href }, "", `/i/${this.itemID}?${url.searchParams.toString()}`);
+
                 } else {
                     document.title = `Honu / Item / <${this.itemID}>`;
                 }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using watchtower.Code;
 using watchtower.Models.Census;
 using watchtower.Models.Internal;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -20,13 +21,16 @@ namespace watchtower.Controllers {
         private readonly CharacterRepository _CharacterRepository;
         private readonly AlertRepository _AlertRepository;
         private readonly CharacterUpdateQueue _Queue;
+        private readonly PriorityCharacterUpdateQueue _PriorityQueue;
 
         public HomeController(CharacterRepository charRepo,
-            CharacterUpdateQueue queue, AlertRepository alertRepository) {
+            CharacterUpdateQueue queue, AlertRepository alertRepository,
+            PriorityCharacterUpdateQueue priorityQueue) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;
             _AlertRepository = alertRepository;
+            _PriorityQueue = priorityQueue;
         }
 
         public IActionResult Index() {
@@ -59,6 +63,7 @@ namespace watchtower.Controllers {
 
         public IActionResult CharacterViewer(string charID) {
             _Queue.Queue(charID);
+            _PriorityQueue.Queue(charID);
             return View();
         }
 

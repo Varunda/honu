@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,8 @@ namespace watchtower.Services.Queues {
     ///     Queue of messages to be sent in Discord
     /// </summary>
     public class DiscordMessageQueue : BaseQueue<HonuDiscordMessage> {
+
+        public DiscordMessageQueue(ILoggerFactory factory) : base(factory) { }
 
         public new void Queue(HonuDiscordMessage msg) {
             if ((msg.ChannelID == null || msg.ChannelID == 0)
