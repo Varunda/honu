@@ -155,18 +155,18 @@ namespace watchtower.Services.Repositories {
             using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db item unlocks")) {
                 span?.AddTag("honu.count", itemStats.Count);
                 try {
+                    foreach (CharacterItem iter in itemStats) {
+                        await _ItemDb.Upsert(iter);
+                    }
+                    /*
                     if (itemStats.Count > 0) {
                         await _ItemDb.Set(charID, itemStats);
                     }
-                    /*
                     if (batchDbUpdate == true) {
                         if (itemStats.Count > 0) {
                             await _ItemDb.Set(entry.CharacterID, itemStats);
                         }
                     } else {
-                        foreach (CharacterItem iter in itemStats) {
-                            await _ItemDb.Upsert(iter);
-                        }
                     }
                     */
                 } catch (Exception ex) {

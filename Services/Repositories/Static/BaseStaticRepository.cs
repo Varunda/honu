@@ -93,7 +93,6 @@ namespace watchtower.Services.Repositories {
             return entry;
         }
 
-
         public async Task<List<T>> GetByIDs(IEnumerable<int> IDs) {
             return (await GetAll()).Where(iter => IDs.Contains(iter.ID)).ToList();
         }
