@@ -89,12 +89,21 @@
 
                 <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="vsStats"></alert-faction-stats>
+                    <button v-if="alert.data.worldID == 19" @click="makeFactionReport(1)" class="btn btn-success w-100" title="Make an outfit report for all players on VS">
+                        Make report
+                    </button>
                 </div>
                 <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="ncStats"></alert-faction-stats>
+                    <button v-if="alert.data.worldID == 19" @click="makeFactionReport(2)" class="btn btn-success w-100" title="Make an outfit report for all players on NC">
+                        Make report
+                    </button>
                 </div>
                 <div class="col-12 col-lg-4">
                     <alert-faction-stats :alert="alert.data" :data="trStats"></alert-faction-stats>
+                    <button v-if="alert.data.worldID == 19" @click="makeFactionReport(3)" class="btn btn-success w-100" title="Make an outfit report for all players on TR">
+                        Make report
+                    </button>
                 </div>
             </div>
 
@@ -219,6 +228,8 @@
     import AlertWinner from "./components/AlertWinner.vue";
     import AlertControlEvents from "./components/AlertControlEvents.vue";
     import AlertPopulationGraph from "./components/AlertPopulationGraph.vue";
+
+    import * as moment from "moment";
 
     class OutfitDataEntry {
         public outfitID: string = "";
@@ -551,6 +562,29 @@
                     this.trStats.facilityCount = this.alert.data.countTR || 0;
                 }
             },
+
+            makeFactionReport: function(factionID: number): void {
+                if (this.participants.state != "loaded") {
+                    return;
+                }
+
+                if (this.alert.state != "loaded") {
+                    return;
+                }
+
+                const characterIDs: string[] = this.participants.data.filter(iter => iter.factionID == factionID)
+                    .map(iter => `+${iter.characterID}`);
+
+                const start: Date = this.alert.data.timestamp;
+                const end: Date = moment(start).add(this.alert.data.duration, "seconds").toDate();
+
+                start.getTime() / 1000;
+
+                const generator: string = `${start.getTime() / 1000},${end.getTime() / 1000},${factionID};${characterIDs.join(",")}`;
+                const b64: string = btoa(generator);
+
+                window.open(`/report/${b64}`);
+            }
         },
 
         computed: {
