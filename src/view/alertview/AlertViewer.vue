@@ -580,7 +580,7 @@
 
                 start.getTime() / 1000;
 
-                const generator: string = `${start.getTime() / 1000},${end.getTime() / 1000},${factionID};${characterIDs.join(",")}`;
+                const generator: string = `${start.getTime() / 1000},${end.getTime() / 1000},${factionID};${characterIDs.join(";")}`;
                 const b64: string = btoa(generator);
 
                 window.open(`/report/${b64}`);
