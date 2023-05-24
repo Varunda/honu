@@ -49,6 +49,16 @@ namespace watchtower.Services.Queues {
         }
 
         /// <summary>
+        ///     Attempt to dequeue an entry from the queue. If no entry is in the queue, the return value will be null.
+        ///     This call will not block until there is an entry in the queue.
+        /// </summary>
+        /// <returns></returns>
+        public T? TryDequeue() {
+            _Items.TryDequeue(out T? entry);
+            return entry;
+        }
+
+        /// <summary>
         ///     Peak at the next item in the queue. This will block until there is one available.
         ///     DO NOT USE THIS WITH MULTIPLER WORKERS. If you have multiple background processors using Peak,
         ///     they will be working on the same <typeparamref name="T"/>!

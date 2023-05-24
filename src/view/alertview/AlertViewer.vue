@@ -578,8 +578,6 @@
                 const start: Date = this.alert.data.timestamp;
                 const end: Date = moment(start).add(this.alert.data.duration, "seconds").toDate();
 
-                start.getTime() / 1000;
-
                 const generator: string = `${start.getTime() / 1000},${end.getTime() / 1000},${factionID};${characterIDs.join(";")}`;
                 const b64: string = btoa(generator);
 

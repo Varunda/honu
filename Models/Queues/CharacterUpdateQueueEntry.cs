@@ -32,5 +32,10 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public bool Print { get; set; } = false;
 
+        /// <summary>
+        ///     How many times an error occured while trying to update this character
+        /// </summary>
+        public uint ErrorCount { get; set; } = 0;
+
     }
 }

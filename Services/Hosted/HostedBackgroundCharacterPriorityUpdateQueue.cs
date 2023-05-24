@@ -67,13 +67,26 @@ namespace watchtower.Services.Hosted {
                     continue;
                 }
 
-                _Logger.LogDebug($"peaking next entry");
-                CharacterUpdateQueueEntry entry = await _Queue.Peak(stoppingToken);
-                _Logger.LogDebug($"peaked next entry {entry.CharacterID}");
-                string cID1 = entry.CharacterID;
-                _Logger.LogDebug($"peaking again, expect to see {cID1}");
-                entry = await _Queue.Peak(stoppingToken);
-                _Logger.LogDebug($"match? {cID1 == entry.CharacterID}, got {entry.CharacterID} from queue (expected {cID1})");
+                CharacterUpdateQueueEntry? entry = null;
+
+                try {
+                    entry = await _Queue.Peak(stoppingToken);
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, $"failed to peak entry");
+                    continue;
+                }
+
+                if (entry == null) {
+                    _Logger.LogError($"unexpected null, why is entry null here?");
+                    continue;
+                }
+
+                if (entry.ErrorCount > 20) {
+                    _Logger.LogError($"Failed to update {entry.CharacterID} {entry.ErrorCount} times. Removing from queue");
+                    await _Queue.Dequeue(stoppingToken);
+                    continue;
+                }
+
                 timer.Restart();
                 _Logger.LogDebug($"priority updating {entry.CharacterID}");
 
@@ -135,18 +148,20 @@ namespace watchtower.Services.Hosted {
 
                     _Logger.LogDebug($"updated {entry.CharacterID} in {timer.ElapsedMilliseconds}ms");
 
-                    _Logger.LogDebug($"dequeue next entry, expect to see {cID1} right away");
                     CharacterUpdateQueueEntry popped = await _Queue.Dequeue(stoppingToken);
-                    _Logger.LogDebug($"dequeued {popped.CharacterID}, expected {cID1}, match? {cID1 == popped.CharacterID}");
-
                     errorCount = 0;
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
-                    _Logger.LogError(ex, $"Failed in {nameof(HostedBackgroundCharacterWeaponStatQueue)}");
+                    _Logger.LogError(ex, $"failed to update {entry?.CharacterID}");
                     ++errorCount;
 
                     if (errorCount > 2) {
                         await Task.Delay(1000 * Math.Min(5, errorCount), stoppingToken);
                     }
+
+                    if (entry != null) {
+                        ++entry.ErrorCount;
+                    }
+
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopped {SERVICE_NAME} with {_Queue.Count()} left");
                 }

@@ -20,6 +20,11 @@ namespace watchtower.Services.Queues {
         /// </summary>
         /// <param name="charID">ID of the character to be updated</param>
         public void Queue(string charID) {
+            if (!IsNumeric(charID)) {
+                _Logger.LogDebug($"{charID} is not only numbers, not adding to queue");
+                return;
+            }
+
             lock (_Pending) {
                 if (_Pending.Contains(charID)) {
                     _Logger.LogDebug($"not queueing {charID}: In _Pending");
@@ -68,6 +73,15 @@ namespace watchtower.Services.Queues {
             ++_ProcessedCount;
 
             return entry!;
+        }
+
+        private bool IsNumeric(string str) {
+            foreach (char c in str) {
+                if (char.IsDigit(c) == false) {
+                    return false;
+                } 
+            }
+            return true;
         }
 
     }
