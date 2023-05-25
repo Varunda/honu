@@ -153,7 +153,6 @@ namespace watchtower {
                 builder.AllowAnyHeader();
             }));
 
-            services.Configure<DbOptions>(Configuration.GetSection("DbOptions"));
             services.Configure<DiscordOptions>(Configuration.GetSection("Discord"));
             services.Configure<JaegerNsaOptions>(Configuration.GetSection("JaegerNsa"));
             services.Configure<CensusRealtimeHealthOptions>(Configuration.GetSection("RealtimeHealth"));
@@ -161,7 +160,9 @@ namespace watchtower {
             services.Configure<PsbDriveSettings>(Configuration.GetSection("PsbDrive"));
             services.Configure<PsbRoleMapping>(Configuration.GetSection("PsbRoleMapping"));
             services.Configure<InstanceOptions>(Configuration.GetSection("Instance"));
+            services.Configure<HttpConfig>(Configuration.GetSection("Http"));
 
+            services.AddTransient<HttpUtilService>();
             services.AddSingleton<InstanceInfo>();
 
             services.AddTransient<IActionResultExecutor<ApiResponse>, ApiResponseExecutor>();

@@ -98,7 +98,7 @@ namespace watchtower.Services.Db {
             object? IDobj = await batch.ExecuteScalarAsync();
             //await conn.CloseAsync();
             if (IDobj == null) {
-                throw new NullReferenceException($"The scalar returned when inserting a kill was null");
+                throw new NullReferenceException($"The scalar returned when inserting a exp was null");
             }
 
             return (long)IDobj;

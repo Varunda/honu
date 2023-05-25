@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using watchtower.Code;
 using watchtower.Models.Census;
 using watchtower.Models.Internal;
@@ -18,6 +20,11 @@ namespace watchtower.Controllers {
 
     public class HomeController : Controller {
 
+        private readonly ILogger<HomeController> _Logger;
+
+        private readonly IHttpContextAccessor _HttpContextAccessor;
+        private readonly HttpUtilService _HttpUtil;
+
         private readonly CharacterRepository _CharacterRepository;
         private readonly AlertRepository _AlertRepository;
         private readonly CharacterUpdateQueue _Queue;
@@ -25,12 +32,16 @@ namespace watchtower.Controllers {
 
         public HomeController(CharacterRepository charRepo,
             CharacterUpdateQueue queue, AlertRepository alertRepository,
-            PriorityCharacterUpdateQueue priorityQueue) {
+            PriorityCharacterUpdateQueue priorityQueue, IHttpContextAccessor httpContextAccessor,
+            HttpUtilService httpUtil, ILogger<HomeController> logger) {
 
             _CharacterRepository = charRepo;
             _Queue = queue;
             _AlertRepository = alertRepository;
             _PriorityQueue = priorityQueue;
+            _HttpContextAccessor = httpContextAccessor;
+            _HttpUtil = httpUtil;
+            _Logger = logger;
         }
 
         public IActionResult Index() {
@@ -63,7 +74,13 @@ namespace watchtower.Controllers {
 
         public IActionResult CharacterViewer(string charID) {
             _Queue.Queue(charID);
-            _PriorityQueue.Queue(charID);
+
+            if (_HttpContextAccessor.HttpContext != null && _HttpUtil.IsSearchEngineBot(_HttpContextAccessor.HttpContext) == false) {
+                _PriorityQueue.Queue(charID);
+            } else {
+                _Logger.LogInformation($"Not putting {charID} into priority queue as it came from a search bot");
+            }
+
             return View();
         }
 

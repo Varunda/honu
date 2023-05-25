@@ -75,7 +75,7 @@ namespace watchtower.Services.Queues {
             return entry!;
         }
 
-        private bool IsNumeric(string str) {
+        private static bool IsNumeric(string str) {
             foreach (char c in str) {
                 if (char.IsDigit(c) == false) {
                     return false;

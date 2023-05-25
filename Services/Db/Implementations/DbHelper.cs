@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Db;
@@ -14,11 +16,11 @@ namespace watchtower.Services.Db.Implementations {
     public class DbHelper : IDbHelper {
 
         private readonly ILogger<DbHelper> _Logger;
-        private readonly DbOptions _DbOptions;
+        private readonly IConfiguration _Configuration;
 
-        public DbHelper(ILogger<DbHelper> logger, IOptions<DbOptions> options) {
+        public DbHelper(ILogger<DbHelper> logger, IConfiguration config) {
             _Logger = logger;
-            _DbOptions = options.Value ?? throw new ArgumentNullException(nameof(options));
+            _Configuration = config;
         }
 
         /// <summary>
@@ -36,20 +38,20 @@ namespace watchtower.Services.Db.Implementations {
         /// <returns>
         ///     A new <see cref="NpgsqlConnection"/>
         /// </returns>
-        public NpgsqlConnection Connection(string? task = null, bool enlist = true) {
-            string connStr = $"Host={_DbOptions.ServerUrl};"
-                + $"Username={_DbOptions.Username};"
-                + $"Password={_DbOptions.Password};" 
-                + $"Database={_DbOptions.DatabaseName};"
-                + $"Include Error Detail=true;"
-                + $"ApplicationName={task ?? "honu"};"
-                + $"Timezone=UTC";
+        public NpgsqlConnection Connection(string server = "events", string? task = null, bool enlist = true) {
+            IConfigurationSection allStrings = _Configuration.GetSection("ConnectionStrings");
+            string? connStr = allStrings[server];
+
+            if (string.IsNullOrEmpty(connStr)) {
+                throw new Exception($"No connection string for {server} exists. Currently have [{string.Join(", ", allStrings.GetChildren().ToList().Select(iter => iter.Path))}]. "
+                    + $"Set this value in config, or by using 'dotnet user-secrets set ConnectionStrings:{server} {{connection string}}");
+            }
 
             if (enlist == false) {
                 connStr += ";Enlist=false";
             }
 
-            NpgsqlConnection conn = new NpgsqlConnection(connStr);
+            NpgsqlConnection conn = new(connStr);
 
             return conn;
         }
