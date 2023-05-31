@@ -1,0 +1,51 @@
+﻿notes and commands on creating the character db
+
+Windows:
+register the server as a service
+pg_ctl.exe -D "E:/Postgres/14/character" register -S auto -N postgres-13-character
+
+// create the db
+CREATE DATABASE ps2;
+
+// add the pg_trgm (trigram) extension, which is used for an index on character names
+CREATE EXTENSION pg_trgm;
+
+// basic command to copy
+// these are ran from the folder that contains pg_ctl.exe
+// the character db is running on port 5433
+
+pg_dump -t wt_character -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t wt_recent_exp -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t wt_recent_kill -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t wt_session -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_achievement -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_directive_objective -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_directive_tier -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_directive_tree -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_directives -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_friends -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_history_stat -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_stats -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_metadata -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t character_items -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+
+import os
+tables = [
+	"wt_character",
+	"wt_recent_exp",
+	"wt_recent_kill",
+	"wt_session",
+	"character_achievement",
+	"character_directive_objective",
+	"character_directive_tier",
+	"character_directive_tree",
+	"character_directives",
+	"character_friends",
+	"character_history_stat",
+	"character_stats",
+	"character_metadata",
+	"character_items"
+]
+
+for table in tables:
+	print(f"pg_dump -t {table} -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2")

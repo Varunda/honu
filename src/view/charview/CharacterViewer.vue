@@ -25,7 +25,7 @@
 
         <div v-if="metadata.state == 'loaded' && metadata.data.notFoundCount > 2">
             <h4 class="text-warning text-center">
-                This character has likely been deleted
+                This character has likely been deleted (or you are viewing a PS4 character, which Honu does not support)
             </h4>
             <small class="text-muted text-center d-block" :title="'Have found in DB ' + metadata.data.notFoundCount + ' times, but not in Census'">
                 This character exists in Honu's database, but not in the Planetside 2 API. Missed {{metadata.data.notFoundCount > 50 ? `50+` : `${metadata.data.notFoundCount}`}} times

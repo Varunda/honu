@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
@@ -6,12 +7,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Queues;
+using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -27,6 +30,8 @@ namespace watchtower.Controllers.Api {
     public class OutfitApiController : ApiControllerBase {
 
         private readonly ILogger<OutfitApiController> _Logger;
+        private readonly IHttpContextAccessor _HttpContextAccessor;
+        private readonly HttpUtilService _HttpUtil;
 
         private readonly OutfitRepository _OutfitRepository;
         private readonly OutfitCollection _OutfitCollection;
@@ -41,7 +46,8 @@ namespace watchtower.Controllers.Api {
             OutfitRepository outfitRepo, OutfitCollection outfitCollection,
             CharacterHistoryStatDbStore histDb,
             CharacterUpdateQueue cacheQueue, OutfitDbStore outfitDb,
-            CharacterCacheQueue charQueue, CharacterRepository characterRepository) {
+            CharacterCacheQueue charQueue, CharacterRepository characterRepository,
+            IHttpContextAccessor httpContextAccessor, HttpUtilService httpUtil) {
 
             _Logger = logger;
 
@@ -53,6 +59,8 @@ namespace watchtower.Controllers.Api {
             _CacheQueue = cacheQueue;
             _CharacterQueue = charQueue;
             _CharacterRepository = characterRepository;
+            _HttpContextAccessor = httpContextAccessor;
+            _HttpUtil = httpUtil;
         }
 
         /// <summary>
@@ -148,7 +156,8 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get the members of a PC outfit
+        ///     Get the members of a PC outfit. Requests from search bots are blocked as this can be expensive as it can
+        ///     touch a lot of characters
         /// </summary>
         /// <remarks>
         ///     The character data includes the characters stats, if present in the DB. If the stats are not present
@@ -166,6 +175,7 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
         /// </response>
         [HttpGet("{outfitID}/members")]
+        [SearchBotBlock]
         public async Task<ApiResponse<List<ExpandedOutfitMember>>> GetMembers(string outfitID, [FromQuery] bool includeStats = true) {
             PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
             if (outfit == null) {
@@ -174,7 +184,7 @@ namespace watchtower.Controllers.Api {
 
             Stopwatch timer = Stopwatch.StartNew();
 
-            List<OutfitMember> members = await _OutfitCollection.GetMembers(outfitID);
+            List<OutfitMember> members = await _OutfitRepository.GetMembers(outfitID);
             List<ExpandedOutfitMember> expanded = new List<ExpandedOutfitMember>(members.Count);
             long getMembersMs = timer.ElapsedMilliseconds; timer.Restart();
 
@@ -190,6 +200,8 @@ namespace watchtower.Controllers.Api {
 
             Dictionary<string, PsCharacter> charMap = new Dictionary<string, PsCharacter>(members.Count); // lookup table
             foreach (PsCharacter c in listCharacters) {
+                // if the character was inserted into the db before this value was saved, queue it for an update to fix it.
+                // this is not possible for all characters, as they may be deleted, but somehow still in the outfit
                 if (c.DateLastLogin == DateTime.MinValue) {
                     _CacheQueue.Queue(c.ID);
                 }
@@ -198,7 +210,6 @@ namespace watchtower.Controllers.Api {
             }
 
             long processCharMs = timer.ElapsedMilliseconds; timer.Restart();
-
 
             foreach (OutfitMember member in members) {
                 ExpandedOutfitMember ex = new();
@@ -272,17 +283,18 @@ namespace watchtower.Controllers.Api {
 
                 long processExMs = timer.ElapsedMilliseconds; timer.Restart();
 
-                _Logger.LogInformation($"{outfitID}/{outfit.Name} get members: {getMembersMs} ({characterIDs.Count}), "
-                    + $"load char db: {loadCharsMs}, process char ms: {processCharMs}, "
-                    + $"load hist ms: {loadHistMs}, process hist ms: {processHistMs}, "
-                    + $"process ex: {processExMs}");
+                _Logger.LogInformation($"{outfitID}/{outfit.Name} get members: {getMembersMs}ms ({characterIDs.Count}), "
+                    + $"load char db: {loadCharsMs}ms, process char ms: {processCharMs}ms, "
+                    + $"load hist ms: {loadHistMs}ms, process hist ms: {processHistMs}ms, "
+                    + $"process ex: {processExMs}ms");
             }
 
             return ApiOk(expanded);
         }
 
         /// <summary>
-        ///     Get the activity statistics for an outfit, broken into 1 hour intervals
+        ///     Get the activity statistics for an outfit, broken into 1 hour intervals.
+        ///     Requests made with a search bot user agent are blocked, as this is an expensive call
         /// </summary>
         /// <remarks>
         ///     <paramref name="start"/> is truncated down to the current hour.
@@ -316,6 +328,7 @@ namespace watchtower.Controllers.Api {
         ///     No <see cref="PsOutfit"/> with ID of <paramref name="outfitID"/> exists
         /// </response>
         [HttpGet("{outfitID}/activity")]
+        [SearchBotBlock]
         public async Task<ApiResponse<List<OutfitActivity>>> GetActivity(string outfitID,
             [FromQuery] DateTime start, [FromQuery] DateTime finish) {
 

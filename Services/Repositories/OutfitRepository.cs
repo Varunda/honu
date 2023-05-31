@@ -18,6 +18,7 @@ namespace watchtower.Services.Repositories {
         private readonly IMemoryCache _Cache;
 
         private const string _CacheKeyID = "Outfit.ID.{0}"; // {0} => Outfit ID
+        private const string CACHE_KEY_MEMBERS = "Outfit.Members.{0}"; // {0} => Outfit ID
 
         private readonly OutfitDbStore _Db;
         private readonly OutfitCollection _Census;
@@ -276,6 +277,28 @@ namespace watchtower.Services.Repositories {
             );
 
             return outfits;
+        }
+
+        /// <summary>
+        ///     Get members of an outfit. This is not stored in the DB, and results in a Census call if
+        ///     the result is not cached
+        /// </summary>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <returns>
+        ///     A list containing the characters that are in an outfit
+        /// </returns>
+        public async Task<List<OutfitMember>> GetMembers(string outfitID) {
+            string cacheKey = string.Format(CACHE_KEY_MEMBERS, outfitID);
+
+            if (_Cache.TryGetValue(cacheKey, out List<OutfitMember> members) == false) {
+                members = await _Census.GetMembers(outfitID);
+
+                _Cache.Set(cacheKey, members, new MemoryCacheEntryOptions() {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                });
+            }
+
+            return members;
         }
 
         private bool HasExpired(PsOutfit outfit) {

@@ -131,7 +131,6 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character_priority_queue")]
         public ApiResponse<List<string>> GetPriorityCharacterUpdateQueue() {
-            using Activity? trace = HonuActivitySource.Root.StartActivity("get character priority queue");
             List<CharacterUpdateQueueEntry> queued = _CharacterPriorityQueue.ToList();
 
             return ApiOk(queued.Select(iter => iter.CharacterID).ToList());

@@ -15,6 +15,10 @@ using watchtower.Services.Repositories;
 
 namespace watchtower.Code {
 
+    /// <summary>
+    ///     Attribute to add to actions to require a user to have a <see cref="HonuAccount"/>,
+    ///     and that account has the necessary permissions
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
     public class PermissionNeededAttribute : TypeFilterAttribute {
 
@@ -46,7 +50,7 @@ namespace watchtower.Code {
         }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context) {
-            HttpContext? httpContext = _Context.HttpContext;
+            HttpContext httpContext = context.HttpContext;
             if (httpContext == null) {
                 throw new ArgumentNullException($"_Context.HttpContext cannot be null");
             }

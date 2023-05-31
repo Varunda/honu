@@ -65,6 +65,8 @@ namespace watchtower.Services.Hosted {
                             tracked.FactionID = character.FactionID;
 
                             // Prevent the TeamID field from being overriden whenever a character is cached
+                            // 2023-05-25: actually, there could be more cases where this assumption is false, such as outfit wars nexus
+                            //      where the character were put on a different team (but kept the same faction)
                             if (tracked.FactionID != Faction.NS) {
                                 tracked.TeamID = character.FactionID;
                             }

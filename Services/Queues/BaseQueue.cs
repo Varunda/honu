@@ -50,7 +50,7 @@ namespace watchtower.Services.Queues {
 
         /// <summary>
         ///     Attempt to dequeue an entry from the queue. If no entry is in the queue, the return value will be null.
-        ///     This call will not block until there is an entry in the queue.
+        ///     This call will not block until there is an entry in the queue, unlike <see cref="Dequeue(CancellationToken)"/>
         /// </summary>
         /// <returns></returns>
         public T? TryDequeue() {

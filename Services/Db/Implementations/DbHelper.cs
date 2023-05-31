@@ -38,7 +38,7 @@ namespace watchtower.Services.Db.Implementations {
         /// <returns>
         ///     A new <see cref="NpgsqlConnection"/>
         /// </returns>
-        public NpgsqlConnection Connection(string server = "events", string? task = null, bool enlist = true) {
+        public NpgsqlConnection Connection(string server = Dbs.EVENTS, string? task = null, bool enlist = true) {
             IConfigurationSection allStrings = _Configuration.GetSection("ConnectionStrings");
             string? connStr = allStrings[server];
 
@@ -79,4 +79,13 @@ namespace watchtower.Services.Db.Implementations {
         }
 
     }
+
+    public static class Dbs {
+
+        public const string EVENTS = "events";
+
+        public const string CHARACTER = "character";
+
+    }
+
 }
