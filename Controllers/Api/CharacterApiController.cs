@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
@@ -486,6 +487,7 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a list of the character's friends
         /// </response>
         [HttpGet("character/{charID}/friends")]
+        [SearchBotBlock]
         public async Task<ApiResponse<List<ExpandedCharacterFriend>>> GetFriends(string charID, [FromQuery] bool fast = false) {
             List<CharacterFriend> friends = await _CharacterFriendRepository.GetByCharacterID(charID, fast);
 

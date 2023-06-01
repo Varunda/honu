@@ -35,7 +35,7 @@ namespace watchtower.Services.Census {
         /// <returns></returns>
         public async Task<List<PsFacility>> GetAll() {
             CensusQuery query = _Census.Create("map_region");
-            query.SetLimit(1000);
+            query.SetLimit(5000);
 
             List<PsFacility> facilities = new List<PsFacility>();
 
@@ -56,6 +56,7 @@ namespace watchtower.Services.Census {
                 _Logger.LogError(ex, "Failed to get all");
             }
 
+            /*
             try {
                 do {
                     string patch = File.ReadAllText(PATCH_FILE);
@@ -86,6 +87,7 @@ namespace watchtower.Services.Census {
             } catch (Exception ex) {
                 _Logger.LogError(ex, "failed to patch map_region");
             }
+            */
 
             return facilities;
         }
