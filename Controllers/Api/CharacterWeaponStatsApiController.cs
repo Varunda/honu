@@ -108,7 +108,7 @@ namespace watchtower.Controllers.Api {
 
             WeaponStatPercentileCache? kdCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KD);
             if (kdCache != null) {
-                if (needsRegen == false && kdCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
+                if (needsRegen == false && DateTime.UtcNow - kdCache.Timestamp > TimeSpan.FromDays(1)) {
                     //_Logger.LogDebug($"percentile cache for {entry.ItemID} is {hsrCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
@@ -120,7 +120,7 @@ namespace watchtower.Controllers.Api {
 
             WeaponStatPercentileCache? kpmCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KPM);
             if (kpmCache != null) {
-                if (needsRegen == false && kpmCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
+                if (needsRegen == false && DateTime.UtcNow - kpmCache.Timestamp > TimeSpan.FromDays(1)) {
                     needsRegen = true;
                 }
 
@@ -131,7 +131,7 @@ namespace watchtower.Controllers.Api {
 
             WeaponStatPercentileCache? accCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.ACC);
             if (accCache != null) {
-                if (needsRegen == false && accCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
+                if (needsRegen == false && DateTime.UtcNow - accCache.Timestamp > TimeSpan.FromDays(1)) {
                     needsRegen = true;
                 }
 
@@ -142,7 +142,7 @@ namespace watchtower.Controllers.Api {
 
             WeaponStatPercentileCache? hsrCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.HSR);
             if (hsrCache != null) {
-                if (needsRegen == false && hsrCache.Timestamp - DateTime.UtcNow > TimeSpan.FromDays(1)) {
+                if (needsRegen == false && DateTime.UtcNow - hsrCache.Timestamp > TimeSpan.FromDays(1)) {
                     needsRegen = true;
                 }
 
@@ -152,6 +152,7 @@ namespace watchtower.Controllers.Api {
             }
 
             if (needsRegen == true) {
+                _Logger.LogDebug($"Putting entry for weapon percentile update [ItemID={entry.ItemID}]");
                 _PercentileQueue.Queue(entry.ItemID);
             }
 
