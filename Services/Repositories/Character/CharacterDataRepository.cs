@@ -30,22 +30,31 @@ namespace watchtower.Services.Repositories {
 
         private readonly CharacterWeaponStatCollection _WeaponCensus;
         private readonly CharacterWeaponStatDbStore _WeaponStatDb;
+        private readonly CharacterWeaponStatRepository _WeaponRepository;
         private readonly CharacterHistoryStatCollection _HistoryCensus;
         private readonly CharacterHistoryStatDbStore _HistoryDb;
+        private readonly CharacterHistoryStatRepository _HistoryRepository;
         private readonly CharacterItemCollection _ItemCensus;
         private readonly CharacterItemDbStore _ItemDb;
+        private readonly CharacterItemRepository _ItemRepository;
         private readonly CharacterStatCollection _StatCensus;
         private readonly CharacterStatDbStore _StatDb;
+        private readonly CharacterStatRepository _StatRepository;
         private readonly CharacterFriendCollection _FriendCensus;
         private readonly CharacterFriendDbStore _FriendDb;
+        private readonly CharacterFriendRepository _CharactacterFriendRepository;
         private readonly CharacterDirectiveCollection _CharacterDirectiveCensus;
         private readonly CharacterDirectiveDbStore _CharacterDirectiveDb;
+        private readonly CharacterDirectiveRepository _CharacterDirectiveRepository;
         private readonly CharacterDirectiveTreeCollection _CharacterDirectiveTreeCensus;
         private readonly CharacterDirectiveTreeDbStore _CharacterDirectiveTreeDb;
+        private readonly CharacterDirectiveTreeRepository _CharacterDirectiveTreeRepository;
         private readonly CharacterDirectiveTierCollection _CharacterDirectiveTierCensus;
         private readonly CharacterDirectiveTierDbStore _CharacterDirectiveTierDb;
+        private readonly CharacterDirectiveTierRepository _CharacterDirectiveTierRepository;
         private readonly CharacterDirectiveObjectiveCollection _CharacterDirectiveObjectiveCensus;
         private readonly CharacterDirectiveObjectiveDbStore _CharacterDirectiveObjectiveDb;
+        private readonly CharacterDirectiveObjectiveRepository _CharacterDirectiveObjectiveRepository;
 
         public CharacterDataRepository(ILogger<CharacterDataRepository> logger,
             CharacterWeaponStatDbStore db, CharacterWeaponStatCollection weaponColl,
@@ -59,7 +68,13 @@ namespace watchtower.Services.Repositories {
             CharacterDirectiveTierCollection charDirTierCensus, CharacterDirectiveTierDbStore charDirTierDb,
             CharacterDirectiveObjectiveCollection charDirObjectiveCensus, CharacterDirectiveObjectiveDbStore charDirObjectiveDb,
             CharacterFriendDbStore friendDb, CharacterMetadataDbStore characterMetadataDb,
-            CharacterRepository characterRepository) {
+            CharacterRepository characterRepository,
+            CharacterDirectiveObjectiveRepository characterDirectiveObjectiveRepository,
+            CharacterDirectiveTierRepository characterDirectiveTierRepository,
+            CharacterDirectiveTreeRepository characterDirectiveTreeRepository, CharacterDirectiveRepository characterDirectiveRepository,
+            CharacterFriendRepository charactacterFriendRepository, CharacterStatRepository statRepository,
+            CharacterItemRepository itemRepository, CharacterHistoryStatRepository historyRepository,
+            CharacterWeaponStatRepository weaponRepository) {
 
             _Logger = logger;
 
@@ -87,6 +102,15 @@ namespace watchtower.Services.Repositories {
             _CharacterDirectiveObjectiveDb = charDirObjectiveDb;
             _CharacterMetadataDb = characterMetadataDb;
             _CharacterRepository = characterRepository;
+            _CharacterDirectiveObjectiveRepository = characterDirectiveObjectiveRepository;
+            _CharacterDirectiveTierRepository = characterDirectiveTierRepository;
+            _CharacterDirectiveTreeRepository = characterDirectiveTreeRepository;
+            _CharacterDirectiveRepository = characterDirectiveRepository;
+            _CharactacterFriendRepository = charactacterFriendRepository;
+            _StatRepository = statRepository;
+            _ItemRepository = itemRepository;
+            _HistoryRepository = historyRepository;
+            _WeaponRepository = weaponRepository;
         }
 
         public async Task UpdateCharacter(string charID, CancellationToken stoppingToken, bool batchUpdate = false) {
@@ -133,7 +157,7 @@ namespace watchtower.Services.Repositories {
                 if (weaponStats.Count > 0) {
                     try {
                         foreach (WeaponStatEntry iter in weaponStats) {
-                            await _WeaponStatDb.Upsert(iter);
+                            await _WeaponRepository.Upsert(iter);
                         }
                     } catch (Exception ex) {
                         span?.AddExceptionEvent(ex);
@@ -149,7 +173,7 @@ namespace watchtower.Services.Repositories {
                 try {
                     span?.AddTag("honu.batch", "ignored");
                     foreach (PsCharacterHistoryStat stat in historyStats) {
-                        await _HistoryDb.Upsert(charID, stat.Type, stat);
+                        await _HistoryRepository.Upsert(charID, stat.Type, stat);
                     }
                 } catch (Exception ex) {
                     span?.AddExceptionEvent(ex);
@@ -163,19 +187,8 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", itemStats.Count);
                 try {
                     foreach (CharacterItem iter in itemStats) {
-                        await _ItemDb.Upsert(iter);
+                        await _ItemRepository.Upsert(iter);
                     }
-                    /*
-                    if (itemStats.Count > 0) {
-                        await _ItemDb.Set(charID, itemStats);
-                    }
-                    if (batchDbUpdate == true) {
-                        if (itemStats.Count > 0) {
-                            await _ItemDb.Set(entry.CharacterID, itemStats);
-                        }
-                    } else {
-                    }
-                    */
                 } catch (Exception ex) {
                     span?.AddExceptionEvent(ex);
                     _Logger.LogError(ex, $"error updating item unlocks for {charID}");
@@ -188,7 +201,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", statEntries.Count);
                 try {
                     if (statEntries.Count > 0) {
-                        await _StatDb.Set(charID, statEntries);
+                        await _StatRepository.Set(charID, statEntries);
                     }
                 } catch (Exception ex) {
                     span?.AddExceptionEvent(ex);
@@ -202,7 +215,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", charFriends.Count);
                 try {
                     if (charFriends.Count > 0) {
-                        await _FriendDb.Set(charID, charFriends);
+                        await _CharactacterFriendRepository.Set(charID, charFriends);
                     }
                 } catch (Exception ex) {
                     span?.AddExceptionEvent(ex);
@@ -216,7 +229,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", charDirs.Count);
                 foreach (CharacterDirective dir in charDirs) {
                     try {
-                        await _CharacterDirectiveDb.Upsert(dir);
+                        await _CharacterDirectiveRepository.Upsert(charID, dir);
                     } catch (Exception ex) {
                         span?.AddExceptionEvent(ex);
                         _Logger.LogError(ex, $"error updating character directive data for {charID} directive ID ${dir.DirectiveID}");
@@ -238,7 +251,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", charTreeDirs.Count);
                 foreach (CharacterDirectiveTree tree in charTreeDirs) {
                     try {
-                        await _CharacterDirectiveTreeDb.Upsert(charID, tree);
+                        await _CharacterDirectiveTreeRepository.Upsert(charID, tree);
                     } catch (Exception ex) {
                         span?.AddExceptionEvent(ex);
                         _Logger.LogError(ex, $"Error upserting character directive trees for {charID}");
@@ -252,7 +265,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", charTierDirs.Count);
                 foreach (CharacterDirectiveTier tier in charTierDirs) {
                     try {
-                        await _CharacterDirectiveTierDb.Upsert(charID, tier);
+                        await _CharacterDirectiveTierRepository.Upsert(charID, tier);
                     } catch (Exception ex) {
                         span?.AddExceptionEvent(ex);
                         _Logger.LogError(ex, $"Error upserting character directive tiers for {charID}");
@@ -266,7 +279,7 @@ namespace watchtower.Services.Repositories {
                 span?.AddTag("honu.count", charObjDirs.Count);
                 foreach (CharacterDirectiveObjective obj in charObjDirs) {
                     try {
-                        await _CharacterDirectiveObjectiveDb.Upsert(charID, obj);
+                        await _CharacterDirectiveObjectiveRepository.Upsert(charID, obj);
                     } catch (Exception ex) {
                         span?.AddExceptionEvent(ex);
                         _Logger.LogError(ex, $"Error upserting character directive objectives for {charID}");

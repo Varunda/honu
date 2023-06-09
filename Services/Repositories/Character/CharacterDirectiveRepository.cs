@@ -68,6 +68,19 @@ namespace watchtower.Services.Repositories {
             return dirs;
         }
 
+        /// <summary>
+        ///     Upsert a single <see cref="CharacterDirective"/>
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        public async Task Upsert(string charID, CharacterDirective dir) {
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Upsert(charID, dir);
+        }
+
     }
 
 }

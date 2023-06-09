@@ -63,5 +63,16 @@ namespace watchtower.Services.Repositories {
             return stats;
         }
 
+        public async Task Set(string charID, List<PsCharacterStat> stats) {
+            if (stats.Count <= 0) {
+                return;
+            }
+
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Set(charID, stats);
+        }
+
     }
 }

@@ -68,6 +68,18 @@ namespace watchtower.Services.Repositories {
             return dirs;
         }
 
+        /// <summary>
+        ///     Upsert a <see cref="CharacterDirectiveObjective"/>
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <param name="obj">Parameters used to upsert</param>
+        public async Task Upsert(string charID, CharacterDirectiveObjective obj) {
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Upsert(charID, obj);
+        }
+
     }
 
 }

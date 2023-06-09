@@ -82,6 +82,23 @@ namespace watchtower.Services.Repositories {
             return friends;
         }
 
+        /// <summary>
+        ///     Set the friends of a character
+        /// </summary>
+        /// <param name="charID"></param>
+        /// <param name="friends"></param>
+        /// <returns></returns>
+        public async Task Set(string charID, List<CharacterFriend> friends) {
+            if (friends.Count <= 0) {
+                return;
+            }
+
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Set(charID, friends);
+        }
+
     }
 
 }

@@ -23,7 +23,7 @@ namespace watchtower.Models.Census {
         public string? Tag { get; set; }
 
         /// <summary>
-        /// What faction the leader of the outfit is
+        /// What faction the leader of the outfit is. This can be -1 if the Census character join fails for some reason
         /// </summary>
         public short FactionID { get; set; }
 
@@ -51,6 +51,11 @@ namespace watchtower.Models.Census {
         /// When the outfit was last updated in Honu
         /// </summary>
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// When the outfit was first seen in Honu. If <c>null</c>, this outfit was loaded from Census
+        /// </summary>
+        public DateTime? Timestamp { get; set; }
 
     }
 }

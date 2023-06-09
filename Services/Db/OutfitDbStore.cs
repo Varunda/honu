@@ -268,13 +268,14 @@ namespace watchtower.Services.Db {
 
             outfit.ID = reader.GetString("id");
             outfit.Name = reader.GetString("name");
+            outfit.Tag = reader.GetNullableString("tag");
             outfit.FactionID = reader.GetInt16("faction_id");
             outfit.LastUpdated = reader.GetDateTime("last_updated_on");
             outfit.LeaderID = reader.GetString("leader_id");
             outfit.MemberCount = reader.GetInt32("member_count");
             outfit.LastUpdated = reader.GetDateTime("timestamp");
             outfit.DateCreated = reader.GetNullableDateTime("time_create") ?? DateTime.MinValue;
-            outfit.Tag = reader.GetNullableString("tag");
+            outfit.Timestamp = reader.GetDateTime("timestamp");
 
             return outfit;
         }

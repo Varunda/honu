@@ -95,9 +95,16 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
-        ///     Get multiple outfits in one API call
+        ///     Get multiple outfits (200 max) in one API call
         /// </summary>
         /// <param name="IDs">List of outfit IDs to get the outfits of</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="PsOutfit"/>, where each <see cref="PsOutfit"/>
+        ///     has a <see cref="PsOutfit.ID"/> in <paramref name="IDs"/>
+        /// </response>
+        /// <response code="400">
+        ///     More than 200 outfits were requested in a single call
+        /// </response>
         [HttpGet("many")]
         public async Task<ApiResponse<List<PsOutfit>>> GetByIDs([FromQuery] List<string> IDs) {
             if (IDs.Count > 200) {

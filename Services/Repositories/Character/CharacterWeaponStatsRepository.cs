@@ -59,6 +59,19 @@ namespace watchtower.Services.Repositories {
 
             return entries;
         }
+
+        /// <summary>
+        ///     Upsert a single <see cref="WeaponStatEntry"/>
+        /// </summary>
+        /// <param name="entry"></param>
+        /// <returns></returns>
+        public async Task Upsert(WeaponStatEntry entry) {
+            string cacheKey = string.Format(CACHE_KEY, entry.CharacterID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Upsert(entry);
+        }
+
     }
 
 }

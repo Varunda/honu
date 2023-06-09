@@ -25,13 +25,13 @@ namespace watchtower.Code.Commands {
             _OutfitDb = services.GetRequiredService<OutfitDbStore>();
         }
 
-        public async Task Refresh(string tag) {
-            _Logger.LogInformation($"Refreshing info for [{tag}] from census");
+        public async Task Refresh(string id) {
+            _Logger.LogInformation($"Refreshing info for outfit {id} from census");
 
-            PsOutfit? outfit = await _OutfitCollection.GetByTag(tag);
+            PsOutfit? outfit = await _OutfitCollection.GetByID(id);
 
             if (outfit == null) {
-                _Logger.LogWarning($"Failed to find outfit [{tag}]");
+                _Logger.LogInformation($"cannot refresh outfit {id}, outfit does not exist in census");
                 return;
             }
 

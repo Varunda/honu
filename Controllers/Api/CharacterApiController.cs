@@ -493,16 +493,17 @@ namespace watchtower.Controllers.Api {
 
             List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(
                 IDs: friends.Select(iter => iter.FriendID).ToList(),
                 env: CensusEnvironment.PC,
                 fast: true
-            );
+            )).ToDictionary(iter => iter.ID);
 
             foreach (CharacterFriend friend in friends) {
-                ExpandedCharacterFriend ex = new ExpandedCharacterFriend() {
+                _ = chars.TryGetValue(friend.FriendID, out PsCharacter? c);
+                ExpandedCharacterFriend ex = new() {
                     Entry = friend,
-                    Friend = chars.FirstOrDefault(iter => iter.ID == friend.FriendID)
+                    Friend = c
                 };
 
                 if (ex.Friend == null) {

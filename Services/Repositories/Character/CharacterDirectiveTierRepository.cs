@@ -68,6 +68,13 @@ namespace watchtower.Services.Repositories {
             return dirs;
         }
 
+        public async Task Upsert(string charID, CharacterDirectiveTier tier) {
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
+            await _Db.Upsert(charID, tier);
+        }
+
     }
 
 }

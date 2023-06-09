@@ -91,6 +91,9 @@ namespace watchtower.Services.Repositories {
         ///     A task when the operation is complete
         /// </returns>
         public Task Upsert(string charID, string type, PsCharacterHistoryStat stat) {
+            string cacheKey = string.Format(CACHE_KEY, charID);
+            _Cache.Remove(cacheKey);
+
             return _Db.Upsert(charID, type, stat);
         }
 
