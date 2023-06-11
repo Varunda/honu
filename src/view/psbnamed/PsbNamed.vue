@@ -71,7 +71,8 @@
 
             <div class="flex-grow-1">
                 <h4>Settings</h4>
-                <div>
+
+                <div class="mb-2">
                     Padding
                     <select class="form-control" v-model="padding">
                         <option>compact</option>
@@ -79,7 +80,27 @@
                         <option>expanded</option>
                     </select>
                 </div>
+
+                <div>
+                    <button class="btn btn-danger" @click="recheckAll" :disabled="recheck.going == true">
+                        Recheck all
+                    </button>
+                    <span v-show="recheck.going == true">
+                        Cannot recheck while a recheck is going. Refresh to cancel
+                    </span>
+                </div>
             </div>
+        </div>
+
+        <div v-if="recheck.opened == true" class="mb-2">
+            <h2>
+                Recheck progress
+                <busy v-if="recheck.going == true" class="honu-busy honu-busy-sm"></busy>
+            </h2>
+
+            <progress-bar :progress="recheck.progress" :total="recheck.total" :show-percent="true"></progress-bar>
+
+            <hr class="border" />
         </div>
 
         <a-table
@@ -336,8 +357,12 @@
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import InfoHover from "components/InfoHover.vue";
     import PsbAccountModal from "components/psb/PsbAccountModal.vue";
+    import ProgressBar from "components/ProgressBar.vue";
+    import Busy from "components/Busy.vue";
+
     import PsbNamedAccountCreateModal from "./components/PsbNamedAccountCreateModal.vue";
 
+    import Toaster from "Toaster";
     import "MomentFilter";
     import "filters/CharacterName";
     import "filters/TimeAgoFilter";
@@ -439,6 +464,14 @@
                     opened: false as boolean,
                 },
 
+                recheck: {
+                    going: false as boolean,
+                    opened: false as boolean,
+                    progress: 0 as number,
+                    total: 0 as number,
+                    current: "" as string
+                },
+
                 view: {
                     opened: false as boolean,
                     account: null as FlatPsbNamedAccount | null
@@ -511,6 +544,41 @@
                 if (this.accounts.state == "loaded") {
                     this.updateFilters();
                 }
+            },
+
+            recheckAll: async function(): Promise<void> {
+                if (this.accounts.state != "loaded") {
+                    Toaster.add("Error", "Cannot recheck all accounts: accounts is not loaded", "danger");
+                    return;
+                }
+
+                const accounts: FlatPsbNamedAccount[] = this.accounts.data.filter(iter => iter.account.deletedAt == null);
+
+                this.recheck.going = true;
+                this.recheck.opened = true;
+                this.recheck.progress = 0;
+                this.recheck.total = accounts.length;
+
+                for (const account of accounts) {
+                    this.recheck.current = `${account.tag}x${account.name}`;
+                    console.log(`rechecking ${account.id}/${account.tag}x${account.name}`);
+                    try {
+                        await PsbNamedAccountApi.recheckByID(account.id);
+                    } catch (err) {
+                        console.error(`error updating account ${account.id}: ${err}`);
+                        Toaster.add(`Error updating ${account.id}`, `${err}`, "danger");
+                    }
+                    ++this.recheck.progress;
+                }
+
+                Toaster.add("Done!", `Updated ${accounts.length} accounts`, "success");
+
+                this.loadAll();
+
+                this.recheck.going = false;
+                setTimeout(() => {
+                    this.recheck.opened = false;
+                }, 2000);
             },
 
             updateFilters: function(): void {
@@ -627,7 +695,9 @@
             InfoHover,
             PsbAccountModal, PsbNamedAccountCreateModal,
             PsbNamedCharacterCell, PsbNamedCharacterLogin,
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            ProgressBar,
+            Busy
         }
 
     });

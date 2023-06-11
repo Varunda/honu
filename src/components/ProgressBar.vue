@@ -4,6 +4,9 @@
             <span style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.5rem;">
                 <slot></slot>
                 {{progress}}/{{total}}
+                <span v-if="ShowPercent == true">
+                    ({{progress / total * 100 | locale(2)}}%)
+                </span>
             </span>
         </div>
     </div>
@@ -12,13 +15,16 @@
 <script lang="ts">
     import Vue from "vue";
 
+    import "filters/LocaleFilter";
+
     import Busy from "components/Busy.vue";
 
     export const ProgressBar = Vue.extend({
         props: {
             total: { type: Number, required: true },
             progress: { type: Number, required: true },
-            color: { type: String, required: false, default: "primary" }
+            color: { type: String, required: false, default: "primary" },
+            ShowPercent: { type: Boolean, required: false, default: false }
         },
 
         computed: {
