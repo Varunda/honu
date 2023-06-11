@@ -35,16 +35,17 @@ namespace watchtower.Services.Db {
         ///     of <paramref name="charID"/>
         /// </returns>
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT weapon_stats.*
 	                FROM weapon_stats
-		                LEFT JOIN wt_item i ON CAST(weapon_stats.item_id as int) = i.id
 	                WHERE weapon_stats.character_id = @CharID
 		                AND (weapon_stats.kills > 0 OR weapon_stats.seconds_with > 0)
             ");
 
             cmd.AddParameter("CharID", charID);
+
+            await cmd.PrepareAsync();
 
             List<WeaponStatEntry> entry = await ReadList(cmd);
             await conn.CloseAsync();
@@ -61,7 +62,7 @@ namespace watchtower.Services.Db {
         ///     A list of all <see cref="WeaponStatEntry"/> with <see cref="WeaponStatEntry.WeaponID"/> of <paramref name="itemID"/>
         /// </returns>
         public async Task<List<WeaponStatEntry>> GetByItemID(string itemID, int? minKills) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM weapon_stats
@@ -73,6 +74,7 @@ namespace watchtower.Services.Db {
 
             cmd.AddParameter("ItemID", itemID);
             cmd.AddParameter("MinKills", minKills ?? 0);
+            await cmd.PrepareAsync();
 
             List<WeaponStatEntry> entry = await ReadList(cmd);
             await conn.CloseAsync();
@@ -85,7 +87,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="entry">Entry to upsert</param>
         public async Task Upsert(WeaponStatEntry entry) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO weapon_stats (
                     character_id, item_id, vehicle_id, kills, deaths, shots, shots_hit, headshots, vehicle_kills, seconds_with, kd, kpm, acc, hsr, vkpm
@@ -155,7 +157,7 @@ namespace watchtower.Services.Db {
                 return $"(item_id = '0' AND vehicle_id = {entry.VehicleID})";
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 

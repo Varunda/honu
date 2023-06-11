@@ -40,7 +40,7 @@ namespace watchtower.Services.Hosted {
                     Stopwatch timer = Stopwatch.StartNew();
                     Stopwatch total = Stopwatch.StartNew();
 
-                    await using NpgsqlConnection conn = _DbHelper.Connection(task: "wt_cleanup", enlist: true);
+                    await using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER, task: "wt_cleanup", enlist: true);
                     long makeConn = timer.ElapsedMilliseconds; timer.Restart();
 
                     await conn.OpenAsync(stoppingToken);

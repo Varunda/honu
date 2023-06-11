@@ -45,7 +45,7 @@ namespace watchtower.Services.Db.Implementations {
                 + $"OR experience_id = {Experience.VKILL_VANGUARD} OR experience_id = {Experience.VKILL_DERVISH} "
                 + $"OR experience_id = {Experience.VKILL_CHIMERA} ";
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
                 WITH kills AS (
                     SELECT *
@@ -113,7 +113,7 @@ namespace watchtower.Services.Db.Implementations {
         }
 
         public async Task<WorldTotal> GetFocus(WorldTotalOptions options) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @$"
                 WITH kills AS (
                     SELECT *

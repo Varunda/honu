@@ -24,18 +24,16 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<SessionDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
-        private readonly CharacterCacheQueue _CharacterCacheQueue;
 
         public SessionDbStore(ILogger<SessionDbStore> logger,
-                IDbHelper helper, CharacterCacheQueue characterCacheQueue) {
+                IDbHelper helper) {
 
             _Logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _DbHelper = helper ?? throw new ArgumentNullException(nameof(helper));
-            _CharacterCacheQueue = characterCacheQueue;
         }
 
         public async Task<List<Session>> GetUnfixed(CancellationToken cancel) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -51,7 +49,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<long> GetUnfixedCount() {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT COUNT(*)
                     FROM wt_session
@@ -65,7 +63,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task SetFixed(long sessionID, CancellationToken cancel) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET needs_fix = false
@@ -86,7 +84,7 @@ namespace watchtower.Services.Db {
         ///     All <see cref="Session"/> with <see cref="Session.CharacterID"/> of <paramref name="charID"/>
         /// </returns>
         public async Task<List<Session>> GetAllByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -110,7 +108,7 @@ namespace watchtower.Services.Db {
         ///     or <c>null</c> if it does not exist
         /// </returns>
         public async Task<Session?> GetByID(long sessionID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -142,7 +140,7 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.start", $"{start:u}");
             trace?.AddTag("honu.end", $"{end:u}");
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -178,7 +176,7 @@ namespace watchtower.Services.Db {
                 throw new ArgumentException($"{nameof(start)} cannot come after {nameof(end)}");
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -221,7 +219,7 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.start", $"{start:u}");
             trace?.AddTag("honu.end", $"{end:u}");
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session
@@ -254,7 +252,7 @@ namespace watchtower.Services.Db {
         ///     The <see cref="Session.ID"/> of the row that was just inserted, or <c>null</c>
         /// </returns>
         public async Task<long> Insert(Session session) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = (@Timestamp - '1 second'::INTERVAL)
@@ -285,7 +283,7 @@ namespace watchtower.Services.Db {
         /// <param name="sessionID">ID of the session to update</param>
         /// <param name="when">What value of <see cref="Session.End"/> will have</param>
         public async Task SetSessionEndByID(long sessionID, DateTime when) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = @Timestamp
@@ -306,7 +304,7 @@ namespace watchtower.Services.Db {
         /// <param name="when">What the finish value will be set to</param>
         /// <param name="cancel">Cancelation token</param>
         public async Task EndAll(DateTime when, CancellationToken cancel) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 UPDATE wt_session
                     SET finish = @Timestamp
@@ -326,7 +324,7 @@ namespace watchtower.Services.Db {
         ///     This is used for creating population data
         /// </remarks>
         public async Task<Session?> GetFirstSession() {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_session

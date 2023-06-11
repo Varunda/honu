@@ -38,7 +38,7 @@ namespace watchtower.Services.Db {
         ///     of <paramref name="charID"/>, or <c>null</c> if it does not exist
         /// </returns>
         public async Task<CharacterMetadata?> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_metadata
@@ -59,7 +59,7 @@ namespace watchtower.Services.Db {
         /// <param name="IDs"></param>
         /// <returns></returns>
         public async Task<List<CharacterMetadata>> GetByIDs(List<string> IDs) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_metadata
@@ -80,7 +80,7 @@ namespace watchtower.Services.Db {
         /// <param name="charID">ID of the character the <paramref name="metadata"/> is for</param>
         /// <param name="metadata">Metadata, used for the parameters</param>
         public async Task Upsert(string charID, CharacterMetadata metadata) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_metadata (
                     id, last_updated, not_found_count

@@ -57,6 +57,79 @@ namespace watchtower.Services.Db {
         ///     The ID of the event that was just inserted into the table
         /// </returns>
         public async Task<long> Insert(ExpEvent ev) {
+            using NpgsqlConnection evConn = _DbHelper.Connection(Dbs.EVENTS, task: "exp insert", enlist: false);
+            using NpgsqlConnection charConn = _DbHelper.Connection(Dbs.CHARACTER, task: "exp insert", enlist: false);
+
+            await Task.WhenAll(evConn.OpenAsync(), charConn.OpenAsync());
+
+            using NpgsqlCommand evCmd = new NpgsqlCommand(@"
+                INSERT INTO wt_exp (
+                    source_character_id, experience_id, source_loadout_id,
+                    source_faction_id, source_team_id,
+                    other_id,
+                    amount,
+                    world_id, zone_id,
+                    timestamp
+                ) VALUES (
+                    $1, $2, $3,
+                    $4, $5,
+                    $6,
+                    $7,
+                    $8, $9,
+                    $10
+                ) RETURNING id;
+            ", evConn) {
+                Parameters = {
+                    new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
+                    new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
+                    new() { Value = ev.OtherID },
+                    new() { Value = ev.Amount },
+                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                    new() { Value = ev.Timestamp }
+                }
+            };
+
+            using NpgsqlCommand charCmd = new NpgsqlCommand(@"
+                INSERT INTO wt_recent_exp (
+                    source_character_id, experience_id, source_loadout_id,
+                    source_faction_id, source_team_id,
+                    other_id,
+                    amount,
+                    world_id, zone_id,
+                    timestamp
+                ) VALUES (
+                    $1, $2, $3,
+                    $4, $5,
+                    $6,
+                    $7,
+                    $8, $9,
+                    $10
+                );
+            ", charConn) {
+                Parameters = {
+                    new() { Value = ev.SourceID }, new() { Value = ev.ExperienceID }, new() { Value = ev.LoadoutID },
+                    new() { Value = Loadout.GetFaction(ev.LoadoutID) }, new() { Value = ev.TeamID },
+                    new() { Value = ev.OtherID },
+                    new() { Value = ev.Amount },
+                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                    new() { Value = ev.Timestamp }
+                }
+            };
+
+            await Task.WhenAll(evCmd.PrepareAsync(), charCmd.PrepareAsync());
+
+            // start this now, don't actually need the results
+            Task charTask = charCmd.ExecuteNonQueryAsync();
+
+            long ID = await evCmd.ExecuteInt64(CancellationToken.None);
+
+            await charTask;
+
+            await Task.WhenAll(evConn.CloseAsync(), charConn.CloseAsync());
+
+            return ID;
+
+            /*
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "exp insert", enlist: false);
 
             //using Activity? openConn = HonuActivitySource.Root.StartActivity("open conn");
@@ -102,6 +175,7 @@ namespace watchtower.Services.Db {
             }
 
             return (long)IDobj;
+            */
         }
 
         /// <summary>
@@ -112,7 +186,7 @@ namespace watchtower.Services.Db {
         ///     The top players who have met the parameters passed in <paramref name="parameters"/>
         /// </returns>
         public async Task<List<ExpDbEntry>> GetEntries(ExpEntryOptions parameters) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
 
             // exclude VR training events (96, 97 and 98)
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -148,7 +222,7 @@ namespace watchtower.Services.Db {
         ///     A list of outfits who have met the parameters passed in <paramref name="options"/>
         /// </returns>
         public async Task<List<ExpDbEntry>> GetTopOutfits(ExpEntryOptions options) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
                     SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '') AS outfit_id
@@ -291,7 +365,7 @@ namespace watchtower.Services.Db {
         ///     A list of <see cref="ExpEvent"/>s
         /// </returns>
         public async Task<List<ExpEvent>> GetByOutfitID(string outfitID, short worldID, short teamID, int interval) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT wt_recent_exp.*
                     FROM wt_recent_exp
@@ -327,7 +401,7 @@ namespace watchtower.Services.Db {
         public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
             bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(useAll == true ? Dbs.EVENTS : Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     FROM {(useAll ? "wt_exp" : "wt_recent_exp")}

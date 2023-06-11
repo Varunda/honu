@@ -80,12 +80,4 @@ namespace watchtower.Services.Db.Implementations {
 
     }
 
-    public static class Dbs {
-
-        public const string EVENTS = "events";
-
-        public const string CHARACTER = "character";
-
-    }
-
 }

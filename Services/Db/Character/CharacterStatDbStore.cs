@@ -28,7 +28,7 @@ namespace watchtower.Services.Db {
         /// <param name="charID">ID of the character</param>
         /// <returns></returns>
         public async Task<List<PsCharacterStat>> GetByID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_stats
@@ -53,7 +53,7 @@ namespace watchtower.Services.Db {
                 return;
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 

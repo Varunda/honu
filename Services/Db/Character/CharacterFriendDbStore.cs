@@ -26,7 +26,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<CharacterFriend>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_friends
@@ -58,7 +58,7 @@ namespace watchtower.Services.Db {
                 throw new Exception($"Refusing to set 0 friends for {charID}, this is potentially destructive");
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 

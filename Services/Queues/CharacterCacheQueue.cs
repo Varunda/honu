@@ -18,8 +18,6 @@ namespace watchtower.Services.Queues {
 
         private readonly HashSet<string> _Pending = new HashSet<string>();
 
-        private readonly ConcurrentDictionary<string, DateTime> _CachedAt = new ();
-
         public CharacterCacheQueue(ILoggerFactory factory) : base(factory) { }
 
         /// <summary>

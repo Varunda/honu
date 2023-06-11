@@ -16,7 +16,7 @@ namespace watchtower.Services.Db {
         /// <param name="task">Optional name to use about the application, defaults to 'honu'</param>
         /// <param name="enlist">Will this connection enlist to the TransactionScope?</param>
         /// <returns>A new connection to use</returns>
-        NpgsqlConnection Connection(string server = "events", string? task = null, bool enlist = true);
+        NpgsqlConnection Connection(string server = Dbs.EVENTS, string? task = null, bool enlist = true);
 
         /// <summary>
         /// Create a new command using the connection passed
@@ -24,6 +24,23 @@ namespace watchtower.Services.Db {
         /// <param name="connection">Connection the command will be executed on</param>
         /// <param name="text">Text of the command</param>
         Task<NpgsqlCommand> Command(NpgsqlConnection connection, string text);
+
+    }
+
+    /// <summary>
+    ///     Names of connection strings
+    /// </summary>
+    public static class Dbs {
+
+        /// <summary>
+        ///     The old DB that has everything
+        /// </summary>
+        public const string EVENTS = "events";
+
+        /// <summary>
+        ///     Faster DB
+        /// </summary>
+        public const string CHARACTER = "character";
 
     }
 

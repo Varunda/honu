@@ -28,7 +28,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="charID">ID of the character</param>
         public async Task<List<CharacterDirective>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_directives
@@ -43,8 +43,13 @@ namespace watchtower.Services.Db {
             return dirs;
         }
 
+        /// <summary>
+        ///     Upsert a single <see cref="CharacterDirective"/>
+        /// </summary>
+        /// <param name="charID">ID of the character being updated</param>
+        /// <param name="dir">Parameters used to upsert</param>
         public async Task Upsert(string charID, CharacterDirective dir) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_directives (
                     character_id, directive_id, directive_tree_id, completion_date
@@ -81,7 +86,7 @@ namespace watchtower.Services.Db {
 
             List<int> existingIDs = dirs.Select(iter => iter.DirectiveID).ToList();
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 
@@ -114,27 +119,6 @@ namespace watchtower.Services.Db {
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
-        }
-
-        public async Task Upsert(CharacterDirective dir) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                INSERT INTO character_directives (
-                    character_id, directive_id, directive_tree_id, completion_date
-                ) VALUES (
-                    @CharacterID, @DirectiveID, @DirectiveTreeID, @CompletionDate
-                ) ON CONFLICT (character_id, directive_id)
-                    DO UPDATE SET directive_tree_id = @DirectiveTreeID,
-                        completion_date = @CompletionDate;
-            ");
-
-            cmd.AddParameter("CharacterID", dir.CharacterID);
-            cmd.AddParameter("DirectiveID", dir.DirectiveID);
-            cmd.AddParameter("DirectiveTreeID", dir.TreeID);
-            cmd.AddParameter("CompletionDate", dir.CompletionDate);
-            await cmd.PrepareAsync();
-
-            await cmd.ExecuteNonQueryAsync();
         }
 
     }

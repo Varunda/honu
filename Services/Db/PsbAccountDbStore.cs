@@ -125,21 +125,25 @@ namespace watchtower.Services.Db {
         ///     in the last 90 days
         /// </returns>
         public async Task<long> GetPlaytime(long accountID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            PsbAccount? account = await GetByID(accountID);
+            if (account == null) {
+                return 0;
+            }
+
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT COALESCE(usage.seconds_online, 0) AS play_time
-                    FROM psb_named pn1
-                    LEFT JOIN (
-                        SELECT pn2.id, SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
-                            FROM psb_named pn2
-                            LEFT JOIN wt_session s ON s.character_id = pn2.vs_id OR s.character_id = pn2.nc_id OR s.character_id = pn2.tr_id
-                            WHERE s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL)
-                            GROUP BY pn2.id
-                    ) usage ON usage.id = pn1.id
-                    WHERE pn1.id = @AccountID;
+                    FROM (
+                        SELECT SUM(EXTRACT(epoch FROM s.finish - s.start)) AS seconds_online
+                            FROM wt_session s
+                            WHERE (s.character_id = @VsID OR s.character_id = @NcID OR s.character_id = @TrID)
+                                AND (s.start >= (NOW() AT TIME ZONE 'utc' - '90 days'::INTERVAL))
+                    ) usage
             ");
 
-            cmd.AddParameter("AccountID", accountID);
+            cmd.AddParameter("VsID", account.VsID);
+            cmd.AddParameter("NcID", account.NcID);
+            cmd.AddParameter("TrID", account.TrID);
 
             object? playTime = await cmd.ExecuteScalarAsync(CancellationToken.None);
 

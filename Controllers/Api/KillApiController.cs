@@ -305,8 +305,7 @@ namespace watchtower.Controllers {
             Dictionary<int, PsItem?> items = new Dictionary<int, PsItem?>();
 
             foreach (KillEvent ev in events) {
-                ExpandedKillEvent e = new ExpandedKillEvent();
-
+                ExpandedKillEvent e = new();
                 e.Event = ev;
 
                 if (items.ContainsKey(ev.WeaponID) == false) {

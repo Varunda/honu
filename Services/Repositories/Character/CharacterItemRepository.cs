@@ -51,12 +51,6 @@ namespace watchtower.Services.Repositories {
                     foreach (CharacterItem i in items) {
                         await _Db.Upsert(i);
                     }
-
-                    /*
-                    if (items.Count > 0) {
-                        await _Db.Set(charID, items);
-                    }
-                    */
                 }
 
                 _Cache.Set(cacheKey, items, new MemoryCacheEntryOptions() {

@@ -22,7 +22,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<CharacterAchievement>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_achievement
@@ -38,7 +38,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task Upsert(CharacterAchievement ach) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_achievement (
                     character_id, achievement_id, earned_count, start_date, finish_date, last_save_date

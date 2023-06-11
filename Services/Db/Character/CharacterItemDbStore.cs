@@ -23,7 +23,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<CharacterItem>> GetByID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_items
@@ -39,7 +39,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task Upsert(CharacterItem item) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 INSERT INTO character_items (
                     character_id, item_id, account_level, stack_count
@@ -66,7 +66,7 @@ namespace watchtower.Services.Db {
                 return;
             }
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
 

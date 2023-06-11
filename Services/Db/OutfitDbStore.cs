@@ -42,7 +42,7 @@ namespace watchtower.Services.Db {
         ///     or <c>null</c> if it does not exist
         /// </returns>
         public async Task<PsOutfit?> GetByID(string outfitID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit
@@ -63,7 +63,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="IDs">IDs of the outfits to get</param>
         public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit
@@ -89,7 +89,7 @@ namespace watchtower.Services.Db {
         ///     A list of all outfits with <see cref="PsOutfit.Tag"/> equal to <paramref name="tag"/>
         /// </returns>
         public async Task<List<PsOutfit>> GetByTag(string tag) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit
@@ -109,7 +109,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <returns></returns>
         public async Task<List<PsOutfit>> GetAll() {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit;
@@ -129,7 +129,7 @@ namespace watchtower.Services.Db {
         ///     A list of all <see cref="PsOutfit"/>s that have <paramref name="name"/> contain <see cref="PsOutfit.Name"/>
         /// </returns>
         public async Task<List<PsOutfit>> SearchByName(string name) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM wt_outfit
@@ -149,7 +149,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="outfit">Parameters used to update/insert the entry</param>
         public async Task Upsert(PsOutfit outfit) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_outfit (
                     id, name, tag, faction_id, last_updated_on, time_create, leader_id, member_count
@@ -188,7 +188,7 @@ namespace watchtower.Services.Db {
         ///     they had online at a given time
         /// </returns>
         public async Task<List<OutfitPopulation>> GetPopulation(DateTime time, short worldID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH outfits AS (
                 SELECT wt_session.outfit_id, COUNT(wt_session.outfit_id)
@@ -228,7 +228,7 @@ namespace watchtower.Services.Db {
         ///         instead of an entry with a count of 0 being returned, no row will be included.
         /// </returns>
         public async Task<List<OutfitActivityDbEntry>> GetActivity(string outfitID, DateTime start, DateTime end, int bucketWidthSec = 3600) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             await using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT
                     gs as timestamp,

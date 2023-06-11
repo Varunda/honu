@@ -24,7 +24,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<CharacterDirectiveTree>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_directive_tree
@@ -40,7 +40,7 @@ namespace watchtower.Services.Db {
         }
 
         public async Task Upsert(string charID, CharacterDirectiveTree dir) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_directive_tree (
                     character_id, tree_id, current_tier, current_level, completion_date

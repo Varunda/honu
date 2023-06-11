@@ -23,8 +23,16 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Get all <see cref="CharacterDirectiveObjective"/>s for a single character
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns>
+        ///     A <see cref="List{T}"/> of <see cref="CharacterDirectiveObjective"/>s with
+        ///     <see cref="CharacterDirectiveObjective.CharacterID"/> of <paramref name="charID"/>
+        /// </returns>
         public async Task<List<CharacterDirectiveObjective>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_directive_objective
@@ -39,8 +47,13 @@ namespace watchtower.Services.Db {
             return dirs;
         }
 
+        /// <summary>
+        ///     Upsert a single <see cref="CharacterDirectiveObjective"/>
+        /// </summary>
+        /// <param name="charID">ID of the character this info is being updated for</param>
+        /// <param name="dir">Parameters used to upsert</param>
         public async Task Upsert(string charID, CharacterDirectiveObjective dir) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_directive_objective (
                     character_id, directive_id, objective_id, objective_group_id, status, state_data

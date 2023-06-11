@@ -52,10 +52,9 @@ namespace watchtower.Services.Db {
         ///     The ID of the <see cref="KillEvent"/> that was just created
         /// </returns>
         public async Task<long> Insert(KillEvent ev) {
+            // insert into EVENTS db
             await using NpgsqlConnection conn = _DbHelper.Connection(task: "kill insert", enlist: false);
-            //using (Activity? connOpen = HonuActivitySource.Root.StartActivity("open conn")) {
-                await conn.OpenAsync();
-            //}
+            await conn.OpenAsync();
 
             await using NpgsqlCommand cmd = new NpgsqlCommand(@"
                 INSERT INTO wt_kills (
@@ -89,7 +88,7 @@ namespace watchtower.Services.Db {
                 }
             };
 
-                await cmd.PrepareAsync();
+            await cmd.PrepareAsync();
 
             //Activity? allExe = HonuActivitySource.Root.StartActivity("insert into wt_kills");
             object? IDobj = await cmd.ExecuteScalarAsync();
@@ -100,7 +99,11 @@ namespace watchtower.Services.Db {
 
             long ID = (long)IDobj;
 
-            cmd.CommandText = @"
+            // insert into CHARACTER db, which has the recent kills
+            await using NpgsqlConnection charConn = _DbHelper.Connection(Dbs.CHARACTER, task: "kill insert", enlist: false);
+            await charConn.OpenAsync();
+
+            using NpgsqlCommand charCmd = new NpgsqlCommand(@"
                 INSERT INTO wt_recent_kills (
                     id, world_id, zone_id,
                     attacker_character_id, attacker_loadout_id,
@@ -116,48 +119,32 @@ namespace watchtower.Services.Db {
                     $9, $10, $11, $12, null,
                     $13, $14, $15
                 ) RETURNING id;
-            ";
+            ", charConn) {
+                Parameters = {
+                    new() { Value = ev.WorldID }, new() { Value = unchecked((int)ev.ZoneID) },
+                    new() { Value = ev.AttackerCharacterID }, new() { Value = ev.AttackerLoadoutID },
+                    new() { Value = ev.AttackerFireModeID }, new() { Value = ev.AttackerVehicleID },
+                    new() { Value = Loadout.GetFaction(ev.AttackerLoadoutID) }, new() { Value = ev.AttackerTeamID },
+                    new() { Value = ev.KilledCharacterID },
+                    new() { Value = ev.KilledLoadoutID },
+                    new() { Value = Loadout.GetFaction(ev.KilledLoadoutID) },
+                    new() { Value = ev.KilledTeamID },
+                    new() { Value = ev.WeaponID },
+                    new() { Value = ev.IsHeadshot },
+                    new() { Value = ev.Timestamp },
+                    new() { Value = ID } // <==== ID IS LAST, $16!!!!!
+                }
+            };
 
-            // Use the parameters from the last cmd, which uses basically the same ones, but now we have the ID to copy
-            cmd.Parameters.Add(new() { Value = ID });
-            await cmd.PrepareAsync();
+            await charCmd.PrepareAsync();
 
             //Activity? recentExe = HonuActivitySource.Root.StartActivity("insert into wt_recent_kills");
-            await cmd.ExecuteNonQueryAsync();
+            await charCmd.ExecuteNonQueryAsync();
             //recentExe?.Stop();
 
-            await conn.CloseAsync();
+            await Task.WhenAll(conn.CloseAsync(), charConn.CloseAsync());
 
             return ID;
-        }
-
-        /// <summary>
-        ///     Update <see cref="KillEvent.RevivedEventID"/>
-        /// </summary>
-        /// <param name="charID">Character ID that was revived</param>
-        /// <param name="revivedEventID">ID of the exp event that the revive came from</param>
-        /// <param name="timestamp">When the revive took place</param>
-        public async Task SetRevivedID(string charID, long revivedEventID, DateTime timestamp) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                UPDATE wt_kills
-                    SET revived_event_id = @RevivedEventID
-                    WHERE killed_character_id = @RevivedCharacterID
-                        AND timestamp = (
-                            SELECT MAX(timestamp)
-                                FROM wt_kills 
-                                WHERE timestamp >= (@Timestamp - interval '50 seconds')
-                                    AND killed_character_id = @RevivedCharacterID
-                        )
-            ");
-
-            cmd.AddParameter("RevivedCharacterID", charID);
-            cmd.AddParameter("RevivedEventID", revivedEventID);
-            cmd.AddParameter("Timestamp", timestamp);
-            await cmd.PrepareAsync();
-
-            await cmd.ExecuteNonQueryAsync();
-            await conn.CloseAsync();
         }
 
         /// <summary>
@@ -167,23 +154,29 @@ namespace watchtower.Services.Db {
         /// <param name="expID">ID of the <see cref="ExpEvent"/> that was the revive</param>
         /// <returns></returns>
         public async Task SetRevived(long deathID, long expID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
-            await using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+            using NpgsqlConnection evConn = _DbHelper.Connection(Dbs.EVENTS);
+            using NpgsqlCommand evCmd = await _DbHelper.Command(evConn, @"
                 UPDATE wt_kills
                     SET revived_event_id = @ExpID
                     WHERE id = @DeathID;
+            ");
+            evCmd.AddParameter("ExpID", expID);
+            evCmd.AddParameter("DeathID", deathID);
+            await evCmd.PrepareAsync();
 
+            using NpgsqlConnection charConn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand charCmd = await _DbHelper.Command(charConn, @"
                 UPDATE wt_recent_kills
                     SET revived_event_id = @ExpID
                     WHERE id = @DeathID;
             ");
+            charCmd.AddParameter("ExpID", expID);
+            charCmd.AddParameter("DeathID", deathID);
+            await charCmd.PrepareAsync();
 
-            cmd.AddParameter("ExpID", expID);
-            cmd.AddParameter("DeathID", deathID);
-            await cmd.PrepareAsync();
+            await Task.WhenAll(evCmd.ExecuteNonQueryAsync(), charCmd.ExecuteNonQueryAsync());
 
-            await cmd.ExecuteNonQueryAsync();
-            await conn.CloseAsync();
+            await Task.WhenAll(evConn.CloseAsync(), charConn.CloseAsync());
         }
 
         /// <summary>
@@ -218,7 +211,7 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.factionID", options.FactionID);
             trace?.AddTag("honu.duration", options.Interval);
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
                     SELECT ID, attacker_character_id, killed_character_id, revived_event_id, attacker_team_id, killed_team_id
@@ -283,7 +276,7 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.factionID", options.FactionID);
             trace?.AddTag("honu.duration", options.Interval);
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
                     SELECT k.id, k.world_id, k.zone_id, c.outfit_id AS attacker_outfit_id, c2.outfit_id AS killed_outfit_id, revived_event_id, k.attacker_character_id, k.killed_character_id
@@ -332,7 +325,7 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.factionID", options.FactionID);
             trace?.AddTag("honu.duration", options.Interval);
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT 
                     weapon_id as item_id,
@@ -457,12 +450,12 @@ namespace watchtower.Services.Db {
         ///     of <paramref name="outfitID"/> within the last <paramref name="interval"/> minutes
         /// </returns>
         public async Task<List<KillEvent>> GetKillsByOutfitID(string outfitID, int interval) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT wt_kills.*
-                    FROM wt_kills
-                        INNER JOIN wt_character ON wt_kills.attacker_character_id = wt_character.id
-                    WHERE wt_kills.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
+                SELECT wt_recent_kills.*
+                    FROM wt_recent_kills
+                        INNER JOIN wt_character ON wt_recent_kills.attacker_character_id = wt_character.id
+                    WHERE wt_recent_kills.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                         AND wt_character.outfit_id = @OutfitID
             ");
 
@@ -493,7 +486,7 @@ namespace watchtower.Services.Db {
 
             bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
 
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(useAll == true ? Dbs.EVENTS : Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     FROM {(useAll ? "wt_kills" : "wt_recent_kills")}

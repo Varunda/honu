@@ -31,7 +31,7 @@ namespace watchtower.Services.Db {
         ///     or an empty list if no character exists
         /// </returns>
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_history_stat
@@ -51,7 +51,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="IDs">List of character IDs to be used</param>
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterIDs(List<string> IDs) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_history_stat
@@ -74,7 +74,7 @@ namespace watchtower.Services.Db {
         /// <param name="stat">Parameters of the stat used when upserting</param>
         public async Task Upsert(string charID, string type, PsCharacterHistoryStat stat) {
             // i hate this
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO character_history_stat (
                     character_id, type, timestamp, all_time, one_life_max,

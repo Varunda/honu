@@ -31,7 +31,7 @@ namespace watchtower.Services.Db {
         ///     The <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>
         /// </returns>
         public async Task<PsCharacter?> GetByID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
@@ -57,7 +57,7 @@ namespace watchtower.Services.Db {
         ///     of <paramref name="name"/>, ignoring case
         /// </returns>
         public async Task<List<PsCharacter>> GetByName(string name) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
@@ -83,7 +83,7 @@ namespace watchtower.Services.Db {
         ///     as an element of <paramref name="IDs"/>
         /// </returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
@@ -108,7 +108,7 @@ namespace watchtower.Services.Db {
         /// </remarks>
         /// <param name="character">Parameters used to insert/update</param>
         public async Task Upsert(PsCharacter character) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_character (
                     id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on, time_create, time_last_login, time_last_save
@@ -153,7 +153,7 @@ namespace watchtower.Services.Db {
         ///     is contained in <see cref="PsCharacter.Name"/>
         /// </returns>
         public async Task<List<PsCharacter>> SearchByName(string name) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
@@ -175,7 +175,7 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <returns></returns>
         public async Task<List<PsCharacter>> GetMissingDates() {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT c.*, o.id AS outfit_id, o.tag AS outfit_tag, o.name AS outfit_name
                     FROM wt_character c
