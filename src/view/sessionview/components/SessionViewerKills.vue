@@ -1,107 +1,14 @@
 ﻿<template>
     <div>
-        <div class="d-flex flex-wrap">
-            <div class="flex-grow-1 mr-3">
-                <h3>Weapons</h3>
-                <table class="table table-sm" style="vertical-align: top; width: auto;">
-                    <thead>
-                        <tr class="table-secondary th-border-top-0">
-                            <th>Weapon</th>
-                            <th>Kills</th>
-                            <th>
-                                %
-                                <info-hover text="What percent of kills in this session were made with this weapon"></info-hover>
-                            </th>
-                            <th>
-                                HSR (%)
-                                <info-hover text="What percent of kills (not shots) were made with a headshot with this weapon"></info-hover>
-                            </th>
-                            <th>
-                                Hip (%)
-                                <info-hover text="What percent of kills (not shots) were made while in hipfire with this weapon"></info-hover>
-                            </th>
-                            <th>
-                                ADS (%)
-                                <info-hover text="What percent of kills (not shots) were made while aiming down sights with this weapon"></info-hover>
-                            </th>
-                        </tr>
-                    </thead>
+        <h3 class="wt-header" style="background-color: var(--purple)">
+            Versus
+        </h3>
 
-                    <tbody>
-                        <tr v-for="entry in groupedKillEventsArray">
-                            <td>
-                                <span v-if="entry[0] == 0">
-                                    &lt;no weapon&gt;
-                                </span>
-                                <a v-else :href="'/i/' + entry[0]">
-                                    <span v-if="groupedKillWeapons.get(entry[0])">
-                                        {{groupedKillWeapons.get(entry[0]).name}}
-                                    </span>
-                                    <span v-else>
-                                        &lt;missing {{entry[0]}}&gt;
-                                    </span>
-                                </a>
-                            </td>
-
-                            <td>
-                                {{entry[1].length}}
-                            </td>
-
-                            <td>
-                                {{entry[1].length / kills.length * 100 | fixed | locale}}%
-                            </td>
-
-                            <td>
-                                {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
-                                ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
-                            </td>
-
-                            <td>
-                                <span v-if="entry[0] == 0">
-                                    --
-                                </span>
-                                <span v-else>
-                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
-                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
-                                </span>
-                            </td>
-
-                            <td>
-                                <span v-if="entry[0] == 0">
-                                    --
-                                </span>
-                                <span v-else>
-                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
-                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
-                                </span>
-                            </td>
-                        </tr>
-
-                        <tr class="table-secondary th-border-top-0">
-                            <td>
-                                <b>Total</b>
-                            </td>
-
-                            <td>
-                                {{kills.length | locale}}
-                            </td>
-
-                            <td colspan="4">
-                                {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="flex-grow-1 mr-3" style="max-width: 50vw;">
-                <canvas id="chart-kills-weapon-usage" style="max-height: 300px;" class="mb-2"></canvas>
-            </div>
-
-            <div class="flex-grow-1 mr-3">
+        <div class="d-flex">
+            <div class="mr-3">
                 <h3>Outfits</h3>
 
-                <table class="table table-sm">
+                <table class="table table-sm" style="width: auto;">
                     <thead>
                         <tr class="table-secondary th-border-top-0">
                             <th>Outfit</th>
@@ -146,7 +53,7 @@
                 </table>
             </div>
 
-            <div class="flex-grow-1">
+            <div class="">
                 <h3>Classes</h3>
 
                 <table class="table table-sm" style="width: auto;">
@@ -197,12 +104,400 @@
                 </table>
             </div>
         </div>
+
+        <h3 class="wt-header" style="background-color: var(--green)">
+            Kills
+        </h3>
+
+        <div class="d-flex flex-wrap">
+            <div class="mr-3">
+                <h3>Weapon kills</h3>
+                <table class="table table-sm" style="vertical-align: top; width: auto;">
+                    <thead>
+                        <tr class="table-secondary th-border-top-0">
+                            <th>Weapon</th>
+                            <th>Kills</th>
+                            <th>
+                                %
+                                <info-hover text="What percent of kills in this session were made with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                HSR (%)
+                                <info-hover text="What percent of kills (not shots) were made with a headshot with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                Hip (%)
+                                <info-hover text="What percent of kills (not shots) were made while in hipfire with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                ADS (%)
+                                <info-hover text="What percent of kills (not shots) were made while aiming down sights with this weapon"></info-hover>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="entry in groupedKillEventsArray">
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    &lt;no weapon&gt;
+                                </span>
+                                <a v-else :href="'/i/' + entry[0]">
+                                    <span v-if="weaponMap.get(entry[0])">
+                                        {{weaponMap.get(entry[0]).name}}
+                                    </span>
+                                    <span v-else>
+                                        &lt;missing {{entry[0]}}&gt;
+                                    </span>
+                                </a>
+                            </td>
+
+                            <td>
+                                {{entry[1].length}}
+                            </td>
+
+                            <td>
+                                {{entry[1].length / kills.length * 100 | fixed | locale}}%
+                            </td>
+
+                            <td>
+                                {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
+                                ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr class="table-secondary th-border-top-0">
+                            <td>
+                                <b>Total</b>
+                            </td>
+
+                            <td colspan="2">
+                                {{kills.length | locale}}
+                            </td>
+
+                            <td colspan="3">
+                                {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex-grow-1">
+                <canvas id="chart-kills-weapon-usage" style="max-height: 300px; max-width: 500px;" class="mb-2"></canvas>
+            </div>
+        </div>
+
+        <div class="flex-grow-1">
+            <h3>Weapon kill types</h3>
+            <table class="table table-sm" style="vertical-align: top; width: auto;">
+                <thead>
+                    <tr class="table-secondary th-border-top-0">
+                        <th>Type</th>
+                        <th>Kills</th>
+                        <th>
+                            %
+                            <info-hover text="What percent of kills in this session were made with this weapon type"></info-hover>
+                        </th>
+                        <th>
+                            HSR (%)
+                            <info-hover text="What percent of kills (not shots) were made with a headshot with this weapon type"></info-hover>
+                        </th>
+                        <th>
+                            Hip (%)
+                            <info-hover text="What percent of kills (not shots) were made while in hipfire with this weapon type"></info-hover>
+                        </th>
+                        <th>
+                            ADS (%)
+                            <info-hover text="What percent of kills (not shots) were made while aiming down sights with this weapon type"></info-hover>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr v-for="entry in groupedKillEventsTypeArray">
+                        <td>
+                            <span v-if="entry[0] == 0">
+                                &lt;no type&gt;
+                            </span>
+                            <span v-else-if="weaponCategoryMap.get(entry[0])">
+                                {{weaponCategoryMap.get(entry[0]).name}}
+                            </span>
+                            <span v-else>
+                                &lt;missing {{entry[0]}}&gt;
+                            </span>
+                        </td>
+
+                        <td>
+                            {{entry[1].length}}
+                        </td>
+
+                        <td>
+                            {{entry[1].length / kills.length * 100 | fixed | locale}}%
+                        </td>
+
+                        <td>
+                            {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
+                            ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
+                        </td>
+
+                        <td>
+                            <span v-if="entry[0] == 0">
+                                --
+                            </span>
+                            <span v-else>
+                                {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
+                                ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
+                            </span>
+                        </td>
+
+                        <td>
+                            <span v-if="entry[0] == 0">
+                                --
+                            </span>
+                            <span v-else>
+                                {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
+                                ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr class="table-secondary th-border-top-0">
+                        <td>
+                            <b>Total</b>
+                        </td>
+
+                        <td colspan="2">
+                            {{kills.length | locale}}
+                        </td>
+
+                        <td colspan="3">
+                            {{kills.filter(iter => iter.event.isHeadshot == true).length / kills.length * 100 | fixed | locale}}%
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="wt-header" style="background-color: var(--red)">
+            Deaths
+        </h3>
+
+        <div class="d-flex flex-wrap">
+            <div class="mr-3">
+                <h3>Weapon deaths</h3>
+                <table class="table table-sm" style="vertical-align: top; width: auto;">
+                    <thead>
+                        <tr class="table-secondary th-border-top-0">
+                            <th>Weapon</th>
+                            <th>Deaths</th>
+                            <th>
+                                %
+                                <info-hover text="What percent of deaths in this session were from this weapon"></info-hover>
+                            </th>
+                            <th>
+                                HSR (%)
+                                <info-hover text="What percent of deaths (not shots) were from a headshot with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                Hip (%)
+                                <info-hover text="What percent of deaths (not shots) were from hipfire with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                ADS (%)
+                                <info-hover text="What percent of deaths (not shots) were from aiming down sights with this weapon"></info-hover>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="entry in groupedDeathEventsArray">
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    &lt;no weapon&gt;
+                                </span>
+                                <a v-else :href="'/i/' + entry[0]">
+                                    <span v-if="weaponMap.get(entry[0])">
+                                        {{weaponMap.get(entry[0]).name}}
+                                    </span>
+                                    <span v-else>
+                                        &lt;missing {{entry[0]}}&gt;
+                                    </span>
+                                </a>
+                            </td>
+
+                            <td>
+                                {{entry[1].length}}
+                            </td>
+
+                            <td>
+                                {{entry[1].length / deaths.length * 100 | fixed | locale}}%
+                            </td>
+
+                            <td>
+                                {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
+                                ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr class="table-secondary th-border-top-0">
+                            <td>
+                                <b>Total</b>
+                            </td>
+
+                            <td colspan="2">
+                                {{deaths.length | locale}}
+                            </td>
+
+                            <td colspan="3">
+                                {{deaths.filter(iter => iter.event.isHeadshot == true).length / deaths.length * 100 | fixed | locale}}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3>Weapon death types</h3>
+                <table class="table table-sm" style="vertical-align: top; width: auto;">
+                    <thead>
+                        <tr class="table-secondary th-border-top-0">
+                            <th>Weapon</th>
+                            <th>Deaths</th>
+                            <th>
+                                %
+                                <info-hover text="What percent of deaths in this session were from this weapon"></info-hover>
+                            </th>
+                            <th>
+                                HSR (%)
+                                <info-hover text="What percent of deaths (not shots) were from a headshot with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                Hip (%)
+                                <info-hover text="What percent of deaths (not shots) were from hipfire with this weapon"></info-hover>
+                            </th>
+                            <th>
+                                ADS (%)
+                                <info-hover text="What percent of deaths (not shots) were from aiming down sights with this weapon"></info-hover>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="entry in groupedDeathEventsTypeArray">
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    &lt;no type&gt;
+                                </span>
+                                <span v-else-if="weaponCategoryMap.get(entry[0])">
+                                    {{weaponCategoryMap.get(entry[0]).name}}
+                                </span>
+                                <span v-else>
+                                    &lt;missing {{entry[0]}}&gt;
+                                </span>
+                            </td>
+
+                            <td>
+                                {{entry[1].length}}
+                            </td>
+
+                            <td>
+                                {{entry[1].length / deaths.length * 100 | fixed | locale}}%
+                            </td>
+
+                            <td>
+                                {{entry[1].filter(iter => iter.event.isHeadshot == true).length}}
+                                ({{entry[1].filter(iter => iter.event.isHeadshot == true).length / entry[1].length * 100 | fixed | locale}}%)
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 0).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+
+                            <td>
+                                <span v-if="entry[0] == 0">
+                                    --
+                                </span>
+                                <span v-else>
+                                    {{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length}}
+                                    ({{entry[1].filter(iter => iter.fireGroupToFireMode != null && iter.fireGroupToFireMode.fireModeIndex == 1).length / entry[1].length * 100 | locale(2)}}%)
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr class="table-secondary th-border-top-0">
+                            <td>
+                                <b>Total</b>
+                            </td>
+
+                            <td colspan="2">
+                                {{deaths.length | locale}}
+                            </td>
+
+                            <td colspan="3">
+                                {{deaths.filter(iter => iter.event.isHeadshot == true).length / deaths.length * 100 | fixed | locale}}%
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
     </div>
 </template>
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
+
+    import { FullKillEvent } from "../common";
 
     import "MomentFilter";
     import "filters/FixedFilter";
@@ -215,6 +510,7 @@
 
     import { ExpandedKillEvent, KillEvent } from "api/KillStatApi";
     import { PsItem } from "api/ItemApi";
+    import { ItemCategory } from "api/ItemCategoryApi";
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
 
@@ -248,8 +544,8 @@
     export const SessionViewerKills = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
-            kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
-            deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
+            kills: { type: Array as PropType<FullKillEvent[]>, required: true },
+            deaths: { type: Array as PropType<FullKillEvent[]>, required: true },
         },
 
         data: function() {
@@ -267,8 +563,8 @@
 
         mounted: function(): void {
             this.$nextTick(async () => {
-                await this.bindVehicles();
                 this.generateKillWeaponChart();
+                await this.bindVehicles();
             });
 
             this.kpmData = this.kills.map(iter => iter.event.timestamp);
@@ -299,7 +595,7 @@
                     data: {
                         labels: arr.map((iter) => {
                             const weaponID: number = iter[0];
-                            const weaponName: string = `${weaponID == 0 ? "no weapon" : this.groupedKillWeapons.get(weaponID)?.name ?? `<missing ${weaponID}>`}`;
+                            const weaponName: string = `${weaponID == 0 ? "no weapon" : this.weaponMap.get(weaponID)?.name ?? `<missing ${weaponID}>`}`;
                             return `${weaponName} - ${(iter[1].length / this.kills.length * 100).toFixed(2)}%`;
                         }),
                         datasets: [{
@@ -309,11 +605,11 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
                         plugins: {
                             legend: {
                                 position: "right",
-                                //align: "start",
+                                align: "start",
                                 labels: {
                                     color: "#fff",
                                     textAlign: "left"
@@ -444,6 +740,7 @@
 
         },
 
+        // i am aware this code is shit, oh well
         computed: {
             groupedKillEvents: function(): Map<number, ExpandedKillEvent[]> {
                 return this.kills.reduce(
@@ -452,9 +749,52 @@
                 );
             },
 
-            groupedKillWeapons: function(): Map<number, PsItem> {
+            groupedKillEventsArray: function(): any[] {
+                return Array.from(this.groupedKillEvents.entries()).sort((a, b) => b[1].length - a[1].length);
+            },
+
+            groupedDeathEvents: function(): Map<number, ExpandedKillEvent[]> {
+                return this.deaths.reduce(
+                    (entryMap: Map<number, ExpandedKillEvent[]>, event: ExpandedKillEvent) => entryMap.set(event.event.weaponID, [...entryMap.get(event.event.weaponID) || [], event]),
+                    new Map()
+                );
+            },
+
+            groupedDeathEventsArray: function(): any[] {
+                return Array.from(this.groupedDeathEvents.entries()).sort((a, b) => b[1].length - a[1].length);
+            },
+
+            groupedKillEventsType: function(): Map<number, FullKillEvent[]> {
+                return this.kills.reduce(
+                    (entryMap: Map<number, FullKillEvent[]>, event: FullKillEvent) => {
+                        const itemCatID: number = event.itemCategory?.id ?? 0;
+                        return entryMap.set(itemCatID, [...entryMap.get(itemCatID) || [], event]);
+                    },
+                    new Map()
+                );
+            },
+
+            groupedKillEventsTypeArray: function(): any[] {
+                return Array.from(this.groupedKillEventsType.entries()).sort((a, b) => b[1].length - a[1].length);
+            },
+
+            groupedDeathEventsType: function(): Map<number, FullKillEvent[]> {
+                return this.deaths.reduce(
+                    (entryMap: Map<number, FullKillEvent[]>, event: FullKillEvent) => {
+                        const itemCatID: number = event.itemCategory?.id ?? -1;
+                        return entryMap.set(itemCatID, [...entryMap.get(itemCatID) || [], event]);
+                    },
+                    new Map()
+                );
+            },
+
+            groupedDeathEventsTypeArray: function(): any[] {
+                return Array.from(this.groupedDeathEventsType.entries()).sort((a, b) => b[1].length - a[1].length);
+            },
+
+            weaponMap: function(): Map<number, PsItem> {
                 const map: Map<number, PsItem> = new Map();
-                for (const iter of this.kills) {
+                for (const iter of [...this.kills, ...this.deaths]) {
                     if (map.has(iter.event.weaponID) == false && iter.item != null) {
                         map.set(iter.event.weaponID, iter.item);
                     }
@@ -463,8 +803,21 @@
                 return map;
             },
 
-            groupedKillEventsArray: function(): any[] {
-                return Array.from(this.groupedKillEvents.entries()).sort((a, b) => b[1].length - a[1].length);
+            weaponCategoryMap: function(): Map<number, ItemCategory> {
+                const map: Map<number, ItemCategory> = new Map();
+                for (const iter of [...this.kills, ...this.deaths]) {
+                    if (iter.itemCategory == null) {
+                        continue;
+                    }
+
+                    if (map.has(iter.itemCategory.id) == true) {
+                        continue;
+                    }
+
+                    map.set(iter.itemCategory.id, iter.itemCategory);
+                }
+
+                return map;
             },
 
             groupedOutfitEvents: function(): Map<string, KillEvent[]> {

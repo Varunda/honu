@@ -31,6 +31,7 @@ namespace watchtower.Controllers {
         private readonly ItemRepository _ItemRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly FireGroupToFireModeRepository _FireGroupToFireModeRepository;
+        private readonly ItemCategoryRepository _ItemCategoryRepository;
 
         private readonly KillEventDbStore _KillDbStore;
         private readonly SessionDbStore _SessionDb;
@@ -38,7 +39,8 @@ namespace watchtower.Controllers {
         public KillApiController(ILogger<KillApiController> logger,
             CharacterRepository charRepo, KillEventDbStore killDb,
             ItemRepository itemRepo, OutfitRepository outfitRepo,
-            SessionDbStore sessionDb, FireGroupToFireModeRepository fireGroupToFireModeRepository) {
+            SessionDbStore sessionDb, FireGroupToFireModeRepository fireGroupToFireModeRepository,
+            ItemCategoryRepository itemCategoryRepository) {
 
             _Logger = logger;
 
@@ -49,6 +51,7 @@ namespace watchtower.Controllers {
             _KillDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _FireGroupToFireModeRepository = fireGroupToFireModeRepository;
+            _ItemCategoryRepository = itemCategoryRepository;
         }
 
         /// <summary>
@@ -75,10 +78,7 @@ namespace watchtower.Controllers {
         /// </response>
         [HttpGet("session/{sessionID}")]
         public async Task<ApiResponse<List<ExpandedKillEvent>>> GetBySessionID(long sessionID) {
-            using var trace = HonuActivitySource.Root.StartActivity("get kills by session");
-            if (trace == null) {
-                _Logger.LogDebug($"no trace for get kills by session");
-            }
+            using Activity? trace = HonuActivitySource.Root.StartActivity("get kills by session");
             trace?.AddTag("honu.sessionID", sessionID);
 
             Session? session = await _SessionDb.GetByID(sessionID);
@@ -126,20 +126,40 @@ namespace watchtower.Controllers {
             return ApiOk(expanded);
         }
 
-        [HttpGet("test-method")]
-        public async Task<ApiResponse<int>> TestMethod() {
-            using Activity? trace = HonuActivitySource.Root.StartActivity("test-method");
-            if (trace == null) {
-                _Logger.LogDebug($"trace is null!");
+        [HttpGet("session/{sessionID}/block")]
+        public async Task<ApiResponse<KillDeathBlock>> GetBySessionBlock(long sessionID) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("get kills by session");
+            trace?.AddTag("honu.sessionID", sessionID);
+
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return ApiNotFound<KillDeathBlock>($"{nameof(Session)} {sessionID}");
             }
 
-            await _KillDbStore.GetTopWeapons(new KillDbOptions() {
-                WorldID = 1,
-                Interval = 120,
-                FactionID = 1
-            });
+            List<KillEvent> events = await _KillDbStore.GetKillsByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
 
-            return ApiOk(0);
+            KillDeathBlock block = new();
+            block.Kills = events.Where(iter => iter.AttackerCharacterID == session.CharacterID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
+            block.Deaths = events.Where(iter => iter.KilledCharacterID == session.CharacterID).ToList();
+
+            // load characters
+            List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
+            IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
+            block.Characters = await _CharacterRepository.GetByIDs(IDs, CensusEnvironment.PC);
+
+            // load items
+            IEnumerable<int> itemIDs = events.Select(iter => iter.WeaponID).Distinct();
+            block.Weapons = await _ItemRepository.GetByIDs(itemIDs);
+
+            // load fire modes
+            IEnumerable<int> fireModeIDs = events.Select(iter => iter.AttackerFireModeID).Distinct();
+            block.FireModes = await _FireGroupToFireModeRepository.GetByFireModes(fireModeIDs);
+
+            // load item categories
+            IEnumerable<int> categoryIDs = block.Weapons.Select(iter => iter.CategoryID).Distinct();
+            block.ItemCategories = await _ItemCategoryRepository.GetByIDs(categoryIDs);
+
+            return ApiOk(block);
         }
 
         /// <summary>

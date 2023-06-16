@@ -154,14 +154,29 @@
                     <tr>
                         <td>Kills</td>
                         <td>
-                            <span v-if="killsOrDeaths.state == 'loading'" class="text-warning">
+                            <span v-if="fullKills.state == 'loading'" class="text-warning">
                                 Loading...
                             </span>
                             <span v-else>
-                                {{killsOrDeaths.state}}
+                                {{fullKills.state}}
                             </span>
-                            <span v-if="killsOrDeaths.state == 'loaded'">
-                                ({{killsOrDeaths.data.length}})
+                            <span v-if="fullKills.state == 'loaded'">
+                                ({{fullKills.data.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Deaths</td>
+                        <td>
+                            <span v-if="fullDeaths.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{fullDeaths.state}}
+                            </span>
+                            <span v-if="fullDeaths.state == 'loaded'">
+                                ({{fullDeaths.data.length}})
                             </span>
                         </td>
                     </tr>
@@ -214,23 +229,23 @@
             </collapsible>
 
             <collapsible header-text="General" id="session-general">
-                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
+                <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-viewer-general v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
+                <session-viewer-general v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
                     :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :full-exp="showFullExp">
                 </session-viewer-general>
             </collapsible>
 
-            <collapsible header-text="Kills" id="session-kills">
-                <div v-if="killsOrDeaths.state == 'loading'">
+            <collapsible header-text="Kills and deaths" id="session-kills">
+                <div v-if="fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-viewer-kills v-else-if="killsOrDeaths.state == 'loaded'"
+                <session-viewer-kills v-else-if="fullKills.state == 'loaded'"
                     :kills="kills" :deaths="deaths" :session="session.data" :full-exp="showFullExp">
                 </session-viewer-kills>
             </collapsible>
@@ -263,12 +278,12 @@
             </collapsible>
 
             <collapsible header-text="Trends" id="session-trends">
-                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading'">
+                <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-viewer-trends v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded'"
+                <session-viewer-trends v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
                     :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :full-exp="showFullExp">
                 </session-viewer-trends>
             </collapsible>
@@ -285,12 +300,12 @@
             </collapsible>
 
             <collapsible header-text="Action log" id="session-action-log">
-                <div v-if="exp.state == 'loading' || killsOrDeaths.state == 'loading' || vehicleDestroy.state == 'loading'">
+                <div v-if="exp.state == 'loading' || fullKills.state == 'loading' || vehicleDestroy.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
                 </div>
 
-                <session-action-log v-else-if="exp.state == 'loaded' && killsOrDeaths.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
                     :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
                 </session-action-log>
             </collapsible>
@@ -328,13 +343,17 @@
     import Busy from "components/Busy.vue";
     import Collapsible from "components/Collapsible.vue";
 
-    import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
+    import { ExpandedKillEvent, KillDeathBlock, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
     import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
     import { AchievementEarnedBlock, AchievementEarnedApi } from "api/AchievementEarnedApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { RealtimeReconnectEntry, RealtimeReconnectApi } from "api/RealtimeReconnectApi";
+    import { ItemCategory } from "api/ItemCategoryApi";
+    import { PsItem } from "api/ItemApi";
+
+    type FullKillEvent = ExpandedKillEvent & { itemCategory: ItemCategory | null };
 
     export const SessionViewer = Vue.extend({
         props: {
@@ -350,7 +369,9 @@
                 session: Loadable.idle() as Loading<Session>,
                 character: Loadable.idle() as Loading<PsCharacter>,
 
-                killsOrDeaths: Loadable.idle() as Loading<ExpandedKillEvent[]>,
+                killBlock: Loadable.idle() as Loading<KillDeathBlock>,
+                fullKills: Loadable.idle() as Loading<FullKillEvent[]>,
+                fullDeaths: Loadable.idle() as Loading<FullKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExperienceBlock>,
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
@@ -400,7 +421,6 @@
                 this.session = await SessionApi.getBySessionID(this.sessionID);
 
                 if (this.session.state == "loaded") {
-
                     const fullStart: Date = new Date("2022-07-31T00:00");
                     this.showFullExp = this.session.data.start.getTime() > fullStart.getTime();
 
@@ -432,8 +452,41 @@
             },
 
             bindKills: async function(): Promise<void> {
-                this.killsOrDeaths = Loadable.loading();
-                this.killsOrDeaths = await KillStatApi.getSessionKills(this.sessionID);
+                this.fullKills = Loadable.loading();
+                this.fullDeaths = Loadable.loading();
+
+                const block: Loading<KillDeathBlock> = await KillStatApi.getSessionBlock(this.sessionID);
+                this.killBlock = block;
+                if (block.state != "loaded") {
+                    this.fullKills = Loadable.rewrap(block);
+                    this.fullDeaths = Loadable.rewrap(block);
+                    return;
+                }
+
+                this.fullKills = Loadable.loaded(block.data.kills.map((iter: KillEvent): FullKillEvent => {
+                    const item: PsItem | null = block.data.weapons.get(iter.weaponID) ?? null;
+                    return {
+                        event: iter,
+                        killed: block.data.characters.get(iter.killedCharacterID) ?? null,
+                        attacker: block.data.characters.get(iter.attackerCharacterID) ?? null,
+                        item: item,
+                        fireGroupToFireMode: block.data.fireModes.get(iter.attackerFireModeID) ?? null,
+                        itemCategory: (item == null) ? null : block.data.itemCategories.get(item.categoryID) ?? null
+                    };
+                }));
+
+                this.fullDeaths = Loadable.loaded(block.data.deaths.map((iter: KillEvent): FullKillEvent => {
+                    const item: PsItem | null = block.data.weapons.get(iter.weaponID) ?? null;
+                    return {
+                        event: iter,
+                        killed: block.data.characters.get(iter.killedCharacterID) ?? null,
+                        attacker: block.data.characters.get(iter.attackerCharacterID) ?? null,
+                        item: item,
+                        fireGroupToFireMode: block.data.fireModes.get(iter.attackerFireModeID) ?? null,
+                        itemCategory: (item == null) ? null : block.data.itemCategories.get(item.categoryID) ?? null
+                    };
+                }));
+
                 this.checkAllAndScroll();
             },
 
@@ -463,7 +516,7 @@
             },
 
             checkAllAndScroll: function(): void {
-                if (this.killsOrDeaths.state != "loaded" || this.vehicleDestroy.state != "loaded"
+                if (this.fullKills.state != "loaded" || this.fullDeaths.state != "loaded" || this.vehicleDestroy.state != "loaded"
                     || this.achievementsEarned.state != "loaded" || this.exp.state != "loaded") {
 
                     return;
@@ -487,25 +540,6 @@
                     return -1;
                 }
                 return ((this.session.data.end || new Date()).getTime() - this.session.data.start.getTime()) / 1000;
-            },
-
-            kills: function(): ExpandedKillEvent[] {
-                if (this.killsOrDeaths.state != "loaded" || this.session.state != "loaded") {
-                    return [];
-                }
-                return this.killsOrDeaths.data.filter(iter => {
-                    return iter.event.attackerCharacterID == (this.session as any).data.characterID
-                        && iter.event.attackerTeamID != iter.event.killedTeamID;
-                });
-            },
-
-            deaths: function(): ExpandedKillEvent[] {
-                if (this.killsOrDeaths.state != "loaded" || this.session.state != "loaded") {
-                    return [];
-                }
-                return this.killsOrDeaths.data.filter(iter => {
-                    return iter.event.revivedEventID == null && iter.event.killedCharacterID == (this.session as any).data.characterID;
-                });
             },
 
             badStreams: function(): any[] {
@@ -542,7 +576,24 @@
                 }
 
                 return arr;
+            },
+
+            kills: function(): FullKillEvent[] {
+                if (this.fullKills.state != "loaded") {
+                    return [];
+                }
+
+                return this.fullKills.data;
+            },
+
+            deaths: function(): FullKillEvent[] {
+                if (this.fullDeaths.state != "loaded") {
+                    return [];
+                }
+
+                return this.fullDeaths.data.filter(iter => iter.event.revivedEventID == null);
             }
+
         },
 
         components: {

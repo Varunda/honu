@@ -4,7 +4,8 @@ import ApiWrapper from "api/ApiWrapper";
 
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsItem, ItemApi } from "api/ItemApi";
-import { FireGroupToFireMode } from "./FireGroupToFireModeApi";
+import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
+import { ItemCategory } from "api/ItemCategoryApi";
 
 export class CharacterWeaponKillEntry {
     public weaponID: number = 0;
@@ -42,6 +43,15 @@ export class ExpandedKillEvent {
     public attacker: PsCharacter | null = null;
     public item: PsItem | null = null;
     public fireGroupToFireMode: FireGroupToFireMode | null = null;
+}
+
+export class KillDeathBlock {
+    public kills: KillEvent[] = [];
+    public deaths: KillEvent[] = [];
+    public characters: Map<string, PsCharacter> = new Map();
+    public weapons: Map<number, PsItem> = new Map();
+    public fireModes: Map<number, FireGroupToFireMode> = new Map();
+    public itemCategories: Map<number, ItemCategory> = new Map();
 }
 
 export class KillStatApi extends ApiWrapper<KillEvent> {
@@ -83,6 +93,36 @@ export class KillStatApi extends ApiWrapper<KillEvent> {
         }
     }
 
+    public static parseBlock(elem: any): KillDeathBlock {
+        const block: KillDeathBlock = new KillDeathBlock();
+
+        for (const cat of elem.itemCategories) {
+            block.itemCategories.set(cat.id, { ...cat });
+        }
+
+        for (const kill of elem.kills) {
+            block.kills.push(KillStatApi.parseKillEvent(kill));
+        }
+
+        for (const death of elem.deaths) {
+            block.deaths.push(KillStatApi.parseKillEvent(death));
+        }
+
+        for (const char of elem.characters) {
+            block.characters.set(char.id, CharacterApi.parse(char));
+        }
+
+        for (const weapon of elem.weapons) {
+            block.weapons.set(weapon.id, ItemApi.parse(weapon));
+        }
+
+        for (const fireMode of elem.fireModes) {
+            block.fireModes.set(fireMode.fireModeID, { ...fireMode });
+        }
+
+        return block;
+    }
+
     public static async getWeaponEntries(charID: string, useShort: boolean): Promise<Loading<CharacterWeaponKillEntry[]>> {
         return KillStatApi.get().readList(`/api/kills/character/${charID}?useShort=${useShort}`, KillStatApi.parseCharacterWeaponKillEntry);
     }
@@ -93,6 +133,10 @@ export class KillStatApi extends ApiWrapper<KillEvent> {
 
     public static async getSessionKills(sessionID: number): Promise<Loading<ExpandedKillEvent[]>> {
         return KillStatApi.get().readList(`/api/kills/session/${sessionID}`, KillStatApi.parseExpandedKillEvent);
+    }
+
+    public static async getSessionBlock(sessionID: number): Promise<Loading<KillDeathBlock>> {
+        return KillStatApi.get().readSingle(`/api/kills/session/${sessionID}/block`, KillStatApi.parseBlock);
     }
 
     public static async getByRange(charID: string, start: Date, end: Date): Promise<Loading<ExpandedKillEvent[]>> {

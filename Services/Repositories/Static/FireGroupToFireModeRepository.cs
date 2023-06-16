@@ -89,5 +89,21 @@ namespace watchtower.Services.Repositories {
             return all.Where(iter => iter.FireModeID == fireModeID).ToList();
         }
 
+        /// <summary>
+        ///     Get all entries with a matching firemode in <paramref name="ids"/>
+        /// </summary>
+        /// <param name="ids">List of IDs to include</param>
+        /// <returns></returns>
+        public async Task<List<FireGroupToFireMode>> GetByFireModes(IEnumerable<int> ids) {
+            List<FireGroupToFireMode> entries = new(ids.Count());
+            foreach (int id in ids) {
+                List<FireGroupToFireMode> modes = await GetByFireModeID(id);
+                if (modes.Count > 0) {
+                    entries.Add(modes.ElementAt(0));
+                }
+            }
+            return entries;
+        }
+
     }
 }
