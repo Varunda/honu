@@ -176,7 +176,7 @@
                                 {{fullDeaths.state}}
                             </span>
                             <span v-if="fullDeaths.state == 'loaded'">
-                                ({{fullDeaths.data.length}})
+                                ({{deaths.length}})
                             </span>
                         </td>
                     </tr>

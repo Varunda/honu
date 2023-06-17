@@ -125,7 +125,10 @@
             </tr>
 
             <tr>
-                <td>Infiltrator</td>
+                <td>
+                    <img src="/img/classes/icon_infil.png" height="24" />
+                    Infiltrator
+                </td>
                 <td>{{classPlaytime.infil.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.infil.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.infil.score | locale(2)}}</td>
@@ -137,7 +140,10 @@
             </tr>
 
             <tr>
-                <td>Light Assault</td>
+                <td>
+                    <img src="/img/classes/icon_light.png" height="24" />
+                    Light Assault
+                </td>
                 <td>{{classPlaytime.lightAssault.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.lightAssault.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.lightAssault.score | locale(0)}}</td>
@@ -149,7 +155,10 @@
             </tr>
 
             <tr>
-                <td>Medic</td>
+                <td>
+                    <img src="/img/classes/icon_medic.png" height="24" />
+                    Medic
+                </td>
                 <td>{{classPlaytime.medic.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.medic.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.medic.score | locale(0)}}</td>
@@ -161,7 +170,10 @@
             </tr>
 
             <tr>
-                <td>Engineer</td>
+                <td>
+                    <img src="/img/classes/icon_engi.png" height="24" />
+                    Engineer
+                </td>
                 <td>{{classPlaytime.engineer.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.engineer.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.engineer.score | locale(0)}}</td>
@@ -173,7 +185,10 @@
             </tr>
 
             <tr>
-                <td>Heavy</td>
+                <td>
+                    <img src="/img/classes/icon_heavy.png" height="24" />
+                    Heavy
+                </td>
                 <td>{{classPlaytime.heavy.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.heavy.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.heavy.score | locale(0)}}</td>
@@ -185,7 +200,10 @@
             </tr>
 
             <tr>
-                <td>MAX</td>
+                <td>
+                    <img src="/img/classes/icon_max.png" height="24" />
+                    MAX
+                </td>
                 <td>{{classPlaytime.max.secondsAs | mduration}}</td>
                 <td>{{classPlaytime.max.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
                 <td v-if="FullExp">{{classPlaytime.max.score | locale(0)}}</td>
