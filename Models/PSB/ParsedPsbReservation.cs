@@ -114,7 +114,7 @@ namespace watchtower.Models.PSB {
                     if (booking.ZoneID != null) {
                         s.Add($"{booking.GetDiscordPretty()} - **Requires OvO admin approval!**");
                     } else {
-                        s.Add($"{booking.GetDiscordPretty}");
+                        s.Add($"{booking.GetDiscordPretty()}");
                     }
                 }
 
