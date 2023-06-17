@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
@@ -6,7 +6,7 @@ namespace watchtower.Services.Census.Readers {
 
     public class CensusCharacterAchievementReader : ICensusReader<CharacterAchievement> {
 
-        public override CharacterAchievement? ReadEntry(JToken token) {
+        public override CharacterAchievement? ReadEntry(JsonElement token) {
             CharacterAchievement cach = new CharacterAchievement();
 
             cach.CharacterID = token.GetRequiredString("character_id");

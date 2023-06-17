@@ -37,6 +37,9 @@ namespace watchtower.Services.Offline {
 
         public void Dispose() { }
 
+        public CensusQuery CreateQuery(string serviceName) {
+            return new CensusQuery(this, serviceName);
+        }
     }
 
 }

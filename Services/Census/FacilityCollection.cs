@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
@@ -40,11 +41,11 @@ namespace watchtower.Services.Census {
             List<PsFacility> facilities = new List<PsFacility>();
 
             try {
-                IEnumerable<JToken> results = await query.GetListAsync();
+                IEnumerable<JsonElement> results = await query.GetListAsync();
 
-                foreach (JToken token in results) {
+                foreach (JsonElement token in results) {
                     // Some regions, such as The Wash and the Shattered Warpgate, don't have a facility in the region
-                    if (token.Value<string?>("facility_id") == null) {
+                    if (token.GetValue<string?>("facility_id") == null) {
                         continue;
                     }
 
@@ -92,7 +93,7 @@ namespace watchtower.Services.Census {
             return facilities;
         }
 
-        private PsFacility _Parse(JToken token) {
+        private PsFacility _Parse(JsonElement token) {
             PsFacility facility = new PsFacility();
 
             facility.FacilityID = token.GetInt32("facility_id", 0);
@@ -101,9 +102,9 @@ namespace watchtower.Services.Census {
             facility.Name = token.GetString("facility_name", "<missing name>");
             facility.TypeID = token.GetInt32("facility_type_id", 0);
             facility.TypeName = token.GetString("facility_type", "<missing type name>");
-            facility.LocationX = token.Value<decimal?>("location_x");
-            facility.LocationZ = token.Value<decimal?>("location_z");
-            facility.LocationY = token.Value<decimal?>("location_y");
+            facility.LocationX = token.GetValue<decimal?>("location_x");
+            facility.LocationZ = token.GetValue<decimal?>("location_z");
+            facility.LocationY = token.GetValue<decimal?>("location_y");
 
             // The map_region patch has null for the Y coord, but has X//Z coords
             if (facility.LocationX != null && facility.LocationZ != null && facility.LocationY == null) {

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
@@ -10,7 +11,7 @@ namespace watchtower.Services.Census.Readers {
 
     public class CensusCharacterStatReader : ICensusReader<PsCharacterStat> {
 
-        public override PsCharacterStat? ReadEntry(JToken token) {
+        public override PsCharacterStat? ReadEntry(JsonElement token) {
             PsCharacterStat stat = new PsCharacterStat();
 
             stat.CharacterID = token.GetRequiredString("character_id");

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.Tracking;
 
@@ -25,7 +26,7 @@ namespace watchtower.Services.Census {
         ///     A new <typeparamref name="T"/> from <paramref name="token"/> if possible,
         ///     or <c>null</c> if <paramref name="token"/> could not be turned into the type
         /// </returns>
-        public abstract T? ReadEntry(JToken token);
+        public abstract T? ReadEntry(JsonElement token);
 
         /// <summary>
         ///     Take a query and turn it into a list of <typeparamref name="T"/>
@@ -39,13 +40,13 @@ namespace watchtower.Services.Census {
             start?.AddTag("honu.census.url", query.GetUri());
 
             using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
-            IEnumerable<JToken> tokens = await query.GetListAsync();
+            IEnumerable<JsonElement> tokens = await query.GetListAsync();
             makeRequest?.Stop();
 
             using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
             List<T> list = new List<T>();
 
-            foreach (JToken token in tokens) {
+            foreach (JsonElement token in tokens) {
                 T? elem = ReadEntry(token);
                 if (elem != null) {
                     list.Add(elem);
@@ -68,12 +69,12 @@ namespace watchtower.Services.Census {
                 start?.AddTag("honu.census.url", query.GetUri());
 
                 using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
-                JToken token = await query.GetAsync();
+                JsonElement? token = await query.GetAsync();
                 makeRequest?.Stop();
 
                 using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
                 if (token != null) {
-                    return ReadEntry(token);
+                    return ReadEntry(token.Value);
                 }
                 parseData?.Stop();
 

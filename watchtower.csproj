@@ -38,6 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="DaybreakGames.Census" Version="6.0.1" />
     <PackageReference Include="DSharpPlus" Version="4.3.0-nightly-01142" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.3.0-nightly-01142" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.58.0.2922" />
@@ -71,10 +72,6 @@
 
   <ItemGroup>
     <None Include="Views\Home\OutfitPop.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\DaybreakGames.Census\src\DaybreakGames.Census\DaybreakGames.Census.csproj" />
   </ItemGroup>
 
   <ItemGroup>

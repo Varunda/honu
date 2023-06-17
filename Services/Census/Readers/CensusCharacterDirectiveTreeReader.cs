@@ -1,8 +1,4 @@
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
@@ -10,7 +6,7 @@ namespace watchtower.Services.Census.Readers {
 
     public class CensusCharacterDirectiveTreeReader : ICensusReader<CharacterDirectiveTree> {
 
-        public override CharacterDirectiveTree? ReadEntry(JToken token) {
+        public override CharacterDirectiveTree? ReadEntry(JsonElement token) {
             CharacterDirectiveTree dir = new CharacterDirectiveTree();
 
             dir.CharacterID = token.GetRequiredString("character_id");

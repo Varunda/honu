@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
@@ -41,20 +42,20 @@ namespace watchtower.Services.Census {
 
             List<PsMap> regions = new List<PsMap>();
 
-            IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JsonElement> result = await query.GetListAsync();
 
-            foreach (JToken zone in result) {
+            foreach (JsonElement zone in result) {
                 uint zoneID = zone.GetUInt32("ZoneId");
 
                 //_Logger.LogDebug($"Zone data of {zoneID} => {zone}");
 
-                JToken? row = zone.SelectToken("Regions")?.SelectToken("Row");
+                JsonElement? row = zone.GetChild("Regions")?.GetChild("Row");
 
                 if (row != null) {
-                    foreach (JToken entry in row) {
-                        JToken? data = entry.SelectToken("RowData");
+                    foreach (JsonElement entry in row.Value.EnumerateArray()) {
+                        JsonElement? data = entry.GetChild("RowData");
                         if (data != null) {
-                            PsMap region = _Parse(data);
+                            PsMap region = _Parse(data.Value);
                             region.ZoneID = zoneID;
                             regions.Add(region);
                         } else {
@@ -84,16 +85,16 @@ namespace watchtower.Services.Census {
 
             List<PsMap> regions = new List<PsMap>();
 
-            JToken? result = await query.GetAsync();
+            JsonElement? result = await query.GetAsync();
 
             if (result != null) {
-                JToken? row = result.SelectToken("Regions")?.SelectToken("Row");
+                JsonElement? row = result.Value.GetChild("Regions")?.GetChild("Row");
 
                 if (row != null) {
-                    foreach (JToken entry in row) {
-                        JToken? data = entry.SelectToken("RowData");
+                    foreach (JsonElement entry in row.Value.EnumerateArray()) {
+                        JsonElement? data = entry.GetChild("RowData");
                         if (data != null) {
-                            PsMap region = _Parse(data);
+                            PsMap region = _Parse(data.Value);
                             region.ZoneID = zoneID; // Yeah we do a bit of cheating here
                             regions.Add(region);
                         }
@@ -118,11 +119,11 @@ namespace watchtower.Services.Census {
             for (int i = 0; i < 10; ++i) {
                 query.SetStart(i * 5000);
 
-                IEnumerable<JToken> result = await query.GetListAsync();
+                IEnumerable<JsonElement> result = await query.GetListAsync();
 
                 _Logger.LogDebug($"loaded {result.Count()} on iteration {i}");
 
-                foreach (JToken token in result) {
+                foreach (JsonElement token in result) {
                     PsMapHex hex = _ParseHex(token);
                     hexes.Add(hex);
                 }
@@ -144,9 +145,9 @@ namespace watchtower.Services.Census {
 
             List<PsFacilityLink> hexes = new List<PsFacilityLink>();
 
-            IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JsonElement> result = await query.GetListAsync();
 
-            foreach (JToken token in result) {
+            foreach (JsonElement token in result) {
                 PsFacilityLink hex = _ParseLink(token);
                 hexes.Add(hex);
             }
@@ -209,7 +210,7 @@ namespace watchtower.Services.Census {
             return null;
         }
 
-        private PsMap _Parse(JToken token) {
+        private PsMap _Parse(JsonElement token) {
             PsMap region = new PsMap();
 
             region.RegionID = token.GetString("RegionId", "");
@@ -218,7 +219,7 @@ namespace watchtower.Services.Census {
             return region;
         }
 
-        private PsMapHex _ParseHex(JToken token) {
+        private PsMapHex _ParseHex(JsonElement token) {
             PsMapHex hex = new PsMapHex();
 
             hex.ZoneID = token.GetZoneID();
@@ -230,7 +231,7 @@ namespace watchtower.Services.Census {
             return hex;
         }
 
-        private PsFacilityLink _ParseLink(JToken token) {
+        private PsFacilityLink _ParseLink(JsonElement token) {
             PsFacilityLink link = new PsFacilityLink();
 
             link.ZoneID = token.GetZoneID();

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
@@ -39,19 +40,22 @@ namespace watchtower.Services.Census {
 
             try {
                 do {
-                    string patch = await File.ReadAllTextAsync(PATCH_FILE);
+                    JsonElement readElement(byte[] file) {
+                        Utf8JsonReader reader = new(file);
+                        JsonElement patchedJson = JsonElement.ParseValue(ref reader);
+                        return patchedJson;
+                    }
 
-                    JToken json = JToken.Parse(patch);
-
-                    JToken? itemList = json.SelectToken("item_list");
+                    byte[] bytes = await File.ReadAllBytesAsync(PATCH_FILE);
+                    JsonElement json = readElement(bytes);
+                    JsonElement? itemList = json.GetChild("item_list");
                     if (itemList == null) {
                         _Logger.LogError($"Missing token 'item_list' from {PATCH_FILE}");
                         break;
                     }
 
-                    IEnumerable<JToken> arr = itemList.Children();
-
-                    foreach (JToken token in arr) {
+                    IEnumerable<JsonElement> arr = itemList.Value.EnumerateArray();
+                    foreach (JsonElement token in arr) {
                         PsItem? item = _Reader.ReadEntry(token);
                         if (item != null) {
                             items.Add(item);

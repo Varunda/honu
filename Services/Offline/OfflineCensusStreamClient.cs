@@ -77,6 +77,10 @@ namespace watchtower.Services.Offline {
 
         public void Subscribe(CensusStreamSubscription subscription) { }
 
+        public CensusStreamClient SetEndpoint(string endpoint) {
+            return _Client;
+        }
+
     }
 
 }

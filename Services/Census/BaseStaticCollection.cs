@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive;
+using System.Text.Json;
 using System.Threading.Tasks;
 using DaybreakGames.Census;
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using watchtower.Code.ExtensionMethods;
 
 namespace watchtower.Services.Census {
 
@@ -109,21 +111,29 @@ namespace watchtower.Services.Census {
                     throw new FileNotFoundException($"Failed to find patch file {_PatchFile}");
                 }
 
+
+                JsonElement readElement(byte[] file) {
+                    Utf8JsonReader reader = new(file);
+                    JsonElement patchedJson = JsonElement.ParseValue(ref reader);
+                    return patchedJson;
+                }
+
                 // Make sure the token has the data we need
-                JToken patchedJson = JToken.Parse(await File.ReadAllTextAsync(_PatchFile));
-                JToken? list = patchedJson.SelectToken($"{_CollectionName}_list");
+                byte[] bytes = await File.ReadAllBytesAsync(_PatchFile);
+                JsonElement patchedJson = readElement(bytes);
+                JsonElement? list = patchedJson.GetChild($"{_CollectionName}_list");
                 if (list == null) {
                     throw new NullReferenceException($"missing token '{_CollectionName}_list' from {_PatchFile}");
                 }
 
-                IEnumerable<JToken> arr = list.Children();
+                IEnumerable<JsonElement> arr = list.Value.EnumerateArray();
                 _Logger.LogDebug($"Loaded {arr.Count()} entries to patch");
 
                 int newEntries = 0;
                 int updatedEntries = 0;
 
                 // Iterate thru each entry, updating the existing entry if the patch has it, or adding it to the entries
-                foreach (JToken token in arr) {
+                foreach (JsonElement token in arr) {
                     T? entry = _Reader.ReadEntry(token);
                     if (entry != null) {
                         string key = _KeyFunc(entry);

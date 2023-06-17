@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 
@@ -7,7 +8,7 @@ namespace watchtower.Services.Census.Readers {
 
     public class CensusExperienceTypeReader : ICensusReader<ExperienceType> {
 
-        public override ExperienceType? ReadEntry(JToken token) {
+        public override ExperienceType? ReadEntry(JsonElement token) {
             ExperienceType type = new ExperienceType();
 
             type.ID = token.GetRequiredInt32("experience_id");

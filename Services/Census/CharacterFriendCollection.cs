@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -38,31 +39,27 @@ namespace watchtower.Services.Census {
             CensusQuery query = _Census.Create("characters_friend");
             query.Where("character_id").Equals(charID);
 
-            JToken? token = await query.GetAsync();
+            JsonElement? token = await query.GetAsync();
             if (token == null) {
                 return new List<CharacterFriend>();
             }
 
-            JToken? friendToken = token!.SelectToken("friend_list");
+            JsonElement? friendToken = token.Value.GetChild("friend_list");
             if (friendToken == null) {
                 throw new FormatException($"Failed to get token 'friend_list' for {charID}");
             }
 
             List<CharacterFriend> res = new List<CharacterFriend>();
 
-            if (friendToken is JArray friends) {
-                foreach (JToken friend in friends) {
-                    CharacterFriend f = _Parse(friend, charID);
-                    res.Add(f);
-                }
-            } else {
-                throw new FormatException($"Failed to convert 'friend_list' into an array");
+            foreach (JsonElement friend in friendToken.Value.EnumerateArray()) {
+                CharacterFriend f = _Parse(friend, charID);
+                res.Add(f);
             }
 
             return res;
         }
 
-        private CharacterFriend _Parse(JToken token, string charID) {
+        private CharacterFriend _Parse(JsonElement token, string charID) {
             return new CharacterFriend() {
                 CharacterID = charID,
                 FriendID = token.GetRequiredString("character_id")

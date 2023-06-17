@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
@@ -130,12 +131,12 @@ namespace watchtower.Services.Census {
             //_Logger.LogTrace($"characters_weapon_stat: {query.GetUri()}");
 
             Uri uri = query.GetUri();
-            IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JsonElement> result = await query.GetListAsync();
 
             weaponStats = new List<WeaponStat>(result.Count());
 
-            foreach (JToken t in result) {
-                WeaponStat? s = _ParseWeaponStat(t);
+            foreach (JsonElement t in result) {
+                WeaponStat? s = ParseWeaponStat(t);
                 if (s != null) {
                     weaponStats.Add(s);
                 }
@@ -160,11 +161,11 @@ namespace watchtower.Services.Census {
             //_Logger.LogTrace($"characters_weapon_stat_by_faction: {query.GetUri()}");
 
             Uri uri = query.GetUri();
-            IEnumerable<JToken> result = await query.GetListAsync();
+            IEnumerable<JsonElement> result = await query.GetListAsync();
 
             weaponStats = new List<WeaponStatByFactionEntry>(result.Count());
 
-            foreach (JToken t in result) {
+            foreach (JsonElement t in result) {
                 WeaponStatByFactionEntry? s = _ParseWeaponByFaction(t);
                 if (s != null) { 
                     weaponStats.Add(s);
@@ -174,12 +175,8 @@ namespace watchtower.Services.Census {
             return weaponStats;
         }
 
-        private WeaponStat? _ParseWeaponStat(JToken token) {
-            if (token == null) {
-                return null;
-            }
-
-            WeaponStat stat = new WeaponStat {
+        private WeaponStat? ParseWeaponStat(JsonElement token) {
+            WeaponStat stat = new() {
                 CharacterID = token.GetString("character_id", "0"),
                 StatName = token.GetString("stat_name", ""),
                 ItemID = token.GetString("item_id", "0"),
@@ -192,19 +189,15 @@ namespace watchtower.Services.Census {
             return stat;
         }
 
-        public WeaponStatByFactionEntry? _ParseWeaponByFaction(JToken token) {
-            if (token == null) {
-                return null;
-            }
-
-            WeaponStatByFactionEntry stat = new WeaponStatByFactionEntry {
+        public WeaponStatByFactionEntry? _ParseWeaponByFaction(JsonElement token) {
+            WeaponStatByFactionEntry stat = new() {
                 CharacterID = token.GetString("character_id", "0"),
                 StatName = token.GetString("stat_name", ""),
                 ItemID = token.GetString("item_id", ""),
                 VehicleID = token.GetInt32("vehicle_id", 0),
-                ValueVS = int.Parse(token.Value<string?>("value_vs") ?? "0"),
-                ValueNC = int.Parse(token.Value<string?>("value_nc") ?? "0"),
-                ValueTR = int.Parse(token.Value<string?>("value_tr") ?? "0"),
+                ValueVS = int.Parse(token.GetValue<string?>("value_vs") ?? "0"),
+                ValueNC = int.Parse(token.GetValue<string?>("value_nc") ?? "0"),
+                ValueTR = int.Parse(token.GetValue<string?>("value_tr") ?? "0"),
             };
 
             //_Logger.LogInformation($"{token} => {stat.CharacterID} {stat.StatName} {stat.ItemID} {stat.VehicleID} {stat.ValueVS} {stat.ValueNC} {stat.ValueTR}");
