@@ -67,6 +67,7 @@ namespace watchtower.Models.PSB {
         /// <param name="other"></param>
         public PsbBaseBooking(PsbBaseBooking other) {
             Facilities = new List<PsFacility>(other.Facilities);
+            ZoneID = other.ZoneID;
             Start = other.Start;
             End = other.End;
         }
