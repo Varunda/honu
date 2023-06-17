@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Discord;
@@ -71,7 +72,7 @@ namespace watchtower.Services.Repositories.PSB {
             // https://developers.google.com/sheets/api/guides/concepts#cell
             SpreadsheetsResource.ValuesResource.GetRequest sheetR = _Drive.GetSheetService().Spreadsheets.Values.Get(_Settings.Value.CalendarFileId, "Current!A5:M");
             Google.Apis.Sheets.v4.Data.ValueRange res = await sheetR.ExecuteAsync();
-            _Logger.LogDebug($"Loaded {res.Values.Count} rows from {_Settings.Value.ContactSheets.Practice}");
+            _Logger.LogDebug($"Loaded {res.Values.Count} rows from {_Settings.Value.CalendarFileId}");
 
             List<PsbCalendarEntry> entries = _CalendarReader.ReadList(res.Values).Where(iter => iter.Valid == true).ToList();
 
@@ -82,8 +83,22 @@ namespace watchtower.Services.Repositories.PSB {
                     PsbCalendarBaseEntry baseEntry = new();
                     baseEntry.Name = baseName;
 
-                    List<PsFacility> possible = facilities.Where(iter => iter.Name.ToLower().StartsWith(baseName.ToLower())).ToList();
-                    baseEntry.PossibleBases = possible;
+                    bool isZone = false;
+                    foreach (uint zoneID in Zone.StaticZones) {
+                        if (Zone.GetName(zoneID).ToLower() != baseName.ToLower()) {
+                            continue;
+                        }
+
+                        baseEntry.PossibleBases = facilities.Where(iter => iter.ZoneID == zoneID).ToList();
+
+                        isZone = true;
+                        break;
+                    }
+
+                    if (isZone == false) {
+                        List<PsFacility> possible = facilities.Where(iter => iter.Name.ToLower().StartsWith(baseName.ToLower())).ToList();
+                        baseEntry.PossibleBases = possible;
+                    }
 
                     entry.Bases.Add(baseEntry);
                 }
@@ -142,7 +157,7 @@ namespace watchtower.Services.Repositories.PSB {
 
             Sheet? currentSheet = sheetFile.Sheets.FirstOrDefault(iter => iter.Properties.Title == "Current");
             if (currentSheet == null) {
-                throw new ArgumentException($"Failed to find tab named 'Current'. Make sure it exists!");
+                throw new ArgumentException($"Failed to find tab named 'Current' in file {_Settings.Value.CalendarFileId}. Make sure it exists!");
             }
 
             SpreadsheetsResource.ValuesResource.GetRequest sheetR = _Drive.GetSheetService().Spreadsheets.Values.Get(_Settings.Value.CalendarFileId, "Current!A5:M");
@@ -186,7 +201,7 @@ namespace watchtower.Services.Repositories.PSB {
                             // outfits
                             $"{string.Join(" / ", reservation.Reservation.Outfits)}",
                             // bases
-                            $"{string.Join(", ", booking.Facilities.Select(iter => iter.Name))}",
+                            ((booking.ZoneID == null) ? $"{string.Join(", ", booking.Facilities.Select(iter => iter.Name))}" : Zone.GetName(booking.ZoneID.Value)),
                             // from time
                             $"{booking.Start:HH:mm}",
                             // to time

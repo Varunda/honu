@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Constants;
 using watchtower.Models.Census;
 
 namespace watchtower.Models.PSB {
@@ -70,14 +71,36 @@ namespace watchtower.Models.PSB {
             End = other.End;
         }
 
+        /// <summary>
+        ///     List of facilities that are in this base booking
+        /// </summary>
         public List<PsFacility> Facilities { get; set; } = new();
 
+        /// <summary>
+        ///     If this booking is for a whole zone, this value will be set
+        /// </summary>
+        public uint? ZoneID { get; set; } = null;
+
+        /// <summary>
+        ///     When this reservation starts. Must be on the same day as <see cref="End"/>
+        /// </summary>
         public DateTime Start { get; set; }
 
+        /// <summary>
+        ///     When this reservation ends. Must be on the same day as <see cref="Start"/>
+        /// </summary>
         public DateTime End { get; set; }
 
         public string GetDiscordPretty() {
-            return $"{string.Join(", ", Facilities.Select(iter => iter.Name))}: {Start.GetDiscordFullTimestamp()} - {End.GetDiscordFullTimestamp()}";
+            string entity = "";
+
+            if (ZoneID == null) {
+                entity = string.Join(", ", Facilities.Select(iter => iter.Name));
+            } else {
+                entity = Zone.GetName(ZoneID.Value) + " (Continent)";
+            }
+
+            return $"{entity}: {Start.GetDiscordFullTimestamp()} - {End.GetDiscordFullTimestamp()}";
         }
 
     }

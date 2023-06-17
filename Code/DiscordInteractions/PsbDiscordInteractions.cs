@@ -178,7 +178,10 @@ namespace watchtower.Code.DiscordInteractions {
             DiscordMessage msg = ctx.TargetMessage;
 
             List<DiscordUser> mentions = msg.MentionedUsers.ToList();
-            mentions.Add(ctx.TargetMessage.Author);
+            // if the author is in the msg, don't add them twice 
+            if (mentions.FirstOrDefault(iter => iter.Id == ctx.TargetMessage.Author.Id) == null) {
+                mentions.Add(ctx.TargetMessage.Author);
+            }
 
             List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
             List<PsbPracticeContact> practice = await _ContactRepository.GetPracticeContacts();
@@ -573,7 +576,7 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (ctx.Member == null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: member was null");
+                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: member was null, cannot check permissions");
                 return;
             }
 
@@ -589,13 +592,28 @@ namespace watchtower.Code.DiscordInteractions {
 
             DiscordMessage? msg = await GetReservationMessage(ctx, "approve-booking", msgID);
             if (msg == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"unexpected condition: there was no message with ID {msgID}");
                 return;
             }
 
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
             if (parsed.Metadata.BookingApprovedById != null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve base booking\nAlready approved by <@{parsed.Metadata.BookingApprovedById}>");
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve base booking:\nAlready approved by <@{parsed.Metadata.BookingApprovedById}>");
                 return;
+            }
+
+            // bookings for a whole continent/zone need OvO admin
+            bool needsAdmin = parsed.Reservation.Bases.FirstOrDefault(iter => iter.ZoneID != null) != null;
+            if (needsAdmin == true) {
+                if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong adminID) == false) {
+                    await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-admin $ROLE_ID`");
+                    return;
+                }
+
+                if (ctx.Member.HasRole(adminID) == false) {
+                    await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve base booking:\nThis reservation is for a whole continent, which can only be approved by OvO admins");
+                    return;
+                }
             }
 
             foreach (PsbBaseBooking booking in parsed.Reservation.Bases) {
@@ -645,7 +663,21 @@ namespace watchtower.Code.DiscordInteractions {
             ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
 
             if (parsed.Metadata.AccountSheetApprovedById != null) {
-                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts\nAlready approved by <@{parsed.Metadata.AccountSheetApprovedById}>");
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\nAlready approved by <@{parsed.Metadata.AccountSheetApprovedById}>");
+                return;
+            }
+
+            if (parsed.Reservation.Accounts >= 48) {
+                if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong adminID) == false) {
+                    await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-admin $ROLE_ID`");
+                    return;
+                }
+
+                if (ctx.Member.HasRole(adminID) == false) {
+                    await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\n"
+                        + $"This reservation requests 48 or more accounts ({parsed.Reservation.Accounts}), which can only be approved by OvO admins");
+                    return;
+                }
             }
 
             string fileID = await _SheetRepository.ApproveAccounts(parsed);

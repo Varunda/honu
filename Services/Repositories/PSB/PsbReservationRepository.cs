@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using watchtower.Code.DiscordInteractions;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Discord;
@@ -178,7 +179,7 @@ namespace watchtower.Services.Repositories.PSB {
 
                         feedback += $"\tConverted '{v}' into {r:u} - {r2:u}\n";
                     } else {
-                        errors.Add($"Failed to convert '{v}' into a valid start and end: >>>{timefeedback}");
+                        errors.Add($"Failed to convert '{v}' into a valid start and end:\n\n >>> {timefeedback}");
                     }
 
                 } else if (field.StartsWith("base")) {
@@ -214,9 +215,14 @@ namespace watchtower.Services.Repositories.PSB {
                 }
             }
             if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
-            if (res.End <= res.Start) { errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)"); }
+            if (res.Start == default || res.End == default) {
+                errors.Add($"Failed to parse when this reservation is");
+            }
+            if (res.Start != default && res.End != default && res.End <= res.Start) {
+                errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)");
+            }
 
-            if (res.Bases.Count > 0) {
+            if (res.Start != default && res.End != default && res.Bases.Count > 0) {
                 errors.AddRange(await CheckBaseBookings(res));
             }
 
@@ -315,20 +321,36 @@ namespace watchtower.Services.Repositories.PSB {
                     }
                 }
 
-                List<PsFacility> possibleBases = await _FacilityRepository.SearchByName(baseName);
-
-                if (possibleBases.Count == 0) {
-                    result.Errors.Add($"Failed to find base `{baseName}`");
-                    continue;
-                } else if (possibleBases.Count > 1) {
-                    result.Errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
-                    continue;
-                }
-
                 PsbBaseBooking book = new();
-                book.Facilities = new List<PsFacility>() { possibleBases[0] };
 
-                _Logger.LogDebug($"found {possibleBases[0].Name}/{possibleBases[0].FacilityID}");
+                // check if this reservation is for a whole continent (needs OvO admin approval!)
+                bool inZone = false;
+                foreach (uint zoneID in Zone.StaticZones) {
+                    if (Zone.GetName(zoneID).ToLower() != baseName) {
+                        continue;
+                    }
+
+                    book.ZoneID = zoneID;
+                    inZone = true;
+                    _Logger.LogDebug($"found zone {zoneID}/{Zone.GetName(zoneID)} from `{baseName}`");
+                    break;
+                } 
+                
+                // if not a whole zone, look for the bases
+                if (inZone == false) {
+                    List<PsFacility> possibleBases = await _FacilityRepository.SearchByName(baseName);
+
+                    if (possibleBases.Count == 0) {
+                        result.Errors.Add($"Failed to find base `{baseName}`");
+                        continue;
+                    } else if (possibleBases.Count > 1) {
+                        result.Errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
+                        continue;
+                    }
+
+                    book.Facilities = new List<PsFacility>() { possibleBases[0] };
+                    _Logger.LogDebug($"found {possibleBases[0].Name}/{possibleBases[0].FacilityID}");
+                }
 
                 if (providedTime == true) {
                     bool hasStart = match.Groups.TryGetValue("start", out Group? startGroup);
@@ -478,23 +500,29 @@ namespace watchtower.Services.Repositories.PSB {
 
                 foreach (PsbBaseBooking booking in res.Bases) {
 
-                    // get the bases of this booking, and the bases that are adjacent to it
-                    List<PsFacility> bookingFacilities = new(booking.Facilities);
-                    foreach (PsFacility fac in booking.Facilities) {
-                        if (linksDict.TryGetValue(fac.FacilityID, out List<PsFacilityLink>? baseLinks) == false) {
-                            continue;
-                        }
-
-                        foreach (PsFacilityLink link in baseLinks) {
-                            if (facs.TryGetValue(link.FacilityB, out PsFacility? adjacentFac) == false) {
-                                _Logger.LogError($"Failed to find facility {link.FacilityB} which is linked to facility {link.FacilityA}");
+                    List<PsFacility> bookingFacilities;
+                    if (booking.ZoneID != null) {
+                        bookingFacilities = facs.Values.Where(iter => iter.ZoneID == booking.ZoneID.Value).ToList();
+                        _Logger.LogDebug($"Checking for no conflicts over the whole zone of {booking.ZoneID}/{Zone.GetName(booking.ZoneID.Value)} ({bookingFacilities.Count} bases)");
+                    } else {
+                        // get the bases of this booking, and the bases that are adjacent to it
+                        bookingFacilities = new(booking.Facilities);
+                        foreach (PsFacility fac in booking.Facilities) {
+                            if (linksDict.TryGetValue(fac.FacilityID, out List<PsFacilityLink>? baseLinks) == false) {
                                 continue;
                             }
-                            bookingFacilities.Add(adjacentFac);
-                        }
-                    }
 
-                    _Logger.LogDebug($"Checking for no conflict on these bases: {string.Join(", ", bookingFacilities.Select(iter => iter.Name))}");
+                            foreach (PsFacilityLink link in baseLinks) {
+                                if (facs.TryGetValue(link.FacilityB, out PsFacility? adjacentFac) == false) {
+                                    _Logger.LogError($"Failed to find facility {link.FacilityB} which is linked to facility {link.FacilityA}");
+                                    continue;
+                                }
+                                bookingFacilities.Add(adjacentFac);
+                            }
+                        }
+
+                        _Logger.LogDebug($"Checking for no conflict on these bases: {string.Join(", ", bookingFacilities.Select(iter => iter.Name))}");
+                    }
 
                     foreach (PsbCalendarEntry iter in entries) {
                         if (iter.Valid == false) {
@@ -503,15 +531,18 @@ namespace watchtower.Services.Repositories.PSB {
 
                         // if this base is already booked by the same group who wants to book the base, this reservation is fine
                         bool broke = false;
+
+                        bool skip = false;
                         foreach (string outfit in res.Outfits) {
                             if (iter.Groups.Select(iter => iter.ToLower()).Contains(outfit.ToLower())) {
-                                broke = true;
+                                _Logger.LogDebug($"Reservation {iter.Start:u} - {iter.End:u} is for {string.Join(", ", iter.Groups)}, which includes {outfit}");
+                                skip = true;
                                 break;
                             }
                         }
 
-                        if (broke == true) {
-                            break;
+                        if (skip == true) {
+                            continue;
                         }
 
                         List<PsFacility> facilities = iter.Bases.SelectMany(iter => iter.PossibleBases).ToList();
@@ -524,8 +555,8 @@ namespace watchtower.Services.Repositories.PSB {
 
                             _Logger.LogDebug($"Checking if {iter.Start:u} to {iter.End:u} at {string.Join(", ", facilities.Select(iter => iter.Name))} overlaps with {booking.Start:u} - {booking.End:u}");
 
-                            if ((booking.Start >= iter.Start && booking.Start <= iter.End)
-                                || (booking.End >= iter.Start && booking.End <= iter.End)
+                            if ((booking.Start >= iter.Start && booking.Start < iter.End)
+                                || (booking.End > iter.Start && booking.End <= iter.End)
                                 || (booking.Start <= iter.Start && booking.End >= iter.End)) {
 
                                 string err = $"{fac.Name} ";

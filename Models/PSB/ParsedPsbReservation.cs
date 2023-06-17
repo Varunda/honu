@@ -80,7 +80,7 @@ namespace watchtower.Models.PSB {
                 builder.Description += $"**Reservation parsed with warnings:**\n{string.Join("\n", ContactErrors.Select(iter => $"- {iter}"))}";
             } else {
                 builder.Color = DiscordColor.Green;
-                builder.Description += $"Reservation parsed successfully, but this does not mean the information is correct! Double check it!";
+                builder.Description += $"Reservation parsed successfully, but this does not mean the information is correct!\n**Double check it!**";
             }
 
             if (Reservation.Outfits.Count > 0) {
@@ -101,12 +101,26 @@ namespace watchtower.Models.PSB {
             } else {
                 builder.AddField("Groups in reservation", "**missing**");
             }
-            builder.AddField("Accounts requested", $"{Reservation.Accounts}");
+
+            builder.AddField("Accounts requested", $"{Reservation.Accounts}{(Reservation.Accounts >= 48 ? " **Requires OvO admin approval!**" : "")}");
+
             builder.AddField("Start time", $"`{Reservation.Start:u}` ({Reservation.Start.GetDiscordFullTimestamp()} - {Reservation.Start.GetDiscordRelativeTimestamp()})");
             builder.AddField("End time", $"`{Reservation.End:u}` ({Reservation.End.GetDiscordFullTimestamp()} - {Reservation.End.GetDiscordRelativeTimestamp()})");
+
             if (Reservation.Bases.Count > 0) {
-                builder.AddField("Bases", string.Join("\n", Reservation.Bases.Select(iter => iter.GetDiscordPretty())));
+                List<string> s = new();
+
+                foreach (PsbBaseBooking booking in Reservation.Bases) {
+                    if (booking.ZoneID != null) {
+                        s.Add($"{booking.GetDiscordPretty()} - **Requires OvO admin approval!**");
+                    } else {
+                        s.Add($"{booking.GetDiscordPretty}");
+                    }
+                }
+
+                builder.AddField("Bases", string.Join("\n", s));
             }
+
             if (Reservation.Details.Length > 0) {
                 builder.AddField("Details", Reservation.Details);
             }
