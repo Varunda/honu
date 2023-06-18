@@ -139,7 +139,7 @@
                 <tr>
                     <td><b>Active (30 days)</b></td>
                     <td>
-                        {{active30d.length}}
+                        {{active30d.length}} / {{members.data.length}}
                         ({{active30d.length / members.data.length * 100 | locale(2)}}%)
                     </td>
                 </tr>
@@ -147,7 +147,7 @@
                 <tr>
                     <td><b>Active (7 days)</b></td>
                     <td>
-                        {{active7d.length}}
+                        {{active7d.length}} / {{members.data.length}}
                         ({{active7d.length / members.data.length * 100 | locale(2)}}%)
                     </td>
                 </tr>
@@ -155,7 +155,7 @@
                 <tr>
                     <td><b>Active (24 hours)</b></td>
                     <td>
-                        {{active24h.length}}
+                        {{active24h.length}} / {{members.data.length}}
                         ({{active24h.length / members.data.length * 100 | locale(2)}}%)
                     </td>
                 </tr>
@@ -185,7 +185,12 @@
                 display-type="table">
 
                 <a-col sort-field="online">
-                    <a-header></a-header>
+                    <a-header>
+                    </a-header>
+
+                    <a-filter field="online" method="input" type="boolean"
+                        :conditions="[ 'equals' ]">
+                    </a-filter>
 
                     <a-body v-slot="entry">
                         <span v-if="entry.online == true" style="color: green;" title="Online">

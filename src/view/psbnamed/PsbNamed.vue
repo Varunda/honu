@@ -6,7 +6,7 @@
             <menu-sep></menu-sep>
 
             <li class="nav-item h1 p-0">
-                PSB named
+                PSB {{typeName}}
             </li>
         </honu-menu>
 
@@ -444,7 +444,7 @@
 
     export const PsbNamed = Vue.extend({
         props: {
-
+            TypeId: { type: Number, required: false, default: 1 }
         },
 
         data: function() {
@@ -459,6 +459,8 @@
                     deleted: false as boolean,
                     warnings: false as boolean
                 },
+
+                typeName: "" as string,
 
                 create: {
                     opened: false as boolean,
@@ -482,7 +484,7 @@
         },
 
         created: function(): void {
-            document.title = `Honu / PSB named`;
+            document.title = `Honu / PSB ${PsbAccountType.getName(this.TypeId)}`;
         },
 
         mounted: function(): void {
@@ -503,6 +505,8 @@
                     }
                 });
             });
+
+            this.typeName = PsbAccountType.getName(this.TypeId);
         },
 
         methods: {
@@ -540,7 +544,7 @@
 
             loadAll: async function(): Promise<void> {
                 this.accounts = Loadable.loading();
-                this.accounts = await PsbNamedAccountApi.getByTypeID(PsbAccountType.NAMED); 
+                this.accounts = await PsbNamedAccountApi.getByTypeID(this.TypeId); 
                 if (this.accounts.state == "loaded") {
                     this.updateFilters();
                 }

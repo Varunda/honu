@@ -1345,6 +1345,22 @@ export const ATable = Vue.extend({
                             return av!.getTime() - bv!.getTime();
                         }
                     }
+                } else if (this.sorting.type == "boolean") {
+                    baseFunc = (a: any, b: any): number => {
+                        const av: boolean = a[this.sorting.field] ?? false;
+                        const bv: boolean = b[this.sorting.field] ?? false;
+
+                        if (av == true && bv == true) {
+                            return 0;
+                        } else if (av == true && bv == false) {
+                            return -1;
+                        } else if (av == false && bv == true) {
+                            return 1;
+                        } else if (av == false && av == false) {
+                            return 0;
+                        }
+                        throw `invalid state of booleans ${av} and ${bv}`;
+                    };
                 } else {
                     throw `Unchecked sorting type: '${this.sorting.type}'. Expected 'string' | 'number' | 'date'`;
                 }

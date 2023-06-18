@@ -6,6 +6,18 @@ import { CharacterApi, PsCharacter } from "api/CharacterApi";
 export class PsbAccountType {
     public static readonly NAMED: number = 1;
     public static readonly PRACTICE: number = 2;
+    public static readonly TOURNEY: number = 3;
+
+    public static getName(typeID: number): string {
+        if (typeID == PsbAccountType.NAMED) {
+            return "Named";
+        } else if (typeID == PsbAccountType.PRACTICE) {
+            return "Practice";
+        } else if (typeID == PsbAccountType.TOURNEY) {
+            return "Tourney";
+        }
+        return `Unknown ${typeID}`;
+    }
 }
 
 export class PsbAccountStatus {
