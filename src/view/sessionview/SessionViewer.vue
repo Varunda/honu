@@ -246,7 +246,7 @@
                 </div>
 
                 <session-viewer-kills v-else-if="fullKills.state == 'loaded'"
-                    :kills="kills" :deaths="deaths" :session="session.data" :full-exp="showFullExp">
+                    :kills="kills" :deaths="deaths" :teamkills="teamkills" :session="session.data" :full-exp="showFullExp">
                 </session-viewer-kills>
             </collapsible>
 
@@ -306,7 +306,7 @@
                 </div>
 
                 <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
+                    :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
                 </session-action-log>
             </collapsible>
 
@@ -578,12 +578,20 @@
                 return arr;
             },
 
+            teamkills: function(): FullKillEvent[] {
+                if (this.fullKills.state != "loaded") {
+                    return [];
+                }
+
+                return this.fullKills.data.filter(iter => iter.event.attackerTeamID == iter.event.killedTeamID);
+            },
+
             kills: function(): FullKillEvent[] {
                 if (this.fullKills.state != "loaded") {
                     return [];
                 }
 
-                return this.fullKills.data;
+                return this.fullKills.data.filter(iter => iter.event.attackerTeamID != iter.event.killedTeamID);
             },
 
             deaths: function(): FullKillEvent[] {

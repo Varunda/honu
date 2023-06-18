@@ -139,7 +139,7 @@ namespace watchtower.Controllers {
             List<KillEvent> events = await _KillDbStore.GetKillsByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
 
             KillDeathBlock block = new();
-            block.Kills = events.Where(iter => iter.AttackerCharacterID == session.CharacterID && iter.AttackerTeamID != iter.KilledTeamID).ToList();
+            block.Kills = events.Where(iter => iter.AttackerCharacterID == session.CharacterID && iter.KilledCharacterID != session.CharacterID).ToList();
             block.Deaths = events.Where(iter => iter.KilledCharacterID == session.CharacterID).ToList();
 
             // load characters

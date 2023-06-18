@@ -129,6 +129,7 @@
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
+            teamkills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
         },
@@ -207,6 +208,7 @@
 
                 entries.push(...this.makeKills());
                 entries.push(...this.makeDeaths());
+                entries.push(...this.makeTeamkills());
                 entries.push(...this.makeExp());
                 entries.push(...this.makeZoneChange());
                 entries.push(...this.makeVehicleDestroy());
@@ -249,6 +251,10 @@
                 return this.makeDeathEventEntries(this.kills, true);
             },
 
+            makeTeamkills: function(): ActionLogEntry[] {
+                return this.makeDeathEventEntries(this.teamkills, true);
+            },
+
             makeDeaths: function(): ActionLogEntry[] {
                 return this.makeDeathEventEntries(this.deaths, false);
             },
@@ -268,7 +274,7 @@
                         parts: [
                             this.createLoadoutIcon(iter.event.attackerLoadoutID),
                             this.createCharacterLink(iter.attacker, iter.event.attackerCharacterID),
-                            { html: `killed` },
+                            { html: (iter.event.attackerTeamID != iter.event.killedTeamID) ? `killed` : `teamkilled` },
                             this.createLoadoutIcon(iter.event.killedLoadoutID),
                             this.createCharacterLink(iter.killed, iter.event.killedCharacterID),
                             { html: `using a` },
