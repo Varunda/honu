@@ -30,6 +30,7 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly VehicleCollection _VehicleCensus;
         private readonly ExperienceTypeCollection _ExpTypeCensus;
         private readonly FireGroupToFireModeCollection _FireGroupCensus;
+        private readonly ItemCategoryCollection _ItemCategoryCensus;
 
         private readonly ObjectiveDbStore _ObjectiveDb;
         private readonly ObjectiveTypeDbStore _ObjectiveTypeDb;
@@ -39,6 +40,7 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly VehicleDbStore _VehicleDb;
         private readonly ExperienceTypeDbStore _ExpTypeDb;
         private readonly FireGroupToFireModeDbStore _FireGroupDb;
+        private readonly ItemCategoryDbStore _ItemCategoryDb;
 
         public ObjectiveCollectionsPopulator(ILogger<ObjectiveCollectionsPopulator> logger,
             ObjectiveCollection objCensus, ObjectiveDbStore objDb,
@@ -48,7 +50,8 @@ namespace watchtower.Services.Hosted.Startup {
             ItemCollection itemCensus, ItemDbStore itemDb,
             VehicleCollection vehCensus, VehicleDbStore vehDb,
             ExperienceTypeDbStore expTypeDb, ExperienceTypeCollection expTypeCensus,
-            FireGroupToFireModeCollection fireGroupCensus, FireGroupToFireModeDbStore fireGroupDb) {
+            FireGroupToFireModeCollection fireGroupCensus, FireGroupToFireModeDbStore fireGroupDb,
+            ItemCategoryCollection itemCategoryCensus, ItemCategoryDbStore itemCategoryDb) {
 
             _Logger = logger;
 
@@ -68,6 +71,8 @@ namespace watchtower.Services.Hosted.Startup {
             _ExpTypeCensus = expTypeCensus;
             _FireGroupCensus = fireGroupCensus;
             _FireGroupDb = fireGroupDb;
+            _ItemCategoryCensus = itemCategoryCensus;
+            _ItemCategoryDb = itemCategoryDb;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -157,6 +162,14 @@ namespace watchtower.Services.Hosted.Startup {
                 _Logger.LogDebug($"FireGroupToFireMode: got {censusFireGroup.Count} from Census, have {dbFireGroup.Count} in DB");
                 foreach (FireGroupToFireMode fireGroup in censusFireGroup) {
                     await _FireGroupDb.Upsert(fireGroup);
+                }
+
+                List<ItemCategory> censusItemCategory = await _ItemCategoryCensus.GetAll();
+                List<ItemCategory> dbItemCategory = await _ItemCategoryDb.GetAll();
+
+                _Logger.LogDebug($"ItemCategory: got {censusItemCategory.Count} from Census, have {dbItemCategory.Count} in DB");
+                foreach (ItemCategory itemCat in censusItemCategory) {
+                    await _ItemCategoryDb.Upsert(itemCat);
                 }
 
                 _Logger.LogDebug($"Finished objective populator in {timer.ElapsedMilliseconds}ms");

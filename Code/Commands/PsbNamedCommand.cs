@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Commands;
@@ -131,6 +132,38 @@ namespace watchtower.Code.Commands {
 
             await _NamedRepository.DeleteByID(ID, HonuAccount.SystemID);
             _Logger.LogInformation($"Successfully marked {ID} as deleted");
+        }
+
+        public async Task ReadList(string filename, short accountType) {
+            if (PsbAccountType.IsValid(accountType) == false) {
+                _Logger.LogWarning($"Invalid account type {accountType}");
+                return;
+            }
+
+            _Logger.LogDebug($"Working directory: {Directory.GetCurrentDirectory()}");
+
+            if (File.Exists($"./{filename}") == false) {
+                _Logger.LogWarning($"Failed to find file {Directory.GetCurrentDirectory()}/{filename}");
+                return;
+            }
+
+            string[] lines = await File.ReadAllLinesAsync(filename);
+            _Logger.LogDebug($"Read {lines.Length} lines from {filename}");
+
+            foreach (string line in lines) {
+                string[] split = line.Split(",");
+                if (split.Length != 2) {
+                    _Logger.LogWarning($"Bad line read, expected 2 elements when split on ',', got {split.Length} instead from '{line}'");
+                    continue;
+                }
+
+                string tagg = split[0].Trim();
+                string name = split[1].Trim();
+
+                await _NamedRepository.Create(tagg, name, accountType);
+                _Logger.LogInformation($"Created {tagg}x{name} with type {accountType}");
+            }
+
         }
 
     }

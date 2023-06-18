@@ -72,8 +72,9 @@ namespace watchtower.Services.Census {
                 JsonElement? token = await query.GetAsync();
                 makeRequest?.Stop();
 
+                // even if the request failed and did not return anything, there can still be an JsonElement without any value
                 using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
-                if (token != null) {
+                if (token != null && token.Value.ValueKind != JsonValueKind.Undefined) {
                     return ReadEntry(token.Value);
                 }
                 parseData?.Stop();

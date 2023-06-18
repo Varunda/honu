@@ -18,6 +18,18 @@ namespace watchtower.Code.Constants {
         public const short PRACTICE = 2;
 
         /// <summary>
+        ///     A tourney account
+        /// </summary>
+        public const short TOURNEY = 3;
+
+        public static bool IsValid(short typeID) {
+            if (typeID != NAMED && typeID != PRACTICE && typeID != TOURNEY) {
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         ///     Get the name representation of an account type ID
         /// </summary>
         public static string GetName(short typeID) {

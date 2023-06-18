@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,33 +37,41 @@ namespace watchtower.Services.Hosted {
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
                     string itemID = await _Queue.Dequeue(stoppingToken);
-                    _Logger.LogTrace($"{SERVICE_NAME}> Generating {itemID}");
+                    _Logger.LogTrace($"generating {itemID}");
+
+                    Stopwatch timer = Stopwatch.StartNew();
+                    Stopwatch stepTimer = Stopwatch.StartNew();
 
                     WeaponStatPercentileCache? kd = await _PercentileDb.GenerateKd(itemID);
                     if (kd != null) {
                         kd.TypeID = PercentileCacheType.KD;
                         await _PercentileDb.Upsert(itemID, kd);
                     }
+                    long kdMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
                     WeaponStatPercentileCache? kpm = await _PercentileDb.GenerateKpm(itemID);
                     if (kpm != null) {
                         kpm.TypeID = PercentileCacheType.KPM;
                         await _PercentileDb.Upsert(itemID, kpm);
                     }
+                    long kpmMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
                     WeaponStatPercentileCache? acc = await _PercentileDb.GenerateAcc(itemID);
                     if (acc != null) {
                         acc.TypeID = PercentileCacheType.ACC;
                         await _PercentileDb.Upsert(itemID, acc);
                     }
+                    long accMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
                     WeaponStatPercentileCache? hsr = await _PercentileDb.GenerateHsr(itemID);
                     if (hsr != null) {
                         hsr.TypeID = PercentileCacheType.HSR;
                         await _PercentileDb.Upsert(itemID, hsr);
                     }
+                    long hsrMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
-                    _Logger.LogInformation($"{SERVICE_NAME}> Generated percentile data for {itemID}");
+                    _Logger.LogInformation($"generated percentile data for {itemID} in {timer.ElapsedMilliseconds}ms "
+                        + $"[KD={kdMs}ms] [KPM={kpmMs}ms] [ACC={accMs}ms] [HSR={hsrMs}ms]");
 
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"{SERVICE_NAME}> Error while generated weapon percentiles");

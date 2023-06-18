@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 
 namespace watchtower.Services.Census.Readers {
 
@@ -35,6 +36,7 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<ItemType>, CensusItemTypeReader>();
             services.AddSingleton<ICensusReader<ExperienceType>, CensusExperienceTypeReader>();
             services.AddSingleton<ICensusReader<FireGroupToFireMode>, CensusFireGroupToFireModeReader>();
+            services.AddSingleton<ICensusReader<RealtimeMapState>, CensusRealtimeMapStateReader>();
         }
 
     }

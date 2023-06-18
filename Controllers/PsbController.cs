@@ -13,6 +13,12 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
+        [Authorize]
+        public IActionResult Tourney() {
+            return View();
+        }
+
         [PermissionNeeded(HonuPermission.PSB_PRACTICE_GET)]
         [Authorize]
         public IActionResult Practice() {

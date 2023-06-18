@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Commands;
@@ -18,10 +19,12 @@ namespace watchtower.Code.Commands {
 
         private readonly ILogger<ZoneCommand> _Logger;
         private readonly MapCollection _MapCollection;
+        private readonly RealtimeMapStateCollection _RealtimeMapCollection;
 
         public ZoneCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<ZoneCommand>>();
             _MapCollection = services.GetRequiredService<MapCollection>();
+            _RealtimeMapCollection = services.GetRequiredService<RealtimeMapStateCollection>();
         }
 
         public void Print() {
@@ -100,6 +103,10 @@ namespace watchtower.Code.Commands {
         public async Task Owner(short worldID, uint zoneID) {
             short? ownerFactionID = await _MapCollection.GetZoneMapOwner(worldID, zoneID);
             _Logger.LogInformation($"Owners of {worldID}:{zoneID} => {ownerFactionID}");
+        }
+
+        public async Task RealtimeState(short worldID, uint zoneID) {
+            await _RealtimeMapCollection.GetAll(CancellationToken.None);
         }
 
     }

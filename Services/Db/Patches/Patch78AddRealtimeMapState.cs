@@ -25,7 +25,7 @@ namespace watchtower.Services.Db.Patches {
                     region_id int NOT NULL,
                     owning_faction_id int NOT NULL,
                     
-                    contested bit NOT NULL,
+                    contested boolean NOT NULL,
                     contesting_faction_id INT NOT NULL,
                     
                     capture_time_ms INT NOT NULL,
