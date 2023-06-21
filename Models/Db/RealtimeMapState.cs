@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace watchtower.Models.Db {
 
@@ -34,6 +35,41 @@ namespace watchtower.Models.Db {
 
         public RealtimeMapStateFactionPopulationPercentage FactionPercentage { get; set; } = new();
 
+        public override bool Equals(object? obj) {
+            return obj is RealtimeMapState state &&
+                   // ID == state.ID && // ID is not included either
+                   WorldID == state.WorldID &&
+                   ZoneID == state.ZoneID &&
+                   // Timestamp == state.Timestamp && // do not include timestamp. It is possible the data is updated, but the data itself has not changed
+                   // SaveTimestamp == state.SaveTimestamp &&
+                   RegionID == state.RegionID &&
+                   OwningFactionID == state.OwningFactionID &&
+                   Contested == state.Contested &&
+                   ContestingFactionID == state.ContestingFactionID &&
+                   CaptureTimeMs == state.CaptureTimeMs &&
+                   CaptureTimeLeftMs == state.CaptureTimeLeftMs &&
+                   CaptureFlagsCount == state.CaptureFlagsCount &&
+                   CaptureFlagsLeft == state.CaptureFlagsLeft &&
+                   EqualityComparer<RealtimeMapStateFactionBounds>.Default.Equals(FactionBounds, state.FactionBounds) &&
+                   EqualityComparer<RealtimeMapStateFactionPopulationPercentage>.Default.Equals(FactionPercentage, state.FactionPercentage);
+        }
+
+        public static bool operator ==(RealtimeMapState a, RealtimeMapState b) {
+            if (ReferenceEquals(a, b)) {
+                return true;
+            } else if (a is null) {
+                return false;
+            } else if (b is null) {
+                return false;
+            }
+
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(RealtimeMapState a, RealtimeMapState b) {
+            return !(a == b);
+        }
+
     }
 
     public class RealtimeMapStateFactionBounds {
@@ -46,6 +82,13 @@ namespace watchtower.Models.Db {
 
         public int NS { get; set; }
 
+        public override bool Equals(object? obj) {
+            return obj is RealtimeMapStateFactionBounds bounds &&
+                   VS == bounds.VS &&
+                   NC == bounds.NC &&
+                   TR == bounds.TR &&
+                   NS == bounds.NS;
+        }
     }
 
     public class RealtimeMapStateFactionPopulationPercentage {
@@ -57,7 +100,14 @@ namespace watchtower.Models.Db {
         public decimal TR { get; set; }
 
         public decimal NS { get; set; }
-        
+
+        public override bool Equals(object? obj) {
+            return obj is RealtimeMapStateFactionPopulationPercentage percentage &&
+                   VS == percentage.VS &&
+                   NC == percentage.NC &&
+                   TR == percentage.TR &&
+                   NS == percentage.NS;
+        }
     }
 
 

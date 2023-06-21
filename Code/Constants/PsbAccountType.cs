@@ -22,8 +22,13 @@ namespace watchtower.Code.Constants {
         /// </summary>
         public const short TOURNEY = 3;
 
+        /// <summary>
+        ///     An OvO account
+        /// </summary>
+        public const short OVO = 4;
+
         public static bool IsValid(short typeID) {
-            if (typeID != NAMED && typeID != PRACTICE && typeID != TOURNEY) {
+            if (typeID != NAMED && typeID != PRACTICE && typeID != TOURNEY && typeID != OVO) {
                 return false;
             }
             return true;
@@ -37,6 +42,10 @@ namespace watchtower.Code.Constants {
                 return "Named";
             } else if (typeID == PRACTICE) {
                 return "Practice";
+            } else if (typeID == TOURNEY) {
+                return "Tourney";
+            } else if (typeID == OVO) {
+                return "OvO";
             }
 
             return $"Unknown {typeID}";

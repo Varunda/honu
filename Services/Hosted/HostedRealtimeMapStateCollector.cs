@@ -22,6 +22,8 @@ namespace watchtower.Services.Hosted {
 
         private const string SERVICE_NAME = "realtime_map_state_collector";
 
+        private readonly Dictionary<string, RealtimeMapState> _PreviousState = new();
+
         public HostedRealtimeMapStateCollector(ILogger<HostedRealtimeMapStateCollector> logger,
             RealtimeMapStateCollection realtimeMapCensus, RealtimeMapStateDbStore realtimeMapDb, IServiceHealthMonitor serviceHealth) {
 
@@ -46,18 +48,34 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
+                    long sameCount = 0;
+                    long changedCount = 0;
+
                     _Logger.LogDebug($"getting map state and saving to db");
                     Stopwatch timer = Stopwatch.StartNew();
 
                     List<RealtimeMapState> states = await _RealtimeMapCensus.GetAll(stoppingToken);
                     long censusMs = timer.ElapsedMilliseconds; timer.Restart();
 
+
                     foreach (RealtimeMapState state in states) {
+
+                        string key = $"{state.WorldID}.{state.ZoneID}.{state.RegionID}";
+                        if (_PreviousState.TryGetValue(key, out RealtimeMapState? previousState) == true) {
+                            if (previousState != null && previousState == state) {
+                                ++sameCount;
+                                continue;
+                            }
+                        }
+
+                        ++changedCount;
                         await _RealtimeMapDb.Insert(state, stoppingToken);
+                        _PreviousState[key] = state;
                     }
                     long dbMs = timer.ElapsedMilliseconds;
 
-                    _Logger.LogInformation($"saved realtime map info in {censusMs + dbMs}ms. [Census={censusMs}ms] [DB={dbMs}ms]");
+                    _Logger.LogInformation($"saved realtime map info in {censusMs + dbMs}ms, updated {changedCount} entries. "
+                        + $"[Census={censusMs}ms] [DB={dbMs}ms] [Same count={sameCount}] [Changed count={changedCount}]");
 
                     health.LastRan = DateTime.UtcNow;
                     health.RunDuration = censusMs + dbMs;

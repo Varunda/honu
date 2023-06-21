@@ -7,6 +7,7 @@ export class PsbAccountType {
     public static readonly NAMED: number = 1;
     public static readonly PRACTICE: number = 2;
     public static readonly TOURNEY: number = 3;
+    public static readonly OVO: number = 4;
 
     public static getName(typeID: number): string {
         if (typeID == PsbAccountType.NAMED) {
@@ -15,6 +16,8 @@ export class PsbAccountType {
             return "Practice";
         } else if (typeID == PsbAccountType.TOURNEY) {
             return "Tourney";
+        } else if (typeID == PsbAccountType.OVO) {
+            return "OvO";
         }
         return `Unknown ${typeID}`;
     }
