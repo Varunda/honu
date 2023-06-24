@@ -253,6 +253,7 @@
                 this.makeRoadkills();
                 this.makeInfantryDamage();
                 this.makeInfantryDamagePerMinute();
+                this.makeBeaconKills();
                 //this.makeRecon(); // BUGGED
             },
 
@@ -1406,6 +1407,19 @@
                 this.catMisc.metrics.push(this.generateExperience(
                     metric,
                     [Experience.MOTION_DETECT, Experience.SQUAD_MOTION_DETECT],
+                    (metadata) => metadata.timeAs)
+                );
+            },
+
+            makeBeaconKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Beacon kills";
+                metric.funName = "Beacon kills";
+                metric.description = "Most beacons killed (per hour)";
+
+                this.catMisc.metrics.push(this.generateExperience(
+                    metric,
+                    [270], // 270 => Squad Spawn beacon kill
                     (metadata) => metadata.timeAs)
                 );
             },
