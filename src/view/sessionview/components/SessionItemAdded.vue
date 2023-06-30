@@ -39,7 +39,7 @@
                     </td>
 
                     <td class="align-middle">
-                        {{ev.event.timestamp | moment}}
+                        {{ev.event.timestamp | moment("YYYY-MM-DD hh:mm:ssA")}}
                     </td>
                 </tr>
             </tbody>
@@ -106,7 +106,7 @@
                         event: iter,
                         item: this.eventsBlock.data.items.find(i => i.id == iter.itemID) ?? null
                     };
-                });
+                }).sort((a, b) => a.event.timestamp.getTime() - b.event.timestamp.getTime());
             }
         },
 
