@@ -48,11 +48,13 @@ export class CharacterWeaponStatEntry {
 	public killsPerMinute: number = 0;
 	public accuracy: number = 0;
 	public headshotRatio: number = 0;
+	public vehicleKillsPerMinute: number = 0;
 
 	public kpmPercent: number | null = null;
 	public kdPercent: number | null = null;
 	public accPercent: number | null = null;
 	public hsrPercent: number | null = null;
+	public vkpmPercent: number | null = null;
 }
 
 export class ExpandedWeaponStatEntry {
@@ -101,11 +103,13 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 			killsPerMinute: elem.stat.killsPerMinute,
 			accuracy: elem.stat.accuracy * 100,
 			headshotRatio: elem.stat.headshotRatio * 100,
+			vehicleKillsPerMinute: elem.stat.vehicleKillsPerMinute,
 
 			kdPercent: elem.killDeathRatioPercentile,
 			kpmPercent: elem.killsPerMinutePercentile,
 			accPercent: elem.accuracyPercentile,
-			hsrPercent: elem.headshotRatioPercentile
+			hsrPercent: elem.headshotRatioPercentile,
+			vkpmPercent: elem.vehicleKillsPerMinutePercentile
 		}
 	}
 

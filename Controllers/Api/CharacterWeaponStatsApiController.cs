@@ -109,7 +109,6 @@ namespace watchtower.Controllers.Api {
             WeaponStatPercentileCache? kdCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KD);
             if (kdCache != null) {
                 if (needsRegen == false && DateTime.UtcNow - kdCache.Timestamp > TimeSpan.FromDays(1)) {
-                    //_Logger.LogDebug($"percentile cache for {entry.ItemID} is {hsrCache.Timestamp - DateTime.UtcNow} old, will regen");
                     needsRegen = true;
                 }
 
@@ -147,6 +146,17 @@ namespace watchtower.Controllers.Api {
                 }
 
                 entry.HeadshotRatioPercentile = _InterpolatePercentile(hsrCache, entry.Stat.HeadshotRatio);
+            } else {
+                needsRegen = true;
+            }
+
+            WeaponStatPercentileCache? vkpmCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.VKPM);
+            if (vkpmCache != null) {
+                if (needsRegen == false && DateTime.UtcNow - vkpmCache.Timestamp > TimeSpan.FromDays(1)) {
+                    needsRegen = true;
+                }
+
+                entry.VehicleKillsPerMinutePercentile = _InterpolatePercentile(vkpmCache, entry.Stat.VehicleKillsPerMinute);
             } else {
                 needsRegen = true;
             }

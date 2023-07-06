@@ -19,5 +19,7 @@ namespace watchtower.Code.Constants {
 
         public const short KILLS = 6;
 
+        public const short VKILLS = 7;
+
     }
 }

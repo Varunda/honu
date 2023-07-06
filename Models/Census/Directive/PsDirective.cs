@@ -3,7 +3,7 @@ using System;
 
 namespace watchtower.Models.Census {
 
-    public class PsDirective {
+    public class PsDirective : IKeyedObject {
 
         /// <summary>
         ///     Unique ID of this directive

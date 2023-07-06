@@ -197,10 +197,10 @@ namespace watchtower {
             services.AddHostedService<RealtimeResubcribeService>();
             services.AddHostedService<WorldOverviewBroadcastService>();
             services.AddHostedService<CharacterStatGeneratorPopulator>();
-            services.AddHostedService<ZoneCheckerService>();
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<DirectiveCollectionsPopulator>();
             services.AddHostedService<ObjectiveCollectionsPopulator>();
+            services.AddHostedService<ZoneCheckerService>();
             services.AddHostedService<AlertLoadStartupService>();
             services.AddHostedService<RealtimeNetworkBroadcastService>();
             services.AddHostedService<RealtimeNetworkBuilderService>();

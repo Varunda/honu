@@ -39,6 +39,7 @@ namespace watchtower.Services.Queues {
             }
 
             _Last = entry;
+            ++_ProcessedCount;
 
             return entry;
         }

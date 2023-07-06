@@ -24,7 +24,7 @@ namespace watchtower.Code.Constants {
         /// </summary>
         /// <param name="worldID">ID of the world</param>
         /// <returns>
-        ///     If t
+        ///     If the world is one that is saved to the DB
         /// </returns>
         public static bool IsTrackedWorld(short worldID) {
             return worldID == Connery || worldID == Miller || worldID == Cobalt

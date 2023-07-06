@@ -295,6 +295,9 @@ namespace watchtower.Services.Hosted {
             Dictionary<string, WeaponStatEntry> topKills = GetTopWeaponStats(iter => iter.Kills, 0, 200);
             AddToAll(topKills, PercentileCacheType.KILLS);
 
+            Dictionary<string, WeaponStatEntry> topVKills = GetTopWeaponStats(iter => iter.VehicleKills, 0, 200);
+            AddToAll(topVKills, PercentileCacheType.VKILLS);
+
             _Logger.LogDebug($"GenerateTop(itemID {itemID})> Setting {all.Count} entries");
 
             await _WeaponTopDb.SetByItemID(itemID, all);

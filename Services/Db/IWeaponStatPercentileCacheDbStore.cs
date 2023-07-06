@@ -125,6 +125,16 @@ namespace watchtower.Services.Db {
             return entry;
         }
 
+        public static async Task<WeaponStatPercentileCache?> GenerateVKpm(this IWeaponStatPercentileCacheDbStore db, string itemID, int minKills = 1159) {
+            WeaponStatPercentileCache? entry = await db.Generate(itemID, "vkpm", minKills);
+            if (entry == null) {
+                return null;
+            }
+
+            entry.TypeID = PercentileCacheType.VKPM;
+            return entry;
+        }
+
     }
 
 }

@@ -12,6 +12,7 @@ using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Services.Hosted.Startup {
 
@@ -21,6 +22,7 @@ namespace watchtower.Services.Hosted.Startup {
     public class ObjectiveCollectionsPopulator : BackgroundService {
 
         private readonly ILogger<ObjectiveCollectionsPopulator> _Logger;
+        private readonly IServiceProvider _Services;
 
         private readonly ObjectiveCollection _ObjectiveCensus;
         private readonly ObjectiveTypeCollection _ObjectiveTypeCensus;
@@ -43,6 +45,7 @@ namespace watchtower.Services.Hosted.Startup {
         private readonly ItemCategoryDbStore _ItemCategoryDb;
 
         public ObjectiveCollectionsPopulator(ILogger<ObjectiveCollectionsPopulator> logger,
+            IServiceProvider services,
             ObjectiveCollection objCensus, ObjectiveDbStore objDb,
             ObjectiveTypeCollection objTypeCensus, ObjectiveTypeDbStore objTypeDb,
             ObjectiveSetCollection objSetCensus, ObjectiveSetDbStore objSetDb,
@@ -54,6 +57,7 @@ namespace watchtower.Services.Hosted.Startup {
             ItemCategoryCollection itemCategoryCensus, ItemCategoryDbStore itemCategoryDb) {
 
             _Logger = logger;
+            _Services = services;
 
             _ObjectiveCensus = objCensus ?? throw new ArgumentNullException(nameof(objCensus));
             _ObjectiveDb = objDb ?? throw new ArgumentNullException(nameof(objDb));
@@ -79,6 +83,18 @@ namespace watchtower.Services.Hosted.Startup {
             try {
                 Stopwatch timer = Stopwatch.StartNew();
 
+                IEnumerable<Type> types = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => typeof(IRefreshableRepository).IsAssignableFrom(p) && p.IsAbstract == false && p.ContainsGenericParameters == false);
+
+                foreach (Type t in types) {
+                    _Logger.LogDebug($"Refreshing {t.FullName}");
+                    IRefreshableRepository repo = (IRefreshableRepository) _Services.GetRequiredService(t);
+                    await repo.Refresh(CancellationToken.None);
+                }
+
+                /*
+                // check
                 List<PsObjective> censusObjs = await _ObjectiveCensus.GetAll();
                 List<PsObjective> dbObjs = await _ObjectiveDb.GetAll();
 
@@ -89,6 +105,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
                 }
 
+                // check
                 List<ObjectiveType> censusTypes = await _ObjectiveTypeCensus.GetAll();
                 List<ObjectiveType> dbTypes = await _ObjectiveTypeDb.GetAll();
 
@@ -99,6 +116,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
                 }
 
+                // check
                 List<ObjectiveSet> censusSets = await _ObjectiveSetCensus.GetAll();
                 List<ObjectiveSet> dbSets = await _ObjectiveSetDb.GetAll();
 
@@ -109,6 +127,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
                 }
 
+                // check
                 List<Achievement> censusAchs = await _AchievementCensus.GetAll();
                 List<Achievement> dbAchs = await _AchievementDb.GetAll();
 
@@ -119,6 +138,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
                 }
 
+                // check
                 List<PsItem> censusItems = await _ItemCensus.GetAll();
                 List<PsItem> dbItems = await _ItemDb.GetAll();
 
@@ -138,6 +158,7 @@ namespace watchtower.Services.Hosted.Startup {
                 }
                 //}
 
+                // check
                 List<PsVehicle> censusVehs = await _VehicleCensus.GetAll();
                 List<PsVehicle> dbVehs = await _VehicleDb.GetAll();
 
@@ -148,6 +169,7 @@ namespace watchtower.Services.Hosted.Startup {
                     }
                 }
 
+                // check
                 List<ExperienceType> censusExpType = await _ExpTypeCensus.GetAll();
                 List<ExperienceType> dbExpType = await _ExpTypeDb.GetAll();
 
@@ -164,6 +186,7 @@ namespace watchtower.Services.Hosted.Startup {
                     await _FireGroupDb.Upsert(fireGroup);
                 }
 
+                // check
                 List<ItemCategory> censusItemCategory = await _ItemCategoryCensus.GetAll();
                 List<ItemCategory> dbItemCategory = await _ItemCategoryDb.GetAll();
 
@@ -171,6 +194,7 @@ namespace watchtower.Services.Hosted.Startup {
                 foreach (ItemCategory itemCat in censusItemCategory) {
                     await _ItemCategoryDb.Upsert(itemCat);
                 }
+                */
 
                 _Logger.LogDebug($"Finished objective populator in {timer.ElapsedMilliseconds}ms");
             } catch (Exception ex) {

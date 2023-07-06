@@ -3,7 +3,7 @@ using System;
 
 namespace watchtower.Models.Census {
 
-    public class DirectiveTreeCategory {
+    public class DirectiveTreeCategory : IKeyedObject {
 
         /// <summary>
         ///     Unique ID of the tree

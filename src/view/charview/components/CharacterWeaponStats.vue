@@ -1,10 +1,6 @@
 ﻿<template>
     <div>
         <div class="mb-2">
-            <button type="button" class="btn btn-primary" @click="loadEntries">
-                Reload
-            </button>
-
             <toggle-button v-model="showDebug">
                 Show IDs
             </toggle-button>
@@ -79,7 +75,7 @@
                     <b v-else>Kills</b>
                 </a-header>
 
-                <a-filter method="input" type="number" field="kills"
+                <a-filter method="input" type="number" field="kills" max-width="14ch"
                     :conditions="[ 'greater_than', 'less_than' ]">
                 </a-filter>
 
@@ -94,7 +90,7 @@
                     <info-hover text="Kills per minute"></info-hover>
                 </a-header>
 
-                <a-filter method="input" type="number" field="killsPerMinute"
+                <a-filter method="input" type="number" field="killsPerMinute" max-width="14ch"
                     :conditions="[ 'greater_than', 'less_than' ]">
                 </a-filter>
 
@@ -119,7 +115,7 @@
                     <b title="Kills / Deaths (revive are not counted)">K/D</b>
                 </a-header>
 
-                <a-filter method="input" type="number" field="killDeathRatio"
+                <a-filter method="input" type="number" field="killDeathRatio" max-width="14ch"
                     :conditions="[ 'greater_than', 'less_than' ]">
                 </a-filter>
 
@@ -148,7 +144,7 @@
                     <b title="Accuracy">ACC</b>
                 </a-header>
 
-                <a-filter method="input" type="number" field="accuracy"
+                <a-filter method="input" type="number" field="accuracy" max-width="14ch"
                     :conditions="[ 'greater_than', 'less_than' ]">
                 </a-filter>
 
@@ -176,7 +172,7 @@
                     <b title="Percentage of kills that end with a headshot">HSR</b>
                 </a-header>
 
-                <a-filter method="input" type="number" field="headshotRatio"
+                <a-filter method="input" type="number" field="headshotRatio" max-width="14ch"
                     :conditions="[ 'greater_than', 'less_than' ]">
                 </a-filter>
 
@@ -197,6 +193,44 @@
 
                 <a-body v-slot="entry">
                     <percentile-cell v-show="showPercent" :value="entry.hsrPercent"></percentile-cell>
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="vehicleKills">
+                <a-header>
+                    <b>VKills</b>
+                </a-header>
+
+                <a-filter method="input" type="number" field="vehicleKills" max-width="14ch"
+                    :conditions="[ 'greater_than', 'less_than' ]"> 
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.vehicleKills | locale(0)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="vehicleKillsPerMinute">
+                <a-header>
+                    <b>VKPM</b>
+                </a-header>
+
+                <a-filter method="input" type="number" field="headshotRatio" max-width="14ch"
+                    :conditions="[ 'greater_than', 'less_than' ]">
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.vehicleKillsPerMinute.toFixed(2)}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="vkpmPercent">
+                <a-header>
+                    <b>VKPM%</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <percentile-cell v-show="showPercent" :value="entry.vkpmPercent"></percentile-cell>
                 </a-body>
             </a-col>
 

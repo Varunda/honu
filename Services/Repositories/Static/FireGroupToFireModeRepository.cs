@@ -2,15 +2,18 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Services.Repositories {
 
-    public class FireGroupToFireModeRepository : IStaticRepository<FireGroupToFireMode> {
+    public class FireGroupToFireModeRepository : IStaticRepository<FireGroupToFireMode>, IRefreshableRepository {
 
         private readonly ILogger<FireGroupToFireModeRepository> _Logger;
         private readonly IMemoryCache _Cache;
@@ -103,6 +106,27 @@ namespace watchtower.Services.Repositories {
                 }
             }
             return entries;
+        }
+
+        public async Task Refresh(CancellationToken cancel) {
+            Stopwatch timer = Stopwatch.StartNew();
+
+            List<FireGroupToFireMode> census = await _Census.GetAll(cancel);
+            if (census.Count == 0) {
+                return;
+            }
+
+            long censusMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            foreach (FireGroupToFireMode t in census) {
+                await _Db.Upsert(t);
+            }
+
+            long dbMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            _Logger.LogInformation($"Refreshed {nameof(FireGroupToFireMode)} with {census.Count} entries in {censusMs + dbMs}ms. [Census={censusMs}ms] [Db={dbMs}ms]");
+
+            _Cache.Remove(CACHE_KEY_ALL);
         }
 
     }

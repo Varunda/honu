@@ -227,6 +227,7 @@
                 }
 
                 for (const stat of this.data) {
+                    // kills is how many of the class you have killed, not how many kills as the class
                     if (stat.statName == "kills") {
                         setStat(this.kills, stat, this.type);
                     } else if (stat.statName == "play_time") {
@@ -254,6 +255,7 @@
 
         computed: {
             totalTime: function(): number {
+                // +1 in case if for some reason there is no classes played
                 return this.timeAs.infil + this.timeAs.lightAssault + this.timeAs.medic
                     + this.timeAs.engineer + this.timeAs.heavy + this.timeAs.max + 1;
             }

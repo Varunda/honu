@@ -70,8 +70,17 @@ namespace watchtower.Services.Hosted {
                     }
                     long hsrMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
+                    WeaponStatPercentileCache? vkpm = await _PercentileDb.GenerateVKpm(itemID);
+                    if (vkpm != null) {
+                        vkpm.TypeID = PercentileCacheType.VKPM;
+                        await _PercentileDb.Upsert(itemID, vkpm);
+                    }
+                    long vkpmMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
+
                     _Logger.LogInformation($"generated percentile data for {itemID} in {timer.ElapsedMilliseconds}ms "
-                        + $"[KD={kdMs}ms] [KPM={kpmMs}ms] [ACC={accMs}ms] [HSR={hsrMs}ms]");
+                        + $"[KD={kdMs}ms] [KPM={kpmMs}ms] [ACC={accMs}ms] [HSR={hsrMs}ms] [VKPM={vkpmMs}ms]");
+
+                    _Queue.AddProcessTime(timer.ElapsedMilliseconds);
 
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, $"{SERVICE_NAME}> Error while generated weapon percentiles");

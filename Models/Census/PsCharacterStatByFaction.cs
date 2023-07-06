@@ -2,15 +2,34 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 
 namespace watchtower.Models.Census {
+
+    /// <summary>
+    ///     Wrapper around /characters_stat_by_faction
+    /// </summary>
     public class PsCharacterStatByFaction {
 
+        /// <summary>
+        ///     ID of the character this stat is for
+        /// </summary>
         public string CharacterID { get; set; } = "";
 
+        /// <summary>
+        ///     Name of this stat
+        /// </summary>
         public string StatName { get; set; } = "";
 
+        /// <summary>
+        ///     ID of the profile/class. See <see cref="Profile"/>
+        /// </summary>
         public int ProfileID { get; set; }
+
+        /// <summary>
+        ///     When this value was last updated
+        /// </summary>
+        public DateTime Timestamp { get; set; }
 
         public int ValueForeverVS { get; set; }
         public int ValueMonthlyVS { get; set; }
@@ -30,7 +49,6 @@ namespace watchtower.Models.Census {
         public int ValueDailyTR { get; set; }
         public int ValueOneLifeMaxTR { get; set; }
 
-        public DateTime Timestamp { get; set; }
 
     }
 }

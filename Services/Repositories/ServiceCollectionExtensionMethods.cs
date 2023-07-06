@@ -51,12 +51,17 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<ItemCategoryRepository>();
             services.AddSingleton<IStaticRepository<Achievement>, AchievementRepository>();
             services.AddSingleton<AchievementRepository>();
-            services.AddSingleton<ExperienceTypeRepository>();
             services.AddSingleton<IStaticRepository<ExperienceType>, ExperienceTypeRepository>();
+            services.AddSingleton<ExperienceTypeRepository>();
+            services.AddSingleton<IStaticRepository<PsDirective>, DirectiveRepository>();
             services.AddSingleton<DirectiveRepository>();
+            services.AddSingleton<IStaticRepository<DirectiveTree>, DirectiveTreeRepository>();
             services.AddSingleton<DirectiveTreeRepository>();
+            //services.AddSingleton<IStaticRepository<DirectiveTier>, DirectiveTierRepository>(); // Directive tier doesn't have a primary key
             services.AddSingleton<DirectiveTierRepository>();
+            services.AddSingleton<IStaticRepository<DirectiveTreeCategory>, DirectiveTreeCategoryRepository>();
             services.AddSingleton<DirectiveTreeCategoryRepository>();
+            services.AddSingleton<IStaticRepository<FireGroupToFireMode>, FireGroupToFireModeRepository>();
             services.AddSingleton<FireGroupToFireModeRepository>();
 
             services.AddSingleton<ReportRepository>();

@@ -29,6 +29,7 @@ pg_dump -t character_history_stat -U postgres -w -d ps2 | psql -U postgres -p 54
 pg_dump -t character_stats -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
 pg_dump -t character_metadata -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
 pg_dump -t character_items -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
+pg_dump -t weapon_stats -U postgres -w -d ps2 | psql -U postgres -p 5433 -d ps2
 
 import os
 tables = [
@@ -46,7 +47,8 @@ tables = [
 	"character_history_stat",
 	"character_stats",
 	"character_metadata",
-	"character_items"
+	"character_items",
+	"weapon_stats"
 ]
 
 for table in tables:

@@ -22,8 +22,6 @@ namespace watchtower.Services.Db {
             services.AddSingleton<ItemAddedDbStore>();
             services.AddSingleton<AchievementEarnedDbStore>();
 
-            services.AddSingleton<ItemDbStore>();
-            services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();
             services.AddSingleton<SessionDbStore, SessionDbStore>();
             services.AddSingleton<FacilityControlDbStore>();
             services.AddSingleton<IFacilityDbStore, FacilityDbStore>();
@@ -39,29 +37,41 @@ namespace watchtower.Services.Db {
             services.AddSingleton<LogoutBufferDbStore>();
             services.AddSingleton<FacilityPlayerControlDbStore>();
             services.AddSingleton<CharacterFriendDbStore>();
-            services.AddSingleton<DirectiveDbStore>();
-            services.AddSingleton<DirectiveTreeDbStore>();
-            services.AddSingleton<DirectiveTierDbStore>();
-            services.AddSingleton<DirectiveTreeCategoryDbStore>();
             services.AddSingleton<CharacterDirectiveDbStore>();
             services.AddSingleton<CharacterDirectiveTreeDbStore>();
             services.AddSingleton<CharacterDirectiveTierDbStore>();
             services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
             services.AddSingleton<CharacterAchievementDbStore>();
 
-            // Objective
+            // static data
+            services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();
+            services.AddSingleton<ItemDbStore>();
             services.AddSingleton<IStaticDbStore<PsObjective>, ObjectiveDbStore>();
             services.AddSingleton<ObjectiveDbStore>();
             services.AddSingleton<IStaticDbStore<ObjectiveType>, ObjectiveTypeDbStore>();
             services.AddSingleton<ObjectiveTypeDbStore>();
             services.AddSingleton<IStaticDbStore<ObjectiveSet>, ObjectiveSetDbStore>();
             services.AddSingleton<ObjectiveSetDbStore>();
-
             services.AddSingleton<IStaticDbStore<Achievement>, AchievementDbStore>();
             services.AddSingleton<AchievementDbStore>();
-
             services.AddSingleton<IStaticDbStore<PsVehicle>, VehicleDbStore>();
             services.AddSingleton<VehicleDbStore>();
+            services.AddSingleton<IStaticDbStore<ItemType>, ItemTypeDbStore>();
+            services.AddSingleton<ItemTypeDbStore>();
+            services.AddSingleton<IStaticDbStore<ItemCategory>, ItemCategoryDbStore>();
+            services.AddSingleton<ItemCategoryDbStore>();
+            services.AddSingleton<IStaticDbStore<ExperienceType>, ExperienceTypeDbStore>();
+            services.AddSingleton<ExperienceTypeDbStore>();
+            services.AddSingleton<IStaticDbStore<FireGroupToFireMode>, FireGroupToFireModeDbStore>();
+            services.AddSingleton<FireGroupToFireModeDbStore>();
+            services.AddSingleton<IStaticDbStore<PsDirective>, DirectiveDbStore>();
+            services.AddSingleton<DirectiveDbStore>();
+            services.AddSingleton<IStaticDbStore<DirectiveTree>, DirectiveTreeDbStore>();
+            services.AddSingleton<DirectiveTreeDbStore>();
+            services.AddSingleton<IStaticDbStore<DirectiveTier>, DirectiveTierDbStore>();
+            services.AddSingleton<DirectiveTierDbStore>();
+            services.AddSingleton<IStaticDbStore<DirectiveTreeCategory>, DirectiveTreeCategoryDbStore>();
+            services.AddSingleton<DirectiveTreeCategoryDbStore>();
 
             services.AddSingleton<PsbAccountDbStore>();
             services.AddSingleton<PsbAccountNoteDbStore>();
@@ -75,15 +85,6 @@ namespace watchtower.Services.Db {
 
             services.AddSingleton<WorldTagDbStore>();
             services.AddSingleton<RealtimeReconnectDbStore>();
-
-            services.AddSingleton<IStaticDbStore<ItemType>, ItemTypeDbStore>();
-            services.AddSingleton<ItemTypeDbStore>();
-            services.AddSingleton<IStaticDbStore<ItemCategory>, ItemCategoryDbStore>();
-            services.AddSingleton<ItemCategoryDbStore>();
-            services.AddSingleton<IStaticDbStore<ExperienceType>, ExperienceTypeDbStore>();
-            services.AddSingleton<ExperienceTypeDbStore>();
-            services.AddSingleton<IStaticDbStore<FireGroupToFireMode>, FireGroupToFireModeDbStore>();
-            services.AddSingleton<FireGroupToFireModeDbStore>();
 
             services.AddSingleton<WeaponStatSnapshotDbStore>();
             services.AddSingleton<HonuAccountPermissionDbStore>();

@@ -27,6 +27,8 @@ namespace watchtower.Models.Api {
 
         public double? HeadshotRatioPercentile { get; set; }
 
+        public double? VehicleKillsPerMinutePercentile { get; set; }
+
     }
 
 }

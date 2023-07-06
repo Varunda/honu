@@ -11,43 +11,12 @@ using watchtower.Services.Db;
 
 namespace watchtower.Services.Repositories {
 
-    public class DirectiveTreeRepository {
+    public class DirectiveTreeRepository : BaseStaticRepository<DirectiveTree> {
 
-        private readonly ILogger<DirectiveTreeRepository> _Logger;
-        private readonly IMemoryCache _Cache;
-
-        private readonly DirectiveTreeDbStore _Db;
-
-        private const string CACHE_KEY = "DirectiveTrees.All"; 
-
-        public DirectiveTreeRepository(ILogger<DirectiveTreeRepository> logger,
-            IMemoryCache cache, DirectiveTreeDbStore db) {
-
-            _Logger = logger;
-            _Cache = cache;
-
-            _Db = db;
-        }
-
-        public async Task<List<DirectiveTree>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY, out List<DirectiveTree> dirs) == false) {
-                dirs = await _Db.GetAll();
-
-                if (dirs.Count > 0) {
-                    _Cache.Set(CACHE_KEY, dirs, new MemoryCacheEntryOptions() {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2)
-                    });
-                }
-            }
-
-            return dirs;
-        }
-
-        public async Task<DirectiveTree?> GetByID(int ID) {
-            List<DirectiveTree> all = await GetAll();
-
-            return all.FirstOrDefault(iter => iter.ID == ID);
-        }
+        public DirectiveTreeRepository(ILoggerFactory loggerFactory,
+            IStaticCollection<DirectiveTree> census, IStaticDbStore<DirectiveTree> db,
+            IMemoryCache cache)
+            : base(loggerFactory, census, db, cache) { }
 
     }
 

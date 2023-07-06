@@ -26,6 +26,7 @@ using DSharpPlus.ButtonCommands;
 using DSharpPlus.ButtonCommands.EventArgs;
 using watchtower.Services.Repositories.PSB;
 using watchtower.Models.PSB;
+using System.Diagnostics;
 
 namespace watchtower.Services.Hosted {
 
@@ -151,7 +152,7 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
-                    DiscordMessageBuilder builder = new DiscordMessageBuilder();
+                    DiscordMessageBuilder builder = new();
 
                     // the contents is ignored if there is any embeds
                     if (msg.Embeds.Count > 0) {
@@ -169,6 +170,8 @@ namespace watchtower.Services.Hosted {
                     if (msg.Components.Count > 0) {
                         builder.AddComponents(msg.Components);
                     }
+
+                    Stopwatch timer = Stopwatch.StartNew();
 
                     if (targetType == TargetType.CHANNEL) {
                         DiscordGuild? guild = await _Discord.TryGetGuild(msg.GuildID!.Value);
@@ -193,6 +196,8 @@ namespace watchtower.Services.Hosted {
 
                         await member.SendMessageAsync(builder);
                     }
+
+                    _MessageQueue.AddProcessTime(timer.ElapsedMilliseconds);
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
                     _Logger.LogError(ex, "error sending message");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {

@@ -242,6 +242,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                     sessionTrace?.AddTag("honu.character_count", parms.CharacterIDs.Count);
                     foreach (string charID in parms.CharacterIDs) {
+                        await Clients.Caller.SendMessage($"loading sessions for character {charID} {parms.PeriodStart:u} - {parms.PeriodEnd:u}");
                         List<Session> s = await _SessionDb.GetByRangeAndCharacterID(charID, parms.PeriodStart, parms.PeriodEnd);
                         sessions.AddRange(s);
                         _Logger.LogTrace($"Loaded {s.Count} sessions for char {charID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");
@@ -249,6 +250,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
                     sessionTrace?.AddTag("honu.outfit_count", parms.OutfitIDs.Count);
                     foreach (string outfitID in parms.OutfitIDs) {
+                        await Clients.Caller.SendMessage($"loading sessions for outfit {outfitID} {parms.PeriodStart:u} - {parms.PeriodEnd:u}");
                         List<Session> s = await _SessionDb.GetByRangeAndOutfit(outfitID, parms.PeriodStart, parms.PeriodEnd);
                         sessions.AddRange(s);
                         _Logger.LogTrace($"Loaded {s.Count} sessions for outfit {outfitID} between {parms.PeriodStart:u} and {parms.PeriodEnd:u}");

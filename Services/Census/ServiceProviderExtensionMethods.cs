@@ -15,40 +15,38 @@ namespace watchtower.Services.Census {
             services.AddSingleton<CharacterStatCollection>();
             services.AddSingleton<CharacterFriendCollection>();
             services.AddSingleton<CharacterAchievementCollection>();
-
-            services.AddSingleton<OutfitCollection, OutfitCollection>();
-
-            // Static collections
-            services.AddSingleton<IStaticCollection<PsItem>, ItemCollection>();
-            services.AddSingleton<ItemCollection>();
-            services.AddSingleton<MapCollection>();
-            services.AddSingleton<FacilityCollection>();
-            services.AddSingleton<IStaticCollection<ItemCategory>, ItemCategoryCollection>();
-            services.AddSingleton<ItemCategoryCollection>();
-            services.AddSingleton<IStaticCollection<ItemType>, ItemTypeCollection>();
-            services.AddSingleton<ItemTypeCollection>();
-
-            // Directive collections
-            services.AddSingleton<DirectiveCollection>();
-            services.AddSingleton<DirectiveTreeCollection>();
-            services.AddSingleton<DirectiveTierCollection>();
             services.AddSingleton<DirectiveTreeCategoryCollection>();
             services.AddSingleton<CharacterDirectiveCollection>();
             services.AddSingleton<CharacterDirectiveTreeCollection>();
             services.AddSingleton<CharacterDirectiveTierCollection>();
             services.AddSingleton<CharacterDirectiveObjectiveCollection>();
 
-            // Objective collections
+            services.AddSingleton<OutfitCollection, OutfitCollection>();
+
+            // Static collections
+            services.AddSingleton<MapCollection>();
+            services.AddSingleton<FacilityCollection>();
+            services.AddSingleton<IStaticCollection<PsItem>, ItemCollection>();
+            services.AddSingleton<ItemCollection>();
+            services.AddSingleton<IStaticCollection<ItemCategory>, ItemCategoryCollection>();
+            services.AddSingleton<ItemCategoryCollection>();
+            services.AddSingleton<IStaticCollection<ItemType>, ItemTypeCollection>();
+            services.AddSingleton<ItemTypeCollection>();
+            services.AddSingleton<IStaticCollection<PsDirective>, DirectiveCollection>();
+            services.AddSingleton<DirectiveCollection>();
+            services.AddSingleton<IStaticCollection<DirectiveTree>, DirectiveTreeCollection>();
+            services.AddSingleton<DirectiveTreeCollection>();
+            services.AddSingleton<IStaticCollection<DirectiveTier>, DirectiveTierCollection>();
+            services.AddSingleton<DirectiveTierCollection>();
+            services.AddSingleton<IStaticCollection<DirectiveTreeCategory>, DirectiveTreeCategoryCollection>();
             services.AddSingleton<IStaticCollection<PsObjective>, ObjectiveCollection>();
             services.AddSingleton<ObjectiveCollection>();
             services.AddSingleton<IStaticCollection<ObjectiveType>, ObjectiveTypeCollection>();
             services.AddSingleton<ObjectiveTypeCollection>();
             services.AddSingleton<IStaticCollection<ObjectiveSet>, ObjectiveSetCollection>();
             services.AddSingleton<ObjectiveSetCollection>();
-
             services.AddSingleton<IStaticCollection<PsVehicle>, VehicleCollection>();
             services.AddSingleton<VehicleCollection>();
-
             services.AddSingleton<IStaticCollection<Achievement>, AchievementCollection>();
             services.AddSingleton<AchievementCollection>();
             services.AddSingleton<IStaticCollection<ExperienceType>, ExperienceTypeCollection>();

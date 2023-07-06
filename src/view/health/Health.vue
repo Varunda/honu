@@ -31,7 +31,12 @@
                             <tr class="table-secondary">
                                 <th>Queue</th>
                                 <th>Length</th>
-                                <th>Processed</th>
+                                <th>
+                                    Processed
+                                    <toggle-button v-model="settings.useCompact" class="btn-sm py-0">
+                                        Compact
+                                    </toggle-button>
+                                </th>
                                 <th>Average</th>
                                 <th>Median</th>
                                 <th>Min</th>
@@ -43,7 +48,14 @@
                             <tr v-for="queue in health.data.queues">
                                 <td>{{queue.queueName}}</td>
                                 <td>{{queue.count}}</td>
-                                <td :title="queue.processed | locale">{{queue.processed | compact}}</td>
+                                <td :title="queue.processed | locale">
+                                    <span v-if="settings.useCompact">
+                                        {{queue.processed | compact}}
+                                    </span>
+                                    <span v-else>
+                                        {{queue.processed | locale}}
+                                    </span>
+                                </td>
 
                                 <td>
                                     <span v-if="queue.average != null">
@@ -198,7 +210,8 @@
                 timerID: undefined as number | undefined,
 
                 settings: {
-                    showGraph: true as boolean
+                    showGraph: true as boolean,
+                    useCompact: true as boolean
                 }
             }
         },

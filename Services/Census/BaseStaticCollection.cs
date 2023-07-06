@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using DaybreakGames.Census;
 using DaybreakGames.Census.Exceptions;
@@ -45,6 +46,10 @@ namespace watchtower.Services.Census {
             _Reader = reader ?? throw new ArgumentNullException(nameof(reader));
         }
 
+        public Task<List<T>> GetAll() {
+            return GetAll(CancellationToken.None);
+        }
+
         /// <summary>
         ///     Get all entries in this collection, applying a patch file if it exists
         /// </summary>
@@ -65,7 +70,7 @@ namespace watchtower.Services.Census {
         ///     The static collection had more pages than Honu retrieved. Honu currently gets 10 pages of 5k entries, 
         ///     so if a static collection has more than 50k entries, this limit will need to be upped
         /// </exception>
-        public async Task<List<T>> GetAll() {
+        public async Task<List<T>> GetAll(CancellationToken cancel) {
             CensusQuery query = _Census.Create(_CollectionName);
             query.SetLimit(5_000);
 

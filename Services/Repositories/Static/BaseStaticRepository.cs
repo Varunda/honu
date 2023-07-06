@@ -1,17 +1,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using watchtower.Models;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Services.Repositories {
 
-    public class BaseStaticRepository<T> : IStaticRepository<T> where T : IKeyedObject {
+    public class BaseStaticRepository<T> : IRefreshableRepository, IStaticRepository<T> where T : IKeyedObject {
 
         internal readonly ILogger _Logger;
         internal readonly IStaticCollection<T> _Census;
@@ -22,17 +25,21 @@ namespace watchtower.Services.Repositories {
         private readonly string CACHE_KEY_ALL;
         private readonly string CACHE_KEY_MAP;
 
+        private readonly string TypeName;
+
         internal BaseStaticRepository(ILoggerFactory loggerFactory,
             IStaticCollection<T> census, IStaticDbStore<T> db,
             IMemoryCache cache) {
 
-            _Logger = loggerFactory.CreateLogger($"StaticRepository<{typeof(T).Name}>");
+            TypeName = typeof(T).Name;
+
+            _Logger = loggerFactory.CreateLogger($"watchtower.Services.Repositories.StaticRepository<{TypeName}>");
             _Census = census ?? throw new ArgumentNullException(nameof(census));
             _Db = db ?? throw new ArgumentNullException(nameof(db));
             _Cache = cache;
 
-            CACHE_KEY_ALL = $"{typeof(T).Name}.All";
-            CACHE_KEY_MAP = $"{typeof(T).Name}.Map";
+            CACHE_KEY_ALL = $"{TypeName}.All";
+            CACHE_KEY_MAP = $"{TypeName}.Map";
         }
 
         /// <summary>
@@ -112,6 +119,28 @@ namespace watchtower.Services.Repositories {
         ///     A task when this operation is complete
         /// </returns>
         public void FlushCache() {
+            _Cache.Remove(CACHE_KEY_ALL);
+            _Cache.Remove(CACHE_KEY_MAP);
+        }
+
+        public async Task Refresh(CancellationToken cancel) {
+            Stopwatch timer = Stopwatch.StartNew();
+
+            List<T> census = await _Census.GetAll(cancel);
+            if (census.Count == 0) {
+                return;
+            }
+
+            long censusMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            foreach (T t in census) {
+                await _Db.Upsert(t);
+            }
+
+            long dbMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            _Logger.LogInformation($"Refreshed {TypeName} with {census.Count} entries in {censusMs + dbMs}ms. [Census={censusMs}ms] [Db={dbMs}ms]");
+
             _Cache.Remove(CACHE_KEY_ALL);
             _Cache.Remove(CACHE_KEY_MAP);
         }
