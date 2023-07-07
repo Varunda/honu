@@ -2,9 +2,11 @@
 using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Models.Db;
 
 namespace watchtower.Services.Db {
@@ -74,6 +76,13 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<RealtimeMapState>> GetHistoricalByWorldAndRegion(short worldID, int regionID, DateTime start, DateTime end) {
+
+            using Activity? root = HonuActivitySource.Root.StartActivity("realtime map state - get historical");
+            root?.AddTag("honu.worldID", worldID);
+            root?.AddTag("honu.regionID", regionID);
+            root?.AddTag("honu.start", $"{start:u}");
+            root?.AddTag("honu.end", $"{end:u}");
+
             using NpgsqlConnection conn = _Helper.Connection();
             using NpgsqlCommand cmd = await _Helper.Command(conn, @"
                 SELECT 

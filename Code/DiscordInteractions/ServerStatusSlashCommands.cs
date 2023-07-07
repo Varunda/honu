@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
+using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -253,6 +254,9 @@ namespace watchtower.Code.DiscordInteractions {
         /// <returns></returns>
         public async Task<DiscordEmbedBuilder> Fights(short worldID) {
 
+            using Activity? root = HonuActivitySource.Root.StartActivity("discord - fights");
+            root?.AddTag("honu.worldID", worldID);
+
             Stopwatch timer = Stopwatch.StartNew();
 
             List<RealtimeMapState> worldMapState = await _RealtimeMapStateRepository.GetByWorld(worldID);
@@ -273,6 +277,10 @@ namespace watchtower.Code.DiscordInteractions {
             Dictionary<int, PsFacility> regions = (await _MapRepository.GetFacilities()).ToDictionary(iter => iter.RegionID);
 
             foreach ((string description, int count, RealtimeMapState state) in fights) {
+                using Activity? zoneRoot = HonuActivitySource.Root.StartActivity("discord - fights region");
+                zoneRoot?.AddTag("honu.worldID", worldID);
+                zoneRoot?.AddTag("honu.regionID", state.RegionID);
+
                 _ = regions.TryGetValue(state.RegionID, out PsFacility? facility);
 
                 // get the owner of the facility
