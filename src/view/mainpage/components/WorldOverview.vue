@@ -22,15 +22,19 @@
             </div>
 
             <div v-if="data != null">
-                <span v-for="zone in data.zones">
-                    <button v-if="zone.isOpened == true" class="btn btn-sm btn-primary mr-2">
-                        {{zone.zoneID | zone}}
-                        <span v-if="zone.alertEnd != null">
-                            <span class="fas fa-exclamation-triangle" title="Active alert!"></span>
-                            {{(new Date(zone.alertEnd) - new Date()) / 1000 | duration}}
-                        </span>
-                    </button>
-                </span>
+                <button v-for="zone in openedZones" class="btn btn-sm btn-primary mr-2">
+                    {{zone.zoneID | zone}}
+                    <span v-if="zone.alertEnd != null">
+                        <span class="fas fa-exclamation-triangle" title="Active alert!"></span>
+                        {{(new Date(zone.alertEnd) - new Date()) / 1000 | duration}}
+                    </span>
+                </button>
+
+                <span v-if="closedZones.length > 0" class="border-right mr-2"></span>
+
+                <button v-for="zone in closedZones" class="btn btn-sm btn-secondary mr-2">
+                    {{zone.zoneID | zone}}
+                </button>
             </div>
         </div>
 
@@ -48,10 +52,13 @@
 </style>
 
 <script lang="ts">
-    import Vue from "vue";
+    import Vue, { PropType } from "vue";
 
     import "filters/ZoneNameFilter";
     import "MomentFilter";
+
+    import { WorldOverview as WorldOverviewData } from "api/WorldOverviewApi";
+    import { ZoneState } from "api/ZoneStateApi";
 
     import { Fragment } from "vue-fragment";
 
@@ -59,11 +66,7 @@
         props: {
             name: { type: String, required: true },
             DisplayName: { type: String, required: true },
-            data: { required: false }
-        },
-
-        created: function(): void {
-            document.title = `Honu / Homepage`;
+            data: { type: Object as PropType<WorldOverviewData | null>, required: false }
         },
 
         data: function() {
@@ -74,6 +77,25 @@
 
         methods: {
 
+        },
+
+        computed: {
+            openedZones: function(): ZoneState[] {
+                if (this.data == null) {
+                    return [];
+                }
+                return this.data.zones.filter(iter => iter.isOpened == true);
+            },
+
+            closedZones: function(): ZoneState[] {
+                if (this.data == null) {
+                    return [];
+                }
+
+                return [...this.data.zones.filter(iter => iter.isOpened == false)].sort((a, b) => {
+                    return (b.lastLocked?.getTime() ?? 0) - (a.lastLocked?.getTime() ?? 0);
+                });
+            }
         },
 
         components: {

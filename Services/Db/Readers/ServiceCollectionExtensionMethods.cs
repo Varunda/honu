@@ -94,6 +94,8 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<PsbParsedReservationMetadata>, PsbParsedReservationReader>();
             services.AddSingleton<IDataReader<WrappedEntry>, WrappedEntryReader>();
             services.AddSingleton<IDataReader<FireGroupToFireMode>, FireGroupToFireModeReader>();
+            services.AddSingleton<IDataReader<PsMetagameEvent>, MetagameEventReader>();
+            services.AddSingleton<IDataReader<RealtimeMapState>, RealtimeMapStateReader>();
         }
 
     }

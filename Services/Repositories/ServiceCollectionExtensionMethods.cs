@@ -63,6 +63,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<DirectiveTreeCategoryRepository>();
             services.AddSingleton<IStaticRepository<FireGroupToFireMode>, FireGroupToFireModeRepository>();
             services.AddSingleton<FireGroupToFireModeRepository>();
+            services.AddSingleton<IStaticRepository<PsMetagameEvent>, MetagameEventRepository>();
+            services.AddSingleton<MetagameEventRepository>();
 
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();
@@ -95,6 +97,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<PsbOvOAccountRepository>();
             services.AddSingleton<WrappedSavedCharacterDataFileRepository>();
             services.AddSingleton<HostedWrappedGenerationProcess>();
+            services.AddSingleton<RealtimeMapStateRepository>();
         }
 
     }

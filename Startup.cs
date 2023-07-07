@@ -207,7 +207,7 @@ namespace watchtower {
             //services.AddHostedService<HostedBackgroundWeaponStatSnapshotCreator>(); // replaced with background weapon stat queue
             services.AddHostedService<RealtimeAlertBroadcastServer>();
             services.AddHostedService<HostedWrappedGenerationProcess>();
-            services.AddHostedService<HostedBackgroundFacilityControlEventProcessQueue>(); // what a doozy of a name
+            services.AddHostedService<ZoneLastLockedStartupService>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -220,6 +220,7 @@ namespace watchtower {
             services.AddHostedService<HostedPsbAccountPlaytimeQueue>();
             services.AddHostedService<SessionEndQueueProcessService>();
             services.AddHostedService<HostedAlertEndService>();
+            services.AddHostedService<HostedBackgroundFacilityControlEventProcessQueue>(); // what a doozy of a name
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddSingleton<DiscordService>();

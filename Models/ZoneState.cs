@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Models.Census;
 
 namespace watchtower.Models {
 
@@ -41,6 +42,8 @@ namespace watchtower.Models {
             PlayerCount = other.PlayerCount;
             Players = other.Players;
             TerritoryControl = other.TerritoryControl;
+            Alert = other.Alert;
+            LastLocked = other.LastLocked;
         }
 
         /// <summary>
@@ -64,6 +67,11 @@ namespace watchtower.Models {
         public UnstableState UnstableState { get; set; }
 
         /// <summary>
+        ///     Alert currently running in this zone
+        /// </summary>
+        public PsAlert? Alert { get; set; }
+
+        /// <summary>
         /// When did an alert on this zone start?
         /// </summary>
         public DateTime? AlertStart { get; set; }
@@ -72,6 +80,8 @@ namespace watchtower.Models {
         /// When will the alert on this zone end, useful for like deso
         /// </summary>
         public DateTime? AlertEnd { get; set; }
+
+        public DateTime? LastLocked { get; set; }
 
         public int PlayerCount { get; set; }
 

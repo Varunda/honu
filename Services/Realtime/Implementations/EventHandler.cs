@@ -689,6 +689,7 @@ namespace watchtower.Realtime {
 
             _Logger.LogDebug($"metagame event payload: {payload}");
 
+            // this is pulled out, as we need to lock the zone state store for the duration of this call
             if (MetagameEvent.IsAerialAnomaly(metagameEventID) == false) {
                 lock (ZoneStateStore.Get().Zones) {
                     ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
@@ -778,6 +779,14 @@ namespace watchtower.Realtime {
                 alert.Duration = ((int?)duration?.TotalSeconds) ?? (60 * 90); // default to 90 minute alerts if unknown
                 alert.ZoneFacilityCount = zone?.Facilities.Count ?? 1;
 
+                lock (ZoneStateStore.Get().Zones) {
+                    ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+                    if (state != null) {
+                        state.Alert = alert;
+                    }
+                }
+
+                // Find who owns each warpgate in the zone
                 if (zone != null) {
                     List<PsFacility> facs = (await _FacilityRepository.GetAll())
                         .Where(iter => iter.ZoneID == alert.ZoneID)
@@ -913,6 +922,13 @@ namespace watchtower.Realtime {
                     _AlertEndQueue.Queue(new AlertEndQueueEntry() {
                         Alert = toRemove
                     });
+
+                    lock (ZoneStateStore.Get().Zones) {
+                        ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
+                        if (state != null) {
+                            state.Alert = null;
+                        }
+                    }
                 } else {
                     _Logger.LogWarning($"Failed to find alert to finish for world {worldID} in zone {zoneID}\nCurrent alerts: {string.Join(", ", alerts.Select(iter => $"{iter.WorldID}.{iter.ZoneID}"))}");
                 }
@@ -961,6 +977,7 @@ namespace watchtower.Realtime {
                 state.IsOpened = false;
                 state.AlertEnd = null;
                 state.AlertStart = null;
+                state.LastLocked = payload.CensusTimestamp("timestamp");
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);
             }

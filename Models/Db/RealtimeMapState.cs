@@ -35,6 +35,16 @@ namespace watchtower.Models.Db {
 
         public RealtimeMapStateFactionPopulationPercentage FactionPercentage { get; set; } = new();
 
+        public bool HasOneFaction() {
+            return this.FactionBounds.VS > 0 || this.FactionBounds.NC > 0 || this.FactionBounds.TR > 0;
+        }
+
+        public bool HasTwoFactions() {
+            return (this.FactionBounds.VS > 0 && this.FactionBounds.NC > 0)
+                || (this.FactionBounds.VS > 0 && this.FactionBounds.TR > 0)
+                || (this.FactionBounds.NC > 0 && this.FactionBounds.TR > 0);
+        }
+
         public override bool Equals(object? obj) {
             return obj is RealtimeMapState state &&
                    // ID == state.ID && // ID is not included either
@@ -70,6 +80,9 @@ namespace watchtower.Models.Db {
             return !(a == b);
         }
 
+        public override int GetHashCode() {
+            return HashCode.Combine(WorldID, ZoneID, RegionID);
+        }
     }
 
     public class RealtimeMapStateFactionBounds {
@@ -89,6 +102,10 @@ namespace watchtower.Models.Db {
                    TR == bounds.TR &&
                    NS == bounds.NS;
         }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(VS, NC, TR, NS);
+        }
     }
 
     public class RealtimeMapStateFactionPopulationPercentage {
@@ -107,6 +124,10 @@ namespace watchtower.Models.Db {
                    NC == percentage.NC &&
                    TR == percentage.TR &&
                    NS == percentage.NS;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(VS, NC, TR, NS);
         }
     }
 

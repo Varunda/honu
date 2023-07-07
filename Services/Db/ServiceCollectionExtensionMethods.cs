@@ -72,6 +72,8 @@ namespace watchtower.Services.Db {
             services.AddSingleton<DirectiveTierDbStore>();
             services.AddSingleton<IStaticDbStore<DirectiveTreeCategory>, DirectiveTreeCategoryDbStore>();
             services.AddSingleton<DirectiveTreeCategoryDbStore>();
+            services.AddSingleton<IStaticDbStore<PsMetagameEvent>, MetagameEventDbStore>();
+            services.AddSingleton<MetagameEventDbStore>();
 
             services.AddSingleton<PsbAccountDbStore>();
             services.AddSingleton<PsbAccountNoteDbStore>();

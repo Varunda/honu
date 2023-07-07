@@ -38,6 +38,7 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<FireGroupToFireMode>, CensusFireGroupToFireModeReader>();
             services.AddSingleton<ICensusReader<RealtimeMapState>, CensusRealtimeMapStateReader>();
             services.AddSingleton<ICensusReader<PsCharacterStatByFaction>, CensusCharacterStatByFactionReader>();
+            services.AddSingleton<ICensusReader<PsMetagameEvent>, CensusMetagameEventReader>();
         }
 
     }

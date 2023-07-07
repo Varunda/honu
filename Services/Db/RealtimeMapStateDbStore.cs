@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
@@ -11,10 +13,14 @@ namespace watchtower.Services.Db {
 
         private readonly ILogger<RealtimeMapStateDbStore> _Logger;
         private readonly IDbHelper _Helper;
+        private readonly IDataReader<RealtimeMapState> _Reader;
 
-        public RealtimeMapStateDbStore(ILogger<RealtimeMapStateDbStore> logger, IDbHelper helper) {
+        public RealtimeMapStateDbStore(ILogger<RealtimeMapStateDbStore> logger,
+            IDbHelper helper, IDataReader<RealtimeMapState> reader) {
+
             _Logger = logger;
             _Helper = helper;
+            _Reader = reader;
         }
 
         public async Task<long> Insert(RealtimeMapState state, CancellationToken cancel) {
@@ -65,6 +71,34 @@ namespace watchtower.Services.Db {
             long ID = await cmd.ExecuteInt64(cancel);
 
             return ID;
+        }
+
+        public async Task<List<RealtimeMapState>> GetHistoricalByWorldAndRegion(short worldID, int regionID, DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _Helper.Connection();
+            using NpgsqlCommand cmd = await _Helper.Command(conn, @"
+                SELECT 
+                    *
+                FROM 
+                    realtime_map_state 
+                WHERE 
+                    world_id = @WorldID
+                    AND region_id = @RegionID
+                    AND timestamp BETWEEN @PeriodStart AND @PeriodEnd
+                ORDER BY
+                    save_timestamp ASC;
+            ");
+
+            cmd.AddParameter("WorldID", worldID);
+            cmd.AddParameter("RegionID", regionID);
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            await cmd.PrepareAsync();
+
+            List<RealtimeMapState> states = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return states;
         }
 
     }

@@ -152,6 +152,8 @@ namespace watchtower.Services.Hosted {
                         continue;
                     }
 
+                    Stopwatch timer = Stopwatch.StartNew();
+
                     DiscordMessageBuilder builder = new();
 
                     // the contents is ignored if there is any embeds
@@ -170,8 +172,6 @@ namespace watchtower.Services.Hosted {
                     if (msg.Components.Count > 0) {
                         builder.AddComponents(msg.Components);
                     }
-
-                    Stopwatch timer = Stopwatch.StartNew();
 
                     if (targetType == TargetType.CHANNEL) {
                         DiscordGuild? guild = await _Discord.TryGetGuild(msg.GuildID!.Value);
