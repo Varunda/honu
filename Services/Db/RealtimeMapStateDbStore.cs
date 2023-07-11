@@ -25,6 +25,14 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Insert a new <see cref="RealtimeMapState"/> into the db
+        /// </summary>
+        /// <param name="state">Parameters used to insert</param>
+        /// <param name="cancel">Cancellation token</param>
+        /// <returns>
+        ///     The ID of the <see cref="RealtimeMapState"/> that was just inserted
+        /// </returns>
         public async Task<long> Insert(RealtimeMapState state, CancellationToken cancel) {
             using NpgsqlConnection conn = _Helper.Connection(Dbs.EVENTS);
             using NpgsqlCommand cmd = await _Helper.Command(conn, @"
@@ -75,8 +83,19 @@ namespace watchtower.Services.Db {
             return ID;
         }
 
+        /// <summary>
+        ///     Get the the <see cref="RealtimeMapState"/> for a world and region between a period
+        /// </summary>
+        /// <param name="worldID">ID of the world to limit the states to</param>
+        /// <param name="regionID">ID of the region</param>
+        /// <param name="start">When to start the period</param>
+        /// <param name="end">When to end the period</param>
+        /// <returns>
+        ///     A list of <see cref="RealtimeMapState"/> with <see cref="RealtimeMapState.WorldID"/> of <paramref name="worldID"/>,
+        ///     a <see cref="RealtimeMapState.RegionID"/> of <paramref name="regionID"/>, and a <see cref="RealtimeMapState.Timestamp"/>
+        ///     between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
         public async Task<List<RealtimeMapState>> GetHistoricalByWorldAndRegion(short worldID, int regionID, DateTime start, DateTime end) {
-
             using Activity? root = HonuActivitySource.Root.StartActivity("realtime map state - get historical");
             root?.AddTag("honu.worldID", worldID);
             root?.AddTag("honu.regionID", regionID);

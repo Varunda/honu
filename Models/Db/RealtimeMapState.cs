@@ -35,14 +35,30 @@ namespace watchtower.Models.Db {
 
         public RealtimeMapStateFactionPopulationPercentage FactionPercentage { get; set; } = new();
 
+        /// <summary>
+        ///     Check if there is at least one faction that has at least one player
+        /// </summary>
+        /// <returns></returns>
         public bool HasOneFaction() {
             return this.FactionBounds.VS > 0 || this.FactionBounds.NC > 0 || this.FactionBounds.TR > 0;
         }
 
+        /// <summary>
+        ///     Check if there are two factions that have at least one player
+        /// </summary>
+        /// <returns></returns>
         public bool HasTwoFactions() {
             return (this.FactionBounds.VS > 0 && this.FactionBounds.NC > 0)
                 || (this.FactionBounds.VS > 0 && this.FactionBounds.TR > 0)
                 || (this.FactionBounds.NC > 0 && this.FactionBounds.TR > 0);
+        }
+
+        /// <summary>
+        ///     Get the upper bounds of the number of players who are in this region
+        /// </summary>
+        /// <returns></returns>
+        public int GetUpperBounds() {
+            return this.FactionBounds.VS + this.FactionBounds.NC + this.FactionBounds.TR;
         }
 
         public override bool Equals(object? obj) {
@@ -64,7 +80,7 @@ namespace watchtower.Models.Db {
                    EqualityComparer<RealtimeMapStateFactionPopulationPercentage>.Default.Equals(FactionPercentage, state.FactionPercentage);
         }
 
-        public static bool operator ==(RealtimeMapState a, RealtimeMapState b) {
+        public static bool operator ==(RealtimeMapState? a, RealtimeMapState? b) {
             if (ReferenceEquals(a, b)) {
                 return true;
             } else if (a is null) {
@@ -76,7 +92,7 @@ namespace watchtower.Models.Db {
             return a.Equals(b);
         }
 
-        public static bool operator !=(RealtimeMapState a, RealtimeMapState b) {
+        public static bool operator !=(RealtimeMapState? a, RealtimeMapState? b) {
             return !(a == b);
         }
 

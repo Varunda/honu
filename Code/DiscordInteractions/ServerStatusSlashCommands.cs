@@ -261,11 +261,10 @@ namespace watchtower.Code.DiscordInteractions {
 
             List<RealtimeMapState> worldMapState = await _RealtimeMapStateRepository.GetByWorld(worldID);
 
-            List<(string description, int count, RealtimeMapState state)> fights = worldMapState
+            List<RealtimeMapState> fights = worldMapState
                 .Where(iter => IsInterestingFight(iter))
-                .Select(iter => _GetFight(iter))
-                .Where(iter => iter.count > 0)
-                .OrderByDescending(iter => iter.count)
+                .Where(iter => iter.GetUpperBounds() > 0)
+                .OrderByDescending(iter => iter.GetUpperBounds())
                 .ToList();
 
             DiscordEmbedBuilder builder = new();
@@ -276,7 +275,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             Dictionary<int, PsFacility> regions = (await _MapRepository.GetFacilities()).ToDictionary(iter => iter.RegionID);
 
-            foreach ((string description, int count, RealtimeMapState state) in fights) {
+            foreach (RealtimeMapState state in fights) {
                 using Activity? zoneRoot = HonuActivitySource.Root.StartActivity("discord - fights region");
                 zoneRoot?.AddTag("honu.worldID", worldID);
                 zoneRoot?.AddTag("honu.regionID", state.RegionID);
@@ -299,7 +298,7 @@ namespace watchtower.Code.DiscordInteractions {
                 for (int i = historicalStates.Count - 1; i >= 0; --i) {
                     RealtimeMapState historicalState = historicalStates[i];
 
-                    if (historicalState.HasTwoFactions() == false) {
+                    if (historicalState.HasTwoFactions() == true) {
                         continue;
                     }
 
@@ -374,37 +373,6 @@ namespace watchtower.Code.DiscordInteractions {
                 || state.FactionBounds.VS > 24
                 || state.FactionBounds.NC > 24
                 || state.FactionBounds.TR > 24;
-        }
-
-        private (string description, int count, RealtimeMapState state) _GetFight(RealtimeMapState state) {
-            int minBounds = GetLowerBounds(state.FactionBounds.VS) +
-                GetLowerBounds(state.FactionBounds.NC) +
-                GetLowerBounds(state.FactionBounds.TR);
-            int maxBounds = state.FactionBounds.VS + state.FactionBounds.NC + state.FactionBounds.TR;
-
-            if (maxBounds == 0) {
-                return ("No fight", 0, state);
-            }
-
-            List<string> descs = new();
-
-            if (state.FactionBounds.VS > 0) {
-                descs.Add($"{GetLowerBounds(state.FactionBounds.VS)} - {state.FactionBounds.VS} VS ({state.FactionPercentage.VS}%)");
-            }
-
-            if (state.FactionPercentage.NC > 0) {
-                descs.Add($"{GetLowerBounds(state.FactionBounds.NC)} - {state.FactionBounds.NC} NC ({state.FactionPercentage.NC}%)");
-            }
-
-            if (state.FactionPercentage.TR > 0) {
-                descs.Add($"{GetLowerBounds(state.FactionBounds.TR)} - {state.FactionBounds.TR} TR ({state.FactionPercentage.TR}%)");
-            }
-
-            return (
-                string.Join(" / ", descs),
-                maxBounds,
-                state
-            );
         }
 
         private int GetLowerBounds(int maxBound) {

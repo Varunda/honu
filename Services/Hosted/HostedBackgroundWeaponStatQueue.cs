@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
@@ -177,7 +178,7 @@ namespace watchtower.Services.Hosted {
         private async Task GenerateTop(int itemID, List<WeaponStatEntry> stats, DateTime timestamp, CancellationToken stoppingToken) {
             List<string> charIDs = stats.Select(iter => iter.CharacterID).Distinct().ToList();
             Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC, fast: true))
-                .ToDictionary(iter => iter.ID);
+                .ToDictionaryDistinct(iter => iter.ID);
 
             List<WeaponStatTop> all = new();
 
