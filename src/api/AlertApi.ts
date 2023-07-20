@@ -68,6 +68,10 @@ export class AlertApi extends ApiWrapper<PsAlert> {
         return AlertApi.get().readList(`/api/alerts/`, AlertApi.readEntry);
     }
 
+    public static async getRecent(): Promise<Loading<PsAlert[]>> {
+        return AlertApi.get().readList(`/api/alerts/recent`, AlertApi.readEntry);
+    }
+
     public static async insert(alert: PsAlert): Promise<Loading<number>> {
         return AlertApi.get().postReplyForm(`/api/alerts`, alert, (iter: any) => iter);
     }

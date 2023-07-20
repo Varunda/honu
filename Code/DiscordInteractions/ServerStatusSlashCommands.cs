@@ -375,6 +375,10 @@ namespace watchtower.Code.DiscordInteractions {
                 || state.FactionBounds.TR > 24;
         }
 
+        /// <summary>
+        ///     Get the lower bound of a fight size from the upper bound
+        /// </summary>
+        /// <param name="maxBound">Max bound of the fight. For example, a 1-12 would be 12</param>
         private int GetLowerBounds(int maxBound) {
             if (maxBound == 0) {
                 return 0;

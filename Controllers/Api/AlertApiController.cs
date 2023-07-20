@@ -93,6 +93,22 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get all alerts that have ocurred within the last 2 weeks
+        /// </summary>
+        /// <response code="200">
+        ///     A list of <see cref="PsAlert"/>s that have a <see cref="PsAlert.Timestamp"/> within 2 weeks from now
+        /// </response>
+        [HttpGet("recent")]
+        public async Task<ApiResponse<List<PsAlert>>> GetRecent() {
+            DateTime periodEnd = DateTime.UtcNow;
+            DateTime periodStart = periodEnd - TimeSpan.FromDays(14);
+
+            List<PsAlert> alerts = await _AlertDb.GetWithinPeriod(periodStart, periodEnd);
+
+            return ApiOk(alerts);
+        }
+
+        /// <summary>
         ///     Get an alert by it's instance ID, which is unique per world
         /// </summary>
         /// <param name="instanceID">Instance ID</param>

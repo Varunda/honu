@@ -42,6 +42,36 @@ namespace watchtower.Services.Db {
                     FROM alerts;
             ");
 
+            await cmd.PrepareAsync();
+
+            List<PsAlert> alert = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return alert;
+        }
+
+        /// <summary>
+        ///     Get all alerts that have started between a time period
+        /// </summary>
+        /// <param name="start">When to start the search period. Inclusive</param>
+        /// <param name="end">When to end the search period. Exclusive</param>
+        /// <returns>
+        ///     A list of <see cref="PsAlert"/> with <see cref="PsAlert.Timestamp"/>
+        ///     between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
+        public async Task<List<PsAlert>> GetWithinPeriod(DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM alerts
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd;
+            ");
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+
+            await cmd.PrepareAsync();
+
             List<PsAlert> alert = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
 
@@ -106,7 +136,6 @@ namespace watchtower.Services.Db {
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM alerts
-                    --WHERE NOW() AT TIME ZONE 'utc' > (timestamp + (duration || ' seconds')::INTERVAL);
                     WHERE NOW() AT TIME ZONE 'utc' < ((timestamp + (duration || ' seconds')::INTERVAL) AT TIME ZONE 'utc');
             ");
 

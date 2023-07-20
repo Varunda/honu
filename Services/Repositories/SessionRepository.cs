@@ -154,7 +154,6 @@ namespace watchtower.Services.Repositories {
 
             player.Online = false;
             player.ZoneID = 0;
-            player.SessionID = null;
 
             CharacterStore.Get().SetByCharacterID(charID, player);
         }

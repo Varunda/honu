@@ -10,7 +10,27 @@
             </li>
         </honu-menu>
 
-        <a-table :entries="alerts" display-type="table" :show-filters="true" 
+        <div class="mb-2">
+            <template v-if="showAll == false">
+                <button @click="bindAllAlerts" class="btn btn-primary">
+                    Show all
+                </button>
+                <span>
+                    Currently viewing alerts within the last 2 weeks.
+                </span>
+            </template>
+
+            <template v-else-if="showAll == true">
+                <button @click="bindRecentAlerts" class="btn btn-success">
+                    Show recent
+                </button>
+                <span>
+                    Currently viewing all alerts since 2021-07-09
+                </span>
+            </template>
+        </div>
+
+        <a-table :entries="(showAll == true) ? all : recent" display-type="table" :show-filters="true" 
             row-padding="normal"
             default-sort-order="desc" default-sort-field="timestamp">
 
@@ -163,7 +183,10 @@
 
         data: function() {
             return {
-                alerts: Loadable.idle() as Loading<PsAlert[]>
+                showAll: false as boolean,
+
+                all: Loadable.idle() as Loading<PsAlert[]>,
+                recent: Loadable.idle() as Loading<PsAlert[]>
             }
         },
 
@@ -172,13 +195,20 @@
         },
 
         mounted: function(): void {
-            this.bindAlerts();
+            this.bindRecentAlerts();
         },
 
         methods: {
-            bindAlerts: async function(): Promise<void> {
-                this.alerts = Loadable.loading();
-                this.alerts = await AlertApi.getAll();
+            bindAllAlerts: async function(): Promise<void> {
+                this.showAll = true;
+                this.all = Loadable.loading();
+                this.all = await AlertApi.getAll();
+            },
+
+            bindRecentAlerts: async function(): Promise<void> {
+                this.showAll = false;
+                this.recent = Loadable.loading();
+                this.recent = await AlertApi.getRecent();
             }
         },
 

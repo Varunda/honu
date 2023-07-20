@@ -138,8 +138,9 @@ namespace watchtower.Controllers {
             if (alertID.Contains('-')) {
                 try {
                     alert = await _AlertRepository.GetByInstanceID(alertID);
-                } catch (FormatException) {
-                    alert = null;
+                } catch (FormatException ex) {
+                    _Logger.LogError($"Failed to parse {alertID} into a valid world-instance pair: {ex.Message}");
+                    return BadRequest($"Failed to parse {alertID} into a valid world-instance pair: {ex.Message}");
                 }
 
                 if (alert != null && outfitID == null) {

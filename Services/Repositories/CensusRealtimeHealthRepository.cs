@@ -74,8 +74,12 @@ namespace watchtower.Services.Repositories {
             return IsDictHealth(ref _Exp, "exp");
         }
 
+        /// <summary>
+        ///     Get a list of world IDs that currently do not have a healthy stream
+        /// </summary>
         public List<short> GetUnhealthyWorlds() {
             List<short> unhealthyWorlds = GetUnhealthyDeath();
+
             if (_HealthTolerances.Value.RequireFailureOnBoth == true) {
                 unhealthyWorlds = unhealthyWorlds.Intersect(GetUnhealthyExp()).ToList();
             } else {

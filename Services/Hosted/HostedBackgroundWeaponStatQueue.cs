@@ -224,6 +224,8 @@ namespace watchtower.Services.Hosted {
             Dictionary<string, WeaponStatEntry> GetTopWeaponStats(Func<WeaponStatEntry, double> selector, int minKills, int count) {
                 List<WeaponStatEntry> ordered = stats.OrderByDescending(selector).ToList();
                 Dictionary<string, WeaponStatEntry> topDict = new();
+
+                HashSet<string> missingCharacterIds = new();
                 
                 foreach (short worldID in World.PcStreams) {
                     foreach (short factionID in Faction.All) {
@@ -233,7 +235,9 @@ namespace watchtower.Services.Hosted {
                             _ = chars.TryGetValue(entry.CharacterID, out PsCharacter? c);
                             if (c == null) {
                                 if (missingCharacters.Contains(entry.CharacterID) == false) {
-                                    _Logger.LogWarning($"Failed to find character {entry.CharacterID}");
+                                    if (false) {
+                                        _Logger.LogWarning($"Failed to find character {entry.CharacterID}");
+                                    }
                                 }
                                 missingCharacters.Add(entry.CharacterID);
                                 continue;
@@ -300,6 +304,11 @@ namespace watchtower.Services.Hosted {
             AddToAll(topVKills, PercentileCacheType.VKILLS);
 
             _Logger.LogDebug($"GenerateTop(itemID {itemID})> Setting {all.Count} entries");
+
+            if (missingCharacters.Count > 0) {
+                string missingStr = string.Join(", ", missingCharacters.Take(25)) + (missingCharacters.Count > 25 ? $"+{missingCharacters.Count - 25} more..." : "");
+                _Logger.LogDebug($"Failed to find characters for weapons [ItemID={itemID}] [Count={missingCharacters.Count}]:\n[{missingStr}]");
+            }
 
             await _WeaponTopDb.SetByItemID(itemID, all);
         }

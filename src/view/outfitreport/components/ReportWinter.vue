@@ -253,7 +253,22 @@
                 this.makeRoadkills();
                 this.makeInfantryDamage();
                 this.makeInfantryDamagePerMinute();
-                this.makeBeaconKills();
+
+                // get the world ID
+                let worldID: number = 0;
+                if (this.report.characters.size > 0) {
+                    this.report.characters.forEach((char: PsCharacter, charID: string) => {
+                        worldID = char.worldID;
+                        return;
+                    });
+                }
+
+                // don't encourage killing spawns!
+                console.log(`ReportWinter> worldID: ${worldID}`);
+                if (worldID == 19) {
+                    this.makeBeaconKills();
+                }
+
                 //this.makeRecon(); // BUGGED
             },
 
