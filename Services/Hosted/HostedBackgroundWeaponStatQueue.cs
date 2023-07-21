@@ -83,7 +83,7 @@ namespace watchtower.Services.Hosted {
                     if (_LastUpdated.TryGetValue(itemID, out DateTime lastUpdatedAt) == true) {
                         TimeSpan diff = DateTime.UtcNow - lastUpdatedAt;
                         if (diff.Duration() <= TimeSpan.FromHours(2)) {
-                            _Logger.LogInformation($"{SERVICE_NAME}> Last updated {itemID} at {lastUpdatedAt:u}, diff {diff}, skipping");
+                            //_Logger.LogInformation($"{SERVICE_NAME}> Last updated {itemID} at {lastUpdatedAt:u}, diff {diff}, skipping");
                             continue;
                         }
                     }
@@ -103,7 +103,7 @@ namespace watchtower.Services.Hosted {
                     if (filtered.Count < 100) { // But if there's not enough, expand the sample
                         filtered = stats.Where(iter => iter.Kills > 50).ToList();
                     }
-                    if (filtered.Count < 100) { // Okay, so not one has more than 50 kills, include everyone
+                    if (filtered.Count < 100) { // if less than 100 users have 50 kills, just include everyone
                         filtered = stats;
                     }
 
