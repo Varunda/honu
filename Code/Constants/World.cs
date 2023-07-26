@@ -78,5 +78,12 @@ namespace watchtower.Code.Constants {
             }
         }
 
+        /// <summary>
+        ///     Check if an ID is a valid world ID
+        /// </summary>
+        public static bool IsValidID(short worldID) {
+            return All.Contains(worldID);
+        }
+
     }
 }

@@ -254,24 +254,36 @@ namespace watchtower.Code.DiscordInteractions {
         /// <returns></returns>
         public async Task<DiscordEmbedBuilder> Fights(short worldID) {
 
+            bool debug = false;
+
             using Activity? root = HonuActivitySource.Root.StartActivity("discord - fights");
             root?.AddTag("honu.worldID", worldID);
 
             Stopwatch timer = Stopwatch.StartNew();
 
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"Fights on {World.GetName(worldID)}";
+            builder.Description = "";
+            builder.Timestamp = DateTime.UtcNow;
+
             List<RealtimeMapState> worldMapState = await _RealtimeMapStateRepository.GetByWorld(worldID);
 
+            if (worldMapState.Count == 0) {
+                builder.Description = "No data available. Honu has yet to fetch data for this world, or no data was provided";
+                return builder;
+            }
+
+            DateTime maxUpdate = worldMapState.Select(iter => iter.Timestamp).Max();
+
+            _Logger.LogDebug($"Max timestamp: {maxUpdate:u}");
+
+            // don't use data that's too old, only within 5 minutes
             List<RealtimeMapState> fights = worldMapState
+                .Where(iter => { maxUpdate = default; return DateTime.UtcNow - iter.Timestamp < TimeSpan.FromMinutes(5); })
                 .Where(iter => IsInterestingFight(iter))
                 .Where(iter => iter.GetUpperBounds() > 0)
                 .OrderByDescending(iter => iter.GetUpperBounds())
                 .ToList();
-
-            DiscordEmbedBuilder builder = new();
-
-            builder.Title = $"Fights on {World.GetName(worldID)}";
-            builder.Description = "";
-            builder.Timestamp = DateTime.UtcNow;
 
             Dictionary<int, PsFacility> regions = (await _MapRepository.GetFacilities()).ToDictionary(iter => iter.RegionID);
 
@@ -294,9 +306,18 @@ namespace watchtower.Code.DiscordInteractions {
                 List<RealtimeMapState> historicalStates = (await _RealtimeMapStateRepository.GetHistoricalByWorldAndRegion(worldID, state.RegionID, periodStart, periodEnd))
                     .OrderByDescending(iter => iter.SaveTimestamp).ToList();
 
+                string s = "Debug output:\n";
+
                 DateTime? fightStarted = null;
                 for (int i = historicalStates.Count - 1; i >= 0; --i) {
                     RealtimeMapState historicalState = historicalStates[i];
+
+                    if (debug == true) {
+                        s += $"{historicalState.ID} {historicalState.Timestamp:HH:mm:ss} "
+                            + $"- {historicalState.FactionBounds.VS} {historicalState.FactionBounds.NC} {historicalState.FactionBounds.TR}"
+                            + $"- {historicalState.FactionPercentage.VS} {historicalState.FactionPercentage.NC} {historicalState.FactionPercentage.TR}"
+                            + $"\n";
+                    }
 
                     if (historicalState.HasTwoFactions() == true) {
                         continue;
@@ -314,15 +335,16 @@ namespace watchtower.Code.DiscordInteractions {
                     break;
                 }
 
+                if (debug == true) {
+                    builder.Description += s;
+                    break;
+                }
+
                 if (fightStarted == null) {
                     fightStarted = periodStart;
                 }
 
-                // TODO: add some sort of trend? so you can see if a fight is growing or shrinking
-                int trend = 0;
-                foreach (RealtimeMapState iter in historicalStates.Take(3)) {
-
-                }
+                builder.Description += "\n";
 
                 TimeSpan diff = DateTime.UtcNow - state.Timestamp;
                 string uncertainty = $"(+-{diff:mm\\:ss})";
@@ -350,6 +372,32 @@ namespace watchtower.Code.DiscordInteractions {
                     fightDesc += $"{left} till {action}\n";
                 }
 
+                if (historicalStates.Count >= 2) {
+                    // 0 = most recent
+                    int trend1 = state.GetLowerBounds();
+                    int trend2 = historicalStates[0].GetLowerBounds();
+                    int trend3 = historicalStates[1].GetLowerBounds();
+
+                    // TODO 2023-07-25: this is kinda dumb, i'll find a better way to do this
+                    fightDesc += "_Trend: ";
+
+                    if (trend1 == trend2 && trend2 == trend3 && trend1 == trend3) {
+                        fightDesc += "steady";
+                    } else if (trend1 == trend2 && trend2 > trend3) {
+                        fightDesc += "declining";
+                    } else if (trend1 == trend2 && trend2 < trend3) {
+                        fightDesc += "growing";
+                    } else if (trend1 < trend2 && trend2 < trend3) {
+                        fightDesc += "growing";
+                    } else if (trend1 > trend2 && trend2 > trend3) {
+                        fightDesc += "rapidly declining";
+                    } else {
+                        fightDesc += "unchecked";
+                    }
+
+                    fightDesc += $" {trend1} => {trend2} => {trend3}_";
+                }
+
                 fightDesc += "\n";
 
                 if (builder.Description.Length + fightDesc.Length > 1000) {
@@ -360,7 +408,7 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (fights.Count == 0) {
-                builder.Description += $"No fights!";
+                builder.Description += $"No fights are currently happening, or the data Honu is using is incorrect";
             }
 
             builder.WithFooter($"Not 100% accurate! Generated in {timer.ElapsedMilliseconds}ms");
@@ -368,6 +416,9 @@ namespace watchtower.Code.DiscordInteractions {
             return builder;
         }
 
+        /// <summary>
+        ///     A fight is interesting if there are 2 factions at it, or one faction has more than 24 (so 48-96) players at it
+        /// </summary>
         private bool IsInterestingFight(RealtimeMapState state) {
             return state.HasTwoFactions()
                 || state.FactionBounds.VS > 24

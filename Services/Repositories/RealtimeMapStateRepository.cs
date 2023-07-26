@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,10 +20,13 @@ namespace watchtower.Services.Repositories {
 
         private readonly Dictionary<string, RealtimeMapState> _PreviousState = new();
 
-        public RealtimeMapStateRepository(ILogger<RealtimeMapStateRepository> logger,
+        private readonly IMemoryCache _Cache;
+
+        public RealtimeMapStateRepository(ILogger<RealtimeMapStateRepository> logger, IMemoryCache cache,
             RealtimeMapStateDbStore db, RealtimeMapStateCollection census) {
 
             _Logger = logger;
+            _Cache = cache;
 
             _Db = db;
             _Census = census;

@@ -11,8 +11,14 @@ namespace watchtower.Models.Db {
 
         public uint ZoneID { get; set; }
 
+        /// <summary>
+        ///     This is when this data was last updated from litha's API
+        /// </summary>
         public DateTime Timestamp { get; set; }
 
+        /// <summary>
+        ///     This is when this data was saved in the DB. Will be the <c>default</c> <see cref="DateTime"/> if not saved
+        /// </summary>
         public DateTime SaveTimestamp { get; set; }
 
         public int RegionID { get; set; }
@@ -51,6 +57,10 @@ namespace watchtower.Models.Db {
             return (this.FactionBounds.VS > 0 && this.FactionBounds.NC > 0)
                 || (this.FactionBounds.VS > 0 && this.FactionBounds.TR > 0)
                 || (this.FactionBounds.NC > 0 && this.FactionBounds.TR > 0);
+        }
+
+        public int GetLowerBounds() {
+            return GetLowerBounds(this.FactionBounds.VS) + GetLowerBounds(this.FactionBounds.NC) + GetLowerBounds(this.FactionBounds.TR);
         }
 
         /// <summary>
@@ -99,6 +109,52 @@ namespace watchtower.Models.Db {
         public override int GetHashCode() {
             return HashCode.Combine(WorldID, ZoneID, RegionID);
         }
+
+        public string GetDifference(RealtimeMapState other) {
+            string s = "";
+
+            if (this.CaptureTimeLeftMs != other.CaptureTimeLeftMs) {
+                s += $"[CaptureTimeLeftMs: {CaptureTimeLeftMs - other.CaptureTimeLeftMs}] ";
+            }
+            if (this.FactionBounds != other.FactionBounds) {
+                s += $"[FactionBounds: {FactionBounds.VS - other.FactionBounds.VS} {FactionBounds.NC - other.FactionBounds.NC} {FactionBounds.TR - other.FactionBounds.TR}] ";
+            }
+            if (this.FactionPercentage != other.FactionPercentage) {
+                s += $"[FactionPercentage: {FactionPercentage.VS - other.FactionPercentage.VS} {FactionPercentage.NC - other.FactionPercentage.NC} {FactionPercentage.TR - other.FactionPercentage.TR}] ";
+            }
+
+            return s;
+        }
+
+        private static int GetLowerBounds(int maxBound) {
+            if (maxBound == 0) {
+                return 0;
+            }
+
+            if (maxBound == 12) {
+                return 1;
+            }
+
+            if (maxBound == 24) {
+                return 12;
+            }
+
+            if (maxBound == 48) {
+                return 24;
+            }
+
+            if (maxBound == 96) {
+                return 48;
+            }
+
+            // 96+
+            if (maxBound == 192) {
+                return 96;
+            }
+
+            return maxBound - 1;
+        }
+
     }
 
     public class RealtimeMapStateFactionBounds {

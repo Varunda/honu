@@ -130,7 +130,84 @@
                 </div>
             </div>
 
-            <div id="realtime-map" class="realtime-map" style="height: 100vh; z-index: 50;"></div>
+            <div id="realtime-map" class="realtime-map" style="height: 100vh; z-index: 50;">
+                <div v-if="history.showUI == true"  style="position: absolute; right: 0; bottom: 0; z-index: 1000; width: 20vw; height: 100%; background-color: black;" class="list-group">
+                    <h4>
+                        <span class="d-flex">
+                            <span class="flex-grow-1 mx-1">
+                                Pop over time: <span v-if="history.facility != null">{{history.facility.name}}</span>
+                            </span>
+                            <span class="btn btn-secondary" @click="history.showUI = false">
+                                &times;
+                            </span>
+                        </span>
+                    </h4>
+
+                    <div v-if="history.data.state == 'idle'">
+
+                    </div>
+
+                    <div v-else-if="history.data.state == 'loading'">
+                        Loading...
+                    </div>
+
+                    <div v-else-if="history.data.state == 'error'">
+                        Error: {{history.data.message}}
+                    </div>
+
+                    <div v-else-if="history.data.state == 'loaded'">
+                        <canvas id="realtime-map-history" style="width: 20vw; height: 300px;"></canvas>
+
+                        <div v-if="history.count.length > 0" class="h4">
+                            Latest estimates:<br/>
+                        </div>
+
+                        <div v-if="history.latest != null && history.count.length > 0">
+                            <div class="d-flex w-100 focus-parent">
+                                <span v-if="history.latest.factionPercentage.vs > 0" :style="{ 'flex-grow': history.latest.factionPercentage.vs, 'background-color': 'var(--color-bg-vs)' }" class="focus-entry">
+                                    {{history.latest.factionPercentage.vs}}% /
+                                    {{history.count[history.count.length - 1].vs}}
+                                </span>
+                                <span v-if="history.latest.factionPercentage.nc > 0" :style="{ 'flex-grow': history.latest.factionPercentage.nc, 'background-color': 'var(--color-bg-nc)' }" class="focus-entry">
+                                    {{history.latest.factionPercentage.nc}}% /
+                                    {{history.count[history.count.length - 1].nc}}
+                                </span>
+                                <span v-if="history.latest.factionPercentage.tr > 0" :style="{ 'flex-grow': history.latest.factionPercentage.tr, 'background-color': 'var(--color-bg-tr)' }" class="focus-entry">
+                                    {{history.latest.factionPercentage.tr}}% /
+                                    {{history.count[history.count.length - 1].tr}}
+                                </span>
+                            </div>
+
+                            <div v-if="history.latest.captureTimeMs > -1">
+                                <div v-if="history.latest.captureFlagsCount > 0" >
+                                    {{history.latest.captureFlagsLeft}} / {{history.latest.captureFlagsCount}}
+                                </div>
+                                <div v-else>
+                                    <span v-if="history.latest.captureTimeLeftMs == -1" >
+                                        {{history.latest.captureTimeMs | duration}}
+                                    </span>
+                                    <span v-else>
+                                        {{history.latest.captureTimeLeftMs | duration}}
+                                    </span>
+                                    / {{history.latest.captureTimeMs | duration}}
+                                </div>
+                            </div>
+
+                            <div v-if="history.latest.contestingFactionID > 0">
+                                contested by {{history.latest.contestingFactionID | faction}}
+                            </div>
+
+                            Last updated:
+                            {{history.latest.timestamp | moment("YYYY-MM-DD hh:mm:ss A")}}
+                        </div>
+
+                        <div class="text-muted">
+                            This data is NOT guaranteed to be 100% accurate!
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </div>
@@ -142,11 +219,14 @@
     import FactionColors from "FactionColors";
 
     import ZoneUtils from "util/Zone";
+    import TimeUtils from "util/Time";
+
+    import * as sR from "signalR";
+
+    import Chart from "chart.js/auto/auto.esm";
+    import "node_modules/chartjs-adapter-moment/dist/chartjs-adapter-moment.esm.js";
 
     import * as L from "leaflet";
-    import * as sR from "signalR";
-    import * as pf from "pathfinding";
-
     import "node_modules/leaflet-contextmenu/dist/leaflet.contextmenu.js";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
@@ -156,8 +236,11 @@
 
     import { ZoneRegion, LatticeLink } from "map/LedgerModels";
     import { PsMapHex, PsFacility, PsFacilityLink, ZoneMap, MapApi } from "api/MapApi";
+    import { RealtimeMapStateApi, RealtimeMapState } from "api/RealtimeMapStateApi";
 
     import "filters/FactionNameFilter";
+    import "MomentFilter";
+    import "filters/DurationFilter";
 
     type PsZone = {
         zoneID: number;
@@ -180,6 +263,12 @@
         public id: number = 0;
         public label: string = "";
         public links: number[] = [];
+    }
+
+    class RealtimeMapCount {
+        public vs: number = 0;
+        public nc: number = 0;
+        public tr: number = 0;
     }
 
     export const RealtimeMap = Vue.extend({
@@ -221,6 +310,15 @@
                     owner: true as boolean
                 },
 
+                history: {
+                    showUI: false as boolean,
+                    data: Loadable.idle() as Loading<RealtimeMapState[]>,
+                    chart: null as Chart | null,
+                    facility: null as PsFacility | null,
+                    count: [] as RealtimeMapCount[],
+                    latest: null as RealtimeMapState | null
+                },
+
                 flip: {
                     showUI: false as boolean,
                     facilityID: null as number | null,
@@ -240,8 +338,6 @@
             this.$nextTick(() => {
                 this.createMap();
             });
-
-            //this.dij();
         },
 
         methods: {
@@ -290,104 +386,6 @@
                 }
             },
 
-            /*
-            dij: function(): void {
-                let graph = {
-                    start: { A: 5, B: 2 },
-                    A: { start: 1, C: 4, D: 2 },
-                    B: { A: 8, D: 7 },
-                    C: { D: 6, finish: 3 },
-                    D: { finish: 1 },
-                    finish: {}
-                };
-
-                let shortestDistanceNode = (distances: any, visited: any) => {
-                    // create a default value for shortest
-                    let shortest = null;
-
-                    // for each node in the distances object
-                    for (let node in distances) {
-                        // if no node has been assigned to shortest yet
-                        // or if the current node's distance is smaller than the current shortest
-                        let currentIsShortest =
-                            shortest === null || distances[node] < distances[shortest];
-
-                        // and if the current node is in the unvisited set
-                        if (currentIsShortest && !visited.includes(node)) {
-                            // update shortest to be the current node
-                            shortest = node;
-                        }
-                    }
-                    return shortest;
-                };
-
-                let findShortestPath = (graph: any, startNode: any, endNode: any) => {
-                    // track distances from the start node using a hash object
-                    let distances = {};
-                    distances[endNode] = "Infinity";
-                    distances = Object.assign(distances, graph[startNode]);// track paths using a hash object
-                    let parents = { endNode: null };
-                    for (let child in graph[startNode]) {
-                        parents[child] = startNode;
-                    }
-
-                    // collect visited nodes
-                    let visited = [];// find the nearest node
-                    let node = shortestDistanceNode(distances, visited);
-
-                    // for that node:
-                    while (node) {
-                        // find its distance from the start node & its child nodes
-                        let distance = distances[node];
-                        let children = graph[node];
-
-                        // for each of those child nodes:
-                        for (let child in children) {
-
-                            // make sure each child node is not the start node
-                            if (String(child) === String(startNode)) {
-                                continue;
-                            } else {
-                                // save the distance from the start node to the child node
-                                let newdistance = distance + children[child];// if there's no recorded distance from the start node to the child node in the distances object
-                                // or if the recorded distance is shorter than the previously stored distance from the start node to the child node
-                                if (!distances[child] || distances[child] > newdistance) {
-                                    // save the distance to the object
-                                    distances[child] = newdistance;
-                                    // record the path
-                                    parents[child] = node;
-                                }
-                            }
-                        }
-                        // move the current node to the visited set
-                        visited.push(node);// move to the nearest neighbor node
-                        node = shortestDistanceNode(distances, visited);
-                    }
-
-                    // using the stored paths from start node to end node
-                    // record the shortest path
-                    let shortestPath = [endNode];
-                    let parent = parents[endNode];
-                    while (parent) {
-                        shortestPath.push(parent);
-                        parent = parents[parent];
-                    }
-                    shortestPath.reverse();
-
-                    //this is the shortest path
-                    let results = {
-                        distance: distances[endNode],
-                        path: shortestPath,
-                    };
-                    // return the shortest path & the end node's distance from the start node
-                    return results;
-                };
-
-                console.log(findShortestPath(graph, "start", "finish"));
-
-            },
-            */
-
             setFaction: function(ev: any, factionID: number | null, connectWarpgate: boolean): void {
                 console.log("event", ev);
                 console.log(`setting facility ${this.flip.facilityID} to ${factionID}`);
@@ -409,235 +407,10 @@
 
                 this.flip.showUI = true;
 
-                //this.pathfind(205001, this.flip.facilityID);
-
-                // construct adjacency matrix
-
-                /*
-                // create what facility ID is in what index
-                const indexes: Map<number, number> = new Map(); // <facility id, index>
-                let index: number = 0;
-                for (const kvp of this.ownershipData.facilities) {
-                    indexes.set(kvp[0], index++);
-                }
-                console.log(indexes);
-
-                // Create the adjacency matrix
-                const graph: number[][] = [];
-                graph.length = indexes.size;
-                for (let i = 0; i < indexes.size; ++i) {
-                    graph[i] = [];
-                    graph[i].length = indexes.size;
-                    for (let j = 0; j < indexes.size; ++j) {
-                        graph[i][j] = 1;
-                    }
-                }
-                console.log(graph);
-
-                // set what facilities are adjacent to each other
-                for (const link of this.zoneData.links) {
-                    const indexA: number | undefined = indexes.get(link.facilityA);
-                    const indexB: number | undefined = indexes.get(link.facilityB);
-
-                    if (indexA == undefined && indexB == undefined) {
-                        throw `Failed to find index for facilityA (${link.facilityA}) and facilityB (${link.facilityB})`;
-                    }
-                    if (indexA == undefined) {
-                        throw `Failed to find index for facilityA (${link.facilityA})`;
-                    }
-                    if (indexB == undefined) {
-                        throw `Failed to find index for facilityB (${link.facilityB})`;
-                    }
-
-                    graph[indexA][indexB] = 0;
-                    graph[indexB][indexA] = 0;
-                }
-                console.log(graph);
-
-                const grid = new pf.Grid(graph);
-                */
-
-                /*
-                // this isn't done lul
-                if (connectWarpgate == true) {
-                    if (this.zoneData == null) {
-                        return console.error(`cannot setFaction: zoneData is null`);
-                    }
-
-                    // Steps:
-                    // 1. find warpgate
-                    // 2. find path from wanted base to warpgate
-                    // 3. ensure none of the bases that would be flipped are already pending a flip
-
-                    // 1. find warpgates
-                    const warpgates: PsFacility[] = this.zoneData.facilities.filter(iter => iter.typeID == 7); // 7 = warpgate
-                    const warpgateIDs: number[] = warpgates.map(iter => iter.facilityID);
-                    console.log(`found ${warpgates.length} warpgates when connected ${this.flip.facilityID}`);
-
-                    const warpgateOwners: PsFacilityOwner[] = Array.from(this.ownershipData.facilities.values())
-                        .filter(iter => warpgateIDs.indexOf(iter.facilityID) > -1);
-
-                    if (warpgateOwners.length != warpgates.length) {
-                        return console.error(`cannot setFaction: warpgateOwners is not the same length as warpgates (${warpgateOwners.length} != ${warpgates.length})`);
-                    }
-
-                    const factionWarpgates: PsFacilityOwner[] = warpgateOwners.filter(iter => iter.owner == factionID);
-                    if (factionWarpgates.length != 1) {
-                        return console.error(`cannot setFaction: there are ${factionWarpgates.length} warpgates owned by ${factionID}, expected 1`);
-                    }
-
-                    const warpgateID: number = factionWarpgates[0].facilityID;
-                    const facilityID: number = this.flip.facilityID;
-
-                    if (warpgateID == facilityID) {
-                        return console.error(`cannot setFaction: warpgateID (${warpgateID}) is the same as the target facilityID (${facilityID})`);
-                    }
-
-                    const queue: number[] = [];
-                    queue.push(facilityID);
-                    const visited: number[] = [];
-
-                    let iterFallback: number = 100; // how many times max to find the path
-
-                    let iter: number | undefined = queue.shift();
-
-                    while (iter != undefined) {
-                        if (iterFallback-- < 0) {
-                            console.error(`hit maximum iteration count!`);
-                            break;
-                        }
-
-                        const links: PsFacilityLink[] = this.zoneData.links.filter(i => i.facilityA == iter || i.facilityB == iter);
-                    }
-
-                    // 2. find path from wanted base to warpgate
-                }
-                */
-
                 owner.flipOwner = factionID ?? undefined;
 
                 this.updateFlipCommands();
                 this.redrawMap({ ownership: true });
-            },
-
-            pathfind: function(facilityA: number, facilityB: number): number[] {
-                if (this.zoneData == null) {
-                    throw `cannot pathfind from ${facilityA} to ${facilityB}: zoneData is null`;
-                }
-                if (this.ownershipData == null) {
-                    throw `cannot pathfind from ${facilityA} to ${facilityB}: ownershipData is null`;
-                }
-
-                // create what facility ID is in what index
-                const indexes: Map<number, number> = new Map(); // <facility id, index>
-                let index: number = 0;
-                for (const kvp of this.ownershipData.facilities) {
-                    indexes.set(kvp[0], index++);
-                }
-                console.log(indexes);
-
-                // Create the adjacency matrix
-                const graph: boolean[][] = [];
-                graph.length = indexes.size;
-                for (let i = 0; i < indexes.size; ++i) {
-                    graph[i] = [];
-                    graph[i].length = indexes.size;
-                    for (let j = 0; j < indexes.size; ++j) {
-                        graph[i][j] = false;
-                    }
-                }
-                console.log(graph);
-
-                // set what facilities are adjacent to each other
-                for (const link of this.zoneData.links) {
-                    const indexA: number | undefined = indexes.get(link.facilityA);
-                    const indexB: number | undefined = indexes.get(link.facilityB);
-
-                    if (indexA == undefined && indexB == undefined) {
-                        throw `Failed to find index for facilityA (${link.facilityA}) and facilityB (${link.facilityB})`;
-                    }
-                    if (indexA == undefined) {
-                        throw `Failed to find index for facilityA (${link.facilityA})`;
-                    }
-                    if (indexB == undefined) {
-                        throw `Failed to find index for facilityB (${link.facilityB})`;
-                    }
-
-                    graph[indexA][indexB] = true;
-                    graph[indexB][indexA] = true;
-                }
-                console.log(graph);
-
-                let start: boolean = true;
-                const facilities: PsFacility[] = this.zoneData.facilities;
-                const links: PsFacilityLink[] = this.zoneData.links;
-                let completed: Path[] = [];
-
-                const travel = (node: Node, path: Node[], total: number): void => {
-                    if (start == true) {
-                        path.push(node);
-                        start = false;
-                    }
-
-                    if (path.length == facilities.length) {
-                        const p: Path = new Path();
-                        for (let i = 0; i < path.length; ++i) {
-                            p.path.push(path[i]);
-                        }
-                        p.distance = total;
-                        completed.push(p);
-
-                        console.log(`path length before: ${path.length}`);
-                        path = path.slice(0, -1);
-                        console.log(`path length after: ${path.length}`);
-                        return;
-                    }
-
-                    const iterID: number = node.id;
-                    const index: number | undefined = indexes.get(iterID);
-                    if (index == undefined) {
-                        throw `failed to find index for ${iterID}`;
-                    }
-
-                    // get the links the facility being iterated over has
-                    const iterLinks: Set<number> = new Set();
-                    for (const iter of links) {
-                        if (iter.facilityA == iterID && iter.facilityB != iterID) {
-                            iterLinks.add(iter.facilityB);
-                        }
-                        if (iter.facilityB == iterID && iter.facilityA != iterID) {
-                            iterLinks.add(iter.facilityA);
-                        }
-                    }
-
-                    for (const linkID of iterLinks) {
-                        let isin: boolean = false;
-                        for (let i = 0; i < path.length; ++i) {
-                            if (path[i].id == linkID) {
-                                isin = true;
-                                break;
-                            }
-                        }
-
-                        if (isin == true) {
-                            console.log(`link to ${linkID} is already in the path, skipping`);
-                            continue;
-                        }
-
-                        const n: Node = new Node();
-                        n.id = linkID;
-                        path.push(n);
-                        travel(n, path, total + 1);
-                    }
-                };
-
-                const s: Node = new Node();
-                s.id = facilityA;
-                travel(s, [], 0);
-
-                debugger;
-
-                return [];
             },
 
             setFactionVS: function(ev: any): void { this.setFaction(ev, 1, false); },
@@ -825,6 +598,122 @@
                         direction: "center",
                         className: "realtime-map-base-name",
                         interactive: true
+                    });
+
+                    region.on("click", async (ev: L.LeafletMouseEvent) => {
+                        if (!ev.target) {
+                            console.warn(`missing target from event: cannot get region ID`);
+                            return;
+                        }
+
+                        if (!ev.target.facility) {
+                            console.warn(`missing target.facility from event: cannot get region ID`);
+                            return;
+                        }
+
+                        if (this.settings.worldID == null) {
+                            console.warn(`cannot load historical data: worldID is null`);
+                            return;
+                        }
+
+                        const fac: PsFacility = ev.target.facility;
+                        this.history.facility = fac;
+                        this.history.showUI = true;
+                        this.history.latest = null;
+
+                        console.log(`loading historical data from world ${this.settings.worldID} region ${fac.regionID}`);
+
+                        this.history.data = Loadable.loading();
+                        this.history.data = await RealtimeMapStateApi.getHistorical(this.settings.worldID, fac.regionID)
+
+                        if (this.history.data.state != "loaded") {
+                            console.error(`not rendering chart, data is not loaded`);
+                            return;
+                        }
+
+                        if (this.history.data.data.length > 0) {
+                            this.history.latest = this.history.data.data[this.history.data.data.length - 1];
+                        }
+
+                        console.log(`loaded ${this.history.data.data.length} entries`);
+
+                        if (this.history.chart != null) {
+                            this.history.chart.destroy();
+                        }
+                        this.history.chart = null;
+
+                        await this.$nextTick();
+                        const canvas: any = document.getElementById("realtime-map-history");
+
+                        this.history.chart = new Chart(canvas.getContext("2d"), {
+                            type: "line",
+                            data: {
+                                labels: [],
+                                datasets: []
+                            },
+                            options: {
+                                plugins: {
+                                    tooltip: {
+                                        mode: "index",
+                                        intersect: false
+                                    }
+                                },
+                                responsive: false,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        type: "time",
+                                        /*
+                                        ticks: {
+                                            maxRotation: 90,
+                                            minRotation: 90,
+                                            callback: function(label, index, ticks) {
+                                                return TimeUtils.format(label, "hh:mm:ss A");
+                                            }
+                                        }
+                                        */
+                                    }
+                                }
+                            }
+                        });
+
+                        //this.history.chart.data.labels = this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A"));
+                        this.history.chart.data.labels = this.history.data.data.map(iter => iter.timestamp);
+                        //this.history.chart.data.labels = this.history.data.data.map(iter => "");
+
+                        this.history.count = [];
+
+                        for (const datum of this.history.data.data) {
+                            const bounds: number = datum.factionBounds.vs + datum.factionBounds.nc + datum.factionBounds.tr;
+
+                            this.history.count.push({
+                                vs: Math.round((datum.factionPercentage.vs / 100) * bounds),
+                                nc: Math.round((datum.factionPercentage.nc / 100) * bounds),
+                                tr: Math.round((datum.factionPercentage.tr / 100) * bounds),
+                            });
+                        }
+
+                        this.history.chart.data.datasets.length = 0;
+                        this.history.chart.data.datasets.push({
+                            data: this.history.count.map(iter => iter.vs),
+                            //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
+                            label: "VS",
+                            borderColor: "purple"
+                        });
+                        this.history.chart.data.datasets.push({
+                            data: this.history.count.map(iter => iter.nc),
+                            //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
+                            label: "NC",
+                            borderColor: "blue"
+                        });
+                        this.history.chart.data.datasets.push({
+                            data: this.history.count.map(iter => iter.tr),
+                            //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
+                            label: "TR",
+                            borderColor: "red"
+                        });
+
+                        this.history.chart.update();
                     });
 
                     region.on("contextmenu", (ev: L.LeafletMouseEvent) => {
