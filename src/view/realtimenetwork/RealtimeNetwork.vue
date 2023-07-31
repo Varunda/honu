@@ -108,7 +108,7 @@
                         <info-hover text="How strong a connection between the selected character and this one. This is a unit-less quantity"></info-hover>
                     </div>
 
-                    <template v-for="inter in selected.interactions">
+                    <template v-for="inter in connections">
                         <div class="input-cell">
                             <a :href="'/c/' + inter.otherID">
                                 {{inter.otherName}}
@@ -280,6 +280,12 @@
      */
     const MIN_FORCEATLAS2_THRESHOLD: number = 300;
 
+    type NodeConnection = {
+        otherID: string;
+        otherName: string;
+        strength: number;
+    }
+
     export const RealtimeNetworkVue = Vue.extend({
         props: {
 
@@ -299,7 +305,7 @@
 
                 filter: "" as string,
                 hovered: null as string | null,
-                neighbors: null as Set<string> | null,
+                neighbors: null as Set<PsCharacter> | null,
                 graphWidth: 5 as number,
                 layoutRunning: false as boolean,
 
@@ -314,6 +320,7 @@
                 selected: null as RealtimeNetworkPlayer | null,
                 allc: new Set() as Set<string>,
                 worldID: null as number | null,
+                connections: [] as any[],
 
                 alertData: [] as RealtimeNetwork[],
 
@@ -661,10 +668,36 @@
                         this.neighbors = null;
                         this.hovered = null;
                         this.selected = null;
+                        this.connections = [];
                     } else {
-                        this.neighbors = new Set(this.graph!.neighbors(node.node));
+                        const otherIDs: string[] = this.graph!.neighbors(node.node);
+
+                        this.neighbors = new Set();
+                        for (const otherID of otherIDs) {
+                            const c: PsCharacter | null = this.socket.getCharacter(otherID);
+                            if (c != null) {
+                                this.neighbors.add(c);
+                            }
+                        }
+
+                        //this.neighbors = new Set(this.graph!.neighbors(node.node));
                         this.hovered = node.node;
                         this.selected = this.network.players.find(iter => iter.characterID == node.node) || null;
+
+                        this.connections = [];
+                        if (this.selected != undefined) {
+                            console.log(`${this.selected.interactions.length} connections`);
+                            for (const i of this.selected.interactions) {
+                                const c: PsCharacter | null = this.socket.getCharacter(i.otherID);
+                                this.connections.push({
+                                    otherID: i.otherID,
+                                    otherName: c == null ? `<unknown ${i.otherID}>` : CharacterUtil.getDisplay(c),
+                                    strength: i.strength
+                                });
+                            }
+                        } else {
+                            console.warn(`no selected, cannot get connections`);
+                        }
                     }
 
                     if (this.renderer) {
@@ -682,7 +715,17 @@
 
                     // If the hovered node isn't this node, and there are neighbors we want to highlight, hide this node
                     //  OR, if there is a filter applied, and this node doesn't match that filter, hide this node
-                    if (this.hovered != node && this.neighbors != null && this.neighbors.has(node) == false
+
+                    let char: PsCharacter | null = null;
+                    if (this.neighbors != null) {
+                        for (const n of this.neighbors) {
+                            if (n.id == node) {
+                                char = n;
+                            }
+                        }
+                    }
+
+                    if (this.hovered != node && this.neighbors != null && char == null
                         || (this.filter.length > 0 && data.label.toLowerCase().indexOf(this.filter.toLowerCase()) == -1)) {
 
                         res.label = "";

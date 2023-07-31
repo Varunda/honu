@@ -69,10 +69,30 @@ namespace watchtower.Services.Repositories {
                 + $"[Census={censusMs}ms] [DB={dbMs}ms] [Same count={sameCount}] [Changed count={changedCount}]");
         }
 
+        /// <summary>
+        ///     Get the <see cref="RealtimeMapState"/> for a specific world and region between a period of time
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <param name="regionID">ID of the region (not facility!)</param>
+        /// <param name="start">When to start the grab period</param>
+        /// <param name="end">When to end the grab period</param>
+        /// <returns>
+        ///     A list of <see cref="RealtimeMapState"/> with <see cref="RealtimeMapState.WorldID"/> of <paramref name="worldID"/>,
+        ///     <see cref="RealtimeMapState.RegionID"/> of <paramref name="regionID"/>, 
+        ///     and <see cref="RealtimeMapState.Timestamp"/> between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
         public Task<List<RealtimeMapState>> GetHistoricalByWorldAndRegion(short worldID, int regionID, DateTime start, DateTime end) {
             return _Db.GetHistoricalByWorldAndRegion(worldID, regionID, start, end);
         }
 
+        /// <summary>
+        ///     Get a list of the current <see cref="RealtimeMapState"/> for a specific world
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <returns>
+        ///     A list of <see cref="RealtimeMapState"/>s from <see cref="_PreviousState"/> with a
+        ///     <see cref="RealtimeMapState.WorldID"/> of <paramref name="worldID"/>
+        /// </returns>
         public Task<List<RealtimeMapState>> GetByWorld(short worldID) {
             lock (_PreviousState) {
                 List<RealtimeMapState> map = _PreviousState.Values.Where(iter => iter.WorldID == worldID).ToList();
@@ -81,6 +101,16 @@ namespace watchtower.Services.Repositories {
             }
         }
 
+        /// <summary>
+        ///     Get a list of the most recent <see cref="RealtimeMapState"/> for a specific world and zone
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <param name="zoneID">ID of the zone</param>
+        /// <returns>
+        ///     A list of <see cref="RealtimeMapState"/> from <see cref="_PreviousState"/> with a 
+        ///     <see cref="RealtimeMapState.WorldID"/> of <paramref name="worldID"/> and 
+        ///     a <see cref="RealtimeMapState.ZoneID"/> of <paramref name="zoneID"/>
+        /// </returns>
         public Task<List<RealtimeMapState>> GetByWorldAndZone(short worldID, uint zoneID) {
             lock (_PreviousState) {
                 List<RealtimeMapState> map = _PreviousState.Values.Where(iter => iter.WorldID == worldID && iter.ZoneID == zoneID).ToList();

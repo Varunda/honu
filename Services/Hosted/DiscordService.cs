@@ -37,7 +37,8 @@ namespace watchtower.Services.Hosted {
         private readonly DiscordMessageQueue _MessageQueue;
         private readonly PsbReservationRepository _ReservationRepository;
 
-        private readonly DiscordClient _Discord;
+        //public DiscordClient _Discord;
+        private readonly DiscordWrapper _Discord;
         private readonly SlashCommandsExtension _SlashCommands;
         private readonly ButtonCommandsExtension _ButtonCommands;
         private IOptions<DiscordOptions> _DiscordOptions;
@@ -49,9 +50,11 @@ namespace watchtower.Services.Hosted {
 
         public DiscordService(ILogger<DiscordService> logger, ILoggerFactory loggerFactory,
             DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services,
+            DiscordWrapper discord,
             PsbReservationRepository reservationRepository) {
 
             _Logger = logger;
+            _Logger.LogError("discord ctor");
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
 
             _DiscordOptions = discordOptions;
@@ -64,6 +67,9 @@ namespace watchtower.Services.Hosted {
                 throw new ArgumentException($"ChannelId is 0, must be set. Try running dotnet user-secrets set Discord:ChannelId $VALUE");
             }
 
+            _Discord = discord;
+
+            /*
             try {
                 _Discord = new DiscordClient(new DiscordConfiguration() {
                     Token = _DiscordOptions.Value.Key,
@@ -73,13 +79,15 @@ namespace watchtower.Services.Hosted {
             } catch (Exception) {
                 throw;
             }
+            */
 
-            _Discord.Ready += Client_Ready;
-            _Discord.InteractionCreated += Generic_Interaction_Created;
-            _Discord.ContextMenuInteractionCreated += Generic_Interaction_Created;
-            _Discord.MessageCreated += Message_Created;
+            _Discord.Get().Ready += Client_Ready;
+            _Discord.Get().InteractionCreated += Generic_Interaction_Created;
+            _Discord.Get().ContextMenuInteractionCreated += Generic_Interaction_Created;
+            _Discord.Get().MessageCreated += Message_Created;
+            _Discord.Get().GuildAvailable += Guild_Available;
 
-            _SlashCommands = _Discord.UseSlashCommands(new SlashCommandsConfiguration() {
+            _SlashCommands = _Discord.Get().UseSlashCommands(new SlashCommandsConfiguration() {
                 Services = services
             });
 
@@ -105,7 +113,7 @@ namespace watchtower.Services.Hosted {
                 _SlashCommands.RegisterCommands<ServerStatusSlashCommands>(_DiscordOptions.Value.GuildId);
             }
 
-            _ButtonCommands = _Discord.UseButtonCommands(new ButtonCommandsConfiguration() {
+            _ButtonCommands = _Discord.Get().UseButtonCommands(new ButtonCommandsConfiguration() {
                 Services = services
             });
             _ButtonCommands.RegisterButtons<SubscribeButtonCommands>();
@@ -120,9 +128,9 @@ namespace watchtower.Services.Hosted {
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
             try {
-                await _Discord.ConnectAsync();
+                await _Discord.Get().ConnectAsync();
 
-                IReadOnlyList<DiscordApplicationCommand> cmds = await _Discord.GetGuildApplicationCommandsAsync(_DiscordOptions.Value.GuildId);
+                IReadOnlyList<DiscordApplicationCommand> cmds = await _Discord.Get().GetGuildApplicationCommandsAsync(_DiscordOptions.Value.GuildId);
                 _Logger.LogDebug($"Have {cmds.Count} commands");
                 foreach (DiscordApplicationCommand cmd in cmds) {
                     _Logger.LogDebug($"{cmd.Id} {cmd.Name}: {cmd.Description}");
@@ -174,7 +182,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     if (targetType == TargetType.CHANNEL) {
-                        DiscordGuild? guild = await _Discord.TryGetGuild(msg.GuildID!.Value);
+                        DiscordGuild? guild = await _Discord.Get().TryGetGuild(msg.GuildID!.Value);
                         if (guild == null) {
                             _Logger.LogError($"Failed to get guild {msg.GuildID} (null)");
                             continue;
@@ -206,10 +214,6 @@ namespace watchtower.Services.Hosted {
             }
         }
 
-        public DiscordClient GetClient() {
-            return _Discord;
-        }
-
         /// <summary>
         ///     Get a <see cref="DiscordMember"/> from an ID
         /// </summary>
@@ -221,7 +225,7 @@ namespace watchtower.Services.Hosted {
         private async Task<DiscordMember?> GetDiscordMember(ulong memberID) {
             // check if cached
             if (_CachedMembership.TryGetValue(memberID, out ulong guildID) == true) {
-                DiscordGuild? guild = await _Discord.TryGetGuild(guildID);
+                DiscordGuild? guild = await _Discord.Get().TryGetGuild(guildID);
                 if (guild == null) {
                     _Logger.LogWarning($"Failed to get guild {guildID} from cached membership for member {memberID}");
                 } else {
@@ -238,7 +242,7 @@ namespace watchtower.Services.Hosted {
             }
 
             // check each guild and see if it contains the target member
-            foreach (KeyValuePair<ulong, DiscordGuild> entry in _Discord.Guilds) {
+            foreach (KeyValuePair<ulong, DiscordGuild> entry in _Discord.Get().Guilds) {
                 DiscordMember? member = await entry.Value.TryGetMember(memberID);
 
                 if (member != null) {
@@ -273,7 +277,28 @@ namespace watchtower.Services.Hosted {
 
             DiscordChannel? channel = await sender.GetChannelAsync(_DiscordOptions.Value.ChannelId);
             if (channel == null) {
-                _Logger.LogWarning($"Failed to find channel");
+                _Logger.LogWarning($"Failed to find channel {_DiscordOptions.Value.ChannelId}");
+            }
+        }
+
+        private async Task Guild_Available(DiscordClient sender, GuildCreateEventArgs args) {
+            DiscordGuild? guild = args.Guild;
+            if (guild == null) {
+                _Logger.LogDebug($"no guild");
+                return;
+            }
+
+            _Logger.LogDebug($"guild available: {guild.Id} / {guild.Name}");
+
+            DiscordGuild? guild2 = await _Discord.Get().TryGetGuild(guild.Id);
+            if (guild2 == null) {
+                _Logger.LogDebug($"g2 is null");
+            } else {
+                _Logger.LogDebug($"guild2: {guild2.Id} / {guild2.Name}");
+            }
+
+            foreach (KeyValuePair<ulong, DiscordGuild> iter in _Discord.Get().Guilds) {
+                _Logger.LogDebug($"{iter.Key}: {iter.Value.Name}");
             }
         }
 

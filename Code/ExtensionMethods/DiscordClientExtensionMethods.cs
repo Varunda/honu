@@ -13,7 +13,7 @@ namespace watchtower.Code.ExtensionMethods {
         /// <param name="client">Extension instance</param>
         /// <param name="guildID">ID of the guild to get</param>
         /// <returns>
-        ///     The <see cref="DiscordGuild"/> with <see cref="DiscordGuild.Id"/> of <paramref name="guildID"/>,
+        ///     The <see cref="DiscordGuild"/> with <see cref="SnowflakeObject.Id"/> of <paramref name="guildID"/>,
         ///     or <c>null</c> if not found
         /// </returns>
         public static async Task<DiscordGuild?> TryGetGuild(this DiscordClient client, ulong guildID) {

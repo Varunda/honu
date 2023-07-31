@@ -57,7 +57,7 @@ namespace watchtower.Code.Constants {
         };
 
         /// <summary>
-        /// Get a display friendly name of a world
+        ///     Get a display friendly name of a world
         /// </summary>
         /// <param name="worldID">World ID to get the name of</param>
         /// <returns></returns>

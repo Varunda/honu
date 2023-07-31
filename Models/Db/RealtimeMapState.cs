@@ -110,22 +110,6 @@ namespace watchtower.Models.Db {
             return HashCode.Combine(WorldID, ZoneID, RegionID);
         }
 
-        public string GetDifference(RealtimeMapState other) {
-            string s = "";
-
-            if (this.CaptureTimeLeftMs != other.CaptureTimeLeftMs) {
-                s += $"[CaptureTimeLeftMs: {CaptureTimeLeftMs - other.CaptureTimeLeftMs}] ";
-            }
-            if (this.FactionBounds != other.FactionBounds) {
-                s += $"[FactionBounds: {FactionBounds.VS - other.FactionBounds.VS} {FactionBounds.NC - other.FactionBounds.NC} {FactionBounds.TR - other.FactionBounds.TR}] ";
-            }
-            if (this.FactionPercentage != other.FactionPercentage) {
-                s += $"[FactionPercentage: {FactionPercentage.VS - other.FactionPercentage.VS} {FactionPercentage.NC - other.FactionPercentage.NC} {FactionPercentage.TR - other.FactionPercentage.TR}] ";
-            }
-
-            return s;
-        }
-
         private static int GetLowerBounds(int maxBound) {
             if (maxBound == 0) {
                 return 0;
