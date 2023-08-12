@@ -13,7 +13,7 @@
         </div>
 
         <div>
-            <button :disabled="sessions.state != 'loaded' || outfits.state != 'loaded'" class="btn btn-success" @click="makeGraph">
+            <button :disabled="sessions.state != 'loaded' || outfits.state != 'loaded'" class="btn btn-success" @click="d3s">
                 Make graph
             </button>
         </div>
@@ -28,13 +28,7 @@
             </progress-bar>
         </div>
 
-        <!--
         <div id="d3_canvas"></div>
-        -->
-
-        <div id="chart" style="width: 100%; height: 100vh;">
-
-        </div>
 
     </div>
 </template>
@@ -54,35 +48,29 @@
 
     import TimeUtils from "util/Time";
 
-    /*
-    import * as d3s from "d3-sankey";
-    import * as d3 from "d3";
-    */
-
     const d3: any = (window as any).d3;
 
-    /// @ts-ignore
-    import * as Plotly from "plotly.js/dist/plotly";
     import ColorUtils from "util/Color";
 
-    type DataEntry = {
-        from: string;
-        to: string;
-        flow: number;
-    }
+    type HNode = {
+        id: string;
+        name: string;
+        color: string;
+        x: number;
+        y: number;
+        dx: number;
+        dy: number;
+        value: number;
 
-    type PDE = {
-        from: string;
-        to: string;
-        timestamp: number;
-        members: string[];
+        sourceLinks: HNode[];
+        targetLinks: HNode[];
     };
 
-    type PD = {
-        outfitID: string;
-        timestamp: number;
-        members: string[];
-        flow: PDE[];
+    type HLink = {
+        source: string;
+        target: string;
+        value: number;
+        dy: number;
     };
 
     export const OutfitSankey = Vue.extend({
@@ -100,17 +88,20 @@
 
                 interval: 1000 * 60 * 60 * 24 * 7 as number, // 1000 ms, 60 seconds, 60 minutes, 24 hours, 7 days
 
+                debugLevel: 0 as number,
+
+                graph: {
+                    nodes: [] as HNode[],
+                    links: [] as HLink[]
+                },
+
+                outfitColors: new Map() as Map<string, string>,
+
                 progress: {
                     initial: false as boolean,
                     current: 0 as number,
                     total: 0 as number
                 },
-
-                plotly: {} as any,
-
-                p: [] as PD[],
-
-                data: [] as DataEntry[]
             }
         },
 
@@ -121,11 +112,10 @@
 
         mounted: function(): void {
             this.$nextTick(async () => {
-                //this.d3s();
                 await this.getSessions();
                 await this.getOutfits();
-                this.makeData();
-                this.makeGraph();
+                this.makeData(10000, 1080);
+                this.d3s();
             });
         },
 
@@ -145,94 +135,246 @@
                 }
             },
 
+            makeNode: function(id: string, name: string, value: number, x?: number, y?: number): HNode {
+                return {
+                    id: id,
+                    name: name,
+                    color: ColorUtils.randomColorSingle(),
+                    x: x ?? Math.random() * 1920,
+                    y: y ?? Math.random() * 1080,
+                    dx: 10,
+                    dy: value,
+                    sourceLinks: [],
+                    targetLinks: [],
+                    value: value
+                };
+            },
+
+            makeLink: function(source: HNode, target: HNode, value: number, dy: number): HLink {
+                const link: HLink = {
+                    source: source.id,
+                    target: target.id,
+                    value: value,
+                    dy: dy
+                };
+
+                source.targetLinks.push(target);
+                target.sourceLinks.push(source);
+
+                return link;
+            },
+
+            debug: function(...data: any[]): void {
+                if (this.debugLevel >= 1) {
+                    console.log(...data);
+                }
+            },
+
+            trace: function(...data: any[]): void {
+                if (this.debugLevel >= 2) {
+                    console.log(...data);
+                }
+            },
+
             d3s: function(): void {
                 const svg = d3.select("#d3_canvas").append("svg")
-                    .attr("width", 1920)
+                    .attr("width", 10000)
                     .attr("height", 1080)
-                    .append("g")
-                    .attr("transform", `translate(0, 0)`);
+                    .attr("viewBox", [0, 0, 10000, 1080]);
 
-                console.log(`d3 stuff`);
+                this.debug(`d3 stuff`);
 
                 const s = d3.sankey()
-                    .nodeWidth(36)
-                    .nodePadding(290)
+                    .nodeWidth(30)
+                    .nodePadding(20)
                     .size([1920, 1080]);
 
-                console.log(svg, s);
+                this.debug("svg: ", svg);
 
-                d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/data_sankey.json", function(err: any, graph: any) {
-                    console.log(`over here!`);
-                    //debugger;
-                    if (err) {
-                        console.error(err);
+                this.debug("s: ", s);
+
+                /*
+                const graph = {
+                    nodes: [
+                        this.makeNode("0", "node0", 20, 0, 0),
+                        this.makeNode("1", "node1", 80, 0, 20),
+                        this.makeNode("2", "node2", 100, 100, 0),
+                        this.makeNode("3", "node3", 30, 200, 0),
+                        this.makeNode("4", "node4", 30, 200, 30),
+                        this.makeNode("5", "node5", 40, 200, 60),
+                        this.makeNode("6", "node6", 50, 300, 0),
+                        this.makeNode("7", "node7", 50, 300, 50)
+                    ] as HNode[],
+                    links: [] as HLink[]
+                };
+
+                graph.links.push(this.makeLink(graph.nodes[0], graph.nodes[2], 20));
+                graph.links.push(this.makeLink(graph.nodes[1], graph.nodes[2], 80));
+                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[5], 40));
+                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[4], 30));
+                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[3], 30));
+                graph.links.push(this.makeLink(graph.nodes[3], graph.nodes[6], 15));
+                graph.links.push(this.makeLink(graph.nodes[4], graph.nodes[6], 15));
+                graph.links.push(this.makeLink(graph.nodes[5], graph.nodes[6], 20));
+                graph.links.push(this.makeLink(graph.nodes[3], graph.nodes[7], 15));
+                graph.links.push(this.makeLink(graph.nodes[4], graph.nodes[7], 15));
+                graph.links.push(this.makeLink(graph.nodes[5], graph.nodes[7], 20));
+                */
+
+                for (const node of this.graph.nodes) {
+                    node.sourceLinks.sort((a, b) => a.y - b.y);
+                    node.targetLinks.sort((a, b) => a.y - b.y);
+                }
+
+                const nodeMap: Map<string, HNode> = new Map();
+                for (const node of this.graph.nodes) {
+                    nodeMap.set(node.id, node);
+                }
+
+                s.nodes(this.graph.nodes)
+                    .links(this.graph.links);
+
+                this.debug(this.graph.nodes);
+                this.debug(this.graph.links);
+
+                this.debug(`over here!`);
+
+                const getNodeOrThrow = (id: string): HNode => {
+                    const n: HNode | undefined = nodeMap.get(id);
+                    if (n == undefined) {
+                        throw `failed to find node ${id}`;
                     }
 
-                    console.log(`over here!`);
+                    return n;
+                };
 
-                    console.log(graph);
+                this.debug(`making linearGradient`);
+                const defs = svg.append("defs")
+                    .selectAll(".link")
+                    .data(this.graph.links)
+                    .enter()
+                    .append("linearGradient")
+                    .attr("id", (d: HLink) => {
+                        return `${d.source}-${d.target}`;
+                    })
+                    .attr("gradientUnits", "userSpaceOnUse")
+                    .attr("x1", (d: HLink) => getNodeOrThrow(d.source).x)
+                    .attr("x2", (d: HLink) => getNodeOrThrow(d.target).x)
+                    //.attr("y1", "0%").attr("y2", "100%")
+                    ;
 
-                    s.nodes(graph.nodes)
-                        .links(graph.links)
-                        .layout(1);
+                this.debug("adding stop 0");
+                defs.append("stop")
+                    //.attr("class", "start")
+                    .attr("offset", "0%")
+                    .attr("stop-color", (d: HLink) => {
+                        const source: HNode = nodeMap.get(d.source)!;
+                        return source.color;
+                    })
+                    .attr("stop-opacity", 1)
+                    ;
 
-                    // add in the links
-                    var link = svg.append("g")
-                        .selectAll(".link")
-                        .data(graph.links)
-                        .enter()
-                        .append("path")
-                        .attr("class", "link")
-                        .attr("d", s.link())
-                        .style("stroke-width", function(d: any) { return Math.max(1, d.dy); })
-                        .sort(function(a: any, b: any) { return b.dy - a.dy; });
+                this.debug("adding stop 1");
+                defs.append("stop")
+                    //.attr("class", "end")
+                    .attr("offset", "100%")
+                    .attr("stop-color", (d: HLink) => {
+                        const target: HNode = nodeMap.get(d.target)!;
+                        return target.color;
+                    })
+                    .attr("stop-opacity", 1)
+                    ;
 
-                    // add in the nodes
-                    var node = svg.append("g")
-                        .selectAll(".node")
-                        .data(graph.nodes)
-                        .enter().append("g")
-                        .attr("class", "node")
-                        .attr("transform", function(d: any) { return "translate(" + d.x + "," + d.y + ")"; });
+                this.debug("building links");
+                const paths = svg.append("g")
+                    .selectAll(".link")
+                    .data(this.graph.links)
+                    .enter()
+                    .append("path")
+                    .attr("class", "link")
+                    .attr("d", (d: HLink) => {
+                        this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
 
-                    // add the rectangles for the nodes
-                    node
-                        .append("rect")
-                        .attr("height", function(d: any) {
-                            console.log(d);
-                            return d.dy;
-                        })
-                        .attr("width", s.nodeWidth())
-                        .style("fill", function(d: any) {
-                            return d.color = "#fff";
-                        })
-                        .style("stroke", function(d: any) {
-                            return d3.rgb(d.color).darker(2);
-                        })
-                        // Add hover text
-                        .append("title")
-                        .text(function(d: any) {
-                            return d.name + "\n" + "There is " + d.value + " stuff in this node";
-                        });
+                        const source: HNode = nodeMap.get(d.source)!;
+                        const target: HNode = nodeMap.get(d.target)!;
 
-                    /*
-                    // add in the title for the nodes
-                    node
-                        .append("text")
-                        .attr("x", -6)
-                        .attr("y", function(d: any) { return d.dy / 2; })
-                        .attr("dy", ".35em")
-                        .attr("text-anchor", "end")
-                        .attr("transform", null)
-                        .text(function(d: any) { return d.name; })
-                        .filter(function(d: any) { return d.x < 1080 / 2; })
-                        .attr("x", 6 + s.nodeWidth())
-                        .attr("text-anchor", "start");
-                    */
+                        this.debug("\tsource", source);
+                        this.debug("\ttarget", target);
 
-                    // the function for moving the nodes
-                    //s.update(graph);
-                });
+                        // can't have the path end in the center path each time
+                        // so an offset is added, based on the height of the nodes before it
+                        let targetOffset: number = 0;
+                        this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
+                        for (const l of this.graph.links) {
+                            if (l.target != target.id) {
+                                continue;
+                            }
+
+                            if (l.source == source.id) {
+                                break;
+                            }
+                            this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
+                            targetOffset += l.dy;
+                        }
+
+                        let sourceOffset: number = 0;
+                        this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
+                        for (const l of this.graph.links) {
+                            if (l.source != source.id) {
+                                continue;
+                            }
+
+                            if (l.target == target.id) {
+                                break;
+                            }
+                            this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
+                            sourceOffset += l.dy;
+                        }
+
+                        const x0 = source.x + source.dx;
+                        const x1 = target.x;
+                        const x2 = x0 * (1 - 0.5) + x1 * 0.5;
+                        const x3 = x0 * (1 - 0.5) + x1 * 0.5;
+                        const y0 = source.y + sourceOffset + (d.dy / 2);
+                        const y1 = target.y + targetOffset + (d.dy / 2);
+                        //const y0 = source.y + sourceOffset + (d.value / 2);
+                        //const y1 = target.y + targetOffset + (d.value / 2);
+
+                        const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
+                        this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
+                        return p;
+                    })
+                    .attr("stroke", (d: HLink) => {
+                        return `url(#${d.source}-${d.target})`;
+                    })
+                    .attr("fill", "none")
+                    .style("stroke-width", (d: HLink) => {
+                        return d.dy;
+                    });
+
+                this.debug("building link text");
+                paths.append("title")
+                    .text((d: HLink) => {
+                        const source: HNode = nodeMap.get(d.source)!;
+                        const target: HNode = nodeMap.get(d.target)!;
+                        return `${source.name} to ${target.name}: ${d.value}`;
+                    });
+
+                this.debug("building nodes");
+                const node = svg.append("g")
+                    .selectAll(".node")
+                    .data(this.graph.nodes)
+                    .enter()
+                    .append("rect")
+                    .attr("class", "node")
+                    .attr("width", (d: HNode) => d.dx)
+                    .attr("height", (d: HNode) => d.dy)
+                    .attr("x", (d: HNode) => d.x)
+                    .attr("y", (d: HNode) => d.y)
+                    .style("fill", (d: HNode) => d.color)
+                    .style("stroke", "#000")
+                    .append("title")
+                    .text((d: HNode) => `${d.name}: ${d.value}`);
             },
 
             /**
@@ -290,12 +432,22 @@
 
                 this.outfits = Loadable.loading();
                 this.outfits = await OutfitApi.getByIDs(outfitIDs);
+
+                if (this.outfits.state == "loaded") {
+                    this.outfitColors.clear();
+                    const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
+
+                    for (let i = 0; i < this.outfits.data.length; ++i) {
+                        const outfitID: string = this.outfits.data[i].id;
+                        this.outfitColors.set(outfitID, colors[i]);
+                    }
+                }
             },
 
             /**
              * Use the session data to make the Sankey data
              */
-            makeData: function(): void {
+            makeData: function(width: number, height: number): void {
                 if (this.sessions.state != "loaded") {
                     return console.warn(`sessions not loaded`);
                 }
@@ -325,6 +477,7 @@
 
                 const c: Map<string, string> = new Map();
 
+                // set initial outfits
                 for (const session of this.sessions.data) {
                     if (c.has(session.characterID) == true) {
                         continue;
@@ -332,232 +485,122 @@
                     c.set(session.characterID, session.outfitID ?? "0");
                 }
 
+                const characterCount: number = c.size;
+
+                console.log(`Loading data for ${characterCount} characters`);
+
+                const outfitIDs: string[] = this.sessions.data.map(iter => iter.outfitID ?? "0").filter((v, i, a) => a.indexOf(v) == i);
+                console.log(`considering ${outfitIDs.length} outfits: [${outfitIDs.join(", ")}]`);
+
+                const nodeMap: Map<string, HNode> = new Map();
+
+                let index: number = 0;
+
                 for (let i = day.getTime(); i <= now.getTime(); i += this.interval) {
+                    if (index++ >= 2) {
+                        //break;
+                    }
+
                     const slice: Session[] = this.sessions.data.filter((iter: Session) => {
                         const time: number = iter.start.getTime();
                         return time >= i && time <= (i + this.interval);
                     });
 
-                    console.log(`NEW LINE =====================================`);
+                    // copy the previous outfits to a new one
+                    const previousOutfitMembership: Map<string, string> = new Map();
+                    c.forEach((v, k) => {
+                        previousOutfitMembership.set(k, v);
+                    });
 
-                    const entries: PD[] = [];
-                    const curr: Map<string, string> = new Map();
+                    this.debug(`NEW LINE =====================================`);
+                    this.debug(`\tLoaded ${slice.length} sessions between ${i} and ${i + this.interval}`);
 
                     for (const session of slice) {
                         const outfitID: string = session.outfitID ?? "0";
-                        curr.set(session.characterID, outfitID);
+                        c.set(session.characterID, outfitID);
                     }
 
-                    for (const kvp of c.entries()) {
-                        const charID: string = kvp[0];
+                    // count of how many characters we've put in places
+                    let count: number = 0;
 
-                        const previousOutfitID: string = kvp[1];
-                        const currentOutfitID: string = curr.get(charID) ?? previousOutfitID;
+                    for (const outfitID of outfitIDs) {
+                        let outfit: HNode = this.makeNode(`${i}-${outfitID}`, `${outfitID}`, 0, 0, 0);
 
-                        let entry: PD | undefined = entries.find(iter => iter.outfitID == previousOutfitID && iter.timestamp == i);
-                        if (entry == undefined) {
-                            //console.log(`new entry ${from} => ${to}`);
-                            entry = {
-                                outfitID: previousOutfitID,
-                                timestamp: i,
-                                members: [],
-                                flow: []
-                            };
-                            entries.push(entry);
-                        }
+                        this.debug(`\tChecking outfit ${outfitID}/${outfit.id}`);
 
-                        entry.members.push(charID);
+                        const diffMap: Map<string, number> = new Map(); // <outfit ID, difference>
 
-                        let flow: PDE | undefined = entry.flow.find(iter => iter.to == currentOutfitID);
-                        if (flow == undefined) {
-                            flow = {
-                                from: previousOutfitID,
-                                to: currentOutfitID,
-                                timestamp: i,
-                                members: []
+                        // how many characters are in this outfit. this includes characters with no session this week (didn't play)
+                        let outfitCount: number = 0;
+                        c.forEach((value: string, charID: string) => {
+                            if (value == outfitID) {
+                                ++outfitCount;
                             }
-                            entry.flow.push(flow);
-                            console.log(`new flow for ${flow.from} => ${flow.to} @ ${new Date(i)}`);
+
+                            if (value == outfitID) {
+                                const previousOutfitID: string = previousOutfitMembership.get(charID)!;
+                                if (value != previousOutfitID) {
+                                    diffMap.set(previousOutfitID, (diffMap.get(previousOutfitID) ?? 0) + 1);
+                                    this.trace(`\t\t${charID} went from ${previousOutfitID} to ${value}`);
+                                }
+                            }
+                        });
+
+                        outfit.value = outfitCount;
+                        outfit.y = (count / characterCount) * height;
+                        outfit.x = ((i - day.getTime()) / (now.getTime() - day.getTime())) * width;
+                        outfit.dx = 10;
+                        outfit.dy = outfit.value / characterCount * height;
+                        outfit.color = outfitID == "0" ? "black" : this.outfitColors.get(outfitID)!;
+
+                        if (outfitID == "0") {
+                            outfit.name = "no outfit";
+                        } else {
+                            outfit.name = this.outfits.data.find(iter => iter.id == outfitID)?.name ?? `<missing ${outfitID}>`;
                         }
-                        flow.members.push(charID);
+                        outfit.name += ` ${outfitID}`;
 
-                        //console.log(`${from} => ${to} :: ${entry.flow}`);
-                    }
+                        count += outfit.value;
 
-                    for (const session of slice) {
-                        c.set(session.characterID, session.outfitID ?? "0");
-                    }
+                        if (outfit.value > 0) {
+                            this.graph.nodes.push(outfit);
+                            this.trace(`\t\t${outfitID} had ${outfit.value} characters with sessions`);
+                            nodeMap.set(outfit.id, outfit);
 
-                    /*
-                    for (const e of entries) {
-                        console.log(e);
+                            const previousTime = i - this.interval;
+                            let countDown: number = outfit.value;
 
-                        if (i == day.getTime()) {
-                            this.p.push(e);
-                            continue;
+                            diffMap.forEach((difference: number, prevOutfitID: string) => {
+                                countDown -= difference;
+
+                                const sourceNode: HNode | undefined = nodeMap.get(`${previousTime}-${prevOutfitID}`);
+                                if (sourceNode == undefined) {
+                                    console.warn(`missing ${previousTime}-${prevOutfitID}`);
+                                    return;
+                                }
+
+                                const link: HLink = this.makeLink(sourceNode, outfit, difference, (difference / characterCount) * height);
+                                this.graph.links.push(link);
+                                this.debug(`\t\tCHANGE ${sourceNode.id} => ${outfit.id}: ${difference}`);
+                            });
+
+                            this.debug(`\t\tSTAYED ${previousTime}-${outfitID} => ${i}-${outfitID}: ${countDown}`);
+
+                            if (countDown > 0) {
+                                const thisNode: HNode | undefined = nodeMap.get(`${previousTime}-${outfitID}`);
+                                if (thisNode != undefined) {
+                                    const link: HLink = this.makeLink(thisNode, outfit, countDown, (countDown / characterCount) * height);
+                                    this.graph.links.push(link);
+                                }
+                            }
                         }
-
-                        if (e.flow.length > 1) {
-                            this.p.push(e);
-                            continue;
-                        }
-
-                        if (e.outfitID != e.flow[0].to) {
-                            this.p.push(e);
-                            continue;
-                        }
-
-                        console.log(`SKIP`);
                     }
-                    */
 
-                    this.p.push(...entries);
+                    if (count != characterCount) {
+                        console.warn(`mismatched number of characters! expected ${characterCount}, got ${count} instead`);
+                    }
+
                 }
-            },
-
-            /**
-             * Render the Sankey graph from Plotly
-             */
-            makeGraph: function(): void {
-                if (this.outfits.state != "loaded") {
-                    return console.warn(`cannot make graph: outfits is not loaded`);
-                }
-                if (this.sessions.state != "loaded") {
-                    return console.warn(`cannot make graph: sessions is not loaded`);
-                }
-
-                const getOutfitIndex = (outfitID: string): number => {
-                    if (this.outfits.state != "loaded") {
-                        return 0;
-                    }
-                    return this.outfits.data.findIndex(iter => iter.id == outfitID);
-                };
-
-                const getOutfitLabel = (outfitID: string): string => {
-                    if (this.outfits.state != "loaded") {
-                        return "not loaded";
-                    }
-                    if (outfitID == "0") {
-                        return "no outfit";
-                    }
-
-                    const outfit: PsOutfit | undefined = this.outfits.data.find(iter => iter.id == outfitID);
-                    if (outfit == undefined) {
-                        return `missing ${outfitID}`;
-                    }
-
-                    return `${(outfit.tag != null) ? `[${outfit.tag}] ` : ""}${outfit.name}`;
-                }
-
-                const flows: PDE[] = [];
-                for (const pd of this.p) {
-                    flows.push(...pd.flow);
-                }
-
-                const getIndex = (outfitID: string, timestamp: number): number => {
-                    return this.p.findIndex(i => i.outfitID == outfitID && i.timestamp == timestamp) ?? 0;
-                };
-
-                const getY = (outfitID: string, timestamp: number): number => {
-                    const thisDay: PD[] = this.p.filter(iter => iter.timestamp == timestamp)
-                        .sort((a, b) => b.members.length - a.members.length || b.outfitID.localeCompare(a.outfitID));
-
-                    //console.log(thisDay);
-
-                    const totalMembers: number = thisDay.reduce((acc, i) => acc += i.members.length, 0);
-
-                    //console.log(`@${timestamp} has ${thisDay.length} outfits, with ${totalMembers} total members`);
-
-                    let acc: number = 0;
-                    for (const datum of thisDay) {
-                        if (datum.outfitID == outfitID) {
-                            //console.log(`${outfitID}@${timestamp} => ${acc / totalMembers} - ${(acc + datum.members.length) / totalMembers}`);
-                            return acc / totalMembers;
-                        }
-                        acc += datum.members.length;
-                    }
-
-                    return 0;
-                }
-
-                const firstSession: Session = this.sessions.data.sort((a, b) => a.start.getTime() - b.start.getTime())[0];
-                const day: Date = firstSession.start;
-                day.setUTCHours(0);
-                day.setUTCMinutes(0);
-                day.setUTCSeconds(0);
-                day.setUTCMilliseconds(0);
-
-                const now: Date = new Date();
-                now.setUTCHours(0);
-                now.setUTCMinutes(0);
-                now.setUTCSeconds(0);
-                now.setUTCMilliseconds(0);
-
-                const outfitCount: number = this.outfits.data.length;
-                const colors: string[] = ColorUtils.randomColors(Math.random(), outfitCount + 1, 0.8); // +1 for no outfit
-
-                const nodes = this.p.map((value) => {
-                    const n = {
-                        color: colors[getOutfitIndex(value.outfitID)],
-                        x: (value.timestamp - day.getTime()) / (now.getTime() - day.getTime()),
-                        y: getY(value.outfitID, value.timestamp),
-                        label: getOutfitLabel(value.outfitID),
-                    };
-
-                    console.log(`${value.outfitID}@${value.timestamp} => (${n.x}, ${n.y}) :: ${n.label}`);
-
-                    return n;
-                });
-
-                console.log(nodes);
-
-                const data = [{
-                    type: "sankey",
-                    arragement: "fixed",
-                    orientation: "h",
-                    //hoverinfo: "none",
-                    node: {
-                        label: nodes.map(i => i.label),
-                        x: nodes.map(i => i.x),
-                        y: nodes.map(i => i.y),
-                        color: nodes.map(i => i.color + "33"),
-                        thickness: 20,
-                        //hovertemplate: "x: %{x}, y: %{y}",
-                        line: {
-                            width: 0
-                        },
-                        pad: 0
-                        //pad: 1
-                        //pad: 10
-                    },
-                    link: {
-                        source: flows.map(iter => getIndex(iter.from, iter.timestamp)),
-                        target: flows.map(iter => getIndex(iter.to, iter.timestamp + this.interval)),
-                        value: flows.map(iter => iter.members.length),
-                        //color: flows.map(iter => colors[getOutfitIndex(iter.from)] + "33")
-                    }
-                }];
-
-                const layout = {
-                    title: "Outfit Sankey",
-                    showlegend: false,
-                    height: 1920
-                };
-
-                const options = {
-                    scrollZoom: true
-                };
-
-                console.log(data);
-
-                Plotly.newPlot(document.getElementById("chart")!, data, layout, options).then((huh: any) => {
-                    this.plotly = huh;
-                });
-
-                d3.select("svg")
-                    .attr("width", 1920).attr("height", 1080)
-                    .append("g")
-                    .attr("transform", `translate(10,10)`);
             }
         },
 

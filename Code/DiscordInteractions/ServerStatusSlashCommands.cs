@@ -353,13 +353,13 @@ namespace watchtower.Code.DiscordInteractions {
                 fightDesc += $"Start at {fightStarted.Value.GetDiscordTimestamp("t")} ({fightStarted.Value.GetDiscordRelativeTimestamp()})\n";
 
                 if (state.FactionBounds.VS > 0) {
-                    fightDesc += $":purple_square: VS: `{GetLowerBounds(state.FactionBounds.VS)} - {state.FactionBounds.VS} ({state.FactionPercentage.VS}%)`\n";
+                    fightDesc += $":purple_square: VS: `{GetLowerBounds(state.FactionBounds.VS)} - {state.FactionBounds.VS} ({Math.Round(state.FactionPercentage.VS)}%)`\n";
                 }
                 if (state.FactionBounds.NC > 0) {
-                    fightDesc += $":blue_square: NC: `{GetLowerBounds(state.FactionBounds.NC)} - {state.FactionBounds.NC} ({state.FactionPercentage.NC}%)`\n";
+                    fightDesc += $":blue_square: NC: `{GetLowerBounds(state.FactionBounds.NC)} - {state.FactionBounds.NC} ({Math.Round(state.FactionPercentage.NC)}%)`\n";
                 }
                 if (state.FactionBounds.TR > 0) {
-                    fightDesc += $":red_square: TR: `{GetLowerBounds(state.FactionBounds.TR)} - {state.FactionBounds.TR} ({state.FactionPercentage.TR}%)`\n";
+                    fightDesc += $":red_square: TR: `{GetLowerBounds(state.FactionBounds.TR)} - {state.FactionBounds.TR} ({Math.Round(state.FactionPercentage.TR)}%)`\n";
                 }
 
                 if (state.CaptureTimeLeftMs > 0) {
