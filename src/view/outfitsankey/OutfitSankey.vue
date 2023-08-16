@@ -856,14 +856,18 @@
                 console.time("get outfits");
 
                 console.time("outfits: get unique")
-                const outfitIDs: string[] = this.sessions.data.filter(iter => iter.outfitID != null)
-                    .map(iter => iter.outfitID!)
-                    .filter((v, i, a) => a.indexOf(v) == i);
+                const outfitIDs: Set<string> = new Set();
+                for (const s of this.sessions.data) {
+                    if (s.outfitID != null) {
+                        outfitIDs.add(s.outfitID);
+                    }
+                }
+
                 console.timeEnd("outfits: get unique");
 
                 console.time("outfits: load api");
                 this.outfits = Loadable.loading();
-                this.outfits = await OutfitApi.getByIDs(outfitIDs);
+                this.outfits = await OutfitApi.getByIDs(Array.from(outfitIDs.keys()));
                 console.timeEnd("outfits: load api");
 
                 if (this.outfits.state == "loaded") {
@@ -893,13 +897,15 @@
                 console.time("get characters");
 
                 console.time("chars: get unique");
-                const charIDs: string[] = this.sessions.data.map(iter => iter.characterID)
-                    .filter((v, i, a) => a.indexOf(v) == i);
+                const charIDs: Set<string> = new Set();
+                for (const s of this.sessions.data) {
+                    charIDs.add(s.characterID);
+                }
                 console.timeEnd("chars: get unique");
 
                 console.time("chars: load api");
                 this.characters = Loadable.loading();
-                this.characters = await CharacterApi.getByIDs(charIDs);
+                this.characters = await CharacterApi.getByIDs(Array.from(charIDs.keys()));
                 console.timeEnd("chars: load api");
 
                 if (this.characters.state == "loaded") {
