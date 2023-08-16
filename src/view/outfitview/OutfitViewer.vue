@@ -94,6 +94,15 @@
                         </a>
                     </td>
                 </tr>
+
+                <tr>
+                    <td><b>Sankey</b></td>
+                    <td>
+                        <a :href="'/outfitsankey/' + outfitID">
+                            Link
+                        </a>
+                    </td>
+                </tr>
             </table>
 
             <table v-if="members.state == 'loaded'" class="table table-sm w-auto d-inline-block mr-2" style="vertical-align: top;">

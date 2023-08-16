@@ -91,7 +91,7 @@
                 this.popperInstance = popper;
             },
 
-            closeStatTooltip: function (): void {
+            closeStatTooltip: function(): void {
                 if (this.popperInstance != null) {
                     this.popperInstance.destroy();
 

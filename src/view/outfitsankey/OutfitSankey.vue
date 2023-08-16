@@ -9,13 +9,29 @@
                 <li class="nav-item h1 p-0">
                     <a href="/outfitsankey">Sankey</a>
                 </li>
-            </honu-menu>
-        </div>
 
-        <div>
-            <button :disabled="sessions.state != 'loaded' || outfits.state != 'loaded'" class="btn btn-success" @click="d3s">
-                Make graph
-            </button>
+                <menu-sep></menu-sep>
+
+                <li class="nav-item h1 p-0">
+                    <span v-if="outfit.state == 'loading'">
+                        &lt;Loading...&gt;
+                    </span>
+
+                    <a v-else-if="outfit.state == 'loaded'" :href="'/o/' + outfitID">
+                        {{outfit.data.name}}
+                    </a>
+
+                    <span v-else>
+                        &lt;ERROR&gt;
+                    </span>
+                </li>
+
+                <menu-sep></menu-sep>
+
+                <li class="nav-item h1 p-0">
+                    Sankey
+                </li>
+            </honu-menu>
         </div>
         
         <div v-if="sessions.state == 'loading'">
@@ -83,6 +99,7 @@
                             {{popper.outfitA.name}}
                         </a>
                     </span>
+
                     for
 
                     <span v-if="popper.outfitBID == '0'">
@@ -133,7 +150,7 @@
     const d3: any = (window as any).d3;
 
     /// @ts-ignore
-    import * as d3z from "node_modules/d3-zoom/dist/d3-zoom.js";
+    //import * as d3z from "node_modules/d3-zoom/dist/d3-zoom.js";
 
     import ColorUtils from "util/Color";
 
@@ -292,14 +309,14 @@
             },
 
             parseOutfit: async function(): Promise<void> {
-                const o: Loading<PsOutfit> = await OutfitApi.getByID(this.outfitID);
-                if (o.state == "nocontent") {
+                this.outfit = await OutfitApi.getByID(this.outfitID);
+                if (this.outfit.state == "nocontent") {
                     document.title = `Honu / Outfit / <not found> / Sankey`;
-                } else if (o.state == "loaded") {
-                    document.title = `Honu / Outfit / ${o.data.name} / Sankey`;
+                } else if (this.outfit.state == "loaded") {
+                    document.title = `Honu / Outfit / ${this.outfit.data.name} / Sankey`;
 
                     const url = new URL(location.href);
-                    url.searchParams.set("tag", o.data.tag ?? o.data.name);
+                    url.searchParams.set("tag", this.outfit.data.tag ?? this.outfit.data.name);
                     history.replaceState({ path: url.href }, "", url.href);
                 }
             },
@@ -357,14 +374,16 @@
 
                 this.debug(`d3 stuff`);
 
+                /*
                 const s = d3.sankey()
                     .nodeWidth(30)
                     .nodePadding(20)
                     .size([10000, 1080]);
+                    */
 
                 this.debug("svg: ", svg);
 
-                this.debug("s: ", s);
+                //this.debug("s: ", s);
 
                 const zoom = d3.zoom();
 
@@ -392,8 +411,10 @@
                     nodeMap.set(node.id, node);
                 }
 
+                /*
                 s.nodes(this.graph.nodes)
                     .links(this.graph.links);
+                    */
 
                 this.debug(this.graph.nodes);
                 this.debug(this.graph.links);
@@ -409,43 +430,37 @@
                     return n;
                 };
 
+                // make a gradient for each path
                 this.debug(`making linearGradient`);
                 const defs = svg.append("defs")
                     .selectAll(".link")
                     .data(this.graph.links)
                     .enter()
                     .append("linearGradient")
-                    .attr("id", (d: HLink) => {
-                        return `${d.source}-${d.target}`;
-                    })
+                    .attr("id", (d: HLink) => { return `${d.source}-${d.target}`; })
                     .attr("gradientUnits", "userSpaceOnUse")
                     .attr("x1", (d: HLink) => getNodeOrThrow(d.source).x)
-                    .attr("x2", (d: HLink) => getNodeOrThrow(d.target).x)
-                    //.attr("y1", "0%").attr("y2", "100%")
-                    ;
+                    .attr("x2", (d: HLink) => getNodeOrThrow(d.target).x);
 
+                // add the starting color to each path
                 this.debug("adding stop 0");
                 defs.append("stop")
-                    //.attr("class", "start")
                     .attr("offset", "0%")
                     .attr("stop-color", (d: HLink) => {
                         const source: HNode = nodeMap.get(d.source)!;
                         return source.color;
-                    })
-                    .attr("stop-opacity", 1)
-                    ;
+                    });
 
+                // add the ending color to each path
                 this.debug("adding stop 1");
                 defs.append("stop")
-                    //.attr("class", "end")
                     .attr("offset", "100%")
                     .attr("stop-color", (d: HLink) => {
                         const target: HNode = nodeMap.get(d.target)!;
                         return target.color;
-                    })
-                    .attr("stop-opacity", 1)
-                    ;
+                    });
 
+                // build the path elements
                 this.debug("building links");
                 const paths = svg.append("g")
                     .selectAll(".link")
@@ -453,111 +468,19 @@
                     .enter()
                     .append("path")
                     .attr("class", "link")
-                    .attr("d", (d: HLink) => {
-                        this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
-
-                        const source: HNode = nodeMap.get(d.source)!;
-                        const target: HNode = nodeMap.get(d.target)!;
-
-                        this.debug("\tsource", source);
-                        this.debug("\ttarget", target);
-
-                        // can't have the path end in the center path each time
-                        // so an offset is added, based on the height of the nodes before it
-                        let targetOffset: number = 0;
-                        this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
-                        for (const l of this.graph.links) {
-                            if (l.target != target.id) {
-                                continue;
-                            }
-
-                            if (l.source == source.id) {
-                                break;
-                            }
-                            this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
-                            targetOffset += l.dy;
-                        }
-
-                        let sourceOffset: number = 0;
-                        this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
-                        for (const l of this.graph.links) {
-                            if (l.source != source.id) {
-                                continue;
-                            }
-
-                            if (l.target == target.id) {
-                                break;
-                            }
-                            this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
-                            sourceOffset += l.dy;
-                        }
-
-                        const x0 = source.x + source.dx;
-                        const x1 = target.x;
-                        const x2 = x0 * (1 - 0.5) + x1 * 0.5;
-                        const x3 = x0 * (1 - 0.5) + x1 * 0.5;
-                        const y0 = source.y + sourceOffset + (d.dy / 2);
-                        const y1 = target.y + targetOffset + (d.dy / 2);
-                        //const y0 = source.y + sourceOffset + (d.value / 2);
-                        //const y1 = target.y + targetOffset + (d.value / 2);
-
-                        const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
-                        this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
-                        return p;
-                    })
-                    .attr("stroke", (d: HLink) => {
-                        return `url(#${d.source}-${d.target})`;
-                    })
+                    .attr("d", (d: HLink) => { return this.makeLinkPath(d); })
+                    .attr("stroke", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
                     .attr("fill", "none")
-                    .on("mouseup", (ev: any, link: HLink) => {
-                        if (ev.button != 0) {
-                            return;
-                        }
+                    .style("stroke-width", (d: HLink) => { return d.dy; })
+                    .style("stroke-opacity", "0.5")
+                    .on("mouseup", this.pathClickListener);
 
-                        const source: HNode = this.graph.map.get(link.source)!;
-                        const target: HNode = this.graph.map.get(link.target)!;
-
-                        const popperDiv: HTMLElement | null = document.getElementById("popper-div");
-                        if (popperDiv == null) {
-                            console.error(`Missing tooltip element '#popper-div'`);
-                            return;
-                        }
-
-                        console.log(ev);
-                        popperDiv.style.display = "block";
-                        popperDiv.style.left = `${ev.clientX}px`;
-                        popperDiv.style.top = `${ev.clientY}px`;
-
-                        const charIDs: string[] = this.graph.diff.getWeek(target.timestamp.getTime()).getCharacters(source.outfitID, target.outfitID);
-
-                        this.popper.characters = charIDs.map((charID: string) => {
-                            return this.charMap.get(charID);
-                        }).filter((iter: PsCharacter | undefined) => iter != undefined).map(iter => iter!);
-
-                        this.popper.characters.sort((a, b) => a.name.localeCompare(b.name));
-
-                        this.popper.title = `Between ${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} and ${TimeUtils.formatNoTimezone(target.timestamp, "YYYY-MM-DD")}`;
-                        this.popper.header = `${charIDs.length} characters`;
-
-                        this.popper.outfitAID = source.outfitID;
-                        this.popper.outfitA = this.outfitMap.get(source.outfitID);
-                        this.popper.outfitBID = target.outfitID;
-                        this.popper.outfitB = this.outfitMap.get(target.outfitID);
-
-                        if (source.outfitID == target.outfitID) {
-                            this.popper.header += `stayed in ${source.name}`;
-                        } else {
-                            this.popper.header += `left ${source.name} to join ${target.name}`;
-                        }
-                    })
-                    .style("stroke-width", (d: HLink) => {
-                        return d.dy;
-                    });
-
+                // sort them based on value, so paths that cross over each other can still be hovered over
                 paths.sort((a: HLink, b: HLink) => {
                     return b.value - a.value;
                 });
 
+                // add text to each path that gives what the link is
                 this.debug("building link text");
                 paths.append("title")
                     .text((d: HLink) => {
@@ -570,6 +493,7 @@
                             + `\n${source.name} to ${target.name}: ${d.value}`;
                     });
 
+                // add the nodes for each week
                 this.debug("building nodes");
                 const node = svg.append("g")
                     .selectAll(".node")
@@ -584,7 +508,9 @@
                     .style("fill", (d: HNode) => d.color)
                     .style("stroke", "#000")
                     .append("title")
-                    .text((d: HNode) => `${d.name}: ${d.value}`);
+                    .text((d: HNode) => {
+                        return `${d.name}: ${d.value} characters`;
+                    });
 
                 console.timeEnd("do d3");
             },
@@ -593,6 +519,109 @@
                 for (const node of this.graph.nodes) {
                     this.graph.map.set(node.id, node);
                 }
+            },
+
+            /**
+             * callback pulled out, this is what makes the curve
+             * @param d
+             */
+            makeLinkPath: function(d: HLink): string {
+                this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
+
+                const source: HNode = this.graph.map.get(d.source)!;
+                const target: HNode = this.graph.map.get(d.target)!;
+
+                this.debug("\tsource", source);
+                this.debug("\ttarget", target);
+
+                // can't have the path end in the center path each time
+                // so an offset is added, based on the height of the nodes before it
+                let targetOffset: number = 0;
+                this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
+                for (const l of this.graph.links) {
+                    if (l.target != target.id) {
+                        continue;
+                    }
+
+                    if (l.source == source.id) {
+                        break;
+                    }
+                    this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
+                    targetOffset += l.dy;
+                }
+
+                let sourceOffset: number = 0;
+                this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
+                for (const l of this.graph.links) {
+                    if (l.source != source.id) {
+                        continue;
+                    }
+
+                    if (l.target == target.id) {
+                        break;
+                    }
+                    this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
+                    sourceOffset += l.dy;
+                }
+
+                const x0 = source.x + source.dx;
+                const x1 = target.x;
+                const x2 = x0 * (1 - 0.5) + x1 * 0.5;
+                const x3 = x0 * (1 - 0.5) + x1 * 0.5;
+                const y0 = source.y + sourceOffset + (d.dy / 2);
+                const y1 = target.y + targetOffset + (d.dy / 2);
+
+                const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
+                this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
+
+                return p;
+            },
+
+            /**
+             * listener for when a path is clicked on
+             * @param ev
+             * @param link
+             */
+            pathClickListener: function(ev: any, link: HLink): void {
+                if (ev.button != 0) {
+                    return;
+                }
+
+                const source: HNode = this.graph.map.get(link.source)!;
+                const target: HNode = this.graph.map.get(link.target)!;
+
+                const popperDiv: HTMLElement | null = document.getElementById("popper-div");
+                if (popperDiv == null) {
+                    console.error(`Missing tooltip element '#popper-div'`);
+                    return;
+                }
+
+                console.log(ev);
+                popperDiv.style.display = "block";
+                popperDiv.style.left = `${ev.clientX}px`;
+                popperDiv.style.top = `${ev.clientY}px`;
+
+                /*
+                if (ev.clientY > (window.innerHeight / 2)) {
+                } else {
+                    popperDiv.style.bottom = `${ev.clientY}px`;
+                }
+                */
+
+                const charIDs: string[] = this.graph.diff.getWeek(target.timestamp.getTime()).getCharacters(source.outfitID, target.outfitID);
+
+                this.popper.characters = charIDs.map((charID: string) => {
+                    return this.charMap.get(charID);
+                }).filter((iter: PsCharacter | undefined) => iter != undefined).map(iter => iter!);
+
+                this.popper.characters.sort((a, b) => a.name.localeCompare(b.name));
+
+                this.popper.title = `Between ${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} and ${TimeUtils.formatNoTimezone(target.timestamp, "YYYY-MM-DD")}`;
+
+                this.popper.outfitAID = source.outfitID;
+                this.popper.outfitA = this.outfitMap.get(source.outfitID);
+                this.popper.outfitBID = target.outfitID;
+                this.popper.outfitB = this.outfitMap.get(target.outfitID);
             },
 
             /**
