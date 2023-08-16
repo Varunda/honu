@@ -374,19 +374,7 @@
 
                 this.debug(`d3 stuff`);
 
-                /*
-                const s = d3.sankey()
-                    .nodeWidth(30)
-                    .nodePadding(20)
-                    .size([10000, 1080]);
-                    */
-
-                this.debug("svg: ", svg);
-
-                //this.debug("s: ", s);
-
                 const zoom = d3.zoom();
-
                 zoom.scaleExtent([1, 40])
                     .translateExtent([[-100, -100], [width + 90, height + 100]])
                     .filter((ev: any) => {
@@ -410,11 +398,6 @@
                 for (const node of this.graph.nodes) {
                     nodeMap.set(node.id, node);
                 }
-
-                /*
-                s.nodes(this.graph.nodes)
-                    .links(this.graph.links);
-                    */
 
                 this.debug(this.graph.nodes);
                 this.debug(this.graph.links);

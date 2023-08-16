@@ -80,8 +80,8 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	public static async getByIDs(charIDs: string[]): Promise<Loading<PsCharacter[]>> {
 		const chars: PsCharacter[] = [];
 
-		for (let i = 0; i < charIDs.length; i += 500) {
-			const slice: string[] = charIDs.slice(i, i + 500);
+		for (let i = 0; i < charIDs.length; i += 200) {
+			const slice: string[] = charIDs.slice(i, i + 200);
 
 			const l: Loading<PsCharacter[]> = await CharacterApi.getByIDsInternal(slice);
 			if (l.state != "loaded") {

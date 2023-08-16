@@ -156,8 +156,8 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 	public static async getByIDs(outfitIDs: string[]): Promise<Loading<PsOutfit[]>> {
 		const outfits: PsOutfit[] = [];
 
-		for (let i = 0; i < outfitIDs.length; i += 500) {
-			const slice: string[] = outfitIDs.slice(i, i + 500);
+		for (let i = 0; i < outfitIDs.length; i += 200) {
+			const slice: string[] = outfitIDs.slice(i, i + 200);
 
 			const l: Loading<PsOutfit[]> = await OutfitApi.getByIDsInternal(slice);
 			if (l.state != "loaded") {
