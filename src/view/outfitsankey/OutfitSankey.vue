@@ -7,7 +7,7 @@
                 <menu-sep></menu-sep>
 
                 <li class="nav-item h1 p-0">
-                    <a href="/outfitsankey">Sankey</a>
+                    <a href="/outfitfinder">Outfit</a>
                 </li>
 
                 <menu-sep></menu-sep>
@@ -237,6 +237,8 @@
                     links: [] as HLink[],
 
                     map: new Map() as Map<string, HNode>,
+                    linkSourceMap: new Map() as Map<string, HLink[]>,
+                    linkTargetMap: new Map() as Map<string, HLink[]>,
                     diff: new MembershipDifferences() as MembershipDifferences
                 },
 
@@ -443,6 +445,21 @@
                         return target.color;
                     });
 
+                this.graph.linkSourceMap.clear();
+                this.graph.linkTargetMap.clear();
+                for (const link of this.graph.links) {
+                    if (this.graph.linkSourceMap.has(link.source) == false) {
+                        this.graph.linkSourceMap.set(link.source, []);
+                    }
+
+                    this.graph.linkSourceMap.get(link.source)!.push(link);
+
+                    if (this.graph.linkTargetMap.has(link.target) == false) {
+                        this.graph.linkTargetMap.set(link.target, []);
+                    }
+                    this.graph.linkTargetMap.get(link.target)!.push(link);
+                }
+
                 // build the path elements
                 this.debug("building links");
                 const paths = svg.append("g")
@@ -521,6 +538,17 @@
                 // so an offset is added, based on the height of the nodes before it
                 let targetOffset: number = 0;
                 this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
+
+                let targetOffset2: number = 0;
+                const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
+                for (const l of targetLinks) {
+                    if (l.source == source.id) {
+                        break;
+                    }
+                    targetOffset2 += l.dy;
+                }
+
+                /*
                 for (const l of this.graph.links) {
                     if (l.target != target.id) {
                         continue;
@@ -532,9 +560,24 @@
                     this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
                     targetOffset += l.dy;
                 }
+                if (targetOffset != targetOffset2) {
+                    console.log(`target offset mismatch: ${targetOffset} ${targetOffset2}`);
+                }
+                */
 
                 let sourceOffset: number = 0;
                 this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
+
+                let sourceOffset2: number = 0;
+                const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
+                for (const l of sourceLinks) {
+                    if (l.target == target.id) {
+                        break;
+                    }
+                    sourceOffset2 += l.dy;
+                }
+
+                /*
                 for (const l of this.graph.links) {
                     if (l.source != source.id) {
                         continue;
@@ -547,12 +590,17 @@
                     sourceOffset += l.dy;
                 }
 
+                if (sourceOffset != sourceOffset2) {
+                    console.log(`mismatch of source offset ${sourceOffset} ${sourceOffset2}`);
+                }
+                */
+
                 const x0 = source.x + source.dx;
                 const x1 = target.x;
                 const x2 = x0 * (1 - 0.5) + x1 * 0.5;
                 const x3 = x0 * (1 - 0.5) + x1 * 0.5;
-                const y0 = source.y + sourceOffset + (d.dy / 2);
-                const y1 = target.y + targetOffset + (d.dy / 2);
+                const y0 = source.y + sourceOffset2 + (d.dy / 2);
+                const y1 = target.y + targetOffset2 + (d.dy / 2);
 
                 const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
                 this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
