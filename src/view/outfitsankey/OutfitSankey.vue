@@ -28,7 +28,87 @@
             </progress-bar>
         </div>
 
+        <div v-if="progress.step != ''">
+            <span class="h3">
+                {{progress.step}}
+            </span>
+            <busy class="honu-busy-lg"></busy>
+        </div>
+
+        <div id="popper-root" style="z-index: 10000;"></div>
+
         <div id="d3_canvas"></div>
+
+        <div id="popper-div" style="display: none; background-color: var(--secondary); color: white; border: 2px var(--light) solid; position: fixed;">
+            <div class="d-flex bg-dark" style="align-items: center;">
+                <strong class="flex-grow-1 px-2">
+                    {{popper.title}}
+                </strong>
+
+                <button type="button" class="btn flex-grow-0" @click="closePopper">
+                    &times;
+                </button>
+            </div>
+
+            <div class="bg-dark px-2 pb-2">
+                <span>
+                    {{popper.characters.length}} players
+                </span>
+
+                <span v-if="popper.outfitAID == popper.outfitBID">
+                    stayed in 
+                    <span v-if="popper.outfitAID == '0'" >
+                        no outfit
+                    </span>
+                    <span v-else-if="popper.outfitA != undefined">
+                        <a :href="'/o/' + popper.outfitA.id">
+                            <span v-if="popper.outfitA.tag != null">
+                                [{{popper.outfitA.tag}}]
+                            </span>
+                            {{popper.outfitA.name}}
+                        </a>
+                    </span>
+                </span>
+
+                <span v-else-if="popper.outfitAID != popper.outfitBID">
+                    left 
+                    <span v-if="popper.outfitAID == '0'">
+                        no outfit
+                    </span>
+                    <span v-else-if="popper.outfitA != undefined">
+                        <a :href="'/o/' + popper.outfitA.id">
+                            <span v-if="popper.outfitA.tag != null">
+                                [{{popper.outfitA.tag}}]
+                            </span>
+                            {{popper.outfitA.name}}
+                        </a>
+                    </span>
+                    for
+
+                    <span v-if="popper.outfitBID == '0'">
+                        no outfit
+                    </span>
+                    <span v-else-if="popper.outfitB != undefined">
+                        <a :href="'/o/' + popper.outfitBID">
+                            <span v-if="popper.outfitB.tag != null">
+                                [{{popper.outfitB.tag}}]
+                            </span>
+                            {{popper.outfitB.name}}
+                        </a>
+                    </span>
+                </span>
+            </div>
+
+            <div style="max-height: 30vh; overflow: auto">
+                <ul style="padding-left: 20px">
+                    <li v-for="c in popper.characters" class="pr-1">
+                        <a :href="'/c/' + c.id">
+                            {{c.name}}
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
     </div>
 </template>
@@ -39,6 +119,7 @@
     import { Loadable, Loading } from "Loading";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsOutfit, OutfitApi } from "api/OutfitApi";
+    import { CharacterApi, PsCharacter } from "api/CharacterApi";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
@@ -47,13 +128,21 @@
     import ProgressBar from "components/ProgressBar.vue";
 
     import TimeUtils from "util/Time";
+    import * as moment from "moment";
 
     const d3: any = (window as any).d3;
+
+    /// @ts-ignore
+    import * as d3z from "node_modules/d3-zoom/dist/d3-zoom.js";
 
     import ColorUtils from "util/Color";
 
     type HNode = {
         id: string;
+
+        outfitID: string;
+        timestamp: Date;
+
         name: string;
         color: string;
         x: number;
@@ -73,6 +162,38 @@
         dy: number;
     };
 
+    class MembershipDifferenceWeek {
+        private map: Map<string, string[]> = new Map();
+
+        public getCharacters(outfitA: string, outfitB: string): string[] {
+            const key: string = `${outfitA}-${outfitB}`;
+            return this.map.get(key) ?? [];
+        }
+
+        public addCharacter(outfitA: string, outfitB: string, charID: string): void {
+            const key: string = `${outfitA}-${outfitB}`;
+            if (this.map.has(key) == false) {
+                this.map.set(key, []);
+            }
+
+            this.map.get(key)!.push(charID);
+        }
+
+    }
+
+    class MembershipDifferences {
+        private map: Map<number, MembershipDifferenceWeek> = new Map();
+
+        public getWeek(n: number): MembershipDifferenceWeek {
+            if (this.map.has(n) == false) {
+                this.map.set(n, new MembershipDifferenceWeek());
+            }
+
+            return this.map.get(n)!;
+        }
+
+    }
+
     export const OutfitSankey = Vue.extend({
         props: {
 
@@ -85,6 +206,10 @@
                 outfit: Loadable.idle() as Loading<PsOutfit>,
                 sessions: Loadable.idle() as Loading<Session[]>,
                 outfits: Loadable.idle() as Loading<PsOutfit[]>,
+                outfitMap: new Map() as Map<string, PsOutfit>,
+
+                characters: Loadable.idle() as Loading<PsCharacter[]>,
+                charMap: new Map() as Map<string, PsCharacter>,
 
                 interval: 1000 * 60 * 60 * 24 * 7 as number, // 1000 ms, 60 seconds, 60 minutes, 24 hours, 7 days
 
@@ -92,12 +217,28 @@
 
                 graph: {
                     nodes: [] as HNode[],
-                    links: [] as HLink[]
+                    links: [] as HLink[],
+
+                    map: new Map() as Map<string, HNode>,
+                    diff: new MembershipDifferences() as MembershipDifferences
                 },
 
                 outfitColors: new Map() as Map<string, string>,
 
+                popper: {
+                    title: "" as string,
+                    header: "" as string,
+                    characters: [] as PsCharacter[],
+
+                    outfitAID: "" as string,
+                    outfitBID: "" as string,
+
+                    outfitA: undefined as PsOutfit | undefined,
+                    outfitB: undefined as PsOutfit | undefined
+                },
+
                 progress: {
+                    step: "" as string,
                     initial: false as boolean,
                     current: 0 as number,
                     total: 0 as number
@@ -112,10 +253,25 @@
 
         mounted: function(): void {
             this.$nextTick(async () => {
+                this.progress.step = "parsing outfit ID";
+                this.parseOutfit();
+
+                this.progress.step = "loading outfit sessions";
                 await this.getSessions();
+
+                this.progress.step = "loading outfit data";
                 await this.getOutfits();
+
+                this.progress.step = "loading characters";
+                await this.getCharacters();
+
+                this.progress.step = "loading data";
                 this.makeData(10000, 1080);
-                this.d3s();
+
+                this.progress.step = "creating graphic";
+                this.d3s(10000, 1080);
+
+                this.progress.step = "";
             });
         },
 
@@ -135,9 +291,24 @@
                 }
             },
 
-            makeNode: function(id: string, name: string, value: number, x?: number, y?: number): HNode {
+            parseOutfit: async function(): Promise<void> {
+                const o: Loading<PsOutfit> = await OutfitApi.getByID(this.outfitID);
+                if (o.state == "nocontent") {
+                    document.title = `Honu / Outfit / <not found> / Sankey`;
+                } else if (o.state == "loaded") {
+                    document.title = `Honu / Outfit / ${o.data.name} / Sankey`;
+
+                    const url = new URL(location.href);
+                    url.searchParams.set("tag", o.data.tag ?? o.data.name);
+                    history.replaceState({ path: url.href }, "", url.href);
+                }
+            },
+
+            makeNode: function(id: string, outfitID: string, name: string, value: number, x?: number, y?: number): HNode {
                 return {
                     id: id,
+                    outfitID: outfitID,
+                    timestamp: new Date(),
                     name: name,
                     color: ColorUtils.randomColorSingle(),
                     x: x ?? Math.random() * 1920,
@@ -176,50 +347,40 @@
                 }
             },
 
-            d3s: function(): void {
+            d3s: function(width: number, height: number): void {
+                console.time("do d3");
+
                 const svg = d3.select("#d3_canvas").append("svg")
-                    .attr("width", 10000)
-                    .attr("height", 1080)
-                    .attr("viewBox", [0, 0, 10000, 1080]);
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("viewBox", [0, 0, width, height]);
 
                 this.debug(`d3 stuff`);
 
                 const s = d3.sankey()
                     .nodeWidth(30)
                     .nodePadding(20)
-                    .size([1920, 1080]);
+                    .size([10000, 1080]);
 
                 this.debug("svg: ", svg);
 
                 this.debug("s: ", s);
 
-                /*
-                const graph = {
-                    nodes: [
-                        this.makeNode("0", "node0", 20, 0, 0),
-                        this.makeNode("1", "node1", 80, 0, 20),
-                        this.makeNode("2", "node2", 100, 100, 0),
-                        this.makeNode("3", "node3", 30, 200, 0),
-                        this.makeNode("4", "node4", 30, 200, 30),
-                        this.makeNode("5", "node5", 40, 200, 60),
-                        this.makeNode("6", "node6", 50, 300, 0),
-                        this.makeNode("7", "node7", 50, 300, 50)
-                    ] as HNode[],
-                    links: [] as HLink[]
-                };
+                const zoom = d3.zoom();
 
-                graph.links.push(this.makeLink(graph.nodes[0], graph.nodes[2], 20));
-                graph.links.push(this.makeLink(graph.nodes[1], graph.nodes[2], 80));
-                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[5], 40));
-                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[4], 30));
-                graph.links.push(this.makeLink(graph.nodes[2], graph.nodes[3], 30));
-                graph.links.push(this.makeLink(graph.nodes[3], graph.nodes[6], 15));
-                graph.links.push(this.makeLink(graph.nodes[4], graph.nodes[6], 15));
-                graph.links.push(this.makeLink(graph.nodes[5], graph.nodes[6], 20));
-                graph.links.push(this.makeLink(graph.nodes[3], graph.nodes[7], 15));
-                graph.links.push(this.makeLink(graph.nodes[4], graph.nodes[7], 15));
-                graph.links.push(this.makeLink(graph.nodes[5], graph.nodes[7], 20));
-                */
+                zoom.scaleExtent([1, 40])
+                    .translateExtent([[-100, -100], [width + 90, height + 100]])
+                    .filter((ev: any) => {
+                        ev.preventDefault();
+                        return (!ev.ctrlKey || ev.type == "wheel") && !ev.button;
+                    })
+                    .on("zoom", zoomed);
+
+                //svg.call(zoom)//.node();
+
+                function zoomed({ transform }: any) {
+                    svg.attr("transform", transform);
+                }
 
                 for (const node of this.graph.nodes) {
                     node.sourceLinks.sort((a, b) => a.y - b.y);
@@ -348,16 +509,65 @@
                         return `url(#${d.source}-${d.target})`;
                     })
                     .attr("fill", "none")
+                    .on("mouseup", (ev: any, link: HLink) => {
+                        if (ev.button != 0) {
+                            return;
+                        }
+
+                        const source: HNode = this.graph.map.get(link.source)!;
+                        const target: HNode = this.graph.map.get(link.target)!;
+
+                        const popperDiv: HTMLElement | null = document.getElementById("popper-div");
+                        if (popperDiv == null) {
+                            console.error(`Missing tooltip element '#popper-div'`);
+                            return;
+                        }
+
+                        console.log(ev);
+                        popperDiv.style.display = "block";
+                        popperDiv.style.left = `${ev.clientX}px`;
+                        popperDiv.style.top = `${ev.clientY}px`;
+
+                        const charIDs: string[] = this.graph.diff.getWeek(target.timestamp.getTime()).getCharacters(source.outfitID, target.outfitID);
+
+                        this.popper.characters = charIDs.map((charID: string) => {
+                            return this.charMap.get(charID);
+                        }).filter((iter: PsCharacter | undefined) => iter != undefined).map(iter => iter!);
+
+                        this.popper.characters.sort((a, b) => a.name.localeCompare(b.name));
+
+                        this.popper.title = `Between ${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} and ${TimeUtils.formatNoTimezone(target.timestamp, "YYYY-MM-DD")}`;
+                        this.popper.header = `${charIDs.length} characters`;
+
+                        this.popper.outfitAID = source.outfitID;
+                        this.popper.outfitA = this.outfitMap.get(source.outfitID);
+                        this.popper.outfitBID = target.outfitID;
+                        this.popper.outfitB = this.outfitMap.get(target.outfitID);
+
+                        if (source.outfitID == target.outfitID) {
+                            this.popper.header += `stayed in ${source.name}`;
+                        } else {
+                            this.popper.header += `left ${source.name} to join ${target.name}`;
+                        }
+                    })
                     .style("stroke-width", (d: HLink) => {
                         return d.dy;
                     });
+
+                paths.sort((a: HLink, b: HLink) => {
+                    return b.value - a.value;
+                });
 
                 this.debug("building link text");
                 paths.append("title")
                     .text((d: HLink) => {
                         const source: HNode = nodeMap.get(d.source)!;
                         const target: HNode = nodeMap.get(d.target)!;
-                        return `${source.name} to ${target.name}: ${d.value}`;
+
+                        const weekEnd: Date = new Date(source.timestamp.getTime() + this.interval);
+
+                        return `${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} - ${TimeUtils.formatNoTimezone(weekEnd, "YYYY-MM-DD")}`
+                            + `\n${source.name} to ${target.name}: ${d.value}`;
                     });
 
                 this.debug("building nodes");
@@ -375,72 +585,13 @@
                     .style("stroke", "#000")
                     .append("title")
                     .text((d: HNode) => `${d.name}: ${d.value}`);
+
+                console.timeEnd("do d3");
             },
 
-            /**
-             * Get all the sessions relevant to load the outfit's sankey
-             */
-            getSessions: async function(): Promise<void> {
-                this.sessions = Loadable.loading();
-
-                const all: Session[] = [];
-
-                const s: Loading<Session[]> = await SessionApi.getByOutfit(this.outfitID);
-                if (s.state != "loaded") {
-                    return;
-                }
-                this.progress.initial = true;
-
-                console.log(`${s.data.length} from outfit`);
-
-                all.push(...s.data);
-
-                const charIDs: string[] = s.data.map(iter => iter.characterID).filter((v, i, a) => a.indexOf(v) == i);
-                this.progress.total = charIDs.length;
-
-                for (const id of charIDs) {
-                    const charSessions: Loading<Session[]> = await SessionApi.getByCharacterID(id);
-                    if (charSessions.state == "loaded") {
-                        all.push(...charSessions.data);
-                    } else {
-                        console.warn(`got state ${charSessions.state} to get`);
-                    }
-                    ++this.progress.current;
-                }
-
-                console.log(`${all.length} sessions loaded`);
-
-                const map: Map<number, Session> = new Map();
-                for (const session of all) {
-                    map.set(session.id, session);
-                }
-
-                this.sessions = Loadable.loaded(Array.from(map.values()));
-            },
-
-            /**
-             * Get all the outfits from the sessions that are loaded
-             */
-            getOutfits: async function(): Promise<void> {
-                if (this.sessions.state != "loaded") {
-                    return console.warn(`cannot get outfits, sessions is ${this.sessions.state} is not 'loaded'`);
-                }
-
-                const outfitIDs: string[] = this.sessions.data.filter(iter => iter.outfitID != null)
-                    .map(iter => iter.outfitID!)
-                    .filter((v, i, a) => a.indexOf(v) == i);
-
-                this.outfits = Loadable.loading();
-                this.outfits = await OutfitApi.getByIDs(outfitIDs);
-
-                if (this.outfits.state == "loaded") {
-                    this.outfitColors.clear();
-                    const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
-
-                    for (let i = 0; i < this.outfits.data.length; ++i) {
-                        const outfitID: string = this.outfits.data[i].id;
-                        this.outfitColors.set(outfitID, colors[i]);
-                    }
+            makeNodeMap: function(): void {
+                for (const node of this.graph.nodes) {
+                    this.graph.map.set(node.id, node);
                 }
             },
 
@@ -463,7 +614,7 @@
                 const firstSession: Session = this.sessions.data.sort((a, b) => a.start.getTime() - b.start.getTime())[0];
                 console.log(`first session at ${firstSession.start}`);
 
-                const day: Date = firstSession.start;
+                const day: Date = moment(firstSession.start).weekday(0).toDate();
                 day.setUTCHours(0);
                 day.setUTCMinutes(0);
                 day.setUTCSeconds(0);
@@ -477,12 +628,26 @@
 
                 const c: Map<string, string> = new Map();
 
+                const charMap: Map<string, PsCharacter> = new Map();
+                if (this.characters.state == "loaded") {
+                    for (const char of this.characters.data) {
+                        charMap.set(char.id, char);
+                    }
+                }
+
                 // set initial outfits
                 for (const session of this.sessions.data) {
                     if (c.has(session.characterID) == true) {
                         continue;
                     }
-                    c.set(session.characterID, session.outfitID ?? "0");
+
+                    // if a character was created after the first session, set them as no outfit
+                    const char: PsCharacter | undefined = charMap.get(session.characterID);
+                    if (char != undefined && char.dateCreated >= day) {
+                        c.set(session.characterID, "0");
+                    } else {
+                        c.set(session.characterID, session.outfitID ?? "0");
+                    }
                 }
 
                 const characterCount: number = c.size;
@@ -496,15 +661,27 @@
 
                 let index: number = 0;
 
+                // put each session into a corresponding bucket for quicker retrieval 
+                const buckets: Map<number, Session[]> = new Map();
+                for (const session of this.sessions.data) {
+                    const slice: number = Math.floor(session.start.getTime() / this.interval);
+
+                    if (buckets.has(slice) == false) {
+                        buckets.set(slice, []);
+                    }
+
+                    buckets.get(slice)!.push(session);
+                }
+
+                console.time("make data");
+
+                // go thru each week, instead of each bucket, as a bucket may be empty
                 for (let i = day.getTime(); i <= now.getTime(); i += this.interval) {
                     if (index++ >= 2) {
                         //break;
                     }
 
-                    const slice: Session[] = this.sessions.data.filter((iter: Session) => {
-                        const time: number = iter.start.getTime();
-                        return time >= i && time <= (i + this.interval);
-                    });
+                    const slice: Session[] = buckets.get(Math.floor(i / this.interval)) ?? [];
 
                     // copy the previous outfits to a new one
                     const previousOutfitMembership: Map<string, string> = new Map();
@@ -524,7 +701,7 @@
                     let count: number = 0;
 
                     for (const outfitID of outfitIDs) {
-                        let outfit: HNode = this.makeNode(`${i}-${outfitID}`, `${outfitID}`, 0, 0, 0);
+                        let outfit: HNode = this.makeNode(`${i}-${outfitID}`, outfitID, `${outfitID}`, 0, 0, 0);
 
                         this.debug(`\tChecking outfit ${outfitID}/${outfit.id}`);
 
@@ -543,9 +720,11 @@
                                     diffMap.set(previousOutfitID, (diffMap.get(previousOutfitID) ?? 0) + 1);
                                     this.trace(`\t\t${charID} went from ${previousOutfitID} to ${value}`);
                                 }
+                                this.graph.diff.getWeek(i).addCharacter(previousOutfitID, outfitID, charID);
                             }
                         });
 
+                        outfit.timestamp = new Date(i);
                         outfit.value = outfitCount;
                         outfit.y = (count / characterCount) * height;
                         outfit.x = ((i - day.getTime()) / (now.getTime() - day.getTime())) * width;
@@ -558,7 +737,7 @@
                         } else {
                             outfit.name = this.outfits.data.find(iter => iter.id == outfitID)?.name ?? `<missing ${outfitID}>`;
                         }
-                        outfit.name += ` ${outfitID}`;
+                        //outfit.name += ` ${outfitID}`;
 
                         count += outfit.value;
 
@@ -599,9 +778,122 @@
                     if (count != characterCount) {
                         console.warn(`mismatched number of characters! expected ${characterCount}, got ${count} instead`);
                     }
-
                 }
-            }
+
+                this.makeNodeMap();
+
+                console.timeEnd("make data");
+            },
+
+            /**
+             * Get all the sessions relevant to load the outfit's sankey
+             */
+            getSessions: async function(): Promise<void> {
+                this.sessions = Loadable.loading();
+
+                const all: Session[] = [];
+
+                const s: Loading<Session[]> = await SessionApi.getByOutfit(this.outfitID);
+                if (s.state != "loaded") {
+                    return;
+                }
+                this.progress.initial = true;
+
+                console.time("get sessions");
+
+                console.log(`${s.data.length} from outfit`);
+
+                all.push(...s.data);
+
+                const charIDs: string[] = s.data.map(iter => iter.characterID).filter((v, i, a) => a.indexOf(v) == i);
+                this.progress.total = charIDs.length;
+
+                for (const id of charIDs) {
+                    const charSessions: Loading<Session[]> = await SessionApi.getByCharacterID(id);
+                    if (charSessions.state == "loaded") {
+                        all.push(...charSessions.data);
+                    } else {
+                        console.warn(`got state ${charSessions.state} to get sessions for ${id}`);
+                    }
+                    ++this.progress.current;
+                }
+
+                console.log(`${all.length} sessions loaded`);
+
+                const map: Map<number, Session> = new Map();
+                for (const session of all) {
+                    map.set(session.id, session);
+                }
+
+                this.sessions = Loadable.loaded(Array.from(map.values()));
+
+                console.timeEnd("get sessions");
+            },
+
+            /**
+             * Get all the outfits from the sessions that are loaded
+             */
+            getOutfits: async function(): Promise<void> {
+                if (this.sessions.state != "loaded") {
+                    return console.warn(`cannot get outfits, sessions is ${this.sessions.state} is not 'loaded'`);
+                }
+
+                console.time("get outfits");
+
+                const outfitIDs: string[] = this.sessions.data.filter(iter => iter.outfitID != null)
+                    .map(iter => iter.outfitID!)
+                    .filter((v, i, a) => a.indexOf(v) == i);
+
+                this.outfits = Loadable.loading();
+                this.outfits = await OutfitApi.getByIDs(outfitIDs);
+
+                if (this.outfits.state == "loaded") {
+                    this.outfitColors.clear();
+                    const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
+
+                    for (let i = 0; i < this.outfits.data.length; ++i) {
+                        const outfitID: string = this.outfits.data[i].id;
+                        this.outfitColors.set(outfitID, colors[i]);
+                    }
+
+                    for (const outfit of this.outfits.data) {
+                        this.outfitMap.set(outfit.id, outfit);
+                    }
+                }
+
+                console.timeEnd("get outfits");
+            },
+
+            getCharacters: async function(): Promise<void> {
+                if (this.sessions.state != "loaded") {
+                    return console.warn(`cannot get characters, sessions is ${this.sessions.state} is not 'loaded'`);
+                }
+
+                console.time("get characters");
+
+                const charIDs: string[] = this.sessions.data.map(iter => iter.characterID)
+                    .filter((v, i, a) => a.indexOf(v) == i);
+
+                this.characters = Loadable.loading();
+                this.characters = await CharacterApi.getByIDs(charIDs);
+
+                if (this.characters.state == "loaded") {
+                    this.charMap.clear();
+                    for (const c of this.characters.data) {
+                        this.charMap.set(c.id, c);
+                    }
+                }
+
+                console.timeEnd("get characters");
+            },
+
+            closePopper: function (): void {
+                const tooltip: HTMLElement | null = document.getElementById("popper-div");
+                if (tooltip != null) {
+                    tooltip.style.display = "none";
+                }
+            },
+
         },
 
         components: {

@@ -1,4 +1,4 @@
-﻿import { Loading } from "Loading";
+﻿import { Loading, Loadable } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
 import { KillEvent } from "api/KillStatApi";
@@ -78,6 +78,23 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	}
 
 	public static async getByIDs(charIDs: string[]): Promise<Loading<PsCharacter[]>> {
+		const chars: PsCharacter[] = [];
+
+		for (let i = 0; i < charIDs.length; i += 500) {
+			const slice: string[] = charIDs.slice(i, i + 500);
+
+			const l: Loading<PsCharacter[]> = await CharacterApi.getByIDsInternal(slice);
+			if (l.state != "loaded") {
+				return l;
+			} else {
+				chars.push(...l.data);
+            }
+        }
+
+		return Loadable.loaded(chars);
+	}
+
+	public static async getByIDsInternal(charIDs: string[]): Promise<Loading<PsCharacter[]>> {
 		const params: URLSearchParams = new URLSearchParams();
 		for (const charID of charIDs) {
 			params.append("IDs", charID);
