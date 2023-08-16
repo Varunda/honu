@@ -832,12 +832,15 @@
 
                 console.log(`${all.length} sessions loaded`);
 
+                // remove duplicates
+                console.time("sessions: get unique");
                 const map: Map<number, Session> = new Map();
                 for (const session of all) {
                     map.set(session.id, session);
                 }
 
                 this.sessions = Loadable.loaded(Array.from(map.values()));
+                console.timeEnd("sessions: get unique");
 
                 console.timeEnd("get sessions");
             },
@@ -852,14 +855,19 @@
 
                 console.time("get outfits");
 
+                console.time("outfits: get unique")
                 const outfitIDs: string[] = this.sessions.data.filter(iter => iter.outfitID != null)
                     .map(iter => iter.outfitID!)
                     .filter((v, i, a) => a.indexOf(v) == i);
+                console.timeEnd("outfits: get unique");
 
+                console.time("outfits: load api");
                 this.outfits = Loadable.loading();
                 this.outfits = await OutfitApi.getByIDs(outfitIDs);
+                console.timeEnd("outfits: load api");
 
                 if (this.outfits.state == "loaded") {
+                    console.time("outfits: colors");
                     this.outfitColors.clear();
                     const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
 
@@ -871,6 +879,7 @@
                     for (const outfit of this.outfits.data) {
                         this.outfitMap.set(outfit.id, outfit);
                     }
+                    console.timeEnd("outfits: colors");
                 }
 
                 console.timeEnd("get outfits");
@@ -883,17 +892,23 @@
 
                 console.time("get characters");
 
+                console.time("chars: get unique");
                 const charIDs: string[] = this.sessions.data.map(iter => iter.characterID)
                     .filter((v, i, a) => a.indexOf(v) == i);
+                console.timeEnd("chars: get unique");
 
+                console.time("chars: load api");
                 this.characters = Loadable.loading();
                 this.characters = await CharacterApi.getByIDs(charIDs);
+                console.timeEnd("chars: load api");
 
                 if (this.characters.state == "loaded") {
+                    console.time("chars: map");
                     this.charMap.clear();
                     for (const c of this.characters.data) {
                         this.charMap.set(c.id, c);
                     }
+                    console.timeEnd("chars: map");
                 }
 
                 console.timeEnd("get characters");
