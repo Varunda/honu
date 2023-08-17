@@ -13,7 +13,7 @@
                 <menu-sep></menu-sep>
 
                 <li class="nav-item h1 p-0">
-                    <span v-if="outfit.state == 'loading'">
+                    <span v-if="outfit.state == 'idle' || outfit.state == 'loading'">
                         &lt;Loading...&gt;
                     </span>
 
@@ -51,9 +51,29 @@
             <busy class="honu-busy-lg"></busy>
         </div>
 
-        <div id="popper-root" style="z-index: 10000;"></div>
+        <div>
+            help text
 
-        <div id="d3_canvas"></div>
+            <div>
+                what is this?
+            </div>
+
+            <div class="input-group">
+                <select v-if="characters.state == 'loaded'" v-model="follow.characterID" class="form-control">
+                    <option v-for="c in follow.sortedCharacters" :value="c.id">
+                        {{c.name}}
+                    </option>
+                </select>
+                <button class="btn btn-secondary btn-group-addon" @click="closeFollowCharacter">
+                    Clear
+                </button>
+            </div>
+
+        </div>
+
+        <div id="d3_canvas" style="overflow: auto;">
+
+        </div>
 
         <div id="popper-div" style="display: none; background-color: var(--secondary); color: white; border: 2px var(--light) solid; position: fixed;">
             <div class="d-flex bg-dark" style="align-items: center;">
@@ -73,46 +93,15 @@
 
                 <span v-if="popper.outfitAID == popper.outfitBID">
                     stayed in 
-                    <span v-if="popper.outfitAID == '0'" >
-                        no outfit
-                    </span>
-                    <span v-else-if="popper.outfitA != undefined">
-                        <a :href="'/o/' + popper.outfitA.id">
-                            <span v-if="popper.outfitA.tag != null">
-                                [{{popper.outfitA.tag}}]
-                            </span>
-                            {{popper.outfitA.name}}
-                        </a>
-                    </span>
+                    <outfit-name :outfit-id="popper.outfitAID" :outfit="popper.outfitA"></outfit-name>
                 </span>
 
                 <span v-else-if="popper.outfitAID != popper.outfitBID">
                     left 
-                    <span v-if="popper.outfitAID == '0'">
-                        no outfit
-                    </span>
-                    <span v-else-if="popper.outfitA != undefined">
-                        <a :href="'/o/' + popper.outfitA.id">
-                            <span v-if="popper.outfitA.tag != null">
-                                [{{popper.outfitA.tag}}]
-                            </span>
-                            {{popper.outfitA.name}}
-                        </a>
-                    </span>
+                    <outfit-name :outfit-id="popper.outfitAID" :outfit="popper.outfitA"></outfit-name>
 
                     for
-
-                    <span v-if="popper.outfitBID == '0'">
-                        no outfit
-                    </span>
-                    <span v-else-if="popper.outfitB != undefined">
-                        <a :href="'/o/' + popper.outfitBID">
-                            <span v-if="popper.outfitB.tag != null">
-                                [{{popper.outfitB.tag}}]
-                            </span>
-                            {{popper.outfitB.name}}
-                        </a>
-                    </span>
+                    <outfit-name :outfit-id="popper.outfitBID" :outfit="popper.outfitB"></outfit-name>
                 </span>
             </div>
 
@@ -121,6 +110,10 @@
                     <li v-for="c in popper.characters" class="pr-1">
                         <a :href="'/c/' + c.id">
                             {{c.name}}
+
+                            <span v-if="c.dateCreated.getTime() > popper.timestamp.getTime()" class="text-danger" title="This character was not created yet!" style="text-decoration: underline; padding-left: 0.25rem;">
+                                *
+                            </span>
                         </a>
                     </li>
                 </ul>
@@ -131,7 +124,7 @@
 </template>
 
 <script lang="ts">
-    import Vue from "vue";
+    import Vue, { PropType } from "vue";
 
     import { Loadable, Loading } from "Loading";
     import { Session, SessionApi } from "api/SessionApi";
@@ -179,8 +172,16 @@
         dy: number;
     };
 
-    class MembershipDifferenceWeek {
+    /**
+     * Class that representes the changes from one week to another
+     */
+    class MembershipWeek {
+        public week: number = 0;
         private map: Map<string, string[]> = new Map();
+
+        constructor(week: number) {
+            this.week = week;
+        }
 
         public getCharacters(outfitA: string, outfitB: string): string[] {
             const key: string = `${outfitA}-${outfitB}`;
@@ -196,20 +197,79 @@
             this.map.get(key)!.push(charID);
         }
 
+        public getCharacterPath(charID: string): string {
+            let path: string | undefined = undefined;
+
+            this.map.forEach((charIDs: string[], pathId: string) => {
+                if (charIDs.indexOf(charID) > -1) {
+                    path = pathId;
+                    return;
+                }
+            });
+
+            if (path == undefined) {
+                console.error(`${charID} was not in the membership for week ${this.week}`);
+            }
+
+            return path ?? "0-0";
+        }
+
     }
 
-    class MembershipDifferences {
-        private map: Map<number, MembershipDifferenceWeek> = new Map();
+    /**
+     * utility class that holds the weekly membership of each outfit
+     */
+    class Membership {
+        private map: Map<number, MembershipWeek> = new Map();
 
-        public getWeek(n: number): MembershipDifferenceWeek {
+        public getWeek(n: number): MembershipWeek {
             if (this.map.has(n) == false) {
-                this.map.set(n, new MembershipDifferenceWeek());
+                this.map.set(n, new MembershipWeek(n));
             }
 
             return this.map.get(n)!;
         }
 
+        public getCharacterPathIds(charID: string, interval: number): string[] {
+            const ids: string[] = [];
+
+            this.map.forEach((value: MembershipWeek, weekN: number) => {
+                const outfitIDs: string[] = value.getCharacterPath(charID).split("-");
+
+                const outfitA: string = outfitIDs[0];
+                const outfitB: string = outfitIDs[1];
+
+                ids.push(`link-${weekN}-${outfitA}-${weekN + interval}-${outfitB}`);
+            });
+
+            return ids;
+        }
+
     }
+
+    const OutfitName = Vue.extend({
+        props: {
+            OutfitId: { type: String, required: true },
+            outfit: { type: Object as PropType<PsOutfit | undefined>, required: false }
+        },
+
+        template: `
+            <span v-if="OutfitId == '0'" >
+                no outfit
+            </span>
+            <a v-else :href="'/o/' + OutfitId">
+                <span v-if="outfit != undefined">
+                    <span v-if="outfit.tag != null">
+                        [{{outfit.tag}}]
+                    </span>
+                    {{outfit.name}}
+                </span>
+                <span v-else>
+                    &lt;missing outfit {{OutfitId}}&gt;
+                </span>
+            </a>
+        `
+    });
 
     export const OutfitSankey = Vue.extend({
         props: {
@@ -233,20 +293,32 @@
                 debugLevel: 0 as number,
 
                 graph: {
+                    root: null as SVGElement | null,
+
                     nodes: [] as HNode[],
                     links: [] as HLink[],
 
                     map: new Map() as Map<string, HNode>,
                     linkSourceMap: new Map() as Map<string, HLink[]>,
                     linkTargetMap: new Map() as Map<string, HLink[]>,
-                    diff: new MembershipDifferences() as MembershipDifferences
+                    diff: new Membership() as Membership
                 },
+
+                follow: {
+                    active: false as boolean,
+                    characterID: "" as string,
+                    sortedCharacters: [] as PsCharacter[],
+                    paths: [] as string[],
+                },
+
+                selectedCharacter: "" as string,
 
                 outfitColors: new Map() as Map<string, string>,
 
                 popper: {
                     title: "" as string,
                     header: "" as string,
+                    timestamp: new Date() as Date,
                     characters: [] as PsCharacter[],
 
                     outfitAID: "" as string,
@@ -323,6 +395,16 @@
                 }
             },
 
+            /**
+             * Create a node
+             * 
+             * @param id
+             * @param outfitID
+             * @param name
+             * @param value
+             * @param x
+             * @param y
+             */
             makeNode: function(id: string, outfitID: string, name: string, value: number, x?: number, y?: number): HNode {
                 return {
                     id: id,
@@ -340,6 +422,14 @@
                 };
             },
 
+            /**
+             * Create a link between two nodes
+             * 
+             * @param source
+             * @param target
+             * @param value
+             * @param dy
+             */
             makeLink: function(source: HNode, target: HNode, value: number, dy: number): HLink {
                 const link: HLink = {
                     source: source.id,
@@ -366,13 +456,59 @@
                 }
             },
 
+            highlightCharacter: function(charID: string): void {
+                console.log(`highlighting all paths that ${charID} took`);
+
+                this.follow.active = true;
+                this.follow.paths = this.graph.diff.getCharacterPathIds(charID, this.interval);
+
+                for (const path of this.follow.paths) {
+                    const elem: HTMLElement | null = document.getElementById(path);
+                    if (elem == null) {
+                        console.warn(`missing ${path}`);
+                    } else {
+                        elem.classList.add("link-hover");
+                    }
+                }
+            },
+
+            closeFollowCharacter: function(): void {
+                for (const path of this.follow.paths) {
+                    const elem: HTMLElement | null = document.getElementById(path);
+                    if (elem == null) {
+                        console.warn(`missing ${path}`);
+                    } else {
+                        elem.classList.remove("link-hover");
+                    }
+                }
+
+                this.follow.active = false;
+            },
+
+            /**
+             * Create the d3 graph
+             * 
+             * @param width
+             * @param height
+             */
             d3s: function(width: number, height: number): void {
                 console.time("do d3");
 
                 const svg = d3.select("#d3_canvas").append("svg")
+                    .attr("id", "svg-root")
                     .attr("width", width)
                     .attr("height", height)
                     .attr("viewBox", [0, 0, width, height]);
+
+                const svgRoot: HTMLElement | null = document.getElementById("svg-root");
+                if (svgRoot == null) {
+                    throw `failed to find #svg-root`;
+                }
+
+                console.log(svgRoot);
+
+                // this is fine
+                this.graph.root = svgRoot as unknown as SVGElement;
 
                 this.debug(`d3 stuff`);
 
@@ -468,16 +604,48 @@
                     .enter()
                     .append("path")
                     .attr("class", "link")
-                    .attr("d", (d: HLink) => { return this.makeLinkPath(d); })
-                    .attr("stroke", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
-                    .attr("fill", "none")
-                    .style("stroke-width", (d: HLink) => { return d.dy; })
-                    .style("stroke-opacity", "0.5")
+                    .attr("id", (d: HLink) => { return `link-${d.source}-${d.target}`; })
+                    .attr("d", (d: HLink) => { return this.makeLinkPath3(d); })
+                    .attr("stroke", (d: HLink) => { return `none`; })
+                    .attr("fill", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
+                    .style("mix-blend-mode", "multiple")
+                    .style("fill-opacity", (d: HLink) => {
+                        const source: HNode = getNodeOrThrow(d.source);
+                        const target: HNode = getNodeOrThrow(d.target);
+
+                        if (source.outfitID != target.outfitID) {
+                            return this.lerp(0.5, 1.0, 1 - (d.value / this.charMap.size));
+                        }
+
+                        return 0.5;
+
+                        //return this.lerp(0.1, 0.5, 1 - (d.value / this.charMap.size));
+                        //return Math.max(0.1, 1 - (Math.log(d.value) / Math.log(140)));
+                    })
                     .on("mouseup", this.pathClickListener);
 
                 // sort them based on value, so paths that cross over each other can still be hovered over
                 paths.sort((a: HLink, b: HLink) => {
-                    return b.value - a.value;
+                    const sourceA: HNode = getNodeOrThrow(a.source);
+                    const targetA: HNode = getNodeOrThrow(a.target);
+                    const sameA: boolean = sourceA.outfitID == targetA.outfitID;
+
+                    const sourceB: HNode = getNodeOrThrow(b.source);
+                    const targetB: HNode = getNodeOrThrow(b.target);
+                    const sameB: boolean = sourceB.outfitID == targetB.outfitID;
+
+                    // if a link is to the same outfit, but the other one isn't, make that one show up on top
+                    if (sameA == true && sameB == true) {
+                        return b.value - a.value;
+                    } else if (sameA == true && sameB == false) {
+                        return -1;
+                    } else if (sameA == false && sameB == true) {
+                        return 1;
+                    } else if (sameA == false && sameB == false) {
+                        return b.value - a.value;
+                    } else {
+                        throw `unchecked sameA//B values!`;
+                    }
                 });
 
                 // add text to each path that gives what the link is
@@ -507,6 +675,26 @@
                     .attr("y", (d: HNode) => d.y)
                     .style("fill", (d: HNode) => d.color)
                     .style("stroke", "#000")
+                    // when you hover over a node, highlight all paths to and from it
+                    .on("mouseover", (ev: any, node: HNode) => {
+                        if (this.follow.active == true) {
+                            return;
+                        }
+
+                        for (const pathID of this.getLinkIds(node)) {
+                            document.getElementById(pathID)?.classList.add("link-hover");
+                        }
+                    })
+                    // and when no longer hovering, remove the highlight
+                    .on("mouseleave", (ev: any, node: HNode) => {
+                        if (this.follow.active == true) {
+                            return;
+                        }
+
+                        for (const pathID of this.getLinkIds(node)) {
+                            document.getElementById(pathID)?.classList.remove("link-hover");
+                        }
+                    })
                     .append("title")
                     .text((d: HNode) => {
                         return `${d.name}: ${d.value} characters`;
@@ -519,6 +707,24 @@
                 for (const node of this.graph.nodes) {
                     this.graph.map.set(node.id, node);
                 }
+            },
+
+            /**
+             * get the element IDs of the paths that go to a node and from a node
+             * @param node
+             */
+            getLinkIds: function(node: HNode): string[] {
+                const pathIds: string[] = [];
+
+                for (const source of node.sourceLinks) {
+                    pathIds.push(`link-${source.id}-${node.id}`);
+                }
+
+                for (const target of node.targetLinks) {
+                    pathIds.push(`link-${node.id}-${target.id}`);
+                }
+
+                return pathIds;
             },
 
             /**
@@ -538,69 +744,30 @@
                 // so an offset is added, based on the height of the nodes before it
                 let targetOffset: number = 0;
                 this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
-
-                let targetOffset2: number = 0;
                 const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
                 for (const l of targetLinks) {
                     if (l.source == source.id) {
                         break;
                     }
-                    targetOffset2 += l.dy;
-                }
-
-                /*
-                for (const l of this.graph.links) {
-                    if (l.target != target.id) {
-                        continue;
-                    }
-
-                    if (l.source == source.id) {
-                        break;
-                    }
-                    this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
                     targetOffset += l.dy;
                 }
-                if (targetOffset != targetOffset2) {
-                    console.log(`target offset mismatch: ${targetOffset} ${targetOffset2}`);
-                }
-                */
 
                 let sourceOffset: number = 0;
                 this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
-
-                let sourceOffset2: number = 0;
                 const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
                 for (const l of sourceLinks) {
                     if (l.target == target.id) {
                         break;
                     }
-                    sourceOffset2 += l.dy;
-                }
-
-                /*
-                for (const l of this.graph.links) {
-                    if (l.source != source.id) {
-                        continue;
-                    }
-
-                    if (l.target == target.id) {
-                        break;
-                    }
-                    this.debug(`\t\t${l.source} => ${l.target} (${l.value}/${l.dy})`);
                     sourceOffset += l.dy;
                 }
-
-                if (sourceOffset != sourceOffset2) {
-                    console.log(`mismatch of source offset ${sourceOffset} ${sourceOffset2}`);
-                }
-                */
 
                 const x0 = source.x + source.dx;
                 const x1 = target.x;
                 const x2 = x0 * (1 - 0.5) + x1 * 0.5;
                 const x3 = x0 * (1 - 0.5) + x1 * 0.5;
-                const y0 = source.y + sourceOffset2 + (d.dy / 2);
-                const y1 = target.y + targetOffset2 + (d.dy / 2);
+                const y0 = source.y + sourceOffset + (d.dy / 2);
+                const y1 = target.y + targetOffset + (d.dy / 2);
 
                 const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
                 this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
@@ -608,8 +775,121 @@
                 return p;
             },
 
+            makeLinkPath2: function(d: HLink): string {
+                this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
+
+                const source: HNode = this.graph.map.get(d.source)!;
+                const target: HNode = this.graph.map.get(d.target)!;
+
+                this.debug("\tsource", source);
+                this.debug("\ttarget", target);
+
+                // can't have the path end in the center path each time
+                // so an offset is added, based on the height of the nodes before it
+                let targetOffset: number = 0;
+                this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
+                const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
+                for (const l of targetLinks) {
+                    if (l.source == source.id) {
+                        break;
+                    }
+                    targetOffset += l.dy;
+                }
+
+                let sourceOffset: number = 0;
+                this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
+                const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
+                for (const l of sourceLinks) {
+                    if (l.target == target.id) {
+                        break;
+                    }
+                    sourceOffset += l.dy;
+                }
+
+                const x0 = source.x + source.dx;
+                const x1 = target.x;
+
+                // start in top right corner of source node
+                // curve to top left corner of target node
+                // straight line down to bottom left corner of target node
+                // curve to bottom right corner of source node
+                // close path
+
+                return `M ${x0}, ${source.y + sourceOffset} L ${target.x}, ${target.y + targetOffset} L ${target.x}, ${target.y + targetOffset + d.dy} L ${x0}, ${source.y + sourceOffset + d.dy} Z`;
+            },
+
+            makeLinkPath3: function(d: HLink): string {
+                this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
+
+                const source: HNode = this.graph.map.get(d.source)!;
+                const target: HNode = this.graph.map.get(d.target)!;
+
+                this.debug("\tsource", source);
+                this.debug("\ttarget", target);
+
+                // can't have the path end in the center path each time
+                // so an offset is added, based on the height of the nodes before it
+                let targetOffset: number = 0;
+                this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
+                const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
+                for (const l of targetLinks) {
+                    if (l.source == source.id) {
+                        break;
+                    }
+                    targetOffset += l.dy;
+                }
+
+                let sourceOffset: number = 0;
+                this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
+                const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
+                for (const l of sourceLinks) {
+                    if (l.target == target.id) {
+                        break;
+                    }
+                    sourceOffset += l.dy;
+                }
+
+                // start in top right corner of source node (x0, y0)
+                const x0 = source.x + source.dx;
+                const y0 = source.y + sourceOffset;
+
+                // curve to top left corner of target node (x1, y1)
+                const x1 = target.x;
+                const y1 = target.y + targetOffset;
+
+                // straight line down to bottom left corner of target node (x2, y2)
+                const x2 = target.x;
+                const y2 = target.y + targetOffset + d.dy;
+
+                // curve to bottom right corner of source node (x3, y3)
+                const x3 = source.x + source.dx;
+                const y3 = source.y + sourceOffset + d.dy;
+
+                const start: string = `M ${x0}, ${y0} `;
+                const p1: string = this.bcurve(x0, y0, x1, y1);
+                const p2: string = `L ${x2}, ${y2} `;
+                const p3: string = this.bcurve(x2, y2, x3, y3);
+
+                return `${start} ${p1} ${p2} ${p3} Z`;
+            },
+
+            bcurve: function(x0: number, y0: number, x1: number, y1: number): string {
+                return ` C ${this.lerp(x0, x1, 0.5)}, ${y0} `
+                    + ` ${this.lerp(x0, x1, 0.5)}, ${y1} `
+                    + ` ${x1}, ${y1} ` ;
+            },
+
+            lerp: function(a: number, b: number, p: number): number {
+                return a * (1 - p) + b * p;
+            },
+
+            nodeClickListener: function(ev: any, node: HNode): void {
+
+            },
+
             /**
              * listener for when a path is clicked on
+             * opens a pop up that shows which characters moved from what outfit
              * @param ev
              * @param link
              */
@@ -630,14 +910,14 @@
                 console.log(ev);
                 popperDiv.style.display = "block";
                 popperDiv.style.left = `${ev.clientX}px`;
-                popperDiv.style.top = `${ev.clientY}px`;
 
-                /*
-                if (ev.clientY > (window.innerHeight / 2)) {
+                if (ev.clientY < (window.innerHeight / 2)) {
+                    popperDiv.style.bottom = "";
+                    popperDiv.style.top = `${ev.clientY}px`;
                 } else {
-                    popperDiv.style.bottom = `${ev.clientY}px`;
+                    popperDiv.style.top = "";
+                    popperDiv.style.bottom = `${window.innerHeight - ev.clientY}px`;
                 }
-                */
 
                 const charIDs: string[] = this.graph.diff.getWeek(target.timestamp.getTime()).getCharacters(source.outfitID, target.outfitID);
 
@@ -647,6 +927,7 @@
 
                 this.popper.characters.sort((a, b) => a.name.localeCompare(b.name));
 
+                this.popper.timestamp = target.timestamp;
                 this.popper.title = `Between ${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} and ${TimeUtils.formatNoTimezone(target.timestamp, "YYYY-MM-DD")}`;
 
                 this.popper.outfitAID = source.outfitID;
@@ -714,7 +995,21 @@
 
                 console.log(`Loading data for ${characterCount} characters`);
 
-                const outfitIDs: string[] = this.sessions.data.map(iter => iter.outfitID ?? "0").filter((v, i, a) => a.indexOf(v) == i);
+                const outfitSet: Set<string> = new Set();
+                for (const s of this.sessions.data) {
+                    outfitSet.add(s.outfitID ?? "0");
+                }
+                const outfitIDs: string[] = Array.from(outfitSet.keys()).sort((a: string, b: string) => {
+                    // if a is the outfit we want, or b is no outfit, put a first
+                    if (a == this.outfitID || b == "0") {
+                        return -1;
+                    }
+                    // if b is the outfit we want, or a is no outfit, put b first
+                    if (b == this.outfitID || a == "0") {
+                        return 1;
+                    }
+                    return a.localeCompare(b);
+                });
                 console.log(`considering ${outfitIDs.length} outfits: [${outfitIDs.join(", ")}]`);
 
                 const nodeMap: Map<string, HNode> = new Map();
@@ -963,6 +1258,8 @@
                         this.charMap.set(c.id, c);
                     }
                     console.timeEnd("chars: map");
+
+                    this.follow.sortedCharacters = [...this.characters.data].sort((a, b) => a.name.localeCompare(b.name));
                 }
 
                 console.timeEnd("get characters");
@@ -980,7 +1277,14 @@
         components: {
             DateTimeInput, InfoHover, Busy,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            ProgressBar
+            ProgressBar,
+            OutfitName
+        },
+
+        watch: {
+            "follow.characterID": function(): void {
+                this.highlightCharacter(this.follow.characterID);
+            }
         }
     });
     export default OutfitSankey;
