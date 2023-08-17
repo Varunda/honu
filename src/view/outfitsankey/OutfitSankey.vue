@@ -1,6 +1,6 @@
 ﻿<template>
-    <div>
-        <div class="d-flex align-items-center mb-2">
+    <div class="d-flex" style="flex-direction: column; height: 100vh;">
+        <div class="d-flex align-items-center mb-2 flex-grow-0 flex-basis-0">
             <honu-menu class="flex-grow-1">
                 <menu-dropdown></menu-dropdown>
 
@@ -34,44 +34,110 @@
             </honu-menu>
         </div>
         
-        <div v-if="sessions.state == 'loading'">
-            <div v-if="progress.initial == false">
-                Loading outfit data
-                <busy v-if="progress.initial == false" class="honu-busy-lg"></busy>
+        <div class="flex-grow-0 flex-basis-0">
+            <div v-if="sessions.state == 'loading'">
+                <div v-if="progress.initial == false">
+                    Loading outfit data
+                    <busy v-if="progress.initial == false" class="honu-busy-lg"></busy>
+                </div>
+                <progress-bar :progress="progress.current" :total="progress.total">
+                    Character sessions loaded:
+                </progress-bar>
             </div>
-            <progress-bar :progress="progress.current" :total="progress.total">
-                Character sessions loaded:
-            </progress-bar>
+
+            <div v-if="progress.step != ''">
+                <span class="h3">
+                    {{progress.step}}
+                </span>
+                <busy class="honu-busy-lg"></busy>
+            </div>
         </div>
 
-        <div v-if="progress.step != ''">
-            <span class="h3">
-                {{progress.step}}
-            </span>
-            <busy class="honu-busy-lg"></busy>
+        <div id="d3_canvas" style="overflow: auto;" class="flex-grow-1">
+
         </div>
 
-        <div>
-            help text
+        <div id="options-menu" style="position: fixed; top: 200px; right: 0; width: 300px;" class="bg-dark m-2">
+
+            <collapsible header-text="What is this?" :show="false">
+                <div id="help-text">
+                    <p>
+                        This is a graphic that shows the changes in outfit membership for all characters in a specific outfit
+                    </p>
+                    <p>
+                        Each outfit is a different colors, broken up by weeks.
+                        Between each week, if a character in one outfit went to another, a path is created between them.
+                    </p>
+                    <p>
+                        Hover over elements to highlight them, and click on paths between 
+                    </p>
+                </div>
+            </collapsible>
+
+            <hr class="border" />
 
             <div>
-                what is this?
+                <label>
+                    Highlight character
+                    <info-hover text="Select a character to highlight the path of outfits"></info-hover>
+                </label>
+
+                <div class="input-group" style="max-width: 40ch;">
+                    <select v-if="characters.state == 'loaded'" v-model="follow.characterID" class="form-control">
+                        <option v-for="c in follow.sortedCharacters" :value="c.id">
+                            {{c.name}}
+                        </option>
+                    </select>
+                    <select v-else disabled class="form-control">
+                        <option :value="null">loading...</option>
+                    </select>
+                    <button class="btn btn-secondary btn-group-addon" @click="closeFollowCharacter">
+                        Clear
+                    </button>
+                </div>
             </div>
 
-            <div class="input-group">
-                <select v-if="characters.state == 'loaded'" v-model="follow.characterID" class="form-control">
-                    <option v-for="c in follow.sortedCharacters" :value="c.id">
-                        {{c.name}}
-                    </option>
-                </select>
-                <button class="btn btn-secondary btn-group-addon" @click="closeFollowCharacter">
-                    Clear
+            <hr class="border" />
+
+            <button class="btn btn-success w-100" @click="downloadPng">
+                Download PNG
+                <info-hover text="Open a PNG in a new tab of the Sankey"></info-hover>
+            </button>
+
+            <hr class="border" />
+
+            <collapsible header-text="Settings" :show="false">
+                <div class="input-group">
+                    <span class="input-group-addon input-group-prepend">
+                        node spacing
+                    </span>
+                    <input v-model.number="settings.pxPerWeek" type="number" class="form-control" />
+                </div>
+
+                <div class="input-group">
+                    <span class="input-group-addon input-group-prepend">
+                        px per player
+                    </span>
+                    <input v-model.number="settings.pxPerChar" type="number" class="form-control" />
+                </div>
+
+                <div class="input-group">
+                    <span class="input-group-addon input-group-prepend">
+                        node width (dx)
+                    </span>
+                    <input v-model.number="settings.nodeWidth" type="number" class="form-control" />
+                </div>
+
+                <div>
+                    <toggle-button v-model="settings.showPaths">
+                        show paths
+                    </toggle-button>
+                </div>
+
+                <button class="btn btn-primary" @click="redraw">
+                    Redraw
                 </button>
-            </div>
-
-        </div>
-
-        <div id="d3_canvas" style="overflow: auto;">
+            </collapsible>
 
         </div>
 
@@ -133,9 +199,11 @@
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import DateTimeInput from "components/DateTimeInput.vue";
+    import Collapsible from "components/Collapsible.vue";
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
     import ProgressBar from "components/ProgressBar.vue";
+    import ToggleButton from "components/ToggleButton";
 
     import TimeUtils from "util/Time";
     import * as moment from "moment";
@@ -295,6 +363,10 @@
                 graph: {
                     root: null as SVGElement | null,
 
+                    width: 100 as number,
+                    height: 100 as number,
+
+
                     nodes: [] as HNode[],
                     links: [] as HLink[],
 
@@ -302,6 +374,15 @@
                     linkSourceMap: new Map() as Map<string, HLink[]>,
                     linkTargetMap: new Map() as Map<string, HLink[]>,
                     diff: new Membership() as Membership
+                },
+
+                settings: {
+                    pxPerWeek: 100 as number,
+                    pxPerChar: 15 as number,
+                    showPaths: true as boolean,
+                    showPathFill: true as boolean,
+                    showNodeStroke: true as boolean,
+                    nodeWidth: 10 as number
                 },
 
                 follow: {
@@ -357,10 +438,10 @@
                 await this.getCharacters();
 
                 this.progress.step = "loading data";
-                this.makeData(10000, 1080);
+                this.makeData();
 
                 this.progress.step = "creating graphic";
-                this.d3s(10000, 1080);
+                this.d3s(this.graph.width, this.graph.height);
 
                 this.progress.step = "";
             });
@@ -414,7 +495,7 @@
                     color: ColorUtils.randomColorSingle(),
                     x: x ?? Math.random() * 1920,
                     y: y ?? Math.random() * 1080,
-                    dx: 10,
+                    dx: this.settings.nodeWidth,
                     dy: value,
                     sourceLinks: [],
                     targetLinks: [],
@@ -482,7 +563,13 @@
                     }
                 }
 
+                this.follow.characterID = "";
                 this.follow.active = false;
+            },
+
+            redraw: function(): void {
+                this.makeData();
+                this.d3s(this.graph.width, this.graph.height);
             },
 
             /**
@@ -493,6 +580,11 @@
              */
             d3s: function(width: number, height: number): void {
                 console.time("do d3");
+
+                if (this.graph.root != null) {
+                    this.graph.root.remove();
+                    this.graph.root = null;
+                }
 
                 const svg = d3.select("#d3_canvas").append("svg")
                     .attr("id", "svg-root")
@@ -598,68 +690,68 @@
 
                 // build the path elements
                 this.debug("building links");
-                const paths = svg.append("g")
-                    .selectAll(".link")
-                    .data(this.graph.links)
-                    .enter()
-                    .append("path")
-                    .attr("class", "link")
-                    .attr("id", (d: HLink) => { return `link-${d.source}-${d.target}`; })
-                    .attr("d", (d: HLink) => { return this.makeLinkPath3(d); })
-                    .attr("stroke", (d: HLink) => { return `none`; })
-                    .attr("fill", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
-                    .style("mix-blend-mode", "multiple")
-                    .style("fill-opacity", (d: HLink) => {
-                        const source: HNode = getNodeOrThrow(d.source);
-                        const target: HNode = getNodeOrThrow(d.target);
 
-                        if (source.outfitID != target.outfitID) {
-                            return this.lerp(0.5, 1.0, 1 - (d.value / this.charMap.size));
+                if (this.settings.showPaths == true) {
+                    const paths = svg.append("g")
+                        .selectAll(".link")
+                        .data(this.graph.links)
+                        .enter()
+                        .append("path")
+                        .attr("class", "link")
+                        .attr("id", (d: HLink) => { return `link-${d.source}-${d.target}`; })
+                        .attr("d", (d: HLink) => { return this.makeLinkPath(d); })
+                        .attr("stroke", (d: HLink) => { return `none`; })
+                        .attr("fill", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
+                        .style("mix-blend-mode", "multiple")
+                        .style("fill-opacity", (d: HLink) => {
+                            const source: HNode = getNodeOrThrow(d.source);
+                            const target: HNode = getNodeOrThrow(d.target);
+
+                            if (source.outfitID != target.outfitID) {
+                                return this.lerp(0.5, 1.0, 1 - (d.value / this.charMap.size));
+                            }
+
+                            return 0.5;
+                        })
+                        .on("mouseup", this.pathClickListener);
+
+                    // sort them based on value, so paths that cross over each other can still be hovered over
+                    paths.sort((a: HLink, b: HLink) => {
+                        const sourceA: HNode = getNodeOrThrow(a.source);
+                        const targetA: HNode = getNodeOrThrow(a.target);
+                        const sameA: boolean = sourceA.outfitID == targetA.outfitID;
+
+                        const sourceB: HNode = getNodeOrThrow(b.source);
+                        const targetB: HNode = getNodeOrThrow(b.target);
+                        const sameB: boolean = sourceB.outfitID == targetB.outfitID;
+
+                        // if a link is to the same outfit, but the other one isn't, make that one show up on top
+                        if (sameA == true && sameB == true) {
+                            return b.value - a.value;
+                        } else if (sameA == true && sameB == false) {
+                            return -1;
+                        } else if (sameA == false && sameB == true) {
+                            return 1;
+                        } else if (sameA == false && sameB == false) {
+                            return b.value - a.value;
+                        } else {
+                            throw `unchecked sameA//B values!`;
                         }
-
-                        return 0.5;
-
-                        //return this.lerp(0.1, 0.5, 1 - (d.value / this.charMap.size));
-                        //return Math.max(0.1, 1 - (Math.log(d.value) / Math.log(140)));
-                    })
-                    .on("mouseup", this.pathClickListener);
-
-                // sort them based on value, so paths that cross over each other can still be hovered over
-                paths.sort((a: HLink, b: HLink) => {
-                    const sourceA: HNode = getNodeOrThrow(a.source);
-                    const targetA: HNode = getNodeOrThrow(a.target);
-                    const sameA: boolean = sourceA.outfitID == targetA.outfitID;
-
-                    const sourceB: HNode = getNodeOrThrow(b.source);
-                    const targetB: HNode = getNodeOrThrow(b.target);
-                    const sameB: boolean = sourceB.outfitID == targetB.outfitID;
-
-                    // if a link is to the same outfit, but the other one isn't, make that one show up on top
-                    if (sameA == true && sameB == true) {
-                        return b.value - a.value;
-                    } else if (sameA == true && sameB == false) {
-                        return -1;
-                    } else if (sameA == false && sameB == true) {
-                        return 1;
-                    } else if (sameA == false && sameB == false) {
-                        return b.value - a.value;
-                    } else {
-                        throw `unchecked sameA//B values!`;
-                    }
-                });
-
-                // add text to each path that gives what the link is
-                this.debug("building link text");
-                paths.append("title")
-                    .text((d: HLink) => {
-                        const source: HNode = nodeMap.get(d.source)!;
-                        const target: HNode = nodeMap.get(d.target)!;
-
-                        const weekEnd: Date = new Date(source.timestamp.getTime() + this.interval);
-
-                        return `${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} - ${TimeUtils.formatNoTimezone(weekEnd, "YYYY-MM-DD")}`
-                            + `\n${source.name} to ${target.name}: ${d.value}`;
                     });
+
+                    // add text to each path that gives what the link is
+                    this.debug("building link text");
+                    paths.append("title")
+                        .text((d: HLink) => {
+                            const source: HNode = nodeMap.get(d.source)!;
+                            const target: HNode = nodeMap.get(d.target)!;
+
+                            const weekEnd: Date = new Date(source.timestamp.getTime() + this.interval);
+
+                            return `${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} - ${TimeUtils.formatNoTimezone(weekEnd, "YYYY-MM-DD")}`
+                                + `\n${source.name} to ${target.name}: ${d.value}`;
+                        });
+                }
 
                 // add the nodes for each week
                 this.debug("building nodes");
@@ -762,93 +854,6 @@
                     sourceOffset += l.dy;
                 }
 
-                const x0 = source.x + source.dx;
-                const x1 = target.x;
-                const x2 = x0 * (1 - 0.5) + x1 * 0.5;
-                const x3 = x0 * (1 - 0.5) + x1 * 0.5;
-                const y0 = source.y + sourceOffset + (d.dy / 2);
-                const y1 = target.y + targetOffset + (d.dy / 2);
-
-                const p: string = `M ${x0}, ${y0} C ${x2}, ${y0} ${x3}, ${y1} ${x1}, ${y1}`;
-                this.debug(`\tlink ${d.source} => ${d.target}: dy: ${d.dy}\n\t\tx0 ${x0} x1 ${x1} x2 ${x2} x3 ${x3} y0 ${y0} y1 ${y1} targetOffset ${targetOffset} sourceOffset ${sourceOffset} \n\t\t${p}`);
-
-                return p;
-            },
-
-            makeLinkPath2: function(d: HLink): string {
-                this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
-
-                const source: HNode = this.graph.map.get(d.source)!;
-                const target: HNode = this.graph.map.get(d.target)!;
-
-                this.debug("\tsource", source);
-                this.debug("\ttarget", target);
-
-                // can't have the path end in the center path each time
-                // so an offset is added, based on the height of the nodes before it
-                let targetOffset: number = 0;
-                this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
-                const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
-                for (const l of targetLinks) {
-                    if (l.source == source.id) {
-                        break;
-                    }
-                    targetOffset += l.dy;
-                }
-
-                let sourceOffset: number = 0;
-                this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
-                const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
-                for (const l of sourceLinks) {
-                    if (l.target == target.id) {
-                        break;
-                    }
-                    sourceOffset += l.dy;
-                }
-
-                const x0 = source.x + source.dx;
-                const x1 = target.x;
-
-                // start in top right corner of source node
-                // curve to top left corner of target node
-                // straight line down to bottom left corner of target node
-                // curve to bottom right corner of source node
-                // close path
-
-                return `M ${x0}, ${source.y + sourceOffset} L ${target.x}, ${target.y + targetOffset} L ${target.x}, ${target.y + targetOffset + d.dy} L ${x0}, ${source.y + sourceOffset + d.dy} Z`;
-            },
-
-            makeLinkPath3: function(d: HLink): string {
-                this.debug(`creating path for ${d.source} => ${d.target}: ${d.value} / ${d.dy}`);
-
-                const source: HNode = this.graph.map.get(d.source)!;
-                const target: HNode = this.graph.map.get(d.target)!;
-
-                this.debug("\tsource", source);
-                this.debug("\ttarget", target);
-
-                // can't have the path end in the center path each time
-                // so an offset is added, based on the height of the nodes before it
-                let targetOffset: number = 0;
-                this.debug(`\tfinding targetOffset for ${d.source} => ${d.target}/${d.dy}`);
-                const targetLinks: HLink[] = this.graph.linkTargetMap.get(target.id) ?? [];
-                for (const l of targetLinks) {
-                    if (l.source == source.id) {
-                        break;
-                    }
-                    targetOffset += l.dy;
-                }
-
-                let sourceOffset: number = 0;
-                this.debug(`\tfinding sourceOffset for ${d.source} => ${d.target}/${d.dy}`);
-                const sourceLinks: HLink[] = this.graph.linkSourceMap.get(source.id) ?? [];
-                for (const l of sourceLinks) {
-                    if (l.target == target.id) {
-                        break;
-                    }
-                    sourceOffset += l.dy;
-                }
-
                 // start in top right corner of source node (x0, y0)
                 const x0 = source.x + source.dx;
                 const y0 = source.y + sourceOffset;
@@ -881,6 +886,33 @@
 
             lerp: function(a: number, b: number, p: number): number {
                 return a * (1 - p) + b * p;
+            },
+
+            downloadPng: function(): void {
+                if (this.graph.root == null) {
+                    console.error("cannot download png: graph root is null");
+                    return;
+                }
+
+                const header: string = "data:image/svg+xml;charset=utf-8";
+                const xmlData: string = new XMLSerializer().serializeToString(this.graph.root);
+
+                const xml: string = `${header},${encodeURIComponent(xmlData)}`;
+
+                const img: HTMLImageElement = document.createElement("img");
+                img.src = xml;
+
+                img.onload = () => {
+                    const canvas: HTMLCanvasElement = document.createElement("canvas");
+                    canvas.width = this.graph.width;
+                    canvas.height = this.graph.height;
+
+                    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    const dataUrl: string = canvas.toDataURL("image/png", 1.0);
+                    window.open(dataUrl);
+                };
+
             },
 
             nodeClickListener: function(ev: any, node: HNode): void {
@@ -939,7 +971,7 @@
             /**
              * Use the session data to make the Sankey data
              */
-            makeData: function(width: number, height: number): void {
+            makeData: function(): void {
                 if (this.sessions.state != "loaded") {
                     return console.warn(`sessions not loaded`);
                 }
@@ -951,6 +983,13 @@
                 if (this.outfits.state != "loaded") {
                     return console.warn(`outfits not loaded`);
                 }
+
+                this.graph.nodes = [];
+                this.graph.links = [];
+                this.graph.diff = new Membership();
+                this.graph.map.clear();
+                this.graph.linkTargetMap.clear();
+                this.graph.linkSourceMap.clear();
 
                 const firstSession: Session = this.sessions.data.sort((a, b) => a.start.getTime() - b.start.getTime())[0];
                 console.log(`first session at ${firstSession.start}`);
@@ -1028,6 +1067,11 @@
                     buckets.get(slice)!.push(session);
                 }
 
+                console.log(`${buckets.size} buckets`);
+                this.graph.width = buckets.size * (this.settings.pxPerWeek + this.settings.nodeWidth);
+                console.log(`${c.size} characters`);
+                this.graph.height = buckets.size * this.settings.pxPerChar;
+
                 console.time("make data");
 
                 // go thru each week, instead of each bucket, as a bucket may be empty
@@ -1081,10 +1125,10 @@
 
                         outfit.timestamp = new Date(i);
                         outfit.value = outfitCount;
-                        outfit.y = (count / characterCount) * height;
-                        outfit.x = ((i - day.getTime()) / (now.getTime() - day.getTime())) * width;
+                        outfit.y = (count / characterCount) * this.graph.height;
+                        outfit.x = ((i - day.getTime()) / (now.getTime() - day.getTime())) * this.graph.width;
                         outfit.dx = 10;
-                        outfit.dy = outfit.value / characterCount * height;
+                        outfit.dy = outfit.value / characterCount * this.graph.height;
                         outfit.color = outfitID == "0" ? "black" : this.outfitColors.get(outfitID)!;
 
                         if (outfitID == "0") {
@@ -1104,29 +1148,32 @@
                             const previousTime = i - this.interval;
                             let countDown: number = outfit.value;
 
+                            // make same outfit paths show up first
                             diffMap.forEach((difference: number, prevOutfitID: string) => {
                                 countDown -= difference;
+                            });
 
+                            if (countDown > 0) {
+                                const thisNode: HNode | undefined = nodeMap.get(`${previousTime}-${outfitID}`);
+                                if (thisNode != undefined) {
+                                    const link: HLink = this.makeLink(thisNode, outfit, countDown, (countDown / characterCount) * this.graph.height);
+                                    this.graph.links.push(link);
+                                }
+                            }
+
+                            diffMap.forEach((difference: number, prevOutfitID: string) => {
                                 const sourceNode: HNode | undefined = nodeMap.get(`${previousTime}-${prevOutfitID}`);
                                 if (sourceNode == undefined) {
                                     console.warn(`missing ${previousTime}-${prevOutfitID}`);
                                     return;
                                 }
 
-                                const link: HLink = this.makeLink(sourceNode, outfit, difference, (difference / characterCount) * height);
+                                const link: HLink = this.makeLink(sourceNode, outfit, difference, (difference / characterCount) * this.graph.height);
                                 this.graph.links.push(link);
                                 this.debug(`\t\tCHANGE ${sourceNode.id} => ${outfit.id}: ${difference}`);
                             });
 
                             this.debug(`\t\tSTAYED ${previousTime}-${outfitID} => ${i}-${outfitID}: ${countDown}`);
-
-                            if (countDown > 0) {
-                                const thisNode: HNode | undefined = nodeMap.get(`${previousTime}-${outfitID}`);
-                                if (thisNode != undefined) {
-                                    const link: HLink = this.makeLink(thisNode, outfit, countDown, (countDown / characterCount) * height);
-                                    this.graph.links.push(link);
-                                }
-                            }
                         }
                     }
 
@@ -1277,13 +1324,15 @@
         components: {
             DateTimeInput, InfoHover, Busy,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            ProgressBar,
+            ProgressBar, Collapsible, ToggleButton,
             OutfitName
         },
 
         watch: {
             "follow.characterID": function(): void {
-                this.highlightCharacter(this.follow.characterID);
+                if (this.follow.characterID != "" && this.follow.characterID != undefined) {
+                    this.highlightCharacter(this.follow.characterID);
+                }
             }
         }
     });
