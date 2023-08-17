@@ -146,10 +146,16 @@
                         <input v-model.number="settings.nodeWidth" type="number" class="form-control" />
                     </div>
 
-                    <div>
-                        <toggle-button v-model="settings.showPaths">
+                    <div class="d-flex">
+                        <toggle-button v-model="settings.showPaths" class="flex-grow-0">
                             show paths
                         </toggle-button>
+                        <toggle-button v-model="settings.showPathId" class="flex-grow-0">
+                            show path id
+                        </toggle-button>
+                        <button class="btn btn-primary" @click="assignOutfitColors(); redraw();">
+                            recolor
+                        </button>
                     </div>
 
                     <button class="btn btn-primary" @click="redraw">
@@ -325,7 +331,7 @@
                 const outfitA: string = outfitIDs[0];
                 const outfitB: string = outfitIDs[1];
 
-                ids.push(`link-${weekN}-${outfitA}-${weekN + interval}-${outfitB}`);
+                ids.push(`link-${weekN - interval}-${outfitA}-${weekN}-${outfitB}`);
             });
 
             return ids;
@@ -401,7 +407,8 @@
                     showPaths: true as boolean,
                     showPathFill: true as boolean,
                     showNodeStroke: true as boolean,
-                    nodeWidth: 10 as number
+                    nodeWidth: 10 as number,
+                    showPathId: false as boolean
                 },
 
                 follow: {
@@ -495,24 +502,6 @@
                 }
             },
 
-            closeSidebar: function(): void {
-                const menu: HTMLElement | null = document.getElementById("options-menu");
-                if (menu == null) {
-                    return;
-                }
-
-                menu.style.right = `-999px`;
-            },
-
-            openSidebar: function(): void {
-                const menu: HTMLElement | null = document.getElementById("options-menu");
-                if (menu == null) {
-                    return;
-                }
-
-                menu.style.right = `0px`;
-            },
-
             /**
              * Create a node
              * 
@@ -576,6 +565,11 @@
 
             highlightCharacter: function(charID: string): void {
                 console.log(`highlighting all paths that ${charID} took`);
+
+                // remove previous path
+                for (const path of this.follow.paths) {
+                    document.getElementById(path)?.classList.remove("link-hover");
+                }
 
                 this.follow.active = true;
                 this.follow.paths = this.graph.diff.getCharacterPathIds(charID, this.interval);
@@ -785,8 +779,14 @@
 
                             const weekEnd: Date = new Date(source.timestamp.getTime() + this.interval);
 
-                            return `${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} - ${TimeUtils.formatNoTimezone(weekEnd, "YYYY-MM-DD")}`
+                            let s: string = `${TimeUtils.formatNoTimezone(source.timestamp, "YYYY-MM-DD")} - ${TimeUtils.formatNoTimezone(weekEnd, "YYYY-MM-DD")}`
                                 + `\n${source.name} to ${target.name}: ${d.value}`;
+
+                            if (this.settings.showPathId == true) {
+                                s = `link-${d.source}-${d.target}\n` + s;
+                            }
+
+                            return s;
                         });
                 }
 
@@ -1298,22 +1298,33 @@
                 console.timeEnd("outfits: load api");
 
                 if (this.outfits.state == "loaded") {
-                    console.time("outfits: colors");
-                    this.outfitColors.clear();
-                    const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
-
-                    for (let i = 0; i < this.outfits.data.length; ++i) {
-                        const outfitID: string = this.outfits.data[i].id;
-                        this.outfitColors.set(outfitID, colors[i]);
-                    }
-
-                    for (const outfit of this.outfits.data) {
-                        this.outfitMap.set(outfit.id, outfit);
-                    }
-                    console.timeEnd("outfits: colors");
+                    this.assignOutfitColors();
                 }
 
                 console.timeEnd("get outfits");
+            },
+
+            assignOutfitColors: function(): void {
+                if (this.outfits.state != "loaded") {
+                    console.warn(`cannot assign outfit colors: outfits is ${this.outfit.state}, not 'loaded'`);
+                    return;
+                }
+
+                console.time("outfits: colors");
+                this.outfitColors.clear();
+
+                const colors: string[] = ColorUtils.randomColors(Math.random(), this.outfits.data.length);
+                colors.sort((a, b) => Math.random() - 0.5);
+
+                for (let i = 0; i < this.outfits.data.length; ++i) {
+                    const outfitID: string = this.outfits.data[i].id;
+                    this.outfitColors.set(outfitID, colors[i]);
+                }
+
+                for (const outfit of this.outfits.data) {
+                    this.outfitMap.set(outfit.id, outfit);
+                }
+                console.timeEnd("outfits: colors");
             },
 
             getCharacters: async function(): Promise<void> {
