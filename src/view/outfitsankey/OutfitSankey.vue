@@ -32,6 +32,15 @@
                     Sankey
                 </li>
             </honu-menu>
+
+            <div>
+                <div v-if="settings.show == false">
+                    <button class="btn btn-secondary" @click="settings.show = true">
+                        Show settings
+                    </button>
+                </div>
+            </div>
+
         </div>
         
         <div class="flex-grow-0 flex-basis-0">
@@ -57,7 +66,13 @@
 
         </div>
 
-        <div id="options-menu" style="position: fixed; top: 200px; right: 0; width: 300px;" class="bg-dark m-2">
+        <div id="options-menu" style="position: fixed; top: 200px; width: 300px;" class="bg-dark m-2" :class="[ settings.show ? 'slide-300-in' : 'slide-300-out' ]">
+
+            <div>
+                <button class="btn btn-secondary" @click="settings.show = false">
+                    &times;
+                </button>
+            </div>
 
             <collapsible header-text="What is this?" :show="false">
                 <div id="help-text">
@@ -74,9 +89,9 @@
                 </div>
             </collapsible>
 
-            <hr class="border" />
+            <hr class="border px-3 mx-1 my-2" />
 
-            <div>
+            <div class="px-2">
                 <label>
                     Highlight character
                     <info-hover text="Select a character to highlight the path of outfits"></info-hover>
@@ -97,48 +112,51 @@
                 </div>
             </div>
 
-            <hr class="border" />
+            <hr class="border px-3 mx-1 my-2" />
 
-            <button class="btn btn-success w-100" @click="downloadPng">
-                Download PNG
-                <info-hover text="Open a PNG in a new tab of the Sankey"></info-hover>
-            </button>
+            <div class="px-2">
+                <button class="btn btn-success w-100" @click="downloadPng">
+                    Download PNG
+                    <info-hover text="Open a PNG in a new tab of the Sankey"></info-hover>
+                </button>
+            </div>
 
-            <hr class="border" />
+            <hr class="border px-3 mx-1 my-2" />
 
             <collapsible header-text="Settings" :show="false">
-                <div class="input-group">
-                    <span class="input-group-addon input-group-prepend">
-                        node spacing
-                    </span>
-                    <input v-model.number="settings.pxPerWeek" type="number" class="form-control" />
-                </div>
+                <div class="px-2">
+                    <div class="input-group">
+                        <span class="input-group-addon input-group-prepend">
+                            node spacing
+                        </span>
+                        <input v-model.number="settings.pxPerWeek" type="number" class="form-control" />
+                    </div>
 
-                <div class="input-group">
-                    <span class="input-group-addon input-group-prepend">
-                        px per player
-                    </span>
-                    <input v-model.number="settings.pxPerChar" type="number" class="form-control" />
-                </div>
+                    <div class="input-group">
+                        <span class="input-group-addon input-group-prepend">
+                            px per player
+                        </span>
+                        <input v-model.number="settings.pxPerChar" type="number" class="form-control" />
+                    </div>
 
-                <div class="input-group">
-                    <span class="input-group-addon input-group-prepend">
-                        node width (dx)
-                    </span>
-                    <input v-model.number="settings.nodeWidth" type="number" class="form-control" />
-                </div>
+                    <div class="input-group">
+                        <span class="input-group-addon input-group-prepend">
+                            node width (dx)
+                        </span>
+                        <input v-model.number="settings.nodeWidth" type="number" class="form-control" />
+                    </div>
 
-                <div>
-                    <toggle-button v-model="settings.showPaths">
-                        show paths
-                    </toggle-button>
-                </div>
+                    <div>
+                        <toggle-button v-model="settings.showPaths">
+                            show paths
+                        </toggle-button>
+                    </div>
 
-                <button class="btn btn-primary" @click="redraw">
-                    Redraw
-                </button>
+                    <button class="btn btn-primary" @click="redraw">
+                        Redraw
+                    </button>
+                </div>
             </collapsible>
-
         </div>
 
         <div id="popper-div" style="display: none; background-color: var(--secondary); color: white; border: 2px var(--light) solid; position: fixed;">
@@ -377,6 +395,7 @@
                 },
 
                 settings: {
+                    show: true as boolean,
                     pxPerWeek: 100 as number,
                     pxPerChar: 15 as number,
                     showPaths: true as boolean,
@@ -474,6 +493,24 @@
                     url.searchParams.set("tag", this.outfit.data.tag ?? this.outfit.data.name);
                     history.replaceState({ path: url.href }, "", url.href);
                 }
+            },
+
+            closeSidebar: function(): void {
+                const menu: HTMLElement | null = document.getElementById("options-menu");
+                if (menu == null) {
+                    return;
+                }
+
+                menu.style.right = `-999px`;
+            },
+
+            openSidebar: function(): void {
+                const menu: HTMLElement | null = document.getElementById("options-menu");
+                if (menu == null) {
+                    return;
+                }
+
+                menu.style.right = `0px`;
             },
 
             /**

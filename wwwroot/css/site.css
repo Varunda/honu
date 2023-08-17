@@ -132,3 +132,23 @@
     0%      { left: 0px; }
     100%    { left: -500px; }
 }
+
+@keyframes slide-300-in {
+    0%      { right: -300px; }
+    100%    { right: 0px; }
+}
+
+@keyframes slide-300-out {
+    0%      { right: 0px; }
+    100%    { right: -300px; }
+}
+
+.slide-300-in {
+    animation: slide-right-in 1s forwards;
+    z-index: 10;
+}
+
+.slide-300-out {
+    animation: slide-right-out 1s forwards;
+    z-index: 10;
+}
