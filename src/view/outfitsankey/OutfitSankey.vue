@@ -1107,7 +1107,7 @@
                 console.log(`${buckets.size} buckets`);
                 this.graph.width = buckets.size * (this.settings.pxPerWeek + this.settings.nodeWidth);
                 console.log(`${c.size} characters`);
-                this.graph.height = buckets.size * this.settings.pxPerChar;
+                this.graph.height = c.size * this.settings.pxPerChar;
 
                 console.time("make data");
 
