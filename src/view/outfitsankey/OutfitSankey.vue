@@ -402,8 +402,8 @@
 
                 settings: {
                     show: true as boolean,
-                    pxPerWeek: 100 as number,
-                    pxPerChar: 15 as number,
+                    pxPerWeek: 50 as number,
+                    pxPerChar: 5 as number,
                     showPaths: true as boolean,
                     showPathFill: true as boolean,
                     showNodeStroke: true as boolean,
@@ -947,7 +947,15 @@
                     canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                     const dataUrl: string = canvas.toDataURL("image/png", 1.0);
-                    window.open(dataUrl);
+
+                    console.log(`dataUrl`);
+
+                    const tab = window.open();
+                    if (tab == null) {
+                        console.error(`failed to open new window`);
+                    } else {
+                        tab.document.body.innerHTML = `<img src="${dataUrl}" width=${this.graph.width}px height=${this.graph.height}px>`;
+                    }
                 };
 
             },
