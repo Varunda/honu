@@ -15,37 +15,30 @@
 
 <style>
 .link {
+    stroke-opacity: 0;
 }
 .link:hover {
-  fill-opacity: 1;
-  filter: 
-    drop-shadow(-2px -2px 0px #fff) 
-    drop-shadow(2px -2px 0px #fff) 
-    drop-shadow(2px 2px 0px #fff)
-    drop-shadow(-2px 2px 0px #fff);
+  fill-opacity: 1 !important;
+  stroke-opacity: 1;
 }
 
 .link-hover {
-  fill-opacity: 1;
-  filter: 
-    drop-shadow(-2px -2px 0px #fff) 
-    drop-shadow(2px -2px 0px #fff) 
-    drop-shadow(2px 2px 0px #fff)
-    drop-shadow(-2px 2px 0px #fff);
+  fill-opacity: 1 !important;
+  stroke-opacity: 1;
 }
 
 .node {
-
+    stroke: #000;
 }
 
 .node:hover {
-  filter: 
-    drop-shadow(-2px -2px 0px #fff) 
-    drop-shadow(2px -2px 0px #fff) 
-    drop-shadow(2px 2px 0px #fff)
-    drop-shadow(-2px 2px 0px #fff);
+    stroke: #fff;
+    stroke-width: 2px;
 }
-
+.node-hover {
+    stroke: #fff;
+    stroke-width: 2px;
+}
 </style>
 
 <div id="app" class="container-fluid">

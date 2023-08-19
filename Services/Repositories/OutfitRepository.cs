@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.Tracking;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
@@ -123,6 +124,8 @@ namespace watchtower.Services.Repositories {
         ///     that is an element of <paramref name="IDs"/>
         /// </returns>
         public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+            using Activity? root = HonuActivitySource.Root.StartActivity("outfit repo - get by IDs");
+            root?.AddTag("honu.count", IDs.Count);
 
             List<PsOutfit> outfits = new List<PsOutfit>(IDs.Count);
 
@@ -139,6 +142,8 @@ namespace watchtower.Services.Repositories {
                 }
             }
 
+            root?.AddTag("honu.in_cache", inCache);
+
             int inDb = 0;
             List<PsOutfit> dbOutfits = await _Db.GetByIDs(IDs);
             foreach (PsOutfit outfit in dbOutfits) {
@@ -147,6 +152,8 @@ namespace watchtower.Services.Repositories {
                 ++inDb;
             }
 
+            root?.AddTag("honu.in_db", inDb);
+
             int inCensus = 0;
             List<PsOutfit> censusOutfits = await _Census.GetByIDs(IDs);
             foreach (PsOutfit outfit in censusOutfits) {
@@ -154,6 +161,8 @@ namespace watchtower.Services.Repositories {
                 IDs.Remove(outfit.ID);
                 ++inCensus;
             }
+
+            root?.AddTag("honu.in_census", inCensus);
 
             foreach (PsOutfit outfit in outfits) {
                 string cacheKey = string.Format(_CacheKeyID, outfit.ID);

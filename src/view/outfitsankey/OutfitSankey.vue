@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="d-flex" style="flex-direction: column; height: 100vh;">
+    <div class="d-flex" style="flex-flow: column; height: 100vh; overflow: hidden;">
         <div class="d-flex align-items-center mb-2 flex-grow-0 flex-basis-0">
             <honu-menu class="flex-grow-1">
                 <menu-dropdown></menu-dropdown>
@@ -22,7 +22,7 @@
                     </a>
 
                     <span v-else>
-                        &lt;ERROR&gt;
+                        &lt;error&gt;
                     </span>
                 </li>
 
@@ -33,17 +33,22 @@
                 </li>
             </honu-menu>
 
-            <div>
+            <div class="flex-grow-0 d-block mr-2">
                 <div v-if="settings.show == false">
-                    <button class="btn btn-secondary" @click="settings.show = true">
+                    <button class="btn btn-success h-100" @click="settings.show = true">
                         Show settings
                     </button>
                 </div>
             </div>
 
+            <div class="flex-grow-0 d-block">
+                <button class="btn btn-primary h-100" @click="resetZoom">
+                    Reset zoom
+                </button>
+            </div>
         </div>
-        
-        <div class="flex-grow-0 flex-basis-0">
+
+        <div class="flex-grow-0">
             <div v-if="sessions.state == 'loading'">
                 <div v-if="progress.initial == false">
                     Loading outfit data
@@ -62,12 +67,13 @@
             </div>
         </div>
 
-        <div id="d3_canvas" style="overflow: auto;" class="flex-grow-1">
-
+        <div id="page-root" class="flex-grow-1">
+            <div id="d3_canvas" style="overflow: hidden;">
+                <svg id="root" :width="graph.width" :height="graph.height" :viewBox="viewboxStr"></svg>
+            </div>
         </div>
 
         <div id="options-menu" style="position: fixed; top: 200px; width: 300px;" class="bg-dark m-2" :class="[ settings.show ? 'slide-300-in' : 'slide-300-out' ]">
-
             <div>
                 <button class="btn btn-secondary" @click="settings.show = false">
                     &times;
@@ -97,7 +103,7 @@
                     <info-hover text="Select a character to highlight the path of outfits"></info-hover>
                 </label>
 
-                <div class="input-group" style="max-width: 40ch;">
+                <div class="input-group">
                     <select v-if="characters.state == 'loaded'" v-model="follow.characterID" class="form-control">
                         <option v-for="c in follow.sortedCharacters" :value="c.id">
                             {{c.name}}
@@ -107,6 +113,30 @@
                         <option :value="null">loading...</option>
                     </select>
                     <button class="btn btn-secondary btn-group-addon" @click="closeFollowCharacter">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-2">
+                <label>
+                    Highlight outfit
+                    <info-hover text="Select an outfit to highlight all paths of the outfit"></info-hover>
+                </label>
+
+                <div class="input-group">
+                    <select v-if="outfits.state == 'loaded'" v-model="followOutfit.outfitID" class="form-control">
+                        <option v-for="o in followOutfit.sortedOutfits" :value="o.id">
+                            <span style="width: 1ch;" :style="{ 'color': outfitColors.get(o.id) }">
+                                &nbsp;
+                            </span>
+                            {{o.name}}
+                        </option>
+                    </select>
+                    <select v-else disabled class="form-control">
+                        <option :value="null">loading...</option>
+                    </select>
+                    <button class="btn btn-secondary btn-group-addon" @click="closeFollowOutfit">
                         Clear
                     </button>
                 </div>
@@ -127,38 +157,24 @@
                 <div class="px-2">
                     <div class="input-group">
                         <span class="input-group-addon input-group-prepend">
-                            node spacing
-                        </span>
-                        <input v-model.number="settings.pxPerWeek" type="number" class="form-control" />
-                    </div>
-
-                    <div class="input-group">
-                        <span class="input-group-addon input-group-prepend">
-                            px per player
-                        </span>
-                        <input v-model.number="settings.pxPerChar" type="number" class="form-control" />
-                    </div>
-
-                    <div class="input-group">
-                        <span class="input-group-addon input-group-prepend">
                             node width (dx)
                         </span>
                         <input v-model.number="settings.nodeWidth" type="number" class="form-control" />
                     </div>
 
-                    <div class="d-flex">
+                    <div class="d-flex" style="flex-wrap: wrap;">
                         <toggle-button v-model="settings.showPaths" class="flex-grow-0">
                             show paths
                         </toggle-button>
                         <toggle-button v-model="settings.showPathId" class="flex-grow-0">
                             show path id
                         </toggle-button>
-                        <button class="btn btn-primary" @click="assignOutfitColors(); redraw();">
+                        <button class="btn btn-success flex-grow-0" @click="assignOutfitColors(); redraw();">
                             recolor
                         </button>
                     </div>
 
-                    <button class="btn btn-primary" @click="redraw">
+                    <button class="btn btn-primary w-100 my-2" @click="redraw">
                         Redraw
                     </button>
                 </div>
@@ -216,6 +232,7 @@
 <script lang="ts">
     import Vue, { PropType } from "vue";
 
+    import Toaster from "Toaster";
     import { Loadable, Loading } from "Loading";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsOutfit, OutfitApi } from "api/OutfitApi";
@@ -386,10 +403,10 @@
 
                 graph: {
                     root: null as SVGElement | null,
+                    zoom: null as any | null,
 
                     width: 100 as number,
                     height: 100 as number,
-
 
                     nodes: [] as HNode[],
                     links: [] as HLink[],
@@ -416,6 +433,13 @@
                     characterID: "" as string,
                     sortedCharacters: [] as PsCharacter[],
                     paths: [] as string[],
+                },
+
+                followOutfit: {
+                    active: false as boolean,
+                    outfitID: "" as string,
+                    sortedOutfits: [] as PsOutfit[],
+                    paths: [] as string[]
                 },
 
                 selectedCharacter: "" as string,
@@ -451,6 +475,17 @@
 
         mounted: function(): void {
             this.$nextTick(async () => {
+
+                const pageRoot: HTMLElement | null = document.getElementById("page-root");
+                if (pageRoot == null) {
+                    Toaster.add("HTML error", "failed to find #page-root", "danger");
+                    throw `failed to find #page-root`;
+                }
+
+                console.log(pageRoot.clientWidth, pageRoot.clientHeight);
+                this.graph.width = pageRoot.clientWidth;
+                this.graph.height = pageRoot.clientHeight;
+
                 this.progress.step = "parsing outfit ID";
                 this.parseOutfit();
 
@@ -467,7 +502,7 @@
                 this.makeData();
 
                 this.progress.step = "creating graphic";
-                this.d3s(this.graph.width, this.graph.height);
+                this.d3s();
 
                 this.progress.step = "";
             });
@@ -598,34 +633,85 @@
                 this.follow.active = false;
             },
 
+            openFollowOutfit: function(): void {
+                for (const elemId of this.followOutfit.paths) {
+                    document.getElementById(elemId)?.classList.remove("link-hover", "node-hover");
+                }
+
+                console.log(`showing outfit paths for ${this.followOutfit.outfitID}`);
+
+                const elements: Set<string> = new Set();
+                for (const node of this.graph.nodes) {
+                    if (node.outfitID != this.followOutfit.outfitID) {
+                        continue;
+                    }
+
+                    for (const link of node.sourceLinks) {
+                        elements.add(`link-${link.id}-${node.id}`);
+                    }
+                    for (const link of node.targetLinks) {
+                        elements.add(`link-${node.id}-${link.id}`);
+                    }
+                    elements.add(`node-${node.id}`);
+                }
+
+                this.followOutfit.paths = Array.from(elements.keys());
+
+                for (const elemId of elements) {
+                    const elem: HTMLElement | null = document.getElementById(elemId);
+                    if (elem != null) {
+                        if (elemId.startsWith("node-")) {
+                            elem.classList.add("node-hover");
+                        } else {
+                            elem.classList.add("link-hover");
+                        }
+                    } else {
+                        console.warn(`failed to find #${elemId}`);
+                    }
+                }
+
+                this.followOutfit.active = true;
+            },
+
+            closeFollowOutfit: function(): void {
+                for (const elemId of this.followOutfit.paths) {
+                    document.getElementById(elemId)?.classList.remove("link-hover", "node-hover");
+                }
+
+                this.followOutfit.outfitID = "";
+                this.followOutfit.active = false;
+            },
+
             redraw: function(): void {
                 this.makeData();
-                this.d3s(this.graph.width, this.graph.height);
+                this.d3s();
+            },
+
+            resetZoom: function(): void {
+                if (this.graph.zoom != null) {
+                    d3.select("svg")
+                        .transition()
+                        .call(this.graph.zoom.transform, d3.zoomIdentity);
+                }
             },
 
             /**
              * Create the d3 graph
-             * 
-             * @param width
-             * @param height
              */
-            d3s: function(width: number, height: number): void {
+            d3s: function(): void {
                 console.time("do d3");
 
                 if (this.graph.root != null) {
-                    this.graph.root.remove();
-                    this.graph.root = null;
+                    for (let i = 0; i < this.graph.root.childNodes.length; ++i) {
+                        this.graph.root.childNodes.item(i).remove();
+                    }
                 }
 
-                const svg = d3.select("#d3_canvas").append("svg")
-                    .attr("id", "svg-root")
-                    .attr("width", width)
-                    .attr("height", height)
-                    .attr("viewBox", [0, 0, width, height]);
+                const svg = d3.select("#root");
 
-                const svgRoot: HTMLElement | null = document.getElementById("svg-root");
+                const svgRoot: HTMLElement | null = document.getElementById("root");
                 if (svgRoot == null) {
-                    throw `failed to find #svg-root`;
+                    throw `failed to find #root`;
                 }
 
                 console.log(svgRoot);
@@ -635,20 +721,24 @@
 
                 this.debug(`d3 stuff`);
 
-                const zoom = d3.zoom();
-                zoom.scaleExtent([1, 40])
-                    .translateExtent([[-100, -100], [width + 90, height + 100]])
+                const docRoot = svg.append("g")
+                    .attr("id", "doc-root");
+
+                this.graph.zoom = d3.zoom();
+                this.graph.zoom
+                    .scaleExtent([0.1, 40])
+                    //.translateExtent([[0, 0], [width, height]])
                     .filter((ev: any) => {
-                        ev.preventDefault();
-                        return (!ev.ctrlKey || ev.type == "wheel") && !ev.button;
+                        return ev.type != "mousedownn";
                     })
-                    .on("zoom", zoomed);
+                    .on("zoom", (ev: any) => {
+                        // a zoom event can also be a drag/pan event
+                        // so if we click on a path (which opens the popper), then start dragging, we want to close the popper
+                        this.closePopper();
+                        docRoot.attr("transform", ev.transform);
+                    });
 
-                //svg.call(zoom)//.node();
-
-                function zoomed({ transform }: any) {
-                    svg.attr("transform", transform);
-                }
+                svg.call(this.graph.zoom);
 
                 for (const node of this.graph.nodes) {
                     node.sourceLinks.sort((a, b) => a.y - b.y);
@@ -676,8 +766,9 @@
 
                 // make a gradient for each path
                 this.debug(`making linearGradient`);
-                const defs = svg.append("defs")
-                    .selectAll(".link")
+                const defs = svg.append("defs");
+
+                const gradients = defs.selectAll(".link")
                     .data(this.graph.links)
                     .enter()
                     .append("linearGradient")
@@ -688,7 +779,7 @@
 
                 // add the starting color to each path
                 this.debug("adding stop 0");
-                defs.append("stop")
+                gradients.append("stop")
                     .attr("offset", "0%")
                     .attr("stop-color", (d: HLink) => {
                         const source: HNode = nodeMap.get(d.source)!;
@@ -697,13 +788,14 @@
 
                 // add the ending color to each path
                 this.debug("adding stop 1");
-                defs.append("stop")
+                gradients.append("stop")
                     .attr("offset", "100%")
                     .attr("stop-color", (d: HLink) => {
                         const target: HNode = nodeMap.get(d.target)!;
                         return target.color;
                     });
 
+                // generate link maps, used to calculate path offsets
                 this.graph.linkSourceMap.clear();
                 this.graph.linkTargetMap.clear();
                 for (const link of this.graph.links) {
@@ -723,7 +815,7 @@
                 this.debug("building links");
 
                 if (this.settings.showPaths == true) {
-                    const paths = svg.append("g")
+                    const paths = docRoot.append("g")
                         .selectAll(".link")
                         .data(this.graph.links)
                         .enter()
@@ -731,7 +823,9 @@
                         .attr("class", "link")
                         .attr("id", (d: HLink) => { return `link-${d.source}-${d.target}`; })
                         .attr("d", (d: HLink) => { return this.makeLinkPath(d); })
-                        .attr("stroke", (d: HLink) => { return `none`; })
+                        .attr("stroke", (d: HLink) => { return `white`; })
+                        .attr("stroke-width", "2")
+                        //.attr("stroke-opacity", "0") // this is handled by the css in OutfitSankey.cshtml
                         .attr("fill", (d: HLink) => { return `url(#${d.source}-${d.target})`; })
                         .style("mix-blend-mode", "multiple")
                         .style("fill-opacity", (d: HLink) => {
@@ -739,12 +833,12 @@
                             const target: HNode = getNodeOrThrow(d.target);
 
                             if (source.outfitID != target.outfitID) {
-                                return this.lerp(0.5, 1.0, 1 - (d.value / this.charMap.size));
+                                return this.lerp(0.5, 0.8, 1 - (d.value / this.charMap.size));
                             }
 
                             return 0.5;
                         })
-                        .on("mouseup", this.pathClickListener);
+                        .on("mousedown", this.pathClickListener);
 
                     // sort them based on value, so paths that cross over each other can still be hovered over
                     paths.sort((a: HLink, b: HLink) => {
@@ -792,21 +886,21 @@
 
                 // add the nodes for each week
                 this.debug("building nodes");
-                const node = svg.append("g")
+                const node = docRoot.append("g")
                     .selectAll(".node")
                     .data(this.graph.nodes)
                     .enter()
                     .append("rect")
+                    .attr("id", (d: HNode) => `node-${d.id}`)
                     .attr("class", "node")
                     .attr("width", (d: HNode) => d.dx)
                     .attr("height", (d: HNode) => d.dy)
                     .attr("x", (d: HNode) => d.x)
                     .attr("y", (d: HNode) => d.y)
                     .style("fill", (d: HNode) => d.color)
-                    .style("stroke", "#000")
                     // when you hover over a node, highlight all paths to and from it
                     .on("mouseover", (ev: any, node: HNode) => {
-                        if (this.follow.active == true) {
+                        if (this.follow.active == true || this.followOutfit.active == true) {
                             return;
                         }
 
@@ -816,7 +910,7 @@
                     })
                     // and when no longer hovering, remove the highlight
                     .on("mouseleave", (ev: any, node: HNode) => {
-                        if (this.follow.active == true) {
+                        if (this.follow.active == true || this.followOutfit.active == true) {
                             return;
                         }
 
@@ -828,6 +922,7 @@
                     .text((d: HNode) => {
                         return `${d.name}: ${d.value} characters`;
                     });
+
 
                 console.timeEnd("do d3");
             },
@@ -975,6 +1070,8 @@
                     return;
                 }
 
+                console.log(`showing link ${link.source}-${link.target}`);
+
                 const source: HNode = this.graph.map.get(link.source)!;
                 const target: HNode = this.graph.map.get(link.target)!;
 
@@ -986,7 +1083,7 @@
 
                 console.log(ev);
                 popperDiv.style.display = "block";
-                popperDiv.style.left = `${ev.clientX}px`;
+                popperDiv.style.left = `${ev.clientX + 4}px`;
 
                 if (ev.clientY < (window.innerHeight / 2)) {
                     popperDiv.style.bottom = "";
@@ -1113,9 +1210,9 @@
                 }
 
                 console.log(`${buckets.size} buckets`);
-                this.graph.width = buckets.size * (this.settings.pxPerWeek + this.settings.nodeWidth);
+                //this.graph.width = buckets.size * (this.settings.pxPerWeek + this.settings.nodeWidth);
                 console.log(`${c.size} characters`);
-                this.graph.height = c.size * this.settings.pxPerChar;
+                //this.graph.height = c.size * this.settings.pxPerChar;
 
                 console.time("make data");
 
@@ -1236,23 +1333,29 @@
              * Get all the sessions relevant to load the outfit's sankey
              */
             getSessions: async function(): Promise<void> {
+                console.time("get sessions");
                 this.sessions = Loadable.loading();
 
                 const all: Session[] = [];
 
+                console.time("get sessions: outfit")
                 const s: Loading<Session[]> = await SessionApi.getByOutfit(this.outfitID);
                 if (s.state != "loaded") {
                     return;
                 }
                 this.progress.initial = true;
 
-                console.time("get sessions");
-
                 console.log(`${s.data.length} from outfit`);
 
                 all.push(...s.data);
+                console.timeEnd("get sessions: outfit");
 
-                const charIDs: string[] = s.data.map(iter => iter.characterID).filter((v, i, a) => a.indexOf(v) == i);
+                const charSet: Set<string> = new Set();
+                for (const session of s.data) {
+                    charSet.add(session.characterID);
+                }
+
+                const charIDs: string[] = Array.from(charSet.keys());
                 this.progress.total = charIDs.length;
 
                 for (const id of charIDs) {
@@ -1307,6 +1410,8 @@
 
                 if (this.outfits.state == "loaded") {
                     this.assignOutfitColors();
+
+                    this.followOutfit.sortedOutfits = [...this.outfits.data].sort((a, b) => a.name.localeCompare(b.name));
                 }
 
                 console.timeEnd("get outfits");
@@ -1384,10 +1489,22 @@
             OutfitName
         },
 
+        computed: {
+            viewboxStr: function(): string {
+                return `${0},${0},${this.graph.width},${this.graph.height}`;
+            }
+        },
+
         watch: {
             "follow.characterID": function(): void {
                 if (this.follow.characterID != "" && this.follow.characterID != undefined) {
                     this.highlightCharacter(this.follow.characterID);
+                }
+            },
+
+            "followOutfit.outfitID": function(): void {
+                if (this.followOutfit.outfitID != "" && this.followOutfit.outfitID != undefined) {
+                    this.openFollowOutfit();
                 }
             }
         }
