@@ -198,7 +198,7 @@ namespace watchtower.Services.Db {
                             (start <= @Time AND finish >= @Time)
                             OR (start <= @Time AND finish IS NULL)
                         )
-                        AND world_id = @WorldID
+                        AND c.world_id = @WorldID
                     GROUP BY wt_session.outfit_id
                 )
                 SELECT *

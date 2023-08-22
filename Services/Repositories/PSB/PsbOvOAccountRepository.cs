@@ -303,7 +303,7 @@ namespace watchtower.Services.Repositories.PSB {
             int columnIndex = when.Day - 1 + 3; // Day is 1-indexed
 
             string columnLetter = "";
-            if (columnIndex > 26) {
+            if (columnIndex >= 26) {
                 columnLetter = "A" + ((char)('A' + (char)(columnIndex % 26)));
             } else {
                 columnLetter = "" + ((char)('A' + (char)columnIndex));
