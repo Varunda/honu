@@ -22,9 +22,8 @@ namespace watchtower.Models {
         public int Total { get; set; }
     }
 
-
     /// <summary>
-    /// Represents state data of a zone
+    ///     Represents state data of a zone
     /// </summary>
     public class ZoneState {
 
@@ -47,17 +46,17 @@ namespace watchtower.Models {
         }
 
         /// <summary>
-        /// ID of the zone
+        ///     ID of the zone
         /// </summary>
         public uint ZoneID { get; set; }
 
         /// <summary>
-        /// What world this zone datat is for
+        ///     What world this zone data is for
         /// </summary>
         public short WorldID { get; set; }
 
         /// <summary>
-        /// Is this zone currently open
+        ///     Is this zone currently open
         /// </summary>
         public bool IsOpened { get; set; } = false;
 
@@ -72,12 +71,12 @@ namespace watchtower.Models {
         public PsAlert? Alert { get; set; }
 
         /// <summary>
-        /// When did an alert on this zone start?
+        ///     When did an alert on this zone start?
         /// </summary>
         public DateTime? AlertStart { get; set; }
 
         /// <summary>
-        /// When will the alert on this zone end, useful for like deso
+        ///     When will the alert on this zone end, useful for like deso
         /// </summary>
         public DateTime? AlertEnd { get; set; }
 

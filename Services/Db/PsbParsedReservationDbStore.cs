@@ -20,6 +20,11 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
+        /// <summary>
+        ///     Get a single <see cref="PsbParsedReservationMetadata"/> by its <see cref="PsbParsedReservationMetadata.MessageID"/>
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <returns></returns>
         public async Task<PsbParsedReservationMetadata?> GetByID(ulong ID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
@@ -40,20 +45,22 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO psb_parsed_reservations (
-                    message_id, account_sheet_id, account_sheet_approved_by, booking_approved_by
+                    message_id, account_sheet_id, account_sheet_approved_by, booking_approved_by, override_by
                 ) VALUES (
-                    @MessageID, @AccountSheetID, @AccountSheetApproved, @BookingsApprovedBy
+                    @MessageID, @AccountSheetID, @AccountSheetApproved, @BookingsApprovedBy, @OverrideBy
                 ) ON CONFLICT (message_id)
                     DO UPDATE set 
                         account_sheet_id = @AccountSheetID,
                         account_sheet_approved_by = @AccountSheetApproved,
-                        booking_approved_by = @BookingsApprovedBy
+                        booking_approved_by = @BookingsApprovedBy,
+                        override_by = @OverrideBy;
             ");
 
             cmd.AddParameter("MessageID", meta.MessageID);
             cmd.AddParameter("AccountSheetID", meta.AccountSheetId);
             cmd.AddParameter("AccountSheetApproved", meta.AccountSheetApprovedById);
             cmd.AddParameter("BookingsApprovedBy", meta.BookingApprovedById);
+            cmd.AddParameter("OverrideBy", meta.OverrideById);
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();

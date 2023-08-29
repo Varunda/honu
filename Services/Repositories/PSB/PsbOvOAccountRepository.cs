@@ -46,6 +46,7 @@ namespace watchtower.Services.Repositories.PSB {
         ///     The ID of a google drive file
         /// </returns>
         public async Task<string> GetMonthSheetFileID(DateTime month) {
+            // example: 01. Jan 2023
             string name = $"{month:MM}. {month:MMMM} {month:yyyy}";
             string cacheKey = string.Format(CACHE_KEY, name);
             if (_Cache.TryGetValue(cacheKey, out string fileID) == true) {
@@ -53,8 +54,6 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             _Logger.LogDebug($"Searching for file for {month:u} => {name}");
-
-            //_DriveSettings.Value.OvORootFolderId
 
             FilesResource.ListRequest list = _GDrive.GetDriveService().Files.List();
             list.SupportsAllDrives = true;

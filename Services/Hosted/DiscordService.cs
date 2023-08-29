@@ -27,6 +27,7 @@ using DSharpPlus.ButtonCommands.EventArgs;
 using watchtower.Services.Repositories.PSB;
 using watchtower.Models.PSB;
 using System.Diagnostics;
+using watchtower.Services.Db;
 
 namespace watchtower.Services.Hosted {
 
@@ -36,6 +37,7 @@ namespace watchtower.Services.Hosted {
 
         private readonly DiscordMessageQueue _MessageQueue;
         private readonly PsbReservationRepository _ReservationRepository;
+        private readonly PsbParsedReservationDbStore _ReservationMetadataDb;
 
         //public DiscordClient _Discord;
         private readonly DiscordWrapper _Discord;
@@ -51,7 +53,7 @@ namespace watchtower.Services.Hosted {
         public DiscordService(ILogger<DiscordService> logger, ILoggerFactory loggerFactory,
             DiscordMessageQueue msgQueue, IOptions<DiscordOptions> discordOptions, IServiceProvider services,
             DiscordWrapper discord,
-            PsbReservationRepository reservationRepository) {
+            PsbReservationRepository reservationRepository, PsbParsedReservationDbStore reservationMetadataDb) {
 
             _Logger = logger;
             _Logger.LogError("discord ctor");
@@ -124,6 +126,7 @@ namespace watchtower.Services.Hosted {
             _ButtonCommands.ButtonCommandExecuted += Button_Command_Executed;
             _ButtonCommands.ButtonCommandErrored += Button_Command_Error;
             _ReservationRepository = reservationRepository;
+            _ReservationMetadataDb = reservationMetadataDb;
         }
 
         public async override Task StartAsync(CancellationToken cancellationToken) {
@@ -486,7 +489,7 @@ namespace watchtower.Services.Hosted {
             }
 
             // ignore interactions such as reponses to messages
-            if (args.Message.Interaction != null) {
+            if (args.Message.Interaction != null || args.Author.IsBot == true) {
                 return;
             }
 
@@ -509,6 +512,9 @@ namespace watchtower.Services.Hosted {
 
                 DiscordThreadChannel thread = await args.Message.CreateThreadAsync(reservationName, AutoArchiveDuration.Day);
                 _Logger.LogDebug($"type: {thread.Type}");
+
+                parsed.Metadata.ThreadID = thread.Id;
+                await _ReservationMetadataDb.Upsert(parsed.Metadata);
 
                 DiscordMessageBuilder builder = _ReservationRepository.CreateMessage(parsed, false);
                 await thread.SendMessageAsync(builder);

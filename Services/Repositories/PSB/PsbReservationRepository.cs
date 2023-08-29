@@ -254,17 +254,29 @@ namespace watchtower.Services.Repositories.PSB {
 
             if (PsbReservationRepository.BookingEnabled == true) {
                 DiscordButtonComponent bookingBtn = PsbButtonCommands.APPROVE_BOOKING(parsed.MessageId);
-                if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Bases.Count == 0) {
-                    bookingBtn.Disable();
+
+                if (parsed.Metadata.OverrideById != null) {
+                    bookingBtn = PsbButtonCommands.APPROVE_BOOKING_OVERRIDE(parsed.MessageId);
+                } else {
+                    if (parsed.Metadata.BookingApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Bases.Count == 0) {
+                        bookingBtn.Disable();
+                    }
                 }
+
                 comps.Add(bookingBtn);
             }
 
             if (PsbReservationRepository.AccountEnabled == true) {
                 DiscordButtonComponent accountBtn = PsbButtonCommands.APPROVE_ACCOUNTS(parsed.MessageId);
-                if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Accounts == 0) {
-                    accountBtn.Disable();
+
+                if (parsed.Metadata.OverrideById != null) {
+                    accountBtn = PsbButtonCommands.APPROVE_ACCOUNTS_OVERRIDE(parsed.MessageId);
+                } else {
+                    if (parsed.Metadata.AccountSheetApprovedById != null || parsed.Errors.Count != 0 || parsed.Reservation.Accounts == 0) {
+                        accountBtn.Disable();
+                    }
                 }
+
                 comps.Add(accountBtn);
             }
 

@@ -400,7 +400,7 @@ namespace watchtower.Code.DiscordInteractions {
 
                 fightDesc += "\n";
 
-                if (builder.Description.Length + fightDesc.Length > 1000) {
+                if (builder.Description.Length + fightDesc.Length > 1500) {
                     break;
                 }
 
@@ -408,7 +408,7 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             if (fights.Count == 0) {
-                builder.Description += $"No fights are currently happening, or the data Honu is using is incorrect";
+                builder.Description += $"No fights are currently happening, or the data Honu is using is incorrect\n\n_Most recent update was at {maxUpdate.GetDiscordFullTimestamp()}_";
             }
 
             builder.WithFooter($"Not 100% accurate! Generated in {timer.ElapsedMilliseconds}ms");

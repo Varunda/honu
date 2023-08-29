@@ -33,6 +33,7 @@ namespace watchtower.Code.DiscordInteractions {
         public FacilityRepository _FacilityRepository { set; private get; } = default!;
         public PsbCalendarRepository _CalendarRepository { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
+        public PsbParsedReservationDbStore _ReservationMetadataDb { set; private get; } = default!;
 
         public IOptions<PsbDriveSettings> _PsbDriveSettings { set; private get; } = default!;
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
@@ -449,6 +450,34 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseEmbed(builder);
         }
 
+        [SlashCommand("override-reservation", "Override reservation")]
+        [RequiredRoleSlash("ovo-admin")]
+        public async Task OverrideReservation(InteractionContext ctx) { 
+
+            await ctx.CreateDeferred(true);
+
+            // in the case of a thread, the ID is the message that the thread is based off of
+            ulong msgID = ctx.Channel.Id;
+
+            PsbParsedReservationMetadata? meta = await _ReservationMetadataDb.GetOrCreate(msgID);
+            if (meta.OverrideById != null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot override {msgID}: already overridden by <@{meta.OverrideById}>");
+                return;
+            }
+
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+                .WithTitle("Override")
+                .WithDescription($"Override created by <@{ctx.User.Id}>/{ctx.User.Username}\n\nOnly this user can approve this reservation now, despite any errors during parsing")
+                .WithColor(DiscordColor.Purple);
+
+            meta.OverrideById = ctx.User.Id;
+            await _ReservationMetadataDb.Upsert(meta);
+
+            await ctx.Channel.SendMessageAsync(builder);
+
+            await ctx.EditResponseText("done");
+        }
+
     }
 
     public class PsbButtonCommands : ButtonCommandModule {
@@ -470,6 +499,15 @@ namespace watchtower.Code.DiscordInteractions {
         public static DiscordButtonComponent APPROVE_BOOKING(ulong msgID) => new(ButtonStyle.Primary, $"@approve-booking.{msgID}", "Approve booking");
 
         /// <summary>
+        ///     Button that when pressed when approve the base bookings of a reservation
+        ///     that can be found in the <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/>
+        ///     of <paramref name="msgID"/>. However this one is stylized differently
+        /// </summary>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
+        public static DiscordButtonComponent APPROVE_BOOKING_OVERRIDE(ulong msgID)
+            => new(ButtonStyle.Primary, $"@approve-booking.{msgID}", "Approve booking (OVERRIDE)", false, new DiscordComponentEmoji("‼️"));
+
+        /// <summary>
         ///     Button that when pressed will approve the account request of a reservation
         ///     that can be found in the <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/>
         ///     of <paramref name="msgID"/>
@@ -477,6 +515,19 @@ namespace watchtower.Code.DiscordInteractions {
         /// <param name="msgID">ID of the message that contains the reservation</param>
         public static DiscordButtonComponent APPROVE_ACCOUNTS(ulong msgID) => new(ButtonStyle.Primary, $"@approve-accounts.{msgID}", "Approve accounts");
 
+        /// <summary>
+        ///     Button that when pressed will approve the account request of a reservation
+        ///     that can be found in the <see cref="DiscordMessage"/> with <see cref="SnowflakeObject.Id"/>
+        ///     of <paramref name="msgID"/>. However this one is stylized differently
+        /// </summary>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
+        public static DiscordButtonComponent APPROVE_ACCOUNTS_OVERRIDE(ulong msgID)
+            => new(ButtonStyle.Primary, $"@approve-accounts.{msgID}", "Approve accounts (OVERRIDE)", false, new DiscordComponentEmoji("‼️"));
+
+        /// <summary>
+        ///     Button that when pressed will reset a reservation
+        /// </summary>
+        /// <param name="msgID">ID of the message that contains the reservation</param>
         public static DiscordButtonComponent RESET_RESERVATION(ulong msgID) => new(ButtonStyle.Danger, $"@reset-reservation.{msgID}", "Reset (DANGER)");
 
         public ILogger<PsbButtonCommands> _Logger { set; private get; } = default!;
@@ -602,6 +653,11 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
+            if (parsed.Metadata.OverrideById != null && parsed.Metadata.OverrideById != ctx.Member.Id) {
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve base booking:\nThis reservation has an override created by <@{parsed.Metadata.OverrideById}>, only they can approve this");
+                return;
+            }
+
             // bookings for a whole continent/zone need OvO admin
             bool needsAdmin = parsed.Reservation.Bases.FirstOrDefault(iter => iter.ZoneID != null) != null;
             if (needsAdmin == true) {
@@ -623,14 +679,23 @@ namespace watchtower.Code.DiscordInteractions {
             parsed.Metadata.BookingApprovedById = ctx.User.Id;
             await _MetadataDb.Upsert(parsed.Metadata);
 
-            await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                 .WithTitle("Success")
-                .WithDescription($"Successfully booked {parsed.Reservation.Bases.Count} bases")
+                .WithDescription($"<@{ctx.User.Id}>/{ctx.User.Username} approved the booking for {parsed.Reservation.Bases.Count} bases")
                 .WithColor(DiscordColor.Green)
-                .WithUrl($"https://docs.google.com/spreadsheets/d/{_DriveSettings.Value.CalendarFileId}/")
-            );
+                .WithUrl($"https://docs.google.com/spreadsheets/d/{_DriveSettings.Value.CalendarFileId}/");
+
+            await ctx.Channel.SendMessageAsync(builder);
+
+            await ctx.Interaction.EditResponseEmbed(builder);
         }
 
+        /// <summary>
+        ///     Button command that will approve the accounts used in a reservation, creating the sheet
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="msgID"></param>
+        /// <returns></returns>
         [ButtonCommand("approve-accounts")]
         public async Task ApproveAccounts(ButtonContext ctx, ulong msgID) {
             await ctx.Interaction.CreateDeferred(true);
@@ -667,6 +732,11 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
+            if (parsed.Metadata.OverrideById != null && parsed.Metadata.OverrideById != ctx.Member.Id) {
+                await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\nThis reservation has an override created by <@{parsed.Metadata.OverrideById}>, only they can approve this");
+                return;
+            }
+
             if (parsed.Reservation.Accounts >= 48) {
                 if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong adminID) == false) {
                     await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-admin $ROLE_ID`");
@@ -683,16 +753,25 @@ namespace watchtower.Code.DiscordInteractions {
             string fileID = await _SheetRepository.ApproveAccounts(parsed);
 
             parsed.Metadata.AccountSheetApprovedById = ctx.User.Id;
+            parsed.Metadata.AccountSheetId = fileID;
             await _MetadataDb.Upsert(parsed.Metadata);
 
-            await ctx.Interaction.EditResponseEmbed(new DiscordEmbedBuilder()
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                 .WithTitle("Success")
-                .WithDescription($"Successfully created account sheet for reservation at `{fileID}`")
+                .WithDescription($"<@{ctx.User.Id}>/{ctx.User.Username} approved the request for accounts.\n\nSheet link: https://docs.google.com/spreadsheets/d/{fileID}")
                 .WithUrl($"https://docs.google.com/spreadsheets/d/{fileID}")
-                .WithColor(DiscordColor.Green)
-            );
+                .WithColor(DiscordColor.Green);
+
+            await ctx.Channel.SendMessageAsync(builder);
+
+            await ctx.Interaction.EditResponseEmbed(builder);
         }
 
+        /// <summary>
+        ///     Button when pressed will reset a reservation
+        /// </summary>
+        /// <param name="ctx">Provided context</param>
+        /// <param name="msgID">ID of the message that contains a reservation</param>
         [ButtonCommand("reset-reservation")]
         public async Task ResetReservation(ButtonContext ctx, ulong msgID) {
             await ctx.Interaction.CreateDeferred(true);
@@ -722,6 +801,7 @@ namespace watchtower.Code.DiscordInteractions {
             parsed.Metadata.AccountSheetApprovedById = null;
             parsed.Metadata.AccountSheetId = null;
             parsed.Metadata.BookingApprovedById = null;
+            parsed.Metadata.OverrideById = null;
             await _MetadataDb.Upsert(parsed.Metadata);
 
             await ctx.Interaction.EditResponseText($"Reset reservation");

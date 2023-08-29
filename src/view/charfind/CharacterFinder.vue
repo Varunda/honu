@@ -41,7 +41,7 @@
             :entries="tableEntries"
             :show-filters="true"
             :paginate="false"
-            default-sort-field="dateLastLogin" default-sort-order="desc"
+            default-sort-field="index" default-sort-order="asc"
             display-type="table">
 
             <a-col sort-field="name">
@@ -187,6 +187,7 @@
     };
 
     type FlatPsCharacter = PsCharacter & Partial<CharacterMetadata> & {
+        index: number;
         battleRankOrder: number;
         outfitSearch: string;
     };
@@ -249,7 +250,15 @@
                     return;
                 }
 
-                const char: PsCharacter = this.characters.data[this.scrollIndex];
+                if (this.tableEntries.state != "loaded") {
+                    return;
+                }
+
+                if (this.tableEntries.data.length == 0) {
+                    return;
+                }
+
+                const char: PsCharacter = this.tableEntries.data[0];
 
                 if (ev.ctrlKey == true) {
                     console.log(`opening ${char.id} in new tab`);
@@ -406,6 +415,7 @@
 
                 const chars: FlatPsCharacter[] = [];
 
+                let index: number = 0;
                 for (const iter of this.characters.data) {
                     let metadata: CharacterMetadata | null = null;
                     if (this.metadatas.state == "loaded") {
@@ -417,11 +427,14 @@
                     }
 
                     chars.push({
+                        index: index,
                         ...iter,
                         ...metadata,
                         battleRankOrder: (iter.prestige * 1000) + iter.battleRank,
                         outfitSearch: (iter.outfitID != null) ? `[${iter.outfitTag}] ${iter.outfitName}` : ""
                     });
+
+                    ++index;
                 }
 
                 return Loadable.loaded(chars);

@@ -72,6 +72,20 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get the current zone population of a world
+        /// </summary>
+        /// <param name="worldID">ID of the world</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ZonePopulation"/>s 
+        ///     for the world passed in <paramref name="worldID"/>
+        /// </response>
+        [HttpGet("{worldID}/zones")]
+        public ApiResponse<List<ZonePopulation>> GetZoneByWorldID(short worldID) {
+            List<ZonePopulation> pops = _PopulationRepository.GetZonesByWorldID(worldID);
+            return ApiOk(pops);
+        }
+
+        /// <summary>
         ///     Get the current world population of multiple worlds
         /// </summary>
         /// <param name="worldID">List of world IDs to include. If an invalid world ID is passed, it is not included in the response</param>
