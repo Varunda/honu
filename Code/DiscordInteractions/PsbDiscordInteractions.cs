@@ -478,6 +478,37 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText("done");
         }
 
+        [SlashCommand("reparse-reservation", "Reparse reservation")]
+        [RequiredRoleSlash("ovo-admin")]
+        public async Task ReparseReservation(InteractionContext ctx) {
+            await ctx.CreateDeferred(true);
+
+            if (ctx.Channel.IsThread == false) {
+                await ctx.Interaction.EditResponseErrorEmbed("cannot reparse reservation: not in a thread");
+                return;
+            }
+
+            ulong msgID = ctx.Channel.Id;
+
+            if (ctx.Channel.Parent == null || ctx.Channel.Parent.IsCategory == true) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot reparse reservation {msgID}: parent channel is null or a category");
+                return;
+            }
+
+            DiscordMessage? msg = await ctx.Channel.Parent.TryGetMessage(msgID);
+            if (msg == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot reparse reservation {msgID}: failed to find msg");
+                return;
+            }
+
+            ParsedPsbReservation parsed = await _ReservationRepository.Parse(msg);
+
+            DiscordMessageBuilder builder = _ReservationRepository.CreateMessage(parsed, false);
+            await ctx.Channel.SendMessageAsync(builder);
+
+            await ctx.EditResponseText("done");
+        }
+
     }
 
     public class PsbButtonCommands : ButtonCommandModule {

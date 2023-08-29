@@ -513,7 +513,6 @@ namespace watchtower.Services.Hosted {
                 DiscordThreadChannel thread = await args.Message.CreateThreadAsync(reservationName, AutoArchiveDuration.Day);
                 _Logger.LogDebug($"type: {thread.Type}");
 
-                parsed.Metadata.ThreadID = thread.Id;
                 await _ReservationMetadataDb.Upsert(parsed.Metadata);
 
                 DiscordMessageBuilder builder = _ReservationRepository.CreateMessage(parsed, false);

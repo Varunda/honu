@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 
 namespace watchtower.Services.Db.Patches {
 
+    [Patch]
     public class Patch80PsbReservationOverride : IDbPatch {
         public int MinVersion => 80;
         public string Name => "psb reservation overrides";

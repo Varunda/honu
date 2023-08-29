@@ -8,11 +8,6 @@
         public ulong MessageID { get; set; }
 
         /// <summary>
-        ///     ID of the thread this reservation is for
-        /// </summary>
-        public ulong ThreadID { get; set; }
-
-        /// <summary>
         ///     ID of the google drive sheet that contains the accounts
         /// </summary>
         public string? AccountSheetId { get; set; }

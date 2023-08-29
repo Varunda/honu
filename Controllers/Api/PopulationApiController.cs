@@ -90,7 +90,7 @@ namespace watchtower.Controllers.Api {
         /// </summary>
         /// <param name="worldID">List of world IDs to include. If an invalid world ID is passed, it is not included in the response</param>
         /// <response code="200">
-        ///     The response will contain a list of <see cref="WorldPopulation"/>s, one for each world ID passed that is a valid world.
+        ///     The response will contain a list of <see cref="WorldPopulation"/>s, one for each world ID passed that is a valid world
         ///     Entries that are not a valid world ID (as defined at <see cref="World.All"/>), will not be given an entry.
         ///     If only invalid world IDs were passed (such as 30), the list will empty
         /// </response>
