@@ -179,8 +179,6 @@ namespace watchtower.Services.Hosted {
 
             foreach (PsCharacter c in inputCharacters) {
                 try {
-                    await Task.Delay(10000);
-
                     WrappedSavedCharacterData data = await ProcessCharacter(entry, c);
                     entry.Kills.AddRange(data.Kills);
                     entry.Deaths.AddRange(data.Deaths);
@@ -352,6 +350,8 @@ namespace watchtower.Services.Hosted {
                 using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - vehicle destroy")) {
                     data.VehicleDestroy = await Retry(() => _VehicleDestroyDb.LoadWrappedKills(character.ID, yearStart));
                     data.VehicleDestroy.AddRange(await Retry(() => _VehicleDestroyDb.LoadWrappedDeaths(character.ID, yearStart)));
+                    // stop killing sundies, don't include them in wrapped
+                    data.VehicleDestroy = data.VehicleDestroy.Where(iter => iter.KilledVehicleID != "10").ToList();
                     trace?.AddTag("honu.count", data.VehicleDestroy.Count);
                 }
 

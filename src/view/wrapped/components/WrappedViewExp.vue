@@ -9,6 +9,7 @@
             <a-table :entries="expData"
                      :paginate="true"
                      :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
+                     default-sort-field="count" default-sort-order="desc"
                      class="border-top-0"
             >
 
@@ -142,8 +143,8 @@
 
                 let arr: ExpData[] = Array.from(map.values());
                 arr = arr.map((iter: ExpData) => {
-                    iter.countPerMin = iter.count / Math.max(1, this.wrapped.extra.totalPlaytime);
-                    iter.expEarnedPerMin = iter.expEarned / Math.max(1, this.wrapped.extra.totalPlaytime);
+                    iter.countPerMin = iter.count / Math.max(1, this.wrapped.extra.totalPlaytime / 60);
+                    iter.expEarnedPerMin = iter.expEarned / Math.max(1, this.wrapped.extra.totalPlaytime / 60);
                     return iter;
                 });
 

@@ -22,6 +22,7 @@ export class WrappedVehicleUsage {
     public suicides: number = 0;
     public teamkills: number = 0;
     public teamdeaths: number = 0;
+    public roadkills: number = 0;
 
     public driverAssists: number = 0;
     public gunnerAssists: number = 0;
@@ -29,6 +30,16 @@ export class WrappedVehicleUsage {
 }
 
 export class WrappedVehicleData {
+
+    private static makeUsage(wrapped: WrappedEntry, vehicleID: string): WrappedVehicleUsage {
+        const veh: WrappedVehicleUsage = new WrappedVehicleUsage();
+
+        veh.vehicleID = Number.parseInt(vehicleID);
+        veh.vehicle = wrapped.vehicles.get(veh.vehicleID) ?? null;
+        veh.vehicleName = veh.vehicle?.name ?? `<missing ${veh.vehicleID}>`;
+
+        return veh;
+    }
 
     public static generate(wrapped: WrappedEntry): WrappedVehicleUsage[] {
         const map: Map<string, WrappedVehicleUsage> = new Map();
@@ -40,10 +51,7 @@ export class WrappedVehicleData {
                 let veh: WrappedVehicleUsage | undefined = map.get(ev.attackerVehicleID);
 
                 if (veh == undefined) {
-                    veh = new WrappedVehicleUsage();
-                    veh.vehicleID = Number.parseInt(ev.attackerVehicleID);
-                    veh.vehicle = wrapped.vehicles.get(veh.vehicleID) ?? null;
-                    veh.vehicleName = veh.vehicle?.name ?? `<missing ${veh.vehicleID}>`;
+                    veh = this.makeUsage(wrapped, ev.attackerVehicleID);
                 }
 
                 if (ev.attackerCharacterID == ev.killedCharacterID) {
@@ -61,10 +69,7 @@ export class WrappedVehicleData {
                 let veh: WrappedVehicleUsage | undefined = map.get(ev.killedVehicleID);
 
                 if (veh == undefined) {
-                    veh = new WrappedVehicleUsage();
-                    veh.vehicleID = Number.parseInt(ev.killedVehicleID);
-                    veh.vehicle = wrapped.vehicles.get(veh.vehicleID) ?? null;
-                    veh.vehicleName = veh.vehicle?.name ?? `<missing ${veh.vehicleID}>`;
+                    veh = this.makeUsage(wrapped, ev.killedVehicleID);
                 }
 
                 if (ev.attackerCharacterID != ev.killedCharacterID && ev.attackerTeamID != ev.killedTeamID) {
@@ -79,7 +84,7 @@ export class WrappedVehicleData {
         }
 
         for (const ev of wrapped.vehicleDeath) {
-
+            // skip duplicate events (can happen in a suicide event)
             if (processed.has(ev.id)) {
                 continue;
             }

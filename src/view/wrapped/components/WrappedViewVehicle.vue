@@ -8,6 +8,7 @@
             <a-table :entries="vehicleData"
                      :paginate="true"
                      :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
+                     default-sort-field="killsAs" default-sort-order="desc"
                      class="border-top-0"
             >
 
@@ -23,7 +24,8 @@
 
                 <a-col sort-field="killsAs">
                     <a-header>
-                        Kills in this vehicle
+                        # Kills as
+                        <info-hover text="How many vehicles a character in this wrapped killed in this vehicle"></info-hover>
                     </a-header>
 
                     <a-body v-slot="entry">
@@ -33,7 +35,8 @@
 
                 <a-col sort-field="killed">
                     <a-header>
-                        How many destroyed
+                        # Killed
+                        <info-hover text="How many of this vehicle a character in this wrapped killed"></info-hover>
                     </a-header>
 
                     <a-body v-slot="entry">
@@ -44,6 +47,7 @@
                 <a-col sort-field="suicides">
                     <a-header>
                         Suicides
+                        <info-hover text="How many of this vehicle a character in this wrapped was suicided (flipped)"></info-hover>
                     </a-header>
 
                     <a-body v-slot="entry">
@@ -63,7 +67,8 @@
 
                 <a-col sort-field="deathsAs">
                     <a-header>
-                        How many were destroyed
+                        # Deaths
+                        <info-hover text="How many times you died in this vehicle"></info-hover>
                     </a-header>
 
                     <a-body v-slot="entry">
@@ -73,7 +78,8 @@
 
                 <a-col sort-field="deathsFrom">
                     <a-header>
-                        How many killed you
+                        # Deaths from
+                        <info-hover text="How many times a character in this wrapped was killed by this vehicle"></info-hover>
                     </a-header>
 
                     <a-body v-slot="entry">
