@@ -6,7 +6,21 @@
         </div>
 
         <div v-else-if="status == 'started'">
-            connected! started...
+            <busy class="honu-busy honu-busy-lg"></busy>
+            Processing characters...
+        </div>
+
+        <div v-else-if="status == 'pending_creation'">
+            This wrapped is in queue to be processed
+            <busy class="honu-busy honu-busy-sm"></busy>
+            <p>
+                {{queue.position + 1}} / {{queue.total}}
+            </p>
+        </div>
+
+        <div v-else-if="status == 'loading_input_characters'">
+            Loading input characters...
+            <busy class="honu-busy honu-busy-sm"></busy>
         </div>
 
         <div v-else-if="status == 'loading_events'">
@@ -44,9 +58,19 @@
             </div>
 
             <div>
-                Vehicle destroy: 
+                Vehicle kills: 
                 <span v-if="steps.vehicleDestroy == true">
-                    Loaded {{wrapped.vehicleDestroy.length}}
+                    Loaded {{wrapped.vehicleKill.length}}
+                </span>
+                <span v-else>
+                    <busy class="honu-busy honu-busy-sm"></busy>
+                </span>
+            </div>
+
+            <div>
+                Vehicle deaths:
+                <span v-if="steps.vehicleDestroy == true">
+                    Loaded {{wrapped.vehicleDeath.length}}
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -198,6 +222,22 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--orange), var(--blue))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-exp :wrapped="filteredWrapped"></wrapped-view-exp>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-vehicle :wrapped="filteredWrapped"></wrapped-view-vehicle>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
                     <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--yellow), var(--purple))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
@@ -231,6 +271,7 @@
     import { PsFacility } from "api/FacilityApi";
     import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
     import { PsOutfit } from "api/OutfitApi";
+    import { PsVehicle } from "api/VehicleApi";
 
     // components
     import Busy from "components/Busy.vue";
@@ -242,6 +283,8 @@
     import WrappedViewSessions from "./components/WrappedViewSessions.vue";
     import WrappedViewClasses from "./components/WrappedViewClasses.vue";
     import WrappedViewWeapons from "./components/WrappedViewWeapons.vue";
+    import WrappedViewVehicle from "./components/WrappedViewVehicle.vue";
+    import WrappedViewExp from "./components/WrappedViewExp.vue";
     import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
 
     export const WrappedViewEntry = Vue.extend({
@@ -271,6 +314,11 @@
                     items: false as boolean,
                     facilities: false as boolean,
                     expTypes: false as boolean,
+                },
+
+                queue: {
+                    position: 0 as number,
+                    total: 0 as number
                 },
 
                 wrapped: new WrappedEntry() as WrappedEntry,
@@ -308,6 +356,7 @@
                 this.connection.on("SendWrappedEntry", this.onSendWrappedEntry);
                 this.connection.on("SendMessage", this.onSendMessage);
                 this.connection.on("UpdateStatus", this.onUpdateStatus);
+                this.connection.on("SendQueuePosition", this.onQueuePosition);
 
                 this.connection.on("SendSessions", this.onSendSessions);
                 this.connection.on("SendKills", this.onSendKills);
@@ -325,6 +374,7 @@
                 this.connection.on("UpdateAchievements", this.onUpdateAchievements);
                 this.connection.on("UpdateExpTypes", this.onUpdateExpTypes);
                 this.connection.on("UpdateFireGroupToFireMode", this.onUpdateFireGroupXrefs);
+                this.connection.on("UpdateVehicles", this.onUpdateVehicles);
 
                 try {
                     await this.connection.start();
@@ -333,20 +383,25 @@
                 }
 
                 this.connection.invoke("JoinGroup", this.WrappedId).then(() => {
-                    if (this.connection != null) {
-                        this.connection.stop();
-                        this.connection = null;
-                    }
+                    console.log("JoinGroup done");
                 });
             },
 
             onSendWrappedEntry: function(entry: WrappedEntry): void {
                 console.log(`wrapped parameters: ${JSON.stringify(entry)}`);
                 this.wrapped.inputCharacterIDs = entry.inputCharacterIDs;
+
+                if (entry.status == 1) { // pending
+                    console.log(`pending, hopefully get queue status`);
+                } else if (entry.status == 2) { // in creation
+                    console.log(`in creation!`);
+                } else if (entry.status == 3) { // done!
+                    console.log(`entry is done!`);
+                }
             },
 
             onSendMessage: function(msg: string): void {
-
+                console.log(`Message from Hub> ${msg}`);
             },
 
             onUpdateStatus: function(status: string): void {
@@ -428,7 +483,13 @@
             onSendVehicleDestroy: function(events: VehicleDestroyEvent[]): void {
                 for (const ev of events) {
                     const event: VehicleDestroyEvent = VehicleDestroyEventApi.parse(ev);
-                    this.wrapped.vehicleDestroy.push(event);
+
+                    if (this.wrapped.inputCharacterIDs.indexOf(ev.attackerCharacterID) > -1) {
+                        this.wrapped.vehicleKill.push(event);
+                    } else if (this.wrapped.inputCharacterIDs.indexOf(ev.killedCharacterID) > -1) {
+                        this.wrapped.vehicleDeath.push(event);
+                    }
+
                 }
                 this.steps.vehicleDestroy = true;
             },
@@ -497,6 +558,18 @@
                 });
 
                 console.log(`got ${refs.length} thingies`);
+            },
+
+            onUpdateVehicles: function(vehs: PsVehicle[]): void {
+                for (const v of vehs) {
+                    this.wrapped.vehicles.set(v.id, v);
+                }
+            },
+
+            onQueuePosition: function(position: number, total: number): void {
+                console.log(`got queue position: ${position} / ${total}`);
+                this.queue.position = position;
+                this.queue.total = total;
             }
 
         },
@@ -520,6 +593,7 @@
         components: {
             Busy,
             WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons,
+            WrappedViewVehicle, WrappedViewExp,
             WrappedViewHighlight
         }
     });

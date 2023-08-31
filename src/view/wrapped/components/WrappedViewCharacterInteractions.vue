@@ -45,7 +45,7 @@
                     <a-col sort-field="kills">
                         <a-header>
                             <b>Kills</b>
-                            <info-hover text="How many times an input character killed this character."></info-hover>
+                            <info-hover text="How many times an input character killed this character"></info-hover>
                         </a-header>
 
                         <a-body v-slot="entry">
@@ -273,7 +273,7 @@
                     <a-col sort-field="teamdeaths">
                         <a-header>
                             Teamdeaths
-                            <info-hover text="How many times you were teamkilled by members of this outfit "></info-hover>
+                            <info-hover text="How many times you were teamkilled by members of this outfit"></info-hover>
                         </a-header>
 
                         <a-body v-slot="entry">
@@ -327,6 +327,7 @@
                     <a-col sort-field="healthHealed">
                         <a-header>
                             <b>Health healed</b>
+                            <info-hover text="Estimate! This estimate tends to under count, so this value is likely higher"></info-hover>
                         </a-header>
 
                         <a-body v-slot="entry">

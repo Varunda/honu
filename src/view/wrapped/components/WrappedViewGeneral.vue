@@ -42,7 +42,11 @@
             </div>
 
             <div>
-                Vehicle destroy: {{this.wrapped.vehicleDestroy.length | locale}}
+                Vehicles killed: {{this.wrapped.vehicleKill.length | locale}}
+            </div>
+
+            <div>
+                Vehicles destroyed: {{this.wrapped.vehicleDeath.length | locale}}
             </div>
 
             <div>

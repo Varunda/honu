@@ -66,6 +66,11 @@ namespace watchtower.Models.Wrapped {
         public Dictionary<int, List<FireGroupToFireMode>> FireGroupToFireModes { get; set; } = new();
 
         /// <summary>
+        ///     All vehicles
+        /// </summary>
+        public Dictionary<int, PsVehicle> Vehicles { get; set; } = new();
+
+        /// <summary>
         ///     All the sessions the input characters had
         /// </summary>
         public List<Session> Sessions { get; set; } = new();

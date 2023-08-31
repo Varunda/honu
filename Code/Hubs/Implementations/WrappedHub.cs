@@ -10,6 +10,7 @@ using watchtower.Models.Events;
 using watchtower.Models.Wrapped;
 using watchtower.Services.Db;
 using watchtower.Services.Hosted;
+using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -20,15 +21,17 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly WrappedSavedCharacterDataFileRepository _WrappedDataRepository;
         private readonly WrappedDbStore _WrappedDb;
         private readonly HostedWrappedGenerationProcess _WrappedProcessor;
+        private readonly WrappedGenerationQueue _WrappedQueue;
 
         public WrappedHub(ILogger<WrappedHub> logger,
             WrappedSavedCharacterDataFileRepository wrappedDataRepository, WrappedDbStore wrappedDb,
-            HostedWrappedGenerationProcess wrappedProcessor) {
+            HostedWrappedGenerationProcess wrappedProcessor, WrappedGenerationQueue wrappedQueue) {
 
             _Logger = logger;
             _WrappedDataRepository = wrappedDataRepository;
             _WrappedDb = wrappedDb;
             _WrappedProcessor = wrappedProcessor;
+            _WrappedQueue = wrappedQueue;
         }
 
         public async Task JoinGroup(Guid ID) {
@@ -50,11 +53,32 @@ namespace watchtower.Code.Hubs.Implementations {
 
             // NOT STARTED
             if (entry.Status == WrappedEntryStatus.NOT_STARTED) {
+                _Logger.LogDebug($"putting {entry.ID} into queue");
+                _WrappedQueue.Queue(entry);
+
+                await group.UpdateStatus(WrappedStatus.PENDING_CREATION);
+
+                Dictionary<Guid, int> poses = _WrappedQueue.GetQueuePositions();
+                if (poses.TryGetValue(entry.ID, out int position) == true) {
+                    await group.SendQueuePosition(position, poses.Count);
+                } else {
+                    _Logger.LogWarning($"missing position for {entry.ID}");
+                }
+
                 return;
             }
 
             // IN PROGRESS
             if (entry.Status == WrappedEntryStatus.IN_PROGRESS) {
+                Dictionary<Guid, int> poses = _WrappedQueue.GetQueuePositions();
+                if (poses.TryGetValue(entry.ID, out int position) == true) {
+                    await group.SendQueuePosition(position, poses.Count);
+                } else {
+                    _Logger.LogWarning($"missing position for {entry.ID}");
+                }
+
+                await group.UpdateStatus(WrappedStatus.STARTED);
+
                 return;
             }
 
@@ -90,6 +114,18 @@ namespace watchtower.Code.Hubs.Implementations {
             }
 
             throw new Exception($"Unchecked status of {nameof(WrappedEntry)} {ID}: {entry.Status}");
+        }
+
+        public async Task GetQueuePositions() {
+            Dictionary<Guid, int> pos = _WrappedQueue.GetQueuePositions();
+
+            string s = "";
+
+            foreach (KeyValuePair<Guid, int> iter in pos) {
+                s += $"<{iter.Key}, {iter.Value}> ";
+            }
+
+            await Clients.Caller.SendMessage(s);
         }
 
     }

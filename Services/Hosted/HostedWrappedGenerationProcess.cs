@@ -42,6 +42,7 @@ namespace watchtower.Services.Hosted {
         private readonly FacilityRepository _FacilityRepository;
         private readonly ExperienceTypeRepository _ExpTypeRepository;
         private readonly FireGroupToFireModeRepository _FireGroupXrefRepository;
+        private readonly VehicleRepository _VehicleRespository;
 
         private readonly KillEventDbStore _KillDb;
         private readonly ExpEventDbStore _ExpDb;
@@ -63,7 +64,8 @@ namespace watchtower.Services.Hosted {
             AchievementEarnedDbStore achievementEarnedDb, ItemAddedDbStore itemAddedDb,
             SessionDbStore sessionDb, WrappedSavedCharacterDataFileRepository wrappedCharacterDataRepository,
             WrappedDbStore wrappedDb, FacilityRepository facilityRepository,
-            ExperienceTypeRepository expTypeRepository, FireGroupToFireModeRepository fireGroupXrefRepository) {
+            ExperienceTypeRepository expTypeRepository, FireGroupToFireModeRepository fireGroupXrefRepository,
+            VehicleRepository vehicleRespository) {
 
             _Logger = logger;
             _Queue = queue;
@@ -88,6 +90,7 @@ namespace watchtower.Services.Hosted {
             _FacilityRepository = facilityRepository;
             _ExpTypeRepository = expTypeRepository;
             _FireGroupXrefRepository = fireGroupXrefRepository;
+            _VehicleRespository = vehicleRespository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -110,6 +113,7 @@ namespace watchtower.Services.Hosted {
                 }
 
                 if (entry == null) {
+                    _Logger.LogDebug($"entry is null, continuing");
                     continue;
                 }
 
@@ -122,6 +126,18 @@ namespace watchtower.Services.Hosted {
                     _Queue.AddProcessTime(timer.ElapsedMilliseconds);
                 } catch (Exception ex) {
                     _Logger.LogDebug(ex, $"unhandled exception while processing entry {entry.ID}");
+                }
+
+                try {
+                    Dictionary<Guid, int> poses = _Queue.GetQueuePositions();
+
+                    List<Task> updates = new(poses.Count);
+                    foreach (KeyValuePair<Guid, int> iter in poses) {
+                        updates.Add(_Hub.Clients.Group($"wrapped-{iter.Key}").SendQueuePosition(iter.Value, poses.Count));
+                    }
+                    await Task.WhenAll(updates);
+                } catch (Exception ex) {
+                    _Logger.LogError($"failed to update queue positions after de-queueing {entry.ID}", ex);
                 }
             }
         }
@@ -162,16 +178,24 @@ namespace watchtower.Services.Hosted {
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateInputCharacters(inputCharacters);
 
             foreach (PsCharacter c in inputCharacters) {
-                WrappedSavedCharacterData data = await ProcessCharacter(entry, c);
+                try {
+                    await Task.Delay(10000);
 
-                entry.Kills.AddRange(data.Kills);
-                entry.Deaths.AddRange(data.Deaths);
-                entry.Experience.AddRange(data.Experience);
-                entry.VehicleDestroy.AddRange(data.VehicleDestroy);
-                entry.ControlEvents.AddRange(data.ControlEvents);
-                entry.ItemAddedEvents.AddRange(data.ItemAddedEvents);
-                entry.AchievementEarned.AddRange(data.AchievementEarned);
-                entry.Sessions.AddRange(data.Sessions);
+                    WrappedSavedCharacterData data = await ProcessCharacter(entry, c);
+                    entry.Kills.AddRange(data.Kills);
+                    entry.Deaths.AddRange(data.Deaths);
+                    entry.Experience.AddRange(data.Experience);
+                    entry.VehicleDestroy.AddRange(data.VehicleDestroy);
+                    entry.ControlEvents.AddRange(data.ControlEvents);
+                    entry.ItemAddedEvents.AddRange(data.ItemAddedEvents);
+                    entry.AchievementEarned.AddRange(data.AchievementEarned);
+                    entry.Sessions.AddRange(data.Sessions);
+                } catch (Exception ex) {
+                    _Logger.LogError($"failed to process character {c.Name}/{c.ID}", ex);
+                    entry.Status = WrappedEntryStatus.NOT_STARTED;
+                    await _WrappedDb.UpdateStatus(entry.ID, entry.Status);
+                }
+
             }
 
             await SendEventData(entry);
@@ -237,6 +261,9 @@ namespace watchtower.Services.Hosted {
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateItems(items);
 
             // LOADING VEHICLES
+            List<PsVehicle> vehicles = await _VehicleRespository.GetAll();
+            entry.Vehicles = vehicles.ToDictionary(iter => iter.ID);
+            await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateVehicles(vehicles);
 
             // LOADING FACILITIES
             List<PsFacility> facilities = await _FacilityRepository.GetByIDs(idSet.Facilities);

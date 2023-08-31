@@ -499,7 +499,7 @@ namespace watchtower.Realtime {
                     FacilityControlEventQueueEntry entry = new(ev, events);
                     _FacilityControlQueue.Queue(entry);
 
-                    _Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
+                    //_Logger.LogDebug($"had to wait {waitCount} times for {events.Count} events for facility control [Timestamp={ev.Timestamp:u}] [OutfitID={ev.OutfitID}] [FacilityID={ev.FacilityID}]");
 
                     RecentFacilityControlStore.Get().Add(ev.WorldID, ev);
                 } catch (Exception ex) {

@@ -136,7 +136,7 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
-                    from vehicle_destroy_kill_{year:yyyy}
+                    from vehicle_destroy_death_{year:yyyy}
                     WHERE killed_character_id = @CharID;
             ");
 

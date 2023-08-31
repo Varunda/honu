@@ -21,13 +21,16 @@ export class WrappedEntry {
     public id: string = ""; // guid
     public inputCharacterIDs: string[] = [];
 
+    public status: number = 0;
+
     public sessions: Session[] = [];
     public kills: KillEvent[] = [];
     public teamkills: KillEvent[] = [];
     public deaths: KillEvent[] = [];
     public teamdeaths: KillEvent[] = [];
     public exp: ExpEvent[] = [];
-    public vehicleDestroy: VehicleDestroyEvent[] = [];
+    public vehicleKill: VehicleDestroyEvent[] = [];
+    public vehicleDeath: VehicleDestroyEvent[] = [];
     public controlEvents: FacilityControlEvent[] = [];
     public achievementEarned: AchievementEarned[] = [];
     public itemAdded: ItemAddedEvent[] = [];

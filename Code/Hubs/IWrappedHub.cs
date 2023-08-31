@@ -19,6 +19,8 @@ namespace watchtower.Code.Hubs {
 
         Task SendWrappedEntry(WrappedEntry entry);
 
+        Task SendQueuePosition(int position, int total);
+
         Task UpdateInputCharacters(List<PsCharacter> inputCharacters);
 
         Task MarkCharacterLoaded(string charID);
@@ -52,6 +54,8 @@ namespace watchtower.Code.Hubs {
         Task UpdateAchievements(List<Achievement> achs);
 
         Task UpdateFireGroupToFireMode(List<FireGroupToFireMode> xrefs);
+
+        Task UpdateVehicles(List<PsVehicle> vehicles);
 
     }
 

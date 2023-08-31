@@ -65,8 +65,8 @@ namespace watchtower.Services.Hosted {
                         await _FacilityPlayerDb.Insert(ID, playerControl);
                     }
                     
-                    _Logger.LogDebug($"processed facility control event {ID}, "
-                        + $"[Players={entry.Event.Players}] [Timestamp={entry.Event.Timestamp:u}] [OutfitID={entry.Event.OutfitID}] [FacilityID={entry.Event.FacilityID}]");
+                    //_Logger.LogDebug($"processed facility control event {ID}, "
+                        //+ $"[Players={entry.Event.Players}] [Timestamp={entry.Event.Timestamp:u}] [OutfitID={entry.Event.OutfitID}] [FacilityID={entry.Event.FacilityID}]");
                 } catch (Exception ex) {
                     _Logger.LogError(ex, $"failed to perform DB operations for {entry.Event.ID}");
                 }

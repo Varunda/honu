@@ -4,6 +4,8 @@
 
         public const string STARTED = "started";
 
+        public const string PENDING_CREATION = "pending_creation";
+
         public const string LOADING_INPUT_CHARACTERS = "loading_input_characters";
 
         public const string LOADING_STATIC_DATA = "loading_static";

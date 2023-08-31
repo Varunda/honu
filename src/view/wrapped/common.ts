@@ -5,6 +5,8 @@ import { KillEvent } from "../../api/KillStatApi";
 import { ExpEvent } from "../../api/ExpStatApi";
 import { PsCharacter } from "../../api/CharacterApi";
 import { WrappedEntityInteraction } from "./data/interactions";
+import { WrappedVehicleUsage, WrappedVehicleData } from "./data/vehicles";
+import { PsVehicle } from "../../api/VehicleApi";
 
 export class WrappedFilters {
     public class = {
@@ -96,6 +98,18 @@ export class EntitySupported {
 
 }
 
+export class VehicleUsage {
+    public vehicleID: number = 0;
+    public vehicleName: string = "";
+    public vehicle: PsVehicle | null = null;
+
+    public kills: number = 0;
+    public deaths: number = 0;
+    public driverAssists: number = 0;
+    public gunnerAssists: number = 0;
+
+}
+
 type PsEvent = KillEvent & { type: "kill" }
     | KillEvent & { type: "death" }
     | ExpEvent & { type: "exp" }
@@ -110,6 +124,9 @@ export class WrappedExtraData {
     public outfitFight: EntityFought[] = [];
     public characterSupport: EntitySupported[] = [];
     public outfitSupport: EntitySupported[] = [];
+    public vehicleUsage: WrappedVehicleUsage[] = [];
+
+    public totalPlaytime: number = 0;
 
     public static build(wrapped: WrappedEntry): WrappedExtraData {
         const extra: WrappedExtraData = new WrappedExtraData();
@@ -176,6 +193,8 @@ export class WrappedExtraData {
             if (session.end == null) {
                 continue;
             }
+
+            extra.totalPlaytime += (session.end.getTime() - session.start.getTime()) / 1000;
 
             // in cases where an event starts a session, not a login, ensure the session start comes first
             events.push({
@@ -278,6 +297,8 @@ export class WrappedExtraData {
         extra.outfitFight = interactions.outfitFight;
         extra.characterSupport = interactions.characterSupport;
         extra.outfitSupport = interactions.outfitSupport;
+
+        extra.vehicleUsage = WrappedVehicleData.generate(wrapped);
 
         return extra;
     }
