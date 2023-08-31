@@ -351,7 +351,7 @@ namespace watchtower.Services.Hosted {
                     data.VehicleDestroy = await Retry(() => _VehicleDestroyDb.LoadWrappedKills(character.ID, yearStart));
                     data.VehicleDestroy.AddRange(await Retry(() => _VehicleDestroyDb.LoadWrappedDeaths(character.ID, yearStart)));
                     // stop killing sundies, don't include them in wrapped
-                    data.VehicleDestroy = data.VehicleDestroy.Where(iter => iter.KilledVehicleID != "10").ToList();
+                    data.VehicleDestroy = data.VehicleDestroy.Where(iter => iter.KilledVehicleID != "2").ToList();
                     trace?.AddTag("honu.count", data.VehicleDestroy.Count);
                 }
 
