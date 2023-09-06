@@ -238,6 +238,14 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-facility :wrapped="filteredWrapped"></wrapped-view-facility>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
                     <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--yellow), var(--purple))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
@@ -268,7 +276,7 @@
     import { AchievementEarned, AchievementEarnedApi } from "api/AchievementEarnedApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { Achievement } from "api/AchievementApi";
-    import { PsFacility } from "api/FacilityApi";
+    import { PsFacility } from "api/MapApi";
     import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
     import { PsOutfit } from "api/OutfitApi";
     import { PsVehicle } from "api/VehicleApi";
@@ -285,6 +293,7 @@
     import WrappedViewWeapons from "./components/WrappedViewWeapons.vue";
     import WrappedViewVehicle from "./components/WrappedViewVehicle.vue";
     import WrappedViewExp from "./components/WrappedViewExp.vue";
+    import WrappedViewFacility from "./components/WrappedViewFacility.vue";
     import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
 
     export const WrappedViewEntry = Vue.extend({
@@ -530,7 +539,7 @@
 
             onUpdateFacilities: function(facs: PsFacility[]): void {
                 for (const f of facs) {
-                    this.wrapped.facilities.set(f.id, f);
+                    this.wrapped.facilities.set(f.facilityID, f);
                 }
             },
 
@@ -593,7 +602,7 @@
         components: {
             Busy,
             WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons,
-            WrappedViewVehicle, WrappedViewExp,
+            WrappedViewVehicle, WrappedViewExp, WrappedViewFacility,
             WrappedViewHighlight
         }
     });

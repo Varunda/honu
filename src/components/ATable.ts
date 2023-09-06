@@ -19,7 +19,7 @@ const Conditions: Map<string, ConditionSettings> = new Map([
     ["not_equal", { title: "Not equal", icon: "fa-not-equal", color: "warning" }],
     ["less_than", { title: "Less than", icon: "fa-less-than", color: "info" }],
     ["greater_than", { title: "Greater than", icon: "fa-greater-than", color: "success" }],
-    ["contains", { title: "Contains", icon: "fa-tilde", color: "info" }],
+    ["contains", { title: "Contains", icon: "fa-asterisk", color: "info" }],
     ["not_empty", { title: "Not empty", icon: "fa-circle", color: "info" }],
     ["empty", { title: "Empty", icon: "fa-empty-set", color: "info" }]
 ]);

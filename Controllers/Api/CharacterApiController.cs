@@ -12,6 +12,7 @@ using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
 using watchtower.Models.Db;
 using watchtower.Services;
+using watchtower.Services.Census;
 using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -38,6 +39,7 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterMetadataDbStore _MetadataDb;
         private readonly CharacterFriendRepository _CharacterFriendRepository;
         private readonly OutfitRepository _OutfitRepository;
+        private readonly KillboardCollection _KillboardCollection;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
 
@@ -47,7 +49,7 @@ namespace watchtower.Controllers.Api {
             CharacterItemRepository charItemRepo, ItemRepository itemRepo,
             CharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
             CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue,
-            OutfitRepository outfitRepository) {
+            OutfitRepository outfitRepository, KillboardCollection killboardCollection) {
 
             _Logger = logger;
 
@@ -61,6 +63,7 @@ namespace watchtower.Controllers.Api {
             _MetadataDb = metadataDb ?? throw new ArgumentNullException(nameof(metadataDb));
             _CharacterFriendRepository = charFriendRepo;
             _OutfitRepository = outfitRepository;
+            _KillboardCollection = killboardCollection;
 
             _UpdateQueue = queue;
         }
@@ -430,6 +433,34 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(player.Online);
+        }
+
+        [HttpGet("character/{charID}/killboard")]
+        public async Task<ApiResponse<List<KillboardEntry>>> GetKillboard(string charID) {
+            List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
+
+            return ApiOk(entries);
+        }
+
+        [HttpGet("character/{charID}/killboard/expanded")]
+        public async Task<ApiResponse<List<ExpandedKillboardEntry>>> GetExpandedKillboard(string charID) {
+            List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
+
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(entries.Select(iter => iter.OtherCharacterID), CensusEnvironment.PC))
+                .ToDictionary(iter => iter.ID);
+
+            List<ExpandedKillboardEntry> expanded = new(entries.Count);
+            foreach (KillboardEntry entry in entries) {
+                ExpandedKillboardEntry ex = new();
+                ex.Entry = entry;
+
+                _ = chars.TryGetValue(entry.OtherCharacterID, out PsCharacter? c);
+                ex.Character = c;
+
+                expanded.Add(ex);
+            }
+
+            return ApiOk(expanded);
         }
 
         /// <summary>

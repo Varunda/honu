@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS wt_ledger_player_2022 AS (
 );
 
 SELECT now();
-CREATE INDEX IF NOT EXISTS idx_wt_ledger_player_2022_character_id ON wt_ledger_player (character_id);
+CREATE INDEX IF NOT EXISTS idx_wt_ledger_player_2022_character_id ON wt_ledger_player_2022 (character_id);
 
 SELECT now();
-CLUSTER wt_ledger_2022 USING idx_wt_ledger_player_2022_character_id;
+CLUSTER wt_ledger_player_2022 USING idx_wt_ledger_player_2022_character_id;

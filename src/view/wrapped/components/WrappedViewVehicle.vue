@@ -7,6 +7,7 @@
 
             <a-table :entries="vehicleData"
                      :paginate="true"
+                     :show-filters="true"
                      :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
                      default-sort-field="killsAs" default-sort-order="desc"
                      class="border-top-0"
@@ -16,6 +17,10 @@
                     <a-header>
                         Vehicle
                     </a-header>
+
+                    <a-filter field="vehicleName" type="string" method="input"
+                              :conditions="[ 'contains', 'equals' ]">
+                    </a-filter>
 
                     <a-body v-slot="entry">
                         {{entry.vehicleName}}
@@ -40,7 +45,14 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        {{entry.killed | locale}}
+                        <span v-if="entry.vehicleID == 2">
+                            --
+                            <info-hover text="Amount of sunderers killed is hidden. Stop killing busses!"></info-hover>
+                        </span>
+
+                        <span v-else>
+                            {{entry.killed | locale}}
+                        </span>
                     </a-body>
                 </a-col>
 

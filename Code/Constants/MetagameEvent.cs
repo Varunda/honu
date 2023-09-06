@@ -29,6 +29,16 @@ namespace watchtower.Code.Constants {
         public const int SUDDEN_DEATH_OSHUR = 240;
         public const int SUDDEN_DEATH_UNKNOWN = 241;
 
+        public const int MAX_ALERT_INDAR = 198;
+        public const int MAX_ALERT_ESAMIR = 199;
+        public const int MAX_ALERT_AMERISH = 200;
+        public const int MAX_ALERT_HOSSIN = 201;
+        public const int MAX_ALERT_OSHUR = 233;
+
+        public const int OSHUR_MELTDOWN_NC = 248;
+        public const int OSHUR_MELTDOWN_VS = 249;
+        public const int OSHUR_MELTDOWN_TR = 250;
+
         /// <summary>
         ///     Get how long a metagame event will last
         /// </summary>
@@ -50,17 +60,23 @@ namespace watchtower.Code.Constants {
                 return TimeSpan.FromMinutes(15);
             }
 
+            if (IsMaxAlert(metagameEventID)) {
+                return TimeSpan.FromMinutes(30);
+            }
+
             return metagameEventID switch {
                 147 or 148 or 149 // Indar
                     or 150 or 151 or 152 // Esamir
                     or 153 or 154 or 155 // Hossin
                     or 156 or 157 or 158 // Amerish
-                    or 211 or 212 or 213 or 214
+                    or 211 or 212 or 213 or 214 // ??
                     or 222 or 223 or 224 // Oshur
                     => TimeSpan.FromMinutes(90),
 
                 176 or 177 or 178 or 179 or 186 or 187 or 188 or 189 or 190 or 191 or 192 or 193 => TimeSpan.FromMinutes(45),
                 208 or 209 or 210 => TimeSpan.FromMinutes(1),
+
+                OSHUR_MELTDOWN_NC or OSHUR_MELTDOWN_TR or OSHUR_MELTDOWN_VS => TimeSpan.FromMinutes(45),
 
                 _ => null,
             };
@@ -103,6 +119,14 @@ namespace watchtower.Code.Constants {
                 || metagameEventID == SUDDEN_DEATH_ESAMIR
                 || metagameEventID == SUDDEN_DEATH_OSHUR
                 || metagameEventID == SUDDEN_DEATH_UNKNOWN;
+        }
+
+        public static bool IsMaxAlert(int metagameEventID) {
+            return metagameEventID == MAX_ALERT_INDAR
+                || metagameEventID == MAX_ALERT_HOSSIN
+                || metagameEventID == MAX_ALERT_AMERISH
+                || metagameEventID == MAX_ALERT_ESAMIR
+                || metagameEventID == MAX_ALERT_OSHUR;
         }
 
     }

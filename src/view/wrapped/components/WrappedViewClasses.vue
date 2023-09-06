@@ -7,66 +7,96 @@
                     General
                 </h3>
 
-                <table class="table border-top-0">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Class</th>
-                            <th>
-                                Time as
-                            </th>
-                            <th>
-                                Kills
-                            </th>
-                            <th>
-                                Deaths
-                                <info-hover text="Revives remove a death"></info-hover>
-                            </th>
-                            <th>
-                                K/D
-                                <info-hover text="Revives remove a death"></info-hover>
-                            </th>
-                            <th>
-                                KPM
-                            </th>
-                            <th>
-                                Score
-                            </th>
-                            <th>
-                                SPM
-                                <info-hover text="Score per minute"></info-hover>
-                            </th>
-                        </tr>
-                    </thead>
+                <a-table :entries="classData"
+                         :paginate="true"
+                         :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
+                         default-sort-field="timeAs" default-sort-order="desc"
+                         class="border-top-0"
+                >
 
-                    <tbody>
-                        <tr v-for="clazz in general">
-                            <td>
-                                {{clazz.name}}
-                            </td>
-                            <td>
-                                {{clazz.timeAs / 1000 | mduration}}
-                            </td>
-                            <td>
-                                {{clazz.kills | locale(0)}}
-                            </td>
-                            <td>
-                                {{clazz.deaths | locale(0)}}
-                            </td>
-                            <td>
-                                {{clazz.kills / Math.max(1, clazz.deaths) | locale(2)}}
-                            </td>
-                            <td>
-                                {{clazz.kills / Math.max(1, clazz.timeAs / 1000) * 60 | locale(2)}}
-                            </td>
-                            <td :title="clazz.exp | locale(0)">
-                                {{clazz.exp | compact}}
-                            </td>
-                            <td>
-                                {{clazz.exp / Math.max(1, clazz.timeAs / 1000) * 60 | locale(2)}}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <a-col sort-field="name">
+                        <a-header>
+                            Class
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            <img :src="'/img/classes/icon_' + entry.icon + '.png'" style="width: 24px;" />
+
+                            {{entry.name}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="timeAs">
+                        <a-header>
+                            Time as
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.timeAs / 1000 | mduration}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="kills">
+                        <a-header>
+                            Kills
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.kills | locale}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="deaths">
+                        <a-header>
+                            Deaths
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.deaths | locale}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="kd">
+                        <a-header>
+                            K/D
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.kd | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="kpm">
+                        <a-header>
+                            KPM
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.kpm | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="exp">
+                        <a-header>
+                            Score
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.exp | compact}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col sort-field="spm">
+                        <a-header>
+                            SPM
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.spm | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                </a-table>
 
             </div>
 
@@ -118,6 +148,12 @@
 
             makeClassGeneralStats: function(): void {
                 this.general = this.wrapped.extra.classStats;
+            }
+        },
+
+        computed: {
+            classData: function(): Loading<WrappedClassStats[]> {
+                return Loadable.loaded(this.wrapped.extra.classStats);
             }
         },
 

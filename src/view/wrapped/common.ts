@@ -131,12 +131,12 @@ export class WrappedExtraData {
     public static build(wrapped: WrappedEntry): WrappedExtraData {
         const extra: WrappedExtraData = new WrappedExtraData();
 
-        const infil: WrappedClassStats = new WrappedClassStats("Infiltrator");
-        const lightAssault: WrappedClassStats = new WrappedClassStats("Light Assault");
-        const medic: WrappedClassStats = new WrappedClassStats("Combat Medic");
-        const engi: WrappedClassStats = new WrappedClassStats("Engineer");
-        const heavy: WrappedClassStats = new WrappedClassStats("Heavy Assault");
-        const max: WrappedClassStats = new WrappedClassStats("MAX");
+        const infil: WrappedClassStats = new WrappedClassStats("Infiltrator", "infil");
+        const lightAssault: WrappedClassStats = new WrappedClassStats("Light Assault", "light");
+        const medic: WrappedClassStats = new WrappedClassStats("Combat Medic", "medic");
+        const engi: WrappedClassStats = new WrappedClassStats("Engineer", "engi");
+        const heavy: WrappedClassStats = new WrappedClassStats("Heavy Assault", "heavy");
+        const max: WrappedClassStats = new WrappedClassStats("MAX", "max");
         const other: WrappedClassStats = new WrappedClassStats("Other");
 
         const getClassStats = (loadoutID: number): WrappedClassStats => {
@@ -292,6 +292,14 @@ export class WrappedExtraData {
             infil, lightAssault, medic, engi, heavy, max
         ];
 
+        extra.classStats = extra.classStats.map((iter: WrappedClassStats) => {
+            iter.kd = iter.kills / Math.max(1, iter.deaths);
+            iter.kpm = iter.kills / Math.max(1, iter.timeAs / 1000) * 60;
+            iter.spm = iter.exp / Math.max(1, iter.timeAs / 1000) * 60;
+
+            return iter;
+        });
+
         const interactions: WrappedEntityInteraction = WrappedEntityInteraction.generate(wrapped);
         extra.characterFight = interactions.characterFight;
         extra.outfitFight = interactions.outfitFight;
@@ -306,15 +314,21 @@ export class WrappedExtraData {
 }
 
 export class WrappedClassStats {
-    constructor(name?: string) {
+    constructor(name?: string, icon?: string) {
         this.name = name ?? "";
+        this.icon = icon ?? "";
     }
 
     public name: string = "";
+    public icon: string = "";
     public kills: number = 0;
     public deaths: number = 0;
     public exp: number = 0;
     public timeAs: number = 0;
+
+    public kd: number = 0;
+    public kpm: number = 0;
+    public spm: number = 0;
 }
 
 export class WrappedSession {

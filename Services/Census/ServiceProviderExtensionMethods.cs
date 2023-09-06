@@ -20,6 +20,7 @@ namespace watchtower.Services.Census {
             services.AddSingleton<CharacterDirectiveTreeCollection>();
             services.AddSingleton<CharacterDirectiveTierCollection>();
             services.AddSingleton<CharacterDirectiveObjectiveCollection>();
+            services.AddSingleton<KillboardCollection>();
 
             services.AddSingleton<OutfitCollection, OutfitCollection>();
 

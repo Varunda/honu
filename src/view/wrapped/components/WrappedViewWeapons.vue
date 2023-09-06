@@ -7,7 +7,8 @@
                 </h3>
 
                 <a-table :entries="weaponData"
-                         :paginate="true" :show-filters="false"
+                         :paginate="true" 
+                         :show-filters="true"
                          :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
                          default-sort-field="kills" default-sort-order="desc"
                          class="border-top-0"
@@ -17,6 +18,10 @@
                         <a-header>
                             Weapon
                         </a-header>
+
+                        <a-filter field="name" type="string" method="input"
+                                  :conditions="[ 'contains', 'equals' ]">
+                        </a-filter>
 
                         <a-body v-slot="entry">
                             <a v-if="entry.id != 0" :href="'/i/' + entry.id">

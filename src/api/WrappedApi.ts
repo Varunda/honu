@@ -9,7 +9,7 @@ import { Session } from "api/SessionApi";
 import { VehicleDestroyEvent } from "api/VehicleDestroyEventApi";
 import { PsCharacter } from "api/CharacterApi";
 import { PsItem } from "api/ItemApi";
-import { PsFacility } from "api/FacilityApi";
+import { PsFacility } from "api/MapApi";
 import { Achievement } from "api/AchievementApi";
 import { FacilityControlEvent } from "api/FacilityControlEventApi";
 import { PsOutfit } from "api/OutfitApi";

@@ -9,6 +9,7 @@
             <a-table :entries="expData"
                      :paginate="true"
                      :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
+                     :show-filters="true"
                      default-sort-field="count" default-sort-order="desc"
                      class="border-top-0"
             >
@@ -18,13 +19,12 @@
                         Type
                     </a-header>
 
+                    <a-filter field="expName" type="string" method="input"
+                              :conditions="[ 'contains', 'equals' ]">
+                    </a-filter>
+
                     <a-body v-slot="entry">
-                        <span v-if="entry.expType != null">
-                            {{entry.expType.name}}
-                        </span>
-                        <span v-else>
-                            &lt;missing {{entry.expID}}&gt;
-                        </span>
+                        {{entry.expName}}
                     </a-body>
                 </a-col>
 
@@ -45,7 +45,7 @@
                     </a-header>
 
                     <a-body v-slot="entry">
-                        {{entry.countPerMin | locale}}
+                        {{entry.countPerMin | locale(2)}}
                     </a-body>
                 </a-col>
 
@@ -97,6 +97,7 @@
 
     type ExpData = {
         expID: number;
+        expName: string;
         expType: ExperienceType | null;
         count: number;
         countPerMin: number;
@@ -128,6 +129,7 @@
                         map.set(exp.experienceID, {
                             expID: exp.experienceID,
                             expType: this.wrapped.expTypes.get(exp.experienceID) ?? null,
+                            expName: this.wrapped.expTypes.get(exp.experienceID)?.name ?? `<missing ${exp.experienceID}>`,
                             count: 0,
                             countPerMin: 0,
                             expEarned: 0,
