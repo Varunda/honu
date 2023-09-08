@@ -1,5 +1,4 @@
 ﻿
-
 export class Achievement {
     public id: number = 0;
     public itemID: number | null = null;

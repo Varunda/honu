@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
 using watchtower.Models.Db;
+using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Census;
 using watchtower.Services.CharacterViewer;
@@ -40,8 +42,10 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterFriendRepository _CharacterFriendRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly KillboardCollection _KillboardCollection;
+        private readonly CharacterHistoryStatDbStore _CharacterHistoryStatDb;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
+        private readonly CharacterCacheQueue _CharacterQueue;
 
         public CharacterApiController(ILogger<CharacterApiController> logger,
             CharacterRepository charRepo, ICharacterStatGeneratorStore genStore,
@@ -49,9 +53,13 @@ namespace watchtower.Controllers.Api {
             CharacterItemRepository charItemRepo, ItemRepository itemRepo,
             CharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
             CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue,
-            OutfitRepository outfitRepository, KillboardCollection killboardCollection) {
+            OutfitRepository outfitRepository, KillboardCollection killboardCollection,
+            CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue) {
 
             _Logger = logger;
+
+            _UpdateQueue = queue;
+            _CharacterQueue = characterQueue;
 
             _CharacterRepository = charRepo;
             _GeneratorStore = genStore ?? throw new ArgumentNullException(nameof(genStore));
@@ -64,8 +72,7 @@ namespace watchtower.Controllers.Api {
             _CharacterFriendRepository = charFriendRepo;
             _OutfitRepository = outfitRepository;
             _KillboardCollection = killboardCollection;
-
-            _UpdateQueue = queue;
+            _CharacterHistoryStatDb = characterHistoryStatDb;
         }
 
         /// <summary>
@@ -435,6 +442,13 @@ namespace watchtower.Controllers.Api {
             return ApiOk(player.Online);
         }
 
+        /// <summary>
+        ///     Get the top 200 killboard entries of a character. The top 200 are ordered by kills + deaths
+        /// </summary>
+        /// <param name="charID">ID of the character to get the killboard entries of</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="KillboardEntry"/>
+        /// </response>
         [HttpGet("character/{charID}/killboard")]
         public async Task<ApiResponse<List<KillboardEntry>>> GetKillboard(string charID) {
             List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
@@ -442,11 +456,25 @@ namespace watchtower.Controllers.Api {
             return ApiOk(entries);
         }
 
+        /// <summary>
+        ///     Get the top 200 killboard entries of a character. The top 200 are ordered by kills + deaths.
+        ///     These entries are expanded, and include additional information that may be useful
+        /// </summary>
+        /// <param name="charID">ID of the character to get the killboard entries of</param>
+        /// <param name="includeStats">
+        ///     Will the <see cref="ExpandedKillboardEntry"/> have its <see cref="ExpandedKillboardEntry.Stats"/> passed?
+        ///     Defaults to false
+        /// </param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="ExpandedKillboardEntry"/>s
+        /// </response>
         [HttpGet("character/{charID}/killboard/expanded")]
-        public async Task<ApiResponse<List<ExpandedKillboardEntry>>> GetExpandedKillboard(string charID) {
+        public async Task<ApiResponse<List<ExpandedKillboardEntry>>> GetExpandedKillboard(string charID, [FromQuery] bool includeStats = false) {
             List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
 
-            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(entries.Select(iter => iter.OtherCharacterID), CensusEnvironment.PC))
+            List<string> characterIDs = entries.Select(iter => iter.OtherCharacterID).Distinct().ToList();
+
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(characterIDs, CensusEnvironment.PC))
                 .ToDictionary(iter => iter.ID);
 
             List<ExpandedKillboardEntry> expanded = new(entries.Count);
@@ -458,6 +486,52 @@ namespace watchtower.Controllers.Api {
                 ex.Character = c;
 
                 expanded.Add(ex);
+            }
+
+            if (includeStats == true) {
+                List<PsCharacterHistoryStat> listStats = new();
+                try {
+                    listStats = await _CharacterHistoryStatDb.GetByCharacterIDs(characterIDs);
+                } catch (NpgsqlException ex) {
+                    if (ex.InnerException is TimeoutException) {
+                        _Logger.LogWarning($"failed to get history stats for killboard of {charID}: db timeout");
+                    } else {
+                        throw;
+                    }
+                }
+
+                Dictionary<string, List<PsCharacterHistoryStat>> statMap = new(entries.Count);
+                foreach (PsCharacterHistoryStat stat in listStats) {
+                    if (statMap.ContainsKey(stat.CharacterID) == false) {
+                        statMap.Add(stat.CharacterID, new List<PsCharacterHistoryStat>());
+                    }
+
+                    statMap[stat.CharacterID].Add(stat);
+                }
+
+                foreach (ExpandedKillboardEntry ex in expanded) {
+                    string otherID = ex.Entry.OtherCharacterID;
+
+                    bool hasCached = false;
+
+                    // Character was not in the local DB, add to the queue to be cached
+                    if (ex.Character == null) {
+                        _CharacterQueue.Queue(new CharacterFetchQueueEntry() { CharacterID = charID, Store = false });
+                        hasCached = true;
+                    }
+
+                    // Only send the kills, deaths, time and score stats. Don't bother sending the ones not displayed
+                    _ = statMap.TryGetValue(ex.Entry.OtherCharacterID, out List<PsCharacterHistoryStat>? stats);
+                    if (stats != null) {
+                        ex.Stats = stats.Where(iter => iter.Type == "kills" || iter.Type == "deaths" || iter.Type == "time" || iter.Type == "score").ToList();
+                    }
+
+                    // If they have no stats (cause we load from DB not census), assume they haven't been pulled, so do so
+                    if ((stats == null || stats.Count == 0) && hasCached == false) {
+                        _UpdateQueue.Queue(charID);
+                        _CharacterQueue.Queue(new CharacterFetchQueueEntry() { CharacterID = charID, Store = false });
+                    }
+                }
             }
 
             return ApiOk(expanded);

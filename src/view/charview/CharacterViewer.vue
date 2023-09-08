@@ -119,6 +119,11 @@
                         Outfit history
                     </a>
                 </li>
+                <li class="nav-item" @click="selectTab('killboard')">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'killboard', 'bg-info': selectedTab == 'killboard' }">
+                        Killboard
+                    </a>
+                </li>
                 <li class="nav-item" @click="selectTab('extra')">
                     <a class="nav-link border" :class="{ 'text-success': selectedTab != 'extra', 'bg-info': selectedTab == 'extra' }">
                         Fun stats
@@ -162,6 +167,7 @@
     import CharacterExtraStats from "./components/CharacterExtraStats.vue";
     import CharacterVehicleStats from "./components/CharacterVehicleStats.vue";
     import CharacterOutfitHistory from "./components/CharacterOutfitHistory.vue";
+    import CharacterKillboard from "./components/CharacterKillboard.vue";
 
     export const CharacterViewer = Vue.extend({
         data: function() {
@@ -237,6 +243,8 @@
                     this.selectedComponent = "CharacterVehicleStats";
                 } else if (lower == "outfithistory") {
                     this.selectedComponent = "CharacterOutfitHistory";
+                } else if (lower == "killboard") {
+                    this.selectedComponent = "CharacterKillboard";
                 } else {
                     throw `Unhandled tab selected '${lower}'`;
                 }
@@ -334,6 +342,7 @@
             CharacterExtraStats,
             CharacterVehicleStats,
             CharacterOutfitHistory,
+            CharacterKillboard,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });

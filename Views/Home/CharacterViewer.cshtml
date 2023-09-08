@@ -5,7 +5,19 @@
 <script src="~/dist/view/charview/view.js" defer asp-append-version="true"></script>
 
 <style>
+    .triangle {
+        width: 0;
+        height: 0;
+        border: solid 2rem;
+        margin: 1rem;
+    }
 
+    .triangle-up {
+        border-color: transparent transparent black transparent;
+    }
+    .triangle-down {
+        border-color: black transparent transparent transparent;
+    }
 </style>
 
 <div class="container-fluid" id="app">
