@@ -156,7 +156,8 @@
             <div class="flex-grow-1"></div>
 
             <div class="text-center">
-                This data uses Planetside 2&rsquo;s API (Census), which can at times be spotty.
+                This data uses Planetside 2&rsquo;s API (Census), which only contains data AFTER November 2019.
+                If these numbers seem low, it's because those kills were gained before November 2019.
                 <br />
                 If the data does not load, it is most likely because Census is being laggy right now
             </div>
