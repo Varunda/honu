@@ -106,6 +106,17 @@
                     </a-body>
                 </a-col>
 
+                <a-col sort-field="lastLogin">
+                    <a-header>
+                        <b>Last login</b>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.lastLogin | moment}}
+                        ({{entry.lastLogin | timeAgo}})
+                    </a-body>
+                </a-col>
+
                 <a-col sort-field="recentCharacterKd">
                     <a-header>
                         <b>Character K/D</b>
@@ -177,10 +188,13 @@
     import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
 
     type KillboardTableEntry = {
+        character: PsCharacter | null;
+
         characterID: string;
         characterName: string;
         characterFaction: number;
-        character: PsCharacter | null;
+        lastLogin: Date;
+
         kills: number;
         deaths: number;
         kd: number;
@@ -245,10 +259,13 @@
                     // then if you were that other character, your kills//deaths swap, so you'd have 2 kills and 1 death against yourself, meaning you're average
 
                     const elem: KillboardTableEntry = {
+                        character: iter.character,
+
                         characterID: iter.entry.sourceCharacterID,
                         characterName: iter.character?.name ?? `<missing ${iter.entry.otherCharacterID}>`,
                         characterFaction: iter.character?.factionID ?? 0,
-                        character: iter.character,
+                        lastLogin: iter.character?.dateLastLogin ?? new Date(),
+
                         kills: iter.entry.kills,
                         deaths: iter.entry.deaths,
                         kd: iter.entry.kills / Math.max(1, iter.entry.deaths),
