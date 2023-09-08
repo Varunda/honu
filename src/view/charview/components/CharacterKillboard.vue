@@ -261,7 +261,7 @@
                     const elem: KillboardTableEntry = {
                         character: iter.character,
 
-                        characterID: iter.entry.sourceCharacterID,
+                        characterID: iter.entry.otherCharacterID,
                         characterName: iter.character?.name ?? `<missing ${iter.entry.otherCharacterID}>`,
                         characterFaction: iter.character?.factionID ?? 0,
                         lastLogin: iter.character?.dateLastLogin ?? new Date(),
