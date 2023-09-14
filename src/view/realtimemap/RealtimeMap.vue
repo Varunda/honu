@@ -244,6 +244,7 @@
 
     type PsZone = {
         zoneID: number;
+        worldID: number;
         facilities: Map<number, PsFacilityOwner>;
     };
 
@@ -803,27 +804,30 @@
                 }));
 
                 if (this.ownershipData != null) {
-                    this.ownershipData.facilities.forEach((owner: PsFacilityOwner, facilityID: number) => {
+                    for (const iter of this.ownershipData.facilities) {
+                        const owner: PsFacilityOwner = iter[1];
+                        const facilityID: number = iter[0];
+
                         const newOwner: PsFacilityOwner | null = zone.facilities.get(facilityID) ?? null;
                         if (newOwner == null) {
                             console.log(`needs refresh: facility ID ${facilityID} is missing in new data`);
                             needsRefresh = true;
                             panesToRedraw.ownership = true;
-                            return;
+                            break;
                         }
 
                         if (newOwner.owner != owner.owner) {
                             console.log(`needs refresh: facility ID ${facilityID} was owned by ${owner.owner}, now owned by ${newOwner.owner}`);
                             needsRefresh = true;
                             panesToRedraw.ownership = true;
-                            return;
+                            break;
                         }
-                    });
+                    }
                 }
 
                 this.ownershipData = zone;
 
-                console.log(this.ownershipData);
+                console.log(`Map update to world ID ${this.ownershipData.worldID} zone ID ${this.ownershipData.zoneID}: ${JSON.stringify(this.ownershipData)}`);
 
                 if (needsRefresh == true) {
                     this.redrawMap(panesToRedraw);
@@ -915,6 +919,7 @@
                     return;
                 }
 
+                console.log(`subscribing to world ID ${this.settings.worldID} and zoneID ${this.settings.zoneID}`);
                 await this.connection.send("Initalize", this.settings.worldID, this.settings.zoneID);
             },
 

@@ -232,7 +232,10 @@
         methods: {
             bind: async function(): Promise<void> {
                 this.simpleKillboard = Loadable.loading();
-                this.simpleKillboard = await KillboardApi.getExpandedByCharacterID(this.character.id, false);
+                // don't await this, start the main loading too
+                KillboardApi.getExpandedByCharacterID(this.character.id, false).then((data: Loading<ExpandedKillboardEntry[]>) => {
+                    this.simpleKillboard = data;
+                });
 
                 this.killboard = Loadable.loading();
                 this.killboard = await KillboardApi.getExpandedByCharacterID(this.character.id, true);

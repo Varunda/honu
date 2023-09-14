@@ -28,6 +28,7 @@ namespace watchtower.Models {
             if (_Zones.TryGetValue(zoneID, out PsZone? zone) == false) {
                 zone = new PsZone();
                 zone.ZoneID = zoneID;
+                zone.WorldID = this.WorldID;
 
                 _Zones.Add(zoneID, zone);
             }
@@ -45,6 +46,8 @@ namespace watchtower.Models {
         ///     ID of the zone
         /// </summary>
         public uint ZoneID { get; set; }
+
+        public short WorldID { get; set; }
 
         public Dictionary<int, PsFacilityOwner> Facilities { get; set; } = new();
 

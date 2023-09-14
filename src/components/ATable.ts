@@ -1,7 +1,7 @@
 ﻿import Vue, { VNode, VNodeData, CreateElement } from "vue";
 
 //import DateTimePicker from "components/DateTimePicker.vue";
-import { Loading, Loadable } from "Loading";
+import { Loading, Loadable, ProblemDetails } from "Loading";
 
 import Busy from "components/Busy.vue";
 import { PropType } from "vue";
@@ -378,6 +378,9 @@ export const ATable = Vue.extend({
 
                 this.$emit("rerender", Loadable.loaded(this.displayedEntries));
             } else if (this.entries.state == "error") {
+
+                const err: ProblemDetails = this.entries.problem;
+
                 rows.push(createElement("tr",
                     {
                         staticClass: "table-danger"
@@ -388,13 +391,13 @@ export const ATable = Vue.extend({
                                 "colspan": `${this.nodes.columns.length}`
                             }
                         },
-                            [`Error loading data from source: ${this.entries.message}`]
+                            [`Error loading data from source: ${err.title} (${err.instance}): ${err.detail}`]
                         )
 
                     ]
                 ));
 
-                this.$emit("rerender", Loadable.error(this.entries.message));
+                this.$emit("rerender", Loadable.error(this.entries.problem));
             } else {
                 rows.push(createElement("tr",
                     {

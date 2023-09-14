@@ -262,6 +262,7 @@
     import "MomentFilter";
 
     import { Loading, Loadable } from "Loading";
+    (window as any).Loadable = Loadable;
     import { PsCharacter } from "api/CharacterApi";
     import { CharacterWeaponStatEntry, CharacterWeaponStatApi, WeaponStatEntry } from "api/CharacterWeaponStatApi";
 

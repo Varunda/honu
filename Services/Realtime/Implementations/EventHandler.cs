@@ -435,7 +435,13 @@ namespace watchtower.Realtime {
             try {
                 PsZone? zone = _MapRepository.GetZone(ev.WorldID, ev.ZoneID);
                 if (zone != null) {
-                    _ = _MapHub.Clients.Group($"RealtimeMap.{ev.WorldID}.{ev.ZoneID}").SendAsync("UpdateMap", zone);
+                    new Thread(async () => {
+                        try {
+                            await _MapHub.Clients.Group($"RealtimeMap.{ev.WorldID}.{ev.ZoneID}").SendAsync("UpdateMap", zone);
+                        } catch (Exception ex) {
+                            _Logger.LogError($"failed to send signalR event 'UpdateMap' to RealtimeMap.{ev.WorldID}.{ev.ZoneID}", ex);
+                        }
+                    }).Start();
                 }
             } catch (Exception ex) {
                 _Logger.LogError(ex, $"failed to send 'UpdateMap' event to signalR for worldID {ev.WorldID}, zone ID {ev.ZoneID}");
