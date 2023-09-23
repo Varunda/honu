@@ -33,7 +33,6 @@
                 <div class="text-muted">
                     This data is NOT guaranteed to be 100% accurate!
                 </div>
-                hey!
             </div>
 
             <div v-else-if="history.data.state == 'error'">
