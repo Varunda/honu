@@ -1,8 +1,8 @@
 ﻿import { WorldTagEntry } from "api/WorldTagApi";
 import { CensusRealtimeHealthEntry } from "api/HonuHealthApi";
 import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
-import { RealtimeMapState } from "/api/RealtimeMapStateApi";
-import { PsFacility } from "../../api/MapApi";
+import { RealtimeMapState } from "api/RealtimeMapStateApi";
+import { PsFacility } from "api/MapApi";
 
 export class BlockEntry {
 	public id: string = "";
