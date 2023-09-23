@@ -89,7 +89,7 @@
 
                         --
 
-                        as of {{fight.mapState.saveTimestamp | timeAgo}} ago
+                        as of {{fight.mapState.timestamp | timeAgo}} ago
                     </div>
 
                     <div class="d-flex w-100 text-center border-top" style="height: 2rem; font-size: 1rem; line-height: 2rem;">
