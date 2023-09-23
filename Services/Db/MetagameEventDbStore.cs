@@ -15,19 +15,21 @@ namespace watchtower.Services.Db {
         internal override void SetupUpsertCommand(NpgsqlCommand cmd, PsMetagameEvent param) {
             cmd.CommandText = @"
                 INSERT INTO metagame_event (
-                    id, name, description, type_id
+                    id, name, description, type_id, duration_minutes
                 ) VALUES (
-                    @ID, @Name, @Description, @TypeID
+                    @ID, @Name, @Description, @TypeID, @Duration
                 ) ON CONFLICT (id) DO UPDATE
                     SET name = @Name,
                         description = @Description,
-                        type_id = @TypeID;
+                        type_id = @TypeID,
+                        duration_minutes = @Duration;
             ";
 
             cmd.AddParameter("ID", param.ID);
             cmd.AddParameter("Name", param.Name);
             cmd.AddParameter("Description", param.Description);
             cmd.AddParameter("TypeID", param.TypeID);
+            cmd.AddParameter("Duration", param.DurationMinutes);
         }
 
     }

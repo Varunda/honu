@@ -22,5 +22,10 @@
         /// </summary>
         public int TypeID { get; set; }
 
+        /// <summary>
+        ///     How many minutes this alert lasts for
+        /// </summary>
+        public int DurationMinutes { get; set; }
+
     }
 }

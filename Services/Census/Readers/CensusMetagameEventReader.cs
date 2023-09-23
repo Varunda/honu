@@ -13,6 +13,7 @@ namespace watchtower.Services.Census.Readers {
             ev.Name = token.GetChild("name")?.GetString("en", "<missing en>") ?? "<missing name token>";
             ev.Description = token.GetChild("description")?.GetString("en", "<missing en>") ?? "<missing description token>";
             ev.TypeID = token.GetInt32("type", -1);
+            ev.DurationMinutes = token.GetInt32("duration_minutes", 1);
 
             return ev;
         }
