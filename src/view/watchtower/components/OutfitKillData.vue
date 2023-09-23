@@ -1,7 +1,7 @@
 ﻿<template>
     <table class="wt-block table table-sm">
         <thead>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th style="width: 30ch">Outfit</th>
                 <th title="Per Players (Total)">Kills</th>
                 <th title="Revives remove a death, like in game">Deaths</th>

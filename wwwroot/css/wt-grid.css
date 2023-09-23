@@ -247,3 +247,8 @@
     grid-column: 1;
     grid-row: 25;
 }
+
+.grid-fights {
+    grid-column: 1 / 4;
+    grid-row: 26;
+}

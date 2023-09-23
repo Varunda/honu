@@ -2,7 +2,7 @@
     <div v-if="data">
         <table class="wt-block table table-sm">
             <thead class="table-secondary">
-                <tr>
+                <tr class="th-border-top-0">
                     <td style="width: 30ch">Outfit</td>
                     <td>Currently online</td>
                     <td>Percent</td>
@@ -12,7 +12,7 @@
             <tbody>
                 <tr v-for="entry in data.outfits">
                     <td>
-                        <a v-if="entry.outfitID" :href="'/o/' + entry.outfitID">
+                        <a v-if="entry.outfitID != '0'" :href="'/o/' + entry.outfitID">
                             {{entry.display}}
                         </a>
 
@@ -24,7 +24,7 @@
                     <td>{{(entry.amountOnline / data.totalOnline * 100).toFixed(2)}}%</td>
                 </tr>
 
-                <tr class="table-secondary">
+                <tr class="table-secondary th-border-top-0">
                     <td colspan="2">Total</td>
                     <td>
                         {{data.totalOnline}}

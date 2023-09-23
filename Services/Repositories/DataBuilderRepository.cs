@@ -29,6 +29,8 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly ItemRepository _ItemRepository;
+        private readonly RealtimeMapStateRepository _RealtimeMapStateRepository;
+        private readonly FacilityRepository _FacilityRepository;
 
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
@@ -43,7 +45,8 @@ namespace watchtower.Services.Repositories {
             CharacterRepository charRepo, OutfitRepository outfitRepo,
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo,
             WorldTagManager tagManager, RealtimeReconnectDbStore reconnectDb,
-            CensusRealtimeHealthRepository healthRepository, IEventHandler eventHandler) {
+            CensusRealtimeHealthRepository healthRepository, IEventHandler eventHandler,
+            RealtimeMapStateRepository realtimeMapStateRepository, FacilityRepository facilityRepository) {
 
             _Logger = logger;
 
@@ -60,6 +63,8 @@ namespace watchtower.Services.Repositories {
             _ReconnectDb = reconnectDb;
             _HealthRepository = healthRepository;
             _EventHandler = eventHandler;
+            _RealtimeMapStateRepository = realtimeMapStateRepository;
+            _FacilityRepository = facilityRepository;
         }
 
         /// <summary>
@@ -104,7 +109,7 @@ namespace watchtower.Services.Repositories {
             ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.NC };
             ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.TR };
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp heals")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp heals")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerHeals.Entries = t.Result),
@@ -120,7 +125,7 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp revives")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp revives")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.REVIVE, Experience.SQUAD_REVIVE };
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerRevives.Entries = t.Result),
@@ -136,7 +141,7 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp resupplies")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp resupplies")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.RESUPPLY, Experience.SQUAD_RESUPPLY };
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerResupplies.Entries = t.Result),
@@ -152,11 +157,11 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp spawns")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp spawns")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() {
-                Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
-                Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN
-            };
+                    Experience.SQUAD_SPAWN, Experience.GALAXY_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
+                    Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN
+                };
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerSpawns.Entries = t.Result),
                     GetOutfitExpBlock(vsExpOptions).ContinueWith(t => data.VS.OutfitSpawns.Entries = t.Result),
@@ -171,7 +176,7 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp vehicle kills")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp vehicle kills")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = Experience.VehicleKillEvents;
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerVehicleKills.Entries = t.Result),
@@ -187,7 +192,7 @@ namespace watchtower.Services.Repositories {
             // Early stop for a quicker shutdown. Saves seconds per restart!
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("exp shield repair")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("exp shield repair")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR };
                 await Task.WhenAll(
                     GetExpBlock(vsExpOptions).ContinueWith(t => data.VS.PlayerShieldRepair.Entries = t.Result),
@@ -199,7 +204,7 @@ namespace watchtower.Services.Repositories {
                 );
             }
 
-            using (var interval = HonuActivitySource.Root.StartActivity("top killers")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("top killers")) {
                 KillDbOptions vsKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.VS };
                 KillDbOptions ncKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.NC };
                 KillDbOptions trKillOptions = new KillDbOptions() { Interval = duration, WorldID = data.WorldID, FactionID = Faction.TR };
@@ -315,7 +320,7 @@ namespace watchtower.Services.Repositories {
             data.TR.PlayerShieldRepair.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SHIELD_REPAIR);
             data.TR.OutfitShieldRepair.Total = worldTotal.GetValue(WorldTotal.TOTAL_TR_SHIELD_REPAIR);
 
-            using (var interval = HonuActivitySource.Root.StartActivity("outfits online")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("outfits online")) {
                 await Task.WhenAll(
                     GetOutfitsOnline(players, Faction.VS, worldID).ContinueWith(result => data.VS.Outfits = result.Result),
                     GetOutfitsOnline(players, Faction.NC, worldID).ContinueWith(result => data.NC.Outfits = result.Result),
@@ -329,7 +334,7 @@ namespace watchtower.Services.Repositories {
             if (stoppingToken != null && stoppingToken.Value.IsCancellationRequested) { return data; }
 
             WorldTotalOptions focusOptions = new WorldTotalOptions() { Interval = 5, WorldID = worldID };
-            using (var interval = HonuActivitySource.Root.StartActivity("focus")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("focus")) {
                 WorldTotal focus = await _WorldTotalDb.GetFocus(focusOptions);
 
                 data.VS.FactionFocus.NcKills = focus.GetValue(WorldTotal.TOTAL_VS_KILLS_NC);
@@ -372,10 +377,29 @@ namespace watchtower.Services.Repositories {
             long timeToUpdateSecondsOnline = time.ElapsedMilliseconds;
 
             //data.TagEntries = _TagManager.GetRecent(data.WorldID);
-            using (var interval = HonuActivitySource.Root.StartActivity("health data")) {
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("health data")) {
                 data.Reconnects = await _ReconnectDb.GetByInterval(data.WorldID, DateTime.UtcNow - TimeSpan.FromMinutes(duration), DateTime.UtcNow);
                 data.RealtimeHealth = _HealthRepository.GetDeathHealth().Where(iter => iter.WorldID == data.WorldID).ToList();
                 data.RealtimeHealth.AddRange(_HealthRepository.GetExpHealth().Where(iter => iter.WorldID == data.WorldID));
+            }
+
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("fights")) {
+                List<RealtimeMapState> fights = (await _RealtimeMapStateRepository.GetByWorld(data.WorldID))
+                    .Where(iter => { return DateTime.UtcNow - iter.Timestamp < TimeSpan.FromMinutes(5); })
+                    .Where(iter => iter.HasTwoFactions())
+                    .ToList();
+
+                fights = fights.OrderByDescending(iter => iter.GetUpperBounds())
+                    .Take(6)
+                    .ToList();
+
+                foreach (RealtimeMapState fight in fights) {
+                    data.Fights.Add(new RealtimeDataFight() {
+                        MapState = fight,
+                        Facility = await _FacilityRepository.GetByRegionID(fight.RegionID)
+                    });
+                }
+
             }
 
             time.Stop();
@@ -539,7 +563,7 @@ namespace watchtower.Services.Repositories {
                         psOutfit = new PsOutfit() {
                             ID = outfitID,
                             FactionID = teamID,
-                            Name = "No outfit"
+                            Name = "no outfit"
                         };
                     } else {
                         psOutfit = await _OutfitRepository.GetByID(outfitID);

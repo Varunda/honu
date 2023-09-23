@@ -279,7 +279,7 @@ namespace watchtower.Code.DiscordInteractions {
 
             // don't use data that's too old, only within 5 minutes
             List<RealtimeMapState> fights = worldMapState
-                .Where(iter => { maxUpdate = default; return DateTime.UtcNow - iter.Timestamp < TimeSpan.FromMinutes(5); })
+                .Where(iter => { return DateTime.UtcNow - iter.Timestamp < TimeSpan.FromMinutes(5); })
                 .Where(iter => IsInterestingFight(iter))
                 .Where(iter => iter.GetUpperBounds() > 0)
                 .OrderByDescending(iter => iter.GetUpperBounds())

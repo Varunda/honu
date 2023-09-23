@@ -501,7 +501,7 @@
                 </h4>
 
                 <table class="table table-sm">
-                    <tr class="table-secondary">
+                    <tr class="table-secondary th-border-top-0">
                         <th>Owner</th>
                         <th>Type</th>
                         <th>Spawns</th>
@@ -532,16 +532,15 @@
                         <td>{{entry.spawnCount}}</td>
                         <td>{{(entry.spawnCount / (entry.secondsAlive / 60)).toFixed(2)}}</td>
                         <td>{{entry.firstSeenAt | moment}}</td>
-                        <td>{{entry.secondsAlive | duration}}</td>
+                        <td>{{entry.secondsAlive | mduration}}</td>
                     </tr>
                 </table>
             </div>
 
-            <div class="grid-misc-tag">
-                <!--
-                    <world-tag></world-tag>
-                -->
+            <div class="grid-fights">
+                <fight-data :fights="worldData.fights" :world-id="worldData.worldID"></fight-data>
             </div>
+
         </div>
 
         <popper-modal :value="modalData"></popper-modal>
@@ -558,6 +557,8 @@
     import { PopperModalData } from "popper/PopperModalData";
     import { ExpStatApi } from "api/ExpStatApi";
     import { WorldTagApi } from "api/WorldTagApi";
+    import { RealtimeMapStateApi } from "api/RealtimeMapStateApi";
+    import { MapApi } from "api/MapApi";
     import FactionColors from "FactionColors";
     import EventBus from "EventBus";
 
@@ -568,6 +569,7 @@
     import OutfitsOnline from "./components/OutfitsOnline.vue";
     import FactionFocus from "./components/FactionFocus.vue";
     import WorldTag from "./components/WorldTag.vue";
+    import FightData from "./components/FightData.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ContinentMetadata from "components/ContinentMetadata.vue";
@@ -643,6 +645,12 @@
                 });
                 data.reconnects.forEach((iter) => {
                     iter.timestamp = new Date(iter.timestamp);
+                });
+                data.fights.forEach((iter) => {
+                    iter.mapState = RealtimeMapStateApi.parse(iter.mapState);
+                    if (iter.facility != null) {
+                        iter.facility = MapApi.parseFacility(iter.facility);
+                    }
                 });
 
                 this.worldData = data;
@@ -937,7 +945,7 @@
             "WeaponKills": WeaponKillsView,
             InfoHover,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            WorldTag,
+            WorldTag, FightData,
             PopperModal
         }
     });

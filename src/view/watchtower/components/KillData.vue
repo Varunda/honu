@@ -1,7 +1,7 @@
 ﻿<template>
     <table class="wt-block table table-sm">
         <thead>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th style="width: 30ch">Player</th>
                 <th>Kills</th>
                 <th title="Kills / Minutes Online">KPM</th>
@@ -50,7 +50,7 @@
                     {{((entry.kills + entry.assists) / (entry.deaths || 1)).toFixed(2)}}
                 </td>
             </tr>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <td><b>Total</b></td>
                 <td colspan="2">{{block.totalKills}}</td>
                 <td>{{block.totalDeaths}}</td>

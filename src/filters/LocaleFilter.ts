@@ -8,9 +8,11 @@ function locale(value: number | string, digits?: number): string {
 		val = value;
 	}
 
+	let dig: number = digits ?? (Number.isInteger(val) ? 0 : 2);
+
 	return val.toLocaleString(undefined, {
-		minimumFractionDigits: digits ? digits : (Number.isInteger(val)) ? 0 : 2,
-		maximumFractionDigits: digits ? digits : (Number.isInteger(val)) ? 0 : 2
+		minimumFractionDigits: dig,
+		maximumFractionDigits: dig
 	});
 }
 

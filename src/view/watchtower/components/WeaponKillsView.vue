@@ -1,7 +1,7 @@
 ﻿<template>
     <table class="wt-block table table-sm">
         <thead>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th>Weapon</th>
                 <th>Users</th>
                 <th>Kills</th>
@@ -18,7 +18,7 @@
                     </a>
 
                     <span v-else>
-                        No weapon
+                        no weapon
                     </span>
                 </td>
                 <td>
@@ -35,7 +35,7 @@
                 </td>
             </tr>
 
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <td colspan="4">Total</td>
                 <td>{{total}}</td>
             </tr>

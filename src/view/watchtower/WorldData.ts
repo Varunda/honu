@@ -1,6 +1,8 @@
 ﻿import { WorldTagEntry } from "api/WorldTagApi";
 import { CensusRealtimeHealthEntry } from "api/HonuHealthApi";
 import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
+import { RealtimeMapState } from "/api/RealtimeMapStateApi";
+import { PsFacility } from "../../api/MapApi";
 
 export class BlockEntry {
 	public id: string = "";
@@ -119,6 +121,11 @@ export class FactionData {
 	public totalAssists: number = 0;
 }
 
+export class RealtimeDataFight {
+	public mapState: RealtimeMapState = new RealtimeMapState();
+	public facility: PsFacility | null = null;
+}
+
 export class WorldData {
 	public worldID: string = "";
 	public worldName: string = "";
@@ -133,5 +140,6 @@ export class WorldData {
 	public tagEntries: WorldTagEntry[] = [];
 	public realtimeHealth: CensusRealtimeHealthEntry[] = [];
 	public reconnects: RealtimeReconnectEntry[] = [];
+	public fights: RealtimeDataFight[] = [];
 
 }

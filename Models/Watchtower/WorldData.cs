@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Models.Health;
 
 namespace watchtower.Models {
@@ -83,6 +85,11 @@ namespace watchtower.Models {
         public int ProcessLag { get; set; } = 0;
 
         public ProblemDetails? LastError { get; set; } = null;
+
+        /// <summary>
+        ///     List of fights current happening on this world
+        /// </summary>
+        public List<RealtimeDataFight> Fights { get; set; } = new();
 
     }
 
@@ -212,6 +219,14 @@ namespace watchtower.Models {
         /// Total number of deaths a faction has gotten
         /// </summary>
         public int TotalDeaths { get; set; }
+
+    }
+
+    public class RealtimeDataFight {
+
+        public RealtimeMapState MapState { get; set; } = new();
+
+        public PsFacility? Facility { get; set; } = null;
 
     }
 

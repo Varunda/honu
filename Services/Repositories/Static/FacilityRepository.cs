@@ -72,6 +72,15 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
+        ///     Get the <see cref="PsFacility"/> by it's <see cref="PsFacility.RegionID"/>
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<PsFacility?> GetByRegionID(int id) {
+            return (await GetAll()).FirstOrDefault(iter => iter.RegionID == id);
+        }
+
+        /// <summary>
         ///     Search for <see cref="PsFacility"/>s that match the name
         /// </summary>
         /// <param name="name">name to search by. Case insensitive, and all non-alphanumeric characters are removed</param>

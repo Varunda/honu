@@ -57,6 +57,21 @@
     --color-bg-nc: #1e56c6;
     --color-bg-tr: #ba2616;
     --color-bg-ns: #cbcbcb;
+
+    --color-bg-1: #9e1acf;
+    --color-bg-2: #1e56c6;
+    --color-bg-3: #ba2616;
+    --color-bg-4: #cbcbcb;
+
+    --color-dark-bg-1: #30083f;
+    --color-dark-bg-2: #091a3c;
+    --color-dark-bg-3: #380b07;
+    --color-dark-bg-4: #292929;
+
+    --color-bgc-1: 258, 26, 207;
+    --color-bgc-2: 30, 86, 198;
+    --color-bgc-3: 186, 38, 22;
+    --color-bgc-4: 203, 203, 203;
 }
 
 .wt-header {

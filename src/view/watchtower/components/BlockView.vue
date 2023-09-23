@@ -1,7 +1,7 @@
 ﻿<template>
     <table class="wt-block table table-sm">
         <thead>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th>{{title}}</th>
                 <th style="width: 12ch">Amount</th>
             </tr>
@@ -29,7 +29,7 @@
                     / {{(entry.value / block.total * 100).toFixed(2)}}%
                 </td>
             </tr>
-            <tr class="table-secondary">
+            <tr class="table-secondary th-border-top-0">
                 <th colspan="2">
                     Total: {{block.total}}
                 </th>
