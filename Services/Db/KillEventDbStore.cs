@@ -300,7 +300,7 @@ namespace watchtower.Services.Db {
                     FROM outfits
                         JOIN wt_outfit ON outfits.attacker_outfit_id = wt_outfit.id
                     WHERE 
-                        (wt_outfit.faction_id = @FactionID OR wt_outfit.faction_id = 4)
+                        (wt_outfit.faction_id = @FactionID OR wt_outfit.faction_id = 4 OR wt_outfit.faction_id = -1)
                     ORDER BY kills DESC;
             ");
 
