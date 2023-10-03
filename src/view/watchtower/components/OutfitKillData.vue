@@ -16,7 +16,10 @@
         <tbody>
             <tr v-for="entry in block.entries">
                 <td :title="entry.name">
-                    <a :href="'/o/' + entry.id" class="text-white">
+                    <!--
+                        <a style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis;" :style="{ color: getFactionColor(entry.factionID) }" :href="'/c/' + entry.id">
+                    -->
+                    <a :href="'/o/' + entry.id" class="text-white" :style="{ color: getFactionColor(entry) }">
                         [{{entry.tag}}] {{entry.name}}
                     </a>
                 </td>
@@ -35,9 +38,9 @@
                 </td>
                 <td>
                     {{entry.members}}
-                    <span title="Members currently online">
+                    <a href="javascript:void(0);" @click="openMembersOnline($event, entry.id)" title="Members currently online">
                         ({{entry.membersOnline}})
-                    </span>
+                    </a>
                 </td>
             </tr>
         </tbody>
@@ -49,11 +52,14 @@
     import { Loading } from "Loading";
 
     import EventBus from "EventBus";
-
     import { PopperModalData } from "popper/PopperModalData";
-    import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
 
     import InfoHover from "components/InfoHover.vue";
+
+    import { KillStatApi, OutfitKillerEntry } from "api/KillStatApi";
+    import { PsCharacter } from "api/CharacterApi";
+    import { OutfitApi } from "api/OutfitApi";
+    import CharacterUtils from "util/Character";
 
     export const OutfitKillData = Vue.extend({
         props: {
@@ -68,6 +74,47 @@
         },
 
         methods: {
+            getFactionColor: function(factionID: number): string {
+                return "";
+                //return FactionColors.getFactionColor(factionID) + "!important";
+            },
+
+            openMembersOnline: async function(event: any, outfitID: string): Promise<void> {
+                const modalData: PopperModalData = new PopperModalData();
+                modalData.root = event.target;
+                modalData.title = "Online members";
+                modalData.columnFields = ["characterName"];
+                modalData.columnNames = ["Character"];
+                modalData.loading = true;
+
+                EventBus.$emit("set-modal-data", modalData);
+
+                let online: Loading<PsCharacter[]> = await OutfitApi.getOnlineByOutfitID(outfitID);
+                if (online.state != "loaded") {
+                    console.warn(`failed to load online characters, ${online.state} not 'loaded'`);
+                    return;
+                }
+
+                modalData.data = online.data.sort((a: PsCharacter, b: PsCharacter) => {
+                    return a.name.localeCompare(b.name);
+                }).map(iter => {
+                    return {
+                        characterName: CharacterUtils.getDisplay(iter),
+                        characterID: iter.id
+                    };
+                });
+
+                modalData.renderers.set("characterName", (data: any): string => {
+                    if (data.characterID != "") {
+                        return `<a href="/c/${data.characterID}">${data.characterName}</a>`;
+                    }
+                    return `${data.characterName}`;
+                });
+                modalData.loading = false;
+
+                EventBus.$emit("set-modal-data", modalData);
+            },
+
             openOutfitKillers: async function(event: any, outfitID: string): Promise<void> {
                 const modalData: PopperModalData = new PopperModalData();
                 modalData.root = event.target;
@@ -103,6 +150,13 @@
                         ...iter,
                         percent: `${(iter.kills / totalKills * 100).toFixed(2)}%`
                     }
+                });
+
+                modalData.renderers.set("characterName", (data: any): string => {
+                    if (data.characterID != "") {
+                        return `<a href="/c/${data.characterID}">${data.characterName}</a>`;
+                    }
+                    return `${data.characterName}`;
                 });
                 modalData.loading = false;
 

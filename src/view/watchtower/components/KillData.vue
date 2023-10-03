@@ -30,13 +30,13 @@
                             {{entry.name}}
                         </a>
 
-                        <a style="flex-grow: 0;" @click="openCharacterSessions($event, entry.id);" href="javascript:void(0);">
+                        <a style="flex-grow: 0;" @click="openCharacterSessions($event, entry.id);" href="javascript:void(0);" class="wt-click">
                             {{entry.secondsOnline | duration}}
                         </a>
                     </span>
                 </td>
                 <td>
-                    <a @click="openCharacterWeaponKills($event, entry.id);" href="javascript:void(0);">
+                    <a @click="openCharacterWeaponKills($event, entry.id);" href="javascript:void(0);" class="wt-click">
                         {{entry.kills}}
                     </a>
                 </td>

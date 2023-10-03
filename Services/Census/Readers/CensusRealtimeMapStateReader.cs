@@ -18,7 +18,7 @@ namespace watchtower.Services.Census.Readers {
             state.Timestamp = token.CensusTimestamp("timestamp");
             state.RegionID = token.GetRequiredInt32("map_region_id");
             state.OwningFactionID = token.GetInt32("owning_faction_id", 0);
-            state.Contested = token.GetBoolean("contested", false);
+            state.Contested = token.GetInt32("is_contested", 0) == 1;
             state.ContestingFactionID = token.GetInt32("contesting_faction_id", 0);
             state.CaptureTimeMs = token.GetInt32("capture_time_ms", -1);
             state.CaptureTimeLeftMs = token.GetInt32("remaining_capture_time_ms", -1);

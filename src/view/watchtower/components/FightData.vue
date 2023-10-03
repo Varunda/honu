@@ -81,8 +81,21 @@
                                     {{fight.mapState.captureTimeLeftMs / 1000 | mduration}}
                                 </span>
 
-                                /
-                                {{fight.mapState.captureTimeMs / 1000 | mduration}}
+                                <span v-if="fight.mapState.contestingFactionID == 0">
+
+                                </span>
+
+                                <span v-else-if="fight.mapState.contestingFactionID != fight.mapState.owningFactionID">
+                                    till
+                                    <span v-if="fight.mapState.contested == true">
+                                        capture by {{fight.mapState.contestingFactionID | faction}}
+                                    </span>
+                                    <span v-else>
+                                        defended
+                                    </span>
+                                </span>
+
+                                ({{fight.mapState.captureTimeMs / 1000 | mduration}} timer)
                             </span>
                         </span>
 
@@ -122,6 +135,7 @@
 
     import "filters/TimeAgoFilter";
     import "filters/LocaleFilter";
+    import "filters/FactionNameFilter";
 
     import Chart from "chart.js/auto/auto.esm";
     import "node_modules/chartjs-adapter-moment/dist/chartjs-adapter-moment.esm.js";

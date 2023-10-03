@@ -380,5 +380,26 @@ namespace watchtower.Controllers.Api {
             return ApiOk(ret);
         }
 
+        /// <summary>
+        ///     Get a list of <see cref="PsCharacter"/>s for the members of an online that are currently online
+        /// </summary>
+        /// <remarks>
+        ///     Use <see cref="CharacterStore"/>, so if the outfit ID is wrong there, it will be wrong here too
+        /// </remarks>
+        /// <param name="outfitID">ID of the outfit</param>
+        /// <response code="200">
+        ///     The response will contain a list of <see cref="PsCharacter"/>s that represent
+        ///     the characters that are currently online and within the outfit
+        ///     specified by <paramref name="outfitID"/>
+        /// </response>
+        [HttpGet("{outfitID}/online")]
+        public async Task<ApiResponse<List<PsCharacter>>> GetOnlineByOutfitID(string outfitID) {
+            List<TrackedPlayer> players = CharacterStore.Get().GetByFilter(iter => iter.Online == true && iter.OutfitID == outfitID);
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(players.Select(iter => iter.ID).Distinct(), CensusEnvironment.PC, fast: true);
+
+            return ApiOk(chars);
+        }
+
     }
 }

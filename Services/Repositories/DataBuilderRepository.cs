@@ -493,6 +493,10 @@ namespace watchtower.Services.Repositories {
                     Name = outfit?.Name ?? $"Missing {iter.OutfitID}",
                 };
 
+                if (outfit != null && outfit.LeaderID != "0") {
+
+                }
+
                 block.Entries.Add(tracked);
             }
 

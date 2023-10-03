@@ -200,4 +200,8 @@ export class OutfitApi extends ApiWrapper<PsOutfit> {
 		return OutfitApi.get().readList(`/api/outfit/${outfitID}/activity?start=${start.toISOString()}&finish=${end.toISOString()}`, OutfitApi.parseActivity);
     }
 
+	public static async getOnlineByOutfitID(outfitID: string): Promise<Loading<PsCharacter[]>> {
+		return OutfitApi.get().readList(`/api/outfit/${outfitID}/online`, CharacterApi.parse);
+    }
+
 }

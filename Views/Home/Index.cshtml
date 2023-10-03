@@ -28,9 +28,33 @@
         cursor: pointer !important;
         color: var(--success) !important;
     }
+
+    a:hover {
+        color: var(--white) !important;
+    }
+
+    .wt-click {
+        /*
+        text-decoration: underline;
+        background-color: rgba(0, 188, 140, 0.2);
+        rgba(0, 188, 140, 0.4) solid;
+        padding-left: 0.125rem;
+        padding-right: 0.125rem;
+        border-radius: 0.125rem;
+        border: 1px solid;
+        border-image: linear-gradient(195deg, rgba(0, 188, 140, 0.2), rgba(0, 188, 140, 0.5)) 1;
+        transition: background-color 0.3s;
+        */
+    }
+
+    .wt-click:hover {
+        color: var(--white) !important;
+        background-color: rgba(0, 188, 140, 0.5);
+    }
+
 </style>
 
-<div id="app" class="container-fluid" style="font-size: 14px; line-height: 1;" v-clock>
+<div id="app" class="container-fluid" style="font-size: 14px; line-height: 1;" v-cloak>
     <realtime-data></realtime-data>
 </div>
 

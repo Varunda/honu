@@ -538,7 +538,7 @@
             </div>
 
             <div class="grid-fights">
-                <fight-data :fights="worldData.fights" :world-id="worldData.worldID"></fight-data>
+                <fight-data :fights="worldData.fights" :world-id="worldID"></fight-data>
             </div>
 
         </div>

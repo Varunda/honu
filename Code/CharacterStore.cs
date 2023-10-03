@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Code.Tracking;
 
 namespace watchtower.Models {
 
@@ -32,6 +34,21 @@ namespace watchtower.Models {
             lock (Players) {
                 Players[charID] = player;
             }
+        }
+
+        public List<TrackedPlayer> GetByFilter(Func<TrackedPlayer, bool> func) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("CharacterStore getByFilter");
+            List<TrackedPlayer> players = new List<TrackedPlayer>();
+
+            lock (Players) {
+                foreach (KeyValuePair<string, TrackedPlayer> iter in Players) {
+                    if (func(iter.Value) == true) {
+                        players.Add(iter.Value);
+                    }
+                }
+            }
+
+            return players;
         }
 
         /// <summary>

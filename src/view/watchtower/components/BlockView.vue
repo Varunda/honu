@@ -3,7 +3,10 @@
         <thead>
             <tr class="table-secondary th-border-top-0">
                 <th>{{title}}</th>
-                <th style="width: 12ch">Amount</th>
+                <th style="width: 12ch">
+                    <info-hover text="Click green links to view more info"></info-hover>
+                    Amount
+                </th>
             </tr>
         </thead>
 
@@ -18,7 +21,7 @@
                     </span>
                 </td>
                 <td>
-                    <a v-if="source" @click="clickHandler($event, entry.id)" href="javascript:void(0);">
+                    <a v-if="source" @click="clickHandler($event, entry.id)" href="javascript:void(0);" class="wt-click">
                         {{entry.value}} 
                     </a>
 
@@ -46,6 +49,7 @@
     import FactionColors from "FactionColors";
     import { PopperModalData } from "popper/PopperModalData";
     import { CharacterExpSupportEntry } from "api/ExpStatApi";
+    import InfoHover from "components/InfoHover.vue";
 
     export const BlockView = Vue.extend({
         props: {
@@ -127,6 +131,10 @@
             }
 
         },
+
+        components: {
+            InfoHover
+        }
     });
 
     export default BlockView;
