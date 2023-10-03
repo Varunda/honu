@@ -249,6 +249,10 @@
             </div>
 
             <div class="mb-3">
+                <div v-if="errors.noOutfitFaction" class="alert alert-danger text-center">
+                    Missing faction ID, please manually select one from the dropdown
+                </div>
+
                 <h5>Set faction (for NSO)</h5>
 
                 <div class="input-group">
@@ -544,6 +548,7 @@
                     badTime: false as boolean,
                     longTime: false as boolean,
                     noPlayers: false as boolean,
+                    noOutfitFaction: false as boolean
                 },
 
                 progress: {
@@ -959,6 +964,8 @@
                 const chars: string = this.characters.map(iter => `+${iter.id};`).join("");
                 const teamID: number = this.teamID ?? -1;
 
+                this.errors.noOutfitFaction = teamID == -1 && (this.outfits.length > 0 || this.characters.length > 0);
+
                 const gen: string = `${start},${end},${teamID};${outfits}${chars}`;
                 this.generator = gen;
                 console.log(`Generator used: ${gen}`);
@@ -1190,7 +1197,7 @@
 
         computed: {
             hasErrors: function(): boolean {
-                return this.errors.noPlayers || this.errors.badTime || this.errors.longTime;
+                return this.errors.noPlayers || this.errors.badTime || this.errors.longTime || this.errors.noOutfitFaction;
             },
 
             generator64: function(): string {
