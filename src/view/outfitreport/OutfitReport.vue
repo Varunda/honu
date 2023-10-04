@@ -449,6 +449,8 @@
 
                 <report-outfit-versus :report="report" :parameters="parameters"></report-outfit-versus>
 
+                <report-class-versus :report="report" :parameters="parameters"></report-class-versus>
+
                 <report-weapon-breakdown :report="report" :parameters="parameters"></report-weapon-breakdown>
 
                 <report-player-list :report="report" :parameters="parameters"></report-player-list>
@@ -492,6 +494,7 @@
     import ReportPopulation from "./components/ReportPopulation.vue";
     import ReportPerMinuteGraph from "./components/ReportPerMinuteGraph.vue";
     import ReportExpBreakdown from "./components/ReportExpBreakdown.vue";
+    import ReportClassVersus from "./components/ReportClassVersus.vue";
     import ProgressBar from "./components/ProgressBar.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
@@ -1249,7 +1252,7 @@
         components: {
             DateTimeInput, InfoHover, Busy,
             ReportClassBreakdown, ReportPlayerList, ReportOutfitVersus, ReportWeaponBreakdown, ReportPerMinuteGraph, ReportExpBreakdown,
-            ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader, ReportPopulation,
+            ReportSupportBreakdown, ReportWinter, ReportControlBreakdown, ReportHeader, ReportPopulation, ReportClassVersus,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             ProgressBar
         }

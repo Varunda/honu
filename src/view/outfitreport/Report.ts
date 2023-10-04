@@ -60,6 +60,7 @@ export class PlayerClassStats {
 	public kills: number = 0;
 	public deaths: number = 0;
 	public timeAs: number = 0;
+	public exp: number = 0;
 
 	public constructor(name: string) {
 		this.name = name;
@@ -159,6 +160,11 @@ export class PlayerMetadataGenerator {
 		for (const exp of report.experience) {
 			const entry: PlayerMetadata = getEntry(exp.sourceID, "exp");
 			entry.exp.push(exp);
+
+			const clazz: PlayerClassStats | null = getClass(entry.ID, exp.loadoutID);
+			if (clazz != null) {
+				clazz.exp += exp.amount;
+			}
 		}
 
 		for (const session of report.sessions) {

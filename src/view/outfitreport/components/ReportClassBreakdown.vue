@@ -8,6 +8,8 @@
                 <th>KPM</th>
                 <th>Deaths</th>
                 <th>KD</th>
+                <th>Exp</th>
+                <th>SPM</th>
                 <th>Players</th>
             </tr>
 
@@ -19,6 +21,8 @@
                     <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
                     <td>{{all.deaths}}</td>
                     <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
+                    <td>{{all.exp | compact}}</td>
+                    <td>{{all.exp / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
                     <td>{{all.count}}</td>
                 </tr>
 
@@ -29,6 +33,8 @@
                     <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
                     <td>{{infil.deaths}}</td>
                     <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
+                    <td>{{infil.exp | compact}}</td>
+                    <td>{{infil.exp / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
                     <td>{{infil.count}}</td>
                 </tr>
 
@@ -39,6 +45,8 @@
                     <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
                     <td>{{lightAssault.deaths}}</td>
                     <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
+                    <td>{{lightAssault.exp | compact}}</td>
+                    <td>{{lightAssault.exp / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
                     <td>{{lightAssault.count}}</td>
                 </tr>
 
@@ -49,6 +57,8 @@
                     <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
                     <td>{{medic.deaths}}</td>
                     <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
+                    <td>{{medic.exp | compact}}</td>
+                    <td>{{medic.exp / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
                     <td>{{medic.count}}</td>
                 </tr>
 
@@ -59,6 +69,8 @@
                     <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
                     <td>{{engineer.deaths}}</td>
                     <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
+                    <td>{{engineer.exp | compact}}</td>
+                    <td>{{engineer.exp / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
                     <td>{{engineer.count}}</td>
                 </tr>
 
@@ -69,6 +81,8 @@
                     <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
                     <td>{{heavy.deaths}}</td>
                     <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
+                    <td>{{heavy.exp | compact}}</td>
+                    <td>{{heavy.exp / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
                     <td>{{heavy.count}}</td>
                 </tr>
 
@@ -79,6 +93,8 @@
                     <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
                     <td>{{max.deaths}}</td>
                     <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
+                    <td>{{max.exp | compact}}</td>
+                    <td>{{max.exp / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
                     <td>{{max.count}}</td>
                 </tr>
             </tbody>
@@ -103,6 +119,12 @@
                     </div>
 
                     <chart-box-whisker :data="allKD" class="input-cell"></chart-box-whisker>
+
+                    <div class="input-cell mr-1">
+                        SPM
+                    </div>
+
+                    <chart-box-whisker :data="allSPM" class="input-cell"></chart-box-whisker>
                 </div>
             </div>
 
@@ -110,30 +132,35 @@
                 <h5>Infiltrator</h5>
                 <chart-box-whisker :data="infilKPM"></chart-box-whisker>
                 <chart-box-whisker :data="infilKD"></chart-box-whisker>
+                <chart-box-whisker :data="infilSPM"></chart-box-whisker>
             </div>
 
             <div class="col-12 col-lg-2 border-right">
                 <h5>Light Assault</h5>
                 <chart-box-whisker :data="lightAssaultKPM"></chart-box-whisker>
                 <chart-box-whisker :data="lightAssaultKD"></chart-box-whisker>
+                <chart-box-whisker :data="lightAssaultSPM"></chart-box-whisker>
             </div>
 
             <div class="col-12 col-lg-2 border-right">
                 <h5>Medic</h5>
                 <chart-box-whisker :data="medicKPM"></chart-box-whisker>
                 <chart-box-whisker :data="medicKD"></chart-box-whisker>
+                <chart-box-whisker :data="medicSPM"></chart-box-whisker>
             </div>
 
             <div class="col-12 col-lg-2 border-right">
                 <h5>Engineer</h5>
                 <chart-box-whisker :data="engineerKPM"></chart-box-whisker>
                 <chart-box-whisker :data="engineerKD"></chart-box-whisker>
+                <chart-box-whisker :data="engineerSPM"></chart-box-whisker>
             </div>
 
             <div class="col-12 col-lg-2 border-right">
                 <h5>Heavy</h5>
                 <chart-box-whisker :data="heavyKPM"></chart-box-whisker>
                 <chart-box-whisker :data="heavyKD"></chart-box-whisker>
+                <chart-box-whisker :data="heavySPM"></chart-box-whisker>
             </div>
         </div>
     </collapsible>
@@ -146,6 +173,7 @@
     import Loadout from "util/Loadout";
 
     import "filters/LocaleFilter";
+    import "filters/CompactFilter";
     import "MomentFilter";
 
     import InfoHover from "components/InfoHover.vue";
@@ -156,6 +184,7 @@
         public kills: number = 0;
         public vehicleKills: number = 0;
         public deaths: number = 0;
+        public exp: number = 0;
         public count: number = 0;
         public timeAs: number = 0;
     }
@@ -188,6 +217,7 @@
             make: function(): void {
                 this.setKills();
                 this.setDeaths();
+                this.setExp();
 
                 for (const metadata of Array.from(this.report.playerMetadata.values())) {
                     if (metadata.classes.mostPlayed == metadata.classes.infil) {
@@ -258,6 +288,28 @@
                         ++this.max.deaths;
                     }
                 }
+            },
+
+            setExp: function(): void {
+                for (const exp of this.report.experience) {
+                    const id: number = exp.loadoutID;
+
+                    this.all.exp += exp.amount;
+
+                    if (Loadout.isInfiltrator(id)) {
+                        this.infil.exp += exp.amount;
+                    } else if (Loadout.isLightAssault(id)) {
+                        this.lightAssault.exp += exp.amount;
+                    } else if (Loadout.isMedic(id)) {
+                        this.medic.exp += exp.amount;
+                    } else if (Loadout.isEngineer(id)) {
+                        this.engineer.exp += exp.amount;
+                    } else if (Loadout.isHeavy(id)) {
+                        this.heavy.exp += exp.amount;
+                    } else if (Loadout.isMax(id)) {
+                        this.max.exp += exp.amount;
+                    }
+                }
             }
         },
 
@@ -276,7 +328,15 @@
             medicKD: function(): number[] { return classKds(this.report, (p) => p.classes.medic); },
             engineerKD: function(): number[] { return classKds(this.report, (p) => p.classes.engineer); },
             heavyKD: function(): number[] { return classKds(this.report, (p) => p.classes.heavy); },
-            maxKD: function(): number[] { return classKds(this.report, (p) => p.classes.max); }
+            maxKD: function(): number[] { return classKds(this.report, (p) => p.classes.max); },
+
+            allSPM: function(): number[] { return Array.from(this.report.playerMetadata.values()).filter(iter => iter.timeAs > 60 * 5).map(iter => iter.exp.reduce((acc, i) => acc += i.amount, 0) / iter.timeAs * 60); },
+            infilSPM: function(): number[] { return classSpms(this.report, (p) => p.classes.infil); },
+            lightAssaultSPM: function(): number[] { return classSpms(this.report, (p) => p.classes.lightAssault); },
+            medicSPM: function(): number[] { return classSpms(this.report, (p) => p.classes.medic); },
+            engineerSPM: function(): number[] { return classSpms(this.report, (p) => p.classes.engineer); },
+            heavySPM: function(): number[] { return classSpms(this.report, (p) => p.classes.heavy); },
+            maxSPM: function(): number[] { return classSpms(this.report, (p) => p.classes.max); },
         },
 
         components: {
@@ -296,6 +356,12 @@
         return Array.from(report.playerMetadata.values())
             .filter(iter => selector(iter).timeAs > 60 * 5)
             .map(iter => selector(iter).kills / selector(iter).timeAs * 60);
+    }
+
+    function classSpms(report: Report, selector: (_: PlayerMetadata) => PlayerClassStats): number[] {
+        return Array.from(report.playerMetadata.values())
+            .filter(iter => selector(iter).timeAs > 60 * 5)
+            .map(iter => selector(iter).exp / selector(iter).timeAs * 60);
     }
 
     export default ReportClassBreakdown;
