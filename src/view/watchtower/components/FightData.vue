@@ -7,7 +7,7 @@
             <info-hover text="What fights are currently happening on this server. There will always be some delay due to how this data is collected, and is not guaranteed to be accurate"></info-hover>
         </h1>
 
-        <div v-if="history.showUI == true">
+        <div v-if="history.showUI == true" class="mb-2">
             <h3>
                 Fight history for
 
@@ -30,21 +30,22 @@
             <div v-else-if="history.data.state == 'loaded'">
                 <canvas id="history-chart" style="width: 100%; height: 300px;"></canvas>
 
-                <div class="text-muted">
-                    This data is NOT guaranteed to be 100% accurate!
+                <div class="text-warning">
+                    This data is NOT 100% accurate! Player counts can only be estimated, especially with smaller fights.
+                    This represents the upper bounds of population within a hex. Each value is the upper bound of the range (1-12 is 12), multiplied by the percentage of the region's pop
                 </div>
             </div>
 
             <div v-else-if="history.data.state == 'error'">
-                errored: {{history.data.error}}
+                <api-error :error="history.data.error"></api-error>
             </div>
         </div>
 
         <div class="row mx-0">
             <div class="mb-2 px-1 col-12 col-lg-6 col-xl-4" v-for="fight in fights">
                 <div class="border rounded" :style="{ 'background-color': 'var(--color-dark-bg-' + fight.mapState.owningFactionID + ')'  }">
-                    <div @click="getFightHistory(fight.mapState.regionID)">
-                        <h2 class="px-1 d-inline-block">
+                    <div @click="getFightHistory(fight.mapState.regionID)" class="d-flex" style="align-items: center;">
+                        <h2 class="px-1 d-inline-block flew-grow-0">
                             <span style="width: 2rem; line-height: 2.5rem;">
                                 <faction-image :faction-id="fight.mapState.owningFactionID" style="width: 2rem;"></faction-image>
                             </span>
@@ -60,9 +61,15 @@
                                 / {{fight.mapState.regionID}}
                             </span>
                         </h2>
-                        <h5 v-if="fight.facility != null" class="d-inline-block">
+                        <h5 v-if="fight.facility != null" class="d-inline-block flex-grow-0">
                             ({{fight.facility.typeName}})
                         </h5>
+
+                        <div class="flex-grow-1"></div>
+
+                        <button class="btn btn-success flex-grow-0 mr-1">
+                            expand
+                        </button>
                     </div>
 
                     <div class="mb-1 px-1">
@@ -132,6 +139,9 @@
     import InfoHover from "components/InfoHover.vue";
     import FactionImage from "components/FactionImage";
     import Busy from "components/Busy.vue";
+    import ApiError from "components/ApiError";
+
+    import ColorUtils from "util/Color";
 
     import "filters/TimeAgoFilter";
     import "filters/LocaleFilter";
@@ -279,15 +289,6 @@
                         scales: {
                             x: {
                                 type: "time",
-                                /*
-                                ticks: {
-                                    maxRotation: 90,
-                                    minRotation: 90,
-                                    callback: function(label, index, ticks) {
-                                        return TimeUtils.format(label, "hh:mm:ss A");
-                                    }
-                                }
-                                */
                             }
                         }
                     }
@@ -311,21 +312,21 @@
                 this.history.chart.data.datasets.length = 0;
                 this.history.chart.data.datasets.push({
                     data: this.history.count.map(iter => iter.vs),
-                    //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
                     label: "VS",
-                    borderColor: "purple"
+                    borderColor: ColorUtils.VS,
+                    stepped: "before"
                 });
                 this.history.chart.data.datasets.push({
                     data: this.history.count.map(iter => iter.nc),
-                    //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
                     label: "NC",
-                    borderColor: "blue"
+                    borderColor: ColorUtils.NC,
+                    stepped: "before"
                 });
                 this.history.chart.data.datasets.push({
                     data: this.history.count.map(iter => iter.tr),
-                    //label: this.history.data.data.map(iter => TimeUtils.format(iter.timestamp, "hh:mm:ss A")),
                     label: "TR",
-                    borderColor: "red"
+                    borderColor: ColorUtils.TR,
+                    stepped: "before"
                 });
 
                 this.history.chart.update();
@@ -333,7 +334,7 @@
         },
 
         components: {
-            InfoHover, LowerBound, FactionBounds, FactionImage, Busy
+            InfoHover, LowerBound, FactionBounds, FactionImage, Busy, ApiError
         }
     });
     export default FightData;
