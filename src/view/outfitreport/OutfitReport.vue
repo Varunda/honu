@@ -87,7 +87,7 @@
         <div v-if="show.logs == true" style="height: 300px; overflow-y: scroll;" class="container-fluid">
             <div v-for="msg in logs" class="row">
                 <div class="col-2" style="font-family: monospace;">
-                    {{msg.when | moment}}
+                    {{msg.when | moment("YYYY-MM-DD HH:mm:ss")}}
                 </div>
 
                 <div class="col-10">
@@ -640,50 +640,6 @@
                 }
             },
 
-            /**
-             * copy the parameters of a report into the UI values so the report can be recreated with new people
-             */
-            editReport: function(): void {
-                this.progress.killdeath = 0;
-                this.progress.exp = 0;
-                this.progress.playerControl = 0;
-                this.progress.vehicleDestroy = 0;
-
-                this.periodStart = this.report.parameters.periodStart;
-                this.periodEnd = this.report.parameters.periodEnd;
-                this.teamID = this.report.parameters.teamID;
-
-                for (const outfitID of this.report.parameters.outfitIDs) {
-                    if (this.outfits.find(iter => iter.id == outfitID) != null) {
-                        console.log(`not adding outfit ${outfitID} to this.outfits: already there`);
-                        continue;
-                    }
-
-                    const outfit: PsOutfit | undefined = this.report.outfits.get(outfitID);
-                    if (outfit == undefined) {
-                        Toaster.add(`Error!`, `Failed to find outfit ID "${outfitID}"`, "danger");
-                    } else {
-                        this.outfits.push(outfit);
-                    }
-                }
-
-                for (const charID of this.report.parameters.characterIDs) {
-                    if (this.characters.find(iter => iter.id == charID) != null) {
-                        console.log(`not adding character ${charID} to this.characters: already there`);
-                        continue;
-                    }
-
-                    const c: PsCharacter | undefined = this.report.characters.get(charID);
-                    if (c == undefined) {
-                        Toaster.add(`Error!`, `Failed to find character ID "${charID}"`, "danger");
-                    } else {
-                        this.characters.push(c);
-                    }
-                }
-
-                this.show.controls = true;
-                this.show.gen = true;
-            },
 
             searchOutfitTag: async function(): Promise<void> {
                 const outfits: Loading<PsOutfit[]> = await OutfitApi.getByTag(this.search.outfitTag);
@@ -932,6 +888,63 @@
                 }).catch((err: any) => {
                     console.error(err);
                 });
+            },
+
+            /**
+             * copy the parameters of a report into the UI values so the report can be recreated with new people
+             */
+            editReport: function(): void {
+                this.progress.killdeath = 0;
+                this.progress.exp = 0;
+                this.progress.playerControl = 0;
+                this.progress.vehicleDestroy = 0;
+
+                this.periodStart = this.report.parameters.periodStart;
+                this.periodEnd = this.report.parameters.periodEnd;
+                this.teamID = this.report.parameters.teamID;
+
+                this.clearEvents();
+
+                for (const outfitID of this.report.parameters.outfitIDs) {
+                    if (this.outfits.find(iter => iter.id == outfitID) != null) {
+                        console.log(`not adding outfit ${outfitID} to this.outfits: already there`);
+                        continue;
+                    }
+
+                    const outfit: PsOutfit | undefined = this.report.outfits.get(outfitID);
+                    if (outfit == undefined) {
+                        Toaster.add(`Error!`, `Failed to find outfit ID "${outfitID}"`, "danger");
+                    } else {
+                        this.outfits.push(outfit);
+                    }
+                }
+
+                for (const charID of this.report.parameters.characterIDs) {
+                    if (this.characters.find(iter => iter.id == charID) != null) {
+                        console.log(`not adding character ${charID} to this.characters: already there`);
+                        continue;
+                    }
+
+                    const c: PsCharacter | undefined = this.report.characters.get(charID);
+                    if (c == undefined) {
+                        Toaster.add(`Error!`, `Failed to find character ID "${charID}"`, "danger");
+                    } else {
+                        this.characters.push(c);
+                    }
+                }
+
+                this.show.controls = true;
+                this.show.gen = true;
+            },
+
+            clearEvents: function(): void {
+                this.report.kills = [];
+                this.report.deaths = [];
+                this.report.experience = [];
+                this.report.vehicleDestroy = [];
+                this.report.sessions = [];
+                this.report.control = [];
+                this.report.playerControl = [];
             },
 
             /**

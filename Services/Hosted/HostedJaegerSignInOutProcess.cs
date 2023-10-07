@@ -48,6 +48,7 @@ namespace watchtower.Services.Hosted {
             "5429332977254796881", // ShowdownModerator
             "5429332977258919329", // JaegerMithril
             "5428863393455241009", // njlivenso2
+            "5429442030420230177", // elfysour3
         };
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,
