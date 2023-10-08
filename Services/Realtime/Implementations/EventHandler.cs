@@ -606,7 +606,7 @@ namespace watchtower.Realtime {
                     Online = false
                 });
 
-                p.LastLogin = DateTime.UtcNow;
+                p.LastLogin = timestamp;
             }
 
             if (env != null) {
@@ -828,7 +828,7 @@ namespace watchtower.Realtime {
                         _Logger.LogError(ex, $"Failed to insert alert in {worldID} in zone {zoneID}");
                     }
                 }
-            } else if (metagameEventName == "ended") {
+            } else if (metagameEventName == "ended" || metagameEventName == "canceled") {
                 List<PsAlert> alerts = AlertStore.Get().GetAlerts();
 
                 PsAlert? toRemove = null;
@@ -1292,7 +1292,7 @@ namespace watchtower.Realtime {
                 lock (NpcStore.Get().Npcs) {
                     TrackedNpc npc = NpcStore.Get().Npcs.GetOrAdd(otherID, new TrackedNpc() {
                         OwnerID = charID,
-                        FirstSeenAt = DateTime.UtcNow,
+                        FirstSeenAt = ev.Timestamp,
                         NpcID = otherID,
                         SpawnCount = 0,
                         Type = NpcType.Sunderer,
@@ -1306,7 +1306,7 @@ namespace watchtower.Realtime {
                 lock (NpcStore.Get().Npcs) {
                     TrackedNpc npc = NpcStore.Get().Npcs.GetOrAdd(otherID, new TrackedNpc() {
                         OwnerID = charID,
-                        FirstSeenAt = DateTime.UtcNow,
+                        FirstSeenAt = ev.Timestamp,
                         NpcID = otherID,
                         SpawnCount = 0,
                         Type = NpcType.Router,

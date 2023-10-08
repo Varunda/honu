@@ -39,6 +39,18 @@ namespace watchtower.Code.Commands {
             _Logger.LogInformation(s);
         }
 
+        public void Info(short worldID, uint zoneID) {
+            lock (ZoneStateStore.Get().Zones) {
+                ZoneState? info = ZoneStateStore.Get().GetZone(worldID, zoneID);
+                if (info == null) {
+                    _Logger.LogWarning($"no zone state info found");
+                } else {
+                    _Logger.LogInformation($"{JToken.FromObject(info)}");
+                }
+            }
+
+        }
+
         public void StartAlert(short worldID, uint zoneID, int duration) {
             lock (ZoneStateStore.Get().Zones) {
                 ZoneState? zone = ZoneStateStore.Get().GetZone(worldID, zoneID);
