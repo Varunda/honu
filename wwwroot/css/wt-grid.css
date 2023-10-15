@@ -84,7 +84,7 @@
     grid-row: 24;
 }
 
-@media (min-width: 1920px) {
+@media (min-width: 1200px) {
     .grid-nc-title-focus {
         display: none;
     }
@@ -337,7 +337,7 @@
     grid-row: 26;
 }
 
-@media (max-width: 1920px) {
+@media (max-width: 1200px) {
 
     .wt-grid-container {
         column-gap: 0.75rem;
@@ -434,6 +434,7 @@
         grid-column: 1;
         grid-row: 18;
     }
+
 
     .grid-title-weapon-kills {
         grid-column: 1;
