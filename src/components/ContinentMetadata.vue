@@ -23,6 +23,10 @@
             </span>
 
             {{metadata.alertEnd | til2}}
+
+            <span v-if="metadata.alertInfo != null">
+                ({{metadata.alertInfo.name}})
+            </span>
         </span>
     </span>
 </template>
