@@ -70,7 +70,7 @@
                 </div>
 
                 <div v-if="badStreams.length > 0" class="alert alert-warning text-center h5">
-                    <div>
+                    <div data-toggle="collapse" data-target="#reconnect-info">
                         Honu reconnected to the API due to a bad realtime event stream from this server, this has caused:
                     </div>
 
@@ -79,6 +79,12 @@
                             {{stream.secondsMissed | tduration}} of {{stream.streamType}} events to be missed
                         </li>
                     </ul>
+
+                    <div id="reconnect-info" class="collapse hide border-top h6 mt-2 pt-2">
+                        <div v-for="reconnect in worldData.reconnects">
+                            {{reconnect.streamType}}@{{reconnect.timestamp | moment("YYYY-MM-DD hh:mm:ssA")}} - {{reconnect.duration | mduration}}
+                        </div>
+                    </div>
                 </div>
 
                 <div v-if="worldData.processLag > 30" class="alert alert-warning text-center h5">
@@ -121,23 +127,23 @@
                             <info-hover text="Players currently online"></info-hover>
                         </th>
                         <th colspan="5" v-if="indarCount > 19" class="border-right">
-                            Indar
+                            <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=2&showUI=true'">Indar</a>
                             <continent-metadata :metadata="worldData.continentCount.indar.metadata"></continent-metadata>
                         </th>
                         <th colspan="5" v-if="hossinCount > 19" class="border-right">
-                            Hossin
+                            <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=4&showUI=true'">Hossin</a>
                             <continent-metadata :metadata="worldData.continentCount.hossin.metadata"></continent-metadata>
                         </th>
                         <th colspan="5" v-if="amerishCount > 19" class="border-right">
-                            Amerish
+                            <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=6&showUI=true'">Amerish</a>
                             <continent-metadata :metadata="worldData.continentCount.amerish.metadata"></continent-metadata>
                         </th>
                         <th colspan="5" v-if="esamirCount > 19" class="border-right">
-                            Esamir
+                            <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=8&showUI=true'">Esamir</a>
                             <continent-metadata :metadata="worldData.continentCount.esamir.metadata"></continent-metadata>
                         </th>
                         <th colspan="5" v-if="oshurCount > 19" class="border-right">
-                            Oshur
+                            <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=344&showUI=true'">Oshur</a>
                             <continent-metadata :metadata="worldData.continentCount.oshur.metadata"></continent-metadata>
                         </th>
                         <th colspan="5">
@@ -243,7 +249,7 @@
                 <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
             </h4>
 
-            <h4 class="grid-title-vs">
+            <h4 class="grid-title-vs p-1" id="header-vs">
                 <img src="/img/logo_vs.png" style="width: 32px; "/>
                 Vanu Sovereignty
                 <info-hover text="NS kills only count when that player is on this faction"></info-hover>
@@ -325,7 +331,9 @@
                 <outfits-online :data="worldData.vs.outfits"></outfits-online>
             </div>
 
-            <h4 class="grid-title-nc">
+            <!-- NC -->
+
+            <h4 class="grid-title-nc p-1" id="header-nc">
                 <img src="/img/logo_nc.png" style="width: 32px; "/>
                 New Conglomerate
                 <info-hover text="NS kills only count when that player is on this faction"></info-hover>
@@ -339,9 +347,17 @@
                 <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
             </div>
 
+            <h4 class="grid-nc-title-focus">
+                NC focus
+            </h4>
+
             <div class="grid-nc-focus">
                 <faction-focus :focus="worldData.nc.factionFocus"></faction-focus>
             </div>
+
+            <h4 class="grid-nc-title-heals">
+                Heals
+            </h4>
 
             <div class="grid-nc-heals d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerHeals" link="/c/"
@@ -352,6 +368,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-nc-title-revives">
+                Revives
+            </h4>
+
             <div class="grid-nc-revives d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerRevives" link="/c/"
                     :source="expSources.charRevive" source-title="Players revived" :source-use-short="useShort">
@@ -360,6 +380,10 @@
                     :source="expSources.outfitRevive" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
+
+            <h4 class="grid-nc-title-shields">
+                Shield repairs
+            </h4>
 
             <div class="grid-nc-shields d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerShieldRepair" link="/c/"
@@ -370,6 +394,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-nc-title-resupplies">
+                Resupplies
+            </h4>
+
             <div class="grid-nc-resupplies d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerResupplies" link="/c/"
                     :source="expSources.charResupply" source-title="Players resupplies" :source-use-short="useShort">
@@ -378,6 +406,10 @@
                     :source="expSources.outfitResupply" :source-team-id="2" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
+
+            <h4 class="grid-nc-title-spawns">
+                Spawns
+            </h4>
 
             <div class="grid-nc-spawns d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerSpawns" link="/c/"
@@ -388,6 +420,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-nc-title-vehicle-kills">
+                Vehicle kills
+            </h4>
+
             <div class="grid-nc-vehicle-kills d-flex">
                 <block-view class="mr-3" :block="worldData.nc.playerVehicleKills" link="/c/"
                     :source="expSources.charVKills" source-title="Vehicles destroyed" :source-use-short="useShort">
@@ -397,17 +433,28 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-nc-title-weapon-kills">
+                Weapon kills
+            </h4>
+
             <div class="grid-nc-weapon-kills">
                 <weapon-kills :weapon-kills="worldData.nc.weaponKills"
                     :total="worldData.nc.totalKills">
                 </weapon-kills>
             </div>
 
+            <h4 class="grid-nc-title-outfits">
+                Outfits currently online
+                <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
+            </h4>
+
             <div class="grid-nc-outfits">
                 <outfits-online :data="worldData.nc.outfits"></outfits-online>
             </div>
 
-            <h4 class="grid-title-tr">
+            <!-- TR -->
+
+            <h4 class="grid-title-tr p-1" id="header-tr">
                 <img src="/img/logo_tr.png" style="width: 32px; "/>
                 Terran Republic
                 <info-hover text="NS kills only count when that player is on this faction"></info-hover>
@@ -421,9 +468,17 @@
                 <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
             </div>
 
+            <h4 class="grid-tr-title-focus">
+                TR Focus
+            </h4>
+
             <div class="grid-tr-focus">
                 <faction-focus :focus="worldData.tr.factionFocus"></faction-focus>
             </div>
+
+            <h4 class="grid-tr-title-heals">
+                Heals
+            </h4>
 
             <div class="grid-tr-heals d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerHeals" link="/c/"
@@ -434,6 +489,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-tr-title-revives">
+                Revives
+            </h4>
+
             <div class="grid-tr-revives d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerRevives" link="/c/"
                     :source="expSources.charRevive" source-title="Players revived" :source-use-short="useShort">
@@ -442,6 +501,10 @@
                     :source="expSources.outfitRevive" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
+
+            <h4 class="grid-tr-title-shields">
+                Shield repairs
+            </h4>
 
             <div class="grid-tr-shields d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerShieldRepair" link="/c/"
@@ -452,6 +515,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-tr-title-resupplies">
+                Resupplies
+            </h4>
+
             <div class="grid-tr-resupplies d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerResupplies" link="/c/"
                     :source="expSources.charResupply" source-title="Players resupplied" :source-use-short="useShort">
@@ -460,6 +527,10 @@
                     :source="expSources.outfitResupply" :source-team-id="3" :source-world-id="worldID" source-title="Players in outfit" :source-use-short="useShort">
                 </block-view>
             </div>
+
+            <h4 class="grid-tr-title-spawns">
+                Spawns
+            </h4>
 
             <div class="grid-tr-spawns d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerSpawns" link="/c/"
@@ -470,6 +541,10 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-tr-title-vehicle-kills">
+                Vehicle kills
+            </h4>
+
             <div class="grid-tr-vehicle-kills d-flex">
                 <block-view class="mr-3" :block="worldData.tr.playerVehicleKills" link="/c/"
                     :source="expSources.charVKills" source-title="Vehicles destroyed" :source-use-short="useShort">
@@ -479,11 +554,19 @@
                 </block-view>
             </div>
 
+            <h4 class="grid-tr-title-weapon-kills">
+                TR weapons
+            </h4>
+
             <div class="grid-tr-weapon-kills">
                 <weapon-kills :weapon-kills="worldData.tr.weaponKills"
                     :total="worldData.tr.totalKills">
                 </weapon-kills>
             </div>
+
+            <h4 class="grid-tr-title-outfits">
+                Outfits
+            </h4>
 
             <div class="grid-tr-outfits">
                 <outfits-online :data="worldData.tr.outfits"></outfits-online>
@@ -544,6 +627,20 @@
         </div>
 
         <popper-modal :value="modalData"></popper-modal>
+
+        <div id="mobile-seeker" class="mobile-seeker">
+            <div class="d-flex text-center">
+                <div class="flex-grow-1 py-2 ms-vs" @click="scrollToFaction(1)">
+                    VS
+                </div>
+                <div class="flex-grow-1 py-2 ms-nc" @click="scrollToFaction(2)">
+                    NC
+                </div>
+                <div class="flex-grow-1 py-2 ms-tr" @click="scrollToFaction(3)">
+                    TR
+                </div>
+            </div>
+        </div>
 
     </div>
 </template>
@@ -691,6 +788,23 @@
         },
 
         methods: {
+
+            scrollToFaction: function(facID: number): void {
+                let elemID: HTMLElement | null = null;
+
+                if (facID == 1) {
+                    elemID = document.getElementById("header-vs");
+                } else if (facID == 2) {
+                    elemID = document.getElementById("header-nc");
+                } else if (facID == 3) {
+                    elemID = document.getElementById("header-tr");
+                }
+
+                if (elemID != null) {
+                    elemID.scrollIntoView();
+                }
+            },
+
             subscribeToWorld: function(worldID: number, useShort: boolean): void {
                 if (this.connection == null) {
                     console.warn(`Cannot subscribe to world ${worldID}, connection is null`);

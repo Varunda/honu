@@ -56,7 +56,6 @@ namespace watchtower.Services.Hosted {
             PsbReservationRepository reservationRepository, PsbParsedReservationDbStore reservationMetadataDb) {
 
             _Logger = logger;
-            _Logger.LogError("discord ctor");
             _MessageQueue = msgQueue ?? throw new ArgumentNullException(nameof(msgQueue));
 
             _DiscordOptions = discordOptions;

@@ -189,6 +189,11 @@ namespace watchtower.Services.Census {
             Dictionary<short, int> counts = new();
 
             foreach (PsMap region in map) {
+                // don't include bases that are locked
+                if (region.FactionID == 0) {
+                    continue;
+                }
+
                 if (counts.ContainsKey(region.FactionID) == false) {
                     counts.Add(region.FactionID, 0);
                 }
@@ -196,7 +201,7 @@ namespace watchtower.Services.Census {
                 ++counts[region.FactionID];
             }
 
-            //_Logger.LogInformation($"{worldID}:{zoneID} => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
+            _Logger.LogInformation($"{worldID}:{zoneID} [Total={total}] => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
 
             if (total > 10 && counts.Count > 0) {
                 KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();

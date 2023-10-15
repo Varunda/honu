@@ -42,6 +42,7 @@ namespace watchtower.Models {
             Players = other.Players;
             TerritoryControl = other.TerritoryControl;
             Alert = other.Alert;
+            AlertInfo = other.AlertInfo;
             LastLocked = other.LastLocked;
         }
 
@@ -71,6 +72,11 @@ namespace watchtower.Models {
         public PsAlert? Alert { get; set; }
 
         /// <summary>
+        ///     Information about the alert
+        /// </summary>
+        public PsMetagameEvent? AlertInfo { get; set; }
+
+        /// <summary>
         ///     When did an alert on this zone start?
         /// </summary>
         public DateTime? AlertStart { get; set; }
@@ -80,12 +86,24 @@ namespace watchtower.Models {
         /// </summary>
         public DateTime? AlertEnd { get; set; }
 
+        /// <summary>
+        ///     When this continent was last locked. Based on the ContinentLock event, and persisted in a DB
+        /// </summary>
         public DateTime? LastLocked { get; set; }
 
+        /// <summary>
+        ///     How many players are on this zone
+        /// </summary>
         public int PlayerCount { get; set; }
 
+        /// <summary>
+        ///     Breakdown of player counts
+        /// </summary>
         public PlayerCount Players { get; set; } = new PlayerCount();
 
+        /// <summary>
+        ///     Breakdown of what faction owns what territories
+        /// </summary>
         public TerritoryControl TerritoryControl { get; set; } = new TerritoryControl();
 
     }

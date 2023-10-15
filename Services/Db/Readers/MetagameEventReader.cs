@@ -13,6 +13,7 @@ namespace watchtower.Services.Db.Readers {
             ev.Name = reader.GetString("name");
             ev.Description = reader.GetString("description");
             ev.TypeID = reader.GetInt32("type_id");
+            ev.DurationMinutes = reader.GetInt32("duration_minutes");
 
             return ev;
         }

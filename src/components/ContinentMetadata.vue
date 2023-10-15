@@ -4,9 +4,24 @@
             <span class="fas fa-lock" title="This continent is locked"></span>
         </span>
 
+        <span v-if="metadata.unstableState == 1">
+            (single lane)
+        </span>
+
+        <span v-else-if="metadata.unstableState == 2">
+            (double lane)
+        </span>
+
         <span v-if="metadata.alertEnd != null">
             <span class="fas fa-exclamation-triangle" title="Active alert!"></span>
-            Locks in
+
+            <span v-if="metadata.alertInfo != null && metadata.alertInfo.typeID == 9">
+                Locks in
+            </span>
+            <span v-else>
+                Ends in
+            </span>
+
             {{metadata.alertEnd | til2}}
         </span>
     </span>

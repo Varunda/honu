@@ -2,12 +2,14 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Repositories;
 
 namespace watchtower.Services.Hosted.Startup {
 
@@ -15,16 +17,19 @@ namespace watchtower.Services.Hosted.Startup {
 
         private readonly ILogger<AlertLoadStartupService> _Logger;
         private readonly AlertDbStore _AlertDb;
+        private readonly MetagameEventRepository _MetagameRepository;
 
         public AlertLoadStartupService(ILogger<AlertLoadStartupService> logger,
-            AlertDbStore alertDb) {
+            AlertDbStore alertDb, MetagameEventRepository metagameRepository) {
 
             _Logger = logger;
             _AlertDb = alertDb;
+            _MetagameRepository = metagameRepository;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken) {
             List<PsAlert> unfinished = await _AlertDb.LoadUnfinished();
+            Dictionary<int, PsMetagameEvent> events = (await _MetagameRepository.GetAll()).ToDictionary(iter => iter.ID);
 
             _Logger.LogInformation($"Loaded {unfinished.Count} unfinished alerts");
 
@@ -41,6 +46,9 @@ namespace watchtower.Services.Hosted.Startup {
                         };
                     }
 
+                    state.Alert = alert;
+                    _ = events.TryGetValue(alert.AlertID, out PsMetagameEvent? ev);
+                    state.AlertInfo = ev;
                     state.AlertStart = alert.Timestamp;
                     state.AlertEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration);
 

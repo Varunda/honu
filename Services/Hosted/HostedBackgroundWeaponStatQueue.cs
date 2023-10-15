@@ -307,7 +307,7 @@ namespace watchtower.Services.Hosted {
 
             if (missingCharacters.Count > 0) {
                 string missingStr = string.Join(", ", missingCharacters.Take(25)) + (missingCharacters.Count > 25 ? $"+{missingCharacters.Count - 25} more..." : "");
-                _Logger.LogDebug($"Failed to find characters for weapons [ItemID={itemID}] [Count={missingCharacters.Count}]:\n[{missingStr}]");
+                _Logger.LogDebug($"Failed to find characters for weapons [ItemID={itemID}] [Count={missingCharacters.Count}]: [{missingStr}]");
             }
 
             await _WeaponTopDb.SetByItemID(itemID, all);

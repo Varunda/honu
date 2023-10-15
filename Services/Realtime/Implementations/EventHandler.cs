@@ -47,6 +47,7 @@ namespace watchtower.Realtime {
         private readonly AlertDbStore _AlertDb;
         private readonly AlertPlayerDataRepository _ParticipantDataRepository;
         private readonly ContinentLockDbStore _ContinentLockDb;
+        private readonly MetagameEventRepository _MetagameRepository;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -92,7 +93,8 @@ namespace watchtower.Realtime {
             RealtimeAlertEventHandler nexusHandler, RealtimeAlertRepository matchRepository,
             WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
             SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb,
-            AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue) {
+            AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue,
+            MetagameEventRepository metagameRepository) {
 
             _Logger = logger;
 
@@ -133,6 +135,7 @@ namespace watchtower.Realtime {
             _SessionEndQueue = sessionEndQueue;
             _AlertEndQueue = alertEndQueue;
             _FacilityControlQueue = facilityControlQueue;
+            _MetagameRepository = metagameRepository;
         }
 
         public DateTime MostRecentProcess() {
@@ -736,7 +739,7 @@ namespace watchtower.Realtime {
                         } else {
                             state.AlertEnd = state.AlertStart + duration;
                         }
-                    } else if (metagameEventName == "ended") {
+                    } else if (metagameEventName == "ended" || metagameEventName == "canceled") { // ghost bastions are canceled if ended early
                         state.AlertStart = null;
 
                         // Continent unlock events are not sent. To check if a continent is open,
@@ -760,6 +763,8 @@ namespace watchtower.Realtime {
 
                             _Logger.LogDebug(s);
                         }).Start();
+                    } else {
+                        _Logger.LogError($"Unchecked value of {nameof(metagameEventName)} '{metagameEventName}' when setting up zone state");
                     }
 
                     ZoneStateStore.Get().SetZone(worldID, zoneID, state);
@@ -776,6 +781,14 @@ namespace watchtower.Realtime {
                     _Logger.LogWarning($"Failed to find a duration for MetagameEvent {metagameEventID}");
                 }
 
+                PsMetagameEvent? metaEv = null;
+                    
+                try {
+                    metaEv = await _MetagameRepository.GetByID(metagameEventID);
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, $"failed to get metagame event {metagameEventID}");
+                }
+
                 PsAlert alert = new();
                 alert.Timestamp = timestamp;
                 alert.ZoneID = zoneID;
@@ -789,6 +802,7 @@ namespace watchtower.Realtime {
                     ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
                     if (state != null) {
                         state.Alert = alert;
+                        state.AlertInfo = metaEv;
                     }
                 }
 
@@ -933,6 +947,7 @@ namespace watchtower.Realtime {
                         ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
                         if (state != null) {
                             state.Alert = null;
+                            state.AlertInfo = null;
                         }
                     }
                 } else {
