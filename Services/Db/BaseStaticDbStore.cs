@@ -19,7 +19,7 @@ namespace watchtower.Services.Db {
             IDataReader<T> reader, IDbHelper helper) {
 
             _TableName = tableName;
-            _Logger = loggerFactory.CreateLogger($"StaticDbStore<{typeof(T).Name}>");
+            _Logger = loggerFactory.CreateLogger($"watchtower.Services.Db.StaticDbStore<{typeof(T).Name}>");
 
             _Reader = reader ?? throw new ArgumentNullException(nameof(reader));
             _DbHelper = helper;

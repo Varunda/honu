@@ -19,4 +19,21 @@ namespace watchtower.Services {
 
     }
 
+    public static class IServiceHealthMonitorExtensions {
+
+        /// <summary>
+        ///     Get the <see cref="ServiceHealthEntry"/> with <see cref="ServiceHealthEntry.Name"/> of <paramref name="serviceName"/>,
+        ///     creating it if it does not exist
+        /// </summary>
+        /// <param name="monitor"></param>
+        /// <param name="serviceName"></param>
+        /// <returns></returns>
+        public static ServiceHealthEntry GetOrCreate(this IServiceHealthMonitor monitor, string serviceName) {
+            return monitor.Get(serviceName) ?? new ServiceHealthEntry() {
+                Name = serviceName
+            };
+        }
+
+    }
+
 }

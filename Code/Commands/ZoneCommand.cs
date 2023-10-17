@@ -76,6 +76,8 @@ namespace watchtower.Code.Commands {
 
                 zone.AlertStart = null;
                 zone.AlertEnd = null;
+                zone.Alert = null;
+                zone.AlertInfo = null;
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, zone);
             }

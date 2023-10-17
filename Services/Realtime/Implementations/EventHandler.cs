@@ -740,7 +740,7 @@ namespace watchtower.Realtime {
                             state.AlertEnd = state.AlertStart + duration;
                         }
                     } else if (metagameEventName == "ended" || metagameEventName == "canceled") { // ghost bastions are canceled if ended early
-                        state.AlertStart = null;
+                        state.EndAlert();
 
                         // Continent unlock events are not sent. To check if a continent is open,
                         //      we get the owner of each continent. If there is no owner, then 
@@ -946,8 +946,7 @@ namespace watchtower.Realtime {
                     lock (ZoneStateStore.Get().Zones) {
                         ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
                         if (state != null) {
-                            state.Alert = null;
-                            state.AlertInfo = null;
+                            state.EndAlert();
                         }
                     }
                 } else {
@@ -996,8 +995,6 @@ namespace watchtower.Realtime {
                 }
 
                 state.IsOpened = false;
-                state.AlertEnd = null;
-                state.AlertStart = null;
                 state.LastLocked = payload.CensusTimestamp("timestamp");
 
                 ZoneStateStore.Get().SetZone(worldID, zoneID, state);

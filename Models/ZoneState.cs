@@ -106,5 +106,15 @@ namespace watchtower.Models {
         /// </summary>
         public TerritoryControl TerritoryControl { get; set; } = new TerritoryControl();
 
+        /// <summary>
+        ///     Update the zone info to indicate that the alert is over
+        /// </summary>
+        public void EndAlert() {
+            this.Alert = null;
+            this.AlertInfo = null;
+            this.AlertEnd = null;
+            this.AlertStart = null;
+        }
+
     }
 }

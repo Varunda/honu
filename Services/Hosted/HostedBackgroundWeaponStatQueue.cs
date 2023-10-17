@@ -93,7 +93,7 @@ namespace watchtower.Services.Hosted {
                     bool errored = false;
                     DateTime timestamp = DateTime.UtcNow;
 
-                    _Logger.LogDebug($"{SERVICE_NAME}> Updating stats for {itemID}");
+                    _Logger.LogDebug($"updating stats for {itemID}");
                     List<WeaponStatEntry> stats = await _WeaponStatDb.GetByItemID($"{itemID}", 0);
 
                     long loadStatsMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
@@ -107,7 +107,7 @@ namespace watchtower.Services.Hosted {
                         filtered = stats;
                     }
 
-                    _Logger.LogTrace($"{SERVICE_NAME}> Loaded {stats.Count} entries for {itemID}");
+                    _Logger.LogTrace($"loaded {stats.Count} entries for {itemID}");
 
                     if (stats.Count == 0) {
                         continue;
@@ -149,11 +149,11 @@ namespace watchtower.Services.Hosted {
                         _LastUpdated[itemID] = DateTime.UtcNow;
                     }
 
-                    string msg = $"Updated weapon stats for {itemID} in {timer.ElapsedMilliseconds}ms, used {stats.Count} entries; ";
-                    msg += $"db load: {loadStatsMs}ms, snapshot: {snapshotMs}ms, percentile: {percentileMs}ms, bucket: {bucketMs}ms, top: {topMs}ms";
+                    string msg = $"updated weapon stats for {itemID} in {timer.ElapsedMilliseconds}ms, used {stats.Count} entries; ";
+                    msg += $"[DB load={loadStatsMs}ms] [snapshot={snapshotMs}ms] [percentile={percentileMs}ms] [bucket={bucketMs}ms] [top={topMs}ms]";
 
                     if (errored == true) {
-                        msg = "Completed with errors: " + msg;
+                        msg = "completed with errors: " + msg;
                         _Logger.LogWarning(msg);
                     } else {
                         _Logger.LogInformation(msg);
@@ -189,7 +189,7 @@ namespace watchtower.Services.Hosted {
                     WeaponStatEntry t = kvp.Value;
 
                     if (chars.TryGetValue(t.CharacterID, out PsCharacter? c) == false) {
-                        _Logger.LogWarning($"Missing {nameof(PsCharacter)} {t.CharacterID} while generating the top?");
+                        _Logger.LogWarning($"missing {nameof(PsCharacter)} {t.CharacterID} while generating the top?");
                         continue;
                     }
 
@@ -227,18 +227,16 @@ namespace watchtower.Services.Hosted {
 
                 HashSet<string> missingCharacterIds = new();
                 
+                // for each world we want stats for
                 foreach (short worldID in World.PcStreams) {
+                    // and for each faction 
                     foreach (short factionID in Faction.All) {
 
+                        // generate the top, so each world and faction combination has 50 entries to view
                         List<WeaponStatEntry> list = new();
                         foreach (WeaponStatEntry entry in ordered) {
                             _ = chars.TryGetValue(entry.CharacterID, out PsCharacter? c);
                             if (c == null) {
-                                if (missingCharacters.Contains(entry.CharacterID) == false) {
-                                    if (false) {
-                                        _Logger.LogWarning($"Failed to find character {entry.CharacterID}");
-                                    }
-                                }
                                 missingCharacters.Add(entry.CharacterID);
                                 continue;
                             }
@@ -307,7 +305,7 @@ namespace watchtower.Services.Hosted {
 
             if (missingCharacters.Count > 0) {
                 string missingStr = string.Join(", ", missingCharacters.Take(25)) + (missingCharacters.Count > 25 ? $"+{missingCharacters.Count - 25} more..." : "");
-                _Logger.LogDebug($"Failed to find characters for weapons [ItemID={itemID}] [Count={missingCharacters.Count}]: [{missingStr}]");
+                _Logger.LogDebug($"failed to find characters for weapons [ItemID={itemID}] [Count={missingCharacters.Count}]: [{missingStr}]");
             }
 
             await _WeaponTopDb.SetByItemID(itemID, all);

@@ -199,7 +199,7 @@ namespace watchtower {
             services.AddHostedService<CharacterStatGeneratorPopulator>();
             services.AddHostedService<FacilityPopulatorStartupService>();
             services.AddHostedService<DirectiveCollectionsPopulator>();
-            services.AddHostedService<ObjectiveCollectionsPopulator>();
+            services.AddHostedService<StaticDataPopulator>();
             services.AddHostedService<ZoneCheckerService>();
             services.AddHostedService<AlertLoadStartupService>();
             services.AddHostedService<RealtimeNetworkBroadcastService>();
