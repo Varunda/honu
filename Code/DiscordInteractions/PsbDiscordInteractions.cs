@@ -625,7 +625,7 @@ namespace watchtower.Code.DiscordInteractions {
                     // valid names have 3-32 characters and are alphanumeric
                     bool validName = account.Player.Length >= 3
                         && account.Player.Length <= 32
-                        && account.Player.Any(iter => !char.IsLetterOrDigit(iter)) == true;
+                        && account.Player.All(iter => char.IsLetterOrDigit(iter)) == true;
 
                     if (charSessions.Count > 0 && validName) {
                         a = $":green_square: `{accountPrefix}` - {account.Player}\n";
