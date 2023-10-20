@@ -16,8 +16,10 @@ using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Models.Internal;
 using watchtower.Models.PSB;
+using watchtower.Services;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
 using watchtower.Services.Repositories.PSB;
@@ -28,12 +30,17 @@ namespace watchtower.Code.DiscordInteractions {
 
         public ILogger<PsbDiscordInteractions> _Logger { set; private get; } = default!;
         public HonuAccountDbStore _AccountDb { set; private get; } = default!;
+        public InstanceInfo _Instance { set; private get; } = default!;
+
+        public FacilityRepository _FacilityRepository { set; private get; } = default!;
+        public SessionDbStore _SessionDb { set; private get; } = default!;
+        public CharacterRepository _CharacterRepository { set; private get; } = default!;
 
         public PsbContactSheetRepository _ContactRepository { set; private get; } = default!;
-        public FacilityRepository _FacilityRepository { set; private get; } = default!;
         public PsbCalendarRepository _CalendarRepository { set; private get; } = default!;
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
         public PsbParsedReservationDbStore _ReservationMetadataDb { set; private get; } = default!;
+        public PsbOvOSheetRepository _SheetRepository { set; private get; } = default!;
 
         public IOptions<PsbDriveSettings> _PsbDriveSettings { set; private get; } = default!;
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
@@ -507,6 +514,149 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.Channel.SendMessageAsync(builder);
 
             await ctx.EditResponseText("done");
+        }
+
+        [SlashCommand("check-accounts", "Check account usage")]
+        [RequiredRoleSlash("ovo-staff")]
+        public async Task CheckAccounts(InteractionContext ctx) {
+            await ctx.CreateDeferred(true);
+
+            if (ctx.Channel.IsThread == false) {
+                await ctx.Interaction.EditResponseErrorEmbed("cannot check accounts: not in a thread");
+                return;
+            }
+
+            ulong msgID = ctx.Channel.Id;
+
+            if (ctx.Channel.Parent == null || ctx.Channel.Parent.IsCategory == true) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msgID}: parent channel is null or a category");
+                return;
+            }
+
+            DiscordMessage? msg = await ctx.Channel.Parent.TryGetMessage(msgID);
+            if (msg == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msgID}: failed to find msg");
+                return;
+            }
+
+            PsbParsedReservationMetadata? metadata = await _ReservationMetadataDb.GetByID(msg.Id);
+            if (metadata == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msg}: failed to find metadata");
+                return;
+            }
+
+            if (metadata.AccountSheetId == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msg}: no account sheet ID set");
+                return;
+            }
+
+            PsbOvOAccountSheet? sheet = await _SheetRepository.GetByID(metadata.AccountSheetId);
+
+            if (sheet == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msg}: sheet was null");
+                return;
+            }
+
+            // get all the character names that could have sessions (TR, NS and VS)
+            List<string> characters = sheet.Accounts.Select(iter => $"PSBx{iter.AccountNumber.PadLeft(4, '0')}")
+                .Aggregate(new List<string>(), (acc, iter) => {
+                    acc.Add($"{iter}VS");
+                    acc.Add($"{iter}NC");
+                    acc.Add($"{iter}TR");
+                    return acc;
+                });
+            _Logger.LogInformation($"checking usage for accounts: [{string.Join(", ", characters)}]");
+
+            // find all the characters that have one of the names we care about
+            List<PsCharacter> chars = new(characters.Count);
+            foreach (string charName in characters) {
+                PsCharacter? c = await _CharacterRepository.GetFirstByName(charName);
+                if (c != null) {
+                    chars.Add(c);
+                } else {
+                    _Logger.LogError($"missing characterr {charName}!!!");
+                }
+            }
+
+            // *3 cause each account has 3 characters to check
+            _Logger.LogInformation($"loaded {chars.Count}/{sheet.Accounts.Count * 3} characters");
+
+            // for each character ID that we care about, get their sessions around the account booking
+            List<Session> sessions = new();
+            foreach (string charID in chars.Select(iter => iter.ID)) {
+                DateTime rangeStart = sheet.When - TimeSpan.FromHours(4);
+                DateTime rangeEnd = sheet.When + TimeSpan.FromHours(12);
+
+                _Logger.LogDebug($"loading sessions for {charID} between {rangeStart:u} and {rangeEnd:u}");
+
+                sessions.AddRange(await _SessionDb.GetByRangeAndCharacterID(charID, rangeStart, rangeEnd));
+            }
+
+            _Logger.LogInformation($"loaded {sessions.Count} sessions for {chars.Count} characters");
+
+            bool error = false;
+
+            string s = $"account check for `{metadata.AccountSheetId}`\n"
+                + $"**When**: {sheet.When.GetDiscordFullTimestamp()} / {sheet.When:u}\n"
+                + $"**Accounts**: {sheet.Accounts.Count}\n\n";
+
+            // check each account and its session's to ensure usage was tracked correctly
+            foreach (PsbOvOAccountSheetUsage account in sheet.Accounts) {
+                string accountPrefix = $"PSBx{account.AccountNumber.PadLeft(4, '0')}";
+                List<string> accountChars = chars.Where(iter => iter.Name.StartsWith(accountPrefix)).Select(iter => iter.ID).ToList();
+
+                List<Session> charSessions = new();
+                charSessions.AddRange(sessions.Where(iter => accountChars.Contains(iter.CharacterID)));
+
+                string a = "";
+
+                if (account.Player == null) {
+                    if (charSessions.Count > 0) {
+                        a = $":red_square: `{accountPrefix}` - used, but no player given\n";
+                        foreach (Session session in charSessions) {
+                            a += $":black_large_square: `{session.ID}` https://{_Instance.GetHost()}/s/{session.ID}\n";
+                        }
+                        error = true;
+                    } else {
+                        a = $":blue_square: `{accountPrefix}` - _unused_\n";
+                    }
+                } else {
+
+                    // valid names have 3-32 characters and are alphanumeric
+                    bool validName = account.Player.Length >= 3
+                        && account.Player.Length <= 32
+                        && account.Player.Any(iter => !char.IsLetterOrDigit(iter)) == true;
+
+                    if (charSessions.Count > 0 && validName) {
+                        a = $":green_square: `{accountPrefix}` - {account.Player}\n";
+                    } else if (charSessions.Count > 0 && validName == false) {
+                        a = $":yellow_square: `{accountPrefix}` - `{account.Player}` (**invalid name!**)\n";
+                    } else {
+                        a = $":red_square: `{accountPrefix}` - marked as used, but no sessions\n";
+                        error = true;
+                    }
+                }
+
+                s += a;
+
+                _Logger.LogDebug($"account {accountPrefix} has {charSessions.Count} sesions");
+            }
+
+            DiscordWebhookBuilder hook = new();
+            hook.AddComponents(LookupButtonCommands.PRINT_EMBED());
+
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"account check";
+            builder.Description = s;
+            builder.Url = $"https://docs.google.com/spreadsheets/d/{metadata.AccountSheetId}";
+            if (error == true) {
+                builder.Color = DiscordColor.Red;
+            } else {
+                builder.Color = DiscordColor.Green;
+            }
+
+            hook.AddEmbed(builder);
+            await ctx.EditResponseAsync(hook);
         }
 
     }

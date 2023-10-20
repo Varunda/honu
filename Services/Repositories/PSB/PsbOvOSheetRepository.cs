@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -198,6 +199,98 @@ namespace watchtower.Services.Repositories.PSB {
             }, gRes.Id).ExecuteAsync();
 
             return gRes.Id;
+        }
+
+        public async Task<PsbOvOAccountSheet?> GetByID(string fileID) {
+
+            // https://developers.google.com/sheets/api/guides/concepts#cell
+            SpreadsheetsResource.ValuesResource.GetRequest sheetR = _GRepository.GetSheetService().Spreadsheets.Values.Get(fileID, "Sheet1!A1:D");
+            Google.Apis.Sheets.v4.Data.ValueRange res = await sheetR.ExecuteAsync();
+            _Logger.LogDebug($"Loaded {res.Values.Count} rows from {fileID}");
+
+            PsbOvOAccountSheet sheet = new();
+            sheet.FileID = fileID;
+
+            IList<IList<object>> values = res.Values;
+
+            int rowIndex = 0;
+
+            DateTimeStyles style = DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowTrailingWhite 
+                | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal;
+
+            DateTime day = DateTime.UtcNow;
+            DateTime time;
+
+            foreach (IList<object> row in values) {
+                if (rowIndex == 0) {
+                    if (row.Count < 2) {
+                        throw new Exception($"expected 2 columns in row 0 (emails), had {row.Count} instead");
+                    }
+
+                    string header = row.ElementAt(0).ToString()!;
+                    string value = row.ElementAt(1).ToString()!;
+
+                    sheet.Emails = new List<string>(value.Split(","));
+                } else if (rowIndex == 1) {
+                    if (row.Count < 2) {
+                        throw new Exception($"expected 2 columns in row 1 (day), had {row.Count} instead");
+                    }
+
+                    string value = row.ElementAt(1).ToString()!;
+                    if (DateTime.TryParseExact(value, "yyyy-MM-dd", null, style, out day) == false) {
+                        throw new FormatException($"failed to parse '{value}' to a valid DateTime");
+                    }
+                    day = DateTime.SpecifyKind(day, DateTimeKind.Utc);
+                } else if (rowIndex == 2) {
+                    if (row.Count < 2) {
+                        throw new Exception($"expected 2 columns in row 2 (time), had {row.Count} instead");
+                    }
+
+                    string value = row.ElementAt(1).ToString()!;
+                    if (DateTime.TryParseExact(value, "HH:mm", null, style, out time) == false) {
+                        throw new FormatException($"failed to parse '{value}' to a valid DateTime");
+                    }
+
+                    time = DateTime.SpecifyKind(time, DateTimeKind.Utc);
+
+                    sheet.When = day + time.TimeOfDay;
+                    sheet.When = DateTime.SpecifyKind(sheet.When, DateTimeKind.Utc);
+
+                } else if (rowIndex == 3) {
+                    if (row.Count < 2) {
+                        throw new Exception($"expected 2 columns in row 3 (status), had {row.Count} instead");
+                    }
+
+                    sheet.State = row.ElementAt(1).ToString()!;
+                } else if (rowIndex == 4) {
+                    if (row.Count < 2) {
+                        throw new Exception($"expected 2 columns in row 4 (type), had {row.Count} instead");
+                    }
+
+                    sheet.Type = row.ElementAt(1).ToString()!;
+                } else if (rowIndex == 5) {
+                    // header
+
+                } else if (rowIndex >= 6) {
+                    if (row.Count < 3) {
+                        throw new Exception($"expected >=3 columns in row {rowIndex} (usage), had {row.Count} instead");
+                    }
+
+                    PsbOvOAccountSheetUsage usage = new();
+                    usage.AccountNumber = row.ElementAt(0).ToString()!;
+                    usage.Username = row.ElementAt(1).ToString()!;
+
+                    if (row.Count >= 4) {
+                        usage.Player = row.ElementAt(3).ToString()!;
+                    }
+
+                    sheet.Accounts.Add(usage);
+                }
+
+                rowIndex += 1;
+            }
+
+            return sheet;
         }
 
     }

@@ -40,13 +40,13 @@ namespace watchtower.Services.Census {
             query.Where("character_id").Equals(charID);
 
             JsonElement? token = await query.GetAsync();
-            if (token == null) {
+            if (token == null || token.Value.ValueKind == JsonValueKind.Undefined) {
                 return new List<CharacterFriend>();
             }
 
             JsonElement? friendToken = token.Value.GetChild("friend_list");
-            if (friendToken == null) {
-                throw new FormatException($"Failed to get token 'friend_list' for {charID}");
+            if (friendToken == null || friendToken.Value.ValueKind == JsonValueKind.Undefined) {
+                throw new FormatException($"Failed to get token 'friend_list' for {charID} from {token}");
             }
 
             List<CharacterFriend> res = new List<CharacterFriend>();

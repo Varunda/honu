@@ -9,11 +9,11 @@ namespace watchtower.Code.ExtensionMethods {
         }
 
         public static string GetDiscordFullTimestamp(this DateTime when) {
-            return $"<t:{new DateTimeOffset(when).ToUnixTimeSeconds()}:f>";
+            return GetDiscordTimestamp(when, "f");
         }
 
         public static string GetDiscordRelativeTimestamp(this DateTime when) {
-            return $"<t:{new DateTimeOffset(when).ToUnixTimeSeconds()}:R>";
+            return GetDiscordTimestamp(when, "R");
         }
 
     }
