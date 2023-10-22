@@ -8,7 +8,7 @@
                     Total: {{data.totalDisplay}}
                 </span>
                 <span v-else>
-                    Total: {{data.total}}
+                    Total: {{data.total | locale(0)}}
                 </span>
             </h5>
 

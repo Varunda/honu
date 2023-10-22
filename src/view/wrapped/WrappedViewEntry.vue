@@ -292,6 +292,7 @@
 
     import TimeUtils from "util/Time";
     import LocaleUtil from "util/Locale";
+    import CharacterUtils from "util/Character";
 
     // components
     import Busy from "components/Busy.vue";
@@ -308,7 +309,8 @@
     import WrappedViewExp from "./components/WrappedViewExp.vue";
     import WrappedViewFacility from "./components/WrappedViewFacility.vue";
     import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
-import CharacterUtils from "../../util/Character";
+
+    const WRAPPED: WrappedEntry = new WrappedEntry();
 
     export const WrappedViewEntry = Vue.extend({
         props: {
@@ -358,7 +360,7 @@ import CharacterUtils from "../../util/Character";
 
         created: function(): void {
             this.connect();
-            this.wrapped.id = this.WrappedId;
+            WRAPPED.id = this.WrappedId;
         },
 
         methods: {
@@ -417,13 +419,15 @@ import CharacterUtils from "../../util/Character";
 
                     if (this.showFull == false) {
                         this.passTwoSimpleMode();
+                    } else {
+                        this.wrapped = WRAPPED;
                     }
                 });
             },
 
             onSendWrappedEntry: function(entry: WrappedEntry): void {
                 console.log(`wrapped parameters: ${JSON.stringify(entry)}`);
-                this.wrapped.inputCharacterIDs = entry.inputCharacterIDs;
+                WRAPPED.inputCharacterIDs = entry.inputCharacterIDs;
 
                 if (entry.status == 1) { // pending
                     console.log(`pending, hopefully get queue status`);
@@ -443,70 +447,69 @@ import CharacterUtils from "../../util/Character";
 
                 if (status == "done") {
                     console.log(`loaded ${this.WrappedId}`);
-                    this.wrapped.extra = WrappedExtraData.build(this.wrapped);
+                    WRAPPED.extra = WrappedExtraData.build(WRAPPED);
                 }
 
                 this.status = status;
             },
 
             onSendSessions: function(sessions: Session[]): void {
-                if (this.showFull == true) {
-                    for (const s of sessions) {
-                        const session: Session = SessionApi.parse(s);
-                        this.wrapped.sessions.push(session);
-                    }
-                } else {
-                    const playTime: Map<string, number> = new Map();
-
-                    for (const s of sessions) {
-                        const session: Session = SessionApi.parse(s);
-                        if (session.end == null) {
-                            continue;
-                        }
-
-                        const id: string = session.characterID;
-
-                        const duration: number = (session.end.getTime() - session.start.getTime()) / 1000;
-
-                        playTime.set(id, (playTime.get(id) ?? 0) + duration);
-                        this.simple.playtime.total += duration;
-                    }
-
-                    const mostPlayed = Array.from(playTime.entries()).sort((a, b) => {
-                        return b[1] - a[1];
-                    }).slice(0, 5);
-
-                    this.simple.playtime.totalDisplay = TimeUtils.duration(this.simple.playtime.total);
-                    this.simple.playtime.data = mostPlayed.map((iter) => {
-                        const charID: string = iter[0];
-                        const playtime: number = iter[1];
-
-                        const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
-                        datum.id = charID;
-                        datum.display = charID;
-                        datum.link = `/c/${charID}`;
-                        datum.value = TimeUtils.duration(playtime);
-
-                        return datum;
-                    });
+                for (const s of sessions) {
+                    const session: Session = SessionApi.parse(s);
+                    WRAPPED.sessions.push(session);
                 }
+
+                /*
+                const playTime: Map<string, number> = new Map();
+
+                for (const s of sessions) {
+                    const session: Session = SessionApi.parse(s);
+                    if (session.end == null) {
+                        continue;
+                    }
+
+                    const id: string = session.characterID;
+
+                    const duration: number = (session.end.getTime() - session.start.getTime()) / 1000;
+
+                    playTime.set(id, (playTime.get(id) ?? 0) + duration);
+                    this.simple.playtime.total += duration;
+                }
+
+                const mostPlayed = Array.from(playTime.entries()).sort((a, b) => {
+                    return b[1] - a[1];
+                }).slice(0, 5);
+
+                this.simple.playtime.totalDisplay = TimeUtils.duration(this.simple.playtime.total);
+                this.simple.playtime.data = mostPlayed.map((iter) => {
+                    const charID: string = iter[0];
+                    const playtime: number = iter[1];
+
+                    const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
+                    datum.id = charID;
+                    datum.display = charID;
+                    datum.link = `/c/${charID}`;
+                    datum.value = TimeUtils.duration(playtime);
+
+                    return datum;
+                });
+                */
 
                 this.steps.sessions = true;
             },
 
             onSendKills: function(events: KillEvent[]): void {
-                if (this.showFull == true) {
-                    for (const ev of events) {
-                        const event: KillEvent = KillStatApi.parseKillEvent(ev);
+                for (const ev of events) {
+                    const event: KillEvent = KillStatApi.parseKillEvent(ev);
 
-                        if (event.attackerTeamID == event.killedTeamID) {
-                            this.wrapped.teamkills.push(event);
-                        } else {
-                            this.wrapped.kills.push(event);
-                        }
+                    if (event.attackerTeamID == event.killedTeamID) {
+                        WRAPPED.teamkills.push(event);
+                    } else {
+                        WRAPPED.kills.push(event);
                     }
-                } else {
+                }
 
+                /*
                     const kills: Map<string, number> = new Map();
 
                     for (const ev of events) {
@@ -540,8 +543,7 @@ import CharacterUtils from "../../util/Character";
 
                         return datum;
                     });
-
-                }
+                */
 
                 this.steps.kills = true;
             },
@@ -551,9 +553,9 @@ import CharacterUtils from "../../util/Character";
                     const event: KillEvent = KillStatApi.parseKillEvent(ev);
 
                     if (event.attackerTeamID == event.killedTeamID) {
-                        this.wrapped.teamdeaths.push(event);
+                        WRAPPED.teamdeaths.push(event);
                     } else {
-                        this.wrapped.deaths.push(event);
+                        WRAPPED.deaths.push(event);
                     }
                 }
                 this.steps.deaths = true;
@@ -562,7 +564,7 @@ import CharacterUtils from "../../util/Character";
             onSendExp: function(events: ExpEvent[]): void {
                 for (const ev of events) {
                     const event: ExpEvent = ExpStatApi.parseExpEvent(ev);
-                    this.wrapped.exp.push(event);
+                    WRAPPED.exp.push(event);
                 }
                 this.steps.exp = true;
             },
@@ -570,7 +572,7 @@ import CharacterUtils from "../../util/Character";
             onSendAchievementEarned: function(events: AchievementEarned[]): void {
                 for (const ev of events) {
                     const event: AchievementEarned = AchievementEarnedApi.parse(ev);
-                    this.wrapped.achievementEarned.push(event);
+                    WRAPPED.achievementEarned.push(event);
                 }
                 this.steps.achievementEarned = true;
             },
@@ -578,14 +580,14 @@ import CharacterUtils from "../../util/Character";
             onSendFacilityControl: function(events: FacilityControlEvent[]): void {
                 for (const ev of events) {
                     const event: FacilityControlEvent = FacilityControlEventApi.parse(ev);
-                    this.wrapped.controlEvents.push(event);
+                    WRAPPED.controlEvents.push(event);
                 }
             },
 
             onSendItemAdded: function(events: ItemAddedEvent[]): void {
                 for (const ev of events) {
                     const event: ItemAddedEvent = ItemAddedEventApi.parse(ev);
-                    this.wrapped.itemAdded.push(event);
+                    WRAPPED.itemAdded.push(event);
                 }
                 this.steps.itemAdded = true;
             },
@@ -594,10 +596,10 @@ import CharacterUtils from "../../util/Character";
                 for (const ev of events) {
                     const event: VehicleDestroyEvent = VehicleDestroyEventApi.parse(ev);
 
-                    if (this.wrapped.inputCharacterIDs.indexOf(ev.attackerCharacterID) > -1) {
-                        this.wrapped.vehicleKill.push(event);
-                    } else if (this.wrapped.inputCharacterIDs.indexOf(ev.killedCharacterID) > -1) {
-                        this.wrapped.vehicleDeath.push(event);
+                    if (WRAPPED.inputCharacterIDs.indexOf(ev.attackerCharacterID) > -1) {
+                        WRAPPED.vehicleKill.push(event);
+                    } else if (WRAPPED.inputCharacterIDs.indexOf(ev.killedCharacterID) > -1) {
+                        WRAPPED.vehicleDeath.push(event);
                     }
 
                 }
@@ -607,54 +609,54 @@ import CharacterUtils from "../../util/Character";
             onUpdateCharacters: function(chars: PsCharacter[]): void {
                 for (const c of chars) {
                     const character: PsCharacter = CharacterApi.parse(c);
-                    this.wrapped.characters.set(c.id, character);
+                    WRAPPED.characters.set(c.id, character);
                 }
                 this.steps.characters = true;
             },
 
             onUpdateOutfits: function(outfits: PsOutfit[]): void {
                 for (const o of outfits) {
-                    this.wrapped.outfits.set(o.id, o);
+                    WRAPPED.outfits.set(o.id, o);
                 }
                 this.steps.outfits = true;
             },
 
             onUpdateItems: function(items: PsItem[]): void {
                 for (const item of items) {
-                    this.wrapped.items.set(item.id, item);
+                    WRAPPED.items.set(item.id, item);
                 }
                 this.steps.items = true;
             },
 
             onUpdateAchievements: function(achs: Achievement[]): void {
                 for (const ach of achs) {
-                    this.wrapped.achivements.set(ach.id, ach);
+                    WRAPPED.achivements.set(ach.id, ach);
                 }
             },
 
             onUpdateExpTypes: function(expTypes: ExperienceType[]): void {
                 for (const expType of expTypes) {
-                    this.wrapped.expTypes.set(expType.id, expType);
+                    WRAPPED.expTypes.set(expType.id, expType);
                 }
             },
 
             onUpdateFacilities: function(facs: PsFacility[]): void {
                 for (const f of facs) {
-                    this.wrapped.facilities.set(f.facilityID, f);
+                    WRAPPED.facilities.set(f.facilityID, f);
                 }
             },
 
             onUpdateFireGroupXrefs: function(refs: FireGroupToFireMode[]): void {
                 for (const entry of refs) {
-                    if (this.wrapped.fireModeXrefs.has(entry.fireModeID) == false) {
-                        this.wrapped.fireModeXrefs.set(entry.fireModeID, []);
+                    if (WRAPPED.fireModeXrefs.has(entry.fireModeID) == false) {
+                        WRAPPED.fireModeXrefs.set(entry.fireModeID, []);
                     }
 
                     // force is safe, created above
-                    this.wrapped.fireModeXrefs.get(entry.fireModeID)!.push(entry);
+                    WRAPPED.fireModeXrefs.get(entry.fireModeID)!.push(entry);
                 }
 
-                this.wrapped.fireModeXrefs.forEach((fireGroups: FireGroupToFireMode[], fireModeID: number) => {
+                WRAPPED.fireModeXrefs.forEach((fireGroups: FireGroupToFireMode[], fireModeID: number) => {
                     if (fireGroups.length == 0) {
                         return;
                     }
@@ -672,7 +674,7 @@ import CharacterUtils from "../../util/Character";
 
             onUpdateVehicles: function(vehs: PsVehicle[]): void {
                 for (const v of vehs) {
-                    this.wrapped.vehicles.set(v.id, v);
+                    WRAPPED.vehicles.set(v.id, v);
                 }
             },
 
@@ -753,7 +755,7 @@ import CharacterUtils from "../../util/Character";
 
                 }
 
-                return this.wrapped;
+                return WRAPPED;
             }
         },
 
