@@ -5,4 +5,11 @@ export default class CharacterUtils {
         return `${(character.outfitTag != null ? `[${character.outfitTag}] ` : ``)} ${character.name}`;
     }
 
+    public static display(id: string, character: { name: string, outfitTag: string | null } | null | undefined): string {
+        if (character == null || character == undefined) {
+            return `<missing ${id}>`;
+        }
+        return `${(character.outfitTag != null ? `[${character.outfitTag}] ` : ``)} ${character.name}`;
+    }
+
 }

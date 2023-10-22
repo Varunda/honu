@@ -78,6 +78,10 @@ export class CharacterApi extends ApiWrapper<PsCharacter> {
 	}
 
 	public static async getByIDs(charIDs: string[]): Promise<Loading<PsCharacter[]>> {
+		if (charIDs.length == 0) {
+			return Loadable.loaded([]);
+        }
+
 		const chars: PsCharacter[] = [];
 
 		for (let i = 0; i < charIDs.length; i += 200) {

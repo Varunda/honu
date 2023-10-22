@@ -105,7 +105,6 @@ namespace watchtower.Code.Hubs.Implementations {
                 }
 
                 await _WrappedProcessor.SendEventData(entry);
-
                 await _WrappedProcessor.SendStaticData(entry);
 
                 await Clients.Group($"wrapped-{entry.ID}").UpdateStatus(WrappedStatus.DONE);

@@ -139,7 +139,7 @@
         <h6>These characters will be included in the wrap up</h6>
         <div class="list-group mb-2">
             <div class="list-group-item" v-for="entry in inputCharacters">
-                {{entry.name}}
+                {{entry | characterName}}
             </div>
         </div>
 

@@ -188,8 +188,15 @@
                 </button>
             </div>
 
-            <div v-if="showFull == false">
-                <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
+            <div v-if="showFull == false" class="d-flex" style="gap: 1rem;">
+
+                <wrapped-simple-card title="Playtime" :data="simple.playtime" header-right="Playtime"></wrapped-simple-card>
+
+                <wrapped-simple-card title="Kills" :data="simple.kills" header-right="Kills"></wrapped-simple-card>
+
+                <!--
+                    <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
+                -->
             </div>
 
             <div v-else-if="showFull == true">
@@ -264,8 +271,10 @@
     import { Loading, Loadable } from "Loading";
 
     // models
-    import { WrappedApi, WrappedEntry } from "api/WrappedApi";
     import { WrappedExtraData, WrappedFilters } from "./common";
+    import { WrappedSimpleData, WrappedSimpleEntry } from "./simple";
+
+    import { WrappedApi, WrappedEntry } from "api/WrappedApi";
     import { KillEvent, KillStatApi } from "api/KillStatApi";
     import { ExperienceType, ExpEvent, ExpStatApi } from "api/ExpStatApi";
     import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
@@ -281,10 +290,14 @@
     import { PsOutfit } from "api/OutfitApi";
     import { PsVehicle } from "api/VehicleApi";
 
+    import TimeUtils from "util/Time";
+    import LocaleUtil from "util/Locale";
+
     // components
     import Busy from "components/Busy.vue";
 
     // wrapped specific components
+    import WrappedSimpleCard from "./WrappedSimpleCard.vue";
     import WrappedViewHeader from "./components/WrappedViewHeader.vue";
     import WrappedViewGeneral from "./components/WrappedViewGeneral.vue";
     import WrappedViewCharacterInteractions from "./components/WrappedViewCharacterInteractions.vue";
@@ -295,6 +308,7 @@
     import WrappedViewExp from "./components/WrappedViewExp.vue";
     import WrappedViewFacility from "./components/WrappedViewFacility.vue";
     import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
+import CharacterUtils from "../../util/Character";
 
     export const WrappedViewEntry = Vue.extend({
         props: {
@@ -307,7 +321,7 @@
 
                 status: "" as string,
 
-                showFull: true as boolean,
+                showFull: false as boolean,
 
                 steps: {
                     kills: false as boolean,
@@ -323,6 +337,13 @@
                     items: false as boolean,
                     facilities: false as boolean,
                     expTypes: false as boolean,
+                },
+
+                simple: {
+                    playtime: new WrappedSimpleData("Playtime", "character") as WrappedSimpleData,
+                    kills: new WrappedSimpleData("Kills", "character") as WrappedSimpleData,
+
+                    all: [] as WrappedSimpleData[]
                 },
 
                 queue: {
@@ -393,6 +414,10 @@
 
                 this.connection.invoke("JoinGroup", this.WrappedId).then(() => {
                     console.log("JoinGroup done");
+
+                    if (this.showFull == false) {
+                        this.passTwoSimpleMode();
+                    }
                 });
             },
 
@@ -425,23 +450,99 @@
             },
 
             onSendSessions: function(sessions: Session[]): void {
-                for (const s of sessions) {
-                    const session: Session = SessionApi.parse(s);
-                    this.wrapped.sessions.push(session);
+                if (this.showFull == true) {
+                    for (const s of sessions) {
+                        const session: Session = SessionApi.parse(s);
+                        this.wrapped.sessions.push(session);
+                    }
+                } else {
+                    const playTime: Map<string, number> = new Map();
+
+                    for (const s of sessions) {
+                        const session: Session = SessionApi.parse(s);
+                        if (session.end == null) {
+                            continue;
+                        }
+
+                        const id: string = session.characterID;
+
+                        const duration: number = (session.end.getTime() - session.start.getTime()) / 1000;
+
+                        playTime.set(id, (playTime.get(id) ?? 0) + duration);
+                        this.simple.playtime.total += duration;
+                    }
+
+                    const mostPlayed = Array.from(playTime.entries()).sort((a, b) => {
+                        return b[1] - a[1];
+                    }).slice(0, 5);
+
+                    this.simple.playtime.totalDisplay = TimeUtils.duration(this.simple.playtime.total);
+                    this.simple.playtime.data = mostPlayed.map((iter) => {
+                        const charID: string = iter[0];
+                        const playtime: number = iter[1];
+
+                        const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
+                        datum.id = charID;
+                        datum.display = charID;
+                        datum.link = `/c/${charID}`;
+                        datum.value = TimeUtils.duration(playtime);
+
+                        return datum;
+                    });
                 }
+
                 this.steps.sessions = true;
             },
 
             onSendKills: function(events: KillEvent[]): void {
-                for (const ev of events) {
-                    const event: KillEvent = KillStatApi.parseKillEvent(ev);
+                if (this.showFull == true) {
+                    for (const ev of events) {
+                        const event: KillEvent = KillStatApi.parseKillEvent(ev);
 
-                    if (event.attackerTeamID == event.killedTeamID) {
-                        this.wrapped.teamkills.push(event);
-                    } else {
-                        this.wrapped.kills.push(event);
+                        if (event.attackerTeamID == event.killedTeamID) {
+                            this.wrapped.teamkills.push(event);
+                        } else {
+                            this.wrapped.kills.push(event);
+                        }
                     }
+                } else {
+
+                    const kills: Map<string, number> = new Map();
+
+                    for (const ev of events) {
+                        const event: KillEvent = KillStatApi.parseKillEvent(ev);
+
+                        if (event.attackerTeamID == event.killedTeamID) {
+
+                        } else {
+                            if (kills.has(event.killedCharacterID) == false) {
+                                kills.set(event.killedCharacterID, 0);
+                            }
+
+                            kills.set(event.killedCharacterID, (kills.get(event.killedCharacterID) ?? 0) + 1);
+                            this.simple.kills.total += 1;
+                        }
+                    }
+
+                    const most = Array.from(kills.entries()).sort((a, b) => {
+                        return b[1] - a[1];
+                    }).slice(0, 5);
+
+                    this.simple.kills.data = most.map((iter) => {
+                        const charID: string = iter[0];
+                        const kills: number = iter[1];
+
+                        const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
+                        datum.id = charID;
+                        datum.display = charID;
+                        datum.link = `/c/${charID}`;
+                        datum.value = LocaleUtil.locale(kills, 0);
+
+                        return datum;
+                    });
+
                 }
+
                 this.steps.kills = true;
             },
 
@@ -579,6 +680,63 @@
                 console.log(`got queue position: ${position} / ${total}`);
                 this.queue.position = position;
                 this.queue.total = total;
+            },
+
+            passTwoSimpleMode: async function(): Promise<void> {
+                console.log(`starting pass 2 for simple mode`);
+
+                const simpleEntries: WrappedSimpleData[] = [
+                    this.simple.playtime,
+                    this.simple.kills,
+                    ...this.simple.all
+                ];
+
+                console.log(`loading static data for ${simpleEntries.length} entries`);
+
+                const charIDs: Set<string> = new Set();
+
+                for (const simple of simpleEntries) {
+                    console.log(`${simple.name} => ${simple.type}`);
+                    if (simple.type == "character") {
+                        simple.data.map(iter => iter.id).forEach(iter => charIDs.add(iter));
+                    } else if (simple.type == "outfit") {
+
+                    } else if (simple.type == "item") {
+
+                    } else if (simple.type == "facility") {
+
+                    } else if (simple.type == "none") {
+                        continue;
+                    } else {
+                        throw `unchecked type ${simple.type}`;
+                    }
+                }
+
+                console.log(`loading data for ${charIDs.size} characters...`);
+                const characters: Loading<PsCharacter[]> = await CharacterApi.getByIDs(Array.from(charIDs));
+                if (characters.state != "loaded") {
+                    console.error(`failed to load characters in pass2`);
+                    return;
+                }
+
+                const outfitIDs: Set<string> = new Set(characters.data.filter(iter => iter.outfitID != null).map(iter => iter.outfitID!));
+                //const outfits: 
+
+                console.log(`loaded ${characters.data.length} characters`);
+
+                const dict: Map<string, PsCharacter> = new Map();
+                characters.data.forEach(iter => dict.set(iter.id, iter));
+
+                for (const simple of simpleEntries) {
+                    if (simple.type != "character") {
+                        continue;
+                    }
+
+                    for (const iter of simple.data) {
+                        iter.display = CharacterUtils.display(iter.id, dict.get(iter.id));
+                    }
+                }
+
             }
 
         },
@@ -601,6 +759,7 @@
 
         components: {
             Busy,
+            WrappedSimpleCard,
             WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons,
             WrappedViewVehicle, WrappedViewExp, WrappedViewFacility,
             WrappedViewHighlight
