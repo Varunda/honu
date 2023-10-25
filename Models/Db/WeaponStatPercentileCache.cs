@@ -69,5 +69,12 @@ namespace watchtower.Models.Db {
 
         public double Q100 { get; set; }
 
+        public override string ToString() {
+            return $"<{nameof(WeaponStatPercentileCache)}: [ItemID={ItemID}] [Timestamp={Timestamp:u}] [Loaded={Loaded}]"
+                + $" [Q0={Q0}] [Q5={Q5}] [Q10={Q10}] [Q15={Q15}] [Q20={Q20}] [Q25={Q25}] [Q30={Q30}] [Q35={Q35}] [Q40={Q40}] [Q45={Q45}]"
+                + $" [Q50={Q50}] [Q55={Q55}] [Q60={Q60}] [Q65={Q65}] [Q70={Q70}] [Q75={Q75}] [Q80={Q80}] [Q85={Q85}] [Q90={Q90}] [Q95={Q95}] [Q100={Q100}]>";
+        }
+
+
     }
 }

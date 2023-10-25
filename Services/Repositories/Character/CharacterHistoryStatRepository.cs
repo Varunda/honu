@@ -56,20 +56,33 @@ namespace watchtower.Services.Repositories {
                 }
 
                 if (getFromCensus == true) {
-                    //_Logger.LogTrace($"Getting history stats for {charID} from census");
-                    List<PsCharacterHistoryStat> census = await _Census.GetByCharacterID(charID);
+                    Task<List<PsCharacterHistoryStat>> censusStats = Task.Run(() =>  _Census.GetByCharacterID(charID));
+                    // if honu has history stats for the character from the db (but are possibly out of date),
+                    //      then use a quicker timeout to be more responsive
+                    TimeSpan timeout = stats.Count > 0 ? TimeSpan.FromSeconds(10) : TimeSpan.FromSeconds(60);
+                    bool cancelled = censusStats.Wait(timeout) == false;
+                    if (cancelled == false) {
+                        List<PsCharacterHistoryStat> census = censusStats.Result;
 
-                    if (census.Count > 0) {
-                        foreach (PsCharacterHistoryStat stat in census) {
-                            PsCharacterHistoryStat? db = stats.FirstOrDefault(iter => iter.Type == stat.Type);
+                        if (census.Count > 0) {
+                            foreach (PsCharacterHistoryStat stat in census) {
+                                PsCharacterHistoryStat? db = stats.FirstOrDefault(iter => iter.Type == stat.Type);
 
-                            if (db == null || stat.LastUpdated > db.LastUpdated) {
-                                //_Logger.LogTrace($"Stat for type {stat.Type} does not exist in DB, or is outdated ({db?.LastUpdated})");
-                                await _Db.Upsert(charID, stat.Type, stat);
+                                if (db == null || stat.LastUpdated > db.LastUpdated) {
+                                    //_Logger.LogTrace($"Stat for type {stat.Type} does not exist in DB, or is outdated ({db?.LastUpdated})");
+                                    await _Db.Upsert(charID, stat.Type, stat);
+                                }
                             }
-                        }
 
-                        stats = census;
+                            stats = census;
+                        }
+                    } else {
+                        // if honu has no DB stats, and failed the census call, throw an exception cause the repo failed to load them
+                        if (stats.Count == 0) {
+                            throw new Exception($"failed to load history stats for {charID}, DB had no stats, and Census timed out");
+                        } else {
+                            _Logger.LogDebug($"cancelled request for census character history stats due to timeout of {timeout}");
+                        }
                     }
                 }
 

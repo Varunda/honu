@@ -51,8 +51,27 @@ namespace watchtower.Services.Repositories {
                 }
 
                 if (getCensus == true) {
-                    stats = await _Census.GetByID(charID);
-                    await _Db.Set(charID, stats);
+                    Task<List<PsCharacterStat>> censusStats = Task.Run(() => _Census.GetByID(charID));
+                    // if honu has history stats for the character from the db (but are possibly out of date),
+                    //      then use a quicker timeout to be more responsive
+                    TimeSpan timeout = stats.Count > 0 ? TimeSpan.FromSeconds(10) : TimeSpan.FromSeconds(60);
+                    bool cancelled = censusStats.Wait(timeout) == false;
+                    if (cancelled == false) {
+                        List<PsCharacterStat> census = censusStats.Result;
+
+                        if (census.Count > 0) {
+                            await _Db.Set(charID, census);
+                        }
+
+                        stats = census;
+                    } else {
+                        // if honu has no DB stats, and failed the census call, throw an exception cause the repo failed to load them
+                        if (stats.Count == 0) {
+                            throw new Exception($"failed to load character stats for {charID}, DB had no stats, and Census timed out");
+                        } else {
+                            _Logger.LogDebug($"cancelled request for census stats due to timeout of {timeout}");
+                        }
+                    }
                 }
 
                 _Cache.Set(cacheKey, stats, new MemoryCacheEntryOptions() {

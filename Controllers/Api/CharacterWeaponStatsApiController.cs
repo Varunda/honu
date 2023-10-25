@@ -104,6 +104,9 @@ namespace watchtower.Controllers.Api {
         }
 
         private async Task<CharacterWeaponStatEntry> _GetPercentileData(CharacterWeaponStatEntry entry) {
+
+            bool debug = entry.CharacterID == "5428026242699274033" && entry.ItemID == "6006064";
+
             bool needsRegen = false;
 
             WeaponStatPercentileCache? kdCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KD);
@@ -112,7 +115,7 @@ namespace watchtower.Controllers.Api {
                     needsRegen = true;
                 }
 
-                entry.KillDeathRatioPercentile = _InterpolatePercentile(kdCache, entry.Stat.KillDeathRatio);
+                entry.KillDeathRatioPercentile = _InterpolatePercentile(kdCache, entry.Stat.KillDeathRatio, debug);
             } else {
                 needsRegen = true;
             }
@@ -169,7 +172,12 @@ namespace watchtower.Controllers.Api {
             return entry;
         }
 
-        private double _InterpolatePercentile(WeaponStatPercentileCache percentiles, double value) {
+        private double _InterpolatePercentile(WeaponStatPercentileCache percentiles, double value, bool debug = false) {
+
+            if (debug == true) {
+                _Logger.LogDebug($"Finding percentile of {value} within {percentiles}");
+            }
+
             if (value >= percentiles.Q100) {
                 return 100.0d;
             }
@@ -194,6 +202,9 @@ namespace watchtower.Controllers.Api {
                 if (value < iter) {
                     min = values[i - 1];
                     max = values[i];
+                    if (debug == true) {
+                        _Logger.LogDebug($"found {value} between [Min={min}] and [Max={max}] [i={i}] [iter={iter}]");
+                    }
                     break;
                 }
             }
@@ -203,7 +214,9 @@ namespace watchtower.Controllers.Api {
             double offset = range - value + min;
             double percent = 1d - (offset / range);
 
-            //_Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {(i - 1) * 5}% - {i * 5}%, {percent} {5d * percent} ANS = {((i - 1) * 5d) + (5d * percent)}%");
+            if (debug == true) {
+                _Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {(i - 1) * 5}% - {i * 5}%, {percent} {5d * percent} ANS = {((i - 1) * 5d) + (5d * percent)}%");
+            }
 
             // Divide by 5d cause each chunk is 5%
             double percentile = ((i - 1) * 5d) + (5d * percent);
