@@ -45,6 +45,10 @@ namespace watchtower.Services.Hosted {
                     WeaponStatPercentileCache? kd = await _PercentileDb.GenerateKd(itemID);
                     if (kd != null) {
                         kd.TypeID = PercentileCacheType.KD;
+                        if (kd.ItemID == "6006064") {
+                            _Logger.LogDebug($"percentile stats for {kd.ItemID}: {kd}");
+                        }
+
                         await _PercentileDb.Upsert(itemID, kd);
                     }
                     long kdMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
