@@ -26,7 +26,10 @@ namespace watchtower.Services {
         public string? GetUserAgent(HttpContext context) {
             StringValues userAgent = context.Request.Headers["User-Agent"];
 
-            foreach (string v in userAgent) {
+            foreach (string? v in userAgent) {
+                if (v == null) {
+                    continue;
+                }
                 return v;
             }
 

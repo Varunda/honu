@@ -11,9 +11,9 @@ namespace watchtower.Services.Queues {
     /// <summary>
     /// Queue of weapon percentile stats to generate
     /// </summary>
-    public class WeaponPercentileCacheQueue : BasePendingQueue<string, string> {
+    public class WeaponPercentileCacheOldQueue : BasePendingQueue<string, string> {
 
-        public WeaponPercentileCacheQueue(ILoggerFactory factory) : base(factory) { }
+        public WeaponPercentileCacheOldQueue(ILoggerFactory factory) : base(factory) { }
 
         internal override string GetEntryID(string entry) {
             return entry;

@@ -101,7 +101,7 @@ namespace watchtower.Services.Hosted {
                     // Only include stats from people who have auaraxed the gun
                     List<WeaponStatEntry> filtered = stats.Where(iter => iter.Kills > 1159).ToList();
                     if (filtered.Count < 100) { // But if there's not enough, expand the sample
-                        filtered = stats.Where(iter => iter.Kills > 50).ToList();
+                        filtered = stats.Where(iter => iter.Kills > 100).ToList();
                     }
                     if (filtered.Count < 100) { // if less than 100 users have 50 kills, just include everyone
                         filtered = stats;

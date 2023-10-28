@@ -25,7 +25,6 @@ namespace watchtower.Code.Commands {
         private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
-        private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly CharacterWeaponStatDbStore _StatDb;
 
         public WeaponStatsCommand(IServiceProvider services) {
@@ -35,7 +34,6 @@ namespace watchtower.Code.Commands {
             _CharacterRepository = services.GetRequiredService<CharacterRepository>();
             _ItemRepository = services.GetRequiredService<ItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
-            _PercentileQueue = services.GetRequiredService<WeaponPercentileCacheQueue>();
             _StatDb = services.GetRequiredService<CharacterWeaponStatDbStore>();
         }
 
@@ -53,7 +51,6 @@ namespace watchtower.Code.Commands {
                     continue;
                 }
                 PsItem? weapon = await _ItemRepository.GetByID(int.Parse(entry.WeaponID));
-                _PercentileQueue.Queue(entry.WeaponID);
 
                 _Logger.LogInformation($"{entry.WeaponID}/{weapon?.Name}: KD = {entry.Kills}/{entry.Deaths}:{entry.KillDeathRatio} KPM = {entry.Kills}/{entry.SecondsWith}:{entry.KillsPerMinute} S{entry.Shots} H{entry.ShotsHit} HS{entry.Headshots}");
             }

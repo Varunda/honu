@@ -623,10 +623,10 @@ namespace watchtower.Realtime {
             p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        private async Task _ProcessPlayerLogout(JToken payload) {
+        private Task _ProcessPlayerLogout(JToken payload) {
             string? charID = payload.Value<string?>("character_id");
             if (charID == null) {
-                return;
+                return Task.CompletedTask;
             }
 
             //using Activity? logoutRoot = HonuActivitySource.Root.StartActivity("PlayerLogout");
@@ -686,6 +686,8 @@ namespace watchtower.Realtime {
                     p.TeamID = Faction.NS;
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task _ProcessMetagameEvent(JToken payload) {

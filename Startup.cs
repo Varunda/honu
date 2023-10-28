@@ -239,7 +239,6 @@ namespace watchtower {
                 services.AddHostedService<OfflineDataMockService>();
             } else {
                 services.AddHostedService<HostedBackgroundCharacterWeaponStatQueue>();
-                services.AddHostedService<HostedBackgroundWeaponPercentileCacheQueue>();
                 services.AddHostedService<HostedBackgroundLogoutBuffer>();
                 services.AddHostedService<HostedBackgroundCharacterPriorityUpdateQueue>();
                 services.AddHostedService<HostedRealtimeMapStateCollector>();

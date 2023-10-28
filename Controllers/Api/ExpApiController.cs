@@ -51,7 +51,7 @@ namespace watchtower.Controllers {
 
         /// <summary>
         ///     Get the experience events a PC player got during a time period.
-        ///     Please use <see cref="GetByCharacterIDAndRange2(string, DateTime, DateTime)"/> instead
+        ///     Please use <see cref="GetByCharacterIDAndRange2(string, DateTime, DateTime, bool?, bool?, List{int}?)"/>
         /// </summary>
         /// <param name="charID">ID of the character to get the events of</param>
         /// <param name="start">When the time period to load started</param>

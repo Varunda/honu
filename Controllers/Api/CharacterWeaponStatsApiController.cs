@@ -32,12 +32,10 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterWeaponStatDbStore _StatDb;
         private readonly VehicleRepository _VehicleRepository;
 
-        private readonly WeaponPercentileCacheQueue _PercentileQueue;
-
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
             CharacterWeaponStatRepository charWeaponRepo, CharacterRepository charRepo,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
-            WeaponPercentileCacheQueue percentQueue, CharacterWeaponStatDbStore statDb,
+            CharacterWeaponStatDbStore statDb,
             VehicleRepository vehicleRepository) {
 
             _Logger = logger;
@@ -48,7 +46,6 @@ namespace watchtower.Controllers.Api {
             _PercentileDb = percentDb;
             _StatDb = statDb;
 
-            _PercentileQueue = percentQueue ?? throw new ArgumentNullException(nameof(percentQueue));
             _VehicleRepository = vehicleRepository;
         }
 
@@ -105,79 +102,35 @@ namespace watchtower.Controllers.Api {
 
         private async Task<CharacterWeaponStatEntry> _GetPercentileData(CharacterWeaponStatEntry entry) {
 
-            bool debug = entry.CharacterID == "5428026242699274033" && entry.ItemID == "6006064";
-
-            bool needsRegen = false;
-
             WeaponStatPercentileCache? kdCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KD);
             if (kdCache != null) {
-                if (needsRegen == false && DateTime.UtcNow - kdCache.Timestamp > TimeSpan.FromDays(1)) {
-                    needsRegen = true;
-                }
-
-                entry.KillDeathRatioPercentile = _InterpolatePercentile(kdCache, entry.Stat.KillDeathRatio, debug);
-            } else {
-                needsRegen = true;
+                entry.KillDeathRatioPercentile = _InterpolatePercentile(kdCache, entry.Stat.KillDeathRatio);
             }
 
             WeaponStatPercentileCache? kpmCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.KPM);
             if (kpmCache != null) {
-                if (needsRegen == false && DateTime.UtcNow - kpmCache.Timestamp > TimeSpan.FromDays(1)) {
-                    needsRegen = true;
-                }
-
                 entry.KillsPerMinutePercentile = _InterpolatePercentile(kpmCache, entry.Stat.KillsPerMinute);
-            } else {
-                needsRegen = true;
             }
 
             WeaponStatPercentileCache? accCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.ACC);
             if (accCache != null) {
-                if (needsRegen == false && DateTime.UtcNow - accCache.Timestamp > TimeSpan.FromDays(1)) {
-                    needsRegen = true;
-                }
-
                 entry.AccuracyPercentile = _InterpolatePercentile(accCache, entry.Stat.Accuracy);
-            } else {
-                needsRegen = true;
             }
 
             WeaponStatPercentileCache? hsrCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.HSR);
             if (hsrCache != null) {
-                if (needsRegen == false && DateTime.UtcNow - hsrCache.Timestamp > TimeSpan.FromDays(1)) {
-                    needsRegen = true;
-                }
-
                 entry.HeadshotRatioPercentile = _InterpolatePercentile(hsrCache, entry.Stat.HeadshotRatio);
-            } else {
-                needsRegen = true;
             }
 
             WeaponStatPercentileCache? vkpmCache = await _PercentileDb.GetByItemID(entry.ItemID, PercentileCacheType.VKPM);
             if (vkpmCache != null) {
-                if (needsRegen == false && DateTime.UtcNow - vkpmCache.Timestamp > TimeSpan.FromDays(1)) {
-                    needsRegen = true;
-                }
-
                 entry.VehicleKillsPerMinutePercentile = _InterpolatePercentile(vkpmCache, entry.Stat.VehicleKillsPerMinute);
-            } else {
-                needsRegen = true;
-            }
-
-            if (needsRegen == true) {
-                _Logger.LogDebug($"Putting entry for weapon percentile update [ItemID={entry.ItemID}]");
-                _PercentileQueue.Queue(entry.ItemID);
             }
 
             return entry;
         }
 
-        private double _InterpolatePercentile(WeaponStatPercentileCache percentiles, double value, bool debug = false) {
-
-            if (debug == true) {
-                _Logger.LogDebug($"Finding percentile of {value} within {percentiles}");
-            }
-
+        private double _InterpolatePercentile(WeaponStatPercentileCache percentiles, double value) {
             if (value >= percentiles.Q100) {
                 return 100.0d;
             }
@@ -202,9 +155,6 @@ namespace watchtower.Controllers.Api {
                 if (value < iter) {
                     min = values[i - 1];
                     max = values[i];
-                    if (debug == true) {
-                        _Logger.LogDebug($"found {value} between [Min={min}] and [Max={max}] [i={i}] [iter={iter}]");
-                    }
                     break;
                 }
             }
@@ -214,9 +164,7 @@ namespace watchtower.Controllers.Api {
             double offset = range - value + min;
             double percent = 1d - (offset / range);
 
-            if (debug == true) {
-                _Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {(i - 1) * 5}% - {i * 5}%, {percent} {5d * percent} ANS = {((i - 1) * 5d) + (5d * percent)}%");
-            }
+            //_Logger.LogDebug($"{percentiles.ItemID} MIN - MAX = {min} - {max} = {value} {(i - 1) * 5}% - {i * 5}%, {percent} {5d * percent} ANS = {((i - 1) * 5d) + (5d * percent)}%");
 
             // Divide by 5d cause each chunk is 5%
             double percentile = ((i - 1) * 5d) + (5d * percent);

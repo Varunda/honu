@@ -14,7 +14,6 @@ namespace watchtower.Services.Queues {
             services.AddSingleton<SessionStarterQueue, SessionStarterQueue>();
             services.AddSingleton<DiscordMessageQueue, DiscordMessageQueue>();
             services.AddSingleton<CharacterUpdateQueue>();
-            services.AddSingleton<WeaponPercentileCacheQueue>();
             services.AddSingleton<LogoutUpdateBuffer>();
             services.AddSingleton<JaegerSignInOutQueue>();
             services.AddSingleton<WeaponUpdateQueue>();

@@ -42,13 +42,15 @@ namespace watchtower.Code {
 
     public class HonuLogger : ConsoleFormatter, IDisposable {
 
-        private readonly IDisposable _OptionsReloadToken;
+        private readonly IDisposable? _OptionsReloadToken;
         private HonuFormatterOptions _Options;
 
         public HonuLogger(IOptionsMonitor<HonuFormatterOptions> options)
             : base("HonuLogger") {
 
-            _OptionsReloadToken = options.OnChange((HonuFormatterOptions options) => _Options = options);
+            _OptionsReloadToken = options.OnChange((HonuFormatterOptions options) => {
+                _Options = options;
+            });
             _Options = options.CurrentValue;
         }
 
@@ -88,7 +90,7 @@ namespace watchtower.Code {
         }
 
         public void Dispose() {
-            _OptionsReloadToken.Dispose();
+            _OptionsReloadToken?.Dispose();
         }
 
         private static string GetLogLevelString(LogLevel logLevel) {

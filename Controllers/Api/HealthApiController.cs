@@ -30,7 +30,6 @@ namespace watchtower.Controllers.Api {
         private readonly SessionStarterQueue _SessionQueue;
         private readonly CharacterUpdateQueue _WeaponQueue;
         private readonly CensusRealtimeEventQueue _TaskQueue;
-        private readonly WeaponPercentileCacheQueue _PercentileQueue;
         private readonly DiscordMessageQueue _DiscordQueue;
         private readonly WeaponUpdateQueue _WeaponUpdateQueue;
         private readonly SessionEndQueue _SessionEndQueue;
@@ -41,7 +40,7 @@ namespace watchtower.Controllers.Api {
         public HealthApiController(ILogger<HealthApiController> logger, IMemoryCache cache,
             CensusRealtimeHealthRepository realtimeHealthRepository, CharacterCacheQueue characterCache,
             SessionStarterQueue sessionQueue, CharacterUpdateQueue weaponQueue,
-            CensusRealtimeEventQueue taskQueue, WeaponPercentileCacheQueue percentileQueue,
+            CensusRealtimeEventQueue taskQueue,
             DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
             RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue,
             SessionEndQueue sessionEndQueue, WrappedGenerationQueue wrappedQueue,
@@ -57,7 +56,6 @@ namespace watchtower.Controllers.Api {
             _SessionQueue = sessionQueue;
             _WeaponQueue = weaponQueue;
             _TaskQueue = taskQueue;
-            _PercentileQueue = percentileQueue;
             _DiscordQueue = discordQueue;
             _ReconnectDb = reconnectDb;
             _WeaponUpdateQueue = weaponUpdateQueue;
@@ -92,7 +90,6 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount session = _MakeCount("session_start_queue", _SessionQueue);
                 ServiceQueueCount weapon = _MakeCount("character_update_queue", _WeaponQueue);
                 ServiceQueueCount task = _MakeCount("task_queue", _TaskQueue);
-                ServiceQueueCount percentile = _MakeCount("weapon_percentile_cache_queue", _PercentileQueue);
                 ServiceQueueCount discord = _MakeCount("discord_message_queue", _DiscordQueue);
                 ServiceQueueCount weaponUpdate = _MakeCount("weapon_update_queue", _WeaponUpdateQueue);
                 ServiceQueueCount sessionEnd = _MakeCount("session_end_queue", _SessionEndQueue);
@@ -101,7 +98,7 @@ namespace watchtower.Controllers.Api {
                 ServiceQueueCount prio = _MakeCount("character_prio_queue", _PriorityCharacterQueue);
 
                 health.Queues = new List<ServiceQueueCount>() {
-                    task, session, c, weapon, prio, weaponUpdate, percentile,
+                    task, session, c, weapon, prio, weaponUpdate,
                     discord, sessionEnd, wrapped, facility
                 };
 
