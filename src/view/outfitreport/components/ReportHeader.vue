@@ -118,7 +118,7 @@
                     playerMetadata: Array.from(this.report.playerMetadata.values())
                 });
 
-                console.log(`made json`);
+                console.log(`made json: ${json.length} characters`);
 
                 const name: string = TimeUtils.format(this.parameters.periodStart, "YYYY-MM-DDThh:mm");
 
