@@ -118,15 +118,23 @@
                     playerMetadata: Array.from(this.report.playerMetadata.values())
                 });
 
+                console.log(`made json`);
+
                 const name: string = TimeUtils.format(this.parameters.periodStart, "YYYY-MM-DDThh:mm");
+
+                console.log(`name: ${name}`);
 
                 const anchor = document.createElement("a");
                 anchor.setAttribute("href", `data:text/json;charset=utf-8,${encodeURIComponent(json)}`);
                 anchor.setAttribute("download", `honu-report-${name}z.json`);
                 document.body.appendChild(anchor);
 
+                console.log(`made element`);
+
                 anchor.click();
                 anchor.remove();
+
+                console.log(`removed element`);
             },
         },
 
