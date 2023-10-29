@@ -228,7 +228,7 @@
                 </table>
             </collapsible>
 
-            <collapsible header-text="General" id="session-general">
+            <collapsible header-text="Summary" id="session-general">
                 <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
