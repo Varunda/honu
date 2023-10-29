@@ -55,7 +55,7 @@
                 <tbody>
                     <tr v-for="ev in full">
                         <td>
-                            {{ev.event.timestamp | moment}}
+                            {{ev.event.timestamp | moment("YYYY-MM-DD hh:mm:ss")}}
                         </td>
 
                         <td>
