@@ -93,11 +93,13 @@
                         </td>
 
                         <td>
-                            <span v-if="ev.type != null">
-                                {{ev.type.name}}
-                            </span>
-                            <span v-else class="text-danger">
-                                missing {{ev.event.experienceID}}
+                            <span :class="{ 'text-info': ev.event.experienceID == selectedExpTypeId }" @click="selectedExpTypeId = ev.event.experienceID">
+                                <span v-if="ev.type != null">
+                                    {{ev.type.name}}
+                                </span>
+                                <span v-else class="text-danger">
+                                    missing {{ev.event.experienceID}}
+                                </span>
                             </span>
                         </td>
 
@@ -173,6 +175,7 @@
                 showAllEvents: false as boolean,
 
                 selectedNpcId: null as number | null,
+                selectedExpTypeId: null as number | null,
 
                 typeCount: [] as Entry[],
                 typeAmount: [] as Entry[],
