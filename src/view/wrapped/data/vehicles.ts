@@ -80,7 +80,6 @@ export class WrappedVehicleData {
             }
 
             processed.add(ev.id);
-
         }
 
         for (const ev of wrapped.vehicleDeath) {

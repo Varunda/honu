@@ -15,7 +15,7 @@ namespace watchtower.Services.Census.Readers {
             item.ID = token.GetRequiredInt32("item_id");
             item.TypeID = token.GetInt32("item_type_id", -1);
             item.CategoryID = token.GetInt32("item_category_id", -1);
-            item.IsVehicleWeapon = token.GetInt32("is_vehicle_weapon", 0) == 0;
+            item.IsVehicleWeapon = token.GetInt32("is_vehicle_weapon", 0) == 1;
             item.Name = token.GetChild("name")?.GetString("en", "<missing en name>") ?? "<missing name>";
             item.Description = token.GetChild("description")?.GetString("en", "<missing en description>") ?? "<missing description>";
             item.FactionID = token.GetInt16("faction_id", -1);

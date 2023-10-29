@@ -234,49 +234,58 @@ namespace watchtower.Services.Hosted {
             await HubUpdateStatus(entry, WrappedStatus.LOADING_STATIC_DATA);
 
             // LOADING CHARACTERS
+            Stopwatch stepTimer = Stopwatch.StartNew();
             List<PsCharacter> chars = await _CharacterRepository.GetByIDs(idSet.Characters, CensusEnvironment.PC, fast: true);
             entry.Characters = chars.ToDictionary(iter => iter.ID);
+            long charMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING OUTFITS
             HashSet<string> outfitIDs = new(chars.Where(iter => iter.OutfitID != null).Select(iter => iter.OutfitID!));
             List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(outfitIDs.ToList());
             entry.Outfits = outfits.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateOutfits(outfits);
+            long outfitMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // also load the leaders of the outfits, as it's how the world and faction of an outfit is loaded
             HashSet<string> leaderOutfitIDs = new(outfits.Select(iter => iter.LeaderID));
-            List<PsCharacter> outfitLeaders = await _CharacterRepository.GetByIDs(leaderOutfitIDs, CensusEnvironment.PC);
+            List<PsCharacter> outfitLeaders = await _CharacterRepository.GetByIDs(leaderOutfitIDs, CensusEnvironment.PC, fast: true);
             foreach (PsCharacter leader in outfitLeaders) {
                 if (entry.Characters.ContainsKey(leader.ID) == false) {
                     entry.Characters.Add(leader.ID, leader);
                 }
             }
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateCharacters(entry.Characters.Values.ToList());
+            long outfitLeaderMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING ITEMS
             List<PsItem> items = await _ItemRepository.GetByIDs(idSet.Items);
             entry.Items = items.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateItems(items);
+            long itemMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING VEHICLES
             List<PsVehicle> vehicles = await _VehicleRespository.GetAll();
             entry.Vehicles = vehicles.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateVehicles(vehicles);
+            long vehicleMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING FACILITIES
             List<PsFacility> facilities = await _FacilityRepository.GetByIDs(idSet.Facilities);
             entry.Facilities = facilities.ToDictionary(iter => iter.FacilityID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateFacilities(facilities);
+            long facMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING ACHIEVEMENTS
             List<Achievement> achs = await _AchievementRepository.GetByIDs(idSet.Achievements);
             entry.Achievements = achs.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateAchievements(achs);
+            long achMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING EXP TYPES
             List<ExperienceType> types = await _ExpTypeRepository.GetByIDs(idSet.ExperienceTypes);
             entry.ExperienceTypes = types.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateExpTypes(types);
+            long expTypeMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING FIRE GROUP XREF
             List<FireGroupToFireMode> fireGroupXrefs = new();
@@ -285,6 +294,10 @@ namespace watchtower.Services.Hosted {
                 fireGroupXrefs.AddRange(fireGroups);
             }
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateFireGroupToFireMode(fireGroupXrefs);
+            long fireGroupMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
+
+            _Logger.LogDebug($"loading static data for {entry.ID}: [Character={charMs}ms] [Outfit={outfitMs}ms] [Outfit leader={outfitLeaderMs}ms] "
+                + $"[Item={itemMs}ms] [Vehicles={vehicleMs}ms] [Facilities={facMs}ms] [Achievements={achMs}ms] [Exp types={expTypeMs}ms] [Fire group={fireGroupMs}ms]");
 
             // DONE
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateStatus(WrappedStatus.DONE);

@@ -1,12 +1,14 @@
 ﻿import { WrappedEntry } from "api/WrappedApi";
 import LoadoutUtils from "util/Loadout";
 import { Session } from "api/SessionApi";
-import { KillEvent } from "../../api/KillStatApi";
-import { ExpEvent } from "../../api/ExpStatApi";
-import { PsCharacter } from "../../api/CharacterApi";
+import { KillEvent } from "api/KillStatApi";
+import { Experience, ExpEvent } from "api/ExpStatApi";
+import { PsCharacter } from "api/CharacterApi";
 import { WrappedEntityInteraction } from "./data/interactions";
 import { WrappedVehicleUsage, WrappedVehicleData } from "./data/vehicles";
-import { PsVehicle } from "../../api/VehicleApi";
+import { PsVehicle } from "api/VehicleApi";
+import { PsItem } from "api/ItemApi";
+import ZoneUtils from "../../util/Zone";
 
 export class WrappedFilters {
     public class = {
@@ -39,6 +41,7 @@ export class EntityFought {
     public displayName: string = "";
     public factionID: number = 0;
     public worldID: number = 0;
+    public characters: Set<string> = new Set();
 
     public kills: number = 0;
     public deaths: number = 0;
@@ -125,8 +128,12 @@ export class WrappedExtraData {
     public characterSupport: EntitySupported[] = [];
     public outfitSupport: EntitySupported[] = [];
     public vehicleUsage: WrappedVehicleUsage[] = [];
+    public weaponStats: WrappedWeaponStats[] = [];
+    public zoneStats: WrappedZoneStats[] = [];
 
     public totalPlaytime: number = 0;
+
+    public focusedCharacter: PsCharacter = new PsCharacter();
 
     public static build(wrapped: WrappedEntry): WrappedExtraData {
         const extra: WrappedExtraData = new WrappedExtraData();
@@ -157,17 +164,39 @@ export class WrappedExtraData {
             return other;
         }
 
+        const weapons: Map<number, WrappedWeaponStats> = new Map();
+
         const events: PsEvent[] = [];
 
         for (const ev of wrapped.kills) {
             const classStats: WrappedClassStats = getClassStats(ev.attackerLoadoutID);
             ++classStats.kills;
 
+            if (weapons.has(ev.weaponID) == false) {
+                weapons.set(ev.weaponID, {
+                    kills: 0,
+                    headshots: 0,
+                    item: wrapped.items.get(ev.weaponID) ?? null,
+                    itemId: ev.weaponID,
+                    name: wrapped.items.get(ev.weaponID)?.name ?? `<missing ${ev.weaponID}>`
+                });
+            }
+
+            const w: WrappedWeaponStats = weapons.get(ev.weaponID)!;
+            w.kills += 1;
+            if (ev.isHeadshot == true) {
+                w.headshots += 1;
+            }
+
+            weapons.set(ev.weaponID, w);
+
             events.push({
                 type: "kill",
                 ...ev
             });
         }
+
+        extra.weaponStats = Array.from(weapons.values());
 
         for (const ev of wrapped.deaths) {
             const classStats: WrappedClassStats = getClassStats(ev.killedLoadoutID);
@@ -220,7 +249,11 @@ export class WrappedExtraData {
         let sessionID: number | null = null;
         let lastLoadoutID: number = 0;
 
+        const zoneInfo: Map<number, WrappedZoneStats> = new Map();
+
         let lastTimestamp: Date = events[0].timestamp;
+        let lastZoneTimestamp: Date = events[0].timestamp;
+
         for (const ev of events) {
             if (ev.type == "session_start") {
                 if (sessionID != null) {
@@ -254,43 +287,92 @@ export class WrappedExtraData {
                     continue;
                 }
 
+                let eventDefID: number = (ev.zoneID & 0xFFFF);
+
+                let zoneStats: WrappedZoneStats | undefined = zoneInfo.get(eventDefID);
+                if (zoneStats == undefined) {
+                    zoneStats = {
+                        definitionID: eventDefID,
+                        kills: 0,
+                        deaths: 0,
+                        exp: 0,
+                        timeMs: 0,
+                        name: ZoneUtils.getZoneName(eventDefID)
+                    };
+                }
+
                 let eventLoadoutID: number;
                 if (ev.type == "kill") {
                     eventLoadoutID = ev.attackerLoadoutID;
                     ++currentSession.kills;
+                    ++zoneStats.kills;
+
+                    if (ev.isHeadshot == true) {
+                        ++currentSession.headshots;
+                    }
+
+                    if (LoadoutUtils.isMax(ev.killedLoadoutID)) {
+                        ++currentSession.maxKills;
+                    }
+
+                    if (ev.attackerVehicleID == 0) {
+                        ++currentSession.infantryKills;
+                    }
+
                 } else if (ev.type == "death") {
                     eventLoadoutID = ev.killedLoadoutID;
                     ++currentSession.deaths;
+                    ++zoneStats.deaths;
                 } else if (ev.type == "exp") {
                     eventLoadoutID = ev.loadoutID;
                     currentSession.exp += ev.amount;
+                    zoneStats.exp += ev.amount;
+
+                    if (Experience.isHeal(ev.experienceID)) {
+                        ++currentSession.heals;
+                    } else if (Experience.isRevive(ev.experienceID)) {
+                        ++currentSession.revives;
+                    } else if (Experience.isMaxRepair(ev.experienceID)) {
+                        ++currentSession.maxRepair;
+                    } else if (Experience.isVehicleRepair(ev.experienceID)) {
+                        ++currentSession.vehicleRepair;
+                    } else if (Experience.isAssist(ev.experienceID)) {
+                        ++currentSession.assists;
+                    } else if (Experience.isResupply(ev.experienceID)) {
+                        ++currentSession.resupplies;
+                    } else if (Experience.isShieldRepair(ev.experienceID)) {
+                        ++currentSession.shieldRepairs;
+                    }
+
                 } else {
                     throw `invalid state, event was not kill|death|exp: ${(ev as any).type}`;
                 }
 
-                if (lastLoadoutID == eventLoadoutID) {
-                    continue;
+                const zoneTimespan: number = ev.timestamp.getTime() - lastZoneTimestamp.getTime();
+                if (zoneTimespan <= 1000 * 60 * 30) {
+                    zoneStats.timeMs += ev.timestamp.getTime() - lastZoneTimestamp.getTime();
                 }
+                lastZoneTimestamp = ev.timestamp;
+                zoneInfo.set(eventDefID, zoneStats);
 
-                const timespan: number = ev.timestamp.getTime() - lastTimestamp.getTime();
+                if (lastLoadoutID != eventLoadoutID) {
+                    const timespan: number = ev.timestamp.getTime() - lastTimestamp.getTime();
+                    // fail safe, don't include events that are 30 minutes apart
+                    if (timespan <= 1000 * 60 * 30) {
+                        const classStats: WrappedClassStats = getClassStats(eventLoadoutID);
+                        classStats.timeAs += timespan;
+                    }
 
-                if (timespan >= 60000) {
-                    //console.log(`${LoadoutUtils.getLoadoutName(eventLoadoutID)} ${timespan} ${ev.timestamp.toISOString()} ${lastTimestamp.toISOString()}!!`);
+                    lastTimestamp = ev.timestamp;
                 }
-
-                // fail safe, don't include events that are 30 minutes apart
-                if (timespan <= 1000 * 60 * 30) {
-                    const classStats: WrappedClassStats = getClassStats(eventLoadoutID);
-                    classStats.timeAs += timespan;
-                }
-
-                lastTimestamp = ev.timestamp;
             }
         }
 
         extra.classStats = [
             infil, lightAssault, medic, engi, heavy, max
         ];
+
+        extra.zoneStats = Array.from(zoneInfo.values());
 
         extra.classStats = extra.classStats.map((iter: WrappedClassStats) => {
             iter.kd = iter.kills / Math.max(1, iter.deaths);
@@ -307,6 +389,19 @@ export class WrappedExtraData {
         extra.outfitSupport = interactions.outfitSupport;
 
         extra.vehicleUsage = WrappedVehicleData.generate(wrapped);
+
+        const timePerCharacter: Map<string, number> = new Map();
+        for (const session of extra.sessions) {
+            timePerCharacter.set(session.characterID, (timePerCharacter.get(session.characterID) ?? 0) + session.duration);
+        }
+
+        const mostPlayedCharacterID: string = Array.from(timePerCharacter.entries()).sort((a, b) => {
+            return b[1] - a[1];
+        })[0][0];
+
+        if (wrapped.characters.has(mostPlayedCharacterID)) {
+            extra.focusedCharacter = wrapped.characters.get(mostPlayedCharacterID)!;
+        }
 
         return extra;
     }
@@ -331,6 +426,17 @@ export class WrappedClassStats {
     public spm: number = 0;
 }
 
+export class WrappedWeaponStats {
+
+    public name: string = "";
+    public itemId: number = 0;
+
+    public kills: number = 0;
+    public headshots: number = 0;
+
+    public item: PsItem | null = null;
+}
+
 export class WrappedSession {
     public session: Session = new Session();
     public characterID: string = "";
@@ -339,6 +445,29 @@ export class WrappedSession {
     public character: PsCharacter | null = null;
 
     public kills: number = 0;
+    public infantryKills: number = 0;
+    public headshots: number = 0;
     public deaths: number = 0;
     public exp: number = 0;
+
+    public maxKills: number = 0;
+
+    public assists: number = 0;
+    public revives: number = 0;
+    public heals: number = 0;
+    public shieldRepairs: number = 0;
+    public resupplies: number = 0;
+    public maxRepair: number = 0;
+    public vehicleRepair: number = 0;
+
 }
+
+export class WrappedZoneStats {
+    public definitionID: number = 0;
+    public name: string = "";
+    public kills: number = 0;
+    public deaths: number = 0;
+    public exp: number = 0;
+    public timeMs: number = 0;
+}
+

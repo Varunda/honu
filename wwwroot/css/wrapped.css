@@ -14,3 +14,12 @@
     --p-green-3: #93ff6b;
 }
 
+.cell {
+    padding: 1rem 2rem;
+}
+
+.cell-center {
+    justify-self: center;
+    align-self: center;
+}
+

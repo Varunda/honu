@@ -7,6 +7,7 @@ export class PsItem {
 	public typeID: number = 0;
 	public categoryID: number = 0;
 	public name: string = "";
+	public isVehicleWeapon: boolean = false;
 }
 
 export class ItemPercentileStats {

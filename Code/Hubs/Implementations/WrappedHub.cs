@@ -85,6 +85,8 @@ namespace watchtower.Code.Hubs.Implementations {
             // DONE
             if (entry.Status == WrappedEntryStatus.DONE) {
                 _Logger.LogDebug($"Loading {entry.InputCharacterIDs.Count} characters in report {entry.ID}");
+                await Clients.Group($"wrapped-{entry.ID}").UpdateStatus(WrappedStatus.LOADING_EVENT_DATA);
+
                 foreach (string charID in entry.InputCharacterIDs) {
                     // timestamp is when the entry was created, which would be for the previous year
                     // so if it was generated in 2023, then we want the data from 2022

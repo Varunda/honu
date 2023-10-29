@@ -20,6 +20,7 @@ import { WrappedExtraData } from "../view/wrapped/common";
 export class WrappedEntry {
     public id: string = ""; // guid
     public inputCharacterIDs: string[] = [];
+    public timestamp: Date = new Date();
 
     public status: number = 0;
 

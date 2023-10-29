@@ -47,6 +47,16 @@
     animation-iteration-count: infinite;
 }
 
+.wt-link {
+    color: var(--green);
+    cursor: pointer;
+}
+
+.wt-link:hover {
+    text-decoration: underline;
+    color: #007053;
+}
+
 :root {
     --color-vs: #cf17cf;
     --color-nc: #3f7fff;
@@ -126,6 +136,10 @@
 .ps2-text {
     line-height: 1;
     font-family: ps2;
+}
+
+.flex-grow-2 {
+    flex-grow: 2;
 }
 
 @keyframes slide-right-in {

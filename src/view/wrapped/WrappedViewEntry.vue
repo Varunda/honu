@@ -30,7 +30,7 @@
             <div>
                 Kills: 
                 <span v-if="steps.kills == true">
-                    Loaded {{wrapped.kills.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -40,7 +40,7 @@
             <div>
                 Deaths: 
                 <span v-if="steps.deaths == true">
-                    Loaded {{wrapped.deaths.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -50,7 +50,7 @@
             <div>
                 Exp: 
                 <span v-if="steps.exp == true">
-                    Loaded {{wrapped.exp.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -60,7 +60,7 @@
             <div>
                 Vehicle kills: 
                 <span v-if="steps.vehicleDestroy == true">
-                    Loaded {{wrapped.vehicleKill.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -70,7 +70,7 @@
             <div>
                 Vehicle deaths:
                 <span v-if="steps.vehicleDestroy == true">
-                    Loaded {{wrapped.vehicleDeath.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -80,7 +80,7 @@
             <div>
                 Facility control: 
                 <span v-if="steps.deaths == true">
-                    Loaded {{wrapped.deaths.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -90,7 +90,7 @@
             <div>
                 Achievement earned: 
                 <span v-if="steps.achievementEarned == true">
-                    Loaded {{wrapped.achievementEarned.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -99,7 +99,7 @@
             <div>
                 Item added: 
                 <span v-if="steps.itemAdded == true">
-                    Loaded {{wrapped.itemAdded.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -109,7 +109,7 @@
             <div>
                 Sessions: 
                 <span v-if="steps.sessions == true">
-                    Loaded {{wrapped.sessions.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -119,13 +119,14 @@
         </div>
 
         <div v-else-if="status == 'loading_static'">
-            <busy class="honu-busy honu-busy-lg"></busy>
-            Loading static data...
+            <h2>
+                Loading static data...
+            </h2>
 
             <div>
                 Characters: 
                 <span v-if="steps.characters == true">
-                    Loaded {{wrapped.characters.size}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -135,7 +136,7 @@
             <div>
                 Outfits: 
                 <span v-if="steps.outfits == true">
-                    Loaded {{wrapped.outfits.size}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -145,7 +146,7 @@
             <div>
                 Items: 
                 <span v-if="steps.items == true">
-                    Loaded {{wrapped.items.size}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -155,7 +156,7 @@
             <div>
                 Facilities: 
                 <span v-if="steps.facilities == true">
-                    Loaded {{wrapped.facilities.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -165,7 +166,7 @@
             <div>
                 Experience types: 
                 <span v-if="steps.expTypes == true">
-                    Loaded {{wrapped.expTypes.length}}
+                    Loaded
                 </span>
                 <span v-else>
                     <busy class="honu-busy honu-busy-sm"></busy>
@@ -189,14 +190,7 @@
             </div>
 
             <div v-if="showFull == false" class="d-flex" style="gap: 1rem;">
-
-                <wrapped-simple-card title="Playtime" :data="simple.playtime" header-right="Playtime"></wrapped-simple-card>
-
-                <wrapped-simple-card title="Kills" :data="simple.kills" header-right="Kills"></wrapped-simple-card>
-
-                <!--
-                    <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
-                -->
+                <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
             </div>
 
             <div v-else-if="showFull == true">
@@ -418,7 +412,7 @@
                     console.log("JoinGroup done");
 
                     if (this.showFull == false) {
-                        this.passTwoSimpleMode();
+
                     } else {
                         this.wrapped = WRAPPED;
                     }
@@ -428,6 +422,7 @@
             onSendWrappedEntry: function(entry: WrappedEntry): void {
                 console.log(`wrapped parameters: ${JSON.stringify(entry)}`);
                 WRAPPED.inputCharacterIDs = entry.inputCharacterIDs;
+                WRAPPED.timestamp = new Date(entry.timestamp);
 
                 if (entry.status == 1) { // pending
                     console.log(`pending, hopefully get queue status`);
@@ -459,42 +454,6 @@
                     WRAPPED.sessions.push(session);
                 }
 
-                /*
-                const playTime: Map<string, number> = new Map();
-
-                for (const s of sessions) {
-                    const session: Session = SessionApi.parse(s);
-                    if (session.end == null) {
-                        continue;
-                    }
-
-                    const id: string = session.characterID;
-
-                    const duration: number = (session.end.getTime() - session.start.getTime()) / 1000;
-
-                    playTime.set(id, (playTime.get(id) ?? 0) + duration);
-                    this.simple.playtime.total += duration;
-                }
-
-                const mostPlayed = Array.from(playTime.entries()).sort((a, b) => {
-                    return b[1] - a[1];
-                }).slice(0, 5);
-
-                this.simple.playtime.totalDisplay = TimeUtils.duration(this.simple.playtime.total);
-                this.simple.playtime.data = mostPlayed.map((iter) => {
-                    const charID: string = iter[0];
-                    const playtime: number = iter[1];
-
-                    const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
-                    datum.id = charID;
-                    datum.display = charID;
-                    datum.link = `/c/${charID}`;
-                    datum.value = TimeUtils.duration(playtime);
-
-                    return datum;
-                });
-                */
-
                 this.steps.sessions = true;
             },
 
@@ -508,42 +467,6 @@
                         WRAPPED.kills.push(event);
                     }
                 }
-
-                /*
-                    const kills: Map<string, number> = new Map();
-
-                    for (const ev of events) {
-                        const event: KillEvent = KillStatApi.parseKillEvent(ev);
-
-                        if (event.attackerTeamID == event.killedTeamID) {
-
-                        } else {
-                            if (kills.has(event.killedCharacterID) == false) {
-                                kills.set(event.killedCharacterID, 0);
-                            }
-
-                            kills.set(event.killedCharacterID, (kills.get(event.killedCharacterID) ?? 0) + 1);
-                            this.simple.kills.total += 1;
-                        }
-                    }
-
-                    const most = Array.from(kills.entries()).sort((a, b) => {
-                        return b[1] - a[1];
-                    }).slice(0, 5);
-
-                    this.simple.kills.data = most.map((iter) => {
-                        const charID: string = iter[0];
-                        const kills: number = iter[1];
-
-                        const datum: WrappedSimpleEntry = new WrappedSimpleEntry();
-                        datum.id = charID;
-                        datum.display = charID;
-                        datum.link = `/c/${charID}`;
-                        datum.value = LocaleUtil.locale(kills, 0);
-
-                        return datum;
-                    });
-                */
 
                 this.steps.kills = true;
             },
@@ -612,6 +535,17 @@
                     WRAPPED.characters.set(c.id, character);
                 }
                 this.steps.characters = true;
+
+                console.log(`got ${chars.length} characters`);
+
+                const baseNameID = WRAPPED.inputCharacterIDs[0];
+                if (WRAPPED.characters.has(baseNameID)) {
+                    const baseName: PsCharacter = WRAPPED.characters.get(baseNameID)!;
+                    document.title = `Honu / Wrapped / ${baseName.name} ${(WRAPPED.inputCharacterIDs.length > 1 ? `+ ${WRAPPED.inputCharacterIDs.length - 1} more` : ``)}`;
+                    console.log(`setting name to ${document.title} from ${baseNameID}`);
+                } else {
+                    console.log(`missing ${baseNameID}`);
+                }
             },
 
             onUpdateOutfits: function(outfits: PsOutfit[]): void {
@@ -619,6 +553,8 @@
                     WRAPPED.outfits.set(o.id, o);
                 }
                 this.steps.outfits = true;
+
+                console.log(`got ${outfits.length} outfits`);
             },
 
             onUpdateItems: function(items: PsItem[]): void {
@@ -626,24 +562,32 @@
                     WRAPPED.items.set(item.id, item);
                 }
                 this.steps.items = true;
+
+                console.log(`got ${items.length} items`);
             },
 
             onUpdateAchievements: function(achs: Achievement[]): void {
                 for (const ach of achs) {
                     WRAPPED.achivements.set(ach.id, ach);
                 }
+
+                console.log(`got ${achs.length} achievements`);
             },
 
             onUpdateExpTypes: function(expTypes: ExperienceType[]): void {
                 for (const expType of expTypes) {
                     WRAPPED.expTypes.set(expType.id, expType);
                 }
+
+                console.log(`got ${expTypes.length} exp types`);
             },
 
             onUpdateFacilities: function(facs: PsFacility[]): void {
                 for (const f of facs) {
                     WRAPPED.facilities.set(f.facilityID, f);
                 }
+
+                console.log(`got ${facs.length} facilities`);
             },
 
             onUpdateFireGroupXrefs: function(refs: FireGroupToFireMode[]): void {
@@ -669,7 +613,7 @@
                     }
                 });
 
-                console.log(`got ${refs.length} thingies`);
+                console.log(`got ${refs.length} fire group xrefs`);
             },
 
             onUpdateVehicles: function(vehs: PsVehicle[]): void {
@@ -683,69 +627,10 @@
                 this.queue.position = position;
                 this.queue.total = total;
             },
-
-            passTwoSimpleMode: async function(): Promise<void> {
-                console.log(`starting pass 2 for simple mode`);
-
-                const simpleEntries: WrappedSimpleData[] = [
-                    this.simple.playtime,
-                    this.simple.kills,
-                    ...this.simple.all
-                ];
-
-                console.log(`loading static data for ${simpleEntries.length} entries`);
-
-                const charIDs: Set<string> = new Set();
-
-                for (const simple of simpleEntries) {
-                    console.log(`${simple.name} => ${simple.type}`);
-                    if (simple.type == "character") {
-                        simple.data.map(iter => iter.id).forEach(iter => charIDs.add(iter));
-                    } else if (simple.type == "outfit") {
-
-                    } else if (simple.type == "item") {
-
-                    } else if (simple.type == "facility") {
-
-                    } else if (simple.type == "none") {
-                        continue;
-                    } else {
-                        throw `unchecked type ${simple.type}`;
-                    }
-                }
-
-                console.log(`loading data for ${charIDs.size} characters...`);
-                const characters: Loading<PsCharacter[]> = await CharacterApi.getByIDs(Array.from(charIDs));
-                if (characters.state != "loaded") {
-                    console.error(`failed to load characters in pass2`);
-                    return;
-                }
-
-                const outfitIDs: Set<string> = new Set(characters.data.filter(iter => iter.outfitID != null).map(iter => iter.outfitID!));
-                //const outfits: 
-
-                console.log(`loaded ${characters.data.length} characters`);
-
-                const dict: Map<string, PsCharacter> = new Map();
-                characters.data.forEach(iter => dict.set(iter.id, iter));
-
-                for (const simple of simpleEntries) {
-                    if (simple.type != "character") {
-                        continue;
-                    }
-
-                    for (const iter of simple.data) {
-                        iter.display = CharacterUtils.display(iter.id, dict.get(iter.id));
-                    }
-                }
-
-            }
-
         },
 
         computed: {
             filteredWrapped: function(): WrappedEntry {
-
                 if (this.filters.class.infil == false
                     || this.filters.class.lightAssault == false
                     || this.filters.class.medic == false
