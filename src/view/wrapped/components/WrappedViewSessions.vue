@@ -12,7 +12,64 @@
                     Session list
                 </h3>
 
-                <a-table :entries="sessions"
+                <div class="border rounded my-3">
+                    <h4 class="ml-3 my-2">
+                        Column selection
+                    </h4>
+
+                    <div class="w-100 btn-group">
+                        <toggle-button v-model="columns.kills">
+                            Kills
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.deaths">
+                            Deaths
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.kd">
+                            K/D
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.kpm">
+                            KPM
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.expEarned">
+                            Exp earned
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.spm">
+                            SPM
+                            <info-hover text="Score per minute"></info-hover>
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.vkills">
+                            Vehicle kills
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.vkpm">
+                            V.Kills/Min
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.heals">
+                            Heals
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.healsPerMinute">
+                            Heals/Min
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.revives">
+                            Revives
+                        </toggle-button>
+
+                        <toggle-button v-model="columns.revivesPerMinute">
+                            Revive/Min
+                        </toggle-button>
+                    </div>
+                </div>
+
+                <a-table v-if="showTable" :entries="sessions"
                          :paginate="true"
                          :page-sizes="[10, 20, 50, 100]" :default-page-size="10"
                          class="border-top-0"
@@ -50,7 +107,7 @@
                         </a-body>
                     </a-col>
 
-                    <a-col sort-field="kills">
+                    <a-col v-if="columns.kills" sort-field="kills">
                         <a-header>
                             Kills
                         </a-header>
@@ -60,7 +117,7 @@
                         </a-body>
                     </a-col>
 
-                    <a-col sort-field="deaths">
+                    <a-col v-if="columns.deaths" sort-field="deaths">
                         <a-header>
                             Deaths
                         </a-header>
@@ -70,27 +127,27 @@
                         </a-body>
                     </a-col>
 
-                    <a-col>
+                    <a-col v-if="columns.kd" sort-field="kd">
                         <a-header>
                             K/D
                         </a-header>
 
                         <a-body v-slot="entry">
-                            {{entry.kills / Math.max(1, entry.deaths) | locale(2)}}
+                            {{entry.kd | locale(2)}}
                         </a-body>
                     </a-col>
 
-                    <a-col>
+                    <a-col v-if="columns.kpm" sort-field="kpm">
                         <a-header>
                             KPM
                         </a-header>
 
                         <a-body v-slot="entry">
-                            {{entry.kills / Math.max(1, entry.duration / 60) | locale(2)}}
+                            {{entry.kpm | locale(2)}}
                         </a-body>
                     </a-col>
 
-                    <a-col sort-field="exp">
+                    <a-col v-if="columns.expEarned" sort-field="exp">
                         <a-header>
                             Exp earned
                         </a-header>
@@ -100,13 +157,73 @@
                         </a-body>
                     </a-col>
 
-                    <a-col>
+                    <a-col v-if="columns.spm" sort-field="spm">
                         <a-header>
                             SPM
                         </a-header>
 
                         <a-body v-slot="entry">
-                            {{entry.exp / Math.max(1, entry.duration / 60) | locale(2)}}
+                            {{entry.spm | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.vkills" sort-field="vehicleKills">
+                        <a-header>
+                            V.Kills
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.vehicleKills | locale(0)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.vkpm" sort-field="vkpm">
+                        <a-header>
+                            V.Kills/Min
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.vkpm | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.heals" sort-field="heals">
+                        <a-header>
+                            Heals
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.heals | locale(0)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.healsPerMinute" sort-field="hpm">
+                        <a-header>
+                            Heals/Min
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.hpm | locale(2)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.revives" sort-field="revives">
+                        <a-header>
+                            Revives
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.revives | locale(0)}}
+                        </a-body>
+                    </a-col>
+
+                    <a-col v-if="columns.revivesPerMinute" sort-field="rpm">
+                        <a-header>
+                            Revives/Min
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.rpm | locale(2)}}
                         </a-body>
                     </a-col>
 
@@ -140,6 +257,7 @@
     import Collapsible from "components/Collapsible.vue";
     import InfoHover from "components/InfoHover.vue";
     import { ATable, AFilter, AHeader, ABody, ACol, ARank } from "components/ATable";
+    import ToggleButton from "components/ToggleButton";
 
     // filters
     import "MomentFilter";
@@ -162,7 +280,28 @@
 
         data: function() {
             return {
-                weekData: [] as SessionWeekData[]
+                weekData: [] as SessionWeekData[],
+
+                showTable: true as boolean,
+
+                columns: {
+                    kills: true as boolean,
+                    deaths: true as boolean,
+                    kd: true as boolean,
+                    kpm: true as boolean,
+
+                    vkills: false as boolean,
+                    vkpm: false as boolean,
+
+                    expEarned: true as boolean,
+                    spm: true as boolean,
+
+                    heals: false as boolean,
+                    revives: false as boolean,
+                    maxRepairs: false as boolean,
+                    revivesPerMinute: false as boolean,
+                    healsPerMinute: false as boolean,
+                }
             }
         },
 
@@ -206,10 +345,26 @@
             }
         },
 
+        watch: {
+
+            columns: {
+                deep: true,
+                handler: async function(): Promise<void> {
+                    // force the table to be destroyed then re-created
+                    this.showTable = false;
+                    await this.$nextTick();
+                    this.showTable = true;
+                }
+                
+            }
+
+        },
+
         components: {
             Collapsible,
             InfoHover,
             ATable, AFilter, AHeader, ABody, ACol, ARank,
+            ToggleButton
         }
 
     });

@@ -92,7 +92,9 @@ namespace watchtower.Code.Hubs.Implementations {
                     // so if it was generated in 2023, then we want the data from 2022
                     WrappedSavedCharacterData? data = await _WrappedDataRepository.Get(entry.Timestamp.AddYears(-1), charID);
                     if (data == null) {
-                        _Logger.LogError($"Missing character {charID} from {nameof(WrappedEntry)} {entry.ID}");
+                        string err = $"Missing character {charID} from {nameof(WrappedEntry)} {entry.ID}! this wrapped is DONE, but missing character data";
+                        _Logger.LogError(err);
+                        await Clients.Group($"wrapped-{entry.ID}").SendError(err);
                         continue;
                     }
 

@@ -496,6 +496,21 @@ export class WrappedExtraData {
             }
         }
 
+        extra.sessions = extra.sessions.map(iter => {
+            const pm: number = Math.max(1, iter.duration / 60);
+
+            iter.kd = iter.kills / Math.max(1, iter.deaths);
+            iter.kpm = iter.kills / pm;
+            iter.spm = iter.exp / pm;
+
+            iter.vkpm = iter.vehicleKills / pm;
+
+            iter.rpm = iter.revives / pm;
+            iter.hpm = iter.heals / pm;
+
+            return iter;
+        });
+
         extra.classStats = [
             infil, lightAssault, medic, engi, heavy, max
         ];
@@ -522,7 +537,6 @@ export class WrappedExtraData {
         for (const session of extra.sessions) {
             timePerCharacter.set(session.characterID, (timePerCharacter.get(session.characterID) ?? 0) + session.duration);
         }
-
 
         const mostPlayedCharacterID: string = Array.from(timePerCharacter.entries()).sort((a, b) => {
             return b[1] - a[1];
@@ -582,6 +596,10 @@ export class WrappedSession {
     public deaths: number = 0;
     public exp: number = 0;
 
+    public kd: number = 0;
+    public kpm: number = 0;
+    public spm: number = 0;
+
     public expEarned: Map<number, number> = new Map();
 
     public vehicleKills: number = 0;
@@ -589,12 +607,17 @@ export class WrappedSession {
     public driverAssists: number = 0;
     public vehicleKillStreak: number = 0;
 
+    public vkpm: number = 0;
+
     public maxKills: number = 0;
     public assists: number = 0;
 
     public revives: number = 0;
     public heals: number = 0;
     public shieldRepairs: number = 0;
+
+    public rpm: number = 0;
+    public hpm: number = 0;
 
     public resupplies: number = 0;
     public maxRepair: number = 0;
