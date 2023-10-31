@@ -17,7 +17,7 @@ namespace watchtower.Services.Hosted.Startup {
     /// <summary>
     /// Runs once at startup, populating the wt_facility table. If an exception occurs, honu can run, so it's just logged
     /// </summary>
-    public class FacilityPopulatorStartupService : IHostedService {
+    public class FacilityPopulatorStartupService : BackgroundService {
 
         private readonly ILogger<FacilityPopulatorStartupService> _Logger;
         private readonly FacilityCollection _FacilityCollection;
@@ -37,7 +37,9 @@ namespace watchtower.Services.Hosted.Startup {
             _MapDb = mapDb;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken) {
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+            _Logger.LogDebug($"starting facility populator service");
+
             try {
                 Stopwatch timer = Stopwatch.StartNew();
 
@@ -73,10 +75,5 @@ namespace watchtower.Services.Hosted.Startup {
                 _Logger.LogError(ex, "Failed to populate facility table");
             }
         }
-
-        public Task StopAsync(CancellationToken cancellationToken) {
-            return Task.CompletedTask;
-        }
-
     }
 }

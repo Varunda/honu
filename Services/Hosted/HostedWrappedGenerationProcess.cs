@@ -196,8 +196,10 @@ namespace watchtower.Services.Hosted {
 
             }
 
+            await HubUpdateStatus(entry, WrappedStatus.LOADING_EVENT_DATA);
             await SendEventData(entry);
 
+            await HubUpdateStatus(entry, WrappedStatus.LOADING_STATIC_DATA);
             await SendStaticData(entry);
 
             entry.Status = WrappedEntryStatus.DONE;
@@ -207,8 +209,6 @@ namespace watchtower.Services.Hosted {
         public async Task SendEventData(WrappedEntry entry) {
             _Logger.LogDebug($"sending event data for {entry.ID}");
             IWrappedHub group = _Hub.Clients.Group($"wrapped-{entry.ID}");
-
-            await group.UpdateStatus(WrappedStatus.LOADING_EVENT_DATA);
 
             await group.SendSessions(entry.Sessions);
             await group.SendKills(entry.Kills);
@@ -241,7 +241,7 @@ namespace watchtower.Services.Hosted {
 
             // LOADING OUTFITS
             HashSet<string> outfitIDs = new(chars.Where(iter => iter.OutfitID != null).Select(iter => iter.OutfitID!));
-            List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(outfitIDs.ToList());
+            List<PsOutfit> outfits = await _OutfitRepository.GetByIDs(outfitIDs.ToList(), fast: true);
             entry.Outfits = outfits.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateOutfits(outfits);
             long outfitMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
@@ -282,7 +282,8 @@ namespace watchtower.Services.Hosted {
             long achMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 
             // LOADING EXP TYPES
-            List<ExperienceType> types = await _ExpTypeRepository.GetByIDs(idSet.ExperienceTypes);
+            //List<ExperienceType> types = await _ExpTypeRepository.GetByIDs(idSet.ExperienceTypes);
+            List<ExperienceType> types = await _ExpTypeRepository.GetAll();
             entry.ExperienceTypes = types.ToDictionary(iter => iter.ID);
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateExpTypes(types);
             long expTypeMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
@@ -298,9 +299,6 @@ namespace watchtower.Services.Hosted {
 
             _Logger.LogDebug($"loading static data for {entry.ID}: [Character={charMs}ms] [Outfit={outfitMs}ms] [Outfit leader={outfitLeaderMs}ms] "
                 + $"[Item={itemMs}ms] [Vehicles={vehicleMs}ms] [Facilities={facMs}ms] [Achievements={achMs}ms] [Exp types={expTypeMs}ms] [Fire group={fireGroupMs}ms]");
-
-            // DONE
-            await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateStatus(WrappedStatus.DONE);
         }
 
         /// <summary>
@@ -320,7 +318,7 @@ namespace watchtower.Services.Hosted {
             DateTime yearStart = new(DateTime.UtcNow.Year - 1, 1, 1);
             DateTime yearEnd = new(DateTime.UtcNow.Year, 1, 1);
 
-            using Activity? rootTrace = HonuActivitySource.Root.StartActivity("Wrapped - Character");
+            using Activity? rootTrace = HonuActivitySource.Root.StartActivity("wrapped - Character");
             rootTrace?.AddTag("honu.wrapped.character_id", character.ID);
             rootTrace?.AddTag("honu.wrapped.character_name", character.Name);
             rootTrace?.AddTag("honu.wrapped.year_start", $"{yearStart:u}");
@@ -336,31 +334,31 @@ namespace watchtower.Services.Hosted {
                 data.CharacterID = character.ID;
 
                 // CHARACTER SESSIONS
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - session")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - session")) {
                     data.Sessions = await Retry(() => _SessionDb.GetByRangeAndCharacterID(character.ID, yearStart, yearEnd));
                     trace?.AddTag("honu.count", data.Sessions.Count);
                 }
 
                 // CHARACTER KILLS
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - kills")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - kills")) {
                     data.Kills = await Retry(() => _KillDb.LoadWrappedKills(character.ID, yearStart));
                     trace?.AddTag("honu.count", data.Kills.Count);
                 }
 
                 // CHARACTER DEATHS
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - deaths")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - deaths")) {
                     data.Deaths = await Retry(() => _KillDb.LoadWrappedDeaths(character.ID, yearStart));
                     trace?.AddTag("honu.count", data.Deaths.Count);
                 }
 
                 // CHARACTER EXPERIENCE
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - exp")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - exp")) {
                     data.Experience = await Retry(() => _ExpDb.LoadWrapped(character.ID, yearStart));
                     trace?.AddTag("honu.count", data.Experience.Count);
                 }
 
                 // CHARACTER VEHICLE DESTROY
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - vehicle destroy")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - vehicle destroy")) {
                     data.VehicleDestroy = await Retry(() => _VehicleDestroyDb.LoadWrappedKills(character.ID, yearStart));
                     data.VehicleDestroy.AddRange(await Retry(() => _VehicleDestroyDb.LoadWrappedDeaths(character.ID, yearStart)));
                     // stop killing sundies, don't include them in wrapped
@@ -369,7 +367,7 @@ namespace watchtower.Services.Hosted {
                 }
 
                 // CHARACTER CONTROL
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - control")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - control")) {
                     List<PlayerControlEvent> playerControlEvents = await Retry(() => _FacilityPlayerControlDb.LoadWrapped(character.ID, yearStart));
                     HashSet<long> playerControlEventIDs = new(playerControlEvents.Select(iter => iter.ControlID));
                     data.ControlEvents = await Retry(() => _FacilityControlDb.GetByIDs(playerControlEventIDs.ToList()));
@@ -377,13 +375,13 @@ namespace watchtower.Services.Hosted {
                 }
 
                 // CHARACTER ACHIEVEMENT EARNED
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - achievement earned")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - achievement earned")) {
                     data.AchievementEarned = await Retry(() => _AchievementEarnedDb.LoadWrapped(character.ID, yearStart));
                     trace?.AddTag("honu.count", data.AchievementEarned.Count);
                 }
 
                 // CHARACTER ITEM ADDED
-                using (Activity? trace = HonuActivitySource.Root.StartActivity("Wrapped - item added")) {
+                using (Activity? trace = HonuActivitySource.Root.StartActivity("wrapped - item added")) {
                     data.ItemAddedEvents = await Retry(() => _ItemAddedDb.LoadWrapped(character.ID, yearStart));
                     trace?.AddTag("honu.count", data.ItemAddedEvents.Count);
                 }

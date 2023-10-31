@@ -123,7 +123,7 @@ namespace watchtower.Services.Repositories {
         ///     A list of <see cref="PsOutfit"/>s, each on with a <see cref="PsOutfit.ID"/>
         ///     that is an element of <paramref name="IDs"/>
         /// </returns>
-        public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+        public async Task<List<PsOutfit>> GetByIDs(List<string> IDs, bool fast = false) {
             using Activity? root = HonuActivitySource.Root.StartActivity("outfit repo - get by IDs");
             root?.AddTag("honu.count", IDs.Count);
 
@@ -155,11 +155,13 @@ namespace watchtower.Services.Repositories {
             root?.AddTag("honu.in_db", inDb);
 
             int inCensus = 0;
-            List<PsOutfit> censusOutfits = await _Census.GetByIDs(IDs);
-            foreach (PsOutfit outfit in censusOutfits) {
-                outfits.Add(outfit);
-                IDs.Remove(outfit.ID);
-                ++inCensus;
+            if (fast == false) {
+                List<PsOutfit> censusOutfits = await _Census.GetByIDs(IDs);
+                foreach (PsOutfit outfit in censusOutfits) {
+                    outfits.Add(outfit);
+                    IDs.Remove(outfit.ID);
+                    ++inCensus;
+                }
             }
 
             root?.AddTag("honu.in_census", inCensus);

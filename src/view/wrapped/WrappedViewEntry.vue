@@ -24,10 +24,11 @@
         </div>
 
         <div v-else-if="status == 'loading_events'">
-            <busy class="honu-busy honu-busy-lg"></busy>
-            Loading events...
+            <h2>
+                Loading events...
+            </h2>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Kills: 
                 <span v-if="steps.kills == true">
                     Loaded
@@ -37,7 +38,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Deaths: 
                 <span v-if="steps.deaths == true">
                     Loaded
@@ -47,7 +48,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Exp: 
                 <span v-if="steps.exp == true">
                     Loaded
@@ -57,7 +58,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Vehicle kills: 
                 <span v-if="steps.vehicleDestroy == true">
                     Loaded
@@ -67,7 +68,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Vehicle deaths:
                 <span v-if="steps.vehicleDestroy == true">
                     Loaded
@@ -77,7 +78,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Facility control: 
                 <span v-if="steps.deaths == true">
                     Loaded
@@ -87,7 +88,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Achievement earned: 
                 <span v-if="steps.achievementEarned == true">
                     Loaded
@@ -96,7 +97,7 @@
                     <busy class="honu-busy honu-busy-sm"></busy>
                 </span>
             </div>
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Item added: 
                 <span v-if="steps.itemAdded == true">
                     Loaded
@@ -106,7 +107,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Sessions: 
                 <span v-if="steps.sessions == true">
                     Loaded
@@ -123,7 +124,7 @@
                 Loading static data...
             </h2>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Characters: 
                 <span v-if="steps.characters == true">
                     Loaded
@@ -133,7 +134,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Outfits: 
                 <span v-if="steps.outfits == true">
                     Loaded
@@ -143,7 +144,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Items: 
                 <span v-if="steps.items == true">
                     Loaded
@@ -153,7 +154,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Facilities: 
                 <span v-if="steps.facilities == true">
                     Loaded
@@ -163,7 +164,7 @@
                 </span>
             </div>
 
-            <div>
+            <div style="padding: 1rem 2rem;">
                 Experience types: 
                 <span v-if="steps.expTypes == true">
                     Loaded

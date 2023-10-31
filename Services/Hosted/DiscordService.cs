@@ -291,17 +291,6 @@ namespace watchtower.Services.Hosted {
             }
 
             _Logger.LogDebug($"guild available: {guild.Id} / {guild.Name}");
-
-            DiscordGuild? guild2 = await _Discord.Get().TryGetGuild(guild.Id);
-            if (guild2 == null) {
-                _Logger.LogDebug($"g2 is null");
-            } else {
-                _Logger.LogDebug($"guild2: {guild2.Id} / {guild2.Name}");
-            }
-
-            foreach (KeyValuePair<ulong, DiscordGuild> iter in _Discord.Get().Guilds) {
-                _Logger.LogDebug($"{iter.Key}: {iter.Value.Name}");
-            }
         }
 
         /// <summary>

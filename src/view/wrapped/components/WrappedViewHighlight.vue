@@ -70,8 +70,9 @@
             <collapsible header-text="Infantry" class="text-center">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;" class="align-content-center">
                     <!-- row 1 -->
-                    <div style="grid-area: 1 / 1 / 1 / 3" class="cell">
+                    <div style="grid-area: 1 / 1 / 1 / 3" class="cell cell-center">
                         <h1>
+                            <img :src="'/img/classes/icon_' + mostPlayedClass.icon + '.png'" style="height: 3rem;" class="mb-2" />
                             {{mostPlayedClass.name}}
                         </h1>
 
@@ -89,20 +90,17 @@
                     <div style="grid-area: 1 / 3 / 1 / 6" class="cell text-left">
                         <div class="d-flex">
                             <div class="flex-grow-1 mr-3" v-if="mostUsedInfantryWeapons.length >= 1">
-                                <h3>{{mostUsedInfantryWeapons[0].name}}</h3>
-                                <h5>{{mostUsedInfantryWeapons[0].kills | locale}}</h5>
+                                <wrapped-item :entry="mostUsedInfantryWeapons[0]"></wrapped-item>
                                 <h6><strong>Top infantry guns</strong></h6>
                             </div>
 
                             <div class="flex-grow-1 mr-3" v-if="mostUsedInfantryWeapons.length >= 2">
-                                <h3>{{mostUsedInfantryWeapons[1].name}}</h3>
-                                <h5>{{mostUsedInfantryWeapons[1].kills | locale}}</h5>
+                                <wrapped-item :entry="mostUsedInfantryWeapons[1]"></wrapped-item>
                                 <h6><strong>&nbsp;</strong></h6>
                             </div>
 
                             <div class="flex-grow-1" v-if="mostUsedInfantryWeapons.length >= 3">
-                                <h3>{{mostUsedInfantryWeapons[2].name}}</h3>
-                                <h5>{{mostUsedInfantryWeapons[2].kills | locale}}</h5>
+                                <wrapped-item :entry="mostUsedInfantryWeapons[2]"></wrapped-item>
                                 <h6><strong>&nbsp;</strong></h6>
                             </div>
                         </div>
@@ -132,8 +130,8 @@
                         </h5>
                     </div>
 
-                    <!-- session bests -->
-                    <div v-for="(best, i) in bestSessions" :style="'grid-area: 3 / ' + (i + 1) + ' / 3 / ' + (i + 2)" class="cell">
+                    <!-- row 3: session bests -->
+                    <div v-for="(best, i) in infantrySessionBests" :style="'grid-area: 3 / ' + (i + 1) + ' / 3 / ' + (i + 2)" class="cell">
                         <h6>
                             <strong>{{best.name}}</strong>
                         </h6>
@@ -153,27 +151,72 @@
 
             <collapsible v-if="showVehicleStats" header-text="Vehicle" class="text-center">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;" class="align-content-center">
-                    <!-- row 1 -->
 
-                    <div style="grid-area: 1 / 1 / 1 / 4" class="cell text-center">
+                    <!-- row 1 -->
+                    <div style="grid-area: 1 / 1 / 1 / 3" class="cell cell-center">
+                        <template v-if="mostUsedVehicles.length > 0">
+                            <h1>
+                                <census-image v-if="mostUsedVehicles[0].vehicle && mostUsedVehicles[0].vehicle.imageID != 0"
+                                              :image-id="mostUsedVehicles[0].vehicle.imageID" style="height: 3rem;" class="mb-2">
+                                </census-image>
+                                {{mostUsedVehicles[0].vehicleName}}
+                            </h1>
+
+                            <h5>
+                                {{mostUsedVehicles[0].killsAs | locale(0)}} vehicle kills
+                            </h5>
+                        </template>
+
+                        <h1 v-else>
+                            none!
+                        </h1>
+
+                        <h6>
+                            <strong>Most used vehicle</strong>
+                        </h6>
+                    </div>
+                    <div style="grid-area: 1 / 3 / 1 / 6" class="cell text-left">
+                        <div class="d-flex">
+                            <div class="flex-grow-1 mr-3" v-if="mostUsedVehicleWeapons.length >= 1">
+                                <wrapped-item :entry="mostUsedVehicleWeapons[0]" :is-vehicle="true"></wrapped-item>
+                                <h6><strong>Top vehicle guns</strong></h6>
+                            </div>
+
+                            <div class="flex-grow-1 mr-3" v-if="mostUsedVehicleWeapons.length >= 2">
+                                <wrapped-item :entry="mostUsedVehicleWeapons[1]" :is-vehicle="true"></wrapped-item>
+                                <h6><strong>&nbsp;</strong></h6>
+                            </div>
+
+                            <div class="flex-grow-1" v-if="mostUsedVehicleWeapons.length >= 3">
+                                <wrapped-item :entry="mostUsedVehicleWeapons[2]" :is-vehicle="true"></wrapped-item>
+                                <h6><strong>&nbsp;</strong></h6>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- row 2 -->
+                    <div style="grid-area: 2 / 1 / 2 / 6" class="cell text-center">
                         <canvas id="chart-vehicle-kills" class="w-100" style="max-height: 300px;"></canvas>
                         <h5>
                             Vehicles killed
                         </h5>
                     </div>
 
-                    <div style="grid-area: 1 / 4 / 1 / 6" class="cell cell-center">
+                    <!-- row 3 -->
+                    <div v-for="(best, i) in vehicleSessionBests" :style="'grid-area: 3 / ' + (i + 1) + ' / 3 / ' + (i + 2)" class="cell">
+                        <h6>
+                            <strong>{{best.name}}</strong>
+                        </h6>
+
                         <h1>
-                            {{mostUsedVehicles[0].vehicleName}}
+                            {{best.value}}
                         </h1>
 
                         <h5>
-                            {{mostUsedVehicles[0].killsAs | locale(0)}} vehicle kills
+                            <a :href="'/s/' + best.session.session.id">
+                                on {{best.session.start | moment}}
+                            </a>
                         </h5>
-
-                        <h6>
-                            <strong>Most used vehicle</strong>
-                        </h6>
                     </div>
                 </div>
             </collapsible>
@@ -201,6 +244,7 @@
     import Collapsible from "components/Collapsible.vue";
     import InfoHover from "components/InfoHover.vue";
     import { ATable, AFilter, AHeader, ABody, ACol, ARank } from "components/ATable";
+    import CensusImage from "components/CensusImage";
 
     // filters
     import "MomentFilter";
@@ -211,6 +255,34 @@
     import { EntityFought, WrappedClassStats, WrappedSession, WrappedWeaponStats } from "../common";
     import { WrappedVehicleUsage } from "../data/vehicles";
     import { PsCharacter } from "api/CharacterApi";
+
+    const WrappedItem = Vue.extend({
+        props: {
+            entry: { type: Object as PropType<WrappedWeaponStats>, required: true },
+            IsVehicle: { type: Boolean, required: false, default: false }
+        },
+
+        template: `
+            <div style="position: relative;">
+                <census-image v-if="entry.item != null && entry.item.imageID && entry.item.imageID != 0" :image-id="entry.item.imageID"
+                    style="text-align: center; height: 100%; max-height: 300px;" class="mr-1">
+                </census-image>
+                <div style="width: 100%; display: inline-block;" >
+                    <h3>{{entry.name}}</h3>
+                    <h5 v-if="IsVehicle == false">
+                        {{entry.kills | locale}}
+                    </h5>
+                    <h5 v-else>
+                        {{entry.vehicleKills | locale}}
+                    </h5>
+                </div>
+            </div>
+        `,
+
+        components: {
+            CensusImage
+        }
+    });
 
     class BestSessionEntry {
         public name: string = "";
@@ -234,13 +306,14 @@
 
                 showDebug: false as boolean,
 
-                bestSessions: [] as BestSessionEntry[]
-
+                infantrySessionBests: [] as BestSessionEntry[],
+                vehicleSessionBests: [] as BestSessionEntry[],
             }
         },
 
         mounted: function(): void {
-            this.makeSessionBests();
+            this.makeInfantrySessionBests();
+            this.makeVehicleSessionBests();
 
             this.$nextTick(() => {
                 this.makeCharts();
@@ -249,40 +322,52 @@
 
         methods: {
 
-            makeSessionBests: function(): void {
-                this.bestSessions = [];
+            /**
+             * Using a list of wrapped sessions, select the one with the highest value given a selector func
+             * 
+             * @param sessions Sessions to find the best of
+             * @param target What list of best to put it into
+             * @param name Name of the best
+             * @param selector Selector function of the sessions to get the value of 
+             * @param filter Optional function filter on the sessions
+             * @param localePrecision How many decimals of precision are included, defaults to 2
+             */
+            makeSessionBest: function(
+                sessions: WrappedSession[],
+                target: BestSessionEntry[],
+                name: string,
+                selector: (_: WrappedSession) => number,
+                filter?: ((_: WrappedSession) => boolean) | undefined,
+                localePrecision: number = 2
+            ) {
+
+                const b: WrappedSession | undefined = sessions.filter(iter => {
+                    if (filter) {
+                        return filter(iter);
+                    }
+                    return true;
+                }).sort((a, b) => {
+                    return selector(b) - selector(a);
+                }).at(0);
+
+                if (b != undefined) {
+                    target.push({
+                        name: name,
+                        value: LocaleUtil.locale(selector(b), localePrecision),
+                        session: b
+                    });
+                }
+            },
+
+            makeInfantrySessionBests: function(): void {
+                this.infantrySessionBests = [];
                 if (this.wrapped.extra.sessions.length == 0) {
                     return;
                 }
 
                 const sessions: WrappedSession[] = [...this.wrapped.extra.sessions];
 
-                const make = (
-                    name: string,
-                    selector: (_: WrappedSession) => number,
-                    filter?: ((_: WrappedSession) => boolean) | undefined,
-                    localePrecision: number = 2
-                ) => {
-
-                    const b: WrappedSession | undefined = sessions.filter(iter => {
-                        if (filter) {
-                            return filter(iter);
-                        }
-                        return true;
-                    }).sort((a, b) => {
-                        return selector(b) - selector(a);
-                    }).at(0);
-
-                    if (b != undefined) {
-                        this.bestSessions.push({
-                            name: name,
-                            value: LocaleUtil.locale(selector(b), localePrecision),
-                            session: b
-                        });
-                    }
-                }
-
-                make("Highest KPM session",
+                this.makeSessionBest(sessions, this.infantrySessionBests, "Highest KPM session",
                     (iter) => (iter.kills / (Math.max(1, iter.duration) / 60)),
                     (iter) => (iter.duration > 300)
                 );
@@ -292,7 +377,7 @@
 
                 // only show if the highest KD is above 1, don't wanna embarrass someone lol
                 if (highestKd != undefined && (highestKd.infantryKills / Math.max(1, highestKd.deaths)) > 1) {
-                    this.bestSessions.push({
+                    this.infantrySessionBests.push({
                         name: "Highest KD session",
                         value: LocaleUtil.locale(highestKd.infantryKills / Math.max(1, highestKd.deaths), 2),
                         session: highestKd
@@ -300,42 +385,93 @@
                 }
 
                 if (this.mostPlayedClass.icon == "medic") {
-                    make("Most revives", (iter) => (iter.revives),
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most revives",
+                        (iter) => (iter.revives),
                         (iter) => (iter.revives > 0),
                         0
                     );
 
-                    make("Most heals", (iter) => (iter.heals),
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most heals", (iter) => (iter.heals),
                         (iter) => (iter.heals > 0),
                         0
                     );
 
-                    make("Most shield repairs", (iter) => iter.shieldRepairs,
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most shield repairs", (iter) => iter.shieldRepairs,
                         (iter) => iter.shieldRepairs >= 100,
                         0
                     );
                 } else if (this.mostPlayedClass.icon == "engi") {
-                    make("Most resupplies", (iter) => iter.resupplies,
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most resupplies", (iter) => iter.resupplies,
                         (iter) => iter.resupplies > 0,
                         0
                     );
 
-                    make("Most MAX repairs", (iter) => iter.maxRepair,
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most MAX repairs", (iter) => iter.maxRepair,
                         (iter) => iter.maxRepair > 100,
                         0
                     );
+
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most hardlight assists", (iter) => iter.hardlightAssists,
+                        (iter) => iter.hardlightAssists > 0,
+                        0
+                    );
                 } else if (this.mostPlayedClass.icon == "heavy") {
-                    make("Most assists", (iter) => iter.assists,
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most assists", (iter) => iter.assists,
                         (iter) => iter.assists > 0,
                         0
                     );
 
-                    make("Most MAX kills", (iter) => iter.maxKills,
+                    this.makeSessionBest(sessions, this.infantrySessionBests, "Most MAX kills", (iter) => iter.maxKills,
                         (iter) => iter.maxKills > 0,
                         0
                     );
 
                 }
+            },
+
+            makeVehicleSessionBests: function(): void {
+                this.vehicleSessionBests = [];
+                if (this.wrapped.extra.sessions.length == 0) {
+                    return;
+                }
+
+                const sessions: WrappedSession[] = [...this.wrapped.extra.sessions];
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Highest VKPM",
+                    (iter) => (iter.vehicleKills / (Math.max(1, iter.duration) / 60)),
+                    (iter) => (iter.duration > 300)
+                );
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Most vehicle repairs",
+                    (iter) => iter.vehicleRepair,
+                    (iter) => iter.vehicleRepair > 0,
+                    0
+                );
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Most driver assists",
+                    (iter) => iter.driverAssists,
+                    (iter) => iter.driverAssists > 0,
+                    0
+                );
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Longest vehicle kill streak",
+                    (iter) => iter.vehicleKillStreak,
+                    (iter) => iter.vehicleKillStreak > 4,
+                    0
+                );
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Most vehicle resupplies",
+                    (iter) => iter.vehicleResupply,
+                    (iter) => iter.vehicleResupply > 50,
+                    0
+                );
+
+                this.makeSessionBest(sessions, this.vehicleSessionBests, "Most roadkills",
+                    (iter) => (iter.expEarned.get(26) || 0),
+                    (iter) => ((iter.expEarned.get(26) || 0) > 10),
+                    0
+                );
+
             },
 
             makeCharts: function(): void {
@@ -490,6 +626,7 @@
                     type: "bar", 
                     data: {
                         labels: outfits.map(iter => {
+                            // if a tag is given, only show the tag
                             if (iter.displayName.indexOf("]") > -1) {
                                 return iter.displayName.slice(0, iter.displayName.indexOf("]") + 1);
                             }
@@ -539,7 +676,7 @@
 
                 const vehicles: WrappedVehicleUsage[] = [...this.wrapped.extra.vehicleUsage].sort((a, b) => {
                     return b.killed - a.killed;
-                }).slice(0, 6);
+                }).slice(0, 10);
 
                 this.charts.vehicleKills = new Chart(ctx, {
                     type: "bar", 
@@ -579,7 +716,9 @@
 
             mostUsedInfantryWeapons: function(): WrappedWeaponStats[] {
                 return [...this.wrapped.extra.weaponStats].filter((iter) => {
-                    return iter.item != null && iter.item.isVehicleWeapon == false;
+                    return iter.item != null
+                        && iter.item.isVehicleWeapon == false
+                        && iter.kills > 0;
                 }).sort((a, b) => {
                     return b.kills - a.kills;
                 }).slice(0, 3);
@@ -588,15 +727,18 @@
             mostUsedVehicleWeapons: function(): WrappedWeaponStats[] {
                 return [...this.wrapped.extra.weaponStats].filter((iter) => {
                     return iter.item != null
+                        && iter.vehicleKills > 0
                         && iter.item.isVehicleWeapon == true
                         && iter.item.categoryID != 102; // infantry weapons (MANA turrets)
                 }).sort((a, b) => {
-                    return b.kills - a.kills;
+                    return b.vehicleKills - a.vehicleKills;
                 }).slice(0, 3);
             },
 
             mostUsedVehicles: function(): WrappedVehicleUsage[] {
-                return [...this.wrapped.extra.vehicleUsage].sort((a, b) => {
+                return [...this.wrapped.extra.vehicleUsage].filter(iter => {
+                    return iter.killsAs > 0;
+                }).sort((a, b) => {
                     return b.killsAs - a.killsAs;
                 }).slice(0, 3);
             },
@@ -646,6 +788,8 @@
             Collapsible,
             InfoHover,
             ATable, AFilter, AHeader, ABody, ACol, ARank,
+            WrappedItem,
+            CensusImage
         }
 
     });

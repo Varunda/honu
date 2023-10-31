@@ -306,6 +306,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "image-proxy",
+                    pattern: "/image-proxy/get/{imageID}",
+                    defaults: new { controller = "ImageProxy", action = "Get" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "selectworld",
                     pattern: "/{action}",
                     defaults: new { controller = "Home", action = "SelectWorld" }

@@ -66,6 +66,7 @@ export class Experience {
     public static RESUPPLY: number = 34;
     public static SHIELD_REPAIR: number = 438;
     public static VEHICLE_RESUPPLY: number = 240;
+    public static HARDLIGHT_COVER: number = 1393;
 
     public static SQUAD_HEAL: number = 51;
     public static SQUAD_REVIVE: number = 53;
@@ -168,6 +169,29 @@ export class Experience {
     public static SQUAD_REPAIR_CHIMERA: number = 1571;
     public static SQUAD_REPAIR_DERVISH: number = 1638;
 
+    public static DRIVER_ASSIST_INFANTRY: number = 421;
+    public static DRIVER_ASSIST_FLASH: number = 422;
+    public static DRIVER_ASSIST_ENGI_TURRET: number = 423;
+    public static DRIVER_ASSIST_PHALANX: number = 424;
+    public static DRIVER_ASSIST_DROP_POD: number = 425;
+    public static DRIVER_ASSIST_GALAXY: number = 426;
+    public static DRIVER_ASSIST_LIBERATOR: number = 427;
+    public static DRIVER_ASSIST_LIGHTNING: number = 428;
+    public static DRIVER_ASSIST_MAGRIDGER: number = 429;
+    public static DRIVER_ASSIST_MOSQUITO: number = 430;
+    public static DRIVER_ASSIST_PROWLER: number = 431;
+    public static DRIVER_ASSIST_REAVER: number = 432;
+    public static DRIVER_ASSIST_SCYTHE: number = 433;
+    public static DRIVER_ASSIST_VANGUARD: number = 435;
+    public static DRIVER_ASSIST_HARASSER: number = 436;
+    public static DRIVER_ASSIST_VALK: number = 519;
+    public static DRIVER_ASSIST_ANT: number = 670;
+    public static DRIVER_ASSIST_COLOSSUS: number = 1479;
+    public static DRIVER_ASSIST_JAVELIN: number = 1498;
+    public static DRIVER_ASSIST_CHIMERA: number = 1566;
+    public static DRIVER_ASSIST_DERVISH: number = 1653;
+    public static DRIVER_ASSIST_CORSAIR: number = 2008;
+
     public static VehicleRepairs: number[] = [
         Experience.REPAIR_FLASH, Experience.REPAIR_ENGI_TURRET, Experience.REPAIR_PHALANX, Experience.REPAIR_DROP_POD, Experience.REPAIR_GALAXY,
         Experience.REPAIR_LIBERATOR, Experience.REPAIR_LIGHTNING, Experience.REPAIR_MAGRIDER, Experience.REPAIR_MOSQUITO, Experience.REPAIR_PROWLER,
@@ -183,6 +207,17 @@ export class Experience {
         Experience.SQUAD_REPAIR_SUNDERER, Experience.SQUAD_REPAIR_VANGUARD, Experience.SQUAD_REPAIR_HARASSER, Experience.SQUAD_REPAIR_VALKYRIE,
         Experience.SQUAD_REPAIR_ANT, Experience.SQUAD_REPAIR_COLOSSUS, Experience.SQUAD_REPAIR_JAVELIN,
         Experience.SQUAD_REPAIR_CHIMERA, Experience.SQUAD_REPAIR_DERVISH
+    ];
+
+    public static DriverAssists: number[] = [
+        Experience.DRIVER_ASSIST_INFANTRY, Experience.DRIVER_ASSIST_FLASH, Experience.DRIVER_ASSIST_ENGI_TURRET,
+        Experience.DRIVER_ASSIST_PHALANX, Experience.DRIVER_ASSIST_DROP_POD, Experience.DRIVER_ASSIST_GALAXY,
+        Experience.DRIVER_ASSIST_LIBERATOR, Experience.DRIVER_ASSIST_LIGHTNING, Experience.DRIVER_ASSIST_MAGRIDGER,
+        Experience.DRIVER_ASSIST_MOSQUITO, Experience.DRIVER_ASSIST_PROWLER, Experience.DRIVER_ASSIST_REAVER,
+        Experience.DRIVER_ASSIST_SCYTHE, Experience.DRIVER_ASSIST_VANGUARD, Experience.DRIVER_ASSIST_HARASSER,
+        Experience.DRIVER_ASSIST_VALK, Experience.DRIVER_ASSIST_ANT, Experience.DRIVER_ASSIST_COLOSSUS,
+        Experience.DRIVER_ASSIST_JAVELIN, Experience.DRIVER_ASSIST_CHIMERA, Experience.DRIVER_ASSIST_DERVISH,
+        Experience.DRIVER_ASSIST_CORSAIR
     ];
 
     /**
@@ -281,6 +316,14 @@ export class Experience {
 
     public static isSquadVehicleRepair(expID: number): boolean {
         return Experience.SquadVehicleRepairs.indexOf(expID) > -1;
+    }
+
+    public static isDriverAssist(expID: number): boolean {
+        return Experience.DriverAssists.indexOf(expID) > -1;
+    }
+
+    public static isVehicleResupply(expID: number): boolean {
+        return Experience.VEHICLE_RESUPPLY == expID || Experience.SQUAD_VEHICLE_RESUPPLY == expID;
     }
 
 }
