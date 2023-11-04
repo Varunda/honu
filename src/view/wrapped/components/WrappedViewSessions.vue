@@ -333,9 +333,14 @@
                     }
 
                     week.playtime += (session.end.getTime() - session.start.getTime()) / 1000;
+                    map.set(key, week);
                 }
 
-                this.weekData = Array.from(map.values());
+                this.weekData = Array.from(map.values()).sort((a, b) => {
+                    return a.weekStart.getTime() - b.weekStart.getTime();
+                });
+
+                console.log(`got ${this.weekData.length} from ${this.wrapped.sessions.length} sessions`);
             },
         },
 

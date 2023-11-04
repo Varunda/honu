@@ -94,7 +94,8 @@ namespace watchtower.Services.Hosted {
                     DateTime timestamp = DateTime.UtcNow;
 
                     _Logger.LogDebug($"updating stats for {itemID}");
-                    List<WeaponStatEntry> stats = await _WeaponStatDb.GetByItemID($"{itemID}", 0);
+                    List<WeaponStatEntry> stats = (await _WeaponStatDb.GetByItemID($"{itemID}", 0))
+                        .Where(iter => iter.SecondsWith >= 60).ToList();
 
                     long loadStatsMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
 

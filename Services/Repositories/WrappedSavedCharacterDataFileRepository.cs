@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using watchtower.Models.Wrapped;
@@ -45,14 +46,16 @@ namespace watchtower.Services.Repositories {
                 return null;
             }
 
+            Stopwatch timer = Stopwatch.StartNew();
             JToken j = JToken.Parse(json);
 
             WrappedSavedCharacterData? data = j.ToObject<WrappedSavedCharacterData>();
+            long parseMs = timer.ElapsedMilliseconds;
 
             if (data == null) {
                 _Logger.LogDebug($"Failed to find saved JSON for {charID}");
             } else {
-                _Logger.LogDebug($"Found saved JSON for {charID}");
+                _Logger.LogDebug($"Found saved JSON for {charID}, parsed in {parseMs}ms");
             }
 
             return data;

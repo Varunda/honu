@@ -34,6 +34,11 @@ export class BadHealthEntry {
     public what: string = "";
 }
 
+export class HealthEventProcessLag {
+    public mostRecentEvent: Date = new Date();
+    public processLag: number = 0;
+}
+
 export class HonuHealthApi extends ApiWrapper<HonuHealth> {
     private static _instance: HonuHealthApi = new HonuHealthApi();
     public static get(): HonuHealthApi { return HonuHealthApi._instance; }
@@ -59,6 +64,13 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
         };
     }
 
+    public static parseEventProcessLag(elem: any): HealthEventProcessLag {
+        return {
+            mostRecentEvent: new Date(elem.mostRecentEvent),
+            processLag: elem.processLag
+        };
+    }
+
     public static parse(elem: any): HonuHealth {
         return {
             queues: elem.queues.map((iter: any) => HonuHealthApi.parseQueue(iter)),
@@ -72,6 +84,10 @@ export class HonuHealthApi extends ApiWrapper<HonuHealth> {
 
     public static async getHealth(): Promise<Loading<HonuHealth>> {
         return HonuHealthApi.get().readSingle(`/api/health`, HonuHealthApi.parse);
+    }
+
+    public static async getEventProcessLag(): Promise<Loading<HealthEventProcessLag>> {
+        return HonuHealthApi.get().readSingle(`/api/health/event-process-lag`, HonuHealthApi.parseEventProcessLag);
     }
 
 }

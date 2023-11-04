@@ -54,6 +54,14 @@
                 </div>
             </div>
 
+            <div v-if="showEventProcessLag == true" class="alert alert-danger text-center h4">
+                Honu is {{processLag.data.processLag | mduration}} behind on events, and not all events in this session have been processed yet
+
+                <div class="h5 mt-1">
+                    Most recent event: {{processLag.data.mostRecentEvent | moment("YYYY-MM-DD hh:mm:ss")}}
+                </div>
+            </div>
+
             <collapsible header-text="Session" id="session-info">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
                     <tr>
@@ -86,7 +94,11 @@
                             <info-hover text="What outfit the character is currently in"></info-hover>
                         </td>
                         <td>
-                            <a :href="'/o/' + character.data.outfitID">
+                            <span v-if="character.data.outfitID == '0'">
+                                &lt;no outfit&gt;
+                            </span>
+
+                            <a v-else :href="'/o/' + character.data.outfitID">
                                 <span v-if="character.data.outfitTag != null">
                                     [{{character.data.outfitTag}}]
                                 </span>
@@ -101,12 +113,12 @@
                             <info-hover text="What outfit the character was in when this session was started"></info-hover>
                         </td>
                         <td>
-                            <span v-if="session.data.outfitID == null">
-                                &lt;No outfit&gt;
+                            <span v-if="session.data.outfitID == null || session.data.outfitID == '0'">
+                                &lt;no outfit&gt;
                             </span>
                             <span v-else>
                                 <a :href="'/o/' + session.data.outfitID">
-                                    View
+                                    view
                                 </a>
                             </span>
                         </td>
@@ -352,6 +364,7 @@
     import { RealtimeReconnectEntry, RealtimeReconnectApi } from "api/RealtimeReconnectApi";
     import { ItemCategory } from "api/ItemCategoryApi";
     import { PsItem } from "api/ItemApi";
+    import { HonuHealthApi, HealthEventProcessLag } from "api/HonuHealthApi";
 
     type FullKillEvent = ExpandedKillEvent & { itemCategory: ItemCategory | null };
 
@@ -376,7 +389,8 @@
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
 
-                reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>
+                reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>,
+                processLag: Loadable.idle() as Loading<HealthEventProcessLag>
             }
         },
 
@@ -408,6 +422,7 @@
             },
 
             bindAll: function(): void {
+                this.bindEventProcessLag();
                 this.bindSession();
                 // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
                 this.bindKills();
@@ -515,6 +530,11 @@
                 }
             },
 
+            bindEventProcessLag: async function(): Promise<void> {
+                this.processLag = Loadable.loading();
+                this.processLag = await HonuHealthApi.getEventProcessLag();
+            },
+
             checkAllAndScroll: function(): void {
                 if (this.fullKills.state != "loaded" || this.fullDeaths.state != "loaded" || this.vehicleDestroy.state != "loaded"
                     || this.achievementsEarned.state != "loaded" || this.exp.state != "loaded") {
@@ -600,6 +620,26 @@
                 }
 
                 return this.fullDeaths.data.filter(iter => iter.event.revivedEventID == null);
+            },
+
+            showEventProcessLag: function(): boolean {
+                if (this.session.state != "loaded") {
+                    return false;
+                }
+
+                if (this.processLag.state != "loaded") {
+                    return false;
+                }
+
+                if (this.session.data.end == null && this.processLag.data.processLag > 30) {
+                    return true;
+                }
+
+                if (this.session.data.end != null && this.processLag.data.mostRecentEvent.getTime() < this.session.data.end.getTime()) {
+                    return true;
+                }
+
+                return false;
             }
 
         },

@@ -28,11 +28,16 @@ namespace watchtower.Code.Converters {
             return reader.GetDateTime();
         }
 
+        // 
+        // turns out the 'u' format is not universal, and Safari does not parse it. the 's' format does not work either, as you need to add
+        // the Z yourself which somehow breaks it? Using "s'Z'" you'd get like 23Z, which isn't useful.
+        // so this custom format is ideally what we want
+        //
         // https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings#UniversalSortable
         //
         // Use the 'u' format for the universally sortable format, which is ISO 8601
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options) {
-            writer.WriteStringValue(value.ToString("u"));
+            writer.WriteStringValue(value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'"));
         }
 
     }

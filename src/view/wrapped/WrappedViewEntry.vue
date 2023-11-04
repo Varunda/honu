@@ -248,6 +248,15 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+
+                    <div style="flex-grow: 1;" class="ml-2">
+                        <wrapped-view-achievements :wrapped="filteredWrapped"></wrapped-view-achievements>
+                    </div>
+                </div>
+
+
+                <div class="d-flex flex-row w-100 mb-3" style="">
                     <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--yellow), var(--purple))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
@@ -303,6 +312,7 @@
     import WrappedViewVehicle from "./components/WrappedViewVehicle.vue";
     import WrappedViewExp from "./components/WrappedViewExp.vue";
     import WrappedViewFacility from "./components/WrappedViewFacility.vue";
+    import WrappedViewAchievements from "./components/WrappedViewAchievements.vue";
     import WrappedViewHighlight from "./components/WrappedViewHighlight.vue";
 
     const WRAPPED: WrappedEntry = new WrappedEntry();
@@ -450,6 +460,11 @@
             },
 
             onSendSessions: function(sessions: Session[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got sessions again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const s of sessions) {
                     const session: Session = SessionApi.parse(s);
                     WRAPPED.sessions.push(session);
@@ -459,6 +474,11 @@
             },
 
             onSendKills: function(events: KillEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got kills again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: KillEvent = KillStatApi.parseKillEvent(ev);
 
@@ -473,6 +493,11 @@
             },
 
             onSendDeaths: function(events: KillEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got death again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: KillEvent = KillStatApi.parseKillEvent(ev);
 
@@ -486,6 +511,11 @@
             },
 
             onSendExp: function(events: ExpEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got exp again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: ExpEvent = ExpStatApi.parseExpEvent(ev);
                     WRAPPED.exp.push(event);
@@ -494,6 +524,11 @@
             },
 
             onSendAchievementEarned: function(events: AchievementEarned[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got achievement again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: AchievementEarned = AchievementEarnedApi.parse(ev);
                     WRAPPED.achievementEarned.push(event);
@@ -502,6 +537,11 @@
             },
 
             onSendFacilityControl: function(events: FacilityControlEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got facility control again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: FacilityControlEvent = FacilityControlEventApi.parse(ev);
                     WRAPPED.controlEvents.push(event);
@@ -509,6 +549,11 @@
             },
 
             onSendItemAdded: function(events: ItemAddedEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got item added again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: ItemAddedEvent = ItemAddedEventApi.parse(ev);
                     WRAPPED.itemAdded.push(event);
@@ -517,6 +562,11 @@
             },
 
             onSendVehicleDestroy: function(events: VehicleDestroyEvent[]): void {
+                if (this.steps.vehicleDestroy == true) {
+                    console.warn(`got vehicle destroy again, this likely means that multiple people are loading this wrapped. ignoring`);
+                    return;
+                }
+
                 for (const ev of events) {
                     const event: VehicleDestroyEvent = VehicleDestroyEventApi.parse(ev);
 
@@ -649,7 +699,7 @@
             Busy,
             WrappedSimpleCard,
             WrappedViewHeader, WrappedViewGeneral, WrappedViewCharacterInteractions, WrappedViewSessions, WrappedViewClasses, WrappedViewWeapons,
-            WrappedViewVehicle, WrappedViewExp, WrappedViewFacility,
+            WrappedViewVehicle, WrappedViewExp, WrappedViewFacility, WrappedViewAchievements,
             WrappedViewHighlight
         }
     });

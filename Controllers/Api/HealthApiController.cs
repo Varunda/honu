@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Api;
 using watchtower.Models.Health;
+using watchtower.Realtime;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
@@ -25,6 +26,7 @@ namespace watchtower.Controllers.Api {
         private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
         private readonly BadHealthRepository _BadHealthRepository;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
+        private readonly IEventHandler _EventHandler;
 
         private readonly CharacterCacheQueue _CharacterCache;
         private readonly SessionStarterQueue _SessionQueue;
@@ -44,7 +46,8 @@ namespace watchtower.Controllers.Api {
             DiscordMessageQueue discordQueue, BadHealthRepository badHealthRepository,
             RealtimeReconnectDbStore reconnectDb, WeaponUpdateQueue weaponUpdateQueue,
             SessionEndQueue sessionEndQueue, WrappedGenerationQueue wrappedQueue,
-            FacilityControlEventProcessQueue facilityControlQueue, PriorityCharacterUpdateQueue priorityCharacterQueue) {
+            FacilityControlEventProcessQueue facilityControlQueue, PriorityCharacterUpdateQueue priorityCharacterQueue,
+            IEventHandler eventHandler) {
 
             _Logger = logger;
             _Cache = cache;
@@ -63,6 +66,7 @@ namespace watchtower.Controllers.Api {
             _WrappedQueue = wrappedQueue;
             _FacilityControlQueue = facilityControlQueue;
             _PriorityCharacterQueue = priorityCharacterQueue;
+            _EventHandler = eventHandler;
         }
 
         /// <summary>
@@ -178,6 +182,28 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(reconnects);
+        }
+
+        /// <summary>
+        ///     Get the realtime event process lag
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a <see cref="HealthEventProcessDelay"/> that contains
+        ///     information about the timestamp of the last processed event, and how many seconds ago
+        ///     that was. While the seconds ago can be derived from the last processed event, this
+        ///     accounts for any time differences between the honu server and whoever is calling this endpoint
+        /// </response>
+        [HttpGet("event-process-lag")]
+        public ApiResponse<HealthEventProcessDelay> GetEventProcessLag() {
+            DateTime mostRecent = _EventHandler.MostRecentProcess();
+            int secondsBehind = (int) Math.Floor((DateTime.UtcNow - mostRecent).TotalSeconds);
+
+            HealthEventProcessDelay delay = new() {
+                MostRecentEvent = mostRecent,
+                ProcessLag = secondsBehind
+            };
+
+            return ApiOk(delay);
         }
 
     }
