@@ -14,6 +14,7 @@ namespace watchtower.Services.Repositories.Readers {
             contact.Email = values.GetRequiredString(2);
             contact.DiscordID = values.GetRequiredUInt64(4);
             contact.RepType = values.GetRequiredString(5);
+            contact.AccountLimit = values.GetRequiredInt32(6);
 
             return contact;
         }

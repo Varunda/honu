@@ -120,6 +120,16 @@ namespace watchtower.Services.Repositories.Readers {
             return r;
         }
 
+        public static int GetRequiredInt32(this List<string?> cols, int index) {
+            string value = cols.GetRequiredString(index);
+
+            if (int.TryParse(value, out int r) == false) {
+                throw new FormatException($"'{value}' is not a valid int");
+            }
+
+            return r;
+        }
+
     }
 
 }

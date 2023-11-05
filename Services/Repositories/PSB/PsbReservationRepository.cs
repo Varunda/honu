@@ -213,6 +213,12 @@ namespace watchtower.Services.Repositories.PSB {
                 if (res.Accounts > 0) {
                     errors.AddRange(repErrors);
                 }
+
+                PsbOvOContact minAccounts = res.Contacts.MinBy(iter => iter.AccountLimit)!;
+                _Logger.LogDebug($"max accounts is {minAccounts.AccountLimit} from {minAccounts.DiscordID}");
+                if (res.Accounts > minAccounts.AccountLimit) {
+                    errors.Add($"<@{minAccounts.DiscordID}>/{minAccounts.Name} can only request up to {minAccounts.AccountLimit} accounts");
+                }
             }
             if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
             if (res.Start == default || res.End == default) {

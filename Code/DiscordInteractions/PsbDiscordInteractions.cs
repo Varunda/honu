@@ -918,15 +918,27 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            if (parsed.Reservation.Accounts >= 48) {
+            PsbOvOContact? maxAccounts = parsed.Reservation.Contacts.MinBy(iter => iter.AccountLimit);
+            if (maxAccounts == null) {
+                await ctx.Interaction.EditResponseErrorEmbed($"cannot approve accounts:\nmissing min account limit entry");
+                return;
+            }
+
+            if (parsed.Reservation.Accounts >= 48 || maxAccounts.AccountLimit > parsed.Reservation.Accounts) {
                 if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong adminID) == false) {
                     await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-admin $ROLE_ID`");
                     return;
                 }
 
                 if (ctx.Member.HasRole(adminID) == false) {
-                    await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\n"
-                        + $"This reservation requests 48 or more accounts ({parsed.Reservation.Accounts}), which can only be approved by OvO admins");
+                    if (parsed.Reservation.Accounts >= 48) {
+                        await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\n"
+                            + $"This reservation requests 48 or more accounts ({parsed.Reservation.Accounts}), which can only be approved by OvO admins"); 
+                    } else {
+                        await ctx.Interaction.EditResponseErrorEmbed($"Cannot approve accounts:\n"
+                            + $"This reservation requests {parsed.Reservation.Accounts}, while <@{maxAccounts.DiscordID}>/{maxAccounts.Name} has a limit of {maxAccounts.AccountLimit}"); 
+                    }
+
                     return;
                 }
             }
@@ -985,6 +997,12 @@ namespace watchtower.Code.DiscordInteractions {
             parsed.Metadata.OverrideById = null;
             await _MetadataDb.Upsert(parsed.Metadata);
 
+            DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
+                .WithTitle("Reservation reset")
+                .WithDescription($"<@{ctx.User.Id}>/{ctx.User.Username} reset the reservation. Remember to update the calendar and sheet!")
+                .WithColor(DiscordColor.Purple);
+
+            await ctx.Channel.SendMessageAsync(builder);
             await ctx.Interaction.EditResponseText($"Reset reservation");
         }
 
