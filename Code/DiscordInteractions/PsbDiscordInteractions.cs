@@ -924,7 +924,7 @@ namespace watchtower.Code.DiscordInteractions {
                 return;
             }
 
-            if (parsed.Reservation.Accounts >= 48 || maxAccounts.AccountLimit > parsed.Reservation.Accounts) {
+            if (parsed.Reservation.Accounts >= 48 || maxAccounts.AccountLimit < parsed.Reservation.Accounts) {
                 if (_RoleMapping.Value.Mappings.TryGetValue("ovo-admin", out ulong adminID) == false) {
                     await ctx.Interaction.EditResponseErrorEmbed("setup error: role mapping for `ovo-admin` is missing. Use `dotnet user-secrets set PsbRoleMapping:Mappings:ovo-admin $ROLE_ID`");
                     return;
