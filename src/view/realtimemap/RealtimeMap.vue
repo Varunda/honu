@@ -445,7 +445,35 @@
                     return console.warn(`cannot update flip commands: ownershipData is null`);
                 }
 
-                let currentCommand: string = "/alias a:facility setfaction;alias v:a 1; alias n:a 2; alias t:a 3; alias s:a 4;";
+                let needVs: boolean = false;
+                let needNc: boolean = false;
+                let needTr: boolean = false;
+                let needNs: boolean = false;
+
+                for (const entry of Array.from(this.ownershipData.facilities.entries())) {
+                    const owner: PsFacilityOwner = entry[1];
+
+                    if (owner.flipOwner != undefined && owner.owner != owner.flipOwner) {
+                        if (owner.flipOwner == 1) {
+                            needVs = true;
+                        } else if (owner.flipOwner == 2) {
+                            needNc = true;
+                        } else if (owner.flipOwner == 3) {
+                            needTr = true;
+                        } else if (owner.flipOwner == 4) {
+                            needNs = true;
+                        } else {
+                            console.warn(`unchecked flipOwner of ${owner.facilityID}= ${owner.flipOwner}`);
+                        }
+                    }
+                }
+
+                let currentCommand: string = "/alias a:facility setfaction;";
+
+                if (needVs == true) { currentCommand += "alias v: a 1;"; }
+                if (needNc == true) { currentCommand += "alias n: a 2;"; }
+                if (needTr == true) { currentCommand += "alias n: a 3;"; }
+                if (needNs == true) { currentCommand += "alias n: a 4;"; }
 
                 this.ownershipData.facilities.forEach((owner: PsFacilityOwner) => {
                     if (owner.flipOwner != undefined && owner.owner != owner.flipOwner) {
