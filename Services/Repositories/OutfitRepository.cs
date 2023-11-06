@@ -229,7 +229,15 @@ namespace watchtower.Services.Repositories {
             List<PsOutfit> census = new List<PsOutfit>();
 
             // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
-            Task<List<PsOutfit>> nameWrapper = Task.Run(() => _Census.SearchByName(tagOrName));
+            Task<List<PsOutfit>> nameWrapper;
+            if (tagOnly == true) {
+                nameWrapper = Task.FromResult(new List<PsOutfit>());
+            } else {
+                nameWrapper = tagOrName.Length >= 3
+                    ? Task.Run(() => _Census.SearchByName(tagOrName))
+                    : Task.Run(() => _Census.GetByName(tagOrName));
+            }
+
             Task<PsOutfit?> tagWrapper = (tagOnly == false) ? Task.Run(() => _Census.GetByTag(tagOrName)) : Task.FromResult<PsOutfit?>(null);
 
             // If the DB had results, set a timeout so this method is kinda quick for that speedy lookup time, 

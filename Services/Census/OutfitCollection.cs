@@ -108,7 +108,24 @@ namespace watchtower.Services.Census {
         /// <returns></returns>
         public Task<List<PsOutfit>> SearchByName(string name) {
             CensusQuery query = _Census.Create("outfit");
-            query.Where("name_lower").Contains(name);
+            query.Where("name_lower").Contains(name.ToLower());
+            query.AddResolve("leader");
+            query.SetLimit(100);
+
+            return _Reader.ReadList(query);
+        }
+
+        /// <summary>
+        ///     Get the name of an outfit (case-insensitive) by name
+        /// </summary>
+        /// <param name="name">name of the outfit to get</param>
+        /// <returns>
+        ///     A list of <see cref="PsOutfit"/> with a lower <see cref="PsOutfit.Name"/>
+        ///     equal to a lower case of <paramref name="name"/>
+        /// </returns>
+        public Task<List<PsOutfit>> GetByName(string name) {
+            CensusQuery query = _Census.Create("outfit");
+            query.Where("name_lower").Equals(name.ToLower());
             query.AddResolve("leader");
             query.SetLimit(100);
 
