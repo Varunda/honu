@@ -300,7 +300,7 @@
                     if (newAccount.state == "loaded") {
                         ++successCount;
                     } else if (newAccount.state == "error") {
-                        Toaster.add(`Error creating ${tag}x${name}`, `Error: ${newAccount.message}`, "warning");
+                        Toaster.add(`Error creating ${tag}x${name}`, `Error: ${newAccount.problem.detail}`, "warning");
                         ++errorCount;
                     }
                 }

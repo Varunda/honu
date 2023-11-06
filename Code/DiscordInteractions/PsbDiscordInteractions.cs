@@ -570,7 +570,8 @@ namespace watchtower.Code.DiscordInteractions {
             // find all the characters that have one of the names we care about
             List<PsCharacter> chars = new(characters.Count);
             foreach (string charName in characters) {
-                PsCharacter? c = await _CharacterRepository.GetFirstByName(charName);
+                // fast, as we know the character exists in the db
+                PsCharacter? c = await _CharacterRepository.GetFirstByName(charName, fast: true);
                 if (c != null) {
                     chars.Add(c);
                 } else {

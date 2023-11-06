@@ -281,14 +281,15 @@ namespace watchtower.Services.Repositories {
         ///     This return is a list, as deleted characters name have may be reused
         /// </remarks>
         /// <param name="name">Name to get</param>
+        /// <param name="fast">If true, no Census lookup is done, only a DB search</param>
         /// <returns></returns>
-        public async Task<List<PsCharacter>> GetByName(string name) {
+        public async Task<List<PsCharacter>> GetByName(string name, bool fast = false) {
             string key = string.Format(CACHE_KEY_NAME, name);
 
             if (_Cache.TryGetValue(key, out List<PsCharacter> characters) == false) {
                 characters = await _Db.GetByName(name);
 
-                PsCharacter? live = await _Census.GetByName(name);
+                PsCharacter? live = (fast == false) ? await _Census.GetByName(name) : null;
 
                 // If the character exists in db and census only add once
                 if (live != null && characters.FirstOrDefault(iter => iter.ID == live.ID) == null) {
@@ -402,9 +403,10 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="repo"></param>
         /// <param name="name">Name to get (case-insensitive)</param>
+        /// <param name="fast">If true, no Census query will be done</param>
         /// <returns></returns>
-        public static async Task<PsCharacter?> GetFirstByName(this CharacterRepository repo, string name) {
-            List<PsCharacter> chars = await repo.GetByName(name);
+        public static async Task<PsCharacter?> GetFirstByName(this CharacterRepository repo, string name, bool fast = false) {
+            List<PsCharacter> chars = await repo.GetByName(name, fast);
             chars = chars.OrderByDescending(iter => iter.DateLastLogin).ToList();
 
             if (chars.Count == 0) {

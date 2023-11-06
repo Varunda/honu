@@ -141,7 +141,8 @@
 
     export const PsbNamedAccountCreateModal = Vue.extend({
         props: {
-            entries: { type: Array as PropType<FlatPsbNamedAccount[]>, required: true }
+            entries: { type: Array as PropType<FlatPsbNamedAccount[]>, required: true },
+            TypeId: { type: Number, required: true }
         },
 
         data: function() {

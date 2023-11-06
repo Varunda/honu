@@ -58,6 +58,13 @@
                 </tr>
 
                 <tr>
+                    <th>World</th>
+                    <td>
+                        {{character.worldID | world}}
+                    </td>
+                </tr>
+
+                <tr>
                     <th>Last login</th>
                     <td>
                         {{character.dateLastLogin | moment}}
@@ -158,6 +165,7 @@
     import "MomentFilter";
     import "filters/TimeAgoFilter";
     import "filters/FactionNameFilter";
+    import "filters/WorldNameFilter";
 
     import { PsCharacter } from "api/CharacterApi";
     import { Session, SessionApi } from "api/SessionApi";

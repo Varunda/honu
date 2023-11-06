@@ -14,8 +14,8 @@
             <div class="flex-grow-1">
                 <h4>Filters</h4>
                 <div>
-                    <button type="button" class="btn" :class="[ filter.missingCharacter ? 'btn-primary' : 'btn-secondary' ]" @click="filter.missingCharacters = !filter.missingCharacters">
-                        <span v-if="filter.missingCharacter">Y</span>
+                    <button type="button" class="btn" :class="[ filter.missingCharacters ? 'btn-primary' : 'btn-secondary' ]" @click="filter.missingCharacters = !filter.missingCharacters">
+                        <span v-if="filter.missingCharacters">Y</span>
                         <span v-else>N</span>
                     </button>
 
@@ -342,7 +342,7 @@
         </div>
 
         <div class="modal" id="account-create-modal">
-            <psb-named-account-create-modal v-if="create.opened == true" :entries="filtered.data">
+            <psb-named-account-create-modal v-if="create.opened == true" :entries="filtered.data" :type-id="TypeId">
             </psb-named-account-create-modal>
         </div>
     </div>
