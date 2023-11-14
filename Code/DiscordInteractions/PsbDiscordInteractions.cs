@@ -288,6 +288,7 @@ namespace watchtower.Code.DiscordInteractions {
             [Option("offset", "offset to start from")] long? offset = 0) {
             await ctx.CreateDeferred(false);
 
+            _ContactRepository.ClearCache();
             List<PsbOvOContact> ovo = await _ContactRepository.GetOvOContacts();
 
             DiscordWebhookBuilder interactionBuilder = new();
@@ -339,6 +340,7 @@ namespace watchtower.Code.DiscordInteractions {
             [Option("offset", "offset to start from")] long? offset = 0) {
             await ctx.CreateDeferred(false);
 
+            _ContactRepository.ClearCache();
             List<PsbPracticeContact> ovo = await _ContactRepository.GetPracticeContacts();
 
             DiscordWebhookBuilder interactionBuilder = new();

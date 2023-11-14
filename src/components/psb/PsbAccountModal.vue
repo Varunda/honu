@@ -221,7 +221,7 @@
                     Toaster.add("Successfully renamed account", `Account successfully renamed to ${this.edit.tag}x${this.edit.name}`, "success");
                     this.cancelEdit();
                 } else if (this.edit.response.state == "error") {
-                    Toaster.add("Failed to rename account", `Failed to rename account: ${this.edit.response.message}`, "danger");
+                    Toaster.add("Failed to rename account", `Failed to rename account: ${this.edit.response.problem.detail}`, "danger");
                 }
             },
 
@@ -237,7 +237,7 @@
                     EventBus.$emit("rebind-accounts");
                     console.log(`Successfully marked account as deleted`);
                 } else if (status.state == "error") {
-                    console.error(`Error when deleting account ${this.account.id}: ${status.message}`);
+                    console.error(`Error when deleting account ${this.account.id}: ${status.problem.detail}`);
                 }
                 this.loading.delete = false;
             },
@@ -249,7 +249,7 @@
                     console.log(`Successfully recheck account ${this.account.id}`);
                     EventBus.$emit("rebind-accounts");
                 } else if (status.state == "error") {
-                    console.error(`Error when rechecking account ${this.account.id}: ${status.message}`);
+                    console.error(`Error when rechecking account ${this.account.id}: ${status.problem.detail}`);
                 }
                 this.loading.recheck = false;
             }

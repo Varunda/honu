@@ -160,9 +160,11 @@ namespace watchtower.Code.Commands {
                 string tagg = split[0].Trim();
                 string name = split[1].Trim();
 
-                await _NamedRepository.Create(tagg, name, accountType);
-                _Logger.LogInformation($"Created {tagg}x{name} with type {accountType}");
+                PsbAccount acc = await _NamedRepository.Create(tagg, name, accountType);
+                _Logger.LogInformation($"Created {tagg}x{name} with type {accountType} with ID {acc.ID}");
             }
+
+            _Logger.LogInformation("done!");
 
         }
 

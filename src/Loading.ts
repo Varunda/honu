@@ -79,7 +79,7 @@ export class Loadable {
                         type: "generic-error",
                         title: `generic error: ${err}`,
                         status: 0,
-                        detail: "",
+                        detail: err,
                         instance: ""
                     }
                 };

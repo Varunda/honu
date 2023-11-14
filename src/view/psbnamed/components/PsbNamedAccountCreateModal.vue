@@ -170,7 +170,7 @@
 
             create: async function(): Promise<void> {
                 this.createResponse = Loadable.loading();
-                this.createResponse = await PsbNamedAccountApi.create(this.tag, this.characterName, PsbAccountType.NAMED);
+                this.createResponse = await PsbNamedAccountApi.create(this.tag, this.characterName, this.TypeId);
 
                 if (this.createResponse.state == "loaded") {
                     Toaster.add("Named account created", `Successfully created a named account for ${this.tag}x${this.characterName}`, "success");
@@ -184,7 +184,12 @@
                         this.showSuccess = false;
                     }, 8000);
                 } else {
-                    Toaster.add("Failed!", `Failed to create named account:\n${(this.createResponse as any).message}`, "danger");
+                    if (this.createResponse.state == "error") {
+                        Toaster.add("Failed!", `Failed to create named account:\n${this.createResponse.problem.detail}`, "danger");
+                    } else {
+                        Toaster.add("Failed!", `Failed to create named account:\n${(this.createResponse as any).message}`, "danger");
+                    }
+
                 }
             }
         },
