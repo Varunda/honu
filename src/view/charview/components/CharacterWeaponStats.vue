@@ -9,6 +9,10 @@
                 Show images
             </toggle-button>
 
+            <toggle-button v-model="showVehicleNames">
+                Show vehicle names
+            </toggle-button>
+
             <toggle-button v-model="showNonWeapons">
                 Show non-weapons
                 <info-hover text="Show all item stats, not just weapons. This will include items such as medkits and spawn beacons" class="px-1"></info-hover>
@@ -58,6 +62,14 @@
                             ">
 
                             {{entry.itemName}}
+                            <span v-if="showVehicleNames == true && entry.vehicleID != 0">
+                                <span v-if="entry.vehicle != null">
+                                    ({{entry.vehicle.name}})
+                                </span>
+                                <span v-else>
+                                    (unknown {{entry.vehicleID}})
+                                </span>
+                            </span>
                             <span v-if="showDebug == true">
                                 / {{entry.itemID}}
                             </span>
@@ -278,7 +290,8 @@
                 showImages: true as boolean,
                 showNonWeapons: false as boolean,
                 showExtraInfo: false as boolean,
-                showPercent: true as boolean
+                showPercent: true as boolean,
+                showVehicleNames: true as boolean
             }
         },
 
