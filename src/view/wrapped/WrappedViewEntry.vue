@@ -629,6 +629,7 @@
                 for (const expType of expTypes) {
                     WRAPPED.expTypes.set(expType.id, expType);
                 }
+                this.steps.expTypes = true;
 
                 console.log(`got ${expTypes.length} exp types`);
             },
@@ -637,6 +638,7 @@
                 for (const f of facs) {
                     WRAPPED.facilities.set(f.facilityID, f);
                 }
+                this.steps.facilities = true;
 
                 console.log(`got ${facs.length} facilities`);
             },

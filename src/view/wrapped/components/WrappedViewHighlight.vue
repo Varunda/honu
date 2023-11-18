@@ -80,7 +80,13 @@
     // general
     import Vue, { PropType } from "vue";
     import { WrappedEntry } from "api/WrappedApi";
+
+    // chart stuff
     import Chart from "chart.js/auto/auto.esm";
+    Chart.defaults.responsive = true;
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.plugins.legend.display = false;
+    Chart.defaults.scales.linear.ticks.color = "white";
 
     // util
     import ColorUtils from "util/Color";

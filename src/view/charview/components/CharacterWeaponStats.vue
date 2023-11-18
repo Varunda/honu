@@ -314,6 +314,31 @@
             loadEntries: async function(): Promise<void> {
                 this.entries = Loadable.loading();
                 this.entries = await CharacterWeaponStatApi.getByCharacterID(this.character.id);
+
+                if (this.entries.state == "loaded") {
+                    const map: Map<string, CharacterWeaponStatEntry> = new Map();
+
+                    // removes possible duplicates by only using the most recent item data
+                    // this is due to bad data, where some vehicle weapons have duplicate entries
+                    for (const entry of this.entries.data) {
+                        if (entry.itemID == "0") {
+                            map.set(`${entry.itemID}-${entry.vehicleID}`, entry);
+                            continue;
+                        }
+
+                        if (map.has(entry.itemID) == false) {
+                            map.set(entry.itemID, entry);
+                        } else {
+                            const prev: CharacterWeaponStatEntry = map.get(entry.itemID)!;
+                            if (entry.timestamp.getTime() > prev.timestamp.getTime()) {
+                                map.set(entry.itemID, entry);
+                            }
+                        }
+                    }
+
+                    this.entries = Loadable.loaded(Array.from(map.values()));
+                }
+
             }
         },
 
