@@ -81,7 +81,9 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<AchievementEarnedEvent>> LoadWrapped(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from achievement_earned_{year:yyyy}

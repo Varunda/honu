@@ -203,6 +203,7 @@ namespace watchtower.Services.Hosted {
             await SendStaticData(entry);
 
             entry.Status = WrappedEntryStatus.DONE;
+            await HubUpdateStatus(entry, WrappedStatus.DONE);
             await _WrappedDb.UpdateStatus(entry.ID, entry.Status);
         }
 

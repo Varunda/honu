@@ -42,6 +42,16 @@ namespace watchtower.Services.Db {
         /// </summary>
         public const string CHARACTER = "character";
 
+        /// <summary>
+        ///     DB for wrapped for 2022
+        /// </summary>
+        public const string WRAPPED_2022 = "wrapped_2022";
+
+        /// <summary>
+        ///     DB for wrapped for 2023
+        /// </summary>
+        public const string WRAPPED_2023 = "wrapped_2023";
+
     }
 
     public static class IDbHelperExtensions {

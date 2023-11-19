@@ -117,7 +117,9 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<VehicleDestroyEvent>> LoadWrappedKills(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from vehicle_destroy_kill_{year:yyyy}
@@ -133,7 +135,9 @@ namespace watchtower.Services.Db {
         }
 
         public async Task<List<VehicleDestroyEvent>> LoadWrappedDeaths(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from vehicle_destroy_death_{year:yyyy}

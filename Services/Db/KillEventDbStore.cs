@@ -519,7 +519,9 @@ namespace watchtower.Services.Db {
         ///     with a <see cref="KillEvent.AttackerCharacterID"/> of <paramref name="charID"/>
         /// </returns>
         public async Task<List<KillEvent>> LoadWrappedKills(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from wt_kills_{year:yyyy}
@@ -544,7 +546,9 @@ namespace watchtower.Services.Db {
         ///     with a <see cref="KillEvent.KilledCharacterID"/> of <paramref name="charID"/>
         /// </returns>
         public async Task<List<KillEvent>> LoadWrappedDeaths(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from wt_deaths_{year:yyyy}

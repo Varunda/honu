@@ -91,7 +91,9 @@ namespace watchtower.Services.Db {
         /// <param name="year"></param>
         /// <returns></returns>
         public async Task<List<ItemAddedEvent>> LoadWrapped(string charID, DateTime year) {
-            using NpgsqlConnection conn = _DbHelper.Connection();
+            string db = $"wrapped_{year:yyyy}";
+
+            using NpgsqlConnection conn = _DbHelper.Connection(db);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     from item_added_{year:yyyy}

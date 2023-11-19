@@ -544,13 +544,14 @@ namespace watchtower.Controllers.Api {
         ///     Because characters can be deleted and names reused, names are not unique
         /// </remarks>
         /// <param name="name">Name of the character to get</param>
+        /// <param name="fast">If a Census lookup will be skipped. Defaults to <c>false</c>, not skipped</param>
         /// <response code="200">
         ///     The response will contain a list of all <see cref="PsCharacter"/>s with 
         ///     <see cref="PsCharacter.Name"/> of <paramref name="name"/>
         /// </response>
         [HttpGet("characters/name/{name}")]
-        public async Task<ApiResponse<List<PsCharacter>>> GetByName(string name) {
-            List<PsCharacter> chars = await _CharacterRepository.GetByName(name);
+        public async Task<ApiResponse<List<PsCharacter>>> GetByName(string name, [FromQuery] bool fast = false) {
+            List<PsCharacter> chars = await _CharacterRepository.GetByName(name, fast);
 
             return ApiOk(chars);
         }
