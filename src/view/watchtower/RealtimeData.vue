@@ -1044,7 +1044,26 @@
             },
 
             populationAll: function(): WorldZonePopulation[] {
-                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Hossin);
+
+                const map: Map<number, WorldZonePopulation> = new Map();
+
+                for (const entry of this.worldData.population) {
+                    let i: WorldZonePopulation | undefined = map.get(entry.timestamp.getTime());
+                    if (i == undefined) {
+                        i = new WorldZonePopulation();
+                        i.timestamp = entry.timestamp;
+                    }
+
+                    i.total += entry.total;
+                    i.factionVs += entry.factionVs;
+                    i.factionNc += entry.factionNc;
+                    i.factionTr += entry.factionTr;
+                    i.factionNs += entry.factionNs;
+
+                    map.set(entry.timestamp.getTime(), i);
+                }
+
+                return Array.from(map.values());
             },
 
             populationIndar: function(): WorldZonePopulation[] {
