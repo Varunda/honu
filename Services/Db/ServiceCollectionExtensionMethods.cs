@@ -99,6 +99,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<PsbParsedReservationDbStore>();
             services.AddSingleton<WrappedDbStore>();
             services.AddSingleton<RealtimeMapStateDbStore>();
+            services.AddSingleton<WorldZonePopulationDbStore>();
         }
 
     }

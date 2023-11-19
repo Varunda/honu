@@ -31,6 +31,7 @@ namespace watchtower.Services.Repositories {
         private readonly ItemRepository _ItemRepository;
         private readonly RealtimeMapStateRepository _RealtimeMapStateRepository;
         private readonly FacilityRepository _FacilityRepository;
+        private readonly WorldZonePopulationDbStore _WorldZonePopulationDb;
 
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
@@ -46,7 +47,8 @@ namespace watchtower.Services.Repositories {
             IWorldTotalDbStore worldTotalDb, ItemRepository itemRepo,
             WorldTagManager tagManager, RealtimeReconnectDbStore reconnectDb,
             CensusRealtimeHealthRepository healthRepository, IEventHandler eventHandler,
-            RealtimeMapStateRepository realtimeMapStateRepository, FacilityRepository facilityRepository) {
+            RealtimeMapStateRepository realtimeMapStateRepository, FacilityRepository facilityRepository,
+            WorldZonePopulationDbStore worldZonePopulationDb) {
 
             _Logger = logger;
 
@@ -65,6 +67,7 @@ namespace watchtower.Services.Repositories {
             _EventHandler = eventHandler;
             _RealtimeMapStateRepository = realtimeMapStateRepository;
             _FacilityRepository = facilityRepository;
+            _WorldZonePopulationDb = worldZonePopulationDb;
         }
 
         /// <summary>
@@ -105,9 +108,9 @@ namespace watchtower.Services.Repositories {
                 WorldID = worldID
             };
 
-            ExpEntryOptions vsExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.VS };
-            ExpEntryOptions ncExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.NC };
-            ExpEntryOptions trExpOptions = new ExpEntryOptions() { Interval = duration, WorldID = worldID, FactionID = Faction.TR };
+            ExpEntryOptions vsExpOptions = new() { Interval = duration, WorldID = worldID, FactionID = Faction.VS };
+            ExpEntryOptions ncExpOptions = new() { Interval = duration, WorldID = worldID, FactionID = Faction.NC };
+            ExpEntryOptions trExpOptions = new() { Interval = duration, WorldID = worldID, FactionID = Faction.TR };
 
             using (Activity? interval = HonuActivitySource.Root.StartActivity("exp heals")) {
                 ncExpOptions.ExperienceIDs = trExpOptions.ExperienceIDs = vsExpOptions.ExperienceIDs = new List<int>() { Experience.HEAL, Experience.SQUAD_HEAL };
@@ -399,7 +402,10 @@ namespace watchtower.Services.Repositories {
                         Facility = await _FacilityRepository.GetByRegionID(fight.RegionID)
                     });
                 }
+            }
 
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("population")) {
+                data.Population = await _WorldZonePopulationDb.GetByWorld(worldID, DateTime.UtcNow - TimeSpan.FromMinutes(duration), DateTime.UtcNow);
             }
 
             time.Stop();

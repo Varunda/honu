@@ -118,6 +118,10 @@
                     {{worldID | world}}
                     player count
                     <info-hover text="Continents are hidden if they have less than 20 players"></info-hover>
+
+                    <toggle-button v-model="showZonePops" class="btn-sm">
+                        Show continent population charts
+                    </toggle-button>
                 </h4>
 
                 <table id="world_pop" class="table" style="table-layout: fixed; text-align: center;">
@@ -126,23 +130,23 @@
                             Server
                             <info-hover text="Players currently online"></info-hover>
                         </th>
-                        <th colspan="5" v-if="indarCount > 19" class="border-right">
+                        <th colspan="5" v-if="indarCount > 19 || worldID == 19" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=2&showUI=true'">Indar</a>
                             <continent-metadata :metadata="worldData.continentCount.indar.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="hossinCount > 19" class="border-right">
+                        <th colspan="5" v-if="hossinCount > 19 || worldID == 19" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=4&showUI=true'">Hossin</a>
                             <continent-metadata :metadata="worldData.continentCount.hossin.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="amerishCount > 19" class="border-right">
+                        <th colspan="5" v-if="amerishCount > 19 || worldID == 19" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=6&showUI=true'">Amerish</a>
                             <continent-metadata :metadata="worldData.continentCount.amerish.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="esamirCount > 19" class="border-right">
+                        <th colspan="5" v-if="esamirCount > 19 || worldID == 19" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=8&showUI=true'">Esamir</a>
                             <continent-metadata :metadata="worldData.continentCount.esamir.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="oshurCount > 19" class="border-right">
+                        <th colspan="5" v-if="oshurCount > 19 || worldID == 19" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=344&showUI=true'">Oshur</a>
                             <continent-metadata :metadata="worldData.continentCount.oshur.metadata"></continent-metadata>
                         </th>
@@ -160,7 +164,7 @@
                         <td>{{totalTRCount}} TR</td>
                         <td class="border-right">{{totalNSCount}} NS</td>
 
-                        <template v-if="indarCount > 19">
+                        <template v-if="indarCount > 19 || worldID == 19">
                             <td>All: {{indarCount}}</td>
                             <td>{{worldData.continentCount.indar.vs}} VS</td>
                             <td>{{worldData.continentCount.indar.nc}} NC</td>
@@ -168,7 +172,7 @@
                             <td class="border-right">{{worldData.continentCount.indar.ns}} NS</td>
                         </template>
 
-                        <template v-if="hossinCount > 19">
+                        <template v-if="hossinCount > 19 || worldID == 19">
                             <td>All: {{hossinCount}}</td>
                             <td>{{worldData.continentCount.hossin.vs}} VS</td>
                             <td>{{worldData.continentCount.hossin.nc}} NC</td>
@@ -176,7 +180,7 @@
                             <td class="border-right">{{worldData.continentCount.hossin.ns}} NS</td>
                         </template>
 
-                        <template v-if="amerishCount > 19">
+                        <template v-if="amerishCount > 19 || worldID == 19">
                             <td>All: {{amerishCount}}</td>
                             <td>{{worldData.continentCount.amerish.vs}} VS</td>
                             <td>{{worldData.continentCount.amerish.nc}} NC</td>
@@ -184,7 +188,7 @@
                             <td class="border-right">{{worldData.continentCount.amerish.ns}} NS</td>
                         </template>
 
-                        <template v-if="esamirCount > 19">
+                        <template v-if="esamirCount > 19 || worldID == 19">
                             <td>All: {{esamirCount}}</td>
                             <td>{{worldData.continentCount.esamir.vs}} VS</td>
                             <td>{{worldData.continentCount.esamir.nc}} NC</td>
@@ -192,7 +196,7 @@
                             <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
                         </template>
 
-                        <template v-if="oshurCount > 19">
+                        <template v-if="oshurCount > 19 || worldID == 19">
                             <td>All: {{oshurCount}}</td>
                             <td>{{worldData.continentCount.oshur.vs}} VS</td>
                             <td>{{worldData.continentCount.oshur.nc}} NC</td>
@@ -206,6 +210,37 @@
                         <td>{{worldData.continentCount.other.nc}} NC</td>
                         <td>{{worldData.continentCount.other.tr}} TR</td>
                         <td>{{worldData.continentCount.other.ns}} NS</td>
+                    </tr>
+
+                    <tr v-if="showZonePops">
+                        <td colspan="5" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="-1" :data="populationAll" :show-teams="false">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5" v-if="indarCount > 19 || worldID == 19" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="2" :data="populationIndar" :show-teams="true">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5" v-if="hossinCount > 19 || worldID == 19" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="4" :data="populationHossin" :show-teams="true">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5" v-if="amerishCount > 19 || worldID == 19" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="6" :data="populationAmerish" :show-teams="true">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5" v-if="esamirCount > 19 || worldID == 19" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="8" :data="populationEsamir" :show-teams="true">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5" v-if="oshurCount > 19 || worldID == 19" class="border-right">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="344" :data="populationOshur" :show-teams="true">
+                            </world-zone-population-chart>
+                        </td>
+                        <td colspan="5">
+                            <world-zone-population-chart :world-id="worldID" :zone-id="0" :data="populationUnknown" :show-teams="false">
+                            </world-zone-population-chart>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -650,7 +685,7 @@
     import Vue from "vue";
     import { createPopper, Instance } from "node_modules/@popperjs/core/lib/popper";
 
-    import { WorldData } from "./WorldData";
+    import { WorldData, WorldZonePopulation } from "./WorldData";
     import { PopperModalData } from "popper/PopperModalData";
     import { ExpStatApi } from "api/ExpStatApi";
     import { WorldTagApi } from "api/WorldTagApi";
@@ -667,15 +702,18 @@
     import FactionFocus from "./components/FactionFocus.vue";
     import WorldTag from "./components/WorldTag.vue";
     import FightData from "./components/FightData.vue";
+    import WorldZonePopulationChart from "./components/WorldZonePopulationChart.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ContinentMetadata from "components/ContinentMetadata.vue";
     import InfoHover from "components/InfoHover.vue";
     import PopperModal from "components/PopperModal.vue";
+    import ToggleButton from "components/ToggleButton";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
     import "filters/TilFilter";
+    import ZoneUtils from "util/Zone";
 
     type StreamFailure = {
         streamType: "death" | "exp";
@@ -703,6 +741,8 @@
                 popperInstance: null as Instance | null,
 
                 showErrorDetails: false as boolean,
+
+                showZonePops: true as boolean,
 
                 expSources: {
                     charHeal: ExpStatApi.getCharacterHealEntries,
@@ -749,6 +789,12 @@
                         iter.facility = MapApi.parseFacility(iter.facility);
                     }
                 });
+                data.population.forEach((iter) => {
+                    iter.timestamp = new Date(iter.timestamp);
+                });
+                data.population.sort((a, b) => {
+                    return a.timestamp.getTime() - b.timestamp.getTime();
+                })
 
                 this.worldData = data;
                 this.lastUpdate = new Date();
@@ -997,6 +1043,34 @@
                     + this.worldData.continentCount.other.ns;
             },
 
+            populationAll: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Hossin);
+            },
+
+            populationIndar: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Indar);
+            },
+
+            populationHossin: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Hossin);
+            },
+
+            populationAmerish: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Amerish);
+            },
+
+            populationEsamir: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Esamir);
+            },
+
+            populationOshur: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == ZoneUtils.Oshur);
+            },
+
+            populationUnknown: function(): WorldZonePopulation[] {
+                return this.worldData.population.filter(iter => iter.zoneID == 0);
+            },
+
             badStreams: function(): StreamFailure[] {
                 const cutoff: Date = new Date(new Date().getTime() - (1000 * 60 * 60 * 2));
 
@@ -1050,7 +1124,7 @@
         },
 
         components: {
-            ContinentMetadata,
+            ContinentMetadata, ToggleButton,
             BlockView,
             FactionFocus,
             "PlayerKillBlock": KillData,
@@ -1060,7 +1134,8 @@
             InfoHover,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             WorldTag, FightData,
-            PopperModal
+            PopperModal,
+            WorldZonePopulationChart
         }
     });
 

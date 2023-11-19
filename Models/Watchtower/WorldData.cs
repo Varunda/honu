@@ -84,12 +84,20 @@ namespace watchtower.Models {
         /// </summary>
         public int ProcessLag { get; set; } = 0;
 
+        /// <summary>
+        ///     Last error that was thrown while trying to generate this data
+        /// </summary>
         public ProblemDetails? LastError { get; set; } = null;
 
         /// <summary>
         ///     List of fights current happening on this world
         /// </summary>
         public List<RealtimeDataFight> Fights { get; set; } = new();
+
+        /// <summary>
+        ///     Population changes over time for the last period of time
+        /// </summary>
+        public List<WorldZonePopulation> Population { get; set; } = new();
 
     }
 

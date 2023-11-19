@@ -94,6 +94,23 @@ export class FactionFocusEntry {
 	public trKills: number = 0;
 }
 
+export class WorldZonePopulation {
+	public worldID: number = 0;
+	public zoneID: number = 0;
+	public timestamp: Date = new Date();
+
+	public total: number = 0;
+	public factionVs: number = 0;
+	public factionNc: number = 0;
+	public factionTr: number = 0;
+	public factionNs: number = 0;
+
+	public teamVs: number = 0;
+	public teamNc: number = 0;
+	public teamTr: number = 0;
+	public teamUnknown: number = 0;
+}
+
 export class FactionData {
 	public factionID: string = "";
 	public factionName: string = "";
@@ -141,5 +158,6 @@ export class WorldData {
 	public realtimeHealth: CensusRealtimeHealthEntry[] = [];
 	public reconnects: RealtimeReconnectEntry[] = [];
 	public fights: RealtimeDataFight[] = [];
+	public population: WorldZonePopulation[] = [];
 
 }
