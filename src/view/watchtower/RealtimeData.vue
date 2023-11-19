@@ -152,7 +152,7 @@
                         </th>
                         <th colspan="5">
                             Other
-                            <info-hover text="Zones such as Koltyr, Desolation or Santuary"></info-hover>
+                            <info-hover text="Zones such as Koltyr, Desolation or Sanctuary"></info-hover>
                         </th>
                     </tr>
 

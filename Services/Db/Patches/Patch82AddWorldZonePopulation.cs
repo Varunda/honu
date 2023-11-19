@@ -7,13 +7,13 @@ namespace watchtower.Services.Db.Patches {
     public class Patch82AddWorldZonePopulation : IDbPatch {
         public int MinVersion => 82;
 
-        public string Name => "add world_zone_popluation";
+        public string Name => "add world_zone_population";
 
         public async Task Execute(IDbHelper helper) {
 
             using NpgsqlConnection conn = helper.Connection(Dbs.EVENTS);
             using NpgsqlCommand cmd = await helper.Command(conn, @"
-                CREATE TABLE IF NOT EXISTS world_zone_popluation (
+                CREATE TABLE IF NOT EXISTS world_zone_population (
                     world_id smallint NOT NULL,
                     zone_id int NOT NULL,
                     timestamp timestamptz NOT NULL,
