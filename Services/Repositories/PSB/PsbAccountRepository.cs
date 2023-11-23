@@ -402,10 +402,12 @@ namespace watchtower.Services.Repositories.PSB {
         private async Task<int> GetStatus(string? charID, List<string> names) {
             PsCharacter? byID = (charID != null) ? await _CharacterCollection.GetByID(charID, CensusEnvironment.PC) : null;
 
+            List<PsCharacter> charNames = await _CharacterCollection.GetByNames(names);
+
             string? usedName = null;
             PsCharacter? byName = null;
             foreach (string name in names) {
-                byName = await _CharacterCollection.GetByName(name);
+                byName = charNames.FirstOrDefault(iter => iter.Name == name);
                 if (byName != null) {
                     usedName = name;
                     break;

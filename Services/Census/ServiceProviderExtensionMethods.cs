@@ -58,6 +58,7 @@ namespace watchtower.Services.Census {
             services.AddSingleton<MetagameEventCollection>();
 
             services.AddSingleton<RealtimeMapStateCollection>();
+            services.AddSingleton<OutfitWarsOutfitCollection>();
         }
 
     }

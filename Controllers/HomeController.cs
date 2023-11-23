@@ -205,5 +205,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult OutfitWars() {
+            return View();
+        }
+
     }
 }

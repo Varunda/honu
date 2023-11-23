@@ -63,6 +63,23 @@ namespace watchtower.Services.Census {
         }
 
         /// <summary>
+        ///     Get characters (case-insensitive) based on names
+        /// </summary>
+        /// <param name="names"></param>
+        /// <returns></returns>
+        public async Task<List<PsCharacter>> GetByNames(IEnumerable<string> names) {
+            CensusQuery query = _Census.Create("character");
+            foreach (string name in names) {
+                query.Where("name.first_lower").Equals(name.ToLower());
+            }
+            //query.Where("name.first_lower").Equals(names.Select(iter => iter.ToLower()));
+            query.AddResolve("outfit", "world");
+
+            List<PsCharacter> chars = await _Reader.ReadList(query);
+            return chars;
+        }
+
+        /// <summary>
         ///     Get a <see cref="PsCharacter"/> by ID
         /// </summary>
         /// <param name="ID">ID of the character to get</param>

@@ -136,6 +136,14 @@ export const MenuPopulation = Vue.extend({
     `
 });
 
+export const MenuOutfitwars = Vue.extend({
+    template: `
+        <li>
+            <a class="dropdown-item" href="/outfitwars">Outfit Wars</a>
+        </li>
+    `
+});
+
 export const MenuDropdown = Vue.extend({
     template: `
         <li class="nav-item dropdown">
@@ -144,6 +152,7 @@ export const MenuDropdown = Vue.extend({
                 <slot>
                     <menu-homepage></menu-homepage>
                     <menu-realtime></menu-realtime>
+                    <menu-outfitwars></menu-outfitwars>
                     <menu-alerts></menu-alerts>
                     <menu-characters></menu-characters>
                     <menu-outfits></menu-outfits>
@@ -159,6 +168,6 @@ export const MenuDropdown = Vue.extend({
 
     components: {
         MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger,
-        MenuRealTimeMap, MenuItems, MenuAlerts, MenuRealtimeNetwork, MenuPopulation
+        MenuRealTimeMap, MenuItems, MenuAlerts, MenuRealtimeNetwork, MenuPopulation, MenuOutfitwars
     }
 });
