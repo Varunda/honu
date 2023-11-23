@@ -24,7 +24,7 @@
             <h5>Select server</h5>
 
             <div class="btn-group w-100">
-                <button class="btn btn-outline-light text-white" :class="[ worldID == 10 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 10">
+                <button class="btn btn-outline-light text-white" :class="[ worldID == 13 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 13">
                     Cobalt
                 </button>
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 1 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 1">
@@ -33,7 +33,7 @@
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 17 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 17">
                     Emerald
                 </button>
-                <button class="btn btn-outline-light text-white" :class="[ worldID == 13 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 13">
+                <button class="btn btn-outline-light text-white" :class="[ worldID == 10 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 10">
                     Miller
                 </button>
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 40 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 40">
