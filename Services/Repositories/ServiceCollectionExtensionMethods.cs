@@ -65,6 +65,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<FireGroupToFireModeRepository>();
             services.AddSingleton<IStaticRepository<PsMetagameEvent>, MetagameEventRepository>();
             services.AddSingleton<MetagameEventRepository>();
+            services.AddSingleton<IStaticRepository<ItemType>, ItemTypeRepository>();
+            services.AddSingleton<ItemTypeRepository>();
 
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();

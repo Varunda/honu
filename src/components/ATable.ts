@@ -60,6 +60,14 @@ export type FilterKeyValue = {
     value: any
 }
 
+export interface ATableType {
+
+    applyFilter(index: number | string, parameters: Partial<Filter>): void;
+
+    resetFilters(): void;
+
+}
+
 export const ATable = Vue.extend({
     props: {
         // Where the data comes from
@@ -906,17 +914,7 @@ export const ATable = Vue.extend({
                     staticClass: "btn btn-secondary",
                     on: {
                         click: () => {
-                            for (const filter of this.filters) {
-                                if (filter.type == "number") {
-                                    filter.value = null;
-                                } else if (filter.type == "string") {
-                                    filter.value = "";
-                                } else if (filter.type == "date") {
-                                    filter.value = null;
-                                } else {
-                                    throw `Cannot reset the value for an <a-filter>, unchecked type: '${filter.type}'`;
-                                }
-                            }
+                            this.resetFilters();
                         }
                     }
                 },
@@ -1137,6 +1135,61 @@ export const ATable = Vue.extend({
 
             return createElement("span");
         },
+
+        applyFilter(index: number | string, parameters: Partial<Filter>): void {
+            if (typeof (index) != "number") {
+                index = this.filters.findIndex(iter => iter.field == index);
+            }
+
+            if (index < 0) {
+                throw `index was less than 0: ${index}`;
+            }
+
+            if (index > this.filters.length) {
+                throw `index was greater than number of filters (${this.filters.length}}: ${index}`;
+            }
+
+            console.log(parameters);
+
+            for (const key in parameters) {
+                (this.filters[index] as any)[key] = (parameters as any)[key];
+            }
+
+            /*
+             * usually, doing a partial update like this would be done using the following:
+                this.filters[index] = {
+                    ...this.filters[index],
+                    ...parameters
+                };
+
+             * this does not work for how a <a-table> works, as setting the filter removes the object used
+             * in input (used for the filter), meaning the input no longer controls the filter used to
+             * control what rows are set
+             * 
+             * instead, we go thru each key of the passed parameters and set them one by one
+             */
+        },
+
+        resetFilters: function(): void {
+            for (const filter of this.filters) {
+                if (filter.type == "empty") {
+                    continue;
+                }
+
+                if (filter.type == "number") {
+                    filter.value = null;
+                } else if (filter.type == "string") {
+                    filter.value = "";
+                } else if (filter.type == "date") {
+                    filter.value = null;
+                } else if (filter.type == "boolean") {
+                    filter.value = null;
+                } else {
+                    throw `Cannot reset the value for an <a-filter>, unchecked type: '${filter.type}'`;
+                }
+            }
+        }
+
     },
 
     computed: {

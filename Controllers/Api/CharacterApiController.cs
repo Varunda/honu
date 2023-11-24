@@ -43,6 +43,8 @@ namespace watchtower.Controllers.Api {
         private readonly OutfitRepository _OutfitRepository;
         private readonly KillboardCollection _KillboardCollection;
         private readonly CharacterHistoryStatDbStore _CharacterHistoryStatDb;
+        private readonly ItemCategoryRepository _ItemCategoryRepository;
+        private readonly ItemTypeRepository _ItemTypeRepository;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
         private readonly CharacterCacheQueue _CharacterQueue;
@@ -54,7 +56,8 @@ namespace watchtower.Controllers.Api {
             CharacterStatRepository statRepo, CharacterMetadataDbStore metadataDb,
             CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue,
             OutfitRepository outfitRepository, KillboardCollection killboardCollection,
-            CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue) {
+            CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue,
+            ItemCategoryRepository itemCategoryRepository, ItemTypeRepository itemTypeRepository) {
 
             _Logger = logger;
 
@@ -73,6 +76,8 @@ namespace watchtower.Controllers.Api {
             _OutfitRepository = outfitRepository;
             _KillboardCollection = killboardCollection;
             _CharacterHistoryStatDb = characterHistoryStatDb;
+            _ItemCategoryRepository = itemCategoryRepository;
+            _ItemTypeRepository = itemTypeRepository;
         }
 
         /// <summary>
@@ -323,6 +328,10 @@ namespace watchtower.Controllers.Api {
                 ExpandedCharacterItem ex = new ExpandedCharacterItem();
                 ex.Entry = item;
                 ex.Item = await _ItemRepository.GetByID(int.Parse(item.ItemID));
+                if (ex.Item != null) {
+                    ex.Category = await _ItemCategoryRepository.GetByID(ex.Item.CategoryID);
+                    ex.Type = await _ItemTypeRepository.GetByID(ex.Item.TypeID);
+                }
 
                 expanded.Add(ex);
             }

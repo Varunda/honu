@@ -12,5 +12,9 @@ namespace watchtower.Models.Api {
 
         public PsItem? Item { get; set; }
 
+        public ItemCategory? Category { get; set; }
+
+        public ItemType? Type { get; set; }
+
     }
 }
