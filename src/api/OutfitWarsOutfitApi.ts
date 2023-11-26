@@ -52,7 +52,7 @@ export class OutfitWarsOutfitApi extends ApiWrapper<OutfitWarsOutfit> {
     public static parseFlat(elem: any): FlatOutfitWarsOutfit {
         return {
             ...elem.entry,
-            signupCount: (elem.status == "Full") ? 24 : elem.signupCount,
+            signupCount: (elem.entry.status == "Full") ? 24 : elem.entry.signupCount,
             outfit: elem.outfit != null ? OutfitApi.parse(elem.outfit) : null
         };
     }
