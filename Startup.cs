@@ -409,6 +409,12 @@ namespace watchtower {
                 );
 
                 endpoints.MapControllerRoute(
+                    name: "outfitwars",
+                    pattern: "/outfitwars/{*.}",
+                    defaults: new { controller = "Home", action = "OutfitWars" }
+                );
+
+                endpoints.MapControllerRoute(
                     name: "api",
                     pattern: "/api/{controller}/{action}"
                 );

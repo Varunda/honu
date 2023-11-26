@@ -41,6 +41,7 @@ namespace watchtower.Services.Census.Readers {
             services.AddSingleton<ICensusReader<PsMetagameEvent>, CensusMetagameEventReader>();
             services.AddSingleton<ICensusReader<CharacterEventGrouped>, CensusCharacterEventGroupedReader>();
             services.AddSingleton<ICensusReader<OutfitWarsOutfit>, CensusOutfitWarsOutfitReader>();
+            services.AddSingleton<ICensusReader<OutfitWarsMatch>, CensusOutfitWarsMatchReader>();
         }
 
     }
