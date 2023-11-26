@@ -37,7 +37,8 @@ export class OutfitWarsOutfitApi extends ApiWrapper<OutfitWarsOutfit> {
 
     public static parse(elem: any): OutfitWarsOutfit {
         return {
-            ...elem
+            ...elem,
+            signupCount: (elem.status == "Full") ? 24 : elem.signupCount
         };
     }
 

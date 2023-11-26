@@ -333,17 +333,20 @@
                     // removes possible duplicates by only using the most recent item data
                     // this is due to bad data, where some vehicle weapons have duplicate entries
                     for (const entry of this.entries.data) {
+                        let key = `${entry.itemID}-${entry.kills}`;
+
                         if (entry.itemID == "0") {
-                            map.set(`${entry.itemID}-${entry.vehicleID}`, entry);
+                            key = `${entry.itemID}-${entry.vehicleID}`;
+                            map.set(key, entry);
                             continue;
                         }
 
-                        if (map.has(entry.itemID) == false) {
-                            map.set(entry.itemID, entry);
+                        if (map.has(key) == false) {
+                            map.set(key, entry);
                         } else {
-                            const prev: CharacterWeaponStatEntry = map.get(entry.itemID)!;
-                            if (entry.timestamp.getTime() > prev.timestamp.getTime()) {
-                                map.set(entry.itemID, entry);
+                            const prev: CharacterWeaponStatEntry = map.get(key)!;
+                            if (entry.timestamp.getTime() > prev.timestamp.getTime() && entry.kills > 0) {
+                                map.set(key, entry);
                             }
                         }
                     }
