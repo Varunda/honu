@@ -5,7 +5,11 @@
         </h1>
 
         <h4>
-            Matches may not be current, as they are not all released at the same time
+            <span class="text-warning">
+                This information may not be correct! Please double check this information in game!
+            </span>
+            <br />
+            Matches may not be current, as they are not all released at the same time. Data can take over an hour to populate
         </h4>
 
         <a-table default-sort-field="timestamp" default-sort-order="asc"

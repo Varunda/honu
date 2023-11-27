@@ -93,7 +93,7 @@
                 }
 
                 return [...this.data.zones.filter(iter => iter.isOpened == false)].sort((a, b) => {
-                    return (b.lastLocked?.getTime() ?? 0) - (a.lastLocked?.getTime() ?? 0);
+                    return (a.lastLocked?.getTime() ?? 0) - (b.lastLocked?.getTime() ?? 0);
                 });
             }
         },
