@@ -954,7 +954,10 @@ namespace watchtower.Code.DiscordInteractions {
 
             DiscordEmbedBuilder builder = new DiscordEmbedBuilder()
                 .WithTitle("Success")
-                .WithDescription($"<@{ctx.User.Id}>/{ctx.User.Username} approved the request for accounts.\n\nSheet link: https://docs.google.com/spreadsheets/d/{fileID}")
+                .WithDescription($"<@{ctx.User.Id}>/{ctx.User.Username} approved the request for accounts.\n\n" +
+                    $"Sheet will be shared to {string.Join(", ", parsed.Reservation.Contacts.Select(iter => $"<@{iter.DiscordID}>"))}" +
+                    $" 2 hours before {parsed.Reservation.Start.GetDiscordFullTimestamp()}\n\n" +
+                    $"Sheet link: https://docs.google.com/spreadsheets/d/{fileID}")
                 .WithUrl($"https://docs.google.com/spreadsheets/d/{fileID}")
                 .WithColor(DiscordColor.Green);
 

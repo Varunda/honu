@@ -472,8 +472,8 @@
 
                 if (needVs == true) { currentCommand += "alias v: a 1;"; }
                 if (needNc == true) { currentCommand += "alias n: a 2;"; }
-                if (needTr == true) { currentCommand += "alias n: a 3;"; }
-                if (needNs == true) { currentCommand += "alias n: a 4;"; }
+                if (needTr == true) { currentCommand += "alias t: a 3;"; }
+                if (needNs == true) { currentCommand += "alias s: a 4;"; }
 
                 this.ownershipData.facilities.forEach((owner: PsFacilityOwner) => {
                     if (owner.flipOwner != undefined && owner.owner != owner.flipOwner) {
