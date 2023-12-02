@@ -64,6 +64,14 @@ namespace watchtower.Code.Constants {
                 return TimeSpan.FromMinutes(30);
             }
 
+            if (metagameEventID == 234) { // nexus pre-match (20 minutes + 45)
+                return TimeSpan.FromMinutes(65);
+            }
+
+            if (metagameEventID == 277) { // nexus match
+                return TimeSpan.FromMinutes(45);
+            }
+
             return metagameEventID switch {
                 147 or 148 or 149 // Indar
                     or 150 or 151 or 152 // Esamir
