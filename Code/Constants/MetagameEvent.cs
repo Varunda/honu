@@ -64,12 +64,12 @@ namespace watchtower.Code.Constants {
                 return TimeSpan.FromMinutes(30);
             }
 
-            if (metagameEventID == 234) { // nexus pre-match (20 minutes + 45)
-                return TimeSpan.FromMinutes(65);
+            if (metagameEventID == 227) { // nexus match
+                return TimeSpan.FromMinutes(45);
             }
 
-            if (metagameEventID == 277) { // nexus match
-                return TimeSpan.FromMinutes(45);
+            if (metagameEventID == 234) { // nexus pre-match (20 minutes + 45)
+                return TimeSpan.FromMinutes(65);
             }
 
             return metagameEventID switch {

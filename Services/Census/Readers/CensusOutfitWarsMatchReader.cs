@@ -10,7 +10,7 @@ namespace watchtower.Services.Census.Readers {
             OutfitWarsMatch match = new();
 
             match.MatchID = token.GetRequiredString("match_id");
-            match.RoundID = token.GetRequiredString("round_id");
+            match.RoundID = token.GetString("round_id", "<missing>");
             match.OutfitWarID = token.GetInt32("outfit_war_id", -1);
             match.OutfitAId = token.GetString("outfit_a_id", "0");
             match.OutfitBId = token.GetString("outfit_b_id", "0");
