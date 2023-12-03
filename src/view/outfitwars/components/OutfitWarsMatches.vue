@@ -1,19 +1,28 @@
 ﻿<template>
     <div>
-        <h1>
-            Matches
-        </h1>
+        <div>
+            <h1>
+                Matches
+            </h1>
 
-        <h4>
-            <span class="text-warning">
-                This information may not be correct! Please double check this information in game!
-            </span>
-            <br />
-            Matches may not be current, as they are not all released at the same time. Data can take over an hour to populate
-        </h4>
+            <h4>
+                <span class="text-warning">
+                    This information may not be correct! Please double check this information in game!
+                </span>
+                <br />
+                Matches may not be current, as they are not all released at the same time. Data can take over an hour to populate
+            </h4>
+        </div>
 
-        <a-table default-sort-field="timestamp" default-sort-order="asc"
-            :entries="entries" display-type="table" :hover="true" :show-filters="true">
+        <div class="p-2 border rounded">
+            <toggle-button v-model="onlyUpcoming">
+                Hide past matches
+            </toggle-button>
+
+        </div>
+
+        <a-table default-sort-field="timestamp" default-sort-order="desc"
+            :entries="shown" display-type="table" :hover="true" :show-filters="true">
 
             <a-col>
                 <a-header>
@@ -72,7 +81,10 @@
 
                 <a-body v-slot="entry">
                     {{entry.timestamp | moment}}
-                    (in {{entry.timestamp | til2}})
+
+                    <span v-if="entry.timestamp.getTime() >= hideAfter.getTime()">
+                        (in {{entry.timestamp | til2}})
+                    </span>
                 </a-body>
             </a-col>
 
@@ -110,6 +122,7 @@
     import Busy from "components/Busy.vue";
     import ApiError from "components/ApiError";
     import FactionImage from "components/FactionImage";
+    import ToggleButton from "components/ToggleButton";
 
     export const OutfitWarsMatches = Vue.extend({
         props: {
@@ -118,7 +131,9 @@
 
         data: function() {
             return {
-                entries: Loadable.idle() as Loading<FlatOutfitWarsMatch[]>
+                entries: Loadable.idle() as Loading<FlatOutfitWarsMatch[]>,
+                hideAfter: new Date() as Date,
+                onlyUpcoming: true as boolean
             }
         },
 
@@ -136,6 +151,19 @@
         },
 
         computed: {
+            shown: function(): Loading<FlatOutfitWarsMatch[]> {
+
+                if (this.onlyUpcoming == false) {
+                    return this.entries;
+                }
+
+                if (this.entries.state != "loaded") {
+                    return this.entries;
+                }
+
+                return Loadable.loaded(this.entries.data.filter(iter => iter.timestamp.getTime() >= this.hideAfter.getTime()));
+            },
+
             filterSources: function() {
                 return {
                     faction: [
@@ -161,7 +189,7 @@
 
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
-            InfoHover, Busy, ApiError, FactionImage
+            InfoHover, Busy, ApiError, FactionImage, ToggleButton
         }
 
     });
