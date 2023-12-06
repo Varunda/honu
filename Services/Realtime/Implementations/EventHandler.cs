@@ -178,7 +178,14 @@ namespace watchtower.Realtime {
                 }
 
                 if (payloadToken.Value<int?>("timestamp") != null) {
-                    _MostRecentProcess = payloadToken.CensusTimestamp("timestamp");
+                    // somehow, it's possible to get events that are in the past, which can really break some things
+                    DateTime timestamp = payloadToken.CensusTimestamp("timestamp");
+                    TimeSpan diff = timestamp - DateTime.UtcNow;
+                    if (timestamp > _MostRecentProcess && diff <= TimeSpan.FromSeconds(3)) {
+                        _MostRecentProcess = timestamp;
+                    } else if (diff > TimeSpan.FromSeconds(3)) {
+                        _Logger.LogWarning($"larger than 3 second diff! {diff}");
+                    }
                 }
 
                 string? eventName = payloadToken.Value<string?>("event_name");
