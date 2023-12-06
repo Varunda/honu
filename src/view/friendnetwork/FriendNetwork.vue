@@ -32,11 +32,15 @@
                     {{selected.name}}
                 </h3>
 
-                <a :href="'/c/' + selected.id">View character</a>
+                <a :href="'/c/' + selected.id" class="btn btn-primary btn-link">View character</a>
 
-                <a @click="makeGraph(selected.id)" href="#">
+                <a @click="makeGraph(selected.id)" href="#" class="btn btn-primary btn-link">
                     View network
                 </a>
+
+                <button class="btn btn-secondary" @click="deselectHovered">
+                    Deselect
+                </button>
             </div>
 
             <div class="m-3 px-2 pl-1" style="display: inline; position: absolute; left: 0; top: 50%; background-color: #222">
@@ -56,9 +60,36 @@
                     Use "oubound attraction"
                 </toggle-button>
 
-                <toggle-button v-model="settings.strongGravity" class="w-100">
+                <toggle-button v-model="settings.strongGravity" class="w-100 mb-2">
                     Use "strong gravity"
                 </toggle-button>
+
+                <div class="mb-2">
+                    <label class="mb-0">
+                        Minimum friends shared
+                        <info-hover text="How many friends in common must be shared to be included"></info-hover>
+                    </label>
+
+                    <input class="form-control" v-model.number="settings.minConnections" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="mb-0">
+                        Minimum friends
+                        <info-hover text="How many friends a character must have to be included"></info-hover>
+                    </label>
+
+                    <input class="form-control" v-model.number="settings.minFriends" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="mb-0">
+                        Max friends
+                        <info-hover text="How many friends a character can have before being excluded"></info-hover>
+                    </label>
+
+                    <input class="form-control" v-model.number="settings.maxFriends" />
+                </div>
 
             </div>
         </div>
@@ -71,10 +102,15 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuHomepage, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ToggleButton from "components/ToggleButton";
     import Busy from "components/Busy.vue";
+    import InfoHover from "components/InfoHover.vue";
 
     import Graph from "graphology";
-    import Sigma from "sigma";
     import FA2Layout from "node_modules/graphology-layout-forceatlas2/worker";
+    import Sigma from "sigma";
+    import { NodeDisplayData, PartialButFor } from "sigma/types";
+    import { Settings } from "sigma/settings";
+    // not actually exported
+    //import { drawLabel } from "sigma/rendering/canvas/label";
 
     import { Loading, Loadable } from "Loading";
 
@@ -108,6 +144,10 @@
         depth: number;
     }
 
+    // HACK: if the renderer is part of the Vue object, then all it's reactive stuff makes the graph horribly slow
+    //      so, the renderer is pulled out
+    let RENDERER: any = null;
+
     export const FriendNetwork = Vue.extend({
         props: {
 
@@ -115,6 +155,8 @@
 
         data: function() {
             return {
+                rootCharacterID: "" as string,
+
                 context: null as HTMLElement | null,
                 graph: null as Graph | null,
                 hovered: null as string | null,
@@ -136,10 +178,16 @@
                 friendMap: new Map() as Map<string, FlatExpandedCharacterFriend[]>,
                 maxFriends: 0 as number,
 
+                friendConnections: new Map as Map<string, number>, // how many inter-connections a character has. <character ID, count>
+
                 settings: {
                     sameWorld: true as boolean,
                     orbit: false as boolean,
-                    strongGravity: true as boolean
+                    strongGravity: true as boolean,
+                    minConnections: 2 as number,
+                    minFriends: 10 as number,
+                    maxFriends: 5000 as number,
+                    rootOnly: false as boolean
                 },
 
                 steps: {
@@ -159,6 +207,7 @@
             }
 
             this.$nextTick(() => {
+                this.rootCharacterID = parts[1];
                 this.context = document.getElementById("graph");
                 this.makeGraph(parts[1]);
             });
@@ -226,13 +275,16 @@
                         this.maxFriends = l.data.length;
                     }
 
-                    if (l.data.length < 10 && l.data.length > 5000) {
+                    // exclude people with less than 10 friends and more than 5000
+                    if (l.data.length < this.settings.minFriends && l.data.length > this.settings.maxFriends) {
+                        console.info(`FriendNetwork> character ${iter.characterID} has ${l.data.length} friends, which is outside the bounds of (${this.settings.minFriends}, ${this.settings.maxFriends})`);
                         continue;
                     }
 
                     console.log(`FriendNetwork> Loaded ${i}/${length} Loaded ${l.data.length} friends for ${iter.characterID}`);
 
                     for (const f of l.data) {
+                        // if the same world setting is turned on, don't include it in the graph
                         if (this.settings.sameWorld == true && this.root != null && f.friendWorldID != this.root.worldID) {
                             continue;
                         }
@@ -245,6 +297,9 @@
                                 color: ColorUtil.getFactionColor(f.friendFactionID ?? 0)
                             });
                         }
+
+                        // increase the number of connections had by one
+                        this.friendConnections.set(f.friendID, (this.friendConnections.get(f.friendID) ?? 0) + 1);
 
                         this.graph.addEdge(iter.characterID, f.friendID, {
                             color: "#444444"
@@ -273,14 +328,16 @@
                 this.hovered = null;
                 this.selected = null;
                 this.maxFriends = 0;
+                this.friendConnections = new Map();
 
-                const character: Loading<PsCharacter> = await CharacterApi.getByID(rootCharacterID);
-                if (character.state != "loaded") {
-                    console.warn(`not here`);
-                    return;
+                if (this.root == null) {
+                    const character: Loading<PsCharacter> = await CharacterApi.getByID(rootCharacterID);
+                    if (character.state != "loaded") {
+                        console.warn(`not here`);
+                        return;
+                    }
+                    this.root = character.data;
                 }
-
-                this.root = character.data;
 
                 if (this.context == null) {
                     console.warn(`FriendNetwork> Cannot call makeGraph: context is null`);
@@ -300,7 +357,7 @@
                 this.loaded.add(rootCharacterID);
                 this.graph.addNode(this.queue[0].characterID, {
                     x: 0, y: 0,
-                    label: CharacterUtils.getDisplay(character.data),
+                    label: CharacterUtils.getDisplay(this.root),
                     size: 10,
                     color: "gold"
                 });
@@ -310,6 +367,35 @@
                 this.todo = this.queue.length + 1;
 
                 await this.processQueue(2);
+
+                for (const entry of Array.from(this.friendConnections.entries())) {
+                    const charID: string = entry[0];
+                    const friendCount: number = entry[1];
+
+                    // count how many edges contain this node
+                    /*
+                    const edgeCount: number = this.graph.filterEdges((edgeID: string, attr, source: string, target: string) => {
+                        return source == charID || target == charID;
+                    }).length;
+                    */
+                    console.log(`FriendNetwork> ${charID} has ${friendCount}`);
+
+                    if (this.settings.minConnections > friendCount) {
+                        console.log(`FriendNetwork> DROPPING ${charID}; ${friendCount} < ${this.settings.minConnections}`);
+                        this.graph.dropNode(charID);
+                    }
+                }
+
+                if (this.settings.rootOnly) {
+                    const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(this.rootCharacterID)!;
+                    const ids: Set<string> = new Set(friends.map(iter => iter.friendID));
+
+                    for (const nodeID of this.graph.nodes()) {
+                        if (ids.has(nodeID) == false && nodeID != this.rootCharacterID) {
+                            this.graph.dropNode(nodeID);
+                        }
+                    }
+                }
 
                 this.graph.forEachNode((node, attr) => {
                     if (node == this.root?.id) {
@@ -326,6 +412,95 @@
                 const renderer = new Sigma(this.graph!, this.context, {
                     allowInvalidContainer: true
                 });
+                RENDERER = renderer;
+
+                renderer.setSetting("labelRenderedSizeThreshold", 3);
+                renderer.setSetting("labelColor", { color: "#fff" });
+                //
+                // TLDR: this makes you have black text when you hover a node, despite the "labelColor" (above) set to white
+                //
+                // problem. you (the programm) can only set one color for node text. honu uses a black background,
+                //      so a white text is appropriate. however, when a user hovers a node, the back drop is ALSO white.
+                //      this is hard coded into sigma, and cannot be changed.
+                // this means that basically only black text is appropriate for node labels, as you want the label nodes to appear
+                //      when a user is hovering them. but honu uses a black background, so black text is not good!
+                //
+                // this method overrides the default method used to render a hovered node,
+                //      and instead of using the settings "labelColor" text, black text is used instead
+                //
+                // the following code is copied directly from sigma.js, which can be found on GitHub:
+                //      https://github.com/jacomyal/sigma.js
+                //
+                // here is the license for sigma.js:
+                //      https://github.com/jacomyal/sigma.js/blob/main/LICENSE.txt
+                //
+                // specifically, the following two files were used:
+                //      https://github.com/jacomyal/sigma.js/blob/main/src/rendering/canvas/hover.ts
+                //      https://github.com/jacomyal/sigma.js/blob/main/src/rendering/canvas/label.ts
+                //
+                renderer.setSetting("hoverRenderer", (
+                    context: CanvasRenderingContext2D,
+                    data: PartialButFor<NodeDisplayData, "x" | "y" | "size" | "label" | "color">,
+                    settings: Settings,
+                ): void => {
+                    const size = settings.labelSize;
+                    const font = settings.labelFont;
+                    const weight = settings.labelWeight;
+
+                    context.font = `${weight} ${size}px ${font}`;
+
+                    // Then we draw the label background
+                    context.fillStyle = "#FFF";
+                    context.shadowOffsetX = 0;
+                    context.shadowOffsetY = 0;
+                    context.shadowBlur = 8;
+                    context.shadowColor = "#000";
+
+                    const PADDING = 2;
+
+                    if (typeof data.label === "string") {
+                        const textWidth = context.measureText(data.label).width;
+                        const boxWidth = Math.round(textWidth + 5);
+                        const boxHeight = Math.round(size + 2 * PADDING);
+                        const radius = Math.max(data.size, size / 2) + PADDING;
+
+                        const angleRadian = Math.asin(boxHeight / 2 / radius);
+                        const xDeltaCoord = Math.sqrt(Math.abs(Math.pow(radius, 2) - Math.pow(boxHeight / 2, 2)));
+
+                        context.beginPath();
+                        context.moveTo(data.x + xDeltaCoord, data.y + boxHeight / 2);
+                        context.lineTo(data.x + radius + boxWidth, data.y + boxHeight / 2);
+                        context.lineTo(data.x + radius + boxWidth, data.y - boxHeight / 2);
+                        context.lineTo(data.x + xDeltaCoord, data.y - boxHeight / 2);
+                        context.arc(data.x, data.y, radius, angleRadian, -angleRadian);
+                        context.closePath();
+                        context.fill();
+                    } else {
+                        context.beginPath();
+                        context.arc(data.x, data.y, data.size + PADDING, 0, Math.PI * 2);
+                        context.closePath();
+                        context.fill();
+                    }
+
+                    context.shadowOffsetX = 0;
+                    context.shadowOffsetY = 0;
+                    context.shadowBlur = 0;
+
+                    // this is where the code from label.ts is used
+                    if (!data.label) { return; }
+                    /* old code
+                    const color = settings.labelColor.attribute
+                        ? data[settings.labelColor.attribute] || settings.labelColor.color || "#000"
+                        : settings.labelColor.color;
+                    */
+                    const color = "#000";
+
+                    context.fillStyle = color;
+                    context.font = `${weight} ${size}px ${font}`;
+
+                    context.fillText(data.label, data.x + data.size + 3, data.y + size / 3);
+                });
+                // back to honu's code
 
                 this.steps.render = true;
 
@@ -376,11 +551,68 @@
                     return res;
                 });
 
-                renderer.setSetting("labelColor", { color: "#ffffff" });
+                //
+                // this is an attempt to automatically stop a graph from doing the layout when the shape of the graph has settled.
+                // it doesn't quite work, but with some tweaking it could be okay.
+                // the main problem is the graph can reach a state where the node will be constantly be shifting between two
+                //      different positions, make it seem like the graph is moving more than it is.
+                // another way i might play around later is calculating how far each node has moved over time, 
+                //      rather than how much all nodes moved
+                /*
+                const nodeCount: number = this.graph.nodes().length;
+                const avg: number[] = [];
+                const previousPos: Map<string, [number, number]> = new Map();
+                let previousRenderTime: number = new Date().getTime();
+                renderer.on("afterRender", () => {
+                    if (this.graph == null) {
+                        return;
+                    }
+
+                    let sum: number = 0;
+
+                    for (const nodeID of this.graph.nodes()) {
+                        const attr = this.graph.getNodeAttributes(nodeID);
+
+                        if (previousPos.has(nodeID) == true) {
+                            const prev: [number, number] = previousPos.get(nodeID)!;
+                            const diff = (attr.x - prev[0]) + (attr.y - prev[1]);
+                            sum += diff;
+                            //console.log(`node ${nodeID} moved ${diff} units`);
+                        }
+
+                        previousPos.set(nodeID, [attr.x, attr.y]);
+                    }
+
+                    avg.push(Math.abs(sum));
+                    if (avg.length >= 50) {
+                        avg.shift();
+                    }
+
+                    const aa: number = avg.reduce((acc, iter) => acc += iter, 0);
+                    const renderTimeMs: number = new Date().getTime() - previousRenderTime;
+                    previousRenderTime = new Date().getTime();
+
+                    console.log(`graph shifted ${sum} units / ${aa} units avg :: [render=${renderTimeMs}ms] [sum/render=${sum / renderTimeMs}]`);
+
+                    if (aa <= (nodeCount * 4)) {
+                        console.warn(`automatically stopping!`);
+                    }
+                });
+                */
 
                 console.log(`made graph`);
 
                 this.loading = false;
+            },
+
+            deselectHovered: function(): void {
+                this.neighbors = null;
+                this.hovered = null;
+                this.selected = null;
+
+                if (RENDERER != null) {
+                    RENDERER.refresh();
+                }
             },
 
             setupLayout: function(): void {
@@ -388,8 +620,8 @@
                     return;
                 }
 
+                // if FA2 is already running, make sure to start the layout again
                 let startAgain: boolean = false;
-
                 if (this.layout != null) {
                     startAgain = this.layout.isRunning();
 
@@ -401,11 +633,17 @@
 
                 this.layout = new FA2Layout(this.graph, {
                     settings: {
+                        //linLogMode: true,
                         gravity: 1,
+                        //scalingRatio: 5,
+                        //edgeWeightInfluence: 0,
                         adjustSizes: true,
+                        //slowDown: 1,
+                        // basically always want this on, as it allows for smaller than O(n^2) complexity
                         barnesHutOptimize: true,
                         strongGravityMode: this.settings.strongGravity,
-                        outboundAttractionDistribution: this.settings.orbit
+                        outboundAttractionDistribution: this.settings.orbit,
+                        
                     },
                 });
 
@@ -422,19 +660,17 @@
         },
 
         watch: {
-
-            settings: {
-                deep: true,
-                handler: function(): void {
-                    this.setupLayout();
-                }
-            }
+            "settings.orbit": function() { this.setupLayout(); },
+            "settings.strongGravity": function() { this.setupLayout(); },
+            "settings.minConnections": function() { this.makeGraph(this.rootCharacterID); },
+            "settings.minFriends": function() { this.makeGraph(this.rootCharacterID); },
+            "settings.maxFriends": function() { this.makeGraph(this.rootCharacterID); },
 
         },
 
         components: {
             HonuMenu, MenuSep, MenuHomepage, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
-            ToggleButton, Busy
+            ToggleButton, Busy, InfoHover
         }
     });
     export default FriendNetwork;
