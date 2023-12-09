@@ -2,12 +2,15 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Commands;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Code.Commands {
 
@@ -75,6 +78,22 @@ namespace watchtower.Code.Commands {
             List<Achievement> achs = await _AchievementCollection.GetAll();
 
             _Logger.LogDebug($"{achs.Count}");
+        }
+
+        public async Task UpdateAll() {
+            Stopwatch timer = Stopwatch.StartNew();
+
+            IEnumerable<Type> types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => typeof(IRefreshableRepository).IsAssignableFrom(p) && p.IsAbstract == false && p.ContainsGenericParameters == false);
+
+            foreach (Type t in types) {
+                _Logger.LogDebug($"refreshing {t.FullName}");
+                IRefreshableRepository repo = (IRefreshableRepository) _Services.GetRequiredService(t);
+                await repo.Refresh(CancellationToken.None);
+            }
+
+            _Logger.LogDebug($"finished static data update in {timer.ElapsedMilliseconds}ms");
         }
 
     }

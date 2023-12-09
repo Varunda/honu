@@ -34,6 +34,8 @@ namespace watchtower.Constants {
 
         public const uint Tutorial2 = 364;
 
+        public const uint Nexus = 10;
+
         /// <summary>
         ///     List of all static zones
         /// </summary>

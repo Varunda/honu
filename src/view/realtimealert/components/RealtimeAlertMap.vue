@@ -39,7 +39,7 @@
     };
 
     // Actual Nexus data
-    const NEXUS_WARPGATE_ALPHA: number = 310570;
+    const NEXUS_WARPGATE_ALPHA: number = 310560;
     const NEXUS_ARAZEK: number = 310500;
     const NEXUS_ARGENT: number = 310540;
     const NEXUS_BITTER_GORGE: number = 310590;
@@ -47,7 +47,7 @@
     const NEXUS_SECURE: number = 310510;
     const NEXUS_HYDRO: number = 310520;
     const NEXUS_SLATE: number = 310550;
-    const NEXUS_WARPGATE_OMEGA: number = 310560;
+    const NEXUS_WARPGATE_OMEGA: number = 310570;
     const NEXUS_ALPHA: number = 310600;
     const NEXUS_OMEGA: number = 310610;
 
