@@ -50,7 +50,7 @@ namespace watchtower.Services.Realtime {
                 return;
             }
 
-            RealtimeAlertTeam? sourceTeam = GetTeam(match, ev.SourceID);
+            RealtimeAlertTeam? sourceTeam = GetTeamByID(match, ev.TeamID);
 
             if (sourceTeam == null) {
                 return;
@@ -68,16 +68,6 @@ namespace watchtower.Services.Realtime {
             if (Experience.IsRevive(expID)) {
                 --sourceTeam.Deaths;
             }
-
-            /*
-            if (Experience.IsAssist(expID) || Experience.IsHeal(expID)
-                    || Experience.IsMaxRepair(expID) || Experience.IsResupply(expID)
-                    || Experience.IsRevive(expID) || Experience.IsShieldRepair(expID)
-                    || Experience.IsSpawn(expID) || Experience.IsVehicleRepair(expID)
-                    || Experience.IsVehicleResupply(expID)) {
-            }
-            */
-
         }
 
         public void HandleFacilityControl(FacilityControlEvent ev) {
@@ -121,11 +111,11 @@ namespace watchtower.Services.Realtime {
         }
 
         private RealtimeAlertTeam? GetTeamByID(RealtimeAlert match, short teamID) {
-            if (teamID == 1) {
+            if (teamID == Faction.VS) {
                 return match.VS;
-            } else if (teamID == 2) {
+            } else if (teamID == Faction.NC) {
                 return match.NC;
-            } else if (teamID == 3) {
+            } else if (teamID == Faction.TR) {
                 return match.TR;
             }
 
