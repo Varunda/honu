@@ -758,12 +758,12 @@ namespace watchtower.Realtime {
                             // Ensure census has times to update
                             await Task.Delay(5000);
 
-                            string s = $"ALERT ended in {worldID}, current owners:\n";
+                            string s = $"ALERT ended in {worldID}, current owners: ";
 
                             foreach (uint zoneID in Zone.StaticZones) {
                                 short? owner = _MapRepository.GetZoneMapOwner(worldID, zoneID);
 
-                                s += $"{zoneID} => {owner}\n";
+                                s += $"[{zoneID} => {owner}] ";
 
                                 if (owner == null) {
                                     ZoneStateStore.Get().UnlockZone(worldID, zoneID);

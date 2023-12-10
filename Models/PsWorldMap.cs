@@ -34,13 +34,13 @@ namespace watchtower.Models {
                 // if the zone is nexus, set the default colors to make things more clear
                 if ((zoneID & 0xFFFF) == Zone.Nexus) {
                     // TR starting bases (south)
-                    zone.SetFacilityOwner(310560, 3); // warpgate alpha
+                    zone.SetFacilityOwner(310570, 3); // warpgate alpha
                     zone.SetFacilityOwner(310540, 3); // argent
                     zone.SetFacilityOwner(310600, 3); // alpha
                     zone.SetFacilityOwner(310510, 3); // nexus secure
 
                     // NC starting bases (north)
-                    zone.SetFacilityOwner(310570, 2); // warpgate omega
+                    zone.SetFacilityOwner(310560, 2); // warpgate omega
                     zone.SetFacilityOwner(310610, 2); // omega
                     zone.SetFacilityOwner(310520, 2); // hydro
                     zone.SetFacilityOwner(310550, 2); // slate
