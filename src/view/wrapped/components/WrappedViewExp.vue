@@ -2,7 +2,7 @@
     <collapsible header-text="Experience earned">
 
         <div>
-            <h3 class="wt-header mb-0 border-0" style="background-color: var(--purple)">
+            <h3 class="wt-header mb-0 border-0" style="background-color: var(--orange)">
                 Experience events
             </h3>
 

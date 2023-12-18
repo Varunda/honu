@@ -190,6 +190,10 @@
                 </button>
             </div>
 
+            <div class="mb-2 w-100 text-center">
+                Wrapped UI layout and picture editing by Lyyti
+            </div>
+
             <div v-if="showFull == false" class="d-flex" style="gap: 1rem;">
                 <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
             </div>
@@ -208,7 +212,7 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--blue), var(--purple))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--blue), var(--blue))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-classes :wrapped="filteredWrapped"></wrapped-view-classes>
@@ -216,7 +220,7 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--green), var(--yellow))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--green), var(--green))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-weapons :wrapped="filteredWrapped"></wrapped-view-weapons>
@@ -224,7 +228,7 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--orange), var(--blue))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--orange), var(--orange))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-exp :wrapped="filteredWrapped"></wrapped-view-exp>
@@ -232,7 +236,7 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--purple))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-vehicle :wrapped="filteredWrapped"></wrapped-view-vehicle>
@@ -240,7 +244,7 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--red), var(--red))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-facility :wrapped="filteredWrapped"></wrapped-view-facility>
@@ -248,16 +252,15 @@
                 </div>
 
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--purple), var(--red))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--cyan), var(--cyan))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-achievements :wrapped="filteredWrapped"></wrapped-view-achievements>
                     </div>
                 </div>
 
-
                 <div class="d-flex flex-row w-100 mb-3" style="">
-                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--yellow), var(--purple))" ></div>
+                    <div class="mb-1" style="width: 1rem; flex-grow: 0; background-image: linear-gradient(to bottom, var(--pink), var(--pink))" ></div>
 
                     <div style="flex-grow: 1;" class="ml-2">
                         <wrapped-view-sessions :wrapped="filteredWrapped"></wrapped-view-sessions>

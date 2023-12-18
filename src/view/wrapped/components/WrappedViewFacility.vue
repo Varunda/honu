@@ -2,7 +2,7 @@
     <collapsible header-text="Facility">
 
         <div>
-            <h3 class="wt-header mb-0 border-0" style="background-color: var(--purple)">
+            <h3 class="wt-header mb-0 border-0" style="background-color: var(--red)">
                 Bases
             </h3>
 

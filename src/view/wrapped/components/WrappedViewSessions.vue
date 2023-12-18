@@ -1,18 +1,22 @@
 ﻿<template>
     <div>
         <collapsible header-text="Sessions">
-            <div>
-                <h3 class="wt-header" style="background-color: var(--red)">
-                    Playtime per week
+            <div class="mb-4">
+                <h3 class="wt-header" style="background-color: var(--pink)">
+                    Playtime per day
                 </h3>
+
+                <div style="height: 500px; width: 100%;">
+                    <canvas id="chart-time-per-day"></canvas>
+                </div>
             </div>
 
             <div>
-                <h3 class="wt-header mb-0 border-0" style="background-color: var(--purple)">
+                <h3 class="wt-header mb-0 border-0" style="background-color: var(--pink)">
                     Session list
                 </h3>
 
-                <div class="border rounded my-3">
+                <div class="border mb-3 mt-0 rounded-bottom">
                     <h4 class="ml-3 my-2">
                         Column selection
                     </h4>
@@ -252,6 +256,7 @@
     import { WrappedEntry } from "api/WrappedApi";
     import { Loadable, Loading } from "Loading";
     import * as moment from "moment";
+    import Chart from "chart.js/auto/auto.esm";
 
     // components
     import Collapsible from "components/Collapsible.vue";
@@ -267,11 +272,14 @@
 
     // models
     import { WrappedSession } from "../common";
+    import TimeUtils from "util/Time";
 
     class SessionWeekData {
         public weekStart: Date = new Date();
         public playtime: number = 0;
     }
+
+    // #chart-time-per-day
 
     export const WrappedViewSessions = Vue.extend({
         props: {
@@ -283,6 +291,10 @@
                 weekData: [] as SessionWeekData[],
 
                 showTable: true as boolean,
+
+                chart: {
+                    timePerDay: null as Chart | null
+                },
 
                 columns: {
                     kills: true as boolean,
@@ -305,14 +317,86 @@
             }
         },
 
-        created: function(): void {
-            this.makeAll();
+        mounted: function(): void {
+            this.$nextTick(() => {
+                this.makeAll();
+            });
         },
 
         methods: {
 
             makeAll: function(): void {
+                this.makeHourData();
                 this.makeWeekData();
+            },
+
+            makeHourData: function(): void {
+                const map: Map<number, number> = new Map();
+
+                for (let i = 0; i < 60 * 24; i += 1) {
+                    map.set(i, 0);
+                }
+
+                for (const session of this.wrapped.sessions) {
+                    if (session.end == null) {
+                        continue;
+                    }
+
+                    const start: moment.Moment = moment(session.start);
+                    for (let ii = session.start.getTime(); ii < session.end.getTime(); ii += (1000 * 60)) {
+                        const iter = start.add(1, "minute");
+
+                        const h: number = iter.get("hour");
+                        const m: number = iter.get("minute");
+
+                        const v: number = h * 60 + m;
+
+                        map.set(v, (map.get(v) ?? 0) + 1);
+                    }
+                }
+
+                console.log(Array.from(map.values()));
+
+                const canvas = document.getElementById("chart-time-per-day") as HTMLCanvasElement;
+                const ctx = canvas.getContext("2d");
+                if (ctx == null) {
+                    console.error(`context for #chart-time-per-day is null`);
+                    return;
+                }
+
+                const sessionCount: number[] = Array.from(map.entries()).sort((a, b) => a[0] - b[0]).map(iter => iter[1]);
+
+                if (this.chart.timePerDay != null) {
+                    this.chart.timePerDay.destroy();
+                    this.chart.timePerDay = null;
+                }
+
+                this.chart.timePerDay = new Chart(ctx, {
+                    type: "bar", 
+                    data: {
+                        labels: sessionCount.map((v, index) => {
+                            return TimeUtils.format(moment(this.wrapped.timestamp).startOf("day").utc().add(index, "minutes").toDate(), "hh:mm A");
+                        }),
+                        datasets: [{
+                            data: sessionCount.map(v => v),
+                            backgroundColor: "white",
+                            barPercentage: 1,
+                            categoryPercentage: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: "white",
+                                    font: {
+                                        family: "Consolas"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             },
 
             makeWeekData: function(): void {

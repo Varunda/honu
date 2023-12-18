@@ -925,7 +925,7 @@ export const ATable = Vue.extend({
         createPageButtons(createElement: CreateElement): VNode[] {
             const nodes: VNode[] = [
                 // Page selection buttons
-                createElement("div", { staticClass: "btn-group" }, [
+                createElement("div", { staticClass: "btn-group mr-2" }, [
                     // First page button
                     createElement("button",
                         {

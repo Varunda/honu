@@ -1,60 +1,110 @@
 ﻿<template>
     <div>
         <collapsible header-text="General">
-            <div>
-                Total playtime: {{totalPlaytime | mduration}}
-            </div>
+            <div style="font-size: 16px;" class="d-flex">
+                <div class="border p-2 m-3 rounded">
+                    <div>
+                        <strong>
+                        Total playtime:
+                        </strong>
+                        {{totalPlaytime | mduration}}
+                    </div>
 
-            <div>
-                Kills: {{this.wrapped.kills.length | locale}}
-            </div>
+                    <div>
+                        <strong>
+                        Kills:
+                        </strong>
+                        {{this.wrapped.kills.length | locale}}
+                    </div>
 
-            <div>
-                Deaths:
-                <info-hover text="Revives remove a death"></info-hover>
-                {{this.wrapped.deaths.length | locale}}
-            </div>
+                    <div>
+                        <strong>
+                        Deaths:
+                        </strong>
+                        <info-hover text="Revives remove a death"></info-hover>
+                        {{this.wrapped.deaths.length | locale}}
+                    </div>
 
-            <div>
-                K/D:
-                <info-hover text="Revive remove a death. This is revive K/D, where a revive removes a death"></info-hover>
-                {{totalKD | locale(2)}}
-            </div>
+                    <div>
+                        <strong>
+                            K/D:
+                        </strong>
+                        <info-hover text="Revive remove a death. This is revive K/D, where a revive removes a death"></info-hover>
+                        {{totalKD | locale(2)}}
+                    </div>
 
-            <div>
-                KPM: {{totalKPM | locale(2)}}
-            </div>
+                    <div>
+                        <strong>
+                        KPM:
+                        </strong>
+                        {{totalKPM | locale(2)}}
+                    </div>
+                </div>
 
-            <div>
-                Teamkills: {{this.wrapped.teamkills.length | locale(0)}}
-            </div>
+                <div class="border p-2 m-3 rounded">
+                    <div>
+                        <strong>
+                        Teamkills:
+                        </strong>
+                        {{this.wrapped.teamkills.length | locale(0)}}
+                    </div>
 
-            <div>
-                Teamdeaths: {{this.wrapped.teamdeaths.length | locale(0)}}
-            </div>
+                    <div>
+                        <strong>
+                        Teamdeaths:
+                        </strong>
+                        {{this.wrapped.teamdeaths.length | locale(0)}}
+                    </div>
+                </div>
 
-            <div>
-                Experience earned: {{totalScore | locale(0)}}
-            </div>
+                <div class="border p-2 m-3 rounded">
+                    <div>
+                        <strong>
+                        Experience earned:
+                        </strong>
+                        {{totalScore | locale(0)}}
+                    </div>
 
-            <div>
-                SPM: {{totalSPM | locale(2)}}
-            </div>
+                    <div>
+                        <strong>
+                        SPM:
+                        </strong>
+                        {{totalSPM | locale(2)}}
+                    </div>
+                </div>
 
-            <div>
-                Vehicles killed: {{this.wrapped.vehicleKill.length | locale}}
-            </div>
+                <div class="border p-2 m-3 rounded">
+                    <div>
+                        <strong>
+                            Vehicles killed:
+                        </strong>
+                        {{this.wrapped.vehicleKill.length | locale}}
+                    </div>
 
-            <div>
-                Vehicles destroyed: {{this.wrapped.vehicleDeath.length | locale}}
-            </div>
+                    <div>
+                        <strong>
+                        Vehicles lost:
+                        </strong>
+                        {{this.wrapped.vehicleDeath.length | locale}}
+                    </div>
+                </div>
 
-            <div>
-                Facilities captures: {{facilityControlCaptureCount | locale}}
-            </div>
+                <div class="border p-2 m-3 rounded">
+                    <div>
+                        <strong>
+                        Facilities captures:
+                        </strong>
+                        {{facilityControlCaptureCount | locale}}
+                    </div>
 
-            <div>
-                Facilities defended: {{facilityControlDefendCount | locale}}
+                    <div>
+                        <strong>
+                        Facilities defended:
+                        </strong>
+                        {{facilityControlDefendCount | locale}}
+                    </div>
+                </div>
+
             </div>
         </collapsible>
     </div>

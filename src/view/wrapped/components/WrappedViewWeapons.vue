@@ -2,7 +2,7 @@
     <div>
         <collapsible header-text="Weapons">
             <div>
-                <h3 class="wt-header mb-0 border-0" style="background-color: var(--purple)">
+                <h3 class="wt-header mb-0 border-0" style="background-color: var(--green)">
                     Weapons
                 </h3>
 
