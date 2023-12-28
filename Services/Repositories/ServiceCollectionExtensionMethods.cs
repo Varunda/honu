@@ -100,6 +100,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<WrappedSavedCharacterDataFileRepository>();
             services.AddSingleton<HostedWrappedGenerationProcess>();
             services.AddSingleton<RealtimeMapStateRepository>();
+            services.AddSingleton<HonuMetadataRepository>();
         }
 
     }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
+using System.Net;
 using watchtower.Models;
 
 namespace watchtower.Services {
@@ -16,6 +17,19 @@ namespace watchtower.Services {
 
             _Logger = logger;
             _Config = config;
+        }
+
+        public string? GetHttpRemoteIp(HttpContext? context) {
+            if (context == null) {
+                return null;
+            }
+
+            IPAddress? addr = context.Connection.RemoteIpAddress;
+            if (addr == null) {
+                return null;
+            }
+
+            return addr.ToString();
         }
 
         /// <summary>

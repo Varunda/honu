@@ -33,7 +33,7 @@ export const ApiError = Vue.extend({
 
             <div v-else-if="getErrorType == 'problems'">
                 <div>
-                    An error occured in this API request: <code>{{error.title}}
+                    An error occured in this API request: <code>{{error.title}}</code>
                 </div>
 
                 <div>

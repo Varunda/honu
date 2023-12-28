@@ -1,5 +1,5 @@
 ﻿import * as axios from "axios";
-import { Loadable, Loading } from "Loading";
+import { Loadable, Loading, ProblemDetails } from "Loading";
 
 /**
  * Base api wrapper used for all other api classes
@@ -58,11 +58,13 @@ export default class ApiWrapper<T> {
 			return Loadable.error(`bad request: ${response.data}`);
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
+		} else if (response.status == 429) {
+			return Loadable.error(`you have been rate limited! more info: ${response.data}`);
 		} else if (response.status == 500) {
 			return Loadable.error(response.data);
 		} else if (response.status == 524 || response.status == 504) {
 			return Loadable.error(`timeout from cloudflare`);
-        }
+        } 
 
 		if (response.status != 200) {
 			throw `unchecked status code ${response.status}: ${response.data}`;
@@ -83,6 +85,8 @@ export default class ApiWrapper<T> {
                 return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
             } else if (response.status == 404) {
                 return Loadable.notFound(response.data);
+            } else if (response.status == 429) {
+                return Loadable.error(`you have been rate limited! more info: ${response.data}`);
             } else if (response.status == 500) {
                 return Loadable.error(`internal server error: ${response.data}`);
             } else if (response.status == 524 || response.status == 504) {
@@ -105,6 +109,14 @@ export default class ApiWrapper<T> {
                 return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
 			} else if (responseCode == 404) {
 				return Loadable.notFound(responseData);
+			} else if (responseCode == 429) {
+				const problem: ProblemDetails = new ProblemDetails();
+				problem.detail = "You have submitted too many requests, and have been rate limited. Please try again later";
+				problem.title = "You are being rate limited. Please try again later.";
+				problem.status = 429;
+				problem.instance = "";
+				problem.type = "rate-limited";
+				return Loadable.error(problem);
 			} else if (responseCode == 500) {
 				return Loadable.error(`internal server error: ${responseData}`);
 			} else if (responseCode == 524 || responseCode == 504) {
@@ -129,6 +141,8 @@ export default class ApiWrapper<T> {
                 return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
             } else if (response.status == 404) {
                 return Loadable.notFound(response.data);
+            } else if (response.status == 429) {
+                return Loadable.error(`you have been rate limited! more info: ${response.data}`);
             } else if (response.status == 500) {
 				return Loadable.error(`internal server error: ${response.data}`);
 			} else if (response.status == 524 || response.status == 504) {
@@ -151,6 +165,8 @@ export default class ApiWrapper<T> {
                 return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
 			} else if (responseCode == 404) {
 				return Loadable.notFound(responseData);
+            } else if (responseCode == 429) {
+                return Loadable.error(`you have been rate limited! more info`);
 			} else if (responseCode == 500) {
 				return Loadable.error(`internal server error: ${responseData}`);
 			} else if (responseCode == 524 || responseCode == 504) {
@@ -176,6 +192,8 @@ export default class ApiWrapper<T> {
 			return Loadable.error(`forbidden: you are not signed in, or your account lacks permissions`);
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
+		} else if (response.status == 429) {
+			return Loadable.error(`you have been rate limited! more info: ${response.data}`);
 		} else if (response.status == 500) {
 			return Loadable.error(response.data);
         } else if (response.status == 524 || response.status == 504) {

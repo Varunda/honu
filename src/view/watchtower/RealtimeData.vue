@@ -829,7 +829,8 @@
             });
 
             EventBus.$on("set-modal-data", (modalData: PopperModalData) => {
-                this.setModalData(modalData);
+                this.modalData = modalData;
+                //this.setModalData(modalData);
             });
         },
 
@@ -924,6 +925,8 @@
                     return;
                 }
 
+                console.log(`updating data!`);
+
                 const tooltip: HTMLElement | null = document.getElementById("stat-table");
                 if (tooltip == null) {
                     console.error(`Missing tooltip element '#stat-table'`);
@@ -941,6 +944,8 @@
                     placement: "auto",
                 });
                 this.popperInstance = popper;
+
+                tooltip.style.display = "block";
             },
 
             closeStatTooltip: function(): void {

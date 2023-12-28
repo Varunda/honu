@@ -53,7 +53,6 @@ namespace watchtower.Code {
                 context.Response.ContentType = "application/problem+json";
                 context.Response.StatusCode = 500;
 
-
                 await context.Response.WriteAsync(JToken.FromObject(dets, _JsonSeralizer).ToString());
             }
         }

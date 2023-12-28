@@ -135,7 +135,6 @@
                     this.chart.data.datasets[3].data = this.data.map(iter => iter.factionNs);
                 }
 
-                console.log(`updating chart`);
                 this.chart.update();
             }
         },

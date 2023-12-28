@@ -1,6 +1,9 @@
 ﻿<template>
     <collapsible header-text="Infantry" class="text-center">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;" class="align-content-center">
+
+        <img class="wrapped-bg-img" :src="'/img/wrapped/' + imageUrl" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; min-height: 900px;" class="align-content-center">
             <!-- row 1 -->
             <div style="grid-area: 1 / 1 / 1 / 3" class="cell cell-center">
                 <h1>
@@ -148,10 +151,14 @@
                 },
 
                 infantrySessionBests: [] as BestSessionEntry[],
+
+                imageUrl: "g_battle_air.png" as string
             }
         },
 
         mounted: function(): void {
+            this.setImageBackground();
+
             this.makeInfantrySessionBests();
 
             this.$nextTick(() => {
@@ -160,6 +167,41 @@
         },
 
         methods: {
+
+            setImageBackground: function(): void {
+                const mostClass = this.mostPlayedClass;
+
+                let url = `c_`;
+
+                switch (mostClass.icon) {
+                    case "infil": url += "infiltrator"; break;
+                    case "light": url += "light_assault"; break;
+                    case "medic": url += "medic"; break;
+                    case "engi": url += "engineer"; break;
+                    case "heavy": url += "heavy_assault"; break;
+                    case "max": url += "MAX"; break;
+                    default:
+                        console.warn(`failed to match class ${mostClass.icon}!`);
+                        break;
+                }
+
+                const factionID: number = this.wrapped.extra.focusedCharacter.factionID;
+                switch (factionID) {
+                    case 1: url += "_VS"; break;
+                    case 2: url += "_NC"; break;
+                    case 3: url += "_TR"; break;
+                    case 4: url += "_VS"; break;
+                    default:
+                        console.warn(`failed to match faction ${factionID}!`);
+                        break;
+                }
+
+                if (mostClass.name == "max" && factionID == 4) {
+                    url = `c_MAX_Disruptor_NS`;
+                }
+
+                this.imageUrl = url + ".png";
+            },
 
             makeInfantrySessionBests: function(): void {
                 this.infantrySessionBests = [];

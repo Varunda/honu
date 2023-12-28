@@ -23,6 +23,8 @@ namespace watchtower.Controllers {
 
         protected ApiResponse<T> ApiInternalError<T>(Exception ex) => new ApiResponse<T>(500, ex.Message);
 
+        protected ApiResponse<T> ApiInternalError<T>(string err) => new ApiResponse<T>(500, err);
+
         protected ApiResponse ApiOk() => new ApiResponse(200, null);
 
         protected ApiResponse ApiBadRequest(string err) => new ApiResponse(400, err);
@@ -34,6 +36,8 @@ namespace watchtower.Controllers {
         protected ApiResponse ApiNotFound(string err) => new ApiResponse(404, err);
 
         protected ApiResponse ApiInternalError(Exception ex) => new ApiResponse(500, ex);
+
+        protected ApiResponse ApiInternalError(string err) => new ApiResponse(500, err);
 
     }
 }

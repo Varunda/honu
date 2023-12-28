@@ -1,6 +1,8 @@
 ﻿<template>
     <collapsible v-if="showVehicleStats" header-text="Vehicle" class="text-center">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr;" class="align-content-center">
+        <img class="wrapped-bg-img" :src="'/img/wrapped/' + imageUrl" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; min-height: 900px;" class="align-content-center">
 
             <!-- row 1 -->
             <div style="grid-area: 1 / 1 / 1 / 3" class="cell cell-center">
@@ -139,10 +141,13 @@
                 },
 
                 vehicleSessionBests: [] as BestSessionEntry[],
+
+                imageUrl: "v_flash.png" as string
             }
         },
 
         mounted: function(): void {
+            this.setBackgroundImage();
             this.makeVehicleSessionBests();
 
             this.$nextTick(() => {
@@ -151,6 +156,57 @@
         },
 
         methods: {
+
+            setBackgroundImage: function(): void {
+
+                let url: string = "v_";
+
+                const most = this.mostUsedVehicles[0];
+
+                switch (most.vehicleID) {
+                    case 1: 
+                    case 1001: // ns flash
+                        url += "flash"; break;
+                    case 2:
+                    case 1002:
+                        url += "sunderer"; break;
+                    case 3: url += "lightning"; break;
+                    case 4: url += "magrider"; break;
+                    case 5: url += "vanguard"; break;
+                    case 6: url += "prowler"; break;
+                    case 7: url += "scythe"; break;
+                    case 8: url += "reaver"; break;
+                    case 9: url += "mosquito"; break;
+                    case 10:
+                    case 1010:
+                        url += "liberator"; break;
+                    case 11:
+                    case 1011:
+                        url += "galaxy"; break;
+                    case 12: url += "harasser"; break;
+                    case 14: url += "valkyrie"; break;
+                    case 15: url += "ant"; break;
+                    case 1001: url += "flash"; break;
+                    case 2007: url += "lightning"; break; // colossus
+                    case 2019: url += "bastion"; break;
+
+                    case 2033:
+                    case 2125:
+                    case 2129:
+                        url += "javelin"; break;
+
+                    case 2136: url += "dervish"; break;
+                    case 2137: url += "lightning"; break; // chimera
+                    case 2142: url += "corsair"; break;
+                    default:
+                        console.warn(`unchecked vehicle ID ${most.vehicleID}!`);
+                        url += "bastion";
+                        break;
+                }
+
+                this.imageUrl = url + ".png";
+            },
+
             makeVehicleSessionBests: function(): void {
                 this.vehicleSessionBests = [];
                 if (this.wrapped.extra.sessions.length == 0) {

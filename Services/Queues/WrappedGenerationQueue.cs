@@ -43,6 +43,7 @@ namespace watchtower.Services.Queues {
                 _Pending.Remove(entry.ID);
             }
 
+            // for each queue position, move them down one
             lock (_QueuePosition) {
                 _QueuePosition.Remove(entry.ID);
                 foreach (Guid key in _QueuePosition.Keys) {

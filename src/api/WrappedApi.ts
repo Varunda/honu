@@ -83,4 +83,8 @@ export class WrappedApi extends ApiWrapper<WrappedEntry> {
         return WrappedApi.get().postReply(`/api/wrapped?${parms.toString()}`, (elem: any) => elem);
     }
 
+    public static isEnabled(): Promise<Loading<boolean>> {
+        return WrappedApi.get().readSingle(`/api/wrapped/enabled`, (elem: any) => elem);
+    }
+
 }

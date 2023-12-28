@@ -248,17 +248,19 @@ namespace watchtower {
                     services.AddHostedService<AlertParticipantBuilder>();
                 }
 
+                // one off services created to fix a problem with Honu's data
                 //services.AddHostedService<CharacterDatesFixerStartupService>();
                 //services.AddHostedService<OutfitMemberFixerStartupService>();
+                //services.AddHostedService<KilledTeamIDFixerService>();
             }
 
             services.AddTransient<WrappedHub>();
 
-            //services.AddHostedService<KilledTeamIDFixerService>();
-
-            // Needed for Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
             services.Configure<ForwardedHeadersOptions>(options => {
+                // look for the x-forwarded-for headers to know the remote IP
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+                // needed for Honu on production, which is behind Nginx, will accept the Cookie for Google OAuth2 
                 options.KnownProxies.Add(IPAddress.Parse("64.227.19.86"));
             });
 
@@ -272,18 +274,9 @@ namespace watchtower {
             WorldIdSanityCheck();
 
             app.UseForwardedHeaders();
-
             app.UseMiddleware<ExceptionHandlerMiddleware>();
 
-            /*
-            if (env.IsDevelopment()) {
-                app.UseDeveloperExceptionPage();
-            }
-            */
-
             logger.LogInformation($"Environment: {env.EnvironmentName}");
-
-            //app.UseHttpsRedirection();
 
             app.UseStaticFiles();
             app.UseRouting();

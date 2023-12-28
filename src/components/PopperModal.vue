@@ -85,13 +85,23 @@
                     this.popperInstance = null;
                 }
 
+                console.log(`updating popper modal`);
+
                 const popper: Instance = createPopper(this.modalData.root, tooltip, {
                     placement: "auto",
                 });
                 this.popperInstance = popper;
+
+                // idk why this is needed and i can't be bothered to figure it out
+                // the display value kept getting set to none instead of block
+                tooltip.style.display = "block";
+                this.$nextTick(() => {
+                    tooltip.style.display = "block";
+                });
             },
 
             closeStatTooltip: function(): void {
+                console.log(`close stat tooltip`);
                 if (this.popperInstance != null) {
                     this.popperInstance.destroy();
 

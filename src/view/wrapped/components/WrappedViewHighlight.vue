@@ -1,5 +1,6 @@
 ﻿<template>
     <div class="w-100">
+
         <div style="max-width: 1600px; margin: auto">
 
             <h1 class="text-center mb-4">
@@ -30,7 +31,9 @@
             </h1>
 
             <collapsible header-text="General" class="text-center">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr;" class="align-content-center">
+                <img class="wrapped-bg-img" :src="'/img/wrapped/' + imageUrl" />
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 900px;" class="align-content-center">
                     <div style="grid-area: 1 / 1 / 1 / 2" class="cell cell-center">
                         <h1>
                             {{Math.round(wrapped.extra.totalPlaytime / 60 / 60) | locale(0)}}
@@ -158,16 +161,46 @@
                 },
 
                 showDebug: false as boolean,
+
+                imageUrl: "g_crystals_ascent_amerish.png" as string
             }
         },
 
         mounted: function(): void {
+            this.setImageBackground();
+
             this.$nextTick(() => {
                 this.makeCharts();
             });
         },
 
         methods: {
+            setImageBackground: function(): void {
+                let url: string = `g_`;
+
+                const imageIndex: number = this.wrapped.kills.length % 13;
+
+                switch (imageIndex) {
+                    case 0: url += "battle_air"; break;
+                    case 1: url += "battle_infantry"; break;
+                    case 2: url += "crystals_amerish"; break;
+                    case 3: url += "crystals_ascent_amerish"; break;
+                    case 4: url += "crystals_esamir"; break;
+                    case 5: url += "landscape_oshur"; break;
+                    case 6: url += "tech_plant_eisa_esamir"; break;
+                    case 7: url += "tech_plant_indar"; break;
+                    case 8: url += "tech_plant_interior"; break;
+                    case 9: url += "tower_indar"; break;
+                    case 10: url += "trident_oshur"; break;
+                    case 11: url += "warpgate_amerish"; break;
+                    case 12: url += "warpgate_esamir"; break;
+                    default:
+                        console.warn(`unchecked image index! ${imageIndex}`);
+                        break;
+                }
+
+                this.imageUrl = url + ".png";
+            },
 
             /**
              * Using a list of wrapped sessions, select the one with the highest value given a selector func

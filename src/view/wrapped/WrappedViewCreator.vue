@@ -135,20 +135,89 @@
 
         <hr class="border" />
 
-        <h2>Input characters</h2>
-        <h6>These characters will be included in the wrap up</h6>
-        <div class="list-group mb-2">
-            <div class="list-group-item" v-for="entry in inputCharacters">
-                {{entry | characterName}}
+        <div class="p-3 border rounded" v-if="responseId.state == 'error'">
+            <div class="alert alert-danger mx-n3 mt-n3">
+                <h2>Failed to create wrapped!</h2>
             </div>
+
+            <api-error :error="responseId.problem"></api-error>
         </div>
 
-        <hr class="border" />
+        <div class="p-3 border rounded" v-if="enabled.state == 'loaded' && enabled.data == false">
+            <div class="alert alert-danger mx-n3 mt-n3">
+                <h2>
+                    Wrapped generation has been disabled!
+                </h2>
+            </div>
+
+            This is likely because the database has not yet been setup to provide data for 2023.
+            <br />
+            Please check back later.
+        </div>
+
+        <h2>Input characters</h2>
+        <h6>These characters will be included in the wrap up</h6>
+
+        <table class="table table-sm mb-2">
+            <thead>
+                <tr class="table-secondary th-border-top-0">
+                    <th>
+                        Character
+                    </th>
+
+                    <th>
+                        Faction
+                    </th>
+
+                    <th>
+                        Server
+                    </th>
+
+                    <th>
+                        Remove
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr v-for="entry in inputCharacters">
+                    <td>
+                        <a :href="'/c/' + entry.id">
+                            {{entry | characterName}}
+                        </a>
+                    </td>
+
+                    <td>
+                        {{entry.factionID | faction}}
+                    </td>
+
+                    <td>
+                        {{entry.worldID | world}}
+                    </td>
+
+                    <td>
+                        <span @click="removeCharacter(entry.id)">
+                            &times;
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
         <div v-if="inputCharacters.length > 0">
-            <button class="btn btn-success w-100" @click="createWrapped">
+            <hr class="border" />
+
+            <button class="btn btn-success w-100 mb-2" @click="createWrapped" :disabled="!canSubmit">
                 Create
             </button>
+
+            <div v-if="inputCharacters.length >= 16" class="alert alert-warning">
+                You can only create a Wrapped with at most 16 characters.
+            </div>
+
+            <div v-if="enabled.state == 'loaded' && enabled.data == false" class="alert alert-danger">
+                Wrapped creation has been disabled on a server-wide level
+            </div>
         </div>
 
     </div>
@@ -159,9 +228,11 @@
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
 
+    import Toaster from "Toaster";
     import { Loadable, Loading } from "Loading";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
     import { WrappedApi, WrappedEntry } from "api/WrappedApi";
+    import { ApiError } from "components/ApiError";
 
     import "MomentFilter";
     import "filters/WorldNameFilter";
@@ -178,14 +249,27 @@
 
         data: function() {
             return {
+                enabled: Loadable.idle() as Loading<boolean>,
+
                 characterInput: "" as string,
                 characters: Loadable.idle() as Loading<PsCharacter[]>,
+
+                responseId: Loadable.idle() as Loading<string>,
 
                 inputCharacters: [] as PsCharacter[]
             }
         },
 
+        mounted: function(): void {
+            this.loadEnabled();
+        },
+
         methods: {
+            loadEnabled: async function(): Promise<void> {
+                this.enabled = Loadable.loading();
+                this.enabled = await WrappedApi.isEnabled();
+            },
+
             findCharactersWrapped: async function(): Promise<void> {
                 if (this.characterInput.length < 3) {
                     console.log(`not searching, character input is ${this.characterInput.length}`);
@@ -206,10 +290,15 @@
                         this.characters = Loadable.loaded([]);
                     }
                 }
-
             },
 
             addCharacter: function(id: string): void {
+                if (this.inputCharacters.find(iter => iter.id == id) != undefined) {
+                    Toaster.add(`Duplicate`, "duplicate character skipped", "warning");
+                    console.warn(`not adding duplicate character ${id}`);
+                    return;
+                }
+
                 if (this.characters.state != "loaded") {
                     console.log(`characters.state is not 'loaded', is actually ${this.characters.state}`);
                     return;
@@ -226,19 +315,43 @@
                 this.characters = Loadable.loaded([]);
             },
 
-            createWrapped: async function(): Promise<void> {
-                const id: Loading<string> = await WrappedApi.insert(this.inputCharacters.map(iter => iter.id));
+            removeCharacter: function(id: string): void {
+                console.log(`removing ${id} from the wrapped`);
+                this.inputCharacters = this.inputCharacters.filter(iter => iter.id != id);
+            },
 
-                if (id.state == "loaded") {
-                    window.history.pushState({ path: `/wrapped/${id.data}` }, '', `/wrapped/${id.data}`);
-                    this.$emit("update-wrapped-id", id.data);
+            createWrapped: async function(): Promise<void> {
+                this.responseId = Loadable.loading();
+                this.responseId = await WrappedApi.insert(this.inputCharacters.map(iter => iter.id));
+
+                if (this.responseId.state == "loaded") {
+                    window.history.pushState({ path: `/wrapped/${this.responseId.data}` }, '', `/wrapped/${this.responseId.data}`);
+                    this.$emit("update-wrapped-id", this.responseId.data);
+                } else if (this.responseId.state == "error") {
+                    console.error(`failed to create wrapped: ${this.responseId.problem.detail}`);
                 } else {
-                    console.log(`unchecked state of id after insert: ${id.state}`);
+                    console.log(`failed to create Wrapped! ${this.responseId.state}`);
                 }
             }
         },
 
         computed: {
+            canSubmit: function(): boolean {
+                if (this.inputCharacters.length == 0) {
+                    return false;
+                }
+
+                if (this.inputCharacters.length >= 16) {
+                    return false;
+                }
+
+                if (this.enabled.state == "loaded" && this.enabled.data == false) {
+                    return false;
+                }
+
+                return true;
+            },
+
             filterSources: function() {
                 return {
                     faction: [
@@ -264,6 +377,7 @@
 
         components: {
             ATable, ACol, ABody, AFilter, AHeader,
+            ApiError
         }
 
     });

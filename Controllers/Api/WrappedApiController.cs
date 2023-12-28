@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -7,6 +9,7 @@ using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Wrapped;
+using watchtower.Services;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
@@ -22,16 +25,35 @@ namespace watchtower.Controllers.Api {
         private readonly WrappedDbStore _WrappedDb;
         private readonly CharacterRepository _CharacterRepository;
         private readonly WrappedGenerationQueue _Queue;
+        private readonly HonuMetadataRepository _MetadataRepository;
+        private readonly HttpUtilService _HttpUtil;
+        private readonly IHttpContextAccessor _HttpContext;
+
+        private readonly IMemoryCache _Cache;
+        private const string CACHE_KEY = "Wrapped.GenerateThrottle.{0}"; // {0} => IP
+
+        /// <summary>
+        ///     List of IPs that are not rate limited
+        /// </summary>
+        private readonly HashSet<string> _WhitelistedIps = new(new string[] {
+            // "127.0.0.1", // localhost
+            "::1", // localhost again (IPv6)
+        });
 
         public WrappedApiController(ILogger<WrappedApiController> logger,
             WrappedDbStore wrappedDb, CharacterRepository characterRepository,
-            WrappedGenerationQueue queue) {
+            WrappedGenerationQueue queue, HonuMetadataRepository metadataRepository,
+            HttpUtilService httpUtil, IHttpContextAccessor httpContext, IMemoryCache cache) {
 
             _Logger = logger;
 
             _WrappedDb = wrappedDb;
             _CharacterRepository = characterRepository;
             _Queue = queue;
+            _MetadataRepository = metadataRepository;
+            _HttpUtil = httpUtil;
+            _HttpContext = httpContext;
+            _Cache = cache;
         }
 
         /// <summary>
@@ -56,6 +78,18 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get if wrapped is currently enabled
+        /// </summary>
+        /// <response code="200">
+        ///     The response will contain a boolean value indicating if the server is currently accepting new Wrapped entries
+        /// </response>
+        [HttpGet("enabled")]
+        public async Task<ApiResponse<bool>> IsEnabled() {
+            bool enabled = await _MetadataRepository.GetAsBoolean("wrapped.enabled") ?? true;
+            return ApiOk(enabled);
+        }
+
+        /// <summary>
         ///     Create a new <see cref="WrappedEntry"/>, insert it into the queue,
         ///     from a list of IDs, returning the ID of the entry
         /// </summary>
@@ -73,6 +107,23 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpPost]
         public async Task<ApiResponse<Guid>> Insert([FromQuery] List<string> IDs) {
+            bool enabled = await _MetadataRepository.GetAsBoolean("wrapped.enabled") ?? true;
+            if (enabled == false) {
+                return ApiBadRequest<Guid>($"Wrapped 2023 is currently being prepared");
+            }
+
+            string? ip = _HttpUtil.GetHttpRemoteIp(_HttpContext.HttpContext);
+            if (ip == null) {
+                _Logger.LogWarning($"missing IP! [Connection.Id={_HttpContext.HttpContext?.Connection.Id}]");
+                return ApiBadRequest<Guid>($"no IP given");
+            }
+
+            _Logger.LogDebug($"new wrapped generation requested [IP={ip}] [IDs (count)={IDs.Count}]");
+
+            if (_Queue.Count() > 100) {
+                return ApiInternalError<Guid>($"Wrapped currently has too many entries");
+            }
+
             if (IDs.Count < 1) {
                 return ApiBadRequest<Guid>($"{nameof(IDs)} must include at least one value");
             }
@@ -91,6 +142,26 @@ namespace watchtower.Controllers.Api {
 
             if (notFoundIDs.Count > 0) {
                 return ApiBadRequest<Guid>($"failed to find characters: {string.Join(", ", notFoundIDs)}");
+            }
+
+            if (_WhitelistedIps.Contains(ip)) {
+                _Logger.LogInformation($"IP is in whitelist [IP={ip}]");
+            } else {
+                string cacheKey = string.Format(CACHE_KEY, ip);
+                if (_Cache.TryGetValue(cacheKey, out int requestCount) == false) {
+                    requestCount = 1;
+                }
+
+                if (requestCount >= 5) {
+                    _Logger.LogInformation($"throttled Wrapped creation [IP={ip}] [requestCount={requestCount}]");
+                    return new ApiResponse<Guid>(429, "you are being rate limited! please wait!");
+                }
+
+                requestCount += 1;
+                _Logger.LogDebug($"updating request count [IP={ip}] [requestCount={requestCount}]");
+                _Cache.Set(cacheKey, requestCount, new MemoryCacheEntryOptions() {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                });
             }
 
             WrappedEntry entry = new();
