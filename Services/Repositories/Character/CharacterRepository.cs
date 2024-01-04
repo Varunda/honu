@@ -366,10 +366,10 @@ namespace watchtower.Services.Repositories {
 
             long sortTime = timer.ElapsedMilliseconds;
 
-            _Logger.LogDebug($"Timings to lookup '{name}':\n"
-                + $"\tDB search: {dbLookup}ms\n"
-                + $"\tCensus search: {censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}\n"
-                + $"\tSort: {sortTime}ms"
+            _Logger.LogDebug($"Timings to lookup '{name}': "
+                + $"[DB search]{dbLookup}ms] "
+                + $"[Census search]{censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}] "
+                + $"[Sort={sortTime}ms]"
             );
 
             return all;

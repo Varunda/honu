@@ -122,12 +122,12 @@
 
                     <tr>
                         <td>KPM</td>
-                        <td>{{historyKills.allTime / (historyTime.allTime || 1) * 60 | fixed | locale}}</td>
+                        <td>{{historyKills.allTime / (historyTime.allTime || 1) * 60 | fixed | locale(2)}}</td>
                     </tr>
 
                     <tr>
                         <td>K/D</td>
-                        <td>{{historyKills.allTime / (historyDeaths.allTime || 1) | fixed | locale}}</td>
+                        <td>{{historyKills.allTime / (historyDeaths.allTime || 1) | fixed | locale(2)}}</td>
                     </tr>
 
                     <tr>
@@ -137,7 +137,7 @@
 
                     <tr>
                         <td>SPM</td>
-                        <td>{{historyScore.allTime / (historyTime.allTime || 1) * 60 | fixed | locale}}</td>
+                        <td>{{historyScore.allTime / (historyTime.allTime || 1) * 60 | fixed | locale(2)}}</td>
                     </tr>
                 </tbody>
 
@@ -188,12 +188,12 @@
 
                     <tr>
                         <td>KPM</td>
-                        <td>{{recentKills / (recentTime || 1) * 60 | fixed | locale}}</td>
+                        <td>{{recentKills / (recentTime || 1) * 60 | fixed | locale(2)}}</td>
                     </tr>
 
                     <tr>
                         <td>K/D</td>
-                        <td>{{recentKills / (recentDeaths || 1) | fixed | locale}}</td>
+                        <td>{{recentKills / (recentDeaths || 1) | fixed | locale(2)}}</td>
                     </tr>
 
                     <tr>
@@ -203,7 +203,7 @@
 
                     <tr>
                         <td>SPM</td>
-                        <td>{{recentScore / (recentTime || 1) * 60 | fixed | locale}}</td>
+                        <td>{{recentScore / (recentTime || 1) * 60 | fixed | locale(2)}}</td>
                     </tr>
                 </tbody>
 

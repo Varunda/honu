@@ -51,6 +51,8 @@ namespace watchtower.Services.Queues {
                 }
             }
 
+            ++_ProcessedCount;
+
             return entry;
         }
 

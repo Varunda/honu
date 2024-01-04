@@ -25,7 +25,7 @@
 
                 <span class="collapse" id="full-char-list">
                     <span v-for="(char, i) in inputCharacters">
-                        <a v-if="i > 0" :href="'/c/' + char.id" class="mr-2">{{char | characterName}}<span v-if="showDebug">{{char.id}}</span></a>
+                        <a v-if="i > 0" :href="'/c/' + char.id" class="mr-2" style="text-decoration: underline; text-decoration-color: var(--green)">{{char | characterName}}<span v-if="showDebug">{{char.id}}</span></a>
                     </span>
                 </span>
             </h1>

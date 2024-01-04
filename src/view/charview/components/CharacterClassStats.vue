@@ -25,7 +25,7 @@
                 {{score.infil | locale}}
             </td>
             <td>
-                {{score.infil / (timeAs.infil || 1) * 60 | fixed | locale}}
+                {{score.infil / (timeAs.infil || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{infilUpdated | moment}}
@@ -45,7 +45,7 @@
                 {{score.lightAssault | locale}}
             </td>
             <td>
-                {{score.lightAssault / (timeAs.lightAssault || 1) * 60 | fixed | locale}}
+                {{score.lightAssault / (timeAs.lightAssault || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{lightAssaultUpdated | moment}}
@@ -65,7 +65,7 @@
                 {{score.medic | locale}}
             </td>
             <td>
-                {{score.medic / (timeAs.medic || 1) * 60 | fixed | locale}}
+                {{score.medic / (timeAs.medic || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{medicUpdated | moment}}
@@ -85,7 +85,7 @@
                 {{score.engineer | locale}}
             </td>
             <td>
-                {{score.engineer / (timeAs.engineer || 1) * 60 | fixed | locale}}
+                {{score.engineer / (timeAs.engineer || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{engineerUpdated | moment}}
@@ -105,7 +105,7 @@
                 {{score.heavy | locale}}
             </td>
             <td>
-                {{score.heavy / (timeAs.heavy || 1) * 60 | fixed | locale}}
+                {{score.heavy / (timeAs.heavy || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{heavyUpdated | moment}}
@@ -125,7 +125,7 @@
                 {{score.max | locale}}
             </td>
             <td>
-                {{score.max / (timeAs.max || 1) * 60 | fixed | locale}}
+                {{score.max / (timeAs.max || 1) * 60 | fixed | locale(2)}}
             </td>
             <td v-if="IncludeMetadata == true">
                 {{maxUpdated | moment}}

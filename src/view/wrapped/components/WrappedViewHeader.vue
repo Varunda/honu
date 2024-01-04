@@ -6,13 +6,17 @@
             </div>
 
             <div class="mb-2">
-                <h4>Characters to include</h4>
+                <h4>Characters</h4>
 
                 <template v-for="charID of wrapped.inputCharacterIDs">
-                    <wrapped-character-button :character-id="charID" :character="wrapped.characters.get(charID)" class="mr-2"></wrapped-character-button>
+                    <wrapped-character-button :character-id="charID" :character="wrapped.characters.get(charID)" class="mr-2"
+                        @update-filter-character-add="addCharacter" @update-filter-character-remove="removeCharacter">
+                    </wrapped-character-button>
                 </template>
             </div>
 
+            <!--
+                
             <div class="mb-2">
                 <h4>Class to include</h4>
 
@@ -53,6 +57,7 @@
                     Update
                 </button>
             </div>
+            -->
 
         </collapsible>
     </div>
@@ -77,8 +82,14 @@
             character: { type: Object as PropType<PsCharacter | null> }
         },
 
+        data: function() {
+            return {
+                toggled: true as boolean
+            }
+        },
+
         template: `
-            <toggle-button class="btn btn-primary mr-2" value="">
+            <button class="btn mr-2" :class="[ toggled ? 'btn-primary' : 'btn-secondary' ]" @click="clickToggle">
                 <span v-if="character == null">
                     &lt;missing {{CharacterId}}&gt;
                 </span>
@@ -90,8 +101,22 @@
 
                     {{character.name}}
                 </span>
-            </toggle-button>
+            </button>
         `,
+
+        methods: {
+            clickToggle: function(): void {
+                //this.toggled = !this.toggled;
+
+                /*
+                if (this.toggled == true) {
+                    this.$emit("update-filter-character-add", this.CharacterId);
+                } else {
+                    this.$emit("update-filter-character-remove", this.CharacterId);
+                }
+                */
+            },
+        },
 
         components: {
             ToggleButton
@@ -109,9 +134,25 @@
             }
         },
 
+        mounted: function(): void {
+            for (const charID of this.wrapped.inputCharacterIDs) {
+                this.filters.characters.push(charID);
+            }
+        },
+
         methods: {
             update: function(): void {
                 this.$emit("update-filters", this.filters);
+            },
+
+            addCharacter: function(charID: string): void {
+                this.filters.characters.push(charID);
+                console.log(`added ${charID} to filter list: [${this.filters.characters.join(", ")}]`);
+            },
+
+            removeCharacter: function(charID: string): void {
+                this.filters.characters = this.filters.characters.filter(iter => iter != charID);
+                console.log(`removed ${charID} to input list: [${this.filters.characters.join(", ")}]`);
             }
         },
 

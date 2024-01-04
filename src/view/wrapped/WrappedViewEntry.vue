@@ -692,8 +692,12 @@
                     || this.filters.class.medic == false
                     || this.filters.class.engi == false
                     || this.filters.class.heavy == false
-                    || this.filters.class.max == false) {
+                    || this.filters.class.max == false
+                    || this.filters.characters.length != this.wrapped.inputCharacterIDs.length) {
 
+                    console.log(`using filtered wrapped!`);
+
+                    const filtered: WrappedEntry = new WrappedEntry();
                 }
 
                 return WRAPPED;
