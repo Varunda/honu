@@ -3,7 +3,7 @@
         <collapsible header-text="Sessions">
             <div class="mb-4">
                 <h3 class="wt-header" style="background-color: var(--pink)">
-                    Playtime per day
+                    Sessions per minute
                 </h3>
 
                 <div style="height: 500px; width: 100%;">

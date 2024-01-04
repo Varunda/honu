@@ -425,6 +425,9 @@
                 this.connection.invoke("JoinGroup", this.WrappedId).then(() => {
                     console.log("JoinGroup done");
 
+                    this.connection?.stop();
+                    console.log(`closing connection`);
+
                     if (this.showFull == false) {
 
                     } else {
