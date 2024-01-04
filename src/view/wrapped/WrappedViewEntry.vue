@@ -425,7 +425,6 @@
                 this.connection.invoke("JoinGroup", this.WrappedId).then(() => {
                     console.log("JoinGroup done");
 
-                    this.connection?.stop();
                     console.log(`closing connection`);
 
                     if (this.showFull == false) {
@@ -460,6 +459,10 @@
                 if (status == "done") {
                     console.log(`loaded ${this.WrappedId}`);
                     WRAPPED.extra = WrappedExtraData.build(WRAPPED);
+
+                    if (this.connection != null) {
+                        this.connection.stop();
+                    }
                 }
 
                 this.status = status;
