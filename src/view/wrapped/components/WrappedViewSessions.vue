@@ -11,6 +11,16 @@
                 </div>
             </div>
 
+            <div class="mb-4">
+                <h3 class="wt-header" style="background-color: var(--pink)">
+                    Play time per character per week
+                </h3>
+
+                <div style="height: 500px; width: 100%;">
+                    <canvas id="chart-time-per-char"></canvas>
+                </div>
+            </div>
+
             <div>
                 <h3 class="wt-header mb-0 border-0" style="background-color: var(--pink)">
                     Session list
@@ -255,8 +265,10 @@
     import Vue, { PropType } from "vue";
     import { WrappedEntry } from "api/WrappedApi";
     import { Loadable, Loading } from "Loading";
+
     import * as moment from "moment";
     import Chart from "chart.js/auto/auto.esm";
+    import "node_modules/chartjs-adapter-moment/dist/chartjs-adapter-moment.esm.js";
 
     // components
     import Collapsible from "components/Collapsible.vue";
@@ -269,6 +281,9 @@
     import "filters/LocaleFilter";
     import "filters/CompactFilter";
     import "filters/CharacterName";
+
+    // util
+    import ColorUtils from "util/Color";
 
     // models
     import { WrappedSession } from "../common";
@@ -293,7 +308,8 @@
                 showTable: true as boolean,
 
                 chart: {
-                    timePerDay: null as Chart | null
+                    timePerDay: null as Chart | null,
+                    timePerChar: null as Chart | null
                 },
 
                 columns: {
@@ -400,28 +416,74 @@
             },
 
             makeWeekData: function(): void {
-                const map: Map<string, SessionWeekData> = new Map();
+                const map: Map<string, number[]> = new Map();
+
+                this.wrapped.inputCharacterIDs.forEach((iter) => {
+                    map.set(iter, [...Array(52)].map(_ => 0));
+                });
 
                 for (const session of this.wrapped.sessions) {
                     if (session.end == null) {
                         continue;
                     }
 
-                    const m: moment.Moment = moment(session.start);
-                    const key: string = moment(session.start).format("w");
+                    const durationSec: number = (session.end.getTime() - session.start.getTime()) / 1000;
+                    const week: number = moment(session.start).utc().get("week") - 1;
 
-                    let week: SessionWeekData | undefined = map.get(key);
-                    if (week == undefined) {
-                        week = new SessionWeekData();
-                        week.weekStart = m.startOf("week").toDate();
-                    }
+                    console.log(`${session.start} ${week}`);
 
-                    week.playtime += (session.end.getTime() - session.start.getTime()) / 1000;
-                    map.set(key, week);
+                    map.get(session.characterID)![week] += durationSec;
                 }
 
-                this.weekData = Array.from(map.values()).sort((a, b) => {
-                    return a.weekStart.getTime() - b.weekStart.getTime();
+                if (this.chart.timePerChar != null) {
+                    this.chart.timePerChar.destroy();
+                    this.chart.timePerChar = null;
+                }
+
+                const canvas = document.getElementById("chart-time-per-char") as HTMLCanvasElement;
+                const ctx = canvas.getContext("2d");
+                if (ctx == null) {
+                    console.error(`context for #chart-time-per-char is null`);
+                    return;
+                }
+
+                this.chart.timePerChar = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: [...Array(52)].map((iter, index) => `week ${index + 1}`),
+                        datasets: this.wrapped.inputCharacterIDs.map((iter, index) => {
+                            return {
+                                label: this.wrapped.characters.get(iter)?.name ?? `<missing ${iter}>`,
+                                data: (map.get(iter) ?? []),
+                                borderColor: ColorUtils.randomColor(0.5, this.wrapped.inputCharacterIDs.length, index),
+                                cubicInterpolationMode: "monotone"
+                            };
+                        })
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    text: "hours"
+                                },
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                mode: "index",
+                                intersect: false,
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ctx.dataset.label + ": " + TimeUtils.duration(ctx.raw as number);
+                                    }
+                                }
+                            },
+                        },
+                        hover: {
+                            mode: "index",
+                            intersect: false
+                        }
+                    }
                 });
 
                 console.log(`got ${this.weekData.length} from ${this.wrapped.sessions.length} sessions`);

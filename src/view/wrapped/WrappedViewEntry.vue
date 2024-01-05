@@ -183,10 +183,10 @@
         <div v-else-if="status == 'done'">
             <div class="mb-2 w-100">
                 <button v-if="showFull == false" @click="showFull = true" class="btn btn-primary w-100">
-                    Show all (laggy and resource intensive!)
+                    View list of tables view (resources intensive!)
                 </button>
                 <button v-else @click="showFull = false" class="btn btn-secondary w-100">
-                    Show highlights
+                    View highlights
                 </button>
             </div>
 
@@ -194,8 +194,22 @@
                 Wrapped UI layout and picture editing by Lyyti
             </div>
 
-            <div v-if="showFull == false" class="d-flex" style="gap: 1rem;">
+            <div v-if="showFull == false" class="d-flex" style="gap: 1rem; flex-direction: column;">
                 <wrapped-view-highlight :wrapped="filteredWrapped"></wrapped-view-highlight>
+
+                <div class="mb-2 w-100 border-top pt-3" style="max-width: 1600px; margin: auto;">
+                    <button v-if="showFull == false" @click="showFull = true" class="btn btn-success w-100"
+                            style="font-size: 2.5rem; color: var(--grey-dark); background-image: linear-gradient(12deg, rgba(0, 188, 140, 0.5), #222 25%, #222); text-align: left; background-color: unset;">
+
+                        &#10070;
+
+                        Click to change views
+
+                        <span style="color: var(--green); font-size: 2rem;">
+                            &#183; resource intensive!
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <div v-else-if="showFull == true">
@@ -266,7 +280,18 @@
                         <wrapped-view-sessions :wrapped="filteredWrapped"></wrapped-view-sessions>
                     </div>
                 </div>
+
+                <div class="mb-2 w-100 border-top pt-3">
+                    <button v-if="showFull == true" @click="showFull = false" class="btn btn-success w-100"
+                            style="font-size: 2.5rem; color: var(--grey-dark); background-image: linear-gradient(12deg, rgba(0, 188, 140, 0.5), #222 25%, #222); text-align: left; background-color: unset;">
+
+                        &#9998;
+
+                        Click to change views
+                    </button>
+                </div>
             </div>
+
         </div>
     </div>
 </template>

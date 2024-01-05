@@ -104,6 +104,17 @@
                     </a-col>
 
                 </a-table>
+
+                <h3 class="wt-header mb-2 border-0" style="background-color: var(--green)">
+                    Weapon usage per week
+                    <info-hover text="only weapons that are >=5% of total kills or at least 1'160 kills included"></info-hover>
+                </h3>
+
+                <div>
+                    <canvas id="chart-weapons-over-time" style="max-height: 500px; height: 500px;">
+                    </canvas>
+                </div>
+
             </div>
 
         </collapsible>
@@ -115,6 +126,8 @@
     import Vue, { PropType } from "vue";
     import { WrappedEntry } from "api/WrappedApi";
     import { Loadable, Loading } from "Loading";
+    import Chart from "chart.js/auto/auto.esm";
+    import * as moment from "moment";
 
     // components
     import Collapsible from "components/Collapsible.vue";
@@ -124,10 +137,14 @@
 
     // models
     import { PsItem } from "api/ItemApi";
+    import { WrappedWeaponStats } from "../common";
 
     // filters
     import "MomentFilter";
     import "filters/LocaleFilter";
+
+    // util
+    import ColorUtils from "util/Color";
 
     class WrappedWeaponData {
         public id: number = 0;
@@ -160,17 +177,96 @@
                     engi: true as boolean,
                     heavy: true as boolean,
                     max: true as boolean
+                },
+
+                chart: {
+                    instance: null as Chart | null
                 }
             }
         },
 
-        created: function(): void {
-            this.makeAll();
+        mounted: function(): void {
+            this.$nextTick(() => {
+                this.makeAll();
+            });
         },
 
         methods: {
             makeAll: function(): void {
                 this.makeWeaponData();
+                this.makeChart();
+            },
+
+            makeChart: function(): void {
+                const mostUsed: WrappedWeaponStats[] = [...this.wrapped.extra.weaponStats].filter(iter => {
+                    return (iter.kills >= (this.wrapped.kills.length / 20)) || (iter.kills >= 1160);
+                }).sort((a, b) => {
+                    return b.kills - a.kills;
+                }).slice(0, 15);
+
+                if (this.chart.instance != null) {
+                    this.chart.instance.destroy(); 
+                    this.chart.instance = null;
+                }
+
+                const canvas = document.getElementById("chart-weapons-over-time") as HTMLCanvasElement;
+                const ctx = canvas.getContext("2d");
+                if (ctx == null) {
+                    console.error(`context for #chart-weapons-over-time is null`);
+                    return;
+                }
+
+                const killsPerWeek: Map<number, number[]> = new Map();
+                mostUsed.forEach((iter) => {
+                    killsPerWeek.set(iter.itemId, [...Array(12)].map(iter => 0));
+                });
+
+                for (const ev of this.wrapped.kills) {
+                    if (killsPerWeek.has(ev.weaponID) == false) {
+                        continue;
+                    }
+
+                    const month: number = moment(ev.timestamp).get("month");
+                    killsPerWeek.get(ev.weaponID)![month] += 1;
+                }
+
+                this.chart.instance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: [...Array(12)].map((iter, index) => `month ${index + 1}`),
+                        datasets: mostUsed.map((iter, index) => {
+                            return {
+                                label: (iter.itemId == 0) ? "no weapon" : iter.name,
+                                data: killsPerWeek.get(iter.itemId) ?? [],
+                                borderColor: ColorUtils.randomColor(0.5, mostUsed.length, index),
+                                cubicInterpolationMode: "monotone"
+                            };
+                        }),
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                ticks: {
+                                    color: "white",
+                                    font: {
+                                        family: "Consolas"
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                mode: "index",
+                                intersect: false
+                            },
+                        },
+                        hover: {
+                            mode: "index",
+                            intersect: false
+                        }
+                    }
+
+                });
             },
 
             makeWeaponData: function(): void {
