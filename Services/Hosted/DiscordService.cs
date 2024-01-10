@@ -400,6 +400,11 @@ namespace watchtower.Services.Hosted {
             }
 
             _Logger.LogError(args.Exception, $"error executing slash command: {args.Context.CommandName}");
+
+            if (args.Exception is BadRequestException badRequest) {
+                _Logger.LogError($"errors in request [url={badRequest.WebRequest.Url}] [errors={badRequest.Errors}]");
+            }
+
             try {
                 // if the response has already started, this won't be null, indicating to instead update the response
                 DiscordMessage? msg = null;

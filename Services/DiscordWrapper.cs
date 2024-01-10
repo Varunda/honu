@@ -42,7 +42,8 @@ namespace watchtower.Services {
                 _Discord = new DiscordClient(new DiscordConfiguration() {
                     Token = _DiscordOptions.Value.Key,
                     TokenType = TokenType.Bot,
-                    LoggerFactory = loggerFactory
+                    LoggerFactory = loggerFactory,
+                    Intents = DiscordIntents.MessageContents | DiscordIntents.AllUnprivileged
                 });
             } catch (Exception) {
                 throw;

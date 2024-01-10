@@ -222,7 +222,7 @@
                 // only show if the highest KD is above 1, don't wanna embarrass someone lol
                 if (highestKd != undefined && (highestKd.infantryKills / Math.max(1, highestKd.deaths)) > 1) {
                     this.infantrySessionBests.push({
-                        name: "Highest KD session",
+                        name: "Highest infantry KD session",
                         value: LocaleUtil.locale(highestKd.infantryKills / Math.max(1, highestKd.deaths), 2),
                         session: highestKd
                     });

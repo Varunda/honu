@@ -35,7 +35,7 @@
 
                     <a-col sort-field="kills">
                         <a-header>
-                            Kills
+                            Infantry kills
                         </a-header>
 
                         <a-body v-slot="entry">
@@ -103,6 +103,16 @@
                         </a-body>
                     </a-col>
 
+                    <a-col sort-field="vehicleKills">
+                        <a-header>
+                            Vehicle kills
+                        </a-header>
+
+                        <a-body v-slot="entry">
+                            {{entry.vehicleKills | locale}}
+                        </a-body>
+                    </a-col>
+
                 </a-table>
 
                 <h3 class="wt-header mb-2 border-0" style="background-color: var(--green)">
@@ -152,6 +162,7 @@
         public name: string = "";
 
         public kills: number = 0;
+        public vehicleKills: number = 0;
         public headshots: number = 0;
         public headshotRatio: number = 0;
 
@@ -301,6 +312,25 @@
                     }
 
                     map.set(ev.weaponID, data);
+                }
+
+                for (const ev of this.wrapped.vehicleKill) {
+                    let data: WrappedWeaponData | undefined = map.get(ev.attackerWeaponID);
+
+                    if (data == undefined) {
+                        data = new WrappedWeaponData();
+                        data.id = ev.attackerWeaponID;
+                        data.item = this.wrapped.items.get(ev.attackerWeaponID) ?? null;
+
+                        if (ev.attackerWeaponID == 0) {
+                            data.name = "no weapon";
+                        } else {
+                            data.name = data.item?.name ?? `<missing ${ev.attackerWeaponID}>`;
+                        }
+                    }
+
+                    ++data.vehicleKills;
+                    map.set(ev.attackerWeaponID, data);
                 }
 
                 const arr: WrappedWeaponData[] = Array.from(map.values()).map((iter: WrappedWeaponData) => {

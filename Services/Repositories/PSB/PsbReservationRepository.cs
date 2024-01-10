@@ -84,6 +84,10 @@ namespace watchtower.Services.Repositories.PSB {
         ///     A parsed <see cref="ParsedPsbReservation"/>
         /// </returns>
         public async Task<ParsedPsbReservation> Parse(DiscordMessage message) {
+            if (string.IsNullOrEmpty(message.Content) == true) {
+                _Logger.LogWarning($"message is empty, did you set the gateway intents? Needs message contents!");
+            }
+
             PsbReservation res = new();
 
             ParsedPsbReservation parsed = new();
