@@ -153,21 +153,33 @@ namespace watchtower.Realtime {
             worlds.AddRange(World.Ps4EuStreams);
 
             foreach (short worldID in worlds) {
-                _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
-                _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
+                try {
+                    new Thread(async () => {
+                        _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
+                        _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
 
-                CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
-                if (env == null) {
-                    _Logger.LogError($"Unknown {nameof(CensusEnvironment)} from world ID {worldID}, defaulting to PC for creating realtime stream");
-                    env = CensusEnvironment.PC;
+                        CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
+                        if (env == null) {
+                            _Logger.LogError($"Unknown {nameof(CensusEnvironment)} from world ID {worldID}, defaulting to PC for creating realtime stream");
+                            env = CensusEnvironment.PC;
+                        }
+
+                        RealtimeStream stream = CreateStream($"stream-{worldID}-{World.GetName(worldID)}", "asdf", env.Value);
+
+                        CensusStreamSubscription sub = CreateSubscription(worldID);
+                        stream.Subscriptions.Add(sub);
+
+                        try {
+                            _Logger.LogInformation($"connecting {stream.Name}...");
+                            await stream.Client.ConnectAsync();
+                            _Logger.LogDebug($"connected {stream.Name}!");
+                        } catch (Exception ex) {
+                            _Logger.LogError($"failed to create stream {stream.Name}: {ex.Message}", ex);
+                        }
+                    }).Start();
+                } catch (Exception ex) {
+                    _Logger.LogError($"failure in background thread to create stream for {worldID}: {ex.Message}", ex);
                 }
-
-                RealtimeStream stream = CreateStream($"stream-{worldID}-{World.GetName(worldID)}", "asdf", env.Value);
-
-                CensusStreamSubscription sub = CreateSubscription(worldID);
-                stream.Subscriptions.Add(sub);
-
-                await stream.Client.ConnectAsync();
             }
 
             await ResubscribeAll();
@@ -292,6 +304,7 @@ namespace watchtower.Realtime {
             }
 
             ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
+            stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
             _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");

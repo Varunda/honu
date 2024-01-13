@@ -378,6 +378,8 @@ namespace watchtower.Controllers.Api {
                 return ApiAuthorize();
             }
 
+            _Logger.LogDebug($"checking permissions [user={currentUser.ID}/{currentUser.Name}] [accountTypeID={accountTypeID}]");
+
             List<HonuAccountPermission> permissions = await _AccountPermissions.GetByAccountID(currentUser.ID);
             if (accountTypeID == PsbAccountType.NAMED) {
                 if (permissions.FirstOrDefault(iter => iter.Permission == HonuPermission.PSB_NAMED_MANAGE) == null) {
@@ -386,6 +388,14 @@ namespace watchtower.Controllers.Api {
             } else if (accountTypeID == PsbAccountType.PRACTICE) {
                 if (permissions.FirstOrDefault(iter => iter.Permission == HonuPermission.PSB_PRACTICE_MANAGE) == null) {
                     return ApiForbidden(HonuPermission.PSB_PRACTICE_MANAGE);
+                }
+            } else if (accountTypeID == PsbAccountType.OVO) {
+                if (permissions.FirstOrDefault(iter => iter.Permission == HonuPermission.HONU_ACCOUNT_ADMIN) == null) {
+                    return ApiForbidden(HonuPermission.HONU_ACCOUNT_ADMIN);
+                }
+            } else if (accountTypeID == PsbAccountType.TOURNEY) {
+                if (permissions.FirstOrDefault(iter => iter.Permission == HonuPermission.PSB_NAMED_MANAGE) == null) {
+                    return ApiForbidden(HonuPermission.PSB_NAMED_MANAGE);
                 }
             } else {
                 return ApiBadRequest($"Unchecked {nameof(accountTypeID)} {accountTypeID}");
