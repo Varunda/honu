@@ -19,11 +19,11 @@ namespace watchtower.Services.Db {
         private readonly IDbHelper _DbHelper;
 
         private readonly IDataReader<PsAlert> _Reader;
-        private readonly IDataReader<AlertPlayer> _ParticipantReader;
+        private readonly IDataReader<CharacterAlertPlayer> _ParticipantReader;
 
         public AlertDbStore(ILogger<AlertDbStore> logger,
             IDbHelper dbHelper, IDataReader<PsAlert> reader,
-            IDataReader<AlertPlayer> participantReader) {
+            IDataReader<CharacterAlertPlayer> participantReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
@@ -161,7 +161,7 @@ namespace watchtower.Services.Db {
         /// <returns>
         ///     A list of all participants, or an empty list if no participants
         /// </returns>
-        public async Task<List<AlertPlayer>> GetParticipants(PsAlert alert) {
+        public async Task<List<CharacterAlertPlayer>> GetParticipants(PsAlert alert) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH kill_dataset AS (
@@ -199,7 +199,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("ZoneID", alert.ZoneID);
             cmd.AddParameter("WorldID", alert.WorldID);
 
-            List<AlertPlayer> parts = await _ParticipantReader.ReadList(cmd);
+            List<CharacterAlertPlayer> parts = await _ParticipantReader.ReadList(cmd);
             await conn.CloseAsync();
 
             return parts;
@@ -214,11 +214,11 @@ namespace watchtower.Services.Db {
         ///     The participants of an alert (character ID + seconds online),
         ///     or an empty list if the alert does not exist
         /// </returns>
-        public async Task<List<AlertPlayer>> GetParticipants(int alertID) {
+        public async Task<List<CharacterAlertPlayer>> GetParticipants(int alertID) {
             PsAlert? alert = await GetByID(alertID);
 
             if (alert == null) {
-                return new List<AlertPlayer>();
+                return new List<CharacterAlertPlayer>();
             }
 
             return await GetParticipants(alert);

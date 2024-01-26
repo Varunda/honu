@@ -134,7 +134,7 @@ namespace watchtower.Services.Repositories {
             expAct?.Stop();
 
             Activity? playersAct = HonuActivitySource.Root.StartActivity("Alert - get players");
-            List<AlertPlayer> parts = await _AlertDb.GetParticipants(alert);
+            List<CharacterAlertPlayer> parts = await _AlertDb.GetParticipants(alert);
             playersAct?.Stop();
 
             Activity? sessionAct = HonuActivitySource.Root.StartActivity("Alert - get sessions");
@@ -149,7 +149,7 @@ namespace watchtower.Services.Repositories {
 
             List<string> duplicateDataEntries = new List<string>();
 
-            foreach (AlertPlayer part in parts) {
+            foreach (CharacterAlertPlayer part in parts) {
                 if (data.ContainsKey(part.CharacterID) == true) {
                     duplicateDataEntries.Add(part.CharacterID);
                     continue;
@@ -295,7 +295,7 @@ namespace watchtower.Services.Repositories {
             }
 
             // Get how long each participant was in the zone for
-            foreach (AlertPlayer part in parts) {
+            foreach (CharacterAlertPlayer part in parts) {
                 if (timestampedEvents.TryGetValue(part.CharacterID, out List<TimestampZoneEvent>? events) == false) {
                     continue;
                 }

@@ -17,13 +17,15 @@ namespace watchtower.Services.Db {
         private readonly ILogger<AlertPlayerDataDbStore> _Logger;
         private readonly IDbHelper _DbHelper;
         private readonly IDataReader<AlertPlayerDataEntry> _Reader;
+        private readonly IDataReader<CharacterAlertPlayer> _CharReader;
 
         public AlertPlayerDataDbStore(ILogger<AlertPlayerDataDbStore> logger, IDbHelper dbHelper,
-            IDataReader<AlertPlayerDataEntry> reader) {
+            IDataReader<AlertPlayerDataEntry> reader, IDataReader<CharacterAlertPlayer> charReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
             _Reader = reader;
+            _CharReader = charReader;
         }
 
         /// <summary>
@@ -141,6 +143,28 @@ namespace watchtower.Services.Db {
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
+        }
+
+        /// <summary>
+        ///     Get the character level data of an alert a character participated in
+        /// </summary>
+        /// <param name="charID">ID of the character</param>
+        /// <returns></returns>
+        public async Task<List<CharacterAlertPlayer>> GetByCharacterID(string charID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT p.*, a.duration, a.zone_id, a.world_id, a.victor_faction_id, a.participants, a.alert_id AS metagame_alert_id, a.instance_id
+                    FROM alert_participant_data p 
+                        LEFT JOIN alerts a ON p.alert_id = a.id
+                    WHERE character_id = @CharacterID;
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+
+            List<CharacterAlertPlayer> cap = await _CharReader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return cap;
         }
 
     }

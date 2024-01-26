@@ -92,7 +92,7 @@ namespace watchtower.Services.Repositories {
             // Events not in the alert's zone are there to get when a player joins/leaves the zone
             List<KillEvent> kills = await _KillDb.GetByRange(start - TimeSpan.FromMinutes(5), end, null, alert.WorldID);
             List<ExpEvent> exp = await _ExpDb.GetByRange(start - TimeSpan.FromMinutes(5), end, null, alert.WorldID);
-            List<AlertPlayer> players = await _AlertDb.GetParticipants(alert);
+            List<CharacterAlertPlayer> players = await _AlertDb.GetParticipants(alert);
             List<Session> sessions = await _SessionDb.GetByRange(start, end);
 
             long loadData = timer.ElapsedMilliseconds;
@@ -109,7 +109,7 @@ namespace watchtower.Services.Repositories {
             }
 
             Dictionary<string, List<TimestampZoneEvent>> timestampedEvents = new Dictionary<string, List<TimestampZoneEvent>>();
-            foreach (AlertPlayer p in players) {
+            foreach (CharacterAlertPlayer p in players) {
                 timestampedEvents.Add(p.CharacterID, new List<TimestampZoneEvent>());
             }
             
@@ -147,7 +147,7 @@ namespace watchtower.Services.Repositories {
             long sortData = timer.ElapsedMilliseconds - loadData;
 
             // For each player, an iteration over the samples is done, and check
-            foreach (AlertPlayer p in players) {
+            foreach (CharacterAlertPlayer p in players) {
                 if (timestampedEvents.TryGetValue(p.CharacterID, out List<TimestampZoneEvent>? events) == false) {
                     continue;
                 }

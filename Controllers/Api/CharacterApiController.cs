@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Code.Constants;
 using watchtower.Models;
+using watchtower.Models.Alert;
 using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.CharacterViewer.CharacterStats;
@@ -45,6 +46,8 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterHistoryStatDbStore _CharacterHistoryStatDb;
         private readonly ItemCategoryRepository _ItemCategoryRepository;
         private readonly ItemTypeRepository _ItemTypeRepository;
+        private readonly AlertPlayerDataDbStore _AlertPlayerDb;
+        private readonly MetagameEventRepository _MetagameEventRepository;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
         private readonly CharacterCacheQueue _CharacterQueue;
@@ -57,7 +60,8 @@ namespace watchtower.Controllers.Api {
             CharacterFriendRepository charFriendRepo, CharacterUpdateQueue queue,
             OutfitRepository outfitRepository, KillboardCollection killboardCollection,
             CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue,
-            ItemCategoryRepository itemCategoryRepository, ItemTypeRepository itemTypeRepository) {
+            ItemCategoryRepository itemCategoryRepository, ItemTypeRepository itemTypeRepository,
+            AlertPlayerDataDbStore alertPlayerDb, MetagameEventRepository metagameEventRepository) {
 
             _Logger = logger;
 
@@ -78,6 +82,8 @@ namespace watchtower.Controllers.Api {
             _CharacterHistoryStatDb = characterHistoryStatDb;
             _ItemCategoryRepository = itemCategoryRepository;
             _ItemTypeRepository = itemTypeRepository;
+            _AlertPlayerDb = alertPlayerDb;
+            _MetagameEventRepository = metagameEventRepository;
         }
 
         /// <summary>
@@ -544,6 +550,18 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(expanded);
+        }
+
+        [HttpGet("character/{charID}/alerts")]
+        public async Task<ApiResponse<ExpandedCharacterAlerts>> GetAlerts(string charID) {
+            List<CharacterAlertPlayer> caps = await _AlertPlayerDb.GetByCharacterID(charID);
+
+            ExpandedCharacterAlerts block = new();
+            block.CharacterID = charID;
+            block.Alerts = caps;
+            block.MetagameEvents = await _MetagameEventRepository.GetByIDs(caps.Select(iter => iter.MetagameAlertID).Distinct());
+
+            return ApiOk(block);
         }
 
         /// <summary>

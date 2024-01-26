@@ -7,7 +7,6 @@
         </div>
 
         <div v-else-if="outfitHistory.state == 'loaded'">
-
             <a-table 
                 :entries="entries"
                 :striped="true"

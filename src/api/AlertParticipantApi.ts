@@ -3,6 +3,7 @@
 import ApiWrapper from "api/ApiWrapper";
 import { CharacterApi, MinimalCharacter, PsCharacter } from "api/CharacterApi";
 import { OutfitApi, PsOutfit } from "api/OutfitApi";
+import { MetagameEventApi, PsMetagameEvent } from "api/MetagameEventApi";
 
 import ProfileUtils from "util/Profile";
 
@@ -79,6 +80,40 @@ export class FlattendParticipantDataEntry {
     public profiles: AlertPlayerProfileData[] = [];
 }
 
+
+export class CharacterAlertPlayer {
+    public victorFactionID: number | null = null;
+    public duration: number = 0;
+    public zoneID: number = 0;
+    public worldID: number = 0;
+    public metagameAlertID: number = 0;
+    public instanceID: number = 0;
+    public name: string = "";
+
+    public alertID: number = 0;
+    public characterID: string = "";
+    public outfitID: string | null = null;
+    public secondsOnline: number = 0;
+    public timestamp: Date = new Date();
+
+    public kills: number = 0;
+    public deaths: number = 0;
+    public vehicleKills: number = 0;
+
+    public heals: number = 0;
+    public revives: number = 0;
+    public shieldRepairs: number = 0;
+    public resupplies: number = 0;
+    public spawns: number = 0;
+    public repairs: number = 0;
+}
+
+export class CharacterAlertBlock {
+    public characterID: string = "";
+    public alerts: CharacterAlertPlayer[] = [];
+    public metagameEvents: Map<number, PsMetagameEvent> = new Map();
+}
+
 export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
     private static _instance: AlertParticipantApi = new AlertParticipantApi();
     public static get(): AlertParticipantApi { return AlertParticipantApi._instance; }
@@ -113,6 +148,32 @@ export class AlertParticipantApi extends ApiWrapper<AlertParticipantDataEntry> {
         }
 
         return expanded;
+    }
+
+    public static parseCharacter(elem: any): CharacterAlertPlayer {
+        return {
+            ...elem,
+            timestamp: new Date(elem.timestamp)
+        };
+    }
+
+    public static readCharacterAlertBlock(elem: any): CharacterAlertBlock {
+        const block: CharacterAlertBlock = new CharacterAlertBlock();
+
+        block.characterID = elem.characterID;
+        block.alerts = elem.alerts.map((iter: any) => AlertParticipantApi.parseCharacter(iter));
+        block.metagameEvents = new Map();
+
+        for (const event of elem.metagameEvents) {
+            const ev: PsMetagameEvent = MetagameEventApi.parse(event);
+            block.metagameEvents.set(ev.id, ev);
+        }
+
+        return block;
+    }
+
+    public static async getByCharacterID(charID: string): Promise<Loading<CharacterAlertBlock>> {
+        return AlertParticipantApi.get().readSingle(`/api/character/${charID}/alerts`, AlertParticipantApi.readCharacterAlertBlock);
     }
 
     public static async getByAlertID(alertID: number): Promise<Loading<FlattendParticipantDataEntry[]>> {

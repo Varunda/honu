@@ -1,11 +1,11 @@
 ﻿<template>
     <div>
-        <h2 class="wt-header d-flex" data-toggle="collapse" :data-target="'#' + elementID">
+        <div class="wt-header d-flex" :class="SizeClass" data-toggle="collapse" :data-target="'#' + elementID">
             <span :id="'icon-' + elementID" class="fas fa-caret-down"></span>
             {{HeaderText}}
 
             <slot name="header"></slot>
-        </h2>
+        </div>
 
         <div :id="elementID" class="collapse" :class="{ show: opened }">
             <slot></slot>
@@ -19,7 +19,8 @@
     export const Collapsible = Vue.extend({
         props: {
             HeaderText: { type: String, required: true },
-            show: { type: Boolean, required: false, default: true }
+            show: { type: Boolean, required: false, default: true },
+            SizeClass: { type: String, required: false, default: "h2" }
         },
 
         data: function() {
