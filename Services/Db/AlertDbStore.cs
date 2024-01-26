@@ -214,11 +214,11 @@ namespace watchtower.Services.Db {
         ///     The participants of an alert (character ID + seconds online),
         ///     or an empty list if the alert does not exist
         /// </returns>
-        public async Task<List<CharacterAlertPlayer>> GetParticipants(int alertID) {
+        public async Task<List<AlertPlayer>> GetParticipants(int alertID) {
             PsAlert? alert = await GetByID(alertID);
 
             if (alert == null) {
-                return new List<CharacterAlertPlayer>();
+                return new List<AlertPlayer>();
             }
 
             return await GetParticipants(alert);
