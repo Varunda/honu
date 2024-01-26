@@ -5,12 +5,12 @@
         default-sort-field="resupplies" default-sort-order="desc" :default-page-size="10"
         display-type="table" row-padding="compact">
 
-        <a-col sort-field="characterName">
+        <a-col sort-field="name">
             <a-header>
                 <b>Character</b>
             </a-header>
 
-            <a-filter field="characterName" type="string" method="input"
+            <a-filter field="name" type="string" method="input"
                 :conditions="[ 'contains' ]">
             </a-filter>
 
