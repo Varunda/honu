@@ -92,7 +92,7 @@ namespace watchtower.Services.Repositories {
             // Events not in the alert's zone are there to get when a player joins/leaves the zone
             List<KillEvent> kills = await _KillDb.GetByRange(start - TimeSpan.FromMinutes(5), end, null, alert.WorldID);
             List<ExpEvent> exp = await _ExpDb.GetByRange(start - TimeSpan.FromMinutes(5), end, null, alert.WorldID);
-            List<CharacterAlertPlayer> players = await _AlertDb.GetParticipants(alert);
+            List<AlertPlayer> players = await _AlertDb.GetParticipants(alert);
             List<Session> sessions = await _SessionDb.GetByRange(start, end);
 
             long loadData = timer.ElapsedMilliseconds;
@@ -109,7 +109,7 @@ namespace watchtower.Services.Repositories {
             }
 
             Dictionary<string, List<TimestampZoneEvent>> timestampedEvents = new Dictionary<string, List<TimestampZoneEvent>>();
-            foreach (CharacterAlertPlayer p in players) {
+            foreach (AlertPlayer p in players) {
                 timestampedEvents.Add(p.CharacterID, new List<TimestampZoneEvent>());
             }
             
@@ -147,7 +147,7 @@ namespace watchtower.Services.Repositories {
             long sortData = timer.ElapsedMilliseconds - loadData;
 
             // For each player, an iteration over the samples is done, and check
-            foreach (CharacterAlertPlayer p in players) {
+            foreach (AlertPlayer p in players) {
                 if (timestampedEvents.TryGetValue(p.CharacterID, out List<TimestampZoneEvent>? events) == false) {
                     continue;
                 }
@@ -211,11 +211,11 @@ namespace watchtower.Services.Repositories {
             long insertData = timer.ElapsedMilliseconds - computeData - sortData - loadData;
 
             _Logger.LogDebug(
-                $"Took {timer.ElapsedMilliseconds}ms to generate alert population data for alert {alert.ID}/{alert.Name}\n"
-                + $"\tTime to load data: {loadData}ms\n"
-                + $"\tSort data: {sortData}ms\n"
-                + $"\tCompute data: {computeData}ms\n"
-                + $"\tInsert data: {insertData}ms\n"
+                $"Took {timer.ElapsedMilliseconds}ms to generate alert population data for alert {alert.ID}/{alert.Name}"
+                + $" [Time to load data: {loadData}ms]"
+                + $" [Sort data: {sortData}ms]"
+                + $" [Compute data: {computeData}ms]"
+                + $" [Insert data: {insertData}ms]"
             );
 
             return pops;

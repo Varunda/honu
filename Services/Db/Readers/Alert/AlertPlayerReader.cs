@@ -4,10 +4,10 @@ using watchtower.Models.Alert;
 
 namespace watchtower.Services.Db.Readers.Alert {
 
-    public class AlertPlayerReader : IDataReader<CharacterAlertPlayer> {
+    public class AlertPlayerReader : IDataReader<AlertPlayer> {
 
-        public override CharacterAlertPlayer? ReadEntry(NpgsqlDataReader reader) {
-            CharacterAlertPlayer part = new CharacterAlertPlayer();
+        public override AlertPlayer? ReadEntry(NpgsqlDataReader reader) {
+            AlertPlayer part = new();
 
             part.CharacterID = reader.GetString("character_id");
 
