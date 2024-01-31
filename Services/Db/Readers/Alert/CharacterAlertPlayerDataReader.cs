@@ -16,6 +16,7 @@ namespace watchtower.Services.Db.Readers.Alert {
             cap.VictorFactionID = reader.GetNullableInt16("victor_faction_id");
             cap.MetagameAlertID = reader.GetInt32("metagame_alert_id");
             cap.InstanceID = reader.GetInt32("instance_id");
+            cap.Name = reader.GetString("name");
 
             cap.AlertID = reader.GetInt64("alert_id");
             cap.Timestamp = reader.GetDateTime("timestamp");

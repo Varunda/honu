@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <div class="alert alert-primary text-center">
-            This data is populated only AFTER and alert is finished
+            This data is populated only AFTER and  alert is finished
         </div>
 
         <div class="border mb-3 mt-0 rounded">

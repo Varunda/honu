@@ -153,7 +153,7 @@ namespace watchtower.Services.Db {
         public async Task<List<CharacterAlertPlayer>> GetByCharacterID(string charID) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
-                SELECT p.*, a.duration, a.zone_id, a.world_id, a.victor_faction_id, a.participants, a.alert_id AS metagame_alert_id, a.instance_id
+                SELECT p.*, a.duration, a.zone_id, a.world_id, a.victor_faction_id, a.participants, a.alert_id AS metagame_alert_id, a.instance_id, a.name
                     FROM alert_participant_data p 
                         LEFT JOIN alerts a ON p.alert_id = a.id
                     WHERE character_id = @CharacterID;

@@ -100,7 +100,7 @@ export class InfantryDamage {
                     }
 
                     // Normalize the amount of XP gained in case this player had a score multiplier
-                    const normalAmount = assist.amount / metadata.scoreMultiplier;
+                    const normalAmount = assist.amount / Math.max(1, metadata.scoreMultiplier);
 
                     // Get the max amount of xp that can be earned from that event, defaulting to 100 if unknown
                     let baseAmount: number | null = null;
