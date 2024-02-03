@@ -228,6 +228,9 @@
         methods: {
             selectTab: function(tab: string): void {
                 this.selectedTab = tab.toLowerCase();
+                if (this.selectedTab == "vehicles") {
+                    this.selectedTab = "vehicle";
+                }
 
                 const lower: string = this.selectedTab.toLowerCase();
 
@@ -245,7 +248,7 @@
                     this.selectedComponent = "CharacterDirectives";
                 } else if (lower == "extra") {
                     this.selectedComponent = "CharacterExtraStats";
-                } else if (lower == "vehicle") {
+                } else if (lower == "vehicle" || lower == "vehicles") {
                     this.selectedComponent = "CharacterVehicleStats";
                 } else if (lower == "outfithistory") {
                     this.selectedComponent = "CharacterOutfitHistory";
