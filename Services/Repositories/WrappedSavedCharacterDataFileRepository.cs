@@ -38,6 +38,7 @@ namespace watchtower.Services.Repositories {
                 return null;
             }
 
+            Stopwatch timer = Stopwatch.StartNew();
             string json;
             try {
                 json = await File.ReadAllTextAsync(filepath);
@@ -45,17 +46,17 @@ namespace watchtower.Services.Repositories {
                 _Logger.LogError(ex, $"Failed to read file '{filepath}'");
                 return null;
             }
+            long readMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            Stopwatch timer = Stopwatch.StartNew();
             JToken j = JToken.Parse(json);
 
             WrappedSavedCharacterData? data = j.ToObject<WrappedSavedCharacterData>();
             long parseMs = timer.ElapsedMilliseconds;
 
             if (data == null) {
-                _Logger.LogDebug($"Failed to find saved JSON for {charID}");
+                _Logger.LogDebug($"failed to find saved JSON for {charID}");
             } else {
-                _Logger.LogDebug($"Found saved JSON for {charID}, parsed in {parseMs}ms");
+                _Logger.LogDebug($"found saved JSON for {charID}, [read={readMs}ms] [parsed={parseMs}ms]");
             }
 
             return data;

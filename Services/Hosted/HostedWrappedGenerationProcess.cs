@@ -211,14 +211,30 @@ namespace watchtower.Services.Hosted {
             _Logger.LogDebug($"sending event data for {entry.ID}");
             IWrappedHub group = _Hub.Clients.Group($"wrapped-{entry.ID}");
 
+            Stopwatch timer2 = Stopwatch.StartNew();
+            Stopwatch timer = Stopwatch.StartNew();
+
             await group.SendSessions(entry.Sessions);
+            long sessionMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendKills(entry.Kills);
+            long killMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendDeaths(entry.Deaths);
+            long deathMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendExp(entry.Experience);
+            long expMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendFacilityControl(entry.ControlEvents);
+            long facControlMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendItemAdded(entry.ItemAddedEvents);
+            long itemAddedMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendAchievementEarned(entry.AchievementEarned);
+            long achEarnedMs = timer.ElapsedMilliseconds; timer.Restart();
             await group.SendVehicleDestroy(entry.VehicleDestroy);
+            long vehDestroyMs = timer.ElapsedMilliseconds; timer.Restart();
+
+            long totalMs = timer2.ElapsedMilliseconds;
+
+            _Logger.LogDebug($"sent event data [id={entry.ID}] [total={totalMs}ms] [session={sessionMs}ms] [kill={killMs}ms] [death={deathMs}ms] [exp={expMs}ms] "
+                + $"[facility control={facControlMs}ms] [item added={itemAddedMs}ms] [achievement earned={achEarnedMs}ms] [vehicle destroy={vehDestroyMs}ms]");
         }
 
         /// <summary>
