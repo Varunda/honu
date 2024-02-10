@@ -48,6 +48,7 @@ namespace watchtower.Controllers.Api {
         private readonly ItemTypeRepository _ItemTypeRepository;
         private readonly AlertPlayerDataDbStore _AlertPlayerDb;
         private readonly MetagameEventRepository _MetagameEventRepository;
+        private readonly CharacterNameChangeDbStore _CharacterNameChangeDb;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
         private readonly CharacterCacheQueue _CharacterQueue;
@@ -61,7 +62,8 @@ namespace watchtower.Controllers.Api {
             OutfitRepository outfitRepository, KillboardCollection killboardCollection,
             CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue,
             ItemCategoryRepository itemCategoryRepository, ItemTypeRepository itemTypeRepository,
-            AlertPlayerDataDbStore alertPlayerDb, MetagameEventRepository metagameEventRepository) {
+            AlertPlayerDataDbStore alertPlayerDb, MetagameEventRepository metagameEventRepository,
+            CharacterNameChangeDbStore characterNameChangeDb) {
 
             _Logger = logger;
 
@@ -84,6 +86,7 @@ namespace watchtower.Controllers.Api {
             _ItemTypeRepository = itemTypeRepository;
             _AlertPlayerDb = alertPlayerDb;
             _MetagameEventRepository = metagameEventRepository;
+            _CharacterNameChangeDb = characterNameChangeDb;
         }
 
         /// <summary>
@@ -670,6 +673,21 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(expanded);
+        }
+
+        /// <summary>
+        ///     get the character name changes that honu has tracked
+        /// </summary>
+        /// <param name="charID">ID of the character to get the changes of</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="CharacterNameChange"/>s that have taken place
+        ///     for the <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>
+        /// </response>
+        [HttpGet("character/{charID}/name-changes")]
+        public async Task<ApiResponse<List<CharacterNameChange>>> GetNameChanges(string charID) {
+            List<CharacterNameChange> changes = await _CharacterNameChangeDb.GetByCharacterID(charID);
+
+            return ApiOk(changes);
         }
 
         /// <summary>

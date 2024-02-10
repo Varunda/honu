@@ -98,6 +98,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<RealtimeMapState>, RealtimeMapStateReader>();
             services.AddSingleton<IDataReader<WorldZonePopulation>, WorldZonePopulationReader>();
             services.AddSingleton<IDataReader<CharacterAlertPlayer>, CharacterAlertPlayerDataReader>();
+            services.AddSingleton<IDataReader<CharacterNameChange>, CharacterNameChangeReader>();
         }
 
     }

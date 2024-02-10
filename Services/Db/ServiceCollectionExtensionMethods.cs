@@ -42,6 +42,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<CharacterDirectiveTierDbStore>();
             services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
             services.AddSingleton<CharacterAchievementDbStore>();
+            services.AddSingleton<CharacterNameChangeDbStore>();
 
             // static data
             services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();

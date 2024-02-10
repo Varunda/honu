@@ -27,6 +27,7 @@ namespace watchtower.Services.Repositories {
         private readonly CharacterDbStore _CharacterDb;
         private readonly CharacterMetadataDbStore _CharacterMetadataDb;
         private readonly CharacterRepository _CharacterRepository;
+        private readonly CharacterNameChangeDbStore _CharacterNameChangeDb;
 
         private readonly CharacterWeaponStatCollection _WeaponCensus;
         private readonly CharacterWeaponStatDbStore _WeaponStatDb;
@@ -74,7 +75,7 @@ namespace watchtower.Services.Repositories {
             CharacterDirectiveTreeRepository characterDirectiveTreeRepository, CharacterDirectiveRepository characterDirectiveRepository,
             CharacterFriendRepository charactacterFriendRepository, CharacterStatRepository statRepository,
             CharacterItemRepository itemRepository, CharacterHistoryStatRepository historyRepository,
-            CharacterWeaponStatRepository weaponRepository) {
+            CharacterWeaponStatRepository weaponRepository, CharacterNameChangeDbStore characterNameChangeDb) {
 
             _Logger = logger;
 
@@ -111,6 +112,7 @@ namespace watchtower.Services.Repositories {
             _ItemRepository = itemRepository;
             _HistoryRepository = historyRepository;
             _WeaponRepository = weaponRepository;
+            _CharacterNameChangeDb = characterNameChangeDb;
         }
 
         public async Task UpdateCharacter(string charID, CancellationToken stoppingToken, bool batchUpdate = false) {
@@ -290,6 +292,30 @@ namespace watchtower.Services.Repositories {
 
             PsCharacter? character = await _CharacterCensus.GetByID(charID, CensusEnvironment.PC);
             if (character != null) {
+
+                // check if the character name has changed, and if so, insert it!
+                PsCharacter? dbChar = await _CharacterDb.GetByID(charID);
+                if (dbChar != null) {
+                    _Logger.LogDebug($"comparing {dbChar.Name} to {character.Name}");
+                    if (character.Name != dbChar.Name) {
+                        _Logger.LogInformation($"name change detected! [character ID={character.ID}] [old name={dbChar.Name}] [new name={character.Name}]");
+
+                        CharacterNameChange change = new();
+                        change.CharacterID = charID;
+                        change.OldName = dbChar.Name;
+                        change.NewName = character.Name;
+                        change.LowerBound = dbChar.LastUpdated;
+                        change.UpperBound = character.LastUpdated;
+                        change.Timestamp = DateTime.UtcNow;
+
+                        try {
+                            await _CharacterNameChangeDb.Insert(change);
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"failed to insert name change [character ID={character.ID}]!");
+                        }
+                    }
+                }
+
                 character.LastUpdated = DateTime.UtcNow;
                 // update on the character repo so if they are cached it stays up to date
                 await _CharacterRepository.Upsert(character);
