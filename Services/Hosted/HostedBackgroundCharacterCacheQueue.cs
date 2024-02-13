@@ -80,18 +80,18 @@ namespace watchtower.Services.Hosted {
                     _Queue.AddProcessTime(timer.ElapsedMilliseconds);
 
                 } catch (CensusServiceUnavailableException) {
-                    _Logger.LogWarning($"Failed to get character from API, service unavailable");
+                    _Logger.LogWarning($"failed to get character from API, service unavailable");
                     await Task.Delay(30 * 1000, stoppingToken);
                 } catch (CensusConnectionException) {
-                    _Logger.LogWarning($"Failed to get character from API, connection exception");
+                    _Logger.LogWarning($"failed to get character from API, connection exception");
                     await Task.Delay(30 * 1000, stoppingToken);
                 } catch (CensusException) {
-                    _Logger.LogWarning($"Failed to get character from API, general exception");
+                    _Logger.LogWarning($"failed to get character from API, general exception");
                     await Task.Delay(30 * 1000, stoppingToken);
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
-                    _Logger.LogError(ex, "Error while caching character");
+                    _Logger.LogError(ex, "error while caching character");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
-                    _Logger.LogInformation($"Stopping {SERVICE_NAME} with {_Queue.Count()} left");
+                    _Logger.LogInformation($"stopping {SERVICE_NAME} with {_Queue.Count()} left");
                 }
             }
         }

@@ -30,8 +30,14 @@ namespace watchtower.Services.Queues {
                 return;
             }
 
-            if (_Pending.Contains(charID)) {
-                return;
+            // this goes before the item is actually queued, as it's possible for the entry to not be
+            // pending but queued otherwise
+            lock (_Pending) {
+                if (_Pending.Contains(charID)) {
+                    return;
+                }
+
+                _Pending.Add(charID);
             }
 
             _Items.Enqueue(new CharacterFetchQueueEntry() {
@@ -39,10 +45,6 @@ namespace watchtower.Services.Queues {
                 Store = true,
                 Environment = environment
             });
-
-            lock (_Pending) {
-                _Pending.Add(charID);
-            }
 
             _Signal.Release();
         }

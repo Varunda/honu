@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models.Census;
+using watchtower.Models.Db;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -25,6 +26,7 @@ namespace watchtower.Services.Repositories {
 
         private readonly CharacterDbStore _Db;
         private readonly CharacterCollection _Census;
+        private readonly CharacterNameChangeDbStore _CharacterNameChangeDb;
 
         private readonly CharacterUpdateQueue _Queue;
         private readonly CharacterCacheQueue _CacheQueue;
@@ -43,7 +45,8 @@ namespace watchtower.Services.Repositories {
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
             CharacterDbStore db, CharacterCollection census,
-            CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue) {
+            CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue,
+            CharacterNameChangeDbStore characterNameChangeDb) {
 
             _Logger = logger;
             _Cache = cache;
@@ -53,6 +56,7 @@ namespace watchtower.Services.Repositories {
 
             _Queue = queue;
             _CacheQueue = cacheQueue;
+            _CharacterNameChangeDb = characterNameChangeDb;
         }
 
         /// <summary>
@@ -89,6 +93,29 @@ namespace watchtower.Services.Repositories {
                         //      Useful if census is down, or a character has been deleted
                         PsCharacter? censusChar = await _Census.GetByID(charID, env);
                         if (censusChar != null) {
+
+                            // if there is a character from the db, and a character from Census, lets compare the names
+                            if (character != null) {
+                                _Logger.LogDebug($"comparing {character.Name} to {censusChar.Name}");
+                                if (character.Name != censusChar.Name) {
+                                    _Logger.LogInformation($"name change detected! [character ID={character.ID}] [old name={censusChar.Name}] [new name={character.Name}]");
+
+                                    CharacterNameChange change = new();
+                                    change.CharacterID = charID;
+                                    change.OldName = censusChar.Name;
+                                    change.NewName = character.Name;
+                                    change.LowerBound = censusChar.LastUpdated;
+                                    change.UpperBound = character.LastUpdated;
+                                    change.Timestamp = DateTime.UtcNow;
+
+                                    try {
+                                        await _CharacterNameChangeDb.Insert(change);
+                                    } catch (Exception ex) {
+                                        _Logger.LogError(ex, $"failed to insert name change [character ID={character.ID}]!");
+                                    }
+                                }
+                            }
+
                             character = censusChar;
                             await _Db.Upsert(censusChar);
                         }
