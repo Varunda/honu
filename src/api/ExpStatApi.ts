@@ -31,6 +31,7 @@ export class ExperienceType {
     public id: number = 0;
     public name: string = "";
     public amount: number = 0;
+    public awardTypeID: number = 0;
 }
 
 export class ExpandedExpEvent {
@@ -379,7 +380,8 @@ export class ExpStatApi extends ApiWrapper<ExpEvent> {
         return {
             id: elem.id,
             name: elem.name,
-            amount: elem.amount
+            amount: elem.amount,
+            awardTypeID: elem.awardTypeID
         };
     }
 

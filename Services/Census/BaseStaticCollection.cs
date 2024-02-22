@@ -28,9 +28,9 @@ namespace watchtower.Services.Census {
         /// <summary>
         ///     What file will be used to patch the Census response, adding new data and updating entries
         /// </summary>
-        internal string? _PatchFile;
-        internal Func<T, string>? _KeyFunc;
-        internal Action<T, T>? _CopyFunc;
+        internal string? _PatchFile = null;
+        internal Func<T, string>? _KeyFunc = null;
+        internal Action<T, T>? _CopyFunc = null;
 
         internal ILogger<BaseStaticCollection<T>> _Logger;
 
@@ -46,6 +46,9 @@ namespace watchtower.Services.Census {
             _Reader = reader ?? throw new ArgumentNullException(nameof(reader));
         }
 
+        /// <summary>
+        ///     calls <see cref="GetAll(CancellationToken)"/> but with <see cref="CancellationToken.None"/>
+        /// </summary>
         public Task<List<T>> GetAll() {
             return GetAll(CancellationToken.None);
         }
@@ -115,7 +118,6 @@ namespace watchtower.Services.Census {
                 if (File.Exists(_PatchFile) == false) {
                     throw new FileNotFoundException($"Failed to find patch file {_PatchFile}");
                 }
-
 
                 JsonElement readElement(byte[] file) {
                     Utf8JsonReader reader = new(file);

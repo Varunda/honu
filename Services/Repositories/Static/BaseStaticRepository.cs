@@ -50,10 +50,14 @@ namespace watchtower.Services.Repositories {
         /// </returns>
         public async Task<List<T>> GetAll() {
             if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<T> entries) == false) {
+                string method = "db";
+                _Logger.LogDebug($"loading static data, not cached [TypeName={TypeName}] [cacheKey={CACHE_KEY_ALL}]");
                 entries = await _Db.GetAll();
 
                 if (entries.Count == 0) {
+                    _Logger.LogInformation($"loaded 0 entries from DB, loading from census [TypeName={TypeName}]");
                     List<T> censusEntries = await _Census.GetAll();
+                    method = "census";
                     if (censusEntries.Count > 0) {
                         foreach (T entry in censusEntries) {
                             await _Db.Upsert(entry);
@@ -64,6 +68,8 @@ namespace watchtower.Services.Repositories {
                 _Cache.Set(CACHE_KEY_ALL, entries, new MemoryCacheEntryOptions() {
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
+
+                _Logger.LogDebug($"loaded static data [TypeName={TypeName}] [method={method}] [count={entries.Count}]");
             }
 
             return entries;
@@ -115,14 +121,15 @@ namespace watchtower.Services.Repositories {
         /// <summary>
         ///     Remove the cached data, forcing a Census call the next time 
         /// </summary>
-        /// <returns>
-        ///     A task when this operation is complete
-        /// </returns>
         public void FlushCache() {
             _Cache.Remove(CACHE_KEY_ALL);
             _Cache.Remove(CACHE_KEY_MAP);
         }
 
+        /// <summary>
+        ///     refresh the data within this repository
+        /// </summary>
+        /// <param name="cancel">async cancellation token</param>
         public async Task Refresh(CancellationToken cancel) {
             Stopwatch timer = Stopwatch.StartNew();
 

@@ -283,14 +283,15 @@ namespace watchtower.Services.Hosted {
             }
         }
 
-        private async Task Guild_Available(DiscordClient sender, GuildCreateEventArgs args) {
+        private Task Guild_Available(DiscordClient sender, GuildCreateEventArgs args) {
             DiscordGuild? guild = args.Guild;
             if (guild == null) {
                 _Logger.LogDebug($"no guild");
-                return;
+                return Task.CompletedTask;
             }
 
             _Logger.LogDebug($"guild available: {guild.Id} / {guild.Name}");
+            return Task.CompletedTask;
         }
 
         /// <summary>

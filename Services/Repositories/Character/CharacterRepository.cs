@@ -96,7 +96,7 @@ namespace watchtower.Services.Repositories {
 
                             // if there is a character from the db, and a character from Census, lets compare the names
                             if (character != null) {
-                                _Logger.LogDebug($"comparing {character.Name} to {censusChar.Name}");
+                                //_Logger.LogDebug($"comparing {character.Name} to {censusChar.Name}");
                                 if (character.Name != censusChar.Name) {
                                     _Logger.LogInformation($"name change detected! [character ID={character.ID}] [old name={censusChar.Name}] [new name={character.Name}]");
 

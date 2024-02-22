@@ -10,6 +10,7 @@ using watchtower.Services.Db.Implementations;
 using watchtower.Services.Hosted;
 using watchtower.Services.Repositories.PSB;
 using watchtower.Services.Repositories.Readers;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Services.Repositories {
 
@@ -67,6 +68,8 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<MetagameEventRepository>();
             services.AddSingleton<IStaticRepository<ItemType>, ItemTypeRepository>();
             services.AddSingleton<ItemTypeRepository>();
+            services.AddSingleton<IStaticRepository<ExperienceAwardType>, ExperienceAwardTypeRepository>();
+            services.AddSingleton<ExperienceAwardTypeRepository>();
 
             services.AddSingleton<ReportRepository>();
             services.AddSingleton<PsbAccountRepository>();

@@ -15,6 +15,7 @@ using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Controllers {
 
@@ -30,14 +31,15 @@ namespace watchtower.Controllers {
         private readonly CharacterRepository _CharacterRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly ExperienceTypeRepository _ExperienceTypeRepository;
+        private readonly ExperienceAwardTypeRepository _ExperienceAwardTypeRepository;
 
         private readonly ExpEventDbStore _ExpDbStore;
         private readonly SessionDbStore _SessionDb;
 
         public ExpApiController(ILogger<ExpApiController> logger,
             CharacterRepository charRepo, ExpEventDbStore killDb,
-            OutfitRepository outfitRepo, SessionDbStore sessionDb, 
-            ExperienceTypeRepository experienceTypeRepository) {
+            OutfitRepository outfitRepo, SessionDbStore sessionDb,
+            ExperienceTypeRepository experienceTypeRepository, ExperienceAwardTypeRepository experienceAwardTypeRepository) {
 
             _Logger = logger;
 
@@ -47,6 +49,7 @@ namespace watchtower.Controllers {
             _ExpDbStore = killDb ?? throw new ArgumentNullException(nameof(killDb));
             _SessionDb = sessionDb ?? throw new ArgumentNullException(nameof(sessionDb));
             _ExperienceTypeRepository = experienceTypeRepository;
+            _ExperienceAwardTypeRepository = experienceAwardTypeRepository;
         }
 
         /// <summary>
@@ -92,7 +95,7 @@ namespace watchtower.Controllers {
 
             List<ExpandedExpEvent> expanded = new List<ExpandedExpEvent>(expEvents.Count);
 
-            // 19 characters is a character ID, othere ones are NPC IDs
+            // 19 characters is a character ID, other ones are NPC IDs
             List<string> characterIDs = expEvents.Select(iter => iter.SourceID).ToList();
             characterIDs.AddRange(expEvents.Where(iter => iter.OtherID.Length == 19).Select(iter => iter.OtherID).ToList());
             characterIDs = characterIDs.Distinct().ToList();
@@ -424,6 +427,19 @@ namespace watchtower.Controllers {
         [HttpGet("types")]
         public async Task<ApiResponse<List<ExperienceType>>> GetExperienceTypes() {
             List<ExperienceType> types = await _ExperienceTypeRepository.GetAll();
+
+            return ApiOk(types);
+        }
+
+        /// <summary>
+        ///     get all <see cref="ExperienceAwardType"/>s stored
+        /// </summary>
+        /// <response code="200">
+        ///     the response will contain a list of all <see cref="ExperienceAwardType"/>s
+        /// </response>
+        [HttpGet("award-types")]
+        public async Task<ApiResponse<List<ExperienceAwardType>>> GetExperienceAwardTypes() {
+            List<ExperienceAwardType> types = await _ExperienceAwardTypeRepository.GetAll();
 
             return ApiOk(types);
         }

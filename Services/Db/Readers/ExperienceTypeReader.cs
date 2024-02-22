@@ -12,6 +12,7 @@ namespace watchtower.Services.Db.Readers {
             type.ID = reader.GetInt32("id");
             type.Name = reader.GetString("name");
             type.Amount = reader.GetDouble("amount");
+            type.AwardTypeID = reader.GetInt32("award_type_id");
 
             return type;
         }

@@ -67,9 +67,11 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
-        ///     Get all the <see cref="WorldZonePopulation"/> for a specific world
+        ///     Get the <see cref="WorldZonePopulation"/> for a specific world over a time period
         /// </summary>
         /// <param name="worldID">ID of the world</param>
+        /// <param name="start">start of the period (inclusive)</param>
+        /// <param name="end">end period (exclusive)</param>
         /// <returns>
         ///     A list of <see cref="WorldZonePopulation"/>
         /// </returns>

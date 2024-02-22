@@ -58,7 +58,7 @@ namespace watchtower.Services.Db {
         ///     <see cref="CharacterNameChange.CharacterID"/> of <paramref name="charID"/>
         /// </returns>
         public async Task<List<CharacterNameChange>> GetByCharacterID(string charID) {
-            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.EVENTS);
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM character_name_change

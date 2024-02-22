@@ -56,6 +56,8 @@ namespace watchtower.Services.Census {
             services.AddSingleton<FireGroupToFireModeCollection>();
             services.AddSingleton<IStaticCollection<PsMetagameEvent>, MetagameEventCollection>();
             services.AddSingleton<MetagameEventCollection>();
+            services.AddSingleton<IStaticCollection<ExperienceAwardType>, ExperienceAwardTypeCollection>();
+            services.AddSingleton<ExperienceAwardTypeCollection>();
 
             services.AddSingleton<RealtimeMapStateCollection>();
             services.AddSingleton<OutfitWarsOutfitCollection>();

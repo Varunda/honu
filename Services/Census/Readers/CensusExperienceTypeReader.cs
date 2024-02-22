@@ -14,6 +14,7 @@ namespace watchtower.Services.Census.Readers {
             type.ID = token.GetRequiredInt32("experience_id");
             type.Name = token.GetString("description", "");
             type.Amount = (double) token.GetDecimal("xp", 0);
+            type.AwardTypeID = token.GetInt32("experience_award_type_id", 0);
 
             return type;
         }

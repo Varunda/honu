@@ -296,7 +296,7 @@ namespace watchtower.Services.Repositories {
                 // check if the character name has changed, and if so, insert it!
                 PsCharacter? dbChar = await _CharacterDb.GetByID(charID);
                 if (dbChar != null) {
-                    _Logger.LogDebug($"comparing {dbChar.Name} to {character.Name}");
+                    //_Logger.LogDebug($"comparing {dbChar.Name} to {character.Name}");
                     if (character.Name != dbChar.Name) {
                         _Logger.LogInformation($"name change detected! [character ID={character.ID}] [old name={dbChar.Name}] [new name={character.Name}]");
 
