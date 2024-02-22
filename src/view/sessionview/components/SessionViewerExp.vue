@@ -294,7 +294,7 @@
             generateShieldRepairEntries: function(): void {
                 const set = this.generatePlayerAndOutfitExp(this.shieldRepairs);
                 this.playerShieldRepairs = set[0];
-                this.outfitShieldRepairs = set[0];
+                this.outfitShieldRepairs = set[1];
             },
 
             generatePlayerAndOutfitExp(events: ExpEvent[]): [Entry[], Entry[]] {
