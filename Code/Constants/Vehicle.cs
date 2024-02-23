@@ -5,7 +5,11 @@
     /// </summary>
     public static class Vehicle {
 
-        public const string SUNDERER = "2";
+        public const string SUNDERER_STR = "2";
+
+        public const int SUNDERER = 2;
+
+        public const int GALAXY = 11;
 
     }
 }

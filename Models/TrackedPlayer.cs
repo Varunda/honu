@@ -67,5 +67,12 @@ namespace watchtower.Models {
         /// </summary>
         public DateTime? LastLogin { get; set; }
 
+        /// <summary>
+        ///     the ID of the vehicle this player might be in. there are 2 special values: 0 means no value, and -1 means in a vehicle, but unknown
+        /// </summary>
+        public int PossibleVehicleID { get; set; }
+
+        public long VehicleLastTimestamp { get; set; }
+
     }
 }

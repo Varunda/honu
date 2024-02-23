@@ -173,8 +173,13 @@ namespace watchtower.Constants {
                 || expId == VKILL_VALKYRIE || expId == VKILL_JAVELIN;
         }
 
+        /// <summary>
+        ///     check both vehicle repair and squad vehicle repair
+        /// </summary>
+        /// <param name="expId"></param>
+        /// <returns></returns>
         public static bool IsVehicleRepair(int expId) {
-            return VehicleKillEvents.Contains(expId) || SquadVehicleRepairEvents.Contains(expId);
+            return VehicleRepairEvents.Contains(expId) || SquadVehicleRepairEvents.Contains(expId);
         }
 
     }

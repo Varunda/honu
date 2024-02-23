@@ -65,6 +65,8 @@ namespace watchtower.Realtime {
         private readonly ItemRepository _ItemRepository;
         private readonly MapRepository _MapRepository;
         private readonly FacilityRepository _FacilityRepository;
+        private readonly ExperienceTypeRepository _ExperienceTypeRepository;
+        private readonly VehicleRepository _VehicleRepository;
 
         private readonly IHubContext<RealtimeMapHub> _MapHub;
         private readonly WorldTagManager _TagManager;
@@ -94,7 +96,7 @@ namespace watchtower.Realtime {
             WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
             SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb,
             AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue,
-            MetagameEventRepository metagameRepository) {
+            MetagameEventRepository metagameRepository, ExperienceTypeRepository experienceTypeRepository, VehicleRepository vehicleRepository) {
 
             _Logger = logger;
 
@@ -136,6 +138,8 @@ namespace watchtower.Realtime {
             _AlertEndQueue = alertEndQueue;
             _FacilityControlQueue = facilityControlQueue;
             _MetagameRepository = metagameRepository;
+            _ExperienceTypeRepository = experienceTypeRepository;
+            _VehicleRepository = vehicleRepository;
         }
 
         public DateTime MostRecentProcess() {
@@ -178,7 +182,7 @@ namespace watchtower.Realtime {
                 }
 
                 if (payloadToken.Value<int?>("timestamp") != null) {
-                    // somehow, it's possible to get events that are in the past, which can really break some things
+                    // somehow, it's possible to get events that are in the future, which can really break some things
                     DateTime timestamp = payloadToken.CensusTimestamp("timestamp");
                     TimeSpan diff = timestamp - DateTime.UtcNow;
                     if (timestamp > _MostRecentProcess && diff <= TimeSpan.FromSeconds(3)) {
@@ -315,6 +319,14 @@ namespace watchtower.Realtime {
                     attacker.TeamID = ev.AttackerTeamID;
                 }
 
+                if (attacker.PossibleVehicleID != int.Parse(ev.AttackerVehicleID) && ev.AttackerCharacterID != ev.KilledCharacterID) {
+                    _Logger.LogDebug($"updating possible vehicle ID of {attacker.ID} from {attacker.PossibleVehicleID} to {ev.AttackerVehicleID} [cause=got kill in vehicle]");
+                }
+                attacker.PossibleVehicleID = int.Parse(ev.AttackerVehicleID);
+                
+                // --------------------------------------------
+                // killed character updates
+
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
                     ID = ev.KilledCharacterID,
@@ -345,6 +357,12 @@ namespace watchtower.Realtime {
                     killed.TeamID = killed.FactionID;
                 }
 
+                // the vehicle is dead, they cannot have another one
+                if (killed.PossibleVehicleID != 0) {
+                    _Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
+                }
+                killed.PossibleVehicleID = 0;
+
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                 attacker.LatestEventTimestamp = nowSeconds;
@@ -359,7 +377,7 @@ namespace watchtower.Realtime {
 
             _NexusHandler.HandleVehicleDestroy(ev);
 
-            if (ev.KilledVehicleID == Vehicle.SUNDERER && ev.WorldID == World.Jaeger) {
+            if (ev.KilledVehicleID == Vehicle.SUNDERER_STR && ev.WorldID == World.Jaeger) {
                 List<ExpEvent> possibleEvents = RecentSundererDestroyExpStore.Get().GetList();
                 ExpEvent? expEvent = null;
                 _Logger.LogDebug($"Bus on Jaeger killed!");
@@ -1075,7 +1093,9 @@ namespace watchtower.Realtime {
 
             if (env != null) { 
                 _CacheQueue.Queue(charID, env.Value);
-                _CacheQueue.Queue(attackerID, env.Value);
+                if (charID != attackerID) { // no need to cache if it's the same
+                    _CacheQueue.Queue(attackerID, env.Value);
+                }
             }
 
             //_Logger.LogTrace($"Processing death: {payload}");
@@ -1101,16 +1121,18 @@ namespace watchtower.Realtime {
                     });
                 }
 
-                if (env != null) {
-                    _CacheQueue.Queue(attacker.ID, env.Value);
-                }
-
                 attacker.ZoneID = zoneID;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
                     attacker.FactionID = attackerFactionID; // If a tracked player was made from a login, no faction ID is given
                     attacker.TeamID = ev.AttackerTeamID;
                 }
+
+                // if the attacker is in a vehicle, we're pretty confident about this being correct lol
+                attacker.PossibleVehicleID = ev.AttackerVehicleID;
+
+                // --------------------------------------------------
+                // update the killer
 
                 // See above for why false is used for the Online value, instead of true
                 TrackedPlayer killed = CharacterStore.Get().Players.GetOrAdd(ev.KilledCharacterID, new TrackedPlayer() {
@@ -1120,10 +1142,6 @@ namespace watchtower.Realtime {
                     Online = false,
                     WorldID = ev.WorldID
                 });
-
-                if (env != null) {
-                    _CacheQueue.Queue(killed.ID, env.Value);
-                }
 
                 // Ensure that 2 sessions aren't started if the attacker and killed are the same
                 if (env != null && killed.ID != "0" && killed.Online == false && attacker.ID != killed.ID) {
@@ -1140,6 +1158,9 @@ namespace watchtower.Realtime {
                     killed.FactionID = factionID;
                     killed.TeamID = ev.KilledTeamID;
                 }
+
+                // if they were killed, they can't be in a vehicle anymore
+                killed.PossibleVehicleID = 0;
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 attacker.LatestEventTimestamp = nowSeconds;
@@ -1213,6 +1234,12 @@ namespace watchtower.Realtime {
 
             long createEventMs = timer.ElapsedMilliseconds; timer.Restart();
 
+            ExperienceType? expType = await _ExperienceTypeRepository.GetByID(ev.ExperienceID);
+            if (timer.ElapsedMilliseconds > 100) {
+                _Logger.LogWarning($"took {timer.ElapsedMilliseconds} to get the exp type of {ev.ExperienceID}");
+            }
+
+            // this is set below in the lock
             TrackedPlayer? otherPlayer = null;
 
             //using Activity? processExp = HonuActivitySource.Root.StartActivity("process CharacterStore");
@@ -1234,6 +1261,44 @@ namespace watchtower.Realtime {
                     });
                 }
 
+                if (expType != null) {
+                    // 2024-02-22 TODO: somehow parse out the vehicle name
+                    if (expType.AwardTypeID == ExperienceAwardTypes.GUNNER_KILL && p.PossibleVehicleID == 0) {
+
+                        if (p.PossibleVehicleID != -1) {
+                            _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=GUNNER_KILL]");
+                        }
+
+                        p.PossibleVehicleID = -1;
+                    }
+                }
+
+                // ok, so, it might seem reasonable to assume that if a character repairs a vanguard, then they are in a vanguard,
+                //      but that's not true cause of prox repair. prox repair IS NOT a different event, so we don't actually know if they
+                //      are in a vehicle or not. a possible improvement would be see if the character is repairing multiple different
+                //      vehicles within the same time period, but for now, i just want to get something out there
+                // so, if we don't already know what vehicle a character is in, just say they are in some vehicle, but we don't know which one
+                if (p.PossibleVehicleID == 0 && Experience.IsVehicleRepair(ev.ExperienceID)) {
+                    if (p.PossibleVehicleID != -1) {
+                        _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=VEHICLE_REPAIR]");
+                    }
+                    p.PossibleVehicleID = -1;
+                }
+
+                // if they are in a vehicle resupply, it's most likely a sunderer, but could be a galaxy, so only update it to a sunderer
+                //      if they ARE NOT in a galaxy
+                //
+                // TODO: could this be a corsair? does anyone care about those?
+                //
+                if (p.PossibleVehicleID != Vehicle.GALAXY
+                    && (ev.ExperienceID == Experience.VEHICLE_RESUPPLY || ev.ExperienceID == Experience.SQUAD_VEHICLE_RESUPPLY)) {
+
+                    if (p.PossibleVehicleID != Vehicle.SUNDERER) {
+                        _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=VEHICLE_RESUPPLY]");
+                    }
+                    p.PossibleVehicleID = Vehicle.SUNDERER;
+                }
+
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID;
                 p.TeamID = teamID;
@@ -1243,35 +1308,8 @@ namespace watchtower.Realtime {
                     p.TeamID = factionID;
                 }
 
+                // this is needed to update revive stats down below
                 CharacterStore.Get().Players.TryGetValue(otherID, out otherPlayer);
-
-                /*
-                // If the event could only happen if two characters are on the same faction, update the team_id field
-                if (Experience.IsRevive(expId) || Experience.IsHeal(expId) || Experience.IsResupply(expId)) {
-                    // If either character was not NSO, update the team_id of the character
-                    // If both are NSO, this field is not updated, as one bad team_id could then spread to other NSOs, messing up tracking
-                    if (CharacterStore.Get().Players.TryGetValue(otherID, out otherPlayer)) {
-                        if (p.FactionID == Faction.NS && otherPlayer.FactionID != Faction.NS
-                            && otherPlayer.FactionID != Faction.UNKNOWN && p.TeamID != otherPlayer.FactionID) {
-
-                            //_Logger.LogDebug($"Robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) non-robot {otherPlayer.ID}, setting robot team ID to {otherPlayer.FactionID} from {p.TeamID}");
-                            p.TeamID = otherPlayer.FactionID;
-                        }
-
-                        if (p.FactionID != Faction.NS && p.FactionID != Faction.UNKNOWN
-                            && otherPlayer.FactionID == Faction.NS && otherPlayer.TeamID != p.FactionID) {
-
-                            //_Logger.LogDebug($"Non-robot {p.ID} supported (exp {expId}, loadout {loadoutId}, faction {factionID}) robot {otherPlayer.ID}, setting robot team ID to {p.FactionID}, from {otherPlayer.TeamID}");
-                            otherPlayer.TeamID = p.FactionID;
-                        }
-                    }
-                }
-
-                // If the character is NS, and we know what team they're currently on (not -1 or 0), update the event
-                if (p.FactionID == Faction.NS && p.TeamID != Faction.UNKNOWN && p.TeamID != 0) {
-                    ev.TeamID = p.TeamID;
-                }
-                */
             }
             //processExp?.Stop();
 
@@ -1280,8 +1318,6 @@ namespace watchtower.Realtime {
             long ID = 0;
             if (World.IsTrackedWorld(ev.WorldID)) {
                 ID = await _ExpEventDb.Insert(ev);
-            } else {
-               // _Logger.LogTrace($"not inserting exp event for world {ev.WorldID}");
             }
             long dbInsertMs = timer.ElapsedMilliseconds; timer.Restart();
 
@@ -1292,10 +1328,8 @@ namespace watchtower.Realtime {
                 TimeSpan diff = ev.Timestamp - otherPlayer.LatestDeath.Timestamp;
 
                 if (diff > TimeSpan.FromSeconds(50)) {
-                    //_Logger.LogTrace($"death {otherPlayer.LatestDeath.ID} is too old {diff}");
                     otherPlayer.LatestDeath = null;
                 } else {
-                    //_Logger.LogTrace($"using death {otherPlayer.LatestDeath.ID} at {otherPlayer.LatestDeath.Timestamp:u}, exp ID {ID}, occured {diff} ago");
                     if (World.IsTrackedWorld(ev.WorldID)) {
                         await _KillEventDb.SetRevived(otherPlayer.LatestDeath.ID, ID);
                     }

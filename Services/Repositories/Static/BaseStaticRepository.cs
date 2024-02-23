@@ -142,6 +142,7 @@ namespace watchtower.Services.Repositories {
 
             foreach (T t in census) {
                 await _Db.Upsert(t);
+                cancel.ThrowIfCancellationRequested();
             }
 
             long dbMs = timer.ElapsedMilliseconds; timer.Restart();

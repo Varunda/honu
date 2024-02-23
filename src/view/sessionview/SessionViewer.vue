@@ -548,7 +548,9 @@
                     // TODO: there's gotta be a better way to let all children render first lol
                     await new Promise((resolve) => setTimeout(resolve, 1000));
                     const id: string = location.hash.slice(1); // .hash includes the #, remove it
-                    document.getElementById(id)?.scrollIntoView();
+                    if (id.length > 0) {
+                        document.getElementById(id)?.scrollIntoView();
+                    }
                 });
             }
 

@@ -135,8 +135,8 @@
                 <td v-if="FullExp">{{classPlaytime.infil.score / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.infil.kills}}</td>
                 <td>{{classPlaytime.infil.deaths}}</td>
-                <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr>
@@ -150,8 +150,8 @@
                 <td v-if="FullExp">{{classPlaytime.lightAssault.score / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.lightAssault.kills}}</td>
                 <td>{{classPlaytime.lightAssault.deaths}}</td>
-                <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr>
@@ -165,8 +165,8 @@
                 <td v-if="FullExp">{{classPlaytime.medic.score / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.medic.kills}}</td>
                 <td>{{classPlaytime.medic.deaths}}</td>
-                <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr>
@@ -180,8 +180,8 @@
                 <td v-if="FullExp">{{classPlaytime.engineer.score / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.engineer.kills}}</td>
                 <td>{{classPlaytime.engineer.deaths}}</td>
-                <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr>
@@ -195,8 +195,8 @@
                 <td v-if="FullExp">{{classPlaytime.heavy.score / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.heavy.kills}}</td>
                 <td>{{classPlaytime.heavy.deaths}}</td>
-                <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr>
@@ -210,8 +210,8 @@
                 <td v-if="FullExp">{{classPlaytime.max.score / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.max.kills}}</td>
                 <td>{{classPlaytime.max.deaths}}</td>
-                <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.deaths, 1) | fixed}}</td>
-                <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.secondsAs, 1) * 60 | fixed | locale}}</td>
+                <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.deaths, 1) | locale(2)}}</td>
+                <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr class="table-secondary">
