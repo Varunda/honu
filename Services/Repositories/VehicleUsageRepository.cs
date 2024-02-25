@@ -96,7 +96,7 @@ namespace watchtower.Services.Repositories {
                         }
 
                         ++fact.Total;
-                        if (p.PossibleVehicleID > 0) {
+                        if (p.PossibleVehicleID != 0) {
                             ++fact.TotalVehicles;
                         }
 
