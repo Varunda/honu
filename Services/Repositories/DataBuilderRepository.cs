@@ -19,6 +19,9 @@ using watchtower.Services.Realtime;
 
 namespace watchtower.Services.Repositories {
 
+    /// <summary>
+    ///     creates <see cref="WorldData"/>, which is used in realtime
+    /// </summary>
     public class DataBuilderRepository {
 
         private readonly ILogger<DataBuilderRepository> _Logger;
@@ -32,6 +35,7 @@ namespace watchtower.Services.Repositories {
         private readonly RealtimeMapStateRepository _RealtimeMapStateRepository;
         private readonly FacilityRepository _FacilityRepository;
         private readonly WorldZonePopulationDbStore _WorldZonePopulationDb;
+        private readonly VehicleUsageRepository _VehicleUsageRepository;
 
         private readonly CharacterCacheQueue _CharacterCacheQueue;
 
@@ -48,7 +52,7 @@ namespace watchtower.Services.Repositories {
             WorldTagManager tagManager, RealtimeReconnectDbStore reconnectDb,
             CensusRealtimeHealthRepository healthRepository, IEventHandler eventHandler,
             RealtimeMapStateRepository realtimeMapStateRepository, FacilityRepository facilityRepository,
-            WorldZonePopulationDbStore worldZonePopulationDb) {
+            WorldZonePopulationDbStore worldZonePopulationDb, VehicleUsageRepository vehicleUsageRepository) {
 
             _Logger = logger;
 
@@ -68,6 +72,7 @@ namespace watchtower.Services.Repositories {
             _RealtimeMapStateRepository = realtimeMapStateRepository;
             _FacilityRepository = facilityRepository;
             _WorldZonePopulationDb = worldZonePopulationDb;
+            _VehicleUsageRepository = vehicleUsageRepository;
         }
 
         /// <summary>
@@ -85,7 +90,7 @@ namespace watchtower.Services.Repositories {
 
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-            WorldData data = new WorldData();
+            WorldData data = new();
 
             data.WorldID = worldID;
             data.WorldName = World.GetName(worldID);
@@ -406,6 +411,10 @@ namespace watchtower.Services.Repositories {
 
             using (Activity? interval = HonuActivitySource.Root.StartActivity("population")) {
                 data.Population = await _WorldZonePopulationDb.GetByWorld(worldID, DateTime.UtcNow - TimeSpan.FromMinutes(duration), DateTime.UtcNow);
+            }
+
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("vehicle usage")) {
+                data.VehicleUsage = await _VehicleUsageRepository.Get(worldID, null, true);
             }
 
             time.Stop();

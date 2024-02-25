@@ -3,6 +3,7 @@ import { CensusRealtimeHealthEntry } from "api/HonuHealthApi";
 import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
 import { RealtimeMapState } from "api/RealtimeMapStateApi";
 import { PsFacility } from "api/MapApi";
+import { VehicleUsageData } from "api/VehicleUsageApi";
 
 export class BlockEntry {
 	public id: string = "";
@@ -159,5 +160,6 @@ export class WorldData {
 	public reconnects: RealtimeReconnectEntry[] = [];
 	public fights: RealtimeDataFight[] = [];
 	public population: WorldZonePopulation[] = [];
+	public vehicleUsage: VehicleUsageData = new VehicleUsageData();
 
 }

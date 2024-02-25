@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Health;
@@ -98,6 +99,11 @@ namespace watchtower.Models {
         ///     Population changes over time for the last period of time
         /// </summary>
         public List<WorldZonePopulation> Population { get; set; } = new();
+
+        /// <summary>
+        ///     estimates of the vehicle usage
+        /// </summary>
+        public VehicleUsageData VehicleUsage { get; set; } = new();
 
     }
 

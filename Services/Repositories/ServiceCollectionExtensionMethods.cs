@@ -104,6 +104,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<HostedWrappedGenerationProcess>();
             services.AddSingleton<RealtimeMapStateRepository>();
             services.AddSingleton<HonuMetadataRepository>();
+            services.AddSingleton<VehicleUsageRepository>();
         }
 
     }

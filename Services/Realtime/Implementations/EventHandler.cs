@@ -357,7 +357,7 @@ namespace watchtower.Realtime {
                     killed.TeamID = killed.FactionID;
                 }
 
-                // the vehicle is dead, they cannot have another one
+                // if someone was in a vehicle, that vehicle is now dead
                 if (killed.PossibleVehicleID != 0) {
                     _Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
                 }
@@ -368,8 +368,6 @@ namespace watchtower.Realtime {
                 attacker.LatestEventTimestamp = nowSeconds;
                 killed.LatestEventTimestamp = nowSeconds;
             }
-
-            //_Logger.LogDebug($"\n{payload.ToString(Newtonsoft.Json.Formatting.None)}\n=>\n{JToken.FromObject(ev).ToString(Newtonsoft.Json.Formatting.None)}");
 
             if (World.IsTrackedWorld(ev.WorldID)) {
                 await _VehicleDestroyDb.Insert(ev, CancellationToken.None);
@@ -1159,7 +1157,9 @@ namespace watchtower.Realtime {
                     killed.TeamID = ev.KilledTeamID;
                 }
 
-                // if they were killed, they can't be in a vehicle anymore
+                if (killed.PossibleVehicleID != 0) {
+                    _Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
+                }
                 killed.PossibleVehicleID = 0;
 
                 long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();

@@ -5,6 +5,7 @@
 <script src="~/lib/signalr/signalr.js"></script>
 <script src="~/dist/view/watchtower/view.js" defer asp-append-version="true"></script>
 <link rel="stylesheet" href="~/css/wt-grid.css">
+<link rel="stylesheet" href="~/css/input-grid.css">
 
 <style>
     .wt-block {
@@ -50,6 +51,16 @@
     .wt-click:hover {
         color: var(--white) !important;
         background-color: rgba(0, 188, 140, 0.5);
+    }
+
+    .vu-type {
+        height: 2rem;
+    }
+
+    .vu-count {
+        text-align: end;
+        vertical-align: middle !important;
+        padding-right: 0.75rem !important;
     }
 
 </style>

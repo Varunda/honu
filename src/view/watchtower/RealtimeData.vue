@@ -284,11 +284,23 @@
                 <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
             </h4>
 
-            <h4 class="grid-title-vs p-1" id="header-vs">
-                <img src="/img/logo_vs.png" style="width: 32px; "/>
-                Vanu Sovereignty
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
+            <div class="grid-title-vs p-1 mb-2" id="header-vs">
+                <h4 class="d-flex w-100 mb-0 align-items-center" data-toggle="collapse" data-target=".vehicle-data">
+                    <span class="flex-grow-1">
+                        <img src="/img/logo_vs.png" style="width: 32px; "/>
+                        Vanu Sovereignty
+                        <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+                    </span>
+
+                    <span class="flex-grow-0 wt-click h6 mb-0 mr-2" title="vehicle usage estimates, click me for more!" style="color: var(--success) !important">
+                        {{worldData.vehicleUsage.vs.totalVehicles / Math.max(worldData.vehicleUsage.vs.total, 1) * 100 | locale(0)}}%
+                    </span>
+                </h4>
+
+                <div class="collapse vehicle-data">
+                    <vehicle-usage-view :data="worldData.vehicleUsage.vs"></vehicle-usage-view>
+                </div>
+            </div>
 
             <div class="grid-vs-player-kills">
                 <player-kill-block :block="worldData.vs" link="'/c/'" :use-short="useShort"></player-kill-block>
@@ -368,11 +380,23 @@
 
             <!-- NC -->
 
-            <h4 class="grid-title-nc p-1" id="header-nc">
-                <img src="/img/logo_nc.png" style="width: 32px; "/>
-                New Conglomerate
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
+            <div class="grid-title-nc p-1 mb-2" id="header-nc">
+                <h4 class="d-flex w-100 mb-0 align-items-center" data-toggle="collapse" data-target=".vehicle-data">
+                    <span class="flex-grow-1">
+                        <img src="/img/logo_nc.png" style="width: 32px; "/>
+                        New Conglomerate
+                        <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+                    </span>
+
+                    <span class="flex-grow-0 wt-click h6 mb-0 mr-2" title="vehicle usage estimates, click me for more!" style="color: var(--success) !important">
+                        {{worldData.vehicleUsage.nc.totalVehicles / Math.max(worldData.vehicleUsage.nc.total, 1) * 100 | locale(0)}}%
+                    </span>
+                </h4>
+
+                <div class="collapse vehicle-data">
+                    <vehicle-usage-view :data="worldData.vehicleUsage.nc"></vehicle-usage-view>
+                </div>
+            </div>
 
             <div class="grid-nc-player-kills">
                 <player-kill-block :block="worldData.nc" :use-short="useShort"></player-kill-block>
@@ -489,11 +513,23 @@
 
             <!-- TR -->
 
-            <h4 class="grid-title-tr p-1" id="header-tr">
-                <img src="/img/logo_tr.png" style="width: 32px; "/>
-                Terran Republic
-                <info-hover text="NS kills only count when that player is on this faction"></info-hover>
-            </h4>
+            <div class="grid-title-tr p-1 mb-2" id="header-tr">
+                <h4 class="d-flex w-100 mb-0 align-items-center" data-toggle="collapse" data-target=".vehicle-data">
+                    <span class="flex-grow-1">
+                        <img src="/img/logo_tr.png" style="width: 32px; "/>
+                        Terran Republic
+                        <info-hover text="NS kills only count when that player is on this faction"></info-hover>
+                    </span>
+
+                    <span class="flex-grow-0 wt-click h6 mb-0 mr-2" title="vehicle usage estimates, click me for more!" style="color: var(--success) !important">
+                        {{worldData.vehicleUsage.tr.totalVehicles / Math.max(worldData.vehicleUsage.tr.total, 1) * 100 | locale(0)}}%
+                    </span>
+                </h4>
+
+                <div class="collapse vehicle-data">
+                    <vehicle-usage-view :data="worldData.vehicleUsage.tr"></vehicle-usage-view>
+                </div>
+            </div>
 
             <div class="grid-tr-player-kills">
                 <player-kill-block :block="worldData.tr" :use-short="useShort"></player-kill-block>
@@ -703,6 +739,7 @@
     import WorldTag from "./components/WorldTag.vue";
     import FightData from "./components/FightData.vue";
     import WorldZonePopulationChart from "./components/WorldZonePopulationChart.vue";
+    import VehicleUsageView from "./components/VehicleUsageView.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ContinentMetadata from "components/ContinentMetadata.vue";
@@ -714,6 +751,7 @@
     import "filters/WorldNameFilter";
     import "filters/TilFilter";
     import ZoneUtils from "util/Zone";
+import { VehicleDataApi } from "../../api/VehicleUsageApi";
 
     type StreamFailure = {
         streamType: "death" | "exp";
@@ -795,6 +833,12 @@
                 data.population.sort((a, b) => {
                     return a.timestamp.getTime() - b.timestamp.getTime();
                 })
+
+                try {
+                    data.vehicleUsage = VehicleDataApi.parse(data.vehicleUsage);
+                } catch (err) {
+                    console.log(err);
+                }
 
                 this.worldData = data;
                 this.lastUpdate = new Date();
@@ -1159,7 +1203,8 @@
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             WorldTag, FightData,
             PopperModal,
-            WorldZonePopulationChart
+            WorldZonePopulationChart,
+            VehicleUsageView
         }
     });
 
