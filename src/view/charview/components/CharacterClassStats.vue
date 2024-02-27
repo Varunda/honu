@@ -198,7 +198,15 @@
                         value = stat.valueWeekly;
                     } else if (type == "monthly") {
                         //console.log(`${stat.timestamp.getFullYear()} ${stat.timestamp.getMonth()} ${now.getFullYear()} ${now.getMonth()}`);
-                        // Value is too old to be useful here
+                        //
+                        // it's possible that some stats were last updated a month behind other stats (cause they haven't pulled them)
+                        //      so it isn't useful to show those stats if it's not the same month
+                        // for example:
+                        //      if a MAX was last pulled in June
+                        //      but, it's currently August
+                        //      then the weekly stats would show all other class stats from August, except MAX would be from June
+                        // confusing! so don't show them
+                        //
                         if (stat.timestamp.getFullYear() != now.getFullYear() || stat.timestamp.getMonth() != now.getMonth()) {
                             return;
                         }
@@ -229,11 +237,15 @@
                 for (const stat of this.data) {
                     // kills is how many of the class you have killed, not how many kills as the class
                     if (stat.statName == "kills") {
-                        setStat(this.kills, stat, this.type);
+                        //setStat(this.kills, stat, this.type);
                     } else if (stat.statName == "play_time") {
                         setStat(this.timeAs, stat, this.type);
                     } else if (stat.statName == "score") {
                         setStat(this.score, stat, this.type);
+                    }
+
+                    if (stat.statName != "play_time") {
+                        continue;
                     }
 
                     if (stat.profileID == 1) {

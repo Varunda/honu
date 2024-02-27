@@ -38,6 +38,30 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("CharacterID", charID);
 
             List<PsCharacterStat> stats = await ReadList(cmd);
+
+            // if there are no stats in the character DB, see if we can rescue them from the events DB
+            if (stats.Count == 0) {
+                _Logger.LogDebug($"failed to find stats for {charID} in character DB, checking events DB");
+                using NpgsqlConnection conn2 = _DbHelper.Connection(Dbs.EVENTS);
+                using NpgsqlCommand cmd2 = await _DbHelper.Command(conn2, @"
+                    SELECT *
+                        FROM character_stats
+                        WHERE character_id = @CharacterID;
+                ");
+
+                cmd2.AddParameter("CharacterID", charID);
+
+                stats = await ReadList(cmd2);
+
+                // save them back to the character DB
+                if (stats.Count > 0) {
+                    _Logger.LogDebug($"found {stats.Count} stats from events DB, putting back into character DB");
+                    await Set(charID, stats);
+                } else {
+                    _Logger.LogDebug($"found 0 stats from events DB, probably never had any");
+                }
+            }
+
             await conn.CloseAsync();
 
             return stats;
@@ -49,6 +73,11 @@ namespace watchtower.Services.Db {
         /// <param name="charID">ID of the character</param>
         /// <param name="stats">List of stats the character has</param>
         public async Task Set(string charID, List<PsCharacterStat> stats) {
+            foreach (PsCharacterStat stat in stats) {
+                await Upsert(charID, stat);
+            }
+
+            /*
             if (stats.Count == 0) {
                 return;
             }
@@ -56,6 +85,10 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 BEGIN;
+
+                DELETE FROM 
+                    character_stats
+                    WHERE character_id = @CharacterID;
 
                 INSERT INTO character_stats(character_id, stat_name, profile_id, value_forever, value_monthly, value_weekly, value_daily, value_max_one_life, timestamp)
                     VALUES {string.Join(",\n", stats.Select(iter => $"('{iter.CharacterID}', '{iter.StatName}', {iter.ProfileID}, "
@@ -65,6 +98,40 @@ namespace watchtower.Services.Db {
             ");
 
             cmd.AddParameter("CharacterID", charID);
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+            */
+        }
+
+        public async Task Upsert(string charID, PsCharacterStat stat) {
+
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                INSERT INTO character_stats (
+                    character_id, stat_name, profile_id, value_forever, value_monthly, value_weekly, value_daily, value_max_one_life, timestamp
+                ) VALUES (
+                    @CharacterID, @StatName, @ProfileID, @ValueForever, @ValueMonthly, @ValueWeekly, @ValueDaily, @ValueMaxOneLife, @Timestamp
+                ) ON CONFLICT (character_id, stat_name, profile_id) DO 
+                    UPDATE SET value_forever = @ValueForever,
+                        value_monthly = @ValueMonthly,
+                        value_weekly = @ValueWeekly,
+                        value_daily = @ValueDaily,
+                        value_max_one_life = @ValueMaxOneLife,
+                        timestamp = @Timestamp;
+            ");
+
+            cmd.AddParameter("CharacterID", charID);
+            cmd.AddParameter("StatName", stat.StatName);
+            cmd.AddParameter("ProfileID", stat.ProfileID);
+            cmd.AddParameter("ValueForever", stat.ValueForever);
+            cmd.AddParameter("ValueMonthly", stat.ValueMonthly);
+            cmd.AddParameter("ValueWeekly", stat.ValueWeekly);
+            cmd.AddParameter("ValueDaily", stat.ValueDaily);
+            cmd.AddParameter("ValueMaxOneLife", stat.ValueMaxOneLife);
+            cmd.AddParameter("Timestamp", stat.Timestamp);
+
+            await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
             await conn.CloseAsync();
