@@ -74,7 +74,7 @@
                 vehicleIdImageMapping: new Map([
                     [0, 31], // 0 => infantry
                     [-1, 4], // -1 => unknown
-                    [1, 260], // 1 => flash
+                    [1, 262], // 1 => flash
                     [2, 264], // 2 => sunderer
                     [3, 258], // 3 => lightning
                     [4, 259], // 4 => magrider
