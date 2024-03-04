@@ -42,8 +42,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="worldID">ID of the world the death event occured in</param>
         /// <param name="timestamp">Timestamp of when the death event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
-        public void SetDeath(short worldID, DateTime timestamp) {
-            SetMap(ref _Deaths, worldID, timestamp, "death");
+        public bool SetDeath(short worldID, DateTime timestamp, JToken? data) {
+            return SetMap(ref _Deaths, worldID, timestamp, "death", data);
         }
 
         /// <summary>
@@ -52,8 +52,8 @@ namespace watchtower.Services.Repositories {
         /// <param name="worldID">ID of the world the exp event occured in</param>
         /// <param name="timestamp">Timestamp of when the exp event occured</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
-        public void SetExp(short worldID, DateTime timestamp) {
-            SetMap(ref _Exp, worldID, timestamp, "exp");
+        public bool SetExp(short worldID, DateTime timestamp, JToken? data) {
+            return SetMap(ref _Exp, worldID, timestamp, "exp", data);
         }
 
         /// <summary>
@@ -120,7 +120,10 @@ namespace watchtower.Services.Repositories {
         /// <param name="worldID"></param>
         /// <param name="timestamp"></param>
         /// <param name="what"></param>
-        private void SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp, string what) {
+        private bool SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp, string what, JToken? data) {
+
+            bool ret = false;
+
             lock (dict) {
                 dict.AddOrUpdate(worldID, new CensusRealtimeHealthEntry() {
                     WorldID = worldID,
@@ -162,12 +165,27 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogDebug($"World {oldValue.WorldID} got an event, resetting failure count");
                     }
 
+                    // if the timestamp would be rolled back more than 2 seconds, record this
+                    if (oldValue.LastEvent != null && ((oldValue.LastEvent - timestamp) >= TimeSpan.FromSeconds(1))) {
+                        TimeSpan diff = oldValue.LastEvent.Value - timestamp;
+                        _Logger.LogInformation($"out of order timestamp found! [worldID={worldID}] [what={what}] [diff={diff}] [timestamp={timestamp:u}] [LastEvent={oldValue.LastEvent:u}]");
+
+                        if (oldValue.LastEventData != null) {
+                            _Logger.LogDebug($"out of order event data [LastEventData={oldValue.LastEventData.ToString(Newtonsoft.Json.Formatting.None)}] [new event={data?.ToString(Newtonsoft.Json.Formatting.None)}]");
+                        }
+
+                        ret = true;
+                    }
+
                     oldValue.FailureCount = 0;
                     oldValue.LastEvent = timestamp;
+                    oldValue.LastEventData = data;
                     ++oldValue.EventCount;
                     return oldValue;
                 });
             }
+
+            return ret;
         }
 
         private List<short> GetUnhealthyDict(string type, ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict,

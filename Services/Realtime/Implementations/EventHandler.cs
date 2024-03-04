@@ -320,7 +320,7 @@ namespace watchtower.Realtime {
                 }
 
                 if (attacker.PossibleVehicleID != int.Parse(ev.AttackerVehicleID) && ev.AttackerCharacterID != ev.KilledCharacterID) {
-                    _Logger.LogDebug($"updating possible vehicle ID of {attacker.ID} from {attacker.PossibleVehicleID} to {ev.AttackerVehicleID} [cause=got kill in vehicle]");
+                    //_Logger.LogDebug($"updating possible vehicle ID of {attacker.ID} from {attacker.PossibleVehicleID} to {ev.AttackerVehicleID} [cause=got kill in vehicle]");
                 }
                 attacker.PossibleVehicleID = int.Parse(ev.AttackerVehicleID);
                 
@@ -359,7 +359,7 @@ namespace watchtower.Realtime {
 
                 // if someone was in a vehicle, that vehicle is now dead
                 if (killed.PossibleVehicleID != 0) {
-                    _Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
+                    //_Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
                 }
                 killed.PossibleVehicleID = 0;
 
@@ -1158,7 +1158,7 @@ namespace watchtower.Realtime {
                 }
 
                 if (killed.PossibleVehicleID != 0) {
-                    _Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
+                    //_Logger.LogDebug($"updating possible vehicle ID of {killed.ID} from {killed.PossibleVehicleID} to 0 [cause=vehicle was killed]");
                 }
                 killed.PossibleVehicleID = 0;
 
@@ -1266,7 +1266,7 @@ namespace watchtower.Realtime {
                     if (expType.AwardTypeID == ExperienceAwardTypes.GUNNER_KILL && p.PossibleVehicleID == 0) {
 
                         if (p.PossibleVehicleID != -1) {
-                            _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=GUNNER_KILL]");
+                            //_Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=GUNNER_KILL]");
                         }
 
                         p.PossibleVehicleID = -1;
@@ -1280,7 +1280,7 @@ namespace watchtower.Realtime {
                 // so, if we don't already know what vehicle a character is in, just say they are in some vehicle, but we don't know which one
                 if (p.PossibleVehicleID == 0 && Experience.IsVehicleRepair(ev.ExperienceID)) {
                     if (p.PossibleVehicleID != -1) {
-                        _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=VEHICLE_REPAIR]");
+                        //_Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=VEHICLE_REPAIR]");
                     }
                     p.PossibleVehicleID = -1;
                 }
@@ -1294,7 +1294,7 @@ namespace watchtower.Realtime {
                     && (ev.ExperienceID == Experience.VEHICLE_RESUPPLY || ev.ExperienceID == Experience.SQUAD_VEHICLE_RESUPPLY)) {
 
                     if (p.PossibleVehicleID != Vehicle.SUNDERER) {
-                        _Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to -1 [cause=VEHICLE_RESUPPLY]");
+                        //_Logger.LogDebug($"updating possible vehicle ID of {p.ID} from {p.PossibleVehicleID} to {Vehicle.SUNDERER} [cause=VEHICLE_RESUPPLY]");
                     }
                     p.PossibleVehicleID = Vehicle.SUNDERER;
                 }

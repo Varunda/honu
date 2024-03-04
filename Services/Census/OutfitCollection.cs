@@ -59,12 +59,21 @@ namespace watchtower.Services.Census {
         /// <param name="IDs">ID of the outfits to get</param>
         /// <returns></returns>
         public async Task<List<PsOutfit>> GetByIDs(List<string> IDs) {
+            if (IDs.Count == 0) {
+                _Logger.LogWarning($"huh");
+                return new List<PsOutfit>();
+            }
+
             int batchCount = (int) Math.Ceiling(IDs.Count / (double) BATCH_SIZE);
 
             List<PsOutfit> chars = new List<PsOutfit>(IDs.Count);
 
             for (int i = 0; i < batchCount; ++i) {
                 List<string> slice = IDs.Skip(i * BATCH_SIZE).Take(BATCH_SIZE).ToList();
+                if (slice.Count == 0) {
+                    _Logger.LogWarning($"why is this slice 0?");
+                    continue;
+                }
 
                 CensusQuery query = _Census.Create("outfit");
                 foreach (string id in slice) {
@@ -76,8 +85,8 @@ namespace watchtower.Services.Census {
                 // If there is an exception, ignore census connection ones
                 try {
                     List<PsOutfit> outfitSlice = await _Reader.ReadList(query);
-                } catch (CensusConnectionException) {
-                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
+                } catch (Exception ex) {
+                    _Logger.LogWarning($"failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE} [Exception={ex.Message}] [{string.Join(",", slice)}]");
                     continue;
                 }
             }

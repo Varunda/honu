@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Models.Census;
 using watchtower.Services.Census;
@@ -32,6 +33,16 @@ namespace watchtower.Services.Repositories {
         ///     With the couple of tests I've done, the quick response takes around 600ms when loading ~30 entries from Census
         /// </remarks>
         private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
+
+        private int _CircuitBreakerErrors = 0;
+        private DateTime? _CircuitBreakerTimeout = null;
+        private DateTime _CircuitBreakerInformed = DateTime.UtcNow;
+
+        private bool _IsCircuitBreakerOn {
+            get {
+                return _CircuitBreakerTimeout != null && DateTime.UtcNow < _CircuitBreakerTimeout;
+            }
+        }
 
         public OutfitRepository(ILogger<OutfitRepository> logger, IMemoryCache cache,
             OutfitDbStore db, OutfitCollection coll) {
@@ -64,16 +75,40 @@ namespace watchtower.Services.Repositories {
                     // If the outfit is in DB but not Census, might as well return from DB
                     //      Useful if census is down, or outfit is deleted
                     try {
-                        PsOutfit? censusOutfit = await _Census.GetByID(outfitID);
+                        PsOutfit? censusOutfit;
+                        if (_IsCircuitBreakerOn) {
+                            if (_CircuitBreakerInformed <= DateTime.UtcNow) {
+                                _CircuitBreakerInformed = DateTime.UtcNow + TimeSpan.FromSeconds(15);
+                                _Logger.LogWarning($"circuit breaker is on, bypassing Census call [nexted informated={_CircuitBreakerInformed:u}] [bypassed=get by id]");
+                            }
+                            censusOutfit = null;
+                        } else {
+                            censusOutfit = await _Census.GetByID(outfitID).TimeoutWithDefault(TimeSpan.FromSeconds(10), null);
+                        }
+
                         if (censusOutfit != null) {
-                            outfit = await _Census.GetByID(outfitID);
+                            // if we got a character from Census fine, turn the circuit breaker off
+                            if (_CircuitBreakerErrors > 0) {
+                                _Logger.LogInformation($"circuit breaker passed, resetting count");
+                            }
+                            _CircuitBreakerTimeout = null;
+                            _CircuitBreakerErrors = 0;
+
+                            outfit = censusOutfit;
                             await _Db.Upsert(censusOutfit);
                         }
                     } catch (Exception ex) {
+                        ++_CircuitBreakerErrors;
+                        if (_CircuitBreakerErrors >= 10) {
+                            _CircuitBreakerTimeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+                            _Logger.LogError($"tripping circuit breaker! [_CircuitBreakerErrors={_CircuitBreakerErrors}] [_CircuitBreakerTimeout={_CircuitBreakerTimeout:u}]");
+                        }
+
                         if (outfit == null) {
                             throw;
                         } else {
-                            _Logger.LogWarning(ex, $"error getting outfit {outfitID} from Census (falling back to DB)");
+                            _Logger.LogWarning($"failed to get outfit from Census, falling back to DB"
+                                + $" [outfitID={outfitID}] [_CircuitBreakerErrors={_CircuitBreakerErrors}] [Exception={ex.Message}]");
                         }
                     }
                 }
@@ -119,6 +154,7 @@ namespace watchtower.Services.Repositories {
         ///     It is assumed that all outfits are current, and none have expired
         /// </remarks>
         /// <param name="IDs">List of IDs to get</param>
+        /// <param name="fast">if Census will be used to get the outfits if not cached and not in the DB</param>
         /// <returns>
         ///     A list of <see cref="PsOutfit"/>s, each on with a <see cref="PsOutfit.ID"/>
         ///     that is an element of <paramref name="IDs"/>
@@ -135,27 +171,33 @@ namespace watchtower.Services.Repositories {
             foreach (string ID in IDs.ToList()) {
                 string cacheKey = string.Format(_CacheKeyID, ID);
 
-                if (_Cache.TryGetValue(cacheKey, out PsOutfit? outfit) == true && outfit != null) {
-                    outfits.Add(outfit);
+                if (_Cache.TryGetValue(cacheKey, out PsOutfit? outfit) == true) {
+                    if (outfit != null) {
+                        outfits.Add(outfit);
+                    }
                     IDs.Remove(ID);
                     ++inCache;
-                }
+                } 
             }
 
             root?.AddTag("honu.in_cache", inCache);
 
+            // only hit DB if needed
             int inDb = 0;
-            List<PsOutfit> dbOutfits = await _Db.GetByIDs(IDs);
-            foreach (PsOutfit outfit in dbOutfits) {
-                outfits.Add(outfit);
-                IDs.Remove(outfit.ID);
-                ++inDb;
+            if (IDs.Count > 0) {
+                List<PsOutfit> dbOutfits = await _Db.GetByIDs(IDs);
+                foreach (PsOutfit outfit in dbOutfits) {
+                    outfits.Add(outfit);
+                    IDs.Remove(outfit.ID);
+                    ++inDb;
+                }
             }
 
             root?.AddTag("honu.in_db", inDb);
 
+            // only hit Census if needed
             int inCensus = 0;
-            if (fast == false) {
+            if (fast == false && IDs.Count > 0) {
                 List<PsOutfit> censusOutfits = await _Census.GetByIDs(IDs);
                 foreach (PsOutfit outfit in censusOutfits) {
                     outfits.Add(outfit);
@@ -170,6 +212,13 @@ namespace watchtower.Services.Repositories {
                 string cacheKey = string.Format(_CacheKeyID, outfit.ID);
                 _Cache.Set(cacheKey, outfit, new MemoryCacheEntryOptions() {
                     SlidingExpiration = TimeSpan.FromMinutes(20)
+                });
+            }
+
+            foreach (string outfitID in IDs) {
+                string cacheKey = string.Format(_CacheKeyID, outfitID);
+                _Cache.Set(cacheKey, (PsOutfit?)null, new MemoryCacheEntryOptions() {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
                 });
             }
 

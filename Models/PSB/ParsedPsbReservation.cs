@@ -56,7 +56,35 @@ namespace watchtower.Models.PSB {
         /// </summary>
         public string MessageLink { get; set; } = "";
 
+        /// <summary>
+        ///     controls if the reservation is allowed to request accounts or not. will be false if one of the reps is practice
+        /// </summary>
+        public bool CanRequestAccounts { get; set; }
+
         public PsbParsedReservationMetadata Metadata { get; set; } = new();
+
+        public PsbGroupContact? GetAccountLimitMinimum() {
+            if (this.Reservation.Contacts.Count == 0) {
+                return null;
+            }
+
+            return this.Reservation.Contacts.MinBy(iter => {
+                if (iter is PsbOvOContact ovo) {
+                    return ovo.AccountLimit;
+                }
+                return 0;
+            });
+        }
+
+        public int GetAccountLimit() {
+            PsbGroupContact? maxAccounts = this.Reservation.Contacts.MinBy(iter => {
+                if (iter is PsbOvOContact ovo) {
+                    return ovo.AccountLimit;
+                }
+                return 0;
+            });
+            return maxAccounts is PsbOvOContact ovo ? ovo.AccountLimit : 0;
+        }
 
         /// <summary>
         ///     Turn the information of a reservation into a Discord embed
@@ -88,7 +116,7 @@ namespace watchtower.Models.PSB {
 
                 // include what rep from each outfit is represented
                 foreach (string outfit in Reservation.Outfits) {
-                    List<PsbOvOContact> contacts = Reservation.Contacts.Where(iter => iter.IsRepFor(outfit)).ToList();
+                    List<PsbGroupContact> contacts = Reservation.Contacts.Where(iter => iter.IsRepFor(outfit)).ToList();
                     if (contacts.Count == 0) {
                         v += $"- {outfit} (no reps given!)\n";
 

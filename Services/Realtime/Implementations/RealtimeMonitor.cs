@@ -130,9 +130,9 @@ namespace watchtower.Realtime {
 
                     string? eventName = payload.Value<string?>("event_name");
                     if (eventName == "Death") {
-                        _RealtimeHealthRepository.SetDeath(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
+                        _RealtimeHealthRepository.SetDeath(payload.GetWorldID(), payload.CensusTimestamp("timestamp"), payload);
                     } else if (eventName == "GainExperience") {
-                        _RealtimeHealthRepository.SetExp(payload.GetWorldID(), payload.CensusTimestamp("timestamp"));
+                        _RealtimeHealthRepository.SetExp(payload.GetWorldID(), payload.CensusTimestamp("timestamp"), payload);
                     }
                 } else if (type == "heartbeat") {
                     //_Logger.LogDebug($"{token}");
@@ -155,8 +155,8 @@ namespace watchtower.Realtime {
             foreach (short worldID in worlds) {
                 try {
                     new Thread(async () => {
-                        _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow);
-                        _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow);
+                        _RealtimeHealthRepository.SetDeath(worldID, DateTime.UtcNow, null);
+                        _RealtimeHealthRepository.SetExp(worldID, DateTime.UtcNow, null);
 
                         CensusEnvironment? env = CensusEnvironmentHelper.FromWorldID(worldID);
                         if (env == null) {
@@ -304,7 +304,7 @@ namespace watchtower.Realtime {
             }
 
             ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
-            stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
+            //stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
             _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");

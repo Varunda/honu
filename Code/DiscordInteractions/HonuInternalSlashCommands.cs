@@ -73,8 +73,7 @@ namespace watchtower.Code.DiscordInteractions {
         [SlashCommand("debug-role-mappings", "Pring role mappings")]
         [RequiredHonuPermissionSlash(HonuPermission.HONU_DISCORD_ADMIN)]
         public async Task DebugRoleMappings(InteractionContext ctx) {
-            DiscordInteractionResponseBuilder builder = new();
-            builder.AsEphemeral(true);
+            await ctx.CreateDeferred(true);
 
             DiscordEmbedBuilder embed = new();
             embed.Description = $"Discord role mappings (name => role):";
@@ -83,9 +82,7 @@ namespace watchtower.Code.DiscordInteractions {
                 embed.AddField(role.Key, $"<@&{role.Value}>", inline: true);
             }
 
-            builder.AddEmbed(embed.Build());
-
-            await ctx.CreateResponseAsync(builder);
+            await ctx.EditResponseEmbed(embed);
         }
 
         [SlashCommand("test-channel-msg", "Send a test message to a channel")]

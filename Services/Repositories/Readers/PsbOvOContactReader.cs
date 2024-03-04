@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using watchtower.Models.PSB;
+using static watchtower.Models.PSB.PsbGroupContact;
 
 namespace watchtower.Services.Repositories.Readers {
 
@@ -13,7 +15,21 @@ namespace watchtower.Services.Repositories.Readers {
             contact.Name = values.GetRequiredString(1);
             contact.Email = values.GetRequiredString(2);
             contact.DiscordID = values.GetRequiredUInt64(4);
-            contact.RepType = values.GetRequiredString(5);
+
+            string repType = values.GetRequiredString(5).ToLower().Trim();
+
+            if (repType == "outfit rep") {
+                contact.RepType = RepresentativeType.OVO;
+            } else if (repType == "community rep") {
+                contact.RepType = RepresentativeType.COMMUNITY;
+            } else if (repType == "observer user") {
+                contact.RepType = RepresentativeType.OBSERVER;
+            } else if (repType == "scrim team") {
+                contact.RepType = RepresentativeType.COMMUNITY;
+            } else {
+                throw new ArgumentException($"failed to validate {repType} as a valid {nameof(RepresentativeType)}");
+            }
+
             contact.AccountLimit = values.GetRequiredInt32(6);
 
             return contact;

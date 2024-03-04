@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code;
 using watchtower.Code.Constants;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Code.Tracking;
 using watchtower.Constants;
 using watchtower.Models;
@@ -250,7 +251,14 @@ namespace watchtower.Services.Repositories {
                 .Where(iter => iter.WorldID == worldID)
                 .OrderByDescending(iter => iter.SpawnCount).Take(8)
                 .Select(async iter => {
-                    PsCharacter? c = await _CharacterRepository.GetByID(iter.OwnerID, CensusEnvironment.PC);
+                    PsCharacter? c;
+                    
+                    try {
+                        c = await _CharacterRepository.GetByID(iter.OwnerID, CensusEnvironment.PC);
+                    } catch (Exception ex) {
+                        c = null;
+                        _Logger.LogWarning($"failed to get character for top spawns [characterID={iter.OwnerID}] [Exception={ex.Message}]");
+                    }
 
                     return new SpawnEntry() {
                         FirstSeenAt = iter.FirstSeenAt,
@@ -427,11 +435,17 @@ namespace watchtower.Services.Repositories {
 
             List<KillDbEntry> topKillers = await _KillEventDb.GetTopKillers(options);
 
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(
-                IDs: topKillers.Select(iter => iter.CharacterID).ToList(),
-                env: CensusEnvironment.PC,
-                fast: true
-            );
+            List<PsCharacter> chars;
+            try {
+                chars = await _CharacterRepository.GetByIDs(
+                    IDs: topKillers.Select(iter => iter.CharacterID).ToList(),
+                    env: CensusEnvironment.PC,
+                    fast: true
+                );
+            } catch (Exception ex) {
+                _Logger.LogWarning($"failed to get top killer characters [Exception={ex.Message}]");
+                chars = new List<PsCharacter>();
+            }
 
             foreach (KillDbEntry entry in topKillers) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == entry.CharacterID);
@@ -448,7 +462,7 @@ namespace watchtower.Services.Repositories {
                     Kills = entry.Kills,
                     Deaths = entry.Deaths,
                     Assists = entry.Assist,
-                    Name = c?.GetDisplayName() ?? $"Missing {entry.CharacterID}",
+                    Name = c?.GetDisplayName() ?? $"<missing {entry.CharacterID}>",
                     Online = p?.Online ?? true,
                     SecondsOnline = (int)entry.SecondsOnline,
                     FactionID = p?.FactionID ?? options.FactionID
@@ -472,7 +486,7 @@ namespace watchtower.Services.Repositories {
 
                 WeaponKillEntry entry = new WeaponKillEntry() {
                     ItemID = itemIter.ItemID,
-                    ItemName = item?.Name ?? $"missing {itemIter.ItemID}",
+                    ItemName = item?.Name ?? $"<missing {itemIter.ItemID}>",
                     Kills = itemIter.Kills,
                     HeadshotKills = itemIter.HeadshotKills,
                     Users = itemIter.Users
@@ -505,11 +519,11 @@ namespace watchtower.Services.Repositories {
                     Members = iter.Members,
                     MembersOnline = players.Count(i => i.Value.Online == true && i.Value.OutfitID == iter.OutfitID),
                     Tag = outfit?.Tag,
-                    Name = outfit?.Name ?? $"Missing {iter.OutfitID}",
+                    Name = outfit?.Name ?? $"<missing {iter.OutfitID}>",
                 };
 
                 if (outfit != null && outfit.LeaderID != "0") {
-
+                    // 2024-03-03: i don't know what was going to be here oops
                 }
 
                 block.Entries.Add(tracked);
@@ -522,18 +536,25 @@ namespace watchtower.Services.Repositories {
             List<BlockEntry> blockEntries = new List<BlockEntry>();
 
             List<ExpDbEntry> entries = await _ExpEventDb.GetEntries(options);
-            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(
-                IDs: entries.Select(iter => iter.ID).ToList(),
-                env: CensusEnvironment.PC,
-                fast: true
-            );
+            List<PsCharacter> chars;
+
+            try {
+                chars = await _CharacterRepository.GetByIDs(
+                    IDs: entries.Select(iter => iter.ID).ToList(),
+                    env: CensusEnvironment.PC,
+                    fast: true
+                );
+            } catch (Exception ex) {
+                chars = new List<PsCharacter>();
+                _Logger.LogWarning($"failed to get characters for exp block [Exception={ex.Message}]");
+            }
 
             foreach (ExpDbEntry entry in entries) {
                 PsCharacter? c = chars.FirstOrDefault(iter => iter.ID == entry.ID);
 
                 BlockEntry b = new BlockEntry() {
                     ID = entry.ID,
-                    Name = c?.GetDisplayName() ?? $"Missing {entry.ID}",
+                    Name = c?.GetDisplayName() ?? $"<missing {entry.ID}>",
                     Value = entry.Count,
                     FactionID = c?.FactionID ?? options.FactionID
                 };
@@ -547,15 +568,26 @@ namespace watchtower.Services.Repositories {
         private async Task<List<BlockEntry>> GetOutfitExpBlock(ExpEntryOptions options) {
             List<BlockEntry> blockEntries = new List<BlockEntry>();
 
-            List<ExpDbEntry> entries = await _ExpEventDb.GetTopOutfits(options);
+            List<ExpDbEntry> entries = (await _ExpEventDb.GetTopOutfits(options))
+                .OrderByDescending(iter => iter.Count)
+                .Take(5).ToList();
+
+            List<PsOutfit> outfits;
+            try {
+                outfits = await _OutfitRepository.GetByIDs(entries.Select(iter => iter.ID).ToList()).TimeoutWithThrow(TimeSpan.FromSeconds(10));
+            } catch (Exception ex) {
+                outfits = new List<PsOutfit>();
+                _Logger.LogWarning($"failed to get outfit for exp block [Exception={ex.Message}]");
+            }
+
             foreach (ExpDbEntry entry in entries) {
-                PsOutfit? outfit = await _OutfitRepository.GetByID(entry.ID);
+                PsOutfit? outfit = outfits.FirstOrDefault(iter => iter.ID == entry.ID);
 
                 BlockEntry b = new BlockEntry() {
-                    ID = (entry.ID == "") ? "0" : entry.ID,
-                    Name = (entry.ID == "") ? "<no outfit>" : (outfit == null) ? $"Missing {entry.ID}" : $"[{outfit.Tag}] {outfit.Name}",
+                    ID = entry.ID,
+                    Name = (entry.ID == "0") ? "<no outfit>" : (outfit == null) ? $"<missing {entry.ID}>" : $"[{outfit.Tag}] {outfit.Name}",
                     Value = entry.Count,
-                    FactionID = (entry.ID == "") ? (short) 0 : options.FactionID
+                    FactionID = (entry.ID == "0") ? (short) 0 : options.FactionID
                 };
 
                 blockEntries.Add(b);
@@ -585,7 +617,12 @@ namespace watchtower.Services.Repositories {
                             Name = "no outfit"
                         };
                     } else {
-                        psOutfit = await _OutfitRepository.GetByID(outfitID);
+                        try {
+                            psOutfit = await _OutfitRepository.GetByID(outfitID);
+                        } catch (Exception ex) {
+                            psOutfit = null;
+                            _Logger.LogWarning($"failed to get outfit for outfits online [outfitID={outfitID}] [Exception={ex.Message}]");
+                        }
                     }
 
                     outfit = new OutfitOnlineEntry() {

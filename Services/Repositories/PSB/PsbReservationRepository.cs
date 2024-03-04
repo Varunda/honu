@@ -164,7 +164,13 @@ namespace watchtower.Services.Repositories.PSB {
 
                         PsbOvOContact? contact = ovo.FirstOrDefault(iter => iter.DiscordID == id);
                         if (contact == null) {
-                            errors.Add($"failed to find a contact for <@{id}>: not a rep, or not a user");
+                            PsbPracticeContact? pracContact = practice.FirstOrDefault(iter => iter.DiscordID == id);
+
+                            if (pracContact != null) {
+                                res.Contacts.Add(pracContact);
+                            } else {
+                                errors.Add($"failed to find a contact for <@{id}>: not a rep, or not a user");
+                            }
                         } else {
                             feedback += $"\tFound OvO contact for <@{id}>: {string.Join("/", contact.Groups)}\n";
                             res.Contacts.Add(contact);
@@ -209,29 +215,57 @@ namespace watchtower.Services.Repositories.PSB {
 
             List<string> repErrors = new();
 
+            /////////////////////////////////////////
             // misc errors
+
+            // make sure there's a rep given
             if (res.Contacts.Count == 0) {
                 errors.Add($"0 contacts were given in this reservation");
             } else {
+                // check that the reps are allowed to request for this outfit
                 repErrors = await CheckReps(res);
                 if (res.Accounts > 0) {
+                    // but only make it an error if they are booking accounts
                     errors.AddRange(repErrors);
                 }
 
-                PsbOvOContact minAccounts = res.Contacts.MinBy(iter => iter.AccountLimit)!;
-                _Logger.LogDebug($"max accounts is {minAccounts.AccountLimit} from {minAccounts.DiscordID}");
-                if (res.Accounts > minAccounts.AccountLimit) {
-                    errors.Add($"<@{minAccounts.DiscordID}>/{minAccounts.Name} can only request up to {minAccounts.AccountLimit} accounts");
+                if (parsed.CanRequestAccounts == false && res.Accounts > 0) {
+                    List<PsbGroupContact> pracs = res.Contacts.Where(iter => iter.RepType == PsbGroupContact.RepresentativeType.PRACTICE).ToList();
+                    errors.Add($"Cannot request accounts with practice reps included: "
+                        + $"{string.Join(", ", pracs.Select(iter => $"<@{iter.DiscordID}>/{iter.Name}"))}");
+                }
+
+                // ensure the account limits are held up
+                PsbGroupContact minAccounts = res.Contacts.MinBy(iter => {
+                    if (iter is PsbOvOContact ovo) {
+                        return ovo.AccountLimit;
+                    }
+                    return 0;
+                })!;
+
+                int minAccountValue = minAccounts is PsbOvOContact ovo ? ovo.AccountLimit : 0;
+
+                _Logger.LogDebug($"max accounts is {minAccountValue} from {minAccounts.DiscordID}");
+                if (res.Accounts > minAccountValue) {
+                    errors.Add($"<@{minAccounts.DiscordID}>/{minAccounts.Name} can only request up to {minAccountValue} accounts");
                 }
             }
-            if (res.Outfits.Count == 0) { errors.Add($"0 groups were given in this reservation"); }
+            // make sure a group requested this, and that the group was found
+            if (res.Outfits.Count == 0) { 
+                errors.Add($"0 groups were given in this reservation");
+            }
+
+            // make sure when this reservation is parsed
             if (res.Start == default || res.End == default) {
                 errors.Add($"Failed to parse when this reservation is");
             }
+
+            // sanity check on the date parsing
             if (res.Start != default && res.End != default && res.End <= res.Start) {
                 errors.Add($"Cannot have a reservation end before it starts (this may be a parsing error!)");
             }
 
+            // check the base bookings, make sure there's no overlap
             if (res.Start != default && res.End != default && res.Bases.Count > 0) {
                 errors.AddRange(await CheckBaseBookings(res));
             }
@@ -459,14 +493,15 @@ namespace watchtower.Services.Repositories.PSB {
             }
 
             List<string> groups = new(res.Outfits);
-            List<PsbOvOContact> contacts = new(res.Contacts);
+            List<PsbGroupContact> contacts = new(res.Contacts);
 
-            List<PsbOvOContact> allContacts = await _ContactRepository.GetOvOContacts();
+            //List<PsbOvOContact> allContacts = await _ContactRepository.GetOvOContacts();
+            //List<PsbPracticeContact> pracContacts = await _ContactRepository.GetPracticeContacts();
 
             foreach (string group in groups) {
                 _Logger.LogTrace($"finding rep for '{group}'");
 
-                List<PsbOvOContact> groupContacts = contacts.Where(iter => iter.Groups.Contains(group.ToLower().Trim())).ToList();
+                List<PsbGroupContact> groupContacts = contacts.Where(iter => iter.IsRepFor(group)).ToList();
                 _Logger.LogTrace($"found {groupContacts.Count} contacts for {group}: {string.Join(", ", groupContacts.Select(iter => iter.DiscordID))}");
 
                 if (groupContacts.Count == 0) {
@@ -475,9 +510,11 @@ namespace watchtower.Services.Repositories.PSB {
                 }
             }
 
-            foreach (PsbOvOContact contact in contacts) {
-                _Logger.LogTrace($"Checking if {contact.DiscordID} is in a group in the reservation");
+            foreach (PsbGroupContact contact in contacts) {
+                _Logger.LogTrace($"Checking if {contact.DiscordID} is in a group in the reservation"
+                    + $" [groups={string.Join(", ", groups)}] [user groups={string.Join(", ", contact.Groups)}]");
 
+                // make sure at least one of the groups the user is a rep for is in the reservation
                 bool contactHasGroup = false;
                 foreach (string group in contact.Groups) {
                     if (groups.Contains(group)) {

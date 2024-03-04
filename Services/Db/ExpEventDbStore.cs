@@ -225,7 +225,7 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
-                    SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '') AS outfit_id
+                    SELECT e.id, e.world_id, e.zone_id, COALESCE(c.outfit_id, '0') AS outfit_id
                         FROM wt_recent_exp e
                             JOIN wt_character c ON e.source_character_id = c.id
                         WHERE e.timestamp >= (NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)

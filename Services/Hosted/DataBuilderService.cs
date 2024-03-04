@@ -101,6 +101,7 @@ namespace watchtower.Services {
                                 data.LastError = null;
                                 msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms; ";
                             } catch (Exception ex) {
+                                msg += $"{worldID}#{duration} {worldTime.ElapsedMilliseconds}ms ERRORED;";
                                 if (data != null) {
                                     data.LastError = new ProblemDetails() {
                                         Detail = ex.ToString(),

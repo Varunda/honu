@@ -96,6 +96,10 @@ namespace watchtower.Services {
                                         SessionID = entry.Value.SessionID
                                     });
                                     ++count;
+
+                                    DateTime when = DateTimeOffset.FromUnixTimeMilliseconds(entry.Value.LatestEventTimestamp).UtcDateTime;
+
+                                    _Logger.LogTrace($"marking character as offline due to timeout [characterID={entry.Key}] [LatestEventTimestamp={entry.Value.LatestEventTimestamp}/{when:u}]");
                                 }
                             }
                         }

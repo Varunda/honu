@@ -26,7 +26,7 @@ namespace watchtower.Models.PSB {
         /// <summary>
         ///     The contacts for the reservation
         /// </summary>
-        public List<PsbOvOContact> Contacts { get; set; } = new();
+        public List<PsbGroupContact> Contacts { get; set; } = new();
 
         /// <summary>
         ///     When the reservation will start

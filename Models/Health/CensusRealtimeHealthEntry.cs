@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 
 namespace watchtower.Models {
 
@@ -21,6 +22,11 @@ namespace watchtower.Models {
         ///     When an event was last received on this stream
         /// </summary>
         public DateTime? LastEvent { get; set; }
+
+        /// <summary>
+        ///     json of the last event parsed
+        /// </summary>
+        public JToken? LastEventData { get; set; }
 
         /// <summary>
         ///     How many times the health check has failed for this event stream

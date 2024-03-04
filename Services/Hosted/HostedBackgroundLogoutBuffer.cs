@@ -85,7 +85,7 @@ namespace watchtower.Services.Hosted {
                     try {
                         chars = await _CharacterCensus.GetByIDs(entries.Select(i => i.CharacterID).ToList(), CensusEnvironment.PC);
                     } catch (Exception ex) {
-                        _Logger.LogError(ex, "Failed to get characters for logout buffer, trying again in a bit");
+                        _Logger.LogError(ex, "failed to get characters for logout buffer, trying again in a bit");
                         await Task.Delay(1000 * PERIOD_WAIT_SHORT, stoppingToken);
                         continue;
                     }
@@ -165,6 +165,7 @@ namespace watchtower.Services.Hosted {
                     health.LastRan = DateTime.UtcNow;
                     health.Message = $"Took {totalTime}ms to run for {entries.Count} entries. DB:{dbTime}ms, Census: {censusTime}ms, update: {processTime}ms."
                         + $" {requeued} stayed, {left} removed, {notFound} missing, {discarded} discarded. {totalDone}/{entries.Count} updated";
+                    _Logger.LogInformation($"{health.Message}");
 
                     _ServiceHealthMonitor.Set(SERVICE_NAME, health);
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {

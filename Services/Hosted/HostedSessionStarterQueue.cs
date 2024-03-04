@@ -80,24 +80,32 @@ namespace watchtower.Services.Hosted {
                     _LastCharacterId = entry.CharacterID;
 
                     using (Activity? start = HonuActivitySource.Root.StartActivity("session start")) {
-                        using Activity? getCharacter = HonuActivitySource.Root.StartActivity("get char");
-                        PsCharacter? c = await _CharacterRepository.GetByID(entry.CharacterID, entry.Environment);
-                        getCharacter?.Stop();
-                        if (c == null) {
-                            ++entry.FailCount;
-                            //_Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
 
-                            entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
-
-                            if (entry.FailCount <= 10) {
-                                _Queue.Queue(entry);
-                                _CharacterCacheQueue.Queue(entry.CharacterID, entry.Environment);
-                                continue;
+                        PsCharacter? c = null;
+                        try {
+                            using (Activity? getCharacter = HonuActivitySource.Root.StartActivity("get char")) {
+                                c = await _CharacterRepository.GetByID(entry.CharacterID, entry.Environment);
                             }
-                        }
+                            if (c == null) {
+                                ++entry.FailCount;
+                                //_Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
 
-                        if (entry.FailCount > 0) {
-                            _Logger.LogDebug($"Took {entry.FailCount} tries to find the character {entry.CharacterID}/{c?.Name} locally");
+                                entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
+
+                                if (entry.FailCount <= 10) {
+                                    _Queue.Queue(entry);
+                                    _CharacterCacheQueue.Queue(entry.CharacterID, entry.Environment);
+                                    continue;
+                                }
+                            }
+
+                            if (entry.FailCount > 0) {
+                                _Logger.LogDebug($"took {entry.FailCount} tries to find the character {entry.CharacterID}/{c?.Name} locally");
+                            }
+                        } catch (Exception ex) {
+                            ++entry.FailCount;
+                            _Logger.LogWarning($"failed to find character when starting session. this will mean the outfit ID and faction ID are wrong"
+                                + $" [charID={entry.CharacterID}] [Exception={ex.Message}]");
                         }
 
                         using (Activity? repoCall = HonuActivitySource.Root.StartActivity("repo start")) {
@@ -107,7 +115,7 @@ namespace watchtower.Services.Hosted {
 
                     _Queue.AddProcessTime(timer.ElapsedMilliseconds);
                 } catch (Exception ex) when (stoppingToken.IsCancellationRequested == false) {
-                    _Logger.LogError(ex, "Error starting session in the background");
+                    _Logger.LogError(ex, "error starting session in the background");
                 } catch (Exception) when (stoppingToken.IsCancellationRequested == true) {
                     _Logger.LogInformation($"Stopping {SERVICE_NAME} with {_Queue.Count()} left");
                 }

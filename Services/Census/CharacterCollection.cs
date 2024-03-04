@@ -110,11 +110,17 @@ namespace watchtower.Services.Census {
         ///     as an element of <paramref name="IDs"/>
         /// </returns>
         public async Task<List<PsCharacter>> GetByIDs(List<string> IDs, CensusEnvironment env) {
+            if (IDs.Count == 0) {
+                return new List<PsCharacter>();
+            }
+
             int batchCount = (int) Math.Ceiling(IDs.Count / (double) BATCH_SIZE);
 
             //_Logger.LogTrace($"Doing {batchCount} batches to get {IDs.Count} characters");
 
             List<PsCharacter> chars = new List<PsCharacter>(IDs.Count);
+
+            int errorCount = 0;
 
             for (int i = 0; i < batchCount; ++i) {
                 //_Logger.LogTrace($"Getting indexes {i * BATCH_SIZE} - {i * BATCH_SIZE + BATCH_SIZE}");
@@ -134,8 +140,25 @@ namespace watchtower.Services.Census {
                 try {
                     List<PsCharacter> sliceCharacters = await _Reader.ReadList(query);
                     chars.AddRange(sliceCharacters);
-                } catch (CensusConnectionException) {
-                    _Logger.LogWarning($"Failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}, had timeout");
+                } catch (Exception ex) when (ex is CensusConnectionException || ex is TaskCanceledException) {
+                    ++errorCount;
+                    _Logger.LogWarning($"failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}, had timeout");
+
+                    if (errorCount >= 5) {
+                        _Logger.LogError($"failed {errorCount} times, assuming Census is down");
+                        break;
+                    }
+
+                    continue;
+                } catch (Exception ex) {
+                    ++errorCount;
+                    _Logger.LogError(ex, $"failed to get slice {i * BATCH_SIZE} - {(i + 1) * BATCH_SIZE}");
+
+                    if (errorCount >= 5) {
+                        _Logger.LogError($"failed {errorCount} times, assuming Census is down");
+                        break;
+                    }
+
                     continue;
                 }
             }

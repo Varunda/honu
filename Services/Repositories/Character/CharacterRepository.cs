@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
+using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Census;
@@ -42,6 +43,16 @@ namespace watchtower.Services.Repositories {
         ///     With the couple of tests I've done, the quick response takes around 600ms when loading ~30 entries from Census
         /// </remarks>
         private const int SEARCH_CENSUS_TIMEOUT_MS = 600;
+
+        private int _CircuitBreakerErrors = 0;
+        private DateTime? _CircuitBreakerTimeout = null;
+        private DateTime _CircuitBreakerInformed = DateTime.UtcNow;
+
+        private bool _IsCircuitBreakerOn {
+            get {
+                return _CircuitBreakerTimeout != null && DateTime.UtcNow < _CircuitBreakerTimeout;
+            }
+        }
 
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
             CharacterDbStore db, CharacterCollection census,
@@ -89,9 +100,22 @@ namespace watchtower.Services.Repositories {
                 // If fast is true, only use the DB to get the data
                 if (fast == false && (character == null || HasExpired(character) == true || character.DateLastLogin == DateTime.MinValue)) {
                     try {
+
+                        // check the circuit breaker
+                        PsCharacter? censusChar;
+                        if (_IsCircuitBreakerOn) {
+                            censusChar = null;
+                            doShortCache = true;
+                            if (_CircuitBreakerInformed <= DateTime.UtcNow) {
+                                _CircuitBreakerInformed = DateTime.UtcNow + TimeSpan.FromSeconds(15);
+                                _Logger.LogWarning($"circuit breaker is on, bypassing Census call [nexted informated={_CircuitBreakerInformed:u}] [bypassed=get by id]");
+                            }
+                        } else {
+                            censusChar = await (_Census.GetByID(charID, env).TimeoutWithDefault(TimeSpan.FromSeconds(10), null));
+                        }
+
                         // If we have the character in DB, but not in Census, return it from DB
                         //      Useful if census is down, or a character has been deleted
-                        PsCharacter? censusChar = await _Census.GetByID(charID, env);
                         if (censusChar != null) {
 
                             // if there is a character from the db, and a character from Census, lets compare the names
@@ -116,17 +140,31 @@ namespace watchtower.Services.Repositories {
                                 }
                             }
 
+                            // if we got a character from Census fine, turn the circuit breaker off
+                            if (_CircuitBreakerErrors > 0) {
+                                _Logger.LogInformation($"circuit breaker passed, resetting count");
+                            }
+                            _CircuitBreakerTimeout = null;
+                            _CircuitBreakerErrors = 0;
+
                             character = censusChar;
                             await _Db.Upsert(censusChar);
                         }
                     } catch (Exception ex) {
+                        ++_CircuitBreakerErrors;
+                        if (_CircuitBreakerErrors >= 10) {
+                            _CircuitBreakerTimeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+                            _Logger.LogError($"tripping circuit breaker! [_CircuitBreakerErrors={_CircuitBreakerErrors}] [_CircuitBreakerTimeout={_CircuitBreakerTimeout:u}]");
+                        }
+
                         // If Honu failed to find any character, propogate the error up
                         //      else, since we have the character, but it's out of date, use that one instead
-                        if (character == null || ex is not CensusConnectionException) {
+                        if (character == null) {  // || ex is not CensusConnectionException) {
+                            _Logger.LogError($"failed to get character from Census [charID={charID}] [_CircuitBreakerErrors={_CircuitBreakerErrors}] [Exception={ex.Message}]");
                             throw;
                         } else {
                             doShortCache = true;
-                            _Logger.LogWarning($"timeout when getting {charID}");
+                            _Logger.LogWarning($"rescued character from DB due to failed Census call [charID={charID}] [_CircuitBreakerErrors={_CircuitBreakerErrors}] [Exception={ex.Message}]");
                         }
                     }
                 }
@@ -253,7 +291,34 @@ namespace watchtower.Services.Repositories {
             int inCensus = 0;
             if (found < total) {
                 if (fast == false) {
-                    List<PsCharacter> census = await _Census.GetByIDs(localIDs, env);
+                    List<PsCharacter> census;
+                    try {
+                        if (_IsCircuitBreakerOn) {
+                            census = new List<PsCharacter>();
+                            if (_CircuitBreakerInformed <= DateTime.UtcNow) {
+                                _CircuitBreakerInformed = DateTime.UtcNow + TimeSpan.FromSeconds(15);
+                                _Logger.LogWarning($"circuit breaker is on, bypassing Census call [nexted informated={_CircuitBreakerInformed:u}] [bypassed=get by ids]");
+                            }
+                        } else {
+                            census = await _Census.GetByIDs(localIDs, env);
+                        }
+
+                        // if we got a character from Census fine, turn the circuit breaker off
+                        if (_CircuitBreakerErrors > 0) {
+                            _Logger.LogInformation($"circuit breaker passed, resetting count");
+                        }
+                        _CircuitBreakerTimeout = null;
+                        _CircuitBreakerErrors = 0;
+                    } catch (Exception ex) {
+                        ++_CircuitBreakerErrors;
+                        if (_CircuitBreakerErrors >= 10) {
+                            _CircuitBreakerTimeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+                            _Logger.LogError($"tripping circuit breaker! [_CircuitBreakerErrors={_CircuitBreakerErrors}] [_CircuitBreakerTimeout={_CircuitBreakerTimeout:u}]");
+                        }
+
+                        _Logger.LogError(ex, $"failed to characters from Census");
+                        census = new List<PsCharacter>();
+                    }
 
                     foreach (PsCharacter c in census) {
                         localIDs.Remove(c.ID);

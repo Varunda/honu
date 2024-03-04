@@ -43,7 +43,7 @@ namespace watchtower.Services.Repositories {
             string cacheKey = string.Format(CACHE_KEY, worldID ?? 0, zoneID ?? 0, includeVehicles);
 
             if (_Cache.TryGetValue(cacheKey, out VehicleUsageData data) == false) {
-                _Logger.LogDebug($"vehicle data uncached, generating [cacheKey={cacheKey}] [worldID={worldID}] [zoneID={zoneID}] [includeVehicles={includeVehicles}]");
+                //_Logger.LogDebug($"vehicle data uncached, generating [cacheKey={cacheKey}] [worldID={worldID}] [zoneID={zoneID}] [includeVehicles={includeVehicles}]");
 
                 Stopwatch timer = Stopwatch.StartNew();
 
@@ -104,10 +104,10 @@ namespace watchtower.Services.Repositories {
                     }
                 }
 
-                _Logger.LogDebug($"generated vehicle usage in {timer.ElapsedMilliseconds}ms [worldID={worldID}] [zoneID={zoneID}] [includeVehicles={includeVehicles}]");
+                //_Logger.LogDebug($"generated vehicle usage in {timer.ElapsedMilliseconds}ms [worldID={worldID}] [zoneID={zoneID}] [includeVehicles={includeVehicles}]");
 
                 _Cache.Set(CACHE_KEY, data, new MemoryCacheEntryOptions() {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(10)
                 });
             }
 

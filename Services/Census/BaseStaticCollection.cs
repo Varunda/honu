@@ -99,8 +99,8 @@ namespace watchtower.Services.Census {
                     if (i == 9 && block.Count == query.Limit) {
                         throw new IndexOutOfRangeException($"After {i} iterations, collection '{_CollectionName}' returned {block.Count} entries with a limit of {query.Limit}. Increase i or the limit per iteration");
                     }
-                } catch (CensusConnectionException) {
-                    // Catch timeout exceptions here
+                } catch (Exception ex) {
+                    _Logger.LogError(ex, $"failed to load {_CollectionName}");
                 }
             }
 
