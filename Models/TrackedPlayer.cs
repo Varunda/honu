@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
+using watchtower.Code.Constants;
 using watchtower.Models.Events;
 
 namespace watchtower.Models {
@@ -72,7 +73,10 @@ namespace watchtower.Models {
         /// </summary>
         public int PossibleVehicleID { get; set; }
 
-        public long VehicleLastTimestamp { get; set; }
+        /// <summary>
+        ///     what profile ID (<see cref="Profile"/>) this character was last
+        /// </summary>
+        public short ProfileID { get; set; }
 
     }
 }

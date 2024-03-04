@@ -59,7 +59,7 @@ namespace watchtower.Models.PSB {
         /// <summary>
         ///     controls if the reservation is allowed to request accounts or not. will be false if one of the reps is practice
         /// </summary>
-        public bool CanRequestAccounts { get; set; }
+        public bool CanRequestAccounts { get; set; } = true;
 
         public PsbParsedReservationMetadata Metadata { get; set; } = new();
 

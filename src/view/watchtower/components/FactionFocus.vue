@@ -1,14 +1,32 @@
 ﻿<template>
     <div v-if="focus != undefined" class="focus-parent">
         <span v-if="focus.vsKills > 0" :style="{ 'flex-grow': vsWidth, 'background-color': 'var(--color-bg-vs)' }" class="focus-entry" title="Percent of kills are VS">
-            {{vsWidth}}%
+            <span v-if="ShowCount">
+                {{focus.vsKills}}
+            </span>
+            <span v-else>
+                {{vsWidth}}%
+            </span>
         </span>
+
         <span v-if="focus.ncKills > 0" :style="{ 'flex-grow': ncWidth, 'background-color': 'var(--color-bg-nc)' }" class="focus-entry" title="Percent of kills are NC">
-            {{ncWidth}}%
+            <span v-if="ShowCount">
+                {{focus.ncKills}}
+            </span>
+            <span v-else>
+                {{ncWidth}}%
+            </span>
         </span>
+
         <span v-if="focus.trKills > 0" :style="{ 'flex-grow': trWidth, 'background-color': 'var(--color-bg-tr)' }" class="focus-entry" title="Percent of kills are TR">
-            {{trWidth}}%
+            <span v-if="ShowCount">
+                {{focus.trKills}}
+            </span>
+            <span v-else>
+                {{trWidth}}%
+            </span>
         </span>
+
         <span v-if="otherKillsTotal > 0" :style="{ 'flex-grow': otherKills, 'background-color': 'var(--color-bg-ns)' }" class="focus-entry" title="Percent of kills on unknown factions">
             {{otherKills}}%
         </span>
@@ -20,7 +38,8 @@
 
     export const FactionFocus = Vue.extend({
         props: {
-            focus: { type: Object as PropType<any>, required: false }
+            focus: { type: Object as PropType<any>, required: false },
+            ShowCount: { type: Boolean, required: false, default: false }
         },
 
         computed: {

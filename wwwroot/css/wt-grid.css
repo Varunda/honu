@@ -34,54 +34,59 @@
     background-color: var(--color-dark-bg-3);
 }
 
-.grid-title-focus {
+.grid-title-classes {
     grid-column: 1 / span 3;
     grid-row: 6;
 }
 
-.grid-title-heals {
+.grid-title-focus {
     grid-column: 1 / span 3;
     grid-row: 8;
 }
 
-.grid-title-revives {
+.grid-title-heals {
     grid-column: 1 / span 3;
     grid-row: 10;
 }
 
-.grid-title-shields {
+.grid-title-revives {
     grid-column: 1 / span 3;
     grid-row: 12;
 }
 
-.grid-title-resupplies {
+.grid-title-shields {
     grid-column: 1 / span 3;
     grid-row: 14;
 }
 
-.grid-title-spawns {
+.grid-title-resupplies {
     grid-column: 1 / span 3;
     grid-row: 16;
 }
 
-.grid-title-vehicle-kills {
+.grid-title-spawns {
     grid-column: 1 / span 3;
     grid-row: 18;
 }
 
-.grid-title-weapon-kills {
+.grid-title-vehicle-kills {
     grid-column: 1 / span 3;
     grid-row: 20;
 }
 
-.grid-title-outfits {
+.grid-title-weapon-kills {
     grid-column: 1 / span 3;
     grid-row: 22;
 }
 
-.grid-title-misc {
+.grid-title-outfits {
     grid-column: 1 / span 3;
     grid-row: 24;
+}
+
+.grid-title-misc {
+    grid-column: 1 / span 3;
+    grid-row: 26;
 }
 
 @media (min-width: 1200px) {
@@ -172,49 +177,56 @@
     grid-row: 5;
 }
 
-.grid-vs-focus {
+.grid-vs-class-usage {
     grid-column: 1;
     grid-row: 7;
+    margin-bottom: 1rem;
+}
+
+.grid-vs-focus {
+    grid-column: 1;
+    grid-row: 9;
+    margin-bottom: 1rem;
 }
 
 .grid-vs-heals {
     grid-column: 1;
-    grid-row: 9;
+    grid-row: 11;
 }
 
 .grid-vs-revives {
     grid-column: 1;
-    grid-row: 11;
+    grid-row: 13;
 }
 
 .grid-vs-shields {
     grid-column: 1;
-    grid-row: 13;
+    grid-row: 15;
 }
 
 .grid-vs-resupplies {
     grid-column: 1;
-    grid-row: 15;
+    grid-row: 17;
 }
 
 .grid-vs-spawns {
     grid-column: 1;
-    grid-row: 17;
+    grid-row: 19;
 }
 
 .grid-vs-vehicle-kills {
     grid-column: 1;
-    grid-row: 19;
+    grid-row: 21;
 }
 
 .grid-vs-weapon-kills {
     grid-column: 1;
-    grid-row: 21;
+    grid-row: 23;
 }
 
 .grid-vs-outfits {
     grid-column: 1;
-    grid-row: 23;
+    grid-row: 25;
 }
 
 .grid-nc-player-kills {
@@ -229,47 +241,47 @@
 
 .grid-nc-focus {
     grid-column: 2;
-    grid-row: 7;
+    grid-row: 9;
 }
 
 .grid-nc-heals {
     grid-column: 2;
-    grid-row: 9;
+    grid-row: 11;
 }
 
 .grid-nc-revives {
     grid-column: 2;
-    grid-row: 11;
+    grid-row: 13;
 }
 
 .grid-nc-shields {
     grid-column: 2;
-    grid-row: 13;
+    grid-row: 15;
 }
 
 .grid-nc-resupplies {
     grid-column: 2;
-    grid-row: 15;
+    grid-row: 17;
 }
 
 .grid-nc-spawns {
     grid-column: 2;
-    grid-row: 17;
+    grid-row: 19;
 }
 
 .grid-nc-vehicle-kills {
     grid-column: 2;
-    grid-row: 19;
+    grid-row: 21;
 }
 
 .grid-nc-weapon-kills {
     grid-column: 2;
-    grid-row: 21;
+    grid-row: 23;
 }
 
 .grid-nc-outfits {
     grid-column: 2;
-    grid-row: 23;
+    grid-row: 25;
 }
 
 .grid-tr-player-kills {
@@ -284,52 +296,52 @@
 
 .grid-tr-focus {
     grid-column: 3;
-    grid-row: 7;
+    grid-row: 9;
 }
 
 .grid-tr-heals {
     grid-column: 3;
-    grid-row: 9;
+    grid-row: 11;
 }
 
 .grid-tr-revives {
     grid-column: 3;
-    grid-row: 11;
+    grid-row: 13;
 }
 
 .grid-tr-shields {
     grid-column: 3;
-    grid-row: 13;
+    grid-row: 15;
 }
 
 .grid-tr-resupplies {
     grid-column: 3;
-    grid-row: 15;
+    grid-row: 17;
 }
 
 .grid-tr-spawns {
     grid-column: 3;
-    grid-row: 17;
+    grid-row: 19;
 }
 
 .grid-tr-vehicle-kills {
     grid-column: 3;
-    grid-row: 19;
+    grid-row: 21;
 }
 
 .grid-tr-weapon-kills {
     grid-column: 3;
-    grid-row: 21;
+    grid-row: 23;
 }
 
 .grid-tr-outfits {
     grid-column: 3;
-    grid-row: 23;
+    grid-row: 25;
 }
 
 .grid-misc-spawns {
     grid-column: 1;
-    grid-row: 25;
+    grid-row: 27;
 }
 
 .grid-fights {
@@ -373,82 +385,86 @@
         background-color: var(--color-dark-bg-3);
     }
 
-    .grid-title-focus {
+    .grid-title-classes {
         grid-column: 1;
         grid-row: 4;
     }
 
+    .grid-title-focus {
+        grid-column: 1;
+        grid-row: 6;
+    }
+
     .grid-title-heals {
         grid-column: 1;
-        grid-row: 8;
+        grid-row: 6;
     }
 
-    .grid-nc-title-focus { grid-row: 27; }
-    .grid-tr-title-focus { grid-row: 48; }
+    .grid-nc-title-focus { grid-row: 29; }
+    .grid-tr-title-focus { grid-row: 50; }
 
-    .grid-nc-title-heals { grid-row: 29; }
-    .grid-tr-title-heals { grid-row: 50; }
+    .grid-nc-title-heals { grid-row: 31; }
+    .grid-tr-title-heals { grid-row: 52; }
 
-    .grid-nc-title-revives { grid-row: 31; }
-    .grid-tr-title-revives { grid-row: 52; }
+    .grid-nc-title-revives { grid-row: 33; }
+    .grid-tr-title-revives { grid-row: 54; }
 
-    .grid-nc-title-shields { grid-row: 33; }
-    .grid-tr-title-shields { grid-row: 54; }
+    .grid-nc-title-shields { grid-row: 35; }
+    .grid-tr-title-shields { grid-row: 56; }
 
-    .grid-nc-title-resupplies { grid-row: 35; }
-    .grid-tr-title-resupplies { grid-row: 56; }
+    .grid-nc-title-resupplies { grid-row: 37; }
+    .grid-tr-title-resupplies { grid-row: 58; }
 
-    .grid-nc-title-spawns { grid-row: 37; }
-    .grid-tr-title-spawns { grid-row: 58; }
+    .grid-nc-title-spawns { grid-row: 39; }
+    .grid-tr-title-spawns { grid-row: 60; }
 
-    .grid-nc-title-vehicle-kills { grid-row: 39; }
-    .grid-tr-title-vehicle-kills { grid-row: 60; }
+    .grid-nc-title-vehicle-kills { grid-row: 41; }
+    .grid-tr-title-vehicle-kills { grid-row: 62; }
 
-    .grid-nc-title-weapon-kills { grid-row: 41; }
-    .grid-tr-title-weapon-kills { grid-row: 62; }
+    .grid-nc-title-weapon-kills { grid-row: 43; }
+    .grid-tr-title-weapon-kills { grid-row: 64; }
 
-    .grid-nc-title-outfits { grid-row: 43; }
-    .grid-tr-title-outfits { grid-row: 64; }
+    .grid-nc-title-outfits { grid-row: 45; }
+    .grid-tr-title-outfits { grid-row: 66; }
 
     .grid-title-revives {
-        grid-column: 1;
-        grid-row: 10;
-    }
-
-    .grid-title-shields {
         grid-column: 1;
         grid-row: 12;
     }
 
-    .grid-title-resupplies {
+    .grid-title-shields {
         grid-column: 1;
         grid-row: 14;
     }
 
-    .grid-title-spawns {
+    .grid-title-resupplies {
         grid-column: 1;
         grid-row: 16;
     }
 
-    .grid-title-vehicle-kills {
+    .grid-title-spawns {
         grid-column: 1;
         grid-row: 18;
     }
 
-
-    .grid-title-weapon-kills {
+    .grid-title-vehicle-kills {
         grid-column: 1;
         grid-row: 20;
     }
 
-    .grid-title-outfits {
+    .grid-title-weapon-kills {
         grid-column: 1;
         grid-row: 22;
     }
 
+    .grid-title-outfits {
+        grid-column: 1;
+        grid-row: 24;
+    }
+
     .grid-title-misc {
         grid-column: 1;
-        grid-row: 67;
+        grid-row: 69;
     }
 
     .grid-vs-player-kills {
@@ -463,167 +479,167 @@
 
     .grid-vs-focus {
         grid-column: 1;
-        grid-row: 7;
+        grid-row: 9;
     }
 
     .grid-vs-heals {
         grid-column: 1;
-        grid-row: 9;
+        grid-row: 11;
     }
 
     .grid-vs-revives {
         grid-column: 1;
-        grid-row: 11;
+        grid-row: 13;
     }
 
     .grid-vs-shields {
         grid-column: 1;
-        grid-row: 13;
+        grid-row: 15;
     }
 
     .grid-vs-resupplies {
         grid-column: 1;
-        grid-row: 15;
+        grid-row: 17;
     }
 
     .grid-vs-spawns {
         grid-column: 1;
-        grid-row: 17;
+        grid-row: 19;
     }
 
     .grid-vs-vehicle-kills {
         grid-column: 1;
-        grid-row: 19;
+        grid-row: 21;
     }
 
     .grid-vs-weapon-kills {
         grid-column: 1;
-        grid-row: 21;
+        grid-row: 23;
     }
 
     .grid-vs-outfits {
         grid-column: 1;
-        grid-row: 23;
+        grid-row: 25;
     }
 
     .grid-nc-player-kills {
         grid-column: 1;
-        grid-row: 25;
+        grid-row: 27;
     }
 
     .grid-nc-outfit-kills {
         grid-column: 1;
-        grid-row: 26;
+        grid-row: 28;
     }
 
     .grid-nc-focus {
         grid-column: 1;
-        grid-row: 28;
+        grid-row: 30;
     }
 
     .grid-nc-heals {
         grid-column: 1;
-        grid-row: 30;
+        grid-row: 32;
     }
 
     .grid-nc-revives {
         grid-column: 1;
-        grid-row: 32;
+        grid-row: 34;
     }
 
     .grid-nc-shields {
         grid-column: 1;
-        grid-row: 34;
+        grid-row: 36;
     }
 
     .grid-nc-resupplies {
         grid-column: 1;
-        grid-row: 36;
+        grid-row: 38;
     }
 
     .grid-nc-spawns {
         grid-column: 1;
-        grid-row: 38;
+        grid-row: 40;
     }
 
     .grid-nc-vehicle-kills {
         grid-column: 1;
-        grid-row: 40;
+        grid-row: 42;
     }
 
     .grid-nc-weapon-kills {
         grid-column: 1;
-        grid-row: 42;
+        grid-row: 44;
     }
 
     .grid-nc-outfits {
         grid-column: 1;
-        grid-row: 44;
+        grid-row: 46;
     }
 
     .grid-tr-player-kills {
         grid-column: 1;
-        grid-row: 46;
+        grid-row: 48;
     }
 
     .grid-tr-outfit-kills {
         grid-column: 1;
-        grid-row: 47;
+        grid-row: 49;
     }
 
     .grid-tr-focus {
         grid-column: 1;
-        grid-row: 49;
+        grid-row: 51;
     }
 
     .grid-tr-heals {
         grid-column: 1;
-        grid-row: 51;
+        grid-row: 53;
     }
 
     .grid-tr-revives {
         grid-column: 1;
-        grid-row: 53;
+        grid-row: 55;
     }
 
     .grid-tr-shields {
         grid-column: 1;
-        grid-row: 55;
+        grid-row: 57;
     }
 
     .grid-tr-resupplies {
         grid-column: 1;
-        grid-row: 57;
+        grid-row: 59;
     }
 
     .grid-tr-spawns {
         grid-column: 1;
-        grid-row: 59;
+        grid-row: 61;
     }
 
     .grid-tr-vehicle-kills {
         grid-column: 1;
-        grid-row: 61;
+        grid-row: 63;
     }
 
     .grid-tr-weapon-kills {
         grid-column: 1;
-        grid-row: 63;
+        grid-row: 65;
     }
 
     .grid-tr-outfits {
         grid-column: 1;
-        grid-row: 65;
+        grid-row: 67;
     }
 
     .grid-misc-spawns {
         grid-column: 1;
-        grid-row: 68;
+        grid-row: 70;
     }
 
     .grid-fights {
         grid-column: 1;
-        grid-row: 70;
+        grid-row: 72;
     }
 
     /* in a .container, so need to remove the margins ourself */

@@ -13,6 +13,7 @@ using watchtower.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
+using watchtower.Models.Watchtower;
 using watchtower.Realtime;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
@@ -425,6 +426,12 @@ namespace watchtower.Services.Repositories {
                 data.VehicleUsage = await _VehicleUsageRepository.Get(worldID, null, true);
             }
 
+            using (Activity? interval = HonuActivitySource.Root.StartActivity("class usage")) {
+                data.VS.ClassUsage = GetClassUsage(data.WorldID, Faction.VS, players);
+                data.NC.ClassUsage = GetClassUsage(data.WorldID, Faction.NC, players);
+                data.TR.ClassUsage = GetClassUsage(data.WorldID, Faction.TR, players);
+            }
+
             time.Stop();
 
             return data;
@@ -438,7 +445,7 @@ namespace watchtower.Services.Repositories {
             List<PsCharacter> chars;
             try {
                 chars = await _CharacterRepository.GetByIDs(
-                    IDs: topKillers.Select(iter => iter.CharacterID).ToList(),
+                    IDs: topKillers.Select(iter => iter.CharacterID),
                     env: CensusEnvironment.PC,
                     fast: true
                 );
@@ -454,8 +461,6 @@ namespace watchtower.Services.Repositories {
                 if (hasPlayer == false && c != null) {
                     _CharacterCacheQueue.Queue(entry.CharacterID, CensusEnvironment.PC);
                 }
-
-                //_Logger.LogTrace($"{c?.Name ?? entry.CharacterID} has been online for {entry.SecondsOnline} seconds");
 
                 KillData killDatum = new KillData() {
                     ID = entry.CharacterID,
@@ -546,7 +551,7 @@ namespace watchtower.Services.Repositories {
                 );
             } catch (Exception ex) {
                 chars = new List<PsCharacter>();
-                _Logger.LogWarning($"failed to get characters for exp block [Exception={ex.Message}]");
+                _Logger.LogWarning($"failed to get characters for exp block [WorldID={options.WorldID}] [FactionID={options.FactionID}] [Exception={ex.Message}]");
             }
 
             foreach (ExpDbEntry entry in entries) {
@@ -645,9 +650,43 @@ namespace watchtower.Services.Repositories {
                     .Take(10)
                     .ToList()
             };
-
         }
 
+        /// <summary>
+        ///     get the class usage of a world for a faction
+        /// </summary>
+        /// <param name="worldID">id of the world to filter to</param>
+        /// <param name="factionID">faction to filter to</param>
+        /// <param name="players">which players to check</param>
+        /// <returns>
+        ///     a new <see cref="RealtimeClassUsage"/>
+        /// </returns>
+        private static RealtimeClassUsage GetClassUsage(short worldID, short factionID, Dictionary<string, TrackedPlayer> players) {
+            RealtimeClassUsage usage = new();
+            usage.FactionID = factionID;
+
+            foreach (KeyValuePair<string, TrackedPlayer> iter in players) {
+                TrackedPlayer p = iter.Value;
+
+                if (p.Online == false || p.TeamID != factionID || p.WorldID != worldID) {
+                    continue;
+                }
+
+                ++usage.Total;
+
+                switch (p.ProfileID) {
+                    case Profile.INFILTRATOR: ++usage.Infil; break;
+                    case Profile.LIGHT_ASSAULT: ++usage.LightAssault; break;
+                    case Profile.MEDIC: ++usage.CombatMedic; break;
+                    case Profile.ENGINEER: ++usage.Engineer; break;
+                    case Profile.HEAVY: ++usage.HeavyAssault; break;
+                    case Profile.MAX: ++usage.MAX; break;
+                    default: ++usage.Unknown; break;
+                }
+            }
+
+            return usage;
+        }
 
     }
 }

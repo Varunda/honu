@@ -63,6 +63,30 @@
         padding-right: 0.75rem !important;
     }
 
+    .class-usage-icon {
+        height: 1.25rem;
+        vertical-align: text-bottom;
+    }
+
+    /*
+        from SessionViewerGeneral.vue
+
+        "#666699", // infil
+        "#0d239d", // LA
+        "#cc0000", // medic
+        "#009900", // engi
+        (this.usePalePink) ? "#fcd5e7" : "#ff69b4", // heavy
+        "#663300", // max
+    */
+    :root {
+        --color-class-infil: #666699;
+        --color-class-light-assault: #0d239d;
+        --color-class-medic: #cc0000;
+        --color-class-engi: #009900;
+        --color-class-heavy: #ff69b4;
+        --color-class-max: #663300;
+    }
+
 </style>
 
 <div id="app" class="container-fluid" style="font-size: 14px; line-height: 1;" v-cloak>

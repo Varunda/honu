@@ -7,6 +7,7 @@ using watchtower.Models.Api;
 using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Health;
+using watchtower.Models.Watchtower;
 
 namespace watchtower.Models {
 
@@ -120,117 +121,122 @@ namespace watchtower.Models {
     }
 
     /// <summary>
-    /// Data about a single faction
+    ///     data about a single faction
     /// </summary>
     public class FactionData {
 
         /// <summary>
-        /// ID of the faction
+        ///     ID of the faction
         /// </summary>
-        public string FactionID { get; set; } = "";
+        public short FactionID { get; set; }
 
         /// <summary>
-        /// Name of the faction
+        ///     name of the faction
         /// </summary>
         public string FactionName { get; set; } = "";
 
         /// <summary>
-        /// The top killers for that faction
+        ///     the top killers for that faction
         /// </summary>
         public KillBlock PlayerKills { get; set; } = new KillBlock();
 
         /// <summary>
-        /// Top outfits for average kills per player
+        ///     top outfits for average kills per player
         /// </summary>
         public OutfitKillBlock OutfitKills { get; set; } = new OutfitKillBlock();
 
         /// <summary>
-        /// Top outfits for heals for that faction
+        ///     top outfits for heals for that faction
         /// </summary>
         public Block OutfitHeals { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for heals for that faction
+        ///     top players for heals for that faction
         /// </summary>
         public Block PlayerHeals { get; set; } = new Block();
 
         /// <summary>
-        /// Top outfits for revives for that faction
+        ///     top outfits for revives for that faction
         /// </summary>
         public Block OutfitRevives { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for revives for that faction
+        ///     top players for revives for that faction
         /// </summary>
         public Block PlayerRevives { get; set; } = new Block();
 
         /// <summary>
-        /// Top outfits for resupplies for that faction
+        ///     top outfits for resupplies for that faction
         /// </summary>
         public Block OutfitResupplies { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for resupplies for that faction
+        ///     top players for resupplies for that faction
         /// </summary>
         public Block PlayerResupplies { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for spawns for that faction
+        ///     top players for spawns for that faction
         /// </summary>
         public Block PlayerSpawns { get; set; } = new Block();
 
         /// <summary>
-        /// Top outfits for spawns for that faction
+        ///     top outfits for spawns for that faction
         /// </summary>
         public Block OutfitSpawns { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for vehicle kills in this faction
+        ///     top players for vehicle kills in this faction
         /// </summary>
         public Block PlayerVehicleKills { get; set; } = new Block();
 
         /// <summary>
-        /// Top outfits for vehicle kills in this faction
+        ///     top outfits for vehicle kills in this faction
         /// </summary>
         public Block OutfitVehicleKills { get; set; } = new Block();
 
         /// <summary>
-        /// Top players for shield repairs for this faction
+        ///     top players for shield repairs for this faction
         /// </summary>
         public Block PlayerShieldRepair { get; set; } = new Block();
 
         /// <summary>
-        /// Top outfits for shield repairs for this faction
+        ///     top outfits for shield repairs for this faction
         /// </summary>
         public Block OutfitShieldRepair { get; set; } = new Block();
 
         /// <summary>
-        /// Top weapons used for this faction
+        ///     top weapons used for this faction
         /// </summary>
         public WeaponKillsBlock WeaponKills { get; set; } = new WeaponKillsBlock();
 
         /// <summary>
-        /// Outfits currently online when the data was created
+        ///     outfits currently online when the data was created
         /// </summary>
         public OutfitsOnline Outfits { get; set; } = new OutfitsOnline();
 
         /// <summary>
-        /// Faction focus based on Death events
+        ///     faction focus based on Death events
         /// </summary>
         public FactionFocusEntry FactionFocus { get; set; } = new FactionFocusEntry();
 
         /// <summary>
-        /// Total number of kills a faction has gotten
+        ///     how many players are using each class
+        /// </summary>
+        public RealtimeClassUsage ClassUsage { get; set; } = new();
+
+        /// <summary>
+        ///     total number of kills a faction has gotten
         /// </summary>
         public int TotalKills { get; set; }
 
         /// <summary>
-        /// Total number of assists a faction has
+        ///     total number of assists a faction has
         /// </summary>
         public int TotalAssists { get; set; }
 
         /// <summary>
-        /// Total number of deaths a faction has gotten
+        ///     total number of deaths a faction has gotten
         /// </summary>
         public int TotalDeaths { get; set; }
 

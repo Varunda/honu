@@ -313,6 +313,7 @@ namespace watchtower.Realtime {
                 }
 
                 attacker.ZoneID = ev.ZoneID;
+                attacker.ProfileID = Profile.GetProfileID(ev.AttackerLoadoutID) ?? 0;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
                     attacker.FactionID = ev.AttackerFactionID; // If a tracked player was made from a login, no faction ID is given
@@ -1120,6 +1121,7 @@ namespace watchtower.Realtime {
                 }
 
                 attacker.ZoneID = zoneID;
+                attacker.ProfileID = Profile.GetProfileID(ev.AttackerLoadoutID) ?? 0;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
                     attacker.FactionID = attackerFactionID; // If a tracked player was made from a login, no faction ID is given
@@ -1151,6 +1153,7 @@ namespace watchtower.Realtime {
                 }
 
                 killed.ZoneID = zoneID;
+                killed.ProfileID = Profile.GetProfileID(ev.KilledLoadoutID) ?? 0;
 
                 if (killed.FactionID == Faction.UNKNOWN) {
                     killed.FactionID = factionID;
@@ -1302,6 +1305,7 @@ namespace watchtower.Realtime {
                 p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 p.ZoneID = zoneID;
                 p.TeamID = teamID;
+                p.ProfileID = Profile.GetProfileID(ev.LoadoutID) ?? 0;
 
                 if (p.FactionID == Faction.UNKNOWN) {
                     p.FactionID = factionID;

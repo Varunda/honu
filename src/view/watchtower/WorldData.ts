@@ -144,6 +144,18 @@ export class RealtimeDataFight {
 	public facility: PsFacility | null = null;
 }
 
+export class RealtimeClassUsage {
+	public factionID: number = 0;
+	public total: number = 0;
+	public infil: number = 0;
+	public lightAssault: number = 0;
+	public combatMedic: number = 0;
+	public engineer: number = 0;
+	public heavyAssault: number = 0;
+	public max: number = 0;
+	public unknown: number = 0;
+}
+
 export class WorldData {
 	public worldID: string = "";
 	public worldName: string = "";

@@ -245,9 +245,32 @@
                 </table>
             </div>
 
+            <h4 class="grid-title-classes">
+                Class usage
+                <info-hover text="This will always be behind a bit, as a player must do something as a class to be seen as that class"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowIcons" class="btn-sm" true-color="btn-primary">
+                        show class icon
+                    </toggle-button>
+                </span>
+            </h4>
+
             <h4 class="grid-title-focus">
                 Current faction focus (5 mins)
                 <info-hover text="What percentage of kills have come from the other factions within the last 5 minutes"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="factionFocusShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
             </h4>
 
             <h4 class="grid-title-heals">
@@ -284,6 +307,8 @@
                 <info-hover text="Only members who are online, not in the last 2 hours, like the kill list does"></info-hover>
             </h4>
 
+            <!-- VS -->
+
             <div class="grid-title-vs p-1 mb-2" id="header-vs">
                 <h4 class="d-flex w-100 mb-0 align-items-center" data-toggle="collapse" data-target=".vehicle-data">
                     <span class="flex-grow-1">
@@ -310,8 +335,14 @@
                 <outfit-kill-block :block="worldData.vs.outfitKills"></outfit-kill-block>
             </div>
 
+            <div class="grid-vs-class-usage">
+                <realtime-class-usage-view :data="worldData.vs.classUsage"
+                    :show-count="classUsageShowCount" :show-icons="classUsageShowIcons">
+                </realtime-class-usage-view>
+            </div>
+
             <div class="grid-vs-focus">
-                <faction-focus :focus="worldData.vs.factionFocus"></faction-focus>
+                <faction-focus :focus="worldData.vs.factionFocus" :show-count="factionFocusShowCount"></faction-focus>
             </div>
 
             <div class="grid-vs-heals d-flex">
@@ -406,12 +437,14 @@
                 <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
             </div>
 
-            <h4 class="grid-nc-title-focus">
-                NC focus
-            </h4>
+            <div class="grid-nc-class-usage">
+                <realtime-class-usage-view :data="worldData.nc.classUsage"
+                    :show-count="classUsageShowCount" :show-icons="classUsageShowIcons">
+                </realtime-class-usage-view>
+            </div>
 
             <div class="grid-nc-focus">
-                <faction-focus :focus="worldData.nc.factionFocus"></faction-focus>
+                <faction-focus :focus="worldData.nc.factionFocus" :show-count="factionFocusShowCount"></faction-focus>
             </div>
 
             <h4 class="grid-nc-title-heals">
@@ -539,12 +572,18 @@
                 <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
             </div>
 
+            <div class="grid-tr-class-usage">
+                <realtime-class-usage-view :data="worldData.tr.classUsage"
+                    :show-count="classUsageShowCount" :show-icons="classUsageShowIcons">
+                </realtime-class-usage-view>
+            </div>
+
             <h4 class="grid-tr-title-focus">
                 TR Focus
             </h4>
 
             <div class="grid-tr-focus">
-                <faction-focus :focus="worldData.tr.factionFocus"></faction-focus>
+                <faction-focus :focus="worldData.tr.factionFocus" :show-count="factionFocusShowCount"></faction-focus>
             </div>
 
             <h4 class="grid-tr-title-heals">
@@ -727,6 +766,7 @@
     import { WorldTagApi } from "api/WorldTagApi";
     import { RealtimeMapStateApi } from "api/RealtimeMapStateApi";
     import { MapApi } from "api/MapApi";
+    import { VehicleDataApi } from "api/VehicleUsageApi";
     import FactionColors from "FactionColors";
     import EventBus from "EventBus";
 
@@ -740,6 +780,7 @@
     import FightData from "./components/FightData.vue";
     import WorldZonePopulationChart from "./components/WorldZonePopulationChart.vue";
     import VehicleUsageView from "./components/VehicleUsageView.vue";
+    import RealtimeClassUsageView from "./components/RealtimeClassUsageView.vue";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import ContinentMetadata from "components/ContinentMetadata.vue";
@@ -751,7 +792,6 @@
     import "filters/WorldNameFilter";
     import "filters/TilFilter";
     import ZoneUtils from "util/Zone";
-import { VehicleDataApi } from "../../api/VehicleUsageApi";
 
     type StreamFailure = {
         streamType: "death" | "exp";
@@ -781,6 +821,10 @@ import { VehicleDataApi } from "../../api/VehicleUsageApi";
                 showErrorDetails: false as boolean,
 
                 showZonePops: true as boolean,
+
+                factionFocusShowCount: false as boolean,
+                classUsageShowCount: false as boolean,
+                classUsageShowIcons: true as boolean,
 
                 expSources: {
                     charHeal: ExpStatApi.getCharacterHealEntries,
@@ -1204,7 +1248,8 @@ import { VehicleDataApi } from "../../api/VehicleUsageApi";
             WorldTag, FightData,
             PopperModal,
             WorldZonePopulationChart,
-            VehicleUsageView
+            VehicleUsageView,
+            RealtimeClassUsageView
         }
     });
 

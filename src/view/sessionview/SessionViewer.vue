@@ -94,7 +94,7 @@
                             <info-hover text="What outfit the character is currently in"></info-hover>
                         </td>
                         <td>
-                            <span v-if="character.data.outfitID == '0'">
+                            <span v-if="character.data.outfitID == '0' || character.data.outfitID == null">
                                 &lt;no outfit&gt;
                             </span>
 
@@ -219,6 +219,21 @@
                             </span>
                             <span v-if="achievementsEarned.state == 'loaded'">
                                 ({{achievementsEarned.data.events.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>Vehicle destroy</td>
+                        <td>
+                            <span v-if="vehicleDestroy.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{vehicleDestroy.state}}
+                            </span>
+                            <span v-if="achievementsEarned.state == 'loaded'">
+                                ({{vehicleDestroy.data.length}})
                             </span>
                         </td>
                     </tr>

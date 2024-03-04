@@ -16,7 +16,7 @@
                     {{kills.length}}
                 </td>
                 <td>
-                    {{kills.length / durationInSeconds * 60 | fixed | locale}}
+                    {{kills.length / durationInSeconds * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -26,7 +26,7 @@
                     {{expAssists.length}}
                 </td>
                 <td>
-                    {{expAssists.length / durationInSeconds * 60 | fixed | locale}}
+                    {{expAssists.length / durationInSeconds * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -56,7 +56,7 @@
                     {{expSpawns.length}}
                 </td>
                 <td>
-                    {{expSpawns.length / durationInSeconds * 60 | fixed | locale}}
+                    {{expSpawns.length / durationInSeconds * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -76,7 +76,7 @@
                     {{expRevives.length}}
                 </td>
                 <td>
-                    {{expRevives.length / classPlaytime.medic.secondsAs * 60 | fixed | locale}}
+                    {{expRevives.length / classPlaytime.medic.secondsAs * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -86,7 +86,7 @@
                     {{expHeals.length}}
                 </td>
                 <td>
-                    {{expHeals.length / classPlaytime.medic.secondsAs * 60 | fixed | locale}}
+                    {{expHeals.length / classPlaytime.medic.secondsAs * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -96,7 +96,7 @@
                     {{expResupplies.length}}
                 </td>
                 <td>
-                    {{expResupplies.length / classPlaytime.engineer.secondsAs * 60 | fixed | locale}}
+                    {{expResupplies.length / classPlaytime.engineer.secondsAs * 60 | locale(2)}}
                 </td>
             </tr>
 
@@ -106,7 +106,7 @@
                     {{expRepairs.length}}
                 </td>
                 <td>
-                    {{expRepairs.length / classPlaytime.engineer.secondsAs * 60 | fixed | locale}}
+                    {{expRepairs.length / classPlaytime.engineer.secondsAs * 60 | locale(2)}}
                 </td>
             </tr>
         </table>
@@ -130,7 +130,7 @@
                     Infiltrator
                 </td>
                 <td>{{classPlaytime.infil.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.infil.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.infil.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.infil.score | locale(2)}}</td>
                 <td v-if="FullExp">{{classPlaytime.infil.score / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.infil.kills}}</td>
@@ -145,7 +145,7 @@
                     Light Assault
                 </td>
                 <td>{{classPlaytime.lightAssault.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.lightAssault.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.lightAssault.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.lightAssault.score | locale(0)}}</td>
                 <td v-if="FullExp">{{classPlaytime.lightAssault.score / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.lightAssault.kills}}</td>
@@ -160,7 +160,7 @@
                     Medic
                 </td>
                 <td>{{classPlaytime.medic.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.medic.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.medic.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.medic.score | locale(0)}}</td>
                 <td v-if="FullExp">{{classPlaytime.medic.score / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.medic.kills}}</td>
@@ -175,7 +175,7 @@
                     Engineer
                 </td>
                 <td>{{classPlaytime.engineer.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.engineer.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.engineer.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.engineer.score | locale(0)}}</td>
                 <td v-if="FullExp">{{classPlaytime.engineer.score / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.engineer.kills}}</td>
@@ -190,7 +190,7 @@
                     Heavy
                 </td>
                 <td>{{classPlaytime.heavy.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.heavy.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.heavy.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.heavy.score | locale(0)}}</td>
                 <td v-if="FullExp">{{classPlaytime.heavy.score / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.heavy.kills}}</td>
@@ -205,7 +205,7 @@
                     MAX
                 </td>
                 <td>{{classPlaytime.max.secondsAs | mduration}}</td>
-                <td>{{classPlaytime.max.secondsAs / durationInSeconds * 100 | fixed | locale}}%</td>
+                <td>{{classPlaytime.max.secondsAs / durationInSeconds * 100 | locale(2)}}%</td>
                 <td v-if="FullExp">{{classPlaytime.max.score | locale(0)}}</td>
                 <td v-if="FullExp">{{classPlaytime.max.score / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
                 <td>{{classPlaytime.max.kills}}</td>
