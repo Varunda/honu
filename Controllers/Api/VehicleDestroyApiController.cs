@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Api;
+using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Services.Db;
@@ -60,15 +62,28 @@ namespace watchtower.Controllers.Api {
 
             List<VehicleDestroyEvent> events = await _VehicleDestroyDb.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
 
-            List<ExpandedVehicleDestroyEvent> exs = new List<ExpandedVehicleDestroyEvent>(events.Count);
+            List<string> charIDs = events.Select(iter => iter.AttackerCharacterID).Union(events.Select(iter => iter.KilledCharacterID)).ToList();
 
+            Dictionary<string, PsCharacter> chars;
+            try {
+                chars = (await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC, true))
+                    .ToDictionary(iter => iter.ID);
+            } catch (Exception ex) {
+                chars = new Dictionary<string, PsCharacter>();
+                _Logger.LogWarning($"failed to get characters for vehicle destroy by session [sessionID={sessionID}] [Exception={ex.Message}]");
+            }
+
+            List<ExpandedVehicleDestroyEvent> exs = new(events.Count);
             foreach (VehicleDestroyEvent ev in events) {
-                ExpandedVehicleDestroyEvent ex = new ExpandedVehicleDestroyEvent();
+                ExpandedVehicleDestroyEvent ex = new();
                 ex.Event = ev;
-                ex.Attacker = await _CharacterRepository.GetByID(ev.AttackerCharacterID, CensusEnvironment.PC);
+
+                ex.Attacker = chars.GetValueOrDefault(ev.AttackerCharacterID);
                 ex.AttackerVehicle = await _VehicleRepository.GetByID(int.Parse(ev.AttackerVehicleID));
-                ex.Killed = await _CharacterRepository.GetByID(ev.KilledCharacterID, CensusEnvironment.PC);
+
+                ex.Killed = chars.GetValueOrDefault(ev.KilledCharacterID);
                 ex.KilledVehicle = await _VehicleRepository.GetByID(int.Parse(ev.KilledVehicleID));
+
                 ex.Item = await _ItemRepository.GetByID(ev.AttackerWeaponID);
 
                 exs.Add(ex);
