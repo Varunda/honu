@@ -181,7 +181,7 @@
             </collapsible>
         </div>
 
-        <div id="popper-div" style="display: none; background-color: var(--secondary); color: white; border: 2px var(--light) solid; position: fixed;">
+        <div id="popper-div" :style="{ display: popper.show == true ? 'block' : 'none' }" style="background-color: var(--secondary); color: white; border: 2px var(--light) solid; position: fixed;">
             <div class="d-flex bg-dark" style="align-items: center;">
                 <strong class="flex-grow-1 px-2">
                     {{popper.title}}
@@ -447,6 +447,7 @@
                 outfitColors: new Map() as Map<string, string>,
 
                 popper: {
+                    show: false as boolean,
                     title: "" as string,
                     header: "" as string,
                     timestamp: new Date() as Date,
@@ -1093,11 +1094,14 @@
                     popperDiv.style.bottom = `${window.innerHeight - ev.clientY}px`;
                 }
 
+                console.log(`put popper at ${popperDiv.style.top}/${popperDiv.style.bottom}, ${popperDiv.style.left}`);
+
                 const charIDs: string[] = this.graph.diff.getWeek(target.timestamp.getTime()).getCharacters(source.outfitID, target.outfitID);
 
                 this.popper.characters = charIDs.map((charID: string) => {
                     return this.charMap.get(charID);
                 }).filter((iter: PsCharacter | undefined) => iter != undefined).map(iter => iter!);
+                console.log(`characters ${this.popper.characters.length}`);
 
                 this.popper.characters.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -1108,6 +1112,7 @@
                 this.popper.outfitA = this.outfitMap.get(source.outfitID);
                 this.popper.outfitBID = target.outfitID;
                 this.popper.outfitB = this.outfitMap.get(target.outfitID);
+                this.popper.show = true;
             },
 
             /**
@@ -1478,6 +1483,7 @@
                 if (tooltip != null) {
                     tooltip.style.display = "none";
                 }
+                this.popper.show = false;
             },
 
         },
