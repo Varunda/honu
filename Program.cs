@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using OpenTelemetry;
@@ -47,6 +48,11 @@ namespace watchtower {
 
         public static async Task Main(string[] args) {
             Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
+
+            // mitigation for https://github.com/advisories/GHSA-5crp-9r3c-p9vr
+            JsonConvert.DefaultSettings = () => new JsonSerializerSettings() {
+                MaxDepth = 128
+            };
 
             bool hostBuilt = false;
 

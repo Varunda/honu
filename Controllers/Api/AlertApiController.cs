@@ -37,13 +37,15 @@ namespace watchtower.Controllers.Api {
         private readonly FacilityControlDbStore _ControlDb;
         private readonly FacilityRepository _FacilityRepository;
         private readonly AlertPopulationRepository _AlertPopulationRepository;
+        private readonly MetagameEventRepository _MetagameEventRepository;
 
         public AlertApiController(ILogger<AlertApiController> logger,
                 AlertPlayerDataRepository participantDataRepository, AlertDbStore alertDb,
                 CharacterRepository characterRepository,
                 OutfitRepository outfitRepository, SessionDbStore sessionDb,
                 AlertPlayerProfileDataDbStore profileDataDb, FacilityControlDbStore controlDb,
-                FacilityRepository facilityRepository, AlertPopulationRepository alertPopulationRepository) {
+                FacilityRepository facilityRepository, AlertPopulationRepository alertPopulationRepository, 
+                MetagameEventRepository metagameEventRepository) {
 
             _Logger = logger;
 
@@ -56,6 +58,7 @@ namespace watchtower.Controllers.Api {
             _ControlDb = controlDb;
             _FacilityRepository = facilityRepository;
             _AlertPopulationRepository = alertPopulationRepository;
+            _MetagameEventRepository = metagameEventRepository;
         }
 
         /// <summary>
@@ -319,6 +322,107 @@ namespace watchtower.Controllers.Api {
             return ApiOk(data);
         }
 
+        /// <summary>
+        ///     a drop-in replacement for PS2Alert data
+        /// </summary>
+        /// <param name="alertID">the worldID-instanceID string of the alert to get the data of</param>
+        /// <response code="200">
+        ///     the response will contain a <see cref="PS2AlertInfo"/> for the alert requested that matches
+        ///     the behavior of PS2Alerts
+        /// </response>
+        /// <response code="400">
+        ///     failed to parse <paramref name="alertID"/> to a valid input.
+        ///     a valid input is {WorldID}-{InstanceID}
+        /// </response>
+        /// <response code="404">
+        ///     honu has tracked no alert with the alert ID passed from <paramref name="alertID"/>.
+        ///     this can mean honu didn't catch the alert from the API, or it has not yet processed
+        ///     the event that starts the alert
+        /// </response>
+        [HttpGet("dropin/{alertID}")]
+        public async Task<ApiResponse<PS2AlertInfo>> GetPS2AlertDropin(string alertID) {
+            string[] parts = alertID.Split("-");
+            if (parts.Length != 2) {
+                return ApiBadRequest<PS2AlertInfo>($"failed to split '{alertID}' into 2 parts when split on '-'");
+            }
+
+            string worldIdStr = parts[0];
+            string instanceIdStr = parts[1];
+
+            List<string> errors = new();
+            if (short.TryParse(worldIdStr, out short worldID) == false) { errors.Add($"failed to convert '{worldIdStr}' to a valid int16"); }
+            if (int.TryParse(instanceIdStr, out int instanceID) == false) { errors.Add($"failed to convert '{instanceIdStr}' into a valid int32"); }
+
+            if (errors.Count > 0) {
+                return ApiBadRequest<PS2AlertInfo>($"failed to get worldID and instanceID from alertID '{alertID}': {string.Join(", ", errors)}");
+            }
+
+            PsAlert? alert = await _AlertDb.GetByInstanceID(instanceID, worldID);
+            if (alert == null) {
+                return ApiNotFound<PS2AlertInfo>($"{nameof(PsAlert)} {worldID}-{instanceID}");
+            }
+
+            PS2AlertInfo info = new();
+            info.HonuId = alert.ID;
+            info.World = worldID;
+            info.CensusInstanceId = instanceID;
+            info.InstanceId = $"{worldID}-{instanceID}";
+            info.Zone = alert.ZoneID;
+            info.TimeStarted = alert.Timestamp;
+            info.Duration = alert.Duration * 1000;
+            // if the alert hasn't ended, then the ended time isn't set
+            if (DateTime.UtcNow >= info.TimeStarted + TimeSpan.FromMilliseconds(info.Duration)) {
+                info.TimeEnded = info.TimeStarted + TimeSpan.FromMilliseconds(info.Duration);
+            }
+            info.CensusMetagameEventType = alert.AlertID;
+            info.MetagameEvent = await _MetagameEventRepository.GetByID(info.CensusMetagameEventType);
+
+            PS2AlertResult result = new();
+            result.Victor = alert.VictorFactionID;
+
+            if (result.Victor == null) {
+                ZoneState? zoneState = ZoneStateStore.Get().GetZone(worldID, info.Zone);
+                if (zoneState == null) {
+                    _Logger.LogWarning($"missing zone state for PS2Alert API [worldID={worldID}] [zoneID={info.Zone}]");
+                } else {
+                    result.VS = (int) Math.Round(zoneState.TerritoryControl.VS / Math.Max(1d, zoneState.TerritoryControl.Total) * 100d);
+                    result.NC = (int) Math.Round(zoneState.TerritoryControl.NC / Math.Max(1d, zoneState.TerritoryControl.Total) * 100d);
+                    result.TR = (int) Math.Round(zoneState.TerritoryControl.TR / Math.Max(1d, zoneState.TerritoryControl.Total) * 100d);
+
+                    int playerCount = CharacterStore.Get().GetByFilter(iter => {
+                        return iter.Online == true && iter.WorldID == worldID && iter.ZoneID == info.Zone;
+                    }).Count;
+                    info.PlayerCount = playerCount;
+
+                    int bracket = playerCount / 3 / 48;
+                    info.Bracket = bracket + 1; // round up
+                }
+            } else {
+                result.VS = alert.CountVS ?? 0;
+                result.NC = alert.CountNC ?? 0;
+                result.TR = alert.CountTR ?? 0;
+            }
+
+            info.Result = result;
+
+            return ApiOk(info);
+        }
+
+        /// <summary>
+        ///     create a custom alert
+        /// </summary>
+        /// <param name="parameters">parameters used to insert the custom alert</param>
+        /// <response code="200">
+        ///     the resonse will contain the <see cref="PsAlert.ID"/> that was just created
+        /// </response>
+        /// <response code="400">
+        ///     one of the following validation errors occured:
+        ///     <ul>
+        ///         <li><see cref="PsAlert.Name"/> from <paramref name="parameters"/> was null or empty</li>
+        ///         <li><see cref="PsAlert.WorldID"/> from <paramref name="parameters"/> is not a valid world ID</li>
+        ///         <li><see cref="PsAlert.ZoneID"/> from <paramref name="parameters"/> is not a valid zone ID</li>
+        ///     </ul>
+        /// </response>
         [HttpPost]
         [PermissionNeeded(HonuPermission.ALERT_CREATE)]
         [Authorize]
@@ -343,6 +447,7 @@ namespace watchtower.Controllers.Api {
 
             return ApiOk(ID);
         }
+
 
     }
 }
