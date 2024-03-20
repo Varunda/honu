@@ -394,6 +394,7 @@ namespace watchtower.Controllers.Api {
                     }).Count;
                     info.PlayerCount = playerCount;
 
+                    // i can't actually find where ps2alerts calculate this, so hopefully this is right!!
                     int bracket = playerCount / 3 / 48;
                     info.Bracket = bracket + 1; // round up
                 }

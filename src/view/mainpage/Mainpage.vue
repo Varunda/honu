@@ -142,11 +142,15 @@
 
         <hr class="border" />
 
-        <div>
+        <div class="mb-4">
             <h4>Contact</h4>
 
             <div>
                 Discord: varunda
+            </div>
+
+            <div>
+                GitHub: <a href="https://github.com/varunda/honu">https://github.com/varunda/honu</a>
             </div>
         </div>
     </div>
