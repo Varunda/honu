@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,6 +42,7 @@ namespace watchtower.Code.DiscordInteractions {
         public PsbReservationRepository _ReservationRepository { set; private get; } = default!;
         public PsbParsedReservationDbStore _ReservationMetadataDb { set; private get; } = default!;
         public PsbOvOSheetRepository _SheetRepository { set; private get; } = default!;
+        public PsbOvOAccountUsageRepository _UsageRepository { set; private get; } = default!;
 
         public IOptions<PsbDriveSettings> _PsbDriveSettings { set; private get; } = default!;
         public IOptions<DiscordOptions> _DiscordOptions { set; private get; } = default!;
@@ -518,6 +520,11 @@ namespace watchtower.Code.DiscordInteractions {
             await ctx.EditResponseText("done");
         }
 
+        /// <summary>
+        ///     check the usage of accounts within a reservation
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
         [SlashCommand("check-accounts", "Check account usage")]
         [RequiredRoleSlash("ovo-staff")]
         public async Task CheckAccounts(InteractionContext ctx) {
@@ -553,49 +560,18 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             PsbOvOAccountSheet? sheet = await _SheetRepository.GetByID(metadata.AccountSheetId);
-
             if (sheet == null) {
                 await ctx.Interaction.EditResponseErrorEmbed($"cannot check accounts for {msg}: sheet was null");
                 return;
             }
 
-            // get all the character names that could have sessions (TR, NS and VS)
-            List<string> characters = sheet.Accounts.Select(iter => $"PSBx{iter.AccountNumber.PadLeft(4, '0')}")
-                .Aggregate(new List<string>(), (acc, iter) => {
-                    acc.Add($"{iter}VS");
-                    acc.Add($"{iter}NC");
-                    acc.Add($"{iter}TR");
-                    return acc;
-                });
-            _Logger.LogInformation($"checking usage for accounts: [{string.Join(", ", characters)}]");
-
-            // find all the characters that have one of the names we care about
-            List<PsCharacter> chars = new(characters.Count);
-            foreach (string charName in characters) {
-                // fast, as we know the character exists in the db
-                PsCharacter? c = await _CharacterRepository.GetFirstByName(charName, fast: true);
-                if (c != null) {
-                    chars.Add(c);
-                } else {
-                    _Logger.LogError($"missing characterr {charName}!!!");
-                }
+            if (sheet.When > DateTime.UtcNow) {
+                await ctx.Interaction.EditResponseErrorEmbed($"this reservation takes place at "
+                    + $"{sheet.When.GetDiscordFullTimestamp()}/{sheet.When:u}, which has not yet happened");
+                return;
             }
 
-            // *3 cause each account has 3 characters to check
-            _Logger.LogInformation($"loaded {chars.Count}/{sheet.Accounts.Count * 3} characters");
-
-            // for each character ID that we care about, get their sessions around the account booking
-            List<Session> sessions = new();
-            foreach (string charID in chars.Select(iter => iter.ID)) {
-                DateTime rangeStart = sheet.When - TimeSpan.FromHours(4);
-                DateTime rangeEnd = sheet.When + TimeSpan.FromHours(12);
-
-                _Logger.LogDebug($"loading sessions for {charID} between {rangeStart:u} and {rangeEnd:u}");
-
-                sessions.AddRange(await _SessionDb.GetByRangeAndCharacterID(charID, rangeStart, rangeEnd));
-            }
-
-            _Logger.LogInformation($"loaded {sessions.Count} sessions for {chars.Count} characters");
+            List<PsbOvOAccountUsage> usages = await _UsageRepository.CheckUsage(sheet);
 
             bool error = false;
 
@@ -604,19 +580,14 @@ namespace watchtower.Code.DiscordInteractions {
                 + $"**Accounts**: {sheet.Accounts.Count}\n\n";
 
             // check each account and its session's to ensure usage was tracked correctly
-            foreach (PsbOvOAccountSheetUsage account in sheet.Accounts) {
-                string accountPrefix = $"PSBx{account.AccountNumber.PadLeft(4, '0')}";
-                List<string> accountChars = chars.Where(iter => iter.Name.StartsWith(accountPrefix)).Select(iter => iter.ID).ToList();
-
-                List<Session> charSessions = new();
-                charSessions.AddRange(sessions.Where(iter => accountChars.Contains(iter.CharacterID)));
-
+            foreach (PsbOvOAccountUsage account in usages) {
                 string a = "";
+                string accountPrefix = $"PSBx{account.SheetUsage.AccountNumber.PadLeft(4, '0')}";
 
-                if (account.Player == null) {
-                    if (charSessions.Count > 0) {
+                if (account.SheetUsage.Player == null) {
+                    if (account.Sessions.Count > 0) {
                         a = $":red_square: `{accountPrefix}` - used, but no player given\n";
-                        foreach (Session session in charSessions) {
+                        foreach (Session session in account.Sessions) {
                             a += $":black_large_square: `{session.ID}` https://{_Instance.GetHost()}/s/{session.ID}\n";
                         }
                         error = true;
@@ -626,14 +597,14 @@ namespace watchtower.Code.DiscordInteractions {
                 } else {
 
                     // valid names have 3-32 characters and are alphanumeric
-                    bool validName = account.Player.Length >= 3
-                        && account.Player.Length <= 32
-                        && account.Player.All(iter => char.IsLetterOrDigit(iter)) == true;
+                    bool validName = account.SheetUsage.Player.Length >= 3
+                        && account.SheetUsage.Player.Length <= 32
+                        && account.SheetUsage.Player.All(iter => char.IsLetterOrDigit(iter)) == true;
 
-                    if (charSessions.Count > 0 && validName) {
-                        a = $":green_square: `{accountPrefix}` - {account.Player}\n";
-                    } else if (charSessions.Count > 0 && validName == false) {
-                        a = $":yellow_square: `{accountPrefix}` - `{account.Player}` (**invalid name!**)\n";
+                    if (account.Sessions.Count > 0 && validName) {
+                        a = $":green_square: `{accountPrefix}` - {account.SheetUsage.Player}\n";
+                    } else if (account.Sessions.Count > 0 && validName == false) {
+                        a = $":yellow_square: `{accountPrefix}` - `{account.SheetUsage.Player}` (**invalid name!**)\n";
                     } else {
                         a = $":red_square: `{accountPrefix}` - marked as used, but no sessions\n";
                         error = true;
@@ -641,8 +612,6 @@ namespace watchtower.Code.DiscordInteractions {
                 }
 
                 s += a;
-
-                _Logger.LogDebug($"account {accountPrefix} has {charSessions.Count} sesions");
             }
 
             DiscordWebhookBuilder hook = new();
@@ -659,6 +628,73 @@ namespace watchtower.Code.DiscordInteractions {
             }
 
             hook.AddEmbed(builder);
+            await ctx.EditResponseAsync(hook);
+        }
+
+        [SlashCommand("find-usage", "find recent usage of a community using OvO")]
+        [RequiredRoleSlash("ovo-staff")]
+        public async Task CheckAccounts(InteractionContext ctx,
+            [Option("name", "outfit name")] string name,
+            [Option("date-before", "YYYY-MM-DD: only include files from BEFORE this date")] string? dateBefore = null) {
+
+            await ctx.CreateDeferred(ephemeral: true);
+
+            DateTime? date = null;
+            if (dateBefore != null) {
+                if (DateTime.TryParseExact(dateBefore, "yyyy-MM-dd", null, DateTimeStyles.AssumeLocal, out DateTime o) == false) {
+                    await ctx.EditResponseErrorEmbed($"failed to parse `{dateBefore}` using YYYY-MM-DD");
+                    return;
+                }
+                date = o;
+                _Logger.LogDebug($"using dateBefore [input={dateBefore}] [date={date:u}]");
+            }
+
+            List<PsbDriveFile> files = await _SheetRepository.GetOutfitUsage(name);
+
+            if (date != null) {
+                files = files.Where(iter => {
+                    //_Logger.LogTrace($"parsing {iter.Name} to YYYY-MM-DD");
+
+                    string[] parts = iter.Name.Split("["); // "2024-03-01 [t1de]" => turns into an array of [ "2024-03-01", "t1de]" ]
+                    string datePart = parts[0];
+
+                    if (DateTime.TryParseExact(datePart, "yyyy-MM-dd", null, DateTimeStyles.AssumeLocal | DateTimeStyles.AllowWhiteSpaces, out DateTime o) == false) {
+                        _Logger.LogWarning($"failed to parse PSB drive file to YYYY-MM-DD [name={iter.Name}] [datePart={datePart}] [drive fild ID={iter.ID}]");
+                        return true; // even if it's not parseable to a date time, include it just in case
+                    }
+
+                    return o <= date;
+                }).ToList();
+            }
+
+            DiscordEmbedBuilder builder = new();
+            builder.Title = $"search results for '{name}'";
+            builder.Description = "";
+
+            int showCount = 0;
+            foreach (PsbDriveFile file in files.OrderByDescending(iter => iter.Name)) {
+                if (builder.Description.Length > 1500) {
+                    break;
+                }
+
+                builder.Description += $"[{file.Name}](https://docs.google.com/spreadsheets/d/{file.ID})";
+
+                PsbOvOAccountSheet? sheet = await _SheetRepository.GetByID(file.ID);
+                if (sheet == null) {
+                    builder.Description += " - sheet not found!";
+                } else {
+
+                }
+
+                ++showCount;
+            }
+
+            builder.Description += $"showing {showCount} of {files.Count} entries";
+
+            DiscordWebhookBuilder hook = new();
+            hook.AddComponents(LookupButtonCommands.PRINT_EMBED());
+            hook.AddEmbed(builder);
+
             await ctx.EditResponseAsync(hook);
         }
 

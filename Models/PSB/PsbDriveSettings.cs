@@ -28,6 +28,11 @@ namespace watchtower.Models.PSB {
         public string OvORootFolderId { get; set; } = "";
 
         /// <summary>
+        ///     id of the folder that contains all old sheets
+        /// </summary>
+        public string OvOArchiveFolderId { get; set; } = "";
+
+        /// <summary>
         ///     ID of the file that contains the template used for reservations
         /// </summary>
         public string TemplateFileId { get; set; } = "";

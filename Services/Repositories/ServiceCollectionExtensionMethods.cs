@@ -90,6 +90,13 @@ namespace watchtower.Services.Repositories {
 
             services.AddSingleton<RealtimeAlertRepository>();
             services.AddSingleton<HonuAccountPermissionRepository>();
+
+            services.AddSingleton<WrappedSavedCharacterDataFileRepository>();
+            services.AddSingleton<HostedWrappedGenerationProcess>();
+            services.AddSingleton<RealtimeMapStateRepository>();
+            services.AddSingleton<HonuMetadataRepository>();
+            services.AddSingleton<VehicleUsageRepository>();
+
             services.AddSingleton<PsbDriveRepository>();
             services.AddSingleton<PsbContactSheetRepository>();
             services.AddSingleton<PsbCalendarRepository>();
@@ -100,11 +107,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<PsbOvOSheetRepository>();
             services.AddSingleton<GDriveRepository>();
             services.AddSingleton<PsbOvOAccountRepository>();
-            services.AddSingleton<WrappedSavedCharacterDataFileRepository>();
-            services.AddSingleton<HostedWrappedGenerationProcess>();
-            services.AddSingleton<RealtimeMapStateRepository>();
-            services.AddSingleton<HonuMetadataRepository>();
-            services.AddSingleton<VehicleUsageRepository>();
+            services.AddSingleton<PsbOvOAccountUsageRepository>();
         }
 
     }

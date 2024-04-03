@@ -38,6 +38,14 @@
         <div>
             <a href="/psb/practice">Practice accounts</a>
         </div>
+
+        <div>
+            <a href="/psb/ovo">OvO accounts</a>
+        </div>
+
+        <div>
+            <a href="/psb/ovousage">OvO usage</a>
+        </div>
     </div>
 </template>
 

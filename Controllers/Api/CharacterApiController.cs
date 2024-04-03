@@ -691,6 +691,27 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     get a list of all <see cref="PsCharacter"/>s that are currently online,
+        ///     optionally filtering to a specific world
+        /// </summary>
+        /// <param name="worldID">optional, defaults to null if not provided. filters the results to a specific world if non-null</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="PsCharacter"/>s that are currently online
+        /// </response>
+        [HttpGet("character/online")]
+        [SearchBotBlock]
+        public async Task<ApiResponse<List<PsCharacter>>> GetOnlineCharacters(short? worldID = null) {
+            List<TrackedPlayer> players = CharacterStore.Get().GetByFilter((iter) => {
+                return iter.Online == true
+                    && (worldID == null || iter.WorldID == worldID);
+            });
+
+            List<PsCharacter> chars = await _CharacterRepository.GetByIDs(players.Select(iter => iter.ID), CensusEnvironment.PC, fast: true);
+
+            return ApiOk(chars);
+        }
+
+        /// <summary>
         ///     Search for a PC character by it's name (case-insensitive)
         /// </summary>
         /// <remarks>

@@ -57,6 +57,16 @@ namespace watchtower.Code.ExtensionMethods {
             return ctx.EditResponseAsync(new DiscordWebhookBuilder().WithContent(message));
         }
 
+        public static Task EditResponseErrorEmbed(this BaseContext ctx, string message, string? title = null) {
+            return ctx.EditResponseAsync(new DiscordWebhookBuilder().AddEmbed(
+                new DiscordEmbedBuilder()
+                    .WithTitle(title ?? "Error")
+                    .WithDescription(message)
+                    .WithColor(DiscordColor.Red)
+                )
+            );
+        }
+
         /// <summary>
         ///     Create an text response to an interaction and send it
         /// </summary>

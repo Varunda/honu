@@ -11,7 +11,7 @@ using watchtower.Models.PSB;
 using watchtower.Services.Db;
 using watchtower.Services.Repositories.PSB;
 
-namespace watchtower.Controllers.Api {
+namespace watchtower.Controllers.Api.Psb {
 
     [ApiController]
     [Route("/api/psb-notes")]
@@ -29,6 +29,11 @@ namespace watchtower.Controllers.Api {
             _NamedRepository = namedRepo;
         }
 
+        /// <summary>
+        ///     get the list of <see cref="PsbAccountNote"/>s on an account
+        /// </summary>
+        /// <param name="accountID"></param>
+        /// <returns></returns>
         [HttpGet("account/{accountID}")]
         [PermissionNeeded(HonuPermission.PSB_NAMED_GET)]
         [Authorize]

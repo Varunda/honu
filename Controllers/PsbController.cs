@@ -37,5 +37,11 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        [PermissionNeeded(HonuPermission.PSB_OVO_GET)]
+        [Authorize]
+        public IActionResult OvoUsage() {
+            return View();
+        }
+
     }
 }

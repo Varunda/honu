@@ -50,6 +50,9 @@ namespace watchtower.Models.Internal {
         public const string PSB_PRACTICE_MANAGE = "PSB.Practice.Manage";
         public readonly static HonuPermission PsbPracticeManage = new(PSB_PRACTICE_MANAGE, "Manage PSB practice accounts");
 
+        public const string PSB_OVO_GET = "PSB.Ovo.Get";
+        public readonly static HonuPermission PsbOvoGet = new(PSB_OVO_GET, "Get PSB OvO accounts");
+
         public const string ALERT_CREATE = "Alert.Create";
         public readonly static HonuPermission AlertCreate = new(ALERT_CREATE, "Create custom alerts");
 

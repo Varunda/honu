@@ -1,4 +1,6 @@
 ﻿using Google.Apis.Drive.v3.Data;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace watchtower.Models.PSB {
 
@@ -20,6 +22,8 @@ namespace watchtower.Models.PSB {
 
         public string MimeType { get; set; } = "";
 
+        public List<string> Parents { get; set; } = new();
+
         /// <summary>
         ///     convert a GDrive file into a PSB wrapped one
         /// </summary>
@@ -29,7 +33,8 @@ namespace watchtower.Models.PSB {
                 Name = file.Name,
                 Kind = file.Kind,
                 DriveId = file.DriveId,
-                MimeType = file.MimeType
+                MimeType = file.MimeType,
+                Parents = (file.Parents ?? new List<string>()).ToList()
             };
         }
 

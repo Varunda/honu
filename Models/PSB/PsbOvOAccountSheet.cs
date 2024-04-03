@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using watchtower.Models.Db;
 
 namespace watchtower.Models.PSB {
 
@@ -26,6 +27,18 @@ namespace watchtower.Models.PSB {
         public string Username { get; set; } = "";
 
         public string? Player { get; set; } = null;
+
+    }
+
+    public class PsbOvOAccountUsage {
+
+        public PsbOvOAccountSheetUsage SheetUsage { get; set; }
+
+        public List<Session> Sessions { get; set; } = new();
+
+        public PsbOvOAccountUsage(PsbOvOAccountSheetUsage sheetUsage) {
+            SheetUsage = sheetUsage;
+        }
 
     }
 

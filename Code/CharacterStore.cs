@@ -36,6 +36,15 @@ namespace watchtower.Models {
             }
         }
 
+        /// <summary>
+        ///     get a list of <see cref="TrackedPlayer"/>s from this <see cref="CharacterStore"/>
+        ///     that match the filter from <paramref name="func"/>. this will lock <see cref="CharacterStore.Players"/>,
+        ///     so a lock around it is not useful
+        /// </summary>
+        /// <param name="func">function used to perform the filtering</param>
+        /// <returns>
+        ///     a list of <see cref="TrackedPlayer"/>s that fulfill the filter from <paramref name="func"/>
+        /// </returns>
         public List<TrackedPlayer> GetByFilter(Func<TrackedPlayer, bool> func) {
             using Activity? trace = HonuActivitySource.Root.StartActivity("CharacterStore getByFilter");
             List<TrackedPlayer> players = new List<TrackedPlayer>();

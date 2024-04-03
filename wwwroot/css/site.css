@@ -181,3 +181,11 @@
     animation: slide-right-out 1s forwards;
     z-index: 10;
 }
+
+.overflow-y-auto {
+    overflow-y: auto !important;
+}
+
+.list-group-sm > .list-group-item {
+    padding: 0.25rem 0.5rem;
+}

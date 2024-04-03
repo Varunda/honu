@@ -41,6 +41,27 @@ namespace watchtower.Services.Db {
             return meta;
         }
 
+        /// <summary>
+        ///     get a <see cref="PsbParsedReservationMetadata"/> by it's <see cref="PsbParsedReservationMetadata.AccountSheetId"/>
+        /// </summary>
+        /// <param name="fileID">ID of the google drive sheet file ID (thing). CASE SENSITIVE</param>
+        /// <returns></returns>
+        public async Task<PsbParsedReservationMetadata?> GetByFileSheetID(string fileID) {
+            using NpgsqlConnection conn = _DbHelper.Connection();
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM psb_parsed_reservations
+                    WHERE account_sheet_id = @FileID;
+            ");
+
+            cmd.AddParameter("FileID", fileID);
+
+            PsbParsedReservationMetadata? meta = await _Reader.ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return meta;
+        }
+
         public async Task Upsert(PsbParsedReservationMetadata meta) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

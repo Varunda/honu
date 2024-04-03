@@ -3,6 +3,8 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -20,12 +22,18 @@ namespace watchtower.Services.Repositories.PSB {
         private readonly ILogger<PsbOvOSheetRepository> _Logger;
         private readonly IOptions<PsbDriveSettings> _Options;
 
+        private readonly IMemoryCache _Cache;
+
+        private const string CACHE_KEY = "Psb.Sheet.Get.{0}"; // {0} => file ID
+
+        private const string CACHE_KEY_USAGE = "Psb.Sheet.Usage.{0}"; // {0} => name
+
         private readonly GDriveRepository _GRepository;
         private readonly PsbOvOAccountRepository _OvOAccountRepository;
 
         public PsbOvOSheetRepository(ILogger<PsbOvOSheetRepository> logger,
             IOptions<PsbDriveSettings> options, GDriveRepository gRepository,
-            PsbOvOAccountRepository ovOAccountRepository) {
+            PsbOvOAccountRepository ovOAccountRepository, IMemoryCache cache) {
 
             _Logger = logger;
             _Options = options;
@@ -34,7 +42,11 @@ namespace watchtower.Services.Repositories.PSB {
             if (_Options.Value.TemplateFileId.Trim().Length == 0) {
                 throw new ArgumentException($"No {nameof(PsbDriveSettings.TemplateFileId)} provided. Set it using dotnet user-secrets set PsbDrive:TemplateFileId $FILE_ID");
             }
+            if (_Options.Value.OvOArchiveFolderId.Trim().Length == 0) {
+                throw new ArgumentException($"No {nameof(PsbDriveSettings.OvOArchiveFolderId)} provided. Set it using dotnet user-secrets set PsbDrive:OvOArchiveFolderId $FILE_ID");
+            }
             _OvOAccountRepository = ovOAccountRepository;
+            _Cache = cache;
         }
 
         /// <summary>
@@ -201,14 +213,33 @@ namespace watchtower.Services.Repositories.PSB {
             return gRes.Id;
         }
 
+        /// <summary>
+        ///     get the usage of an OvO sheet from a file ID.
+        ///     for example if the URL is: https://docs.google.com/spreadsheets/d/1433Rk3ucrTCO8p6dItn73DLOhzz9ySU59ghapgkvoAQ/ (not a real url)
+        ///     then "1433Rk3ucrTCO8p6dItn73DLOhzz9ySU59ghapgkvoAQ" is the file ID
+        /// </summary>
+        /// <param name="fileID">ID of the google drive file</param>
+        /// <returns>
+        ///     a <see cref="PsbOvOAccountSheet"/> that contains the usage of the sheet,
+        ///     or <c>null</c> if no sheet exists
+        /// </returns>
+        /// <exception cref="Exception">if the sheet opened does not match the expected format</exception>
+        /// <exception cref="FormatException">if the date time from the sheet could not be parased</exception>
         public async Task<PsbOvOAccountSheet?> GetByID(string fileID) {
+
+            string cacheKey = string.Format(CACHE_KEY, fileID);
+            if (_Cache.TryGetValue(cacheKey, out PsbOvOAccountSheet? sheet) == true) {
+                return sheet;
+            }
+
+            _Logger.LogInformation($"loading {nameof(PsbOvOAccountSheet)} from GDrive API [fileID={fileID}]");
 
             // https://developers.google.com/sheets/api/guides/concepts#cell
             SpreadsheetsResource.ValuesResource.GetRequest sheetR = _GRepository.GetSheetService().Spreadsheets.Values.Get(fileID, "Sheet1!A1:D");
             Google.Apis.Sheets.v4.Data.ValueRange res = await sheetR.ExecuteAsync();
             _Logger.LogDebug($"Loaded {res.Values.Count} rows from {fileID}");
 
-            PsbOvOAccountSheet sheet = new();
+            sheet = new();
             sheet.FileID = fileID;
 
             IList<IList<object>> values = res.Values;
@@ -221,8 +252,19 @@ namespace watchtower.Services.Repositories.PSB {
             DateTime day = DateTime.UtcNow;
             DateTime time;
 
+            // an example sheet looks like this (where | marks new columns)
+            //
+            // "Rep emails" | $EMAILS
+            // "Request Date" | YYYY-MM-DD
+            // "Requested Time" | hh:mm | "Sheet gets released 4 hours in advance"
+            // "Shared Status" | string
+            // "Type" | "Basic Jaeger Accounts"
+            // "Number" | "Account" | "Password" | "Player"
+            // xxxx | string | string | string?
+            // ... continues
+
             foreach (IList<object> row in values) {
-                if (rowIndex == 0) {
+                if (rowIndex == 0) { // "Rep emails"
                     if (row.Count < 2) {
                         throw new Exception($"expected 2 columns in row 0 (emails), had {row.Count} instead");
                     }
@@ -231,7 +273,7 @@ namespace watchtower.Services.Repositories.PSB {
                     string value = row.ElementAt(1).ToString()!;
 
                     sheet.Emails = new List<string>(value.Split(","));
-                } else if (rowIndex == 1) {
+                } else if (rowIndex == 1) { // "Request date"
                     if (row.Count < 2) {
                         throw new Exception($"expected 2 columns in row 1 (day), had {row.Count} instead");
                     }
@@ -241,7 +283,7 @@ namespace watchtower.Services.Repositories.PSB {
                         throw new FormatException($"failed to parse '{value}' to a valid DateTime");
                     }
                     day = DateTime.SpecifyKind(day, DateTimeKind.Utc);
-                } else if (rowIndex == 2) {
+                } else if (rowIndex == 2) { // "Requested Time"
                     if (row.Count < 2) {
                         throw new Exception($"expected 2 columns in row 2 (time), had {row.Count} instead");
                     }
@@ -256,22 +298,29 @@ namespace watchtower.Services.Repositories.PSB {
                     sheet.When = day + time.TimeOfDay;
                     sheet.When = DateTime.SpecifyKind(sheet.When, DateTimeKind.Utc);
 
-                } else if (rowIndex == 3) {
+                } else if (rowIndex == 3) { // "Shared Status"
                     if (row.Count < 2) {
                         throw new Exception($"expected 2 columns in row 3 (status), had {row.Count} instead");
                     }
 
                     sheet.State = row.ElementAt(1).ToString()!;
-                } else if (rowIndex == 4) {
-                    if (row.Count < 2) {
+                } else if (rowIndex == 4) { // "Type"
+                    if (row.Count == 1) {
+                        sheet.Type = row.ElementAt(0).ToString()!;
+                    } else if (row.Count < 2) {
                         throw new Exception($"expected 2 columns in row 4 (type), had {row.Count} instead");
                     }
 
-                    sheet.Type = row.ElementAt(1).ToString()!;
-                } else if (rowIndex == 5) {
+                    // legacy OVO sheet doesn't contain the Type row, and instead goes to just the accounts
+                    if (row.ElementAt(0).ToString()! == "Number") {
+                        rowIndex = 5;
+                        sheet.Type = "Basic Jaeger Accounts";
+                    } else {
+                        sheet.Type = row.ElementAt(1).ToString()!;
+                    }
+                } else if (rowIndex == 5) { // "Number" | "Account" | "Password" | "Player"
                     // header
-
-                } else if (rowIndex >= 6) {
+                } else if (rowIndex >= 6) { // who used what accounts - number | string | password | player
                     if (row.Count < 3) {
                         throw new Exception($"expected >=3 columns in row {rowIndex} (usage), had {row.Count} instead");
                     }
@@ -290,7 +339,96 @@ namespace watchtower.Services.Repositories.PSB {
                 rowIndex += 1;
             }
 
+            _Cache.Set(cacheKey, sheet, new MemoryCacheEntryOptions() {
+                SlidingExpiration = TimeSpan.FromMinutes(15)
+            });
+
             return sheet;
+        }
+
+        /// <summary>
+        ///     search for all ovo sheets an outfit has created
+        /// </summary>
+        /// <param name="outfit">name of the outfit</param>
+        /// <returns>
+        ///     a list of <see cref="PsbDriveFile"/>s that contain 
+        ///     <paramref name="outfit"/> in the <see cref="PsbDriveFile.Name"/>
+        /// </returns>
+        public async Task<List<PsbDriveFile>> GetOutfitUsage(string outfit) {
+            string cacheKey = string.Format(CACHE_KEY_USAGE, outfit);
+            if (_Cache.TryGetValue(cacheKey, out List<PsbDriveFile> files) == true) {
+                return files;
+            }
+
+            List<PsbDriveFile> folders = await _GRepository.TraverseDirectory(_Options.Value.OvOArchiveFolderId);
+
+            Dictionary<string, PsbDriveFile> map = folders.ToDictionary(iter => iter.ID);
+
+            foreach (PsbDriveFile file in folders) {
+                int failsafe = 0;
+                List<PsbDriveFile> traverse = new();
+
+                PsbDriveFile? parent = file;
+                while (parent != null) {
+                    traverse.Add(parent);
+                    if (parent.Parents.Count == 0) {
+                        _Logger.LogWarning($"file {parent.ID} has no parents");
+                        parent = null;
+                        break;
+                    }
+
+                    parent = map.GetValueOrDefault(parent.Parents[0]);
+
+                    if (++failsafe > 100) {
+                        _Logger.LogWarning($"failsafe tripped");
+                        break;
+                    }
+                }
+
+                traverse.Reverse();
+                string path = string.Join("/", traverse.Select(iter => iter.Name));
+                _Logger.LogDebug($"{file.Name} => {path}/{file.Name}");
+            }
+
+            string query = $"{string.Join(" or ", folders.Select(iter => $"('{iter.ID}' in parents)"))} or ('{_Options.Value.OvORootFolderId}' in parents) ";
+
+            FilesResource.ListRequest list = _GRepository.GetDriveService().Files.List();
+            list.SupportsAllDrives = true;
+            list.Q = $"({query}) and trashed=false and name contains '{outfit}'";
+            list.OrderBy = "name";
+            list.PageSize = 20;
+
+            _Logger.LogInformation($"performing search for outfit usage [outfit={outfit}] [Q={list.Q}]");
+
+            string? nextPage = null;
+            int backupLimit = 1000;
+
+            files = new List<PsbDriveFile>();
+
+            do {
+                list.PageToken = nextPage ?? "";
+
+                Google.Apis.Drive.v3.Data.FileList res = await list.ExecuteAsync();
+
+                foreach (Google.Apis.Drive.v3.Data.File file in res.Files) {
+                    //_Logger.LogTrace($"iteration file [file={file.Name}] {file.MimeType} {string.Join(", ", file.Parents ?? new List<string>())}");
+
+                    if (file.MimeType == "application/vnd.google-apps.folder") {
+                        continue;
+                    }
+
+                    PsbDriveFile psbFile = PsbDriveFile.Convert(file);
+                    files.Add(psbFile);
+                }
+
+                nextPage = res.NextPageToken;
+            } while (nextPage != null && nextPage.Length > 0 && --backupLimit > 0);
+
+            _Cache.Set(cacheKey, files, new MemoryCacheEntryOptions() {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
+
+            return files;
         }
 
     }
