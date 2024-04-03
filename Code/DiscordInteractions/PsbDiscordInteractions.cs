@@ -683,8 +683,10 @@ namespace watchtower.Code.DiscordInteractions {
                 if (sheet == null) {
                     builder.Description += " - sheet not found!";
                 } else {
-
+                    builder.Description += $" - {sheet.Accounts.Count} accounts";
                 }
+
+                builder.Description += "\n";
 
                 ++showCount;
             }

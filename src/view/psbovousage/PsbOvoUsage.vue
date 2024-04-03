@@ -189,7 +189,9 @@
                                             <busy class="honu-busy honu-busy-sm"></busy>
                                         </span>
 
-                                        <a v-for="session in account.sessions" :href="'/session/' + session.id">{{session.id}}</a>
+                                        <a v-for="session in account.sessions" :href="'/s/' + session.id">
+                                            {{session.id}}
+                                        </a>
 
                                         <span v-if="account.sessions.length == 0" class="text-muted">
                                             --
