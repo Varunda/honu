@@ -1,7 +1,7 @@
 ﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 import { PsbDriveFile, PsbDriveFileApi } from "./PsbDriveFileApi";
-import { Session } from "../SessionApi";
+import { Session, SessionApi } from "../SessionApi";
 
 export class PsbOvOSheet {
     public fileID: string = "";
@@ -50,7 +50,7 @@ export class PsbOvOSheetApi extends ApiWrapper<PsbOvOSheet> {
     public static parseUsage(elem: any): PsbSheetAccountUsage {
         return {
             sheetUsage: PsbOvOSheetApi.parseAccount(elem.sheetUsage),
-            sessions: []
+            sessions: elem.sessions.map((iter: any) => SessionApi.parse(iter)
         }
     }
 
