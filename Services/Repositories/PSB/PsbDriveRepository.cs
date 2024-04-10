@@ -135,7 +135,7 @@ namespace watchtower.Services.Repositories.PSB {
         ///     A list of <see cref="PsbDriveFile"/>s, or null if the psb drive repository failed to initalize
         /// </returns>
         public async Task<List<PsbDriveFile>?> GetPracticeSheets() {
-            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_SHEETS, out List<PsbDriveFile> files) == true) {
+            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_SHEETS, out List<PsbDriveFile>? files) == true) {
                 return files;
             }
 
@@ -190,7 +190,7 @@ namespace watchtower.Services.Repositories.PSB {
         public async Task<List<PsbDrivePermission>?> GetPermissions(string driveFileID) {
             string cacheKey = string.Format(CACHE_KEY_FILE_PERMISSIONS, driveFileID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<PsbDrivePermission> perms) == true) { 
+            if (_Cache.TryGetValue(cacheKey, out List<PsbDrivePermission>? perms) == true) { 
                 return perms;
             }
 

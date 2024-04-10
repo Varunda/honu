@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -176,7 +177,7 @@ namespace watchtower.Services.Repositories {
         ///     Get the <see cref="PsFacility"/>s
         /// </summary>
         public async Task<List<PsFacility>> GetFacilities() {
-            if (_Cache.TryGetValue(KEY_FACILITIES, out List<PsFacility> facs) == false) {
+            if (_Cache.TryGetValue(KEY_FACILITIES, out List<PsFacility>? facs) == false || facs == null) {
                 facs = await _FacilityDb.GetAll();
 
                 _Cache.Set(KEY_FACILITIES, facs, new MemoryCacheEntryOptions() {
@@ -191,7 +192,7 @@ namespace watchtower.Services.Repositories {
         ///     Get the <see cref="PsFacilityLink"/>s
         /// </summary>
         public async Task<List<PsFacilityLink>> GetFacilityLinks() {
-            if (_Cache.TryGetValue(KEY_LINKS, out List<PsFacilityLink> links) == false) {
+            if (_Cache.TryGetValue(KEY_LINKS, out List<PsFacilityLink>? links) == false || links == null) {
                 links = await _MapDb.GetFacilityLinks();
 
                 if (links.Count == 0) {
@@ -214,7 +215,7 @@ namespace watchtower.Services.Repositories {
         ///     Get all the <see cref="PsMapHex"/>es
         /// </summary>
         public async Task<List<PsMapHex>> GetHexes() {
-            if (_Cache.TryGetValue(KEY_HEXES, out List<PsMapHex> hexes) == false) {
+            if (_Cache.TryGetValue(KEY_HEXES, out List<PsMapHex>? hexes) == false || hexes == null) {
                 hexes = await _MapDb.GetHexes();
 
                 if (hexes.Count == 0) {

@@ -39,7 +39,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<CharacterDirective>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<CharacterDirective> dirs) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<CharacterDirective>? dirs) == false || dirs == null) {
                 CharacterMetadata? metadata = await _Metadata.GetByCharacterID(charID);
                 PsCharacter? dbChar = await _CharacterDb.GetByID(charID);
 
@@ -52,7 +52,7 @@ namespace watchtower.Services.Repositories {
                     getCensus = dirs.Count == 0; // If there is no character directives, might not have gotten yet
                 }
 
-                if (getCensus == true) {
+                if (getCensus == true || dirs == null) {
                     dirs = await _Census.GetByCharacterID(charID);
 
                     foreach (CharacterDirective dir in dirs) {

@@ -356,7 +356,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </returns>
         public async Task<List<PsbDriveFile>> GetOutfitUsage(string outfit) {
             string cacheKey = string.Format(CACHE_KEY_USAGE, outfit);
-            if (_Cache.TryGetValue(cacheKey, out List<PsbDriveFile> files) == true) {
+            if (_Cache.TryGetValue(cacheKey, out List<PsbDriveFile>? files) == true && files != null) {
                 return files;
             }
 

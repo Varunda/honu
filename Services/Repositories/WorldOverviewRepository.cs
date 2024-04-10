@@ -28,7 +28,7 @@ namespace watchtower.Services.Repositories {
         }
 
         public List<WorldOverview> Build() {
-            if (_Cache.TryGetValue(CACHE_KEY, out List<WorldOverview> worlds) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY, out List<WorldOverview>? worlds) == false || worlds == null) {
                 WorldOverview connery = new() { WorldID = World.Connery, WorldName = "Connery" };
                 WorldOverview cobalt = new() { WorldID = World.Cobalt, WorldName = "Cobalt" };
                 WorldOverview jaeger = new() { WorldID = World.Jaeger, WorldName = "Jaeger" };

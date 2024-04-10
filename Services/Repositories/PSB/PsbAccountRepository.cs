@@ -43,7 +43,7 @@ namespace watchtower.Services.Repositories.PSB {
         ///     Get all <see cref="PsbAccount"/>s
         /// </summary>
         public async Task<List<PsbAccount>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY, out List<PsbAccount> accounts) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY, out List<PsbAccount>? accounts) == false || accounts == null) {
                 accounts = await _Db.GetAll();
 
                 _Cache.Set(CACHE_KEY, accounts, new MemoryCacheEntryOptions() {

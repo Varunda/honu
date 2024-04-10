@@ -38,7 +38,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<CharacterAchievement>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<CharacterAchievement> achs) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<CharacterAchievement>? achs) == false || achs == null) {
                 achs = await _Db.GetByCharacterID(charID);
 
                 // Get the friends from Census if they have no friends, they have no metadata, or the last

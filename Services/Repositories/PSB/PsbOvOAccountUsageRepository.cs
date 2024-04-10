@@ -42,7 +42,7 @@ namespace watchtower.Services.Repositories.PSB {
         public async Task<List<PsbOvOAccountUsage>> CheckUsage(PsbOvOAccountSheet sheet) {
             string cacheKey = string.Format(CACHE_KEY, sheet.FileID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<PsbOvOAccountUsage> usages) == true) {
+            if (_Cache.TryGetValue(cacheKey, out List<PsbOvOAccountUsage>? usages) == true && usages != null) {
                 return usages;
             }
 

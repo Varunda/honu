@@ -137,7 +137,7 @@ namespace watchtower.Services.Hosted {
                     List<Session> filtered = sessions.Where(iter => {
                         if (chars.TryGetValue(iter.CharacterID, out PsCharacter? c) == false) {
                             if (_MissingCharacters.Contains(iter.CharacterID) == false) {
-                                _Logger.LogWarning($"Missing {iter.CharacterID}");
+                                //_Logger.LogWarning($"Missing {iter.CharacterID}");
                                 _MissingCharacters.Add(iter.CharacterID);
                             }
                             return false;

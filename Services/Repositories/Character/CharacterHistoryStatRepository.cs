@@ -41,7 +41,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<PsCharacterHistoryStat>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<PsCharacterHistoryStat> stats) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<PsCharacterHistoryStat>? stats) == false || stats == null) {
                 stats = await _Db.GetByCharacterID(charID);
 
                 bool getFromCensus = stats.Count == 0;

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- <TargetFramework>netcoreapp3.1</TargetFramework> -->
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <UserSecretsId>4ce60cbd-a8c2-4907-bfb3-0c77328f3e26</UserSecretsId>

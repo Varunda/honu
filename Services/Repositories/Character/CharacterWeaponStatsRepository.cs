@@ -41,7 +41,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<WeaponStatEntry>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<WeaponStatEntry> entries) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<WeaponStatEntry>? entries) == false || entries == null) {
                 entries = await _Db.GetByCharacterID(charID);
 
                 if (entries.Count == 0) {

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace watchtower.Services.Repositories {
         ///     A list of all <see cref="PsFacility"/>s
         /// </returns>
         public async Task<List<PsFacility>> GetAll() {
-            if (_Cache.TryGetValue("Facilities.All", out List<PsFacility> facs) == false) {
+            if (_Cache.TryGetValue("Facilities.All", out List<PsFacility>? facs) == false || facs == null) {
                 facs = await _Db.GetAll();
 
                 // if the DB call fails for whatever, or it has yet to be populated, don't cache it

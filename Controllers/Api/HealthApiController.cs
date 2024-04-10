@@ -81,7 +81,7 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet]
         public async Task<ApiResponse<HonuHealth>> GetRealtimeHealth() {
-            if (_Cache.TryGetValue("Honu.Health", out HonuHealth health) == false) {
+            if (_Cache.TryGetValue("Honu.Health", out HonuHealth? health) == false || health == null) {
                 health = new HonuHealth();
                 health.Timestamp = DateTime.UtcNow;
                 health.Death = _RealtimeHealthRepository.GetDeathHealth().OrderBy(iter => iter.WorldID).ToList();

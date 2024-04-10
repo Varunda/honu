@@ -201,7 +201,7 @@ namespace watchtower.Services.Census {
                 ++counts[region.FactionID];
             }
 
-            _Logger.LogInformation($"{worldID}:{zoneID} [Total={total}] => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
+            _Logger.LogInformation($"getting zone map owner [worldID={worldID}] [zoneID={zoneID}] [Total={total}] => {string.Join(", ", counts.Select(kvp => kvp.Key + ": " + kvp.Value))}");
 
             if (total > 10 && counts.Count > 0) {
                 KeyValuePair<short, int> majority = counts.ToList().OrderByDescending(iter => iter.Value).First();

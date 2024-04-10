@@ -484,12 +484,12 @@ namespace watchtower.Services.Repositories.PSB {
         /// </summary>
         /// <param name="res">Reservation to check</param>
         /// <returns>A list of errors. A list with a length of 0 means no errors</returns>
-        private async Task<List<string>> CheckReps(PsbReservation res) {
+        private Task<List<string>> CheckReps(PsbReservation res) {
             List<string> errors = new();
 
             if (res.Contacts.Count == 0) {
                 errors.Add($"given 0 contacts");
-                return errors;
+                return Task.FromResult(errors);
             }
 
             List<string> groups = new(res.Outfits);
@@ -528,7 +528,7 @@ namespace watchtower.Services.Repositories.PSB {
                 }
             }
 
-            return errors;
+            return Task.FromResult(errors);
         }
 
         /// <summary>

@@ -43,7 +43,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<HonuAccountPermission>> GetByAccountID(long accountID) {
             string cacheKey = string.Format(CACHE_KEY, accountID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<HonuAccountPermission> perms) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<HonuAccountPermission>? perms) == false || perms == null) {
                 perms = await _PermissionDb.GetByAccountID(accountID);
 
                 _Cache.Set(cacheKey, perms, new MemoryCacheEntryOptions() {

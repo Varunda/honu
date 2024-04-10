@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using watchtower.Code.Converters;
 
@@ -84,6 +85,7 @@ namespace watchtower.Models {
 
         static ApiResponseExecutor() {
             _JsonOptions = new JsonSerializerOptions();
+            _JsonOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
 
             _JsonOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             _JsonOptions.Converters.Add(new DateTimeJsonConverter());

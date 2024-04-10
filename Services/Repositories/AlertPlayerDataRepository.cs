@@ -370,7 +370,7 @@ namespace watchtower.Services.Repositories {
 
             string cacheKey = string.Format(CACHE_KEY_DAILY_CHARACTER, charID, $"{start:u}", $"{end:u}");
 
-            if (_Cache.TryGetValue(cacheKey, out List<AlertPlayerDataEntry> data) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<AlertPlayerDataEntry>? data) == false || data == null) {
                 data = await _ParticipantDataDb.GetDailyByCharacterIDAndTimestamp(charID, start, end);
 
                 _Cache.Set(cacheKey, data, new MemoryCacheEntryOptions() {

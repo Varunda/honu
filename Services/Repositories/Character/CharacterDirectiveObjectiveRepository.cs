@@ -39,7 +39,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<CharacterDirectiveObjective>> GetByCharacterID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<CharacterDirectiveObjective> dirs) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<CharacterDirectiveObjective>? dirs) == false || dirs == null) {
                 CharacterMetadata? metadata = await _Metadata.GetByCharacterID(charID);
                 PsCharacter? dbChar = await _CharacterDb.GetByID(charID);
 
@@ -58,6 +58,11 @@ namespace watchtower.Services.Repositories {
                     foreach (CharacterDirectiveObjective dir in dirs) {
                         await _Db.Upsert(charID, dir);
                     }
+                }
+
+                if (dirs == null) {
+                    _Logger.LogError($"expected dirs to be non-null at this point! [charID={charID}");
+                    dirs = new List<CharacterDirectiveObjective>();
                 }
 
                 _Cache.Set(cacheKey, dirs, new MemoryCacheEntryOptions() {

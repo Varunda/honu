@@ -19,7 +19,7 @@ namespace watchtower.Services.Repositories {
             : base(loggerFactory, census, db, cache) { }
 
         public async Task<PsObjective?> GetByGroupID(int groupID) {
-            if (_Cache.TryGetValue(CACHE_KEY_GROUP_MAP, out Dictionary<int, PsObjective> map) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY_GROUP_MAP, out Dictionary<int, PsObjective>? map) == false || map == null) {
                 List<PsObjective> all = await GetAll();
                 map = new Dictionary<int, PsObjective>(all.Count);
 

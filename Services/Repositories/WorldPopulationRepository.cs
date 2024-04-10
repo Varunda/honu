@@ -35,7 +35,7 @@ namespace watchtower.Services.Repositories {
         public WorldPopulation GetByWorldID(short worldID) {
             string cacheKey = string.Format(CACHE_KEY, worldID);
 
-            if (_Cache.TryGetValue(cacheKey, out WorldPopulation pop) == false) {
+            if (_Cache.TryGetValue(cacheKey, out WorldPopulation? pop) == false || pop == null) {
                 Stopwatch timer = Stopwatch.StartNew();
                 pop = new WorldPopulation();
                 pop.Timestamp = DateTime.UtcNow;
@@ -83,7 +83,7 @@ namespace watchtower.Services.Repositories {
         public List<ZonePopulation> GetZonesByWorldID(short worldID) {
             string cacheKey = string.Format(CACHE_KEY_ZONES, worldID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<ZonePopulation> pops) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<ZonePopulation>? pops) == false || pops == null) {
                 Stopwatch timer = Stopwatch.StartNew();
                 pops = new List<ZonePopulation>();
 

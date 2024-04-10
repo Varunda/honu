@@ -46,7 +46,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="fast">Will only the DB be used, and no queries to Census be used?</param>
         public async Task<List<CharacterFriend>> GetByCharacterID(string charID, bool fast = false) {
             string cacheKey = string.Format(CACHE_KEY, charID);
-            if (_Cache.TryGetValue(cacheKey, out List<CharacterFriend> friends) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<CharacterFriend>? friends) == false || friends == null) {
                 friends = await _Db.GetByCharacterID(charID);
 
                 // Get the friends from Census if they have no friends, they have no metadata, or the last

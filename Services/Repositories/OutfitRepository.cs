@@ -358,7 +358,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<OutfitMember>> GetMembers(string outfitID) {
             string cacheKey = string.Format(CACHE_KEY_MEMBERS, outfitID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<OutfitMember> members) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<OutfitMember>? members) == false || members == null) {
                 members = await _Census.GetMembers(outfitID);
 
                 _Cache.Set(cacheKey, members, new MemoryCacheEntryOptions() {

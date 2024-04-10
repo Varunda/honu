@@ -41,6 +41,7 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="worldID">ID of the world the death event occured in</param>
         /// <param name="timestamp">Timestamp of when the death event occured</param>
+        /// <param name="data">json token, used for out of order detection</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public bool SetDeath(short worldID, DateTime timestamp, JToken? data) {
             return SetMap(ref _Deaths, worldID, timestamp, "death", data);
@@ -51,6 +52,7 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="worldID">ID of the world the exp event occured in</param>
         /// <param name="timestamp">Timestamp of when the exp event occured</param>
+        /// <param name="data">json token, used for out of order detection</param>
         /// <exception cref="ArgumentException">If the world ID was not a valid world</exception>
         public bool SetExp(short worldID, DateTime timestamp, JToken? data) {
             return SetMap(ref _Exp, worldID, timestamp, "exp", data);
@@ -120,6 +122,7 @@ namespace watchtower.Services.Repositories {
         /// <param name="worldID"></param>
         /// <param name="timestamp"></param>
         /// <param name="what"></param>
+        /// <param name="data"></param>
         private bool SetMap(ref ConcurrentDictionary<short, CensusRealtimeHealthEntry> dict, short worldID, DateTime timestamp, string what, JToken? data) {
 
             bool ret = false;

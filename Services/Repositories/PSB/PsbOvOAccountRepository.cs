@@ -49,7 +49,7 @@ namespace watchtower.Services.Repositories.PSB {
             // example: 01. Jan 2023
             string name = $"{month:MM}. {month:MMMM} {month:yyyy}";
             string cacheKey = string.Format(CACHE_KEY, name);
-            if (_Cache.TryGetValue(cacheKey, out string fileID) == true) {
+            if (_Cache.TryGetValue(cacheKey, out string? fileID) == true && fileID != null) {
                 return fileID;
             }
 

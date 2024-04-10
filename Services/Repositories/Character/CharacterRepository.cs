@@ -378,7 +378,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<PsCharacter>> GetByName(string name, bool fast = false) {
             string key = string.Format(CACHE_KEY_NAME, name);
 
-            if (_Cache.TryGetValue(key, out List<PsCharacter> characters) == false) {
+            if (_Cache.TryGetValue(key, out List<PsCharacter>? characters) == false || characters == null) {
                 characters = await _Db.GetByName(name);
 
                 PsCharacter? live = (fast == false) ? await _Census.GetByName(name) : null;

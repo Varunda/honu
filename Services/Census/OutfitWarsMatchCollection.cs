@@ -44,7 +44,7 @@ namespace watchtower.Services.Census {
         }
 
         public async Task<List<OutfitWarsMatch>> GetAll(CancellationToken cancel) {
-            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<OutfitWarsMatch> outfits) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<OutfitWarsMatch>? outfits) == false || outfits == null) {
                 _Logger.LogInformation($"loading outfit war matches");
                 HttpResponseMessage response = await _Http.GetAsync($"https://census.lithafalcon.cc/get/ps2/outfit_war_match?c:limit=10000&outfit_war_id=]40", cancel);
                 DateTime responseEnd = DateTime.UtcNow;

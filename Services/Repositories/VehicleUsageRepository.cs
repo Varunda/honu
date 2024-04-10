@@ -42,7 +42,7 @@ namespace watchtower.Services.Repositories {
 
             string cacheKey = string.Format(CACHE_KEY, worldID ?? 0, zoneID ?? 0, includeVehicles);
 
-            if (_Cache.TryGetValue(cacheKey, out VehicleUsageData data) == false) {
+            if (_Cache.TryGetValue(cacheKey, out VehicleUsageData? data) == false || data == null) {
                 //_Logger.LogDebug($"vehicle data uncached, generating [cacheKey={cacheKey}] [worldID={worldID}] [zoneID={zoneID}] [includeVehicles={includeVehicles}]");
 
                 Stopwatch timer = Stopwatch.StartNew();

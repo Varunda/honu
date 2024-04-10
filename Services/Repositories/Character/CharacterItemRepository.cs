@@ -40,7 +40,7 @@ namespace watchtower.Services.Repositories {
         public async Task<List<CharacterItem>> GetByID(string charID) {
             string cacheKey = string.Format(CACHE_KEY, charID);
 
-            if (_Cache.TryGetValue(cacheKey, out List<CharacterItem> items) == false) {
+            if (_Cache.TryGetValue(cacheKey, out List<CharacterItem>? items) == false || items == null) {
                 items = await _Db.GetByID(charID);
 
                 if (items.Count == 0) {

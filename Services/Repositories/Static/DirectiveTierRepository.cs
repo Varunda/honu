@@ -30,7 +30,7 @@ namespace watchtower.Services.Repositories {
         }
 
         public async Task<List<DirectiveTier>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY, out List<DirectiveTier> dirs) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY, out List<DirectiveTier>? dirs) == false || dirs == null) {
                 dirs = await _Db.GetAll();
 
                 if (dirs.Count > 0) {

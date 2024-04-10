@@ -144,9 +144,11 @@ namespace watchtower.Services.Repositories.PSB {
         ///     if you need it sooner
         /// </remarks>
         public async Task<List<PsbPracticeContact>> GetPracticeContacts() {
-            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_ALL, out List<PsbPracticeContact> contacts) == true) {
+            if (_Cache.TryGetValue(CACHE_KEY_PRACTICE_ALL, out List<PsbPracticeContact>? contacts) == true && contacts != null) {
                 return contacts;
             }
+
+            contacts = new List<PsbPracticeContact>();
 
             if (Initialize() == false) {
                 throw new SystemException($"Failed to initialize: {GetInitializeFailureReason()}");
@@ -192,7 +194,7 @@ namespace watchtower.Services.Repositories.PSB {
         }
 
         public async Task<List<PsbOvOContact>> GetOvOContacts() {
-            if (_Cache.TryGetValue(CACHE_KEY_OVO_ALL, out List<PsbOvOContact> contacts) == true) {
+            if (_Cache.TryGetValue(CACHE_KEY_OVO_ALL, out List<PsbOvOContact>? contacts) == true && contacts != null) {
                 return contacts;
             }
 

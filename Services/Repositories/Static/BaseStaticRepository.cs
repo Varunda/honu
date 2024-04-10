@@ -49,7 +49,7 @@ namespace watchtower.Services.Repositories {
         ///     A list of static PS2 data
         /// </returns>
         public async Task<List<T>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<T> entries) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<T>? entries) == false || entries == null) {
                 string method = "db";
                 _Logger.LogDebug($"loading static data, not cached [TypeName={TypeName}] [cacheKey={CACHE_KEY_ALL}]");
                 entries = await _Db.GetAll();
@@ -89,7 +89,7 @@ namespace watchtower.Services.Repositories {
             //      and getting the objective by ID, which can take an O(n) operation into O(n^2),
             //      not good. Having a lookup be O(1) too is just nicer in general and more inline
             //      if what you'd expect
-            if (_Cache.TryGetValue(CACHE_KEY_MAP, out Dictionary<int, T> entries) == false) {
+            if (_Cache.TryGetValue(CACHE_KEY_MAP, out Dictionary<int, T>? entries) == false || entries == null) {
                 List<T> all = await GetAll();
                 entries = new Dictionary<int, T>(all.Count);
 

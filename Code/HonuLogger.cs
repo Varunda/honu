@@ -54,7 +54,7 @@ namespace watchtower.Code {
             _Options = options.CurrentValue;
         }
 
-        public override void Write<TState>(in LogEntry<TState> logEntry, IExternalScopeProvider scopeProvider, TextWriter textWriter) {
+        public override void Write<TState>(in LogEntry<TState> logEntry, IExternalScopeProvider? scopeProvider, TextWriter textWriter) {
             string? msg = logEntry.Formatter?.Invoke(logEntry.State, logEntry.Exception);
             if (logEntry.Exception == null && msg == null) {
                 return;

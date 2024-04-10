@@ -102,7 +102,7 @@ namespace watchtower.Services.Repositories {
 
         public async Task<List<PsbDriveFile>> TraverseDirectory(string fileID) {
             string cacheKey = string.Format(CACHE_KEY_TRAVERSE, fileID);
-            if (_Cache.TryGetValue(cacheKey, out List<PsbDriveFile> files) == true) {
+            if (_Cache.TryGetValue(cacheKey, out List<PsbDriveFile>? files) == true && files != null) {
                 return files;
             }
 
