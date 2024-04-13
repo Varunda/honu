@@ -139,6 +139,16 @@
                         <td>SPM</td>
                         <td>{{historyScore.allTime / (historyTime.allTime || 1) * 60 | fixed | locale(2)}}</td>
                     </tr>
+
+                    <tr>
+                        <td>Certs</td>
+                        <td>{{historyCert.allTime | locale(0)}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Certs/min</td>
+                        <td>{{historyCert.allTime / (historyTime.allTime || 1) * 60 | locale(2)}}</td>
+                    </tr>
                 </tbody>
 
                 <tr v-else-if="history.state == 'loaded' && history.data.length == 0" class="table-warning">
@@ -204,6 +214,16 @@
                     <tr>
                         <td>SPM</td>
                         <td>{{recentScore / (recentTime || 1) * 60 | fixed | locale(2)}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Certs</td>
+                        <td>{{recentCert | locale(0)}}</td>
+                    </tr>
+
+                    <tr>
+                        <td>Certs/min</td>
+                        <td>{{recentCert / (recentTime || 1) * 60 | locale(2)}}</td>
                     </tr>
                 </tbody>
 
@@ -341,6 +361,10 @@
                 return this.historyScore == null ? -1 : this.historyScore.days.reduce((a, b) => a + b, 0);
             },
 
+            recentCert: function(): number {
+                return this.historyCert == null ? -1 : this.historyCert.days.reduce((a, b) => a + b, 0);
+            },
+
             currentMonth: function(): number {
                 return new Date().getMonth(); // 0 indexed
             },
@@ -349,6 +373,7 @@
             historyDeaths: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "deaths") || null; },
             historyScore: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "score") || null; },
             historyTime: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "time") || null; },
+            historyCert: function(): CharacterHistoryStat | null { return this.history.state != "loaded" ? null : this.history.data.find(iter => iter.type == "certs") || null; },
         },
 
         components: {

@@ -73,7 +73,7 @@
         </div>
 
         <div v-else-if="extra.state == 'error'">
-            Error loading extra stats: {{extra.message}}
+            <api-error :error="extra.problem"></api-error>
         </div>
 
         <div v-else class="text-danger">
@@ -88,6 +88,7 @@
 
     import InfoHover from "components/InfoHover.vue";
     import Busy from "components/Busy.vue";
+    import ApiError from "components/ApiError";
 
     import "MomentFilter";
     import "filters/LocaleFilter";
@@ -120,7 +121,8 @@
 
         components: {
             InfoHover,
-            Busy
+            Busy,
+            ApiError
         }
     });
 
