@@ -14,7 +14,7 @@
             <div class="progress mt-3" style="height: 3rem;">
                 <div class="progress-bar" :style="{ width: progressWidth }" style="height: 3rem;">
                     <span style="position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.5rem;">
-                        <busy class="honu-busy"></busy>
+                        <busy class="honu-busy honu-busy-sm"></busy>
                         Loading {{total - todo}}/{{total}} friend lists...
                     </span>
                 </div>
@@ -43,7 +43,7 @@
                 </button>
             </div>
 
-            <div class="m-3 px-2 pl-1" style="display: inline; position: absolute; left: 0; top: 50%; background-color: #222">
+            <div class="m-3 px-2 pl-1" style="display: inline; position: absolute; left: 0; top: 50%; background-color: #222; transform: translateY(-50%)">
                 <div class="btn-group btn-group-vertical w-100">
                     <button class="btn btn-success" @click="startLayout">
                         Start layout
@@ -90,6 +90,10 @@
 
                     <input class="form-control" v-model.number="settings.maxFriends" />
                 </div>
+
+                <toggle-button v-model="settings.rootOnly" class="w-100">
+                    show close friends only
+                </toggle-button>
 
             </div>
         </div>
@@ -155,7 +159,7 @@
 
         data: function() {
             return {
-                rootCharacterID: "" as string,
+                rootCharacterIDs: [] as string[],
 
                 context: null as HTMLElement | null,
                 graph: null as Graph | null,
@@ -207,9 +211,10 @@
             }
 
             this.$nextTick(() => {
-                this.rootCharacterID = parts[1];
+                this.rootCharacterIDs = parts[1].split(",");
+                console.log(`roots: ${this.rootCharacterIDs.join(", ")}`);
                 this.context = document.getElementById("graph");
-                this.makeGraph(parts[1]);
+                this.makeGraph(this.rootCharacterIDs);
             });
         },
 
@@ -276,7 +281,7 @@
                     }
 
                     // exclude people with less than 10 friends and more than 5000
-                    if (l.data.length < this.settings.minFriends && l.data.length > this.settings.maxFriends) {
+                    if (l.data.length < this.settings.minFriends || l.data.length > this.settings.maxFriends) {
                         console.info(`FriendNetwork> character ${iter.characterID} has ${l.data.length} friends, which is outside the bounds of (${this.settings.minFriends}, ${this.settings.maxFriends})`);
                         continue;
                     }
@@ -301,6 +306,11 @@
                         // increase the number of connections had by one
                         this.friendConnections.set(f.friendID, (this.friendConnections.get(f.friendID) ?? 0) + 1);
 
+                        if (this.graph.hasEdge(iter.characterID, f.friendID) == true) {
+                            //console.log(`edge between ${iter.characterID} and ${f.friendID} already exists, skipping`);
+                            continue;
+                        }
+
                         this.graph.addEdge(iter.characterID, f.friendID, {
                             color: "#444444"
                         });
@@ -319,7 +329,7 @@
                 return friends;
             },
 
-            makeGraph: async function(rootCharacterID: string): Promise<void> {
+            makeGraph: async function(rootCharacterIDs: string[]): Promise<void> {
                 this.loading = true;
                 this.total = 0;
                 this.todo = 0;
@@ -329,15 +339,6 @@
                 this.selected = null;
                 this.maxFriends = 0;
                 this.friendConnections = new Map();
-
-                if (this.root == null) {
-                    const character: Loading<PsCharacter> = await CharacterApi.getByID(rootCharacterID);
-                    if (character.state != "loaded") {
-                        console.warn(`not here`);
-                        return;
-                    }
-                    this.root = character.data;
-                }
 
                 if (this.context == null) {
                     console.warn(`FriendNetwork> Cannot call makeGraph: context is null`);
@@ -353,14 +354,21 @@
                 this.graph = new Graph();
                 if (this.graph == null) { throw `wtf`; }
 
-                this.queue.push({ characterID: rootCharacterID, depth: 0 });
-                this.loaded.add(rootCharacterID);
-                this.graph.addNode(this.queue[0].characterID, {
-                    x: 0, y: 0,
-                    label: CharacterUtils.getDisplay(this.root),
-                    size: 10,
-                    color: "gold"
-                });
+                for (const rootCharacterID of rootCharacterIDs) {
+                    this.queue.push({ characterID: rootCharacterID, depth: 0 });
+                    this.loaded.add(rootCharacterID);
+
+                    const char: Loading<PsCharacter> = await CharacterApi.getByID(rootCharacterID);
+
+                    this.graph.addNode(rootCharacterID, {
+                        x: 0, y: 0,
+                        label: (char.state == "loaded") ? CharacterUtils.getDisplay(char.data) : "",
+                        size: 10,
+                        color: "gold"
+                    });
+                }
+                this.total = this.queue.length;
+                this.todo = this.queue.length + 1;
 
                 await this.processQueue(1);
                 this.total = this.queue.length;
@@ -372,33 +380,34 @@
                     const charID: string = entry[0];
                     const friendCount: number = entry[1];
 
-                    // count how many edges contain this node
-                    /*
-                    const edgeCount: number = this.graph.filterEdges((edgeID: string, attr, source: string, target: string) => {
-                        return source == charID || target == charID;
-                    }).length;
-                    */
-                    console.log(`FriendNetwork> ${charID} has ${friendCount}`);
+                    //console.log(`FriendNetwork> ${charID} has ${friendCount}`);
 
                     if (this.settings.minConnections > friendCount) {
-                        console.log(`FriendNetwork> DROPPING ${charID}; ${friendCount} < ${this.settings.minConnections}`);
+                        //console.log(`FriendNetwork> DROPPING ${charID}; ${friendCount} < ${this.settings.minConnections}`);
                         this.graph.dropNode(charID);
                     }
                 }
 
+                // only show friends connected to one of the root nodes
                 if (this.settings.rootOnly) {
-                    const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(this.rootCharacterID)!;
-                    const ids: Set<string> = new Set(friends.map(iter => iter.friendID));
+                    const ids: Set<string> = new Set();
+
+                    for (const rootCharacterID of this.rootCharacterIDs) {
+                        const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(rootCharacterID)!;
+                        for (const f of friends.map(iter => iter.friendID)) {
+                            ids.add(f);
+                        }
+                    }
 
                     for (const nodeID of this.graph.nodes()) {
-                        if (ids.has(nodeID) == false && nodeID != this.rootCharacterID) {
+                        if (ids.has(nodeID) == false && this.rootCharacterIDs.indexOf(nodeID) == -1) {
                             this.graph.dropNode(nodeID);
                         }
                     }
                 }
 
                 this.graph.forEachNode((node, attr) => {
-                    if (node == this.root?.id) {
+                    if (rootCharacterIDs.indexOf(node) > -1) {
                         attr.size = 10;
                     } else if (this.friendMap.has(node) == true) {
                         const friends: FlatExpandedCharacterFriend[] = this.friendMap.get(node)!;
@@ -419,7 +428,7 @@
                 //
                 // TLDR: this makes you have black text when you hover a node, despite the "labelColor" (above) set to white
                 //
-                // problem. you (the programm) can only set one color for node text. honu uses a black background,
+                // problem. you (the program) can only set one color for node text. honu uses a black background,
                 //      so a white text is appropriate. however, when a user hovers a node, the back drop is ALSO white.
                 //      this is hard coded into sigma, and cannot be changed.
                 // this means that basically only black text is appropriate for node labels, as you want the label nodes to appear
@@ -662,10 +671,10 @@
         watch: {
             "settings.orbit": function() { this.setupLayout(); },
             "settings.strongGravity": function() { this.setupLayout(); },
-            "settings.minConnections": function() { this.makeGraph(this.rootCharacterID); },
-            "settings.minFriends": function() { this.makeGraph(this.rootCharacterID); },
-            "settings.maxFriends": function() { this.makeGraph(this.rootCharacterID); },
-
+            "settings.minConnections": function() { this.makeGraph(this.rootCharacterIDs); },
+            "settings.minFriends": function() { this.makeGraph(this.rootCharacterIDs); },
+            "settings.maxFriends": function() { this.makeGraph(this.rootCharacterIDs); },
+            "settings.rootOnly": function() { this.makeGraph(this.rootCharacterIDs); }
         },
 
         components: {
