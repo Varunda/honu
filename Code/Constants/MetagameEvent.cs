@@ -78,7 +78,7 @@ namespace watchtower.Code.Constants {
                     or 153 or 154 or 155 // Hossin
                     or 156 or 157 or 158 // Amerish
                     or 211 or 212 or 213 or 214 // ??
-                    or 222 or 223 or 224 // Oshur
+                    or 222 or 223 or 224 or 226 // Oshur
                     => TimeSpan.FromMinutes(90),
 
                 176 or 177 or 178 or 179 or 186 or 187 or 188 or 189 or 190 or 191 or 192 or 193 => TimeSpan.FromMinutes(45),

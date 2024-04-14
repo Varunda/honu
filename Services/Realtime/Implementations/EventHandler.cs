@@ -762,6 +762,7 @@ namespace watchtower.Realtime {
                         TimeSpan? duration = MetagameEvent.GetDuration(metagameEventID);
                         if (duration == null) {
                             _Logger.LogWarning($"Failed to find duration of metagame event {metagameEventID}\n{payload}");
+                            state.AlertEnd = state.AlertStart + TimeSpan.FromMinutes(90);
                         } else {
                             state.AlertEnd = state.AlertStart + duration;
                         }
@@ -829,6 +830,8 @@ namespace watchtower.Realtime {
                     if (state != null) {
                         state.Alert = alert;
                         state.AlertInfo = metaEv;
+                    } else {
+                        _Logger.LogWarning($"missing {nameof(ZoneState)} for alert [metagameEventID={metagameEventID}] [worldID={worldID}] [zoneID={zoneID}]");
                     }
                 }
 

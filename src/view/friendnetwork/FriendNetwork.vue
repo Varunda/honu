@@ -54,6 +54,13 @@
                     </button>
                 </div>
 
+                <div class="mb-2">
+                    <label class="mb-0">
+                        Search
+                    </label>
+                    <input class="form-control" placeholder="search..." v-model="search"></input>
+                </div>
+
                 <hr class="wt-header" />
 
                 <toggle-button v-model="settings.orbit" class="w-100 mb-2">
@@ -62,6 +69,10 @@
 
                 <toggle-button v-model="settings.strongGravity" class="w-100 mb-2">
                     Use "strong gravity"
+                </toggle-button>
+
+                <toggle-button v-model="settings.linLogMode" class="w-100 mb-2">
+                    Use "lin log mode"
                 </toggle-button>
 
                 <div class="mb-2">
@@ -181,10 +192,14 @@
 
                 friendMap: new Map() as Map<string, FlatExpandedCharacterFriend[]>,
                 maxFriends: 0 as number,
+                characterMap: new Map as Map<string, FlatExpandedCharacterFriend>, // <character ID, entry>
 
                 friendConnections: new Map as Map<string, number>, // how many inter-connections a character has. <character ID, count>
 
+                search: "" as string,
+
                 settings: {
+                    linLogMode: true as boolean,
                     sameWorld: true as boolean,
                     orbit: false as boolean,
                     strongGravity: true as boolean,
@@ -269,6 +284,10 @@
 
                         if (l.state == "loaded") {
                             this.friendMap.set(iter.characterID, l.data);
+
+                            for (const entry of l.data) {
+                                this.characterMap.set(entry.characterID, entry);
+                            }
                         }
                     }
 
@@ -547,6 +566,21 @@
                         res.color = "#222222";
                     }
 
+                    if (this.search.length > 0) {
+                        const ex: FlatExpandedCharacterFriend | undefined = this.characterMap.get(node);
+                        if (ex == undefined) {
+                            console.log(`missing ${node}`);
+                            return res;
+                        }
+
+                        if (ex.friendName?.toLowerCase().startsWith(this.search.toLowerCase())) {
+                            res.color = "#222222";
+                            res.label = "";
+                        } else {
+                            res.labelColor = "#000000";
+                        }
+                    }
+
                     return res;
                 });
 
@@ -642,7 +676,7 @@
 
                 this.layout = new FA2Layout(this.graph, {
                     settings: {
-                        //linLogMode: true,
+                        linLogMode: this.settings.linLogMode,
                         gravity: 1,
                         //scalingRatio: 5,
                         //edgeWeightInfluence: 0,
@@ -674,7 +708,13 @@
             "settings.minConnections": function() { this.makeGraph(this.rootCharacterIDs); },
             "settings.minFriends": function() { this.makeGraph(this.rootCharacterIDs); },
             "settings.maxFriends": function() { this.makeGraph(this.rootCharacterIDs); },
-            "settings.rootOnly": function() { this.makeGraph(this.rootCharacterIDs); }
+            "settings.rootOnly": function() { this.makeGraph(this.rootCharacterIDs); },
+
+            "search": function() {
+                if (RENDERER != null) {
+                    RENDERER.refresh();
+                }
+            }
         },
 
         components: {
