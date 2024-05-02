@@ -147,11 +147,14 @@ namespace watchtower.Services.Repositories.PSB {
                 throw new SystemException($"_DriveService is not supposed to be null now");
             }
 
+
             FilesResource.ListRequest list = _DriveService.Files.List();
             list.SupportsAllDrives = true;
             list.Q = $"('{_Settings.Value.PracticeFolderId}' in parents) and trashed=false";
             list.OrderBy = "name";
             list.PageSize = 5;
+
+            _Logger.LogDebug($"loading practice sheets from GDrive API [list.Q={list.Q}] [PracticeFolderId={_Settings.Value.PracticeFolderId}]");
 
             string? nextPage = null;
             int backupLimit = 100;
@@ -174,6 +177,8 @@ namespace watchtower.Services.Repositories.PSB {
 
                 nextPage = res.NextPageToken;
             } while (nextPage != null && nextPage.Length > 0 && --backupLimit > 0);
+
+            _Logger.LogDebug($"loaded practice sheets done [files.Count={files.Count}] [files=[{string.Join(", ", files.Select(iter => iter.Name))}]]");
 
             _Cache.Set(CACHE_KEY_PRACTICE_SHEETS, files, new MemoryCacheEntryOptions() {
                 SlidingExpiration = TimeSpan.FromMinutes(30)

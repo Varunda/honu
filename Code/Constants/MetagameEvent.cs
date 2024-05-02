@@ -48,6 +48,7 @@ namespace watchtower.Code.Constants {
         ///     or <c>null</c> if it's unknown
         /// </returns>
         public static TimeSpan? GetDuration(int metagameEventID) {
+
             if (IsGhostBastion(metagameEventID)) {
                 return TimeSpan.FromMinutes(15);
             }

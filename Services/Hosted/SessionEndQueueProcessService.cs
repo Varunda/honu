@@ -79,7 +79,7 @@ namespace watchtower.Services.Hosted {
                     }
 
                     if ((session.End ?? DateTime.UtcNow) - session.Start <= TimeSpan.FromSeconds(_Options.Value.SessionEndSubscriptionDuration)) {
-                        _Logger.LogDebug($"session {session.ID} is too short, not sending to subscriptions");
+                        _Logger.LogDebug($"session is too short, not sending to subscriptions [sessionID={session.ID}] [characterID={entry.CharacterID}]");
                         continue;
                     }
 
@@ -101,6 +101,7 @@ namespace watchtower.Services.Hosted {
                     msg.Embeds.Add(builder);
 
                     foreach (SessionEndSubscription sub in subs) {
+                        _Logger.LogDebug($"sending session send message [sessionID={session.ID}] [sub.DiscordID={sub.DiscordID}] [characterID={entry.CharacterID}]");
                         msg.TargetUserID = sub.DiscordID;
                         _DiscordMessageQueue.Queue(new HonuDiscordMessage(msg)); // clone the object so we can reuse it
                     }

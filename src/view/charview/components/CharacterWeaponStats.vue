@@ -11,6 +11,7 @@
 
             <toggle-button v-model="showVehicleNames">
                 Show vehicle names
+                <info-hover text="If vehicle names will be included in parenthesis for vehicle weapons" class="px-1"></info-hover>
             </toggle-button>
 
             <toggle-button v-model="showNonWeapons">
@@ -26,9 +27,13 @@
             <toggle-button v-model="showPercent">
                 Show percentiles
             </toggle-button>
+
+            <toggle-button v-model="showCategory">
+                Show item category
+            </toggle-button>
         </div>
 
-        <a-table
+        <a-table v-if="showTable"
             :entries="filteredEntries"
             :show-filters="true"
             :striped="false"
@@ -75,6 +80,20 @@
                             </span>
                         </a>
                     </div>
+                </a-body>
+            </a-col>
+
+            <a-col v-if="showCategory" sort-field="categoryName">
+                <a-header>
+                    <b>Category</b>
+                </a-header>
+
+                <a-filter method="dropdown" type="string" field="categoryName" max-width="20ch"
+                    :conditions="[ 'equals' ]">
+                </a-filter>
+
+                <a-body v-slot="entry">
+                    {{entry.categoryName}}
                 </a-body>
             </a-col>
 
@@ -276,6 +295,7 @@
     import { Loading, Loadable } from "Loading";
     import { PsCharacter } from "api/CharacterApi";
     import { CharacterWeaponStatEntry, CharacterWeaponStatApi, WeaponStatEntry } from "api/CharacterWeaponStatApi";
+    import { ItemCategory, ItemCategoryApi } from "api/ItemCategoryApi";
 
     export const CharacterWeaponStats = Vue.extend({
         props: {
@@ -285,12 +305,16 @@
         data: function() {
             return {
                 entries: Loadable.idle() as Loading<CharacterWeaponStatEntry[]>,
+
+                showTable: true as boolean,
+
                 showDebug: false as boolean,
                 showImages: true as boolean,
                 showNonWeapons: false as boolean,
                 showExtraInfo: false as boolean,
                 showPercent: true as boolean,
-                showVehicleNames: true as boolean
+                showVehicleNames: true as boolean,
+                showCategory: true as boolean
             }
         },
 
@@ -353,6 +377,12 @@
 
                     this.entries = Loadable.loaded(Array.from(map.values()));
                 }
+            },
+
+            toggleTable: async function(): Promise<void> {
+                this.showTable = false;
+                await this.$nextTick();
+                this.showTable = true;
 
             }
         },
@@ -379,6 +409,10 @@
         watch: {
             "character.id": function(): void {
                 console.log(`NEW CHAR ID ${this.character.id}`);
+            },
+
+            showCategory: function(): void {
+                this.toggleTable();
             }
         },
 

@@ -15,6 +15,8 @@ namespace watchtower.Models.Api {
 
         public PsItem? Item { get; set; }
 
+        public ItemCategory? ItemCategory { get; set; }
+
         public PsVehicle? Vehicle { get; set; }
 
         public WeaponStatEntry Stat { get; set; } = new WeaponStatEntry();

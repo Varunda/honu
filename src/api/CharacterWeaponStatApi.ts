@@ -1,10 +1,10 @@
-﻿import * as axios from "axios";
-import { Loading } from "Loading";
+﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
 import { PsItem } from "api/ItemApi";
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsVehicle } from "api/VehicleApi";
+import { ItemCategory, ItemCategoryApi } from "api/ItemCategoryApi";
 
 export class WeaponStatEntry {
 	public weaponID: string = "";
@@ -32,8 +32,10 @@ export class CharacterWeaponStatEntry {
 	public vehicleID: number = 0;
 	public item: PsItem | null = null;
 	public vehicle: PsVehicle | null = null;
+	public itemCategory: ItemCategory | null = null;
 
 	public itemName: string = "";
+	public categoryName: string = "";
 
 	public kills: number = 0;
 	public vehicleKills: number = 0;
@@ -89,7 +91,11 @@ export class CharacterWeaponStatApi extends ApiWrapper<CharacterWeaponStatEntry>
 			vehicleID: elem.stat.vehicleID,
 			vehicle: (elem.vehicle == null) ? null : { ...elem.vehicle },
 			item: (elem.item == null) ? null : { ...elem.item },
+			itemCategory: (elem.itemCategory == null) ? null : ItemCategoryApi.parse(elem.itemCategory),
+
 			itemName: (elem.item) ? elem.item.name : (elem.itemID == 0) ? "no weapon" : `<missing ${elem.itemID}>`,
+			categoryName: (elem.itemCategory == null) ? `<missing>` : ItemCategoryApi.parse(elem.itemCategory).name,
+
 			kills: elem.stat.kills,
 			deaths: elem.stat.deaths,
 			vehicleKills: elem.stat.vehicleKills,

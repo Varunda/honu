@@ -433,10 +433,13 @@ namespace watchtower.Code.DiscordInteractions {
                     return null;
                 }
 
+                _Logger.LogDebug($"loaded practice sheets [practiceSheets.Count={practiceSheets.Count}]");
+
                 string sheetName = $"Outfit Practice [{tag}]".ToLower();
                 PsbDriveFile? sheet = practiceSheets.FirstOrDefault(iter => iter.Name.ToLower() == sheetName);
                 if (sheet == null) {
-                    await ctx.EditResponseText($"Error: failed to find {tag}'s practice sheet");
+                    _Logger.LogWarning($"failed to find practice sheet [tag={tag}] [sheetName={sheetName}]");
+                    await ctx.EditResponseText($"Error: failed to find {tag}'s practice sheet [sheetName={sheetName}]");
                     return null;
                 }
 

@@ -28,15 +28,16 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterWeaponStatRepository _CharacterWeaponStatRepository;
         private readonly CharacterRepository _CharacterRepository;
         private readonly ItemRepository _ItemRepository;
+        private readonly VehicleRepository _VehicleRepository;
+        private readonly ItemCategoryRepository _ItemCategoryRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly CharacterWeaponStatDbStore _StatDb;
-        private readonly VehicleRepository _VehicleRepository;
 
         public CharacterWeaponStatsApiController(ILogger<CharacterWeaponStatsApiController> logger,
             CharacterWeaponStatRepository charWeaponRepo, CharacterRepository charRepo,
             ItemRepository itemRepo, IWeaponStatPercentileCacheDbStore percentDb,
-            CharacterWeaponStatDbStore statDb,
-            VehicleRepository vehicleRepository) {
+            CharacterWeaponStatDbStore statDb, VehicleRepository vehicleRepository,
+            ItemCategoryRepository itemCategoryRepository) {
 
             _Logger = logger;
 
@@ -47,6 +48,7 @@ namespace watchtower.Controllers.Api {
             _StatDb = statDb;
 
             _VehicleRepository = vehicleRepository;
+            _ItemCategoryRepository = itemCategoryRepository;
         }
 
         /// <summary>
@@ -81,6 +83,9 @@ namespace watchtower.Controllers.Api {
                 stat.Stat = entry;
                 stat.ItemID = entry.WeaponID;
                 stat.Item = await _ItemRepository.GetByID(int.Parse(stat.ItemID));
+                if (stat.Item != null) {
+                    stat.ItemCategory = await _ItemCategoryRepository.GetByID(stat.Item.CategoryID);
+                }
                 stat.Vehicle = await _VehicleRepository.GetByID(entry.VehicleID);
 
                 // Ignore boring stuff like a helmet
