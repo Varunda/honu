@@ -80,11 +80,7 @@
         components: {
             Busy,
             InfoHover,
-            ATable,
-            ACol,
-            AHeader,
-            AFilter,
-            ABody,
+            ATable, ACol, AHeader, AFilter, ABody,
             CharacterDirectiveCategory
         }
 

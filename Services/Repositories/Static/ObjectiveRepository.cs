@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,11 @@ namespace watchtower.Services.Repositories {
             IMemoryCache cache)
             : base(loggerFactory, census, db, cache) { }
 
+        /// <summary>
+        ///     get a <see cref="PsObjective"/> based on its <see cref="PsObjective.GroupID"/>
+        /// </summary>
+        /// <param name="groupID"></param>
+        /// <returns></returns>
         public async Task<PsObjective?> GetByGroupID(int groupID) {
             if (_Cache.TryGetValue(CACHE_KEY_GROUP_MAP, out Dictionary<int, PsObjective>? map) == false || map == null) {
                 List<PsObjective> all = await GetAll();
@@ -38,6 +44,18 @@ namespace watchtower.Services.Repositories {
 
             map.TryGetValue(groupID, out PsObjective? obj);
             return obj;
+        }
+
+        public async Task<List<PsObjective>> GetByGroupIDs(IEnumerable<int> groupIDs) {
+            List<PsObjective> objs = new();
+            foreach (int i in groupIDs) {
+                PsObjective? obj = await GetByGroupID(i);
+                if (obj != null) {
+                    objs.Add(obj);
+                }
+            }
+
+            return objs;
         }
 
     }

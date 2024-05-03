@@ -114,6 +114,11 @@
                         Directives
                     </a>
                 </li>
+                <li class="nav-item" @click="selectTab('achievements')">
+                    <a class="nav-link border" :class="{ 'text-success': selectedTab != 'achievements', 'bg-info': selectedTab == 'achievements' }">
+                        Achievements
+                    </a>
+                </li>
                 <li class="nav-item" @click="selectTab('outfitHistory')">
                     <a class="nav-link border" :class="{ 'text-success': selectedTab != 'outfithistory', 'bg-info': selectedTab == 'outfithistory' }">
                         Outfit history
@@ -174,6 +179,7 @@
     import CharacterOutfitHistory from "./components/CharacterOutfitHistory.vue";
     import CharacterKillboard from "./components/CharacterKillboard.vue";
     import CharacterAlerts from "./components/CharacterAlerts.vue";
+    import CharacterAchievementView from "./components/CharacterAchievementView.vue";
 
     export const CharacterViewer = Vue.extend({
         data: function() {
@@ -246,6 +252,8 @@
                     this.selectedComponent = "CharacterFriends";
                 } else if (lower == "directives") {
                     this.selectedComponent = "CharacterDirectives";
+                } else if (lower == "achievements") {
+                    this.selectedComponent = "CharacterAchievementView";
                 } else if (lower == "extra") {
                     this.selectedComponent = "CharacterExtraStats";
                 } else if (lower == "vehicle" || lower == "vehicles") {
@@ -355,6 +363,7 @@
             CharacterOutfitHistory,
             CharacterKillboard,
             CharacterAlerts,
+            CharacterAchievementView,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });

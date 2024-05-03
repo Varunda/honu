@@ -33,7 +33,7 @@
             </toggle-button>
         </div>
 
-        <a-table v-if="showTable"
+        <a-table v-if="showTable" class="mb-0"
             :entries="filteredEntries"
             :show-filters="true"
             :striped="false"
@@ -276,6 +276,10 @@
             </a-col>
 
         </a-table>
+
+        <div class="text-center mb-3 alert alert-secondary">
+            The aurax progress colors behind weapons (purple, gold, silver, and bronze) are based on how many kills with the weapon, not the actual progress in game.
+        </div>
 
     </div>
 </template>

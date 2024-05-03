@@ -49,6 +49,11 @@ export class ExperienceBlock {
     public events: ExpEvent[] = [];
 }
 
+export class ExperienceAwardType {
+    public id: number = 0;
+    public name: string = "";
+}
+
 export class Experience {
 
     public static KILL: number = 1;
@@ -382,6 +387,12 @@ export class ExpStatApi extends ApiWrapper<ExpEvent> {
             name: elem.name,
             amount: elem.amount,
             awardTypeID: elem.awardTypeID
+        };
+    }
+
+    public static parseAwardType(elem: any): ExperienceAwardType {
+        return {
+            ...elem
         };
     }
 

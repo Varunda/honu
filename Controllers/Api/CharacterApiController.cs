@@ -20,6 +20,7 @@ using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Controllers.Api {
 
@@ -35,20 +36,27 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterRepository _CharacterRepository;
         private readonly ICharacterStatGeneratorStore _GeneratorStore;
         private readonly CharacterHistoryStatRepository _HistoryRepository;
-        private readonly SessionDbStore _SessionDb;
         private readonly CharacterItemRepository _CharacterItemRepository;
-        private readonly ItemRepository _ItemRepository;
         private readonly CharacterStatRepository _StatRepository;
         private readonly CharacterMetadataDbStore _MetadataDb;
         private readonly CharacterFriendRepository _CharacterFriendRepository;
-        private readonly OutfitRepository _OutfitRepository;
-        private readonly KillboardCollection _KillboardCollection;
         private readonly CharacterHistoryStatDbStore _CharacterHistoryStatDb;
+        private readonly CharacterNameChangeDbStore _CharacterNameChangeDb;
+        private readonly CharacterAchievementRepository _CharacterAchievementRepository;
+        private readonly KillboardCollection _KillboardCollection;
+        private readonly SessionDbStore _SessionDb;
+
+        private readonly ItemRepository _ItemRepository;
+        private readonly OutfitRepository _OutfitRepository;
         private readonly ItemCategoryRepository _ItemCategoryRepository;
         private readonly ItemTypeRepository _ItemTypeRepository;
         private readonly AlertPlayerDataDbStore _AlertPlayerDb;
         private readonly MetagameEventRepository _MetagameEventRepository;
-        private readonly CharacterNameChangeDbStore _CharacterNameChangeDb;
+        private readonly AchievementRepository _AchievementRepository;
+        private readonly ObjectiveRepository _ObjectiveRepository;
+        private readonly ObjectiveTypeRepository _ObjectiveTypeRepository;
+        private readonly VehicleRepository _VehicleRepository;
+        private readonly ExperienceAwardTypeRepository _ExperienceAwardTypeRepository;
 
         private readonly CharacterUpdateQueue _UpdateQueue;
         private readonly CharacterCacheQueue _CharacterQueue;
@@ -63,7 +71,10 @@ namespace watchtower.Controllers.Api {
             CharacterHistoryStatDbStore characterHistoryStatDb, CharacterCacheQueue characterQueue,
             ItemCategoryRepository itemCategoryRepository, ItemTypeRepository itemTypeRepository,
             AlertPlayerDataDbStore alertPlayerDb, MetagameEventRepository metagameEventRepository,
-            CharacterNameChangeDbStore characterNameChangeDb) {
+            CharacterNameChangeDbStore characterNameChangeDb, CharacterAchievementRepository characterAchievementRepository,
+            AchievementRepository achievementRepository, ObjectiveRepository objectiveRepository,
+            ObjectiveTypeRepository objectiveTypeRepository, VehicleRepository vehicleRepository,
+            ExperienceAwardTypeRepository experienceAwardTypeRepository) {
 
             _Logger = logger;
 
@@ -87,6 +98,12 @@ namespace watchtower.Controllers.Api {
             _AlertPlayerDb = alertPlayerDb;
             _MetagameEventRepository = metagameEventRepository;
             _CharacterNameChangeDb = characterNameChangeDb;
+            _CharacterAchievementRepository = characterAchievementRepository;
+            _AchievementRepository = achievementRepository;
+            _ObjectiveRepository = objectiveRepository;
+            _ObjectiveTypeRepository = objectiveTypeRepository;
+            _VehicleRepository = vehicleRepository;
+            _ExperienceAwardTypeRepository = experienceAwardTypeRepository;
         }
 
         /// <summary>
@@ -688,6 +705,44 @@ namespace watchtower.Controllers.Api {
             List<CharacterNameChange> changes = await _CharacterNameChangeDb.GetByCharacterID(charID);
 
             return ApiOk(changes);
+        }
+
+        /// <summary>
+        ///     get the <see cref="ExpandedCharacterAchievement"/>s of a <see cref="PsCharacter"/>
+        /// </summary>
+        /// <param name="charID">ID of the <see cref="PsCharacter"/> to get the achievements of</param>
+        /// <returns></returns>
+        [HttpGet("character/{charID}/achievements")]
+        public async Task<ApiResponse<CharacterAchievementBlock>> GetAchievements(string charID) {
+            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
+            if (c == null) {
+                return ApiNotFound<CharacterAchievementBlock>($"{nameof(PsCharacter)} {charID}");
+            }
+
+            List<CharacterAchievement> achs = await _CharacterAchievementRepository.GetByCharacterID(charID);
+
+            CharacterAchievementBlock block = new();
+            block.CharacterID = charID;
+            block.Entries = achs;
+            block.Achievements = await _AchievementRepository.GetByIDs(achs.Select(iter => iter.AchievementID));
+
+            _Logger.LogDebug($"loaded achievements for character [charID={charID}] [loaded={block.Achievements.Count}] [requested={achs.Select(iter => iter.AchievementID).Distinct().Count()}]");
+
+            IEnumerable<int> itemIDs = block.Achievements
+                .Where(iter => iter.ItemID != null && iter.ItemID.Value != 0)
+                .Select(iter => iter.ItemID!.Value);
+            block.Items = await _ItemRepository.GetByIDs(itemIDs);
+
+            IEnumerable<int> objIDs = block.Achievements.Select(iter => iter.ObjectiveGroupID);
+            block.Objectives = await _ObjectiveRepository.GetByGroupIDs(objIDs);
+
+            IEnumerable<int> objTypeIDs = block.Objectives.Select(iter => iter.TypeID);
+            block.ObjectiveTypes = await _ObjectiveTypeRepository.GetByIDs(objTypeIDs);
+
+            block.Vehicles = await _VehicleRepository.GetAll();
+            block.AwardTypes = await _ExperienceAwardTypeRepository.GetAll();
+
+            return ApiOk(block);
         }
 
         /// <summary>
