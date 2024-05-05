@@ -1,7 +1,17 @@
 ﻿
 <template>
     <div>
-        <span v-if="entry.objTypeID == 12">
+        <span v-if="entry.objTypeID == 3">
+            Kill
+            <cell :entry="entry" :param="1"></cell>
+            NPCs
+
+            with a definition of
+            <cell :entry="entry" :param="2"></cell>
+            <info-hover text="This is currently unknown what it means"></info-hover>
+        </span>
+
+        <span v-else-if="entry.objTypeID == 12">
             Get
             <span v-if="!entry.objective.param1" class="text-warning">
                 missing param1
@@ -12,7 +22,7 @@
 
             <span v-if="entry.achievement && entry.achievement.itemID">
                 using the
-                <span v-if="entry.item" class="text-param">
+                <span v-if="entry.item" class="text-param" :title="'itemID: ' + entry.achievement.itemID">
                     {{entry.item.name}}
                 </span>
                 <span v-else class="text-param">
@@ -28,34 +38,29 @@
             earn
             <cell :entry="entry" :param="1"></cell>
 
-            times as a platoon leader
+            times as a squad leader
         </span>
 
         <span v-else-if="entry.objTypeID == 15">
-            Earn
-
+            Have squad members earn
             <cell :entry="entry" :param="1"></cell>
-            xp
-
-            from a {{awardTypeString}} exp event
+            xp from a
+            <span class="text-param" title="param2, param3, param4, param5, param6">{{awardTypeString}}</span>
+            exp event as a squad leader
         </span>
 
         <span v-else-if="entry.objTypeID == 17">
             Have squad members earn
             <cell :entry="entry" :param="1"></cell>
-            exp
-
-            of type {{awardTypeString}}
+            exp worth of type
+            <span class="text-param" title="param2, param3, param4, param5, param6">{{awardTypeString}}</span>
         </span>
 
         <span v-else-if="entry.objTypeID == 19">
-            Complete
-            <cell :entry="entry" :param="2"></cell>
-
-            achievements of type
+            Earn achievement
             <cell :entry="entry" :param="1"></cell>
-
-            as a platoon leader
+            <cell :entry="entry" :param="2"></cell>
+            times as a platoon leader
         </span>
 
         <span v-else-if="entry.objTypeID == 20">
@@ -71,9 +76,7 @@
 
             facilities 
             <cell :entry="entry" :param="1"></cell>
-            times,
-
-            with at least
+            times, with at least
             <cell :entry="entry" :param="3"></cell>
             enemies
         </span>
@@ -89,9 +92,18 @@
         </span>
 
         <span v-else-if="entry.objTypeID == 69">
-            Earn exp events classified as {{awardTypeString}} events
+            Earn exp events classified as 
+            <span class="text-param" title="param2, param3, param4, param5, param6">{{awardTypeString}}</span>
+            events
             
-            <cell :entry="entry" :param="1"></cell> times
+            <cell :entry="entry" :param="1"></cell>
+            times
+
+            <span v-if="entry.objective.param8" class="text-warning">
+                with a classification of
+                <cell :entry="entry" :param="8"></cell>
+                <info-hover text="it is unknown what this means"></info-hover>
+            </span>
         </span>
 
         <span v-else-if="entry.objTypeID == 90">
@@ -101,7 +113,16 @@
         </span>
 
         <span v-else-if="entry.objTypeID == 91">
-            Repair
+            <span v-if="entry.objective.param5 == '1'">
+                Repair
+            </span>
+            <span v-else-if="entry.objective.param5 == '0'">
+                Heal
+            </span>
+            <span v-else class="text-warning">
+                unchecked param5: {{entry.objective.param5}}
+            </span>
+
             <cell :entry="entry" :param="1"></cell>
             damage
         </span>
@@ -134,6 +155,12 @@
             {{entry.objective.param3 | facilityType}}
 
             facilities
+
+            <span v-if="entry.objective.param4">
+                with at least
+                <cell :entry="entry" :param="4"></cell>
+                enemies
+            </span>
         </span>
 
         <span v-else>
@@ -142,7 +169,14 @@
 
         <span v-if="ShowDebug" class="text-monospace">
             <br />
-            objTypeID={{entry.objTypeID}}
+            objTypeID={{entry.objTypeID}}/
+            <span v-if="entry.objectiveType != null">
+                {{entry.objectiveType.description}}
+            </span>
+            <span v-else class="text-warning">
+                missing!
+            </span>
+            <br />
 
             <span v-if="entry.objective.param1 != null || entry.objectiveType.param1 != null">
                 param1={{entry.objective.param1}}/{{entry.objectiveType.param1}}<br />
@@ -185,6 +219,8 @@
     import Vue, { PropType } from "vue";
 
     import "filters/FacilityTypeFilter";
+
+    import InfoHover from "components/InfoHover.vue";
 
     import { FlatCharacterAchievement } from "./common";
     import { CharacterAchievementBlock } from "api/CharacterAchievementApi";
@@ -290,21 +326,37 @@ import { ExperienceAwardType } from "../../../api/ExpStatApi";
                 return this.block.awardTypes.find(iter => iter.id.toString() == this.entry.objective!.param5) ?? null;
             },
 
+            awardType5: function(): ExperienceAwardType | null {
+                if (this.entry.objective == null || this.entry.objective.param6 == null) {
+                    return null;
+                }
+
+                return this.block.awardTypes.find(iter => iter.id.toString() == this.entry.objective!.param6) ?? null;
+            },
+
             awardTypeString: function(): string {
                 const types: string[] = [
                     this.awardType1,
                     this.awardType2,
                     this.awardType3,
-                    this.awardType4
+                    this.awardType4,
+                    this.awardType5
                 ].filter(iter => iter != null).map(iter => iter!.name);
 
-                return types.join(", or ");
+                const comma = types.slice(0, -1);
+                let str: string = comma.join(", ");
+                if (types.length > 1) {
+                    str += ", or ";
+                }
+                str += types[types.length - 1];
+
+                return str;
             }
 
         },
 
         components: {
-            Cell
+            Cell, InfoHover
         }
     });
     export default CharacterAchievementObjectiveData;

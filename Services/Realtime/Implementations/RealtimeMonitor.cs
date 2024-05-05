@@ -304,7 +304,7 @@ namespace watchtower.Realtime {
             }
 
             ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
-            //stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
+            stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
             _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");

@@ -12,7 +12,7 @@
             </toggle-button>
         </div>
 
-        <a-table 
+        <a-table v-if="showTable"
             :entries="data"
             :show-filters="true" display-type="table"
             default-sort-field="name" default-sort-order="asc">
@@ -47,12 +47,16 @@
                     <b>How to earn</b>
                 </a-header>
 
+                <a-filter method="dropdown" field="objTypeID" type="number" :source="objTypeIDs" max-width="60ch"
+                    :conditions="[ 'equals' ]">
+                </a-filter>
+
                 <a-body v-slot="entry">
                     <div v-if="entry.objective == null" class="text-muted">
                         missing objective
                     </div>
                     
-                    <div v-else>
+                    <div v-else style="max-width: 50ch;">
                         <character-achievement-objective-data :block="block.data" :entry="entry" :show-debug="showDebug"></character-achievement-objective-data>
                     </div>
                 </a-body>
@@ -81,7 +85,7 @@
                     <b>Earned</b>
                 </a-header>
 
-                <a-filter method="input" type="number" field="earnedCount"
+                <a-filter method="input" type="number" field="earnedCount" max-width="20ch"
                     :conditions="[ 'greater_than', 'equals' ]">
                 </a-filter>
 
@@ -97,6 +101,16 @@
 
                 <a-body v-slot="entry">
                     {{entry.dateStarted | moment}}
+                </a-body>
+            </a-col>
+
+            <a-col sort-field="dateUpdated">
+                <a-header>
+                    <b>Last updated</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.dateUpdated | moment}}
                 </a-body>
             </a-col>
 
@@ -150,6 +164,8 @@
             return {
                 block: Loadable.idle() as Loading<CharacterAchievementBlock>,
 
+                showTable: true as boolean,
+
                 showDebug: false as boolean,
                 showUnknown: false as boolean
 
@@ -164,11 +180,19 @@
             loadData: async function(): Promise<void> {
                 this.block = Loadable.loading();
                 this.block = await CharacterAchievementApi.getByCharacterID(this.character.id);
+
+                if (this.block.state == "loaded") {
+                    // this lil hack lets the objTypeIDs computed property update, which forces the <a-table>
+                    // to be remade, which then updates the <a-filter:source> property
+                    this.showTable = false;
+                    this.$nextTick(() => {
+                        this.showTable = true;
+                    });
+                }
             }
         },
 
         computed: {
-
             data: function(): Loading<FlatCharacterAchievement[]> {
                 if (this.block.state != "loaded") {
                     return Loadable.rewrap(this.block);
@@ -215,6 +239,7 @@
                             earnedCount: iter.earnedCount,
                             dateFinished: iter.finishDate,
                             dateStarted: iter.startDate,
+                            dateUpdated: iter.lastSaveDate,
 
                             name: ach?.name ?? `<missing ${iter.achievementID}>`,
                             description: ach?.description ?? `<missing ${iter.achievementID}>`,
@@ -229,8 +254,29 @@
                         };
                     }
                 ));
-            }
+            },
 
+            objTypeIDs: function(): any[] {
+                if (this.block.state != "loaded") {
+                    return [];
+                }
+
+                console.log(`mapping obj types`);
+
+                const entries: {key: string, value: number | null}[] = this.block.data.objectiveTypes.map(iter => {
+                    return {
+                        key: iter.description,
+                        value: iter.id
+                    }
+                });
+                entries.push({
+                    key: "All",
+                    value: null
+                });
+
+                console.log(`got ${entries.length} entries!`);
+                return entries;
+            }
         },
 
         components: {

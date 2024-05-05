@@ -10,6 +10,7 @@ export type FlatCharacterAchievement = {
     earnedCount: number;
     dateFinished: Date | null;
     dateStarted: Date;
+    dateUpdated: Date | null;
 
     name: string;
     description: string;

@@ -886,6 +886,9 @@ export const ATable = Vue.extend({
             return createElement("select",
                 {
                     staticClass: "form-control a-table-filter-select",
+                    staticStyle: {
+                        "max-width": filter.width
+                    },
                     on: {
                         input: (event: InputEvent): void => {
                             if (filter.type == "number") {
@@ -898,7 +901,16 @@ export const ATable = Vue.extend({
                         }
                     }
                 },
-                filter.source?.map((iter: any) => {
+                [...(filter.source ?? [])].sort((a: any, b: any) => {
+                    if (typeof (a.key) != "string") {
+                        throw `Expected to find string for ${a.key}, got type ${typeof(a.key)} instead!`;
+                    }
+                    if (typeof (b.key) != "string") {
+                        throw `Expected to find string for ${b.key}, got type ${typeof(b.key)} instead!`;
+                    }
+
+                    return a.key.localeCompare(b.key);
+                }).map((iter: any) => {
                     if (typeof (iter.key) != "string") {
                         throw `Expected to find string for ${iter.key}, got type ${typeof(iter.key)} instead!`;
                     }
