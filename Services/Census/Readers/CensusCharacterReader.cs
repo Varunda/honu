@@ -32,6 +32,7 @@ namespace watchtower.Services.Census.Readers {
             }
 
             player.BattleRank = token.GetChild("battle_rank")?.GetInt16("value", 0) ?? 0;
+            player.MinutesPlayed = token.GetChild("times")?.GetInt64("minutes_played", 0) ?? 0;
 
             return player;
         }

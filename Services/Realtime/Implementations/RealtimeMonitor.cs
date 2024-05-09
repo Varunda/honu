@@ -26,6 +26,8 @@ namespace watchtower.Realtime {
         /// </summary>
         private const int RECONNECT_MIN_SECONDS = 10;
 
+        public static bool UseNss = true;
+
         private readonly List<short> _Events = new List<short>() {
             Experience.HEAL, Experience.SQUAD_HEAL,
             Experience.REVIVE, Experience.SQUAD_REVIVE,
@@ -98,6 +100,7 @@ namespace watchtower.Realtime {
                             break;
                         }
 
+                        iter.Value.Client.SetEndpoint("");
                         await iter.Value.Client.ReconnectAsync();
                         iter.Value.LastConnect = DateTime.UtcNow;
                         _Logger.LogDebug($"reconnected '{iter.Key}' due to bad stream");
@@ -267,15 +270,6 @@ namespace watchtower.Realtime {
 
             sub.EventNames = new List<string>() { "GainExperience", "AchievementEarned", "ItemAdded" };
 
-            /*
-            sub.EventNames = _Events.Select(i => $"GainExperience_experience_id_{i}");
-            foreach (int expId in Experience.VehicleRepairEvents) {
-                sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
-            }
-            foreach (int expId in Experience.SquadVehicleRepairEvents) {
-                sub.EventNames = sub.EventNames.Append($"GainExperience_experience_id_{expId}");
-            }
-            */
             sub.EventNames = sub.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")
@@ -304,7 +298,9 @@ namespace watchtower.Realtime {
             }
 
             ICensusStreamClient stream = _Services.GetRequiredService<ICensusStreamClient>();
-            stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
+            if (UseNss == true) {
+                stream.SetEndpoint("wss://push.nanite-systems.net/streaming");
+            }
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
             _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");

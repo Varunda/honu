@@ -95,6 +95,17 @@ namespace watchtower.Code.ExtensionMethods {
             return token.GetValue<short?>(name) ?? fallback;
         }
 
+        /// <summary>
+        ///     get a <see cref="long"/> value from a <see cref="JsonElement"/>, using <paramref name="fallback"/> if not found
+        /// </summary>
+        /// <param name="token">extension instance</param>
+        /// <param name="name">name of the element within the token</param>
+        /// <param name="fallback">fallback value if the token does not have the value</param>
+        /// <returns></returns>
+        public static long GetInt64(this JsonElement token, string name, short fallback) {
+            return token.GetValue<long?>(name) ?? fallback;
+        }
+
         public static short GetRequiredInt16(this JsonElement token, string name) {
             return token.GetValue<short?>(name) ?? throw new ArgumentNullException($"Failed to get required field with name of '{name}' from {token}");
         }

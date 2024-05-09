@@ -111,9 +111,9 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wt_character (
-                    id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on, time_create, time_last_login, time_last_save
+                    id, name, world_id, faction_id, outfit_id, battle_rank, prestige, last_updated_on, time_create, time_last_login, time_last_save, minutes_played
                 ) VALUES (
-                    @ID, @Name, @WorldID, @FactionID, @OutfitID, @BattleRank, @Prestige, @LastUpdatedOn, @DateCreated, @DateLastLogin, @DateLastSave
+                    @ID, @Name, @WorldID, @FactionID, @OutfitID, @BattleRank, @Prestige, @LastUpdatedOn, @DateCreated, @DateLastLogin, @DateLastSave, @MinutesPlayed
                 ) ON CONFLICT (id) DO
                     UPDATE SET name = @Name,
                         world_id = @WorldID,
@@ -124,7 +124,8 @@ namespace watchtower.Services.Db {
                         last_updated_on = @LastUpdatedOn,
                         time_create = @DateCreated,
                         time_last_login = @DateLastLogin,
-                        time_last_save = @DateLastSave
+                        time_last_save = @DateLastSave,
+                        minutes_played = @MinutesPlayed;
             ");
 
             cmd.AddParameter("ID", character.ID);
@@ -138,6 +139,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("DateCreated", character.DateCreated);
             cmd.AddParameter("DateLastLogin", character.DateLastLogin);
             cmd.AddParameter("DateLastSave", character.DateLastSave);
+            cmd.AddParameter("MinutesPlayed", character.MinutesPlayed);
             await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
@@ -202,6 +204,7 @@ namespace watchtower.Services.Db {
             c.LastUpdated = reader.GetDateTime("last_updated_on");
             c.BattleRank = reader.GetInt16("battle_rank");
             c.Prestige = reader.GetInt32("prestige");
+            c.MinutesPlayed = reader.GetInt64("minutes_played");
 
             c.OutfitID = reader.GetNullableString("outfit_id");
             c.OutfitTag = reader.GetNullableString("outfit_tag");

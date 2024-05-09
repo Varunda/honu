@@ -75,6 +75,11 @@ namespace watchtower.Models.Census {
         /// </summary>
         public DateTime DateLastSave { get; set; }
 
+        /// <summary>
+        ///     how many minutes this character has played
+        /// </summary>
+        public long MinutesPlayed { get; set; }
+
     }
 
     /// <summary>
