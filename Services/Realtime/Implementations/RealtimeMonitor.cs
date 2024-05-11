@@ -100,7 +100,6 @@ namespace watchtower.Realtime {
                             break;
                         }
 
-                        iter.Value.Client.SetEndpoint("");
                         await iter.Value.Client.ReconnectAsync();
                         iter.Value.LastConnect = DateTime.UtcNow;
                         _Logger.LogDebug($"reconnected '{iter.Key}' due to bad stream");
