@@ -6,6 +6,7 @@ export class OutfitHistoryEntry {
     public outfitID: string = "";
     public start: Date = new Date();
     public end: Date = new Date();
+    public playtime: number = 0;
 }
 
 export class OutfitHistoryBlock {
@@ -23,7 +24,8 @@ export class OutfitHistoryApi extends ApiWrapper<OutfitHistoryBlock> {
         return {
             outfitID: elem.outfitID,
             start: new Date(elem.start),
-            end: new Date(elem.end)
+            end: new Date(elem.end),
+            playtime: elem.duration
         };
     }
 

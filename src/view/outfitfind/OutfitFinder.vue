@@ -20,39 +20,60 @@
             </div>
         </div>
 
-        <table class="table table-sm">
-            <tr>
-                <th>Tag</th>
-                <th>Name</th>
-                <th>Player count</th>
-                <th>Faction</th>
-                <th>Permalink</th>
-            </tr>
+        <a-table :entries="outfits" default-sort-field="index" default-sort-order="asc">
+            <a-col sort-field="tag">
+                <a-header>
+                    <b>Tag</b>
+                </a-header>
 
-            <tr v-if="outfits.state == 'idle'">
-            </tr>
+                <a-body v-slot="entry">
+                    {{entry.tag}}
+                </a-body>
+            </a-col>
 
-            <tr v-else-if="outfits.state == 'loading'">
-                <td colspan="5">
-                    Loading...
-                </td>
-            </tr>
+            <a-col sort-field="name">
+                <a-header>
+                    <b>Name</b>
+                </a-header>
 
-            <tbody v-else-if="outfits.state == 'loaded'">
-                <tr v-for="outfit in outfits.data">
-                    <td>{{outfit.tag}}</td>
-                    <td>'{{outfit.name}}'</td>
-                    <td>{{outfit.memberCount}}</td>
-                    <td>{{outfit.factionID | faction}}</td>
-                    <td>
-                        <a :href="'/o/' + outfit.id" type="button" class="btn btn-success">
-                            Open
-                        </a>
-                    </td>
-                </tr>
-            </tbody>
+                <a-body v-slot="entry">
+                    '{{entry.name}}'
+                </a-body>
+            </a-col>
 
-        </table>
+            <a-col sort-field="memberCount">
+                <a-header>
+                    <b>Members</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.memberCount}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Faction</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    {{entry.factionID | faction}}
+                </a-body>
+            </a-col>
+
+            <a-col>
+                <a-header>
+                    <b>Link</b>
+                </a-header>
+
+                <a-body v-slot="entry">
+                    <a :href="'/o/' + entry.id" type="button" class="btn btn-success">
+                        Open
+                    </a>
+                </a-body>
+            </a-col>
+        </a-table>
+
     </div>
 </template>
 
@@ -61,10 +82,14 @@
     import { Loading, Loadable } from "Loading";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
 
     import { PsOutfit, OutfitApi } from "api/OutfitApi";
 
     import "filters/FactionNameFilter";
+
+    // ordered type to prevent the <a-table> used to display this data to order the data by default
+    type OutfitSearch = PsOutfit & { index: number };
 
     export const OutfitFinder = Vue.extend({
         props: {
@@ -73,65 +98,27 @@
 
         data: function() {
             return {
-                outfits: Loadable.idle() as Loading<PsOutfit[]>,
+                outfits: Loadable.idle() as Loading<OutfitSearch[]>,
 
                 name: "" as string,
                 searchName: "" as string,
-                scrollIndex: 0 as number
             }
         },
 
         methods: {
-            scrollOptions: function(ev: KeyboardEvent): void {
-                if (this.outfits.state != "loaded") {
-                    return;
-                }
-
-                if (ev.key == "ArrowUp") {
-                    if (this.scrollIndex == 0) {
-                        return;
-                    }
-                    --this.scrollIndex;
-                } else if (ev.key == "ArrowDown") {
-                    if (this.scrollIndex - 1 == this.outfits.data.length) {
-                        return;
-                    }
-                    ++this.scrollIndex;
-                } else {
-                    return;
-                }
-
-                ev.preventDefault();
-            },
-
-            openEnter: function(ev: KeyboardEvent): void {
-                if (this.outfits.state != "loaded") {
-                    return;
-                }
-
-                const outfit: PsOutfit = this.outfits.data[this.scrollIndex];
-
-                if (ev.ctrlKey == true) {
-                    console.log(`opening ${outfit.id} in new tab`);
-                    window.open(`/o/${outfit.id}`, "_blank");
-                } else {
-                    console.log(`opening ${outfit.id} in this tab`);
-                    location.href = `/o/${outfit.id}`;
-                }
-
-                ev.preventDefault();
-            },
-
             search: async function(): Promise<void> {
-                this.scrollIndex = 0;
                 this.searchName = this.name;
                 this.outfits = Loadable.loading();
-                this.outfits = await OutfitApi.searchByName(this.searchName);
+                const l: Loading<PsOutfit[]> = await OutfitApi.searchByName(this.searchName);
+                if (l.state != "loaded") {
+                    this.outfits = Loadable.rewrap(l);
+                    return;
+                }
 
                 const lowerName: string = this.name.toLowerCase();
 
-                if (this.outfits.state == "loaded") {
-                    this.outfits.data = this.outfits.data.sort((a, b) => {
+                if (l.state == "loaded") {
+                    this.outfits = Loadable.loaded(l.data.sort((a, b) => {
                         let tagOnly: boolean = this.searchName.at(0) == '[';
 
                         if ((!tagOnly && b.name.toLowerCase() == lowerName) || b.tag?.toLowerCase() == lowerName) {
@@ -142,14 +129,20 @@
                         }
 
                         return b.memberCount - a.memberCount;
-                    });
+                    }).map((iter, index) => {
+                        return {
+                            ...iter,
+                            index: index
+                        };
+                    }));
                 }
             }
 
         },
 
         components: {
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            ATable, ACol, AHeader, ABody, AFilter
         }
 
     });

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
@@ -127,34 +128,39 @@ namespace watchtower.Services.Repositories {
             List<CharacterDirectiveObjective> charObjDirs = new();
 
             using Activity? censusTrace = HonuActivitySource.Root.StartActivity("update character - census root");
-            await Task.WhenAll(
-                // Update the characters weapon stats
-                _WeaponCensus.GetByCharacterID(charID).ContinueWith(result => weaponStats = result.Result),
 
-                // Update the characters history stats
-                _HistoryCensus.GetByCharacterID(charID).ContinueWith(result => historyStats = result.Result),
+            // break each task into a task, so if one task fails, not all of them fail as well
+            Task<List<WeaponStatEntry>> weaponTask = _WeaponCensus.GetByCharacterID(charID);
+            Task<List<PsCharacterHistoryStat>> historyTask = _HistoryCensus.GetByCharacterID(charID);
+            Task<List<CharacterItem>> itemTask = _ItemCensus.GetByID(charID);
+            Task<List<PsCharacterStat>> statTask = _StatCensus.GetByID(charID);
+            Task<List<CharacterFriend>> friendTask = _FriendCensus.GetByCharacterID(charID);
+            Task<List<CharacterDirective>> charDirTask = _CharacterDirectiveCensus.GetByCharacterID(charID);
+            Task<List<CharacterDirectiveTree>> charDirTreeTask = _CharacterDirectiveTreeCensus.GetByCharacterID(charID);
+            Task<List<CharacterDirectiveTier>> charDirTierTask = _CharacterDirectiveTierCensus.GetByCharacterID(charID);
+            Task<List<CharacterDirectiveObjective>> charDirObjTask = _CharacterDirectiveObjectiveCensus.GetByCharacterID(charID);
+            Task[] tasks = [
+                weaponTask,
+                historyTask,
+                itemTask,
+                statTask,
+                friendTask,
+                charDirTask, charDirTreeTask, charDirTierTask, charDirObjTask
+            ];
 
-                // Update the items the character has
-                _ItemCensus.GetByID(charID).ContinueWith(result => itemStats = result.Result),
-
-                // Get the character stats (not the history ones)
-                _StatCensus.GetByID(charID).ContinueWith(result => statEntries = result.Result),
-
-                // Get the character's friends
-                _FriendCensus.GetByCharacterID(charID).ContinueWith(result => charFriends = result.Result),
-
-                // Get the character's directive data
-                _CharacterDirectiveCensus.GetByCharacterID(charID).ContinueWith(result => charDirs = result.Result),
-                _CharacterDirectiveTreeCensus.GetByCharacterID(charID).ContinueWith(result => charTreeDirs = result.Result),
-                _CharacterDirectiveTierCensus.GetByCharacterID(charID).ContinueWith(result => charTierDirs = result.Result),
-                _CharacterDirectiveObjectiveCensus.GetByCharacterID(charID).ContinueWith(result => charObjDirs = result.Result)
-            );
+            try {
+                await Task.WhenAll(tasks);
+            } catch (Exception ex) {
+                _Logger.LogError(ex, $"partial or complete failure to update a character [charID={charID}] [tasks={string.Join(", ", tasks.Select(iter => iter.Status))}]");
+            }
             censusTrace?.Stop();
 
             using Activity? dbTrace = HonuActivitySource.Root.StartActivity("update character - db root");
 
             // DB WEAPON STATS
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats")) {
+            if (weaponTask.IsCompletedSuccessfully == true) {
+                weaponStats = weaponTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db weapon stats");
                 span?.AddTag("honu.count", weaponStats.Count);
                 if (weaponStats.Count > 0) {
                     try {
@@ -166,11 +172,15 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogError(ex, $"error updating character weapon stat data for {charID}");
                     }
                 }
+            } else {
+                _Logger.LogWarning($"could not update weapon stats for character, task was not completed [charID={charID}] [taskStatus={weaponTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB HISTORY STATS
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db history stats")) {
+            if (historyTask.IsCompletedSuccessfully == true) {
+                historyStats = historyTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db history stats");
                 span?.AddTag("honu.count", historyStats.Count);
                 try {
                     span?.AddTag("honu.batch", "ignored");
@@ -181,11 +191,15 @@ namespace watchtower.Services.Repositories {
                     span?.AddExceptionEvent(ex);
                     _Logger.LogError(ex, $"error updating history stats for {charID}");
                 }
+            } else {
+                _Logger.LogWarning($"could not update history stats for character, task was not completed [charID={charID}] [taskStatus={historyTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB ITEM UNLOCKS
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db item unlocks")) {
+            if (itemTask.IsCompletedSuccessfully == true) {
+                itemStats = itemTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db item unlocks");
                 span?.AddTag("honu.count", itemStats.Count);
                 try {
                     foreach (CharacterItem iter in itemStats) {
@@ -195,11 +209,15 @@ namespace watchtower.Services.Repositories {
                     span?.AddExceptionEvent(ex);
                     _Logger.LogError(ex, $"error updating item unlocks for {charID}");
                 }
+            } else {
+                _Logger.LogWarning($"could not update items for character, task was not completed [charID={charID}] [taskStatus={itemTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB STATS
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db stats")) {
+            if (statTask.IsCompletedSuccessfully == true) {
+                statEntries = statTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db stats");
                 span?.AddTag("honu.count", statEntries.Count);
                 try {
                     if (statEntries.Count > 0) {
@@ -209,11 +227,15 @@ namespace watchtower.Services.Repositories {
                     span?.AddExceptionEvent(ex);
                     _Logger.LogError(ex, $"error updating stats for {charID}");
                 }
+            } else {
+                _Logger.LogWarning($"could not update stats for character, task was not completed [charID={charID}] [taskStatus={statTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB FRIENDS
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db friends")) {
+            if (friendTask.IsCompletedSuccessfully == true) {
+                charFriends = friendTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db friends");
                 span?.AddTag("honu.count", charFriends.Count);
                 try {
                     if (charFriends.Count > 0) {
@@ -223,11 +245,15 @@ namespace watchtower.Services.Repositories {
                     span?.AddExceptionEvent(ex);
                     _Logger.LogError(ex, $"error updating friends for {charID}");
                 }
+            } else {
+                _Logger.LogWarning($"could not update friends for character, task was not completed [charID={charID}] [taskStatus={friendTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB DIRECTIVE
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive")) {
+            if (charDirTask.IsCompletedSuccessfully == true) {
+                charDirs = charDirTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive");
                 span?.AddTag("honu.count", charDirs.Count);
                 foreach (CharacterDirective dir in charDirs) {
                     try {
@@ -237,19 +263,15 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogError(ex, $"error updating character directive data for {charID} directive ID ${dir.DirectiveID}");
                     }
                 }
-                /*
-                try {
-                    await _CharacterDirectiveDb.UpsertMany(charID, charDirs);
-                } catch (Exception ex) {
-                    span?.AddExceptionEvent(ex);
-                    _Logger.LogError(ex, $"Error updating character directive data for {charID}");
-                }
-                */
+            } else {
+                _Logger.LogWarning($"could not update directives for character, task was not completed [charID={charID}] [taskStatus={charDirTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB DIRECTIVE TREE
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tree")) {
+            if (charDirTreeTask.IsCompletedSuccessfully == true) {
+                charTreeDirs = charDirTreeTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tree");
                 span?.AddTag("honu.count", charTreeDirs.Count);
                 foreach (CharacterDirectiveTree tree in charTreeDirs) {
                     try {
@@ -259,11 +281,15 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogError(ex, $"Error upserting character directive trees for {charID}");
                     }
                 }
+            } else {
+                _Logger.LogWarning($"could not update directive tree for character, task was not completed [charID={charID}] [taskStatus={charDirTreeTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB DIRECTIVE TIER
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tier")) {
+            if (charDirTierTask.IsCompletedSuccessfully == true) {
+                charTierDirs = charDirTierTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive tier");
                 span?.AddTag("honu.count", charTierDirs.Count);
                 foreach (CharacterDirectiveTier tier in charTierDirs) {
                     try {
@@ -273,11 +299,15 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogError(ex, $"Error upserting character directive tiers for {charID}");
                     }
                 }
+            } else {
+                _Logger.LogWarning($"could not update directive tier for character, task was not completed [charID={charID}] [taskStatus={charDirTierTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             // DB DIRECTIVE OBJECTIVE
-            using (Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive objective")) {
+            if (charDirObjTask.IsCompletedSuccessfully == true) {
+                charObjDirs = charDirObjTask.Result;
+                using Activity? span = HonuActivitySource.Root.StartActivity("update character - db directive objective");
                 span?.AddTag("honu.count", charObjDirs.Count);
                 foreach (CharacterDirectiveObjective obj in charObjDirs) {
                     try {
@@ -287,48 +317,24 @@ namespace watchtower.Services.Repositories {
                         _Logger.LogError(ex, $"Error upserting character directive objectives for {charID}");
                     }
                 }
+            } else {
+                _Logger.LogWarning($"could not update directive objectives for character, task was not completed [charID={charID}] [taskStatus={charDirObjTask.Status}]");
             }
             stoppingToken.ThrowIfCancellationRequested();
 
             PsCharacter? character = await _CharacterCensus.GetByID(charID, CensusEnvironment.PC);
             if (character != null) {
-
-                // check if the character name has changed, and if so, insert it!
-                PsCharacter? dbChar = await _CharacterDb.GetByID(charID);
-                if (dbChar != null) {
-                    //_Logger.LogDebug($"comparing {dbChar.Name} to {character.Name}");
-                    if (character.Name != dbChar.Name) {
-                        _Logger.LogInformation($"name change detected! [character ID={character.ID}] [old name={dbChar.Name}] [new name={character.Name}]");
-
-                        CharacterNameChange change = new();
-                        change.CharacterID = charID;
-                        change.OldName = dbChar.Name;
-                        change.NewName = character.Name;
-                        change.LowerBound = dbChar.LastUpdated;
-                        change.UpperBound = character.LastUpdated;
-                        change.Timestamp = DateTime.UtcNow;
-
-                        try {
-                            await _CharacterNameChangeDb.Insert(change);
-                        } catch (Exception ex) {
-                            _Logger.LogError(ex, $"failed to insert name change [character ID={character.ID}]!");
-                        }
-                    }
-                }
-
                 character.LastUpdated = DateTime.UtcNow;
                 // update on the character repo so if they are cached it stays up to date
                 await _CharacterRepository.Upsert(character);
 
-                CharacterMetadata? metadata = await _CharacterMetadataDb.GetByCharacterID(charID);
-                if (metadata == null) {
-                    metadata = new CharacterMetadata() {
-                        ID = charID,
-                        LastUpdated = DateTime.UtcNow,
-                        NotFoundCount = 0
-                    };
-                }
+                CharacterMetadata metadata = await _CharacterMetadataDb.GetByCharacterID(charID) ?? new CharacterMetadata() {
+                    ID = charID,
+                    LastUpdated = DateTime.UtcNow,
+                    NotFoundCount = 0
+                };
 
+                // TODO 2024-05-12: do we want to update the LastUpdated even if one of the parts of the update failed?
                 metadata.LastUpdated = DateTime.UtcNow;
                 metadata.NotFoundCount = 0;
                 await _CharacterMetadataDb.Upsert(charID, metadata);

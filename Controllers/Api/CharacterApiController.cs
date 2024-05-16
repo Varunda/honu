@@ -433,6 +433,10 @@ namespace watchtower.Controllers.Api {
                     _Logger.LogDebug($"character {charID} was in {outfitID} before it was created! ({outfit.DateCreated:u} > {s.Start:u})");
                     continue;
                 }
+                
+                if (s.End != null) {
+                    previous.Duration += (int) ((s.End.Value - s.Start).TotalSeconds);
+                }
 
                 if (previous.OutfitID != outfitID) {
                     _Logger.LogDebug($"Current outfitID {outfitID} is not {previous.OutfitID} in session ID {s.ID}");

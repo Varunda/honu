@@ -59,13 +59,24 @@
                     </a-body>
                 </a-col>
 
-                <a-col>
+                <a-col sort-field="duration">
                     <a-header>
                         <b>Duration</b>
                     </a-header>
 
                     <a-body v-slot="entry">
                         {{entry.duration | tduration}}
+                    </a-body>
+                </a-col>
+
+                <a-col sort-field="playtime">
+                    <a-header>
+                        <b>Time played</b>
+                        <info-hover text="Sum of duration of sessions within this outfit"></info-hover>
+                    </a-header>
+
+                    <a-body v-slot="entry">
+                        {{entry.playtime | tduration}}
                     </a-body>
                 </a-col>
             </a-table>
@@ -110,6 +121,7 @@
         current: boolean;
         duration: number;
         outfit: PsOutfit | null;
+        playtime: number;
     }
 
     export const CharacterOutfitHistory = Vue.extend({
@@ -150,7 +162,8 @@
                         ...iter,
                         current: index == this.outfitHistory.data.entries.length - 1, // last entry = most recent
                         duration: (iter.end.getTime() - iter.start.getTime()) / 1000,
-                        outfit: outfit
+                        outfit: outfit,
+                        playtime: iter.playtime
                     };
                 }));
             }
@@ -158,7 +171,7 @@
 
         components: {
             ATable, ACol, AHeader, ABody, AFilter,
-            Busy
+            Busy, InfoHover
         }
     });
     export default CharacterOutfitHistory;

@@ -421,11 +421,7 @@
         },
 
         components: {
-            ATable,
-            ACol,
-            AHeader,
-            ABody,
-            AFilter,
+            ATable, ACol, AHeader, ABody, AFilter,
             InfoHover,
             PercentileCell,
             CensusImage,

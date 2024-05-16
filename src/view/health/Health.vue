@@ -208,6 +208,7 @@
                 latestUpdate: null as | Date | null,
 
                 timerID: undefined as number | undefined,
+                loadingData: false as boolean,
 
                 settings: {
                     showGraph: true as boolean,
@@ -221,6 +222,10 @@
 
             this.updateHealth();
             this.timerID = setInterval(async () => {
+                if (this.loadingData == true) {
+                    console.log(`Health> health data is already being updated, not performing update again`);
+                    return;
+                }
                 await this.updateHealth();
             }, 1000) as unknown as number;
 
@@ -238,7 +243,7 @@
                     //      ran every 500ms, then this interval ran 500ms after the updateHealth interval,
                     //      this would cause the data to flicker every 500ms, very annoying
                     if (diff > 1500) {
-                        console.warn(`data is ${diff}ms old, forcing a refresh`);
+                        console.warn(`data is ${diff}ms old, forcing a UI refresh`);
                         needsRefresh = true;
                     }
                 }
@@ -251,8 +256,10 @@
 
         methods: {
             updateHealth: async function(): Promise<void> {
+                this.loadingData = true;
                 this.health = await HonuHealthApi.getHealth();
                 if (this.health.state == "loaded") {
+                    this.loadingData = false;
                     this.latestUpdate = new Date();
                 }
             },

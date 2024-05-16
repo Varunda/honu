@@ -262,12 +262,12 @@ namespace watchtower.Realtime {
         /// <param name="worldID">ID of the world the subscription will be for</param>
         internal CensusStreamSubscription CreateSubscription(short worldID) {
             CensusStreamSubscription sub = new CensusStreamSubscription() {
-                Worlds = new List<string>() { $"{worldID}" },
-                Characters = new[] { "all" },
+                Worlds = [$"{worldID}"],
+                Characters = ["all"],
                 LogicalAndCharactersWithWorlds = true
             };
 
-            sub.EventNames = new List<string>() { "GainExperience", "AchievementEarned", "ItemAdded" };
+            sub.EventNames = ["GainExperience", "AchievementEarned", "ItemAdded"];
 
             sub.EventNames = sub.EventNames.Append("Death")
                 .Append("PlayerLogin").Append("PlayerLogout")
