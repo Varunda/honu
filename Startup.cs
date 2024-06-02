@@ -222,6 +222,7 @@ namespace watchtower {
             services.AddHostedService<HostedAlertEndService>();
             services.AddHostedService<HostedBackgroundFacilityControlEventProcessQueue>(); // what a doozy of a name
             services.AddHostedService<HostedWorldZonePopulationBuilder>();
+            services.AddHostedService<AggregateSessionPopulatorStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddSingleton<DiscordWrapper>();

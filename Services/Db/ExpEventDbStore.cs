@@ -398,7 +398,7 @@ namespace watchtower.Services.Db {
         ///     All <see cref="ExpEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
-        public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+        public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null) {
             bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
 
             using NpgsqlConnection conn = _DbHelper.Connection(useAll == true ? Dbs.EVENTS : Dbs.CHARACTER);

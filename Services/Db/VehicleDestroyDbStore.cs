@@ -116,6 +116,35 @@ namespace watchtower.Services.Db {
             return await cmd.ExecuteInt64(cancel);
         }
 
+        /// <summary>
+        ///     get a list of <see cref="VehicleDestroyEvent"/>s that occured between <paramref name="start"/>
+        ///     and <paramref name="end"/> (start is inclusive, end is exclusive)
+        /// </summary>
+        /// <param name="start">start of the range (inclusive)</param>
+        /// <param name="end">end of the range (exclusive)</param>
+        /// <returns>
+        ///     a list of <see cref="VehicleDestroyEvent"/>s with a <see cref="VehicleDestroyEvent.Timestamp"/>
+        ///     between <paramref name="start"/> (inclusive) and <paramref name="end"/> (exclusive)
+        /// </returns>
+        public async Task<List<VehicleDestroyEvent>> GetByRange(DateTime start, DateTime end) {
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.EVENTS);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT *
+                    FROM vehicle_destroy
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd;
+            ");
+            cmd.CommandTimeout = 300;
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+            await cmd.PrepareAsync();
+
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
         public async Task<List<VehicleDestroyEvent>> LoadWrappedKills(string charID, DateTime year) {
             string db = $"wrapped_{year:yyyy}";
 

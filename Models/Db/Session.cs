@@ -37,6 +37,32 @@ namespace watchtower.Models.Db {
         /// </summary>
         public short TeamID { get; set; }
 
+        // Kills
+
+        public DateTime? SummaryCalculated { get; set; }
+
+        public int Kills { get; set; }
+
+        public int Deaths { get; set; }
+
+        public int VehicleKills { get; set; }
+
+        public long ExperienceGained { get; set; }
+
+        // Support
+
+        public int Heals { get; set; } = 0;
+
+        public int Revives { get; set; } = 0;
+
+        public int ShieldRepairs { get; set; } = 0;
+
+        public int Resupplies { get; set; } = 0;
+
+        public int Spawns { get; set; } = 0;
+
+        public int Repairs { get; set; } = 0;
+
     }
 
 }

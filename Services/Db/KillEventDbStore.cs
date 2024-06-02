@@ -479,7 +479,7 @@ namespace watchtower.Services.Db {
         ///     All <see cref="KillEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
-        public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID, short? worldID) {
+        public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null) {
             if (end <= start) {
                 throw new ArgumentException($"{nameof(start)} {start:u} must come before {nameof(end)} {end:u}");
             }

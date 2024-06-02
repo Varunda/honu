@@ -167,10 +167,16 @@ namespace watchtower.Services.Db {
 
         /// <summary>
         ///     Get all sessions that occured between a time period
+        ///     (all sessions that started, ended, or were over this range)
         /// </summary>
-        /// <param name="start"></param>
-        /// <param name="end"></param>
-        /// <returns></returns>
+        /// <param name="start">start of the range (inclusive)</param>
+        /// <param name="end">end of the range (exclusive)</param>
+        /// <returns>
+        ///     all <see cref="Session"/>s with a <see cref="Session.Start"/> between <paramref name="start"/> and <paramref name="end"/>,
+        ///     a <see cref="Session.End"/> between <paramref name="start"/> and <paramref name="end"/>,
+        ///     or where <see cref="Session.Start"/> is greater than <paramref name="start"/>
+        ///     AND <see cref="Session.End"/> is greater than <paramref name="end"/>
+        /// </returns>
         public async Task<List<Session>> GetByRange(DateTime start, DateTime end) {
             if (start > end) {
                 throw new ArgumentException($"{nameof(start)} cannot come after {nameof(end)}");
@@ -338,8 +344,46 @@ namespace watchtower.Services.Db {
             return f;
         }
 
+        public async Task UpdateSummary(long sessionID, Session s) {
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE 
+                    wt_session
+                SET 
+                    summary_calculated = @SummaryCalculated,
+                    kills = @Kills,
+                    deaths = @Deaths,
+                    vehicle_kills = @VehicleKills,
+                    heals = @Heals,
+                    revives = @Revives,
+                    shield_repairs = @ShieldRepairs,
+                    resupplies = @Resupplies,
+                    repairs = @Repairs,
+                    spawns = @Spawns,
+                    experience_gained = @ExperienceGained
+                WHERE id = @SessionID;
+            ");
+
+            cmd.AddParameter("SessionID", sessionID);
+            cmd.AddParameter("SummaryCalculated", s.SummaryCalculated);
+            cmd.AddParameter("Kills", s.Kills);
+            cmd.AddParameter("Deaths", s.Deaths);
+            cmd.AddParameter("VehicleKills", s.VehicleKills);
+            cmd.AddParameter("ExperienceGained", s.ExperienceGained);
+            cmd.AddParameter("Heals", s.Heals);
+            cmd.AddParameter("Revives", s.Revives);
+            cmd.AddParameter("ShieldRepairs", s.ShieldRepairs);
+            cmd.AddParameter("Resupplies", s.Resupplies);
+            cmd.AddParameter("Repairs", s.Repairs);
+            cmd.AddParameter("Spawns", s.Spawns);
+            await cmd.PrepareAsync();
+
+            await cmd.ExecuteNonQueryAsync();
+            await conn.CloseAsync();
+        }
+
         public override Session ReadEntry(NpgsqlDataReader reader) {
-            Session s = new Session();
+            Session s = new();
 
             s.ID = reader.GetInt64("id");
             s.CharacterID = reader.GetString("character_id");
@@ -347,6 +391,18 @@ namespace watchtower.Services.Db {
             s.End = reader.GetNullableDateTime("finish");
             s.OutfitID = reader.GetNullableString("outfit_id");
             s.TeamID = reader.GetInt16("team_id");
+
+            s.SummaryCalculated = reader.GetNullableDateTime("summary_calculated");
+            s.Kills = reader.GetInt32("kills");
+            s.Deaths = reader.GetInt32("deaths");
+            s.VehicleKills = reader.GetInt32("vehicle_kills");
+            s.ExperienceGained = reader.GetInt64("experience_gained");
+            s.Heals = reader.GetInt32("heals");
+            s.Revives = reader.GetInt32("revives");
+            s.ShieldRepairs = reader.GetInt32("shield_repairs");
+            s.Resupplies = reader.GetInt32("resupplies");
+            s.Repairs = reader.GetInt32("repairs");
+            s.Spawns = reader.GetInt32("spawns");
 
             return s;
         }
