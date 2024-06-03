@@ -59,7 +59,7 @@ namespace watchtower.Services.Hosted.Startup {
                             break;
                         }
 
-                        if (sessions.FirstOrDefault(iter => iter.End == null) == null) {
+                        if (sessions.FirstOrDefault(iter => iter.End != null) == null) {
                             _Logger.LogDebug($"no unfinished sessions found, skipping [iterDate={iterDate:u}] [sessions.Count={sessions.Count}]");
                             break;
                         }
