@@ -52,6 +52,7 @@ namespace watchtower.Services.Hosted.Startup {
                 try {
                     // i prefer doing a do{} while(false) for states where there can be multiple exists
                     do {
+                        stoppingToken.ThrowIfCancellationRequested();
                         Stopwatch loadTimer = Stopwatch.StartNew();
                         List<Session> sessions = await _SessionDb.GetByRange(iterDate, iterDate.AddDays(1));
                         if (sessions.Count == 0) {
@@ -68,7 +69,7 @@ namespace watchtower.Services.Hosted.Startup {
 
                         // find the first session that needs its summary calculated, if one doesn't exist, then this range is already done
                         if (sessions.FirstOrDefault(iter => iter.SummaryCalculated == null) == null) {
-                            _Logger.LogDebug($"no unfinished sessions found, skipping [iterDate={iterDate:u}] [sessions.Count={sessions.Count}]");
+                            _Logger.LogDebug($"no unsummarized sessions found, skipping [iterDate={iterDate:u}] [sessions.Count={sessions.Count}]");
                             break;
                         }
 
@@ -78,6 +79,7 @@ namespace watchtower.Services.Hosted.Startup {
                         long killLoadMs = loadTimer.ElapsedMilliseconds; loadTimer.Restart();
                         List<VehicleDestroyEvent> vehicleEvents = await _VehicleDestroyDb.GetByRange(iterDate, iterDate.AddDays(1));
                         long vkillLoadMs = loadTimer.ElapsedMilliseconds; loadTimer.Restart();
+                        stoppingToken.ThrowIfCancellationRequested();
 
                         Dictionary<string, List<ExpEvent>> exp = new Dictionary<string, List<ExpEvent>>();
                         foreach (ExpEvent ev in expEvents) {
@@ -218,6 +220,7 @@ namespace watchtower.Services.Hosted.Startup {
 
                             try {
                                 await _SessionDb.UpdateSummary(s.ID, s);
+                                stoppingToken.ThrowIfCancellationRequested();
                             } catch (Exception ex) {
                                 _Logger.LogError(ex, $"failed to update session [session.ID={s.ID}] [iterDate={iterDate:u}]");
                             }
