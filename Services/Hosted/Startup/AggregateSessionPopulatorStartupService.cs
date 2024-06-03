@@ -58,6 +58,12 @@ namespace watchtower.Services.Hosted.Startup {
                             _Logger.LogDebug($"no sessions found, skipping [iterDate={iterDate:u}]");
                             break;
                         }
+
+                        if (sessions.FirstOrDefault(iter => iter.End == null) == null) {
+                            _Logger.LogDebug($"no unfinished sessions found, skipping [iterDate={iterDate:u}] [sessions.Count={sessions.Count}]");
+                            break;
+                        }
+
                         long sessionLoadMs = loadTimer.ElapsedMilliseconds; loadTimer.Restart();
 
                         // find the first session that needs its summary calculated, if one doesn't exist, then this range is already done
@@ -152,10 +158,9 @@ namespace watchtower.Services.Hosted.Startup {
                             if (s.Spawns == -1) { s.Spawns = 0; }
                             if (s.ExperienceGained == -1) { s.ExperienceGained = 0; }
 
-                            List<KillEvent> kevents = kills.GetValueOrDefault(s.CharacterID) ?? [];
-                            foreach (KillEvent ev in kevents) {
+                            foreach (KillEvent ev in kills.GetValueOrDefault(s.CharacterID) ?? []) {
                                 // ignore events outside the range of this session
-                                if (s.Start > ev.Timestamp || ev.Timestamp > s.End.Value) {
+                                if (s.Start >= ev.Timestamp || ev.Timestamp > s.End.Value) {
                                     continue;
                                 }
 
@@ -163,7 +168,7 @@ namespace watchtower.Services.Hosted.Startup {
                             }
 
                             foreach (KillEvent ev in deaths.GetValueOrDefault(s.CharacterID) ?? []) {
-                                if (s.Start > ev.Timestamp || ev.Timestamp > s.End.Value) {
+                                if (s.Start >= ev.Timestamp || ev.Timestamp > s.End.Value) {
                                     continue;
                                 }
 
@@ -171,16 +176,15 @@ namespace watchtower.Services.Hosted.Startup {
                             }
 
                             foreach (VehicleDestroyEvent ev in vehicleKills.GetValueOrDefault(s.CharacterID) ?? []) {
-                                if (s.Start > ev.Timestamp || ev.Timestamp > s.End.Value) {
+                                if (s.Start >= ev.Timestamp || ev.Timestamp > s.End.Value) {
                                     continue;
                                 }
 
                                 s.VehicleKills += 1;
                             }
 
-                            List<ExpEvent> sessionExp = exp.GetValueOrDefault(s.CharacterID) ?? [];
-                            foreach (ExpEvent ev in sessionExp) {
-                                if (s.Start > ev.Timestamp || ev.Timestamp > s.End.Value) {
+                            foreach (ExpEvent ev in exp.GetValueOrDefault(s.CharacterID) ?? []) {
+                                if (s.Start >= ev.Timestamp || ev.Timestamp > s.End.Value) {
                                     continue;
                                 }
 

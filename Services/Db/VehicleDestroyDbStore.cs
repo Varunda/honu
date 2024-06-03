@@ -122,11 +122,12 @@ namespace watchtower.Services.Db {
         /// </summary>
         /// <param name="start">start of the range (inclusive)</param>
         /// <param name="end">end of the range (exclusive)</param>
+        /// <param name="cancel">cancellation token</param>
         /// <returns>
         ///     a list of <see cref="VehicleDestroyEvent"/>s with a <see cref="VehicleDestroyEvent.Timestamp"/>
         ///     between <paramref name="start"/> (inclusive) and <paramref name="end"/> (exclusive)
         /// </returns>
-        public async Task<List<VehicleDestroyEvent>> GetByRange(DateTime start, DateTime end) {
+        public async Task<List<VehicleDestroyEvent>> GetByRange(DateTime start, DateTime end, CancellationToken cancel = default) {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.EVENTS);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
@@ -139,7 +140,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("PeriodEnd", end);
             await cmd.PrepareAsync();
 
-            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd);
+            List<VehicleDestroyEvent> evs = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return evs;

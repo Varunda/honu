@@ -16,5 +16,9 @@ namespace watchtower.Code.ExtensionMethods {
             return GetDiscordTimestamp(when, "R");
         }
 
+        public static bool Between(this DateTime when, DateTime rangeStart, DateTime rangeEnd) {
+            return when >= rangeStart && when < rangeEnd;
+        }
+
     }
 }

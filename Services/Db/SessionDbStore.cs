@@ -206,6 +206,28 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     get a list of all <see cref="Session"/>s with <see cref="Session.SummaryCalculated"/>
+        ///     of null, and <see cref="Session.End"/> that is not null. These are all sessions
+        ///     that can have the aggregate stat summaries calculated
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<Session>> GetNeedsSummary(CancellationToken cancel = default) {
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE summary_calculated IS NULL AND finish IS NOT NULL;
+            ");
+
+            cmd.CommandTimeout = 300;
+
+            List<Session> sessions = await ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
+        /// <summary>
         ///     Get all sessions between two ranges within an outfit
         /// </summary>
         /// <param name="outfitID">Optional ID of the outfit to provide</param>

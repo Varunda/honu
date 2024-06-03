@@ -81,6 +81,15 @@
                         </td>
                     </tr>
 
+                    <tr v-if="character.state == 'loaded'">
+                        <td><b>World</b></td>
+                        <td>
+                            <a :href="'/view/' + character.data.worldID">
+                                {{character.data.worldID | world}}
+                            </a>
+                        </td>
+                    </tr>
+
                     <tr>
                         <td><b>Faction</b></td>
                         <td>
@@ -354,6 +363,7 @@
     import "filters/FixedFilter";
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
+    import "filters/WorldNameFilter";
 
     import SessionViewerKills from "./components/SessionViewerKills.vue";
     import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";

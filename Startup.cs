@@ -208,6 +208,9 @@ namespace watchtower {
             services.AddHostedService<RealtimeAlertBroadcastServer>();
             services.AddHostedService<HostedWrappedGenerationProcess>();
             services.AddHostedService<ZoneLastLockedStartupService>();
+            services.AddHostedService<HostedWorldZonePopulationBuilder>();
+            services.AddHostedService<AggregateSessionPopulatorStartupService>(); // only needed as migration of data
+            //services.AddHostedService<HostedSessionSummaryProcess>(); // add this one the initial backfill is done
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();
@@ -221,8 +224,6 @@ namespace watchtower {
             services.AddHostedService<SessionEndQueueProcessService>();
             services.AddHostedService<HostedAlertEndService>();
             services.AddHostedService<HostedBackgroundFacilityControlEventProcessQueue>(); // what a doozy of a name
-            services.AddHostedService<HostedWorldZonePopulationBuilder>();
-            services.AddHostedService<AggregateSessionPopulatorStartupService>();
 
             if (Configuration.GetValue<bool>("Discord:Enabled") == true) {
                 services.AddSingleton<DiscordWrapper>();

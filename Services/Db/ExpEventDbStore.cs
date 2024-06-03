@@ -21,6 +21,7 @@ namespace watchtower.Services.Db {
         private readonly IDbHelper _DbHelper;
 
         private readonly IDataReader<ExpEvent> _ExpDataReader;
+        private readonly IDataReader<SmallerExpEvent> _SmallerExpReader;
 
         private const string unformatted = @"
             INSERT INTO {0} (
@@ -41,12 +42,13 @@ namespace watchtower.Services.Db {
         ";
 
         public ExpEventDbStore(ILogger<ExpEventDbStore> logger,
-            IDbHelper dbHelper, IDataReader<ExpEvent> expReader) {
+            IDbHelper dbHelper, IDataReader<ExpEvent> expReader, IDataReader<SmallerExpEvent> smallerExpReader) {
 
             _Logger = logger;
             _DbHelper = dbHelper;
 
             _ExpDataReader = expReader ?? throw new ArgumentNullException(nameof(expReader));
+            _SmallerExpReader = smallerExpReader;
         }
 
         /// <summary>
@@ -394,11 +396,13 @@ namespace watchtower.Services.Db {
         /// <param name="end">End period</param>
         /// <param name="zoneID">Optional, zone ID to limit the kills by</param>
         /// <param name="worldID">Optional, world ID to limit the kills by</param>
+        /// <param name="cancel">cancellation token</param>
         /// <returns>
         ///     All <see cref="ExpEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
-        public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null) {
+        public async Task<List<ExpEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null,
+            CancellationToken cancel = default) {
             bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
 
             using NpgsqlConnection conn = _DbHelper.Connection(useAll == true ? Dbs.EVENTS : Dbs.CHARACTER);
@@ -418,7 +422,29 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("WorldID", worldID);
             await cmd.PrepareAsync();
 
-            List<ExpEvent> evs = await _ExpDataReader.ReadList(cmd);
+            List<ExpEvent> evs = await _ExpDataReader.ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return evs;
+        }
+
+        public async Task<List<SmallerExpEvent>> GetSmallerByRange(DateTime start, DateTime end, CancellationToken cancel = default) {
+            bool useAll = (DateTime.UtcNow - end) > TimeSpan.FromHours(2) || (DateTime.UtcNow - start) > TimeSpan.FromHours(2);
+
+            using NpgsqlConnection conn = _DbHelper.Connection(useAll == true ? Dbs.EVENTS : Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
+                SELECT source_character_id, experience_id, amount, timestamp
+                    FROM {(useAll ? "wt_exp" : "wt_recent_exp")}
+                    WHERE timestamp BETWEEN @PeriodStart AND @PeriodEnd;
+            ");
+
+            cmd.CommandTimeout = 300;
+
+            cmd.AddParameter("PeriodStart", start);
+            cmd.AddParameter("PeriodEnd", end);
+            await cmd.PrepareAsync();
+
+            List<SmallerExpEvent> evs = await _SmallerExpReader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return evs;

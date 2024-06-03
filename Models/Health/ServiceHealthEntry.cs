@@ -16,7 +16,7 @@ namespace watchtower.Models {
         public string Name { get; set; } = "";
 
         /// <summary>
-        ///     When this service was last ran
+        ///     When this service was last ran to completion
         /// </summary>
         public DateTime LastRan { get; set; } = DateTime.UtcNow;
 

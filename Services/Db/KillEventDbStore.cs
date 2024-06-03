@@ -475,11 +475,14 @@ namespace watchtower.Services.Db {
         /// <param name="end">End period</param>
         /// <param name="zoneID">Optional, zone ID to limit the kills by</param>
         /// <param name="worldID">Optional, world ID to limit the kills by</param>
+        /// <param name="cancel">cancellation token</param>
         /// <returns>
         ///     All <see cref="KillEvent"/>s that occured between the range given. If <paramref name="zoneID"/>
         ///     and/or <paramref name="worldID"/> is given, the event will match those options given
         /// </returns>
-        public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null) {
+        public async Task<List<KillEvent>> GetByRange(DateTime start, DateTime end, uint? zoneID = null, short? worldID = null,
+            CancellationToken cancel = default) {
+
             if (end <= start) {
                 throw new ArgumentException($"{nameof(start)} {start:u} must come before {nameof(end)} {end:u}");
             }
@@ -503,7 +506,7 @@ namespace watchtower.Services.Db {
 
             await cmd.PrepareAsync();
 
-            List<KillEvent> evs = await _KillEventReader.ReadList(cmd);
+            List<KillEvent> evs = await _KillEventReader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return evs;
