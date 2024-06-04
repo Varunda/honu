@@ -268,7 +268,7 @@ namespace watchtower.Services.Hosted {
             }
 
             updateTimer.Stop();
-            _Logger.LogInformation($"session summary iteration done [duration={loadTimer.ElapsedMilliseconds}ms] [updateTImer={updateTimer.ElapsedMilliseconds}ms]" +
+            _Logger.LogInformation($"session summary iteration done [duration={loadTimer.ElapsedMilliseconds}ms] [updateTimer={updateTimer.ElapsedMilliseconds}ms]" +
                 $" [sessions.Count={sessions.Sessions.Count}] [processed={countProcessed}] [unend={countUnended}] [partial={countPartial}] [done={countDone}] [already={countAlready}]");
         }
 

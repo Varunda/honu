@@ -31,6 +31,13 @@
             <toggle-button v-model="showCategory">
                 Show item category
             </toggle-button>
+
+            <a :href="'/api/character/' + character.id + '/weapon_stats'" class="btn btn-primary" target="_blank"
+                :download="'honu-character-weapons-' + character.name + '-' + character.id + '.json'">
+
+                Download JSON
+                <span class="fa-fw fas fa-download"></span>
+            </a>
         </div>
 
         <a-table v-if="showTable" class="mb-0"
@@ -280,6 +287,7 @@
         <div class="text-center mb-3 alert alert-secondary">
             The aurax progress colors behind weapons (purple, gold, silver, and bronze) are based on how many kills with the weapon, not the actual progress in game.
         </div>
+
 
     </div>
 </template>

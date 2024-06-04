@@ -11,6 +11,18 @@ export class Session {
 	public end: Date | null = null;
 	public outfitID: string | null = null;
 	public teamID: number = 0;
+
+	public summaryCalculated: Date | null = null;
+	public kills: number = 0;
+	public deaths: number = 0;
+	public vehicleKills: number = 0;
+	public experienceGained: number = 0;
+	public heals: number = 0;
+	public revives: number = 0;
+	public shieldRepairs: number = 0;
+	public resupplies: number = 0;
+	public repairs: number = 0;
+	public spawns: number = 0;
 }
 
 export class SessionBlock {
@@ -32,7 +44,8 @@ export class SessionApi extends ApiWrapper<Session> {
 		return {
 			...elem,
 			start: new Date(elem.start),
-			end: elem.end == null ? null : new Date(elem.end)
+			end: elem.end == null ? null : new Date(elem.end),
+			summaryCalculated: elem.summaryCalculated == null ? null : new Date(elem.summaryCalculated)
 		};
 	}
 

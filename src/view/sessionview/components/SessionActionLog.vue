@@ -399,6 +399,9 @@
 
                         parts.push(this.createLogText("healed"));
                         parts.push(this.createCharacterLink(other, iter.otherID));
+
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 25;
+                        parts.push(this.createLogText(`for ${amount}-${amount + 25} health`));
                     } else if (Experience.isRevive(expID)) {
                         type = "revive";
 
@@ -551,6 +554,10 @@
              * @param options Optional options about how to display the link, such as will an 's be included?
              */
             createCharacterLink: function(c: PsCharacter | null, id: string, options?: { possessive?: boolean }): LogPart {
+                if (id == "0") {
+                    return { html: "no one" + (options?.possessive == true ? "'s" : "") };
+                }
+
                 let text: string = this.getCharacterName(c, id);
                 if (options && options.possessive) {
                     text += "'s";
@@ -574,6 +581,10 @@
              * @param loadoutID ID of the loadout
              */
             createLoadoutIcon: function(loadoutID: number): LogPart {
+                if (loadoutID == 0) {
+                    return { html: "" };
+                }
+
                 const className: string = LoadoutUtils.getLoadoutName(loadoutID);
                 let iconName: string = "";
                 if (className == LoadoutUtils.NAME_INFILTRATOR) {

@@ -16,6 +16,27 @@
             </h2>
         </div>
 
+        <div class="mb-2">
+            <a :href="'/jaegernsa/' + (when - 3600)" class="btn btn-primary">
+                -1 hour
+            </a>
+            <a :href="'/jaegernsa/' + (when - 300)" class="btn btn-primary">
+                -5 min
+            </a>
+            <a :href="'/jaegernsa/' + (when - 60)" class="btn btn-primary">
+                -1 min
+            </a>
+            <a :href="'/jaegernsa/' + (when + 60)" class="btn btn-primary">
+                +1 min
+            </a>
+            <a :href="'/jaegernsa/' + (when + 300)" class="btn btn-primary">
+                +5 min
+            </a>
+            <a :href="'/jaegernsa/' + (when + 3600)" class="btn btn-primary">
+                +1 hour
+            </a>
+        </div>
+
         <a-table
             :entries="entries" :show-filters="true" display-type="table" :hover="true"
             default-sort-field="start" default-sort-order="asc">

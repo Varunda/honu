@@ -135,7 +135,7 @@
 
                     <tr>
                         <td><b>Start</b></td>
-                        <td>{{session.data.start | moment}}</td>
+                        <td>{{session.data.start | moment("YYYY-MM-DD hh:mm:ss")}}</td>
                     </tr>
 
                     <tr>
@@ -145,7 +145,7 @@
                                 &lt;In progress&gt;
                             </span>
                             <span v-else>
-                                {{session.data.end | moment}}
+                                {{session.data.end | moment("YYYY-MM-DD hh:mm:ss")}}
                             </span>
                         </td>
                     </tr>
@@ -218,6 +218,21 @@
                     </tr>
 
                     <tr>
+                        <td>Vehicle destroy</td>
+                        <td>
+                            <span v-if="vehicleDestroy.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else>
+                                {{vehicleDestroy.state}}
+                            </span>
+                            <span v-if="vehicleDestroy.state == 'loaded'">
+                                ({{vehicleDestroy.data.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
                         <td>Achievements</td>
                         <td>
                             <span v-if="achievementsEarned.state == 'loading'" class="text-warning">
@@ -228,21 +243,6 @@
                             </span>
                             <span v-if="achievementsEarned.state == 'loaded'">
                                 ({{achievementsEarned.data.events.length}})
-                            </span>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Vehicle destroy</td>
-                        <td>
-                            <span v-if="vehicleDestroy.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else>
-                                {{vehicleDestroy.state}}
-                            </span>
-                            <span v-if="achievementsEarned.state == 'loaded'">
-                                ({{vehicleDestroy.data.length}})
                             </span>
                         </td>
                     </tr>
@@ -292,7 +292,9 @@
                     Loading...
                 </div>
 
-                <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp-breakdown>
+                <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'"
+                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                </session-viewer-exp-breakdown>
             </collapsible>
 
             <collapsible header-text="Experience" id="session-exp">
@@ -301,7 +303,8 @@
                     Loading...
                 </div>
 
-                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp"></session-viewer-exp>
+                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                </session-viewer-exp>
             </collapsible>
 
             <collapsible header-text="Achievements earned" id="session-achievement">
@@ -310,7 +313,9 @@
                     Loading...
                 </div>
 
-                <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'" :session="session.data" :earned="achievementsEarned.data"></session-achievements-earned>
+                <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'"
+                    :session="session.data" :earned="achievementsEarned.data">
+                </session-achievements-earned>
             </collapsible>
 
             <collapsible header-text="Trends" id="session-trends">
@@ -342,7 +347,8 @@
                 </div>
 
                 <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills" :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
+                    :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills"
+                    :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
                 </session-action-log>
             </collapsible>
 

@@ -902,6 +902,13 @@ export const ATable = Vue.extend({
                     }
                 },
                 [...(filter.source ?? [])].sort((a: any, b: any) => {
+                    if (a.value == null && b.value != null) { // make sure that "All" comes first
+                        return -1;
+                    }
+                    if (a.value != null && b.value == null) {
+                        return 1;
+                    }
+
                     if (typeof (a.key) != "string") {
                         throw `Expected to find string for ${a.key}, got type ${typeof(a.key)} instead!`;
                     }
@@ -1061,6 +1068,11 @@ export const ATable = Vue.extend({
         },
 
         createFilterConditionButton(createElement: CreateElement, filter: Filter): VNode {
+
+            if (Conditions.get(filter.selectedCondition) == undefined) {
+                throw `condition ${filter.selectedCondition} does not exist!`;
+            }
+
             // .btn-group that contains the button for the currently selected condition
             //      as well as the dropdown to change the current filter condition
             return createElement("div", { staticClass: "btn-group" }, [
@@ -1100,6 +1112,10 @@ export const ATable = Vue.extend({
                     },
                     // Dropdown item for each filter condition
                     filter.conditions.map((condition: string): VNode => {
+                        if (Conditions.get(condition) == undefined) {
+                            throw `condition ${condition} does not exist!`;
+                        }
+
                         const condIcon: string = Conditions.get(condition)!.icon;
                         const condTitle: string = Conditions.get(condition)!.title;
                         const condColor: string = Conditions.get(condition)!.color;

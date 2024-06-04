@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <div class="alert alert-primary text-center">
-            This data is populated only AFTER and  alert is finished
+            This data is populated only AFTER an alert is finished
         </div>
 
         <div class="border mb-3 mt-0 rounded">
@@ -325,7 +325,7 @@
 
             <a-col v-if="columns.shieldRepairsPerMinute" sort-field="shieldRepairsPerMinute">
                 <a-header>
-                    <b>SHield reps/Min</b>
+                    <b>Shield reps/Min</b>
                 </a-header>
 
                 <a-body v-slot="entry">
