@@ -356,7 +356,6 @@
                     this.chart = null;
                 }
 
-                //hc.chart("hc-chart", {
                 this.chart = hs.stockChart("hc-chart", {
                     title: { text: "" },
 

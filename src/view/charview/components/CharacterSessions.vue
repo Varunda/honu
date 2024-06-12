@@ -1,5 +1,13 @@
 ﻿<template>
     <div>
+        <div class="border mb-3 mt-0 rounded" @click="showChart = true">
+            <collapsible header-text="Graphed session stats" size-class="h4" class="mb-3" :show="false">
+                <div v-if="showChart == true">
+                    <session-chart v-if="block.state == 'loaded'" :entries="data.data"></session-chart>
+                </div>
+            </collapsible>
+        </div>
+
         <div class="border mb-3 mt-0 rounded">
             <collapsible header-text="Column selection" size-class="h4" class="mb-0">
                 <div class="pl-3">
@@ -468,6 +476,8 @@
                 <a-body v-slot="entry">
                     <a :href="'/s/' + entry.id">
                         View
+
+
                     </a>
                 </a-body>
             </a-col>
@@ -514,6 +524,8 @@
     import ToggleButton from "components/ToggleButton";
     import Collapsible from "components/Collapsible.vue";
 
+    import SessionChart from "./SessionChart.vue";
+
     import "filters/LocaleFilter";
     import "filters/FixedFilter";
 
@@ -521,49 +533,12 @@
     import { PsOutfit } from "api/OutfitApi";
     import { Session, SessionBlock, SessionApi } from "api/SessionApi";
 
+    import { FlatSession } from "./common";
+
     type SessionOutfit = {
         session: Session;
         outfit: PsOutfit | null;
     }
-
-    type FlatSession = {
-        id: number;
-        characterID: string;
-        start: Date;
-        end: Date | null;
-        outfitID: string | null;
-        outfitName: string | null;
-        outfitTag: string | null;
-        outfitFaction: number | null;
-
-        duration: number; // number of seconds
-
-        summaryCalculated: Date | null;
-        expGained: number;
-        expPerMinute: number;
-
-        kills: number;
-        vkills: number;
-        deaths: number;
-        kd: number;
-        kpm: number;
-        vkpm: number;
-
-        spawns: number;
-        spawnsPerMinute: number;
-
-        heals: number;
-        revives: number;
-        shieldRepairs: number;
-        healsPerMinute: number;
-        revivesPerMinute: number;
-        shieldRepairsPerMinute: number;
-
-        maxRepairs: number;
-        resupplies: number;
-        maxRepairsPerMinute: number;
-        resuppliesPerMinute: number;
-    };
 
     const SessionCell = Vue.extend({
         props: {
@@ -593,9 +568,11 @@
                 showAll: false as boolean,
                 showTable: true as boolean,
 
+                showChart: false as boolean,
+
                 cutoff: {
-                    vkill: new Date(2022, 1, 18) as Date,
-                    exp: new Date(2022, 7, 23) as Date
+                    vkill: new Date(2022, 0, 18) as Date, // month is 0 indexed
+                    exp: new Date(2022, 6, 23) as Date
                 },
 
                 columns: {
@@ -716,7 +693,9 @@
 
                 const outfits: Map<string, PsOutfit> = this.block.data.outfits;
 
-                return Loadable.loaded(sessions.map(iter => {
+                return Loadable.loaded(sessions.sort((a, b) => {
+                    return a.start.getTime() - b.start.getTime();
+                }).map(iter => {
                     let outfit: PsOutfit | undefined;
                     if (iter.outfitID == null || iter.outfitID == "0") {
                         outfit = undefined;
@@ -786,7 +765,8 @@
         components: {
             ATable, ACol, AHeader, ABody, AFilter,
             InfoHover, ToggleButton, Collapsible,
-            SessionCell
+            SessionCell,
+            SessionChart
         }
     });
     export default CharacterSessions;

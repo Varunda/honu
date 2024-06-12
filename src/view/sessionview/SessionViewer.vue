@@ -557,7 +557,8 @@
                 this.reconnects = Loadable.loading();
                 this.reconnects = await RealtimeReconnectApi.getByInterval(this.session.data.start, this.session.data.end ?? new Date());
                 if (this.reconnects.state == "loaded" && this.character.state == "loaded") {
-                    this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == this.character.data.worldID);
+                    const worldID: number = this.character.data.worldID;
+                    this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == worldID);
                 }
             },
 
