@@ -165,9 +165,29 @@ namespace watchtower.Controllers {
                 return ApiBadRequest<ExperienceBlock>($"{nameof(start)} must come before ${nameof(end)}");
             }
 
-            List<ExpEvent> events = await _ExpDbStore.GetByCharacterID(charID, start, end);
+            ExperienceBlock block = await _GetExpBlock(charID, start, end, includeCharacters, includeExpTypes, interestedEvents, false);
+            return ApiOk(block);
+        }
+
+        private async Task<ExperienceBlock> _GetExpBlock(string charID,
+            DateTime start, DateTime end,
+            bool? includeCharacters = true, bool? includeExpTypes = true,
+            List<int>? interestedEvents = null, bool? useOther = false) {
+
+            if (end - start > TimeSpan.FromDays(1)) {
+                throw new Exception($"{nameof(start)} and {nameof(end)} cannot have more than a 24 hour difference");
+            }
+            if (start >= end) {
+                throw new Exception($"{nameof(start)} must come before ${nameof(end)}");
+            }
+
+            // 
+            List<ExpEvent> events = (useOther == true)
+                ? await _ExpDbStore.GetOtherByCharacterIDs([charID], start, end)
+                : await _ExpDbStore.GetByCharacterID(charID, start, end);
+
             if (interestedEvents != null && interestedEvents.Count > 0) {
-                _Logger.LogDebug($"Filtering exp events for {charID} between {start:u} - {end:u}: {string.Join(", ", interestedEvents)}");
+                _Logger.LogDebug($"filtering exp events [charID={charID}] [start={start:u}] [end={end:u}] [events={string.Join(", ", interestedEvents)}]");
                 events = events.Where(iter => interestedEvents.IndexOf(iter.ExperienceID) > -1).ToList();
             }
 
@@ -201,7 +221,7 @@ namespace watchtower.Controllers {
                 block.ExperienceTypes = types;
             }
 
-            return ApiOk(block);
+            return block;
         }
 
         /// <summary>
@@ -229,6 +249,31 @@ namespace watchtower.Controllers {
             }
 
             return await GetByCharacterIDAndRange(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+        }
+
+        /// <summary>
+        ///     get the exp events in a session where the <see cref="ExpEvent.OtherID"/> is the
+        ///     <see cref="Session.CharacterID"/> of the <see cref="Session"/> with <see cref="Session.ID"/>
+        ///     of <paramref name="sessionID"/>
+        /// </summary>
+        /// <param name="sessionID">ID of the session to get the <see cref="ExpEvent"/>s of</param>
+        /// <response code="200">
+        ///     the response will contain a <see cref="ExperienceBlock"/> for the <see cref="ExpEvent"/>s
+        ///     that occured within the <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/>
+        ///     with a <see cref="ExpEvent.OtherID"/> of the <see cref="Session"/>
+        /// </response>
+        /// <response code="404">
+        ///     no <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
+        [HttpGet("session/{sessionID}/target")]
+        public async Task<ApiResponse<ExperienceBlock>> GetTargetBySessionID(long sessionID) {
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return ApiNotFound<ExperienceBlock>($"{nameof(Session)} {sessionID}");
+            }
+
+            ExperienceBlock block = await _GetExpBlock(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow, true, true, useOther: true);
+            return ApiOk(block);
         }
 
         /// <summary>
