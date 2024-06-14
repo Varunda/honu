@@ -212,12 +212,12 @@ namespace watchtower.Controllers {
             }
 
             if (includeCharacters == true) {
-                List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs.ToList(), CensusEnvironment.PC, fast: true);
+                List<PsCharacter> chars = await _CharacterRepository.GetByIDs(charIDs, CensusEnvironment.PC, fast: true);
                 block.Characters = chars;
             }
 
             if (includeExpTypes == true) {
-                List<ExperienceType> types = (await _ExperienceTypeRepository.GetAll()).Where(iter => expTypeIDs.Contains(iter.ID)).ToList();
+                List<ExperienceType> types = await _ExperienceTypeRepository.GetByIDs(expTypeIDs);
                 block.ExperienceTypes = types;
             }
 

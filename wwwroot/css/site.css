@@ -194,3 +194,18 @@
     text-decoration: underline dotted;
     cursor: help;
 }
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.bottom-border {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.bottom-border:last-child {
+    border-bottom: unset;
+}
+

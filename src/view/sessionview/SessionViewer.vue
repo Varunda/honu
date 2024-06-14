@@ -12,7 +12,7 @@
             <menu-sep></menu-sep>
 
             <li class="nav-item h1 p-0">
-                <span v-if="character.state == 'loading'">
+                <span v-if="character.state == 'loading' || character.state == 'idle'">
                     &lt;loading...&gt;
                 </span>
 
@@ -50,7 +50,10 @@
                     This session was created before all exp events were tracked, and some data will be hidden.
                 </div>
                 <div class="mt-2">
-                    Click here to show the full exp data anyways
+                    <span class="wt-link">
+                        Click here
+                    </span>
+                    to show the full exp data anyways
                 </div>
             </div>
 
@@ -178,6 +181,9 @@
                             <span v-if="fullKills.state == 'loading'" class="text-warning">
                                 Loading...
                             </span>
+                            <span v-else-if="fullKills.state == 'loaded'" class="text-info">
+                                loaded
+                            </span>
                             <span v-else>
                                 {{fullKills.state}}
                             </span>
@@ -192,6 +198,9 @@
                         <td>
                             <span v-if="fullDeaths.state == 'loading'" class="text-warning">
                                 Loading...
+                            </span>
+                            <span v-else-if="fullDeaths.state == 'loaded'" class="text-info">
+                                loaded
                             </span>
                             <span v-else>
                                 {{fullDeaths.state}}
@@ -208,6 +217,9 @@
                             <span v-if="exp.state == 'loading'" class="text-warning">
                                 Loading...
                             </span>
+                            <span v-else-if="exp.state == 'loaded'" class="text-info">
+                                loaded
+                            </span>
                             <span v-else>
                                 {{exp.state}}
                             </span>
@@ -218,10 +230,31 @@
                     </tr>
 
                     <tr>
+                        <td>Exp (target)</td>
+                        <td>
+                            <span v-if="expOther.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else-if="expOther.state == 'loaded'" class="text-info">
+                                loaded
+                            </span>
+                            <span v-else>
+                                {{expOther.state}}
+                            </span>
+                            <span v-if="expOther.state == 'loaded'">
+                                ({{expOther.data.events.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
                         <td>Vehicle destroy</td>
                         <td>
                             <span v-if="vehicleDestroy.state == 'loading'" class="text-warning">
                                 Loading...
+                            </span>
+                            <span v-else-if="vehicleDestroy.state == 'loaded'" class="text-info">
+                                loaded
                             </span>
                             <span v-else>
                                 {{vehicleDestroy.state}}
@@ -233,10 +266,16 @@
                     </tr>
 
                     <tr>
-                        <td>Achievements</td>
+                        <td>
+                            Achievements
+                            <info-hover text="Not available before 2022-08-01"></info-hover>
+                        </td>
                         <td>
                             <span v-if="achievementsEarned.state == 'loading'" class="text-warning">
                                 Loading...
+                            </span>
+                            <span v-else-if="achievementsEarned.state == 'loaded'" class="text-info">
+                                loaded
                             </span>
                             <span v-else>
                                 {{achievementsEarned.state}}
@@ -264,7 +303,7 @@
                 </table>
             </collapsible>
 
-            <collapsible header-text="Summary" id="session-general">
+            <collapsible header-text="Summary" id="session-general" class="mb-3">
                 <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -275,7 +314,7 @@
                 </session-viewer-general>
             </collapsible>
 
-            <collapsible header-text="Kills and deaths" id="session-kills">
+            <collapsible header-text="Kills and deaths" id="session-kills" class="mb-3">
                 <div v-if="fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -286,7 +325,7 @@
                 </session-viewer-kills>
             </collapsible>
 
-            <collapsible v-if="showFullExp == true" header-text="Experience breakdown" id="session-expb">
+            <collapsible v-if="showFullExp == true" header-text="Experience breakdown" id="session-expb" class="mb-3">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -297,7 +336,7 @@
                 </session-viewer-exp-breakdown>
             </collapsible>
 
-            <collapsible header-text="Experience" id="session-exp">
+            <collapsible header-text="Experience" id="session-exp" class="mb-3">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -307,7 +346,17 @@
                 </session-viewer-exp>
             </collapsible>
 
-            <collapsible header-text="Achievements earned" id="session-achievement">
+            <collapsible header-text="Supported by" id="session-supported-by" class="mb-3">
+                <div v-if="expOther.state == 'loading'">
+                    <busy style="max-height: 1.25rem;"></busy>
+                    Loading...
+                </div>
+
+                <session-supported-by v-else-if="expOther.state == 'loaded'" :session="session.data" :exp="expOther.data" :full-exp="showFullExp">
+                </session-supported-by>
+            </collapsible>
+
+            <collapsible header-text="Achievements earned" id="session-achievement" class="mb-3">
                 <div v-if="achievementsEarned.state == 'loading'">
                     <busy class="honu-busy"></busy>
                     Loading...
@@ -318,7 +367,7 @@
                 </session-achievements-earned>
             </collapsible>
 
-            <collapsible header-text="Trends" id="session-trends">
+            <collapsible header-text="Trends" id="session-trends" class="mb-3">
                 <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -329,7 +378,7 @@
                 </session-viewer-trends>
             </collapsible>
 
-            <collapsible header-text="Routers & Sunderers" id="session-spawns">
+            <collapsible header-text="Routers & Sunderers" id="session-spawns" class="mb-3">
                 <div v-if="exp.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -340,7 +389,7 @@
                 </session-viewer-spawns>
             </collapsible>
 
-            <collapsible header-text="Action log" id="session-action-log">
+            <collapsible header-text="Action log" id="session-action-log" class="mb-3">
                 <div v-if="exp.state == 'loading' || fullKills.state == 'loading' || vehicleDestroy.state == 'loading'">
                     <busy style="max-height: 1.25rem;"></busy>
                     Loading...
@@ -352,7 +401,7 @@
                 </session-action-log>
             </collapsible>
 
-            <collapsible header-text="Item added" id="session-item-added">
+            <collapsible header-text="Item added" id="session-item-added" class="mb-3">
                 <session-item-added :session="session.data"></session-item-added>
             </collapsible>
 
@@ -380,6 +429,7 @@
     import SessionViewerExpBreakdown from "./components/SessionViewerExpBreakdown.vue";
     import SessionAchievementsEarned from "./components/SessionAchievementsEarned.vue";
     import SessionItemAdded from "./components/SessionItemAdded.vue";
+    import SessionSupportedBy from "./components/SessionSupportedBy.vue";
     import ChartTimestamp from "./components/ChartTimestamp.vue";
 
     import InfoHover from "components/InfoHover.vue";
@@ -417,6 +467,7 @@
                 fullKills: Loadable.idle() as Loading<FullKillEvent[]>,
                 fullDeaths: Loadable.idle() as Loading<FullKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExperienceBlock>,
+                expOther: Loadable.idle() as Loading<ExperienceBlock>,
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
 
@@ -458,6 +509,7 @@
                 // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
                 this.bindKills();
                 this.bindExp();
+                this.bindExpOther();
                 this.bindVehicleDestroy();
                 this.bindAchievementsEarned();
             },
@@ -495,6 +547,11 @@
                 this.exp = Loadable.loading();
                 this.exp = await ExpStatApi.getBySessionID(this.sessionID);
                 this.checkAllAndScroll();
+            },
+
+            bindExpOther: async function(): Promise<void> {
+                this.expOther = Loadable.loading();
+                this.expOther = await ExpStatApi.getOtherBySessionID(this.sessionID);
             },
 
             bindKills: async function(): Promise<void> {
@@ -680,7 +737,7 @@
 
         components: {
             SessionViewerKills, SessionViewerGeneral, SessionViewerExp, SessionViewerTrends, SessionActionLog,
-            SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned, SessionItemAdded,
+            SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned, SessionItemAdded, SessionSupportedBy,
             ChartTimestamp,
             InfoHover,
             Busy,

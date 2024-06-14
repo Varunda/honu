@@ -400,6 +400,10 @@ export class ExpStatApi extends ApiWrapper<ExpEvent> {
         return ExpStatApi.get().readSingle(`/api/exp/sessions/${sessionID}`, ExpStatApi.parseBlock);
     }
 
+    public static getOtherBySessionID(sessionID: number): Promise<Loading<ExperienceBlock>> {
+        return ExpStatApi.get().readSingle(`/api/exp/session/${sessionID}/target`, ExpStatApi.parseBlock);
+    }
+
     public static async getByCharacterIDAndRange(charID: string, start: Date, end: Date): Promise<Loading<ExpandedExpEvent[]>> {
         return ExpStatApi.get().readList(`/api/exp/${charID}/period?start=${start.toISOString()}&end=${end.toISOString()}`, ExpStatApi.parseExpandedExpEntry);
     }

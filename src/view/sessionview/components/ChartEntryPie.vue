@@ -6,7 +6,6 @@
     import Vue, { PropType } from "vue";
 
     import Chart from "chart.js/auto/auto.esm";
-    //import { randomRGB, rgbToString, randomColors } from "util/Color";
     import ColorUtils from "util/Color";
 
     interface Entry {

@@ -1,40 +1,5 @@
 ﻿<template>
     <div>
-
-        <div v-if="spawns.length > 0" class="bottom-border">
-            <h3>Spawns</h3>
-
-            <div class="d-flex flex-wrap mw-100">
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-entry-pie :data="playerSpawns"></chart-entry-pie>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-entry-list :data="playerSpawns"></chart-entry-list>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                </div>
-            </div>
-        </div>
-
-        <div v-if="playerVehicleKills.length > 0" class="bottom-border">
-            <h3>Vehicle kills</h3>
-
-            <div class="d-flex flex-wrap mw-100">
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-entry-pie :data="playerVehicleKills"></chart-entry-pie>
-                </div>
-
-                <div class="flex-grow-1 flex-basis-0">
-                    <chart-entry-list :data="playerVehicleKills"></chart-entry-list>
-                </div>
-            </div>
-        </div>
-
         <div v-if="heals.length > 0" class="bottom-border">
             <h3>Heals</h3>
 
@@ -150,10 +115,18 @@
 
 <script lang="ts">
     import Vue, { PropType } from "vue";
+    import { Loadable, Loading } from "Loading";
+
+    import "MomentFilter";
+    import "filters/FixedFilter";
+    import "filters/LocaleFilter";
 
     import ChartTimestamp from "./ChartTimestamp.vue";
     import ChartEntryPie from "./ChartEntryPie.vue";
     import ChartEntryList from "./ChartEntryList.vue";
+
+    import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
+    import ToggleButton from "components/ToggleButton";
 
     import { Session } from "api/SessionApi";
     import { ExpandedExpEvent, Experience, ExperienceBlock, ExpEvent } from "api/ExpStatApi";
@@ -165,7 +138,7 @@
         link: string | null;
     }
 
-    export const SessionViewerExp = Vue.extend({
+    export const SessionSupportedBy = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
@@ -188,9 +161,6 @@
 
                 playerShieldRepairs: [] as Entry[],
                 outfitShieldRepairs: [] as Entry[],
-
-                playerSpawns: [] as Entry[],
-                playerVehicleKills: [] as Entry[]
             }
         },
 
@@ -205,16 +175,6 @@
                 this.generateResupplyEntries();
                 this.generateRepairEntries();
                 this.generateShieldRepairEntries();
-                this.generateSpawnEntries();
-            },
-
-            generateSpawnEntries: function(): void {
-                const sundy: Entry = { display: "Sundy", count: this.exp.events.filter(iter => iter.experienceID == Experience.SUNDERER_SPAWN_BONUS).length, link: null };
-                const router: Entry = { display: "Router", count: this.exp.events.filter(iter => iter.experienceID == Experience.GENERIC_NPC_SPAWN).length, link: null };
-                const squadSpawn: Entry = { display: "Squad spawn", count: this.exp.events.filter(iter => iter.experienceID == Experience.SQUAD_SPAWN).length, link: null };
-                const vehicleSpawn: Entry = { display: "Squad vehicle spawn", count: this.exp.events.filter(iter => iter.experienceID == Experience.SQUAD_VEHICLE_SPAWN_BONUS).length, link: null };
-
-                this.playerSpawns = [sundy, router, squadSpawn, vehicleSpawn];
             },
 
             generateHealEntries: function(): void {
@@ -252,20 +212,16 @@
                 const outfitMap: Map<string, Entry> = new Map();
 
                 for (const ev of events) {
-                    if (ev.otherID.length != 19) {
-                        continue;
-                    }
+                    const c: PsCharacter | null = this.exp.characters.find(iter => iter.id == ev.sourceID) || null;
 
-                    const c: PsCharacter | null = this.exp.characters.find(iter => iter.id == ev.otherID) || null;
-
-                    if (charMap.has(ev.otherID) == false) {
-                        charMap.set(ev.otherID, {
-                            display: c == null ? `<missing ${ev.otherID}>` : `${(c.outfitID ? `[${c.outfitTag}] ` : "")}${c.name}`,
+                    if (charMap.has(ev.sourceID) == false) {
+                        charMap.set(ev.sourceID, {
+                            display: c == null ? `<missing ${ev.sourceID}>` : `${(c.outfitID ? `[${c.outfitTag}] ` : "")}${c.name}`,
                             count: 0,
-                            link: `/c/${ev.otherID}`
+                            link: `/c/${ev.sourceID}`
                         });
                     }
-                    ++charMap.get(ev.otherID)!.count;
+                    ++charMap.get(ev.sourceID)!.count;
 
                     if (c != null) {
                         if (outfitMap.has(c.outfitID ?? "0") == false) {
@@ -321,10 +277,10 @@
         },
 
         components: {
-            ChartTimestamp,
-            ChartEntryPie,
-            ChartEntryList
+            ChartTimestamp, ChartEntryPie, ChartEntryList,
+            ATable, ACol, ABody, AFilter, AHeader,
+            ToggleButton
         }
     });
-    export default SessionViewerExp;
+    export default SessionSupportedBy;
 </script>
