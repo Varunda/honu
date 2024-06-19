@@ -278,6 +278,7 @@
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
+            duration: { type: Number, required: true },
             FullExp: { type: Boolean, required: true }
         },
 

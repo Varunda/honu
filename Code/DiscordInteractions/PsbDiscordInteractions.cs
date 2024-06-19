@@ -54,10 +54,15 @@ namespace watchtower.Code.DiscordInteractions {
         [ContextMenu(ApplicationCommandType.UserContextMenu, "Get rep status")]
         [RequiredRoleContext(RequiredRoleCheck.OVO_STAFF)]
         public async Task PsbWhoIsContext(ContextMenuContext ctx) {
-            DiscordMember source = ctx.Member;
-            DiscordMember target = ctx.TargetMember;
+            DiscordMember? source = ctx.Member;
+            DiscordMember? target = ctx.TargetMember;
 
             await ctx.CreateDeferred(true);
+
+            if (target == null) {
+                await ctx.EditResponseErrorEmbed($"missing ctx.TargetMember?");
+                return;
+            }
 
             List<PsbOvOContact> ovo = new();
             List<PsbPracticeContact> practice = new();

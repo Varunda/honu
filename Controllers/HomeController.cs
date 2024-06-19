@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using watchtower.Code;
+using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Internal;
 using watchtower.Models.Queues;
@@ -207,6 +208,17 @@ namespace watchtower.Controllers {
 
         public IActionResult OutfitWars() {
             return View();
+        }
+
+        public IActionResult RandomSession() {
+            List<TrackedPlayer> chars = CharacterStore.Get().GetByFilter(iter => {
+                return iter.Online == true && iter.SessionID != null;
+            });
+
+            int index = Random.Shared.Next(chars.Count - 1);
+            TrackedPlayer players = chars.ElementAt(index);
+
+            return Redirect($"/s/{players.SessionID}");
         }
 
     }

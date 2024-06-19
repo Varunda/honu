@@ -301,109 +301,124 @@
                         </td>
                     </tr>
                 </table>
-            </collapsible>
 
-            <collapsible header-text="Summary" id="session-general" class="mb-3">
-                <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
+                <div v-if="range.show == true" class="py-3 px-5 border rounded">
+                    <div id="range-slider" class="mb-3"></div>
+
+                    <div v-if="session.state == 'loaded'" class="mb-3 text-center">
+                        <span>
+                            showing events from {{range.start | moment}}
+                        </span>
+                        <span>
+                            to {{range.end | moment}}
+                        </span>
+                    </div>
                 </div>
-
-                <session-viewer-general v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
-                    :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :full-exp="showFullExp">
-                </session-viewer-general>
             </collapsible>
 
-            <collapsible header-text="Kills and deaths" id="session-kills" class="mb-3">
-                <div v-if="fullKills.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+            <div v-if="showCharts == true">
+                <collapsible header-text="Summary" id="session-general" class="mb-3">
+                    <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-viewer-kills v-else-if="fullKills.state == 'loaded'"
-                    :kills="kills" :deaths="deaths" :teamkills="teamkills" :session="session.data" :full-exp="showFullExp">
-                </session-viewer-kills>
-            </collapsible>
+                    <session-viewer-general v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
+                        :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :full-exp="showFullExp" :duration="durationInSeconds2">
+                    </session-viewer-general>
+                </collapsible>
 
-            <collapsible v-if="showFullExp == true" header-text="Experience breakdown" id="session-expb" class="mb-3">
-                <div v-if="exp.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Kills and deaths" id="session-kills" class="mb-3">
+                    <div v-if="fullKills.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'"
-                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
-                </session-viewer-exp-breakdown>
-            </collapsible>
+                    <session-viewer-kills v-else-if="fullKills.state == 'loaded'"
+                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :session="session.data" :full-exp="showFullExp">
+                    </session-viewer-kills>
+                </collapsible>
 
-            <collapsible header-text="Experience" id="session-exp" class="mb-3">
-                <div v-if="exp.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible v-if="showFullExp == true" header-text="Experience breakdown" id="session-expb" class="mb-3">
+                    <div v-if="exp.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp">
-                </session-viewer-exp>
-            </collapsible>
+                    <session-viewer-exp-breakdown v-else-if="exp.state == 'loaded'"
+                        :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                    </session-viewer-exp-breakdown>
+                </collapsible>
 
-            <collapsible header-text="Supported by" id="session-supported-by" class="mb-3">
-                <div v-if="expOther.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Experience" id="session-exp" class="mb-3">
+                    <div v-if="exp.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-supported-by v-else-if="expOther.state == 'loaded'" :session="session.data" :exp="expOther.data" :full-exp="showFullExp">
-                </session-supported-by>
-            </collapsible>
+                    <session-viewer-exp v-else-if="exp.state == 'loaded'" :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                    </session-viewer-exp>
+                </collapsible>
 
-            <collapsible header-text="Achievements earned" id="session-achievement" class="mb-3">
-                <div v-if="achievementsEarned.state == 'loading'">
-                    <busy class="honu-busy"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Supported by" id="session-supported-by" class="mb-3">
+                    <div v-if="expOther.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'"
-                    :session="session.data" :earned="achievementsEarned.data">
-                </session-achievements-earned>
-            </collapsible>
+                    <session-supported-by v-else-if="expOther.state == 'loaded'" :session="session.data" :exp="expOther.data" :full-exp="showFullExp">
+                    </session-supported-by>
+                </collapsible>
 
-            <collapsible header-text="Trends" id="session-trends" class="mb-3">
-                <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Achievements earned" id="session-achievement" class="mb-3">
+                    <div v-if="achievementsEarned.state == 'loading'">
+                        <busy class="honu-busy"></busy>
+                        Loading...
+                    </div>
 
-                <session-viewer-trends v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :full-exp="showFullExp">
-                </session-viewer-trends>
-            </collapsible>
+                    <session-achievements-earned v-else-if="achievementsEarned.state == 'loaded'"
+                        :session="session.data" :earned="achievementsEarned.data">
+                    </session-achievements-earned>
+                </collapsible>
 
-            <collapsible header-text="Routers & Sunderers" id="session-spawns" class="mb-3">
-                <div v-if="exp.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Trends" id="session-trends" class="mb-3">
+                    <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-viewer-spawns v-else-if="exp.state == 'loaded'"
-                    :session="session.data" :exp="exp.data" :full-exp="showFullExp">
-                </session-viewer-spawns>
-            </collapsible>
+                    <session-viewer-trends v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
+                        :session="session.data" :kills="kills" :deaths="deaths" :exp="exp.data" :full-exp="showFullExp">
+                    </session-viewer-trends>
+                </collapsible>
 
-            <collapsible header-text="Action log" id="session-action-log" class="mb-3">
-                <div v-if="exp.state == 'loading' || fullKills.state == 'loading' || vehicleDestroy.state == 'loading'">
-                    <busy style="max-height: 1.25rem;"></busy>
-                    Loading...
-                </div>
+                <collapsible header-text="Routers & Sunderers" id="session-spawns" class="mb-3">
+                    <div v-if="exp.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
 
-                <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
-                    :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills"
-                    :exp="exp.data" :vehicle-destroy="vehicleDestroy.data" :full-exp="showFullExp">
-                </session-action-log>
-            </collapsible>
+                    <session-viewer-spawns v-else-if="exp.state == 'loaded'"
+                        :session="session.data" :exp="exp.data" :full-exp="showFullExp">
+                    </session-viewer-spawns>
+                </collapsible>
 
-            <collapsible header-text="Item added" id="session-item-added" class="mb-3">
-                <session-item-added :session="session.data"></session-item-added>
-            </collapsible>
+                <collapsible header-text="Action log" id="session-action-log" class="mb-3">
+                    <div v-if="exp.state == 'loading' || fullKills.state == 'loading' || vehicleDestroy.state == 'loading'">
+                        <busy style="max-height: 1.25rem;"></busy>
+                        Loading...
+                    </div>
+
+                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                        :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills"
+                        :exp="exp.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
+                    </session-action-log>
+                </collapsible>
+
+                <collapsible header-text="Item added" id="session-item-added" class="mb-3">
+                    <session-item-added :session="session.data"></session-item-added>
+                </collapsible>
+            </div>
 
         </div>
     </div>
@@ -419,6 +434,8 @@
     import "filters/LocaleFilter";
     import "filters/FactionNameFilter";
     import "filters/WorldNameFilter";
+
+    import TimeUtils from "util/Time";
 
     import SessionViewerKills from "./components/SessionViewerKills.vue";
     import SessionViewerGeneral from "./components/SessionViewerGeneral.vue";
@@ -447,7 +464,12 @@
     import { PsItem } from "api/ItemApi";
     import { HonuHealthApi, HealthEventProcessLag } from "api/HonuHealthApi";
 
+    import * as ds from "node_modules/nouislider/dist/nouislider";
+    import "node_modules/nouislider/dist/nouislider.css";
+
     type FullKillEvent = ExpandedKillEvent & { itemCategory: ItemCategory | null };
+
+    // 2024-06-17 TODO: yeah this code is kinda bad
 
     export const SessionViewer = Vue.extend({
         props: {
@@ -460,6 +482,21 @@
 
                 showFullExp: false as boolean,
 
+                showCharts: true as boolean,
+
+                range: {
+                    show: false as boolean,
+
+                    min: 0 as number,
+                    max: 0 as number,
+                    // these values are set to cover all possible events so if the kills
+                    // of a session are loaded before the session itself, the shown kills is all events
+                    start: new Date(0) as Date,
+                    end: new Date(8640000000000000) as Date,
+
+                    timeout: 0 as number
+                },
+
                 session: Loadable.idle() as Loading<Session>,
                 character: Loadable.idle() as Loading<PsCharacter>,
 
@@ -467,7 +504,9 @@
                 fullKills: Loadable.idle() as Loading<FullKillEvent[]>,
                 fullDeaths: Loadable.idle() as Loading<FullKillEvent[]>,
                 exp: Loadable.idle() as Loading<ExperienceBlock>,
+                allExp: [] as ExpEvent[],
                 expOther: Loadable.idle() as Loading<ExperienceBlock>,
+                allOtherExp: [] as ExpEvent[],
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
 
@@ -527,6 +566,56 @@
                     }
 
                     this.bindCharacter();
+
+                    this.range.start = this.session.data.start;
+                    this.range.max = ((this.session.data.end ?? new Date()).getTime() - this.session.data.start.getTime()) / 1000;
+                    this.range.end = new Date(this.session.data.start.getTime() + (this.range.max * 1000));
+
+                    this.$nextTick(() => {
+                        const slider: HTMLElement | null = document.getElementById("range-slider");
+                        if (slider == null) {
+                            throw `failed to find #range-slider`;
+                        }
+
+                        const sliderObj = ds.create(slider, {
+                            range: {
+                                min: this.range.min,
+                                max: this.range.max
+                            },
+                            start: [0, this.range.max],
+                            connect: true,
+                            tooltips: {
+                                to: (value) => {
+                                    return TimeUtils.format(new Date(this.range.start.getTime() + value * 1000));
+                                },
+                            }
+                        });
+                        console.log(`SessionViewer: created range slider`);
+
+                        sliderObj.on("set", (values, handle) => {
+                            clearTimeout(this.range.timeout);
+
+                            this.range.timeout = setTimeout(() => {
+                                if (this.session.state != "loaded") {
+                                    throw `cannot change range, session is not loaded`;
+                                }
+
+                                const startv: number = typeof values[0] == "string" ? Number.parseInt(values[0]) : values[0];
+                                this.range.start = new Date(this.session.data.start.getTime() + (startv * 1000));
+
+                                const endv: number = typeof values[1] == "string" ? Number.parseInt(values[1]) : values[1];
+                                this.range.end = new Date(this.session.data.start.getTime() + (endv * 1000));
+
+                                console.log(`SessionViewer> range changed to ${this.range.start} to ${this.range.end}`);
+
+                                this.showCharts = false;
+                                this.updateExp();
+                                this.$nextTick(() => {
+                                    this.showCharts = true;
+                                });
+                            }, 500) as unknown as number;
+                        });
+                    });
                 }
             },
 
@@ -547,11 +636,39 @@
                 this.exp = Loadable.loading();
                 this.exp = await ExpStatApi.getBySessionID(this.sessionID);
                 this.checkAllAndScroll();
+
+                if (this.exp.state == "loaded") {
+                    this.allExp = this.exp.data.events;
+                } else {
+                    this.allExp = [];
+                }
+            },
+
+            updateExp: function(): void {
+                if (this.exp.state == "loaded") {
+                    this.exp.data.events = this.allExp.filter(iter => {
+                        return iter.timestamp.getTime() >= this.range.start.getTime()
+                            && iter.timestamp.getTime() <= this.range.end.getTime();
+                    });
+                }
+
+                if (this.expOther.state == "loaded") {
+                    this.expOther.data.events = this.allOtherExp.filter(iter => {
+                        return iter.timestamp.getTime() >= this.range.start.getTime()
+                            && iter.timestamp.getTime() <= this.range.end.getTime();
+                    });
+                }
             },
 
             bindExpOther: async function(): Promise<void> {
                 this.expOther = Loadable.loading();
                 this.expOther = await ExpStatApi.getOtherBySessionID(this.sessionID);
+
+                if (this.expOther.state == "loaded") {
+                    this.allOtherExp = this.expOther.data.events;
+                } else {
+                    this.allOtherExp = [];
+                }
             },
 
             bindKills: async function(): Promise<void> {
@@ -653,6 +770,10 @@
                 return ((this.session.data.end || new Date()).getTime() - this.session.data.start.getTime()) / 1000;
             },
 
+            durationInSeconds2: function(): number {
+                return (this.range.start.getTime() - this.range.end.getTime()) / 1000;
+            },
+
             badStreams: function(): any[] {
                 if (this.reconnects.state != "loaded") {
                     return [];
@@ -694,7 +815,10 @@
                     return [];
                 }
 
-                return this.fullKills.data.filter(iter => iter.event.attackerTeamID == iter.event.killedTeamID);
+                return this.fullKills.data.filter(iter =>
+                    iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime()
+                    && iter.event.attackerTeamID == iter.event.killedTeamID);
             },
 
             kills: function(): FullKillEvent[] {
@@ -702,7 +826,9 @@
                     return [];
                 }
 
-                return this.fullKills.data.filter(iter => iter.event.attackerTeamID != iter.event.killedTeamID);
+                return this.fullKills.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime()
+                    && iter.event.attackerTeamID != iter.event.killedTeamID);
             },
 
             deaths: function(): FullKillEvent[] {
@@ -710,7 +836,19 @@
                     return [];
                 }
 
-                return this.fullDeaths.data.filter(iter => iter.event.revivedEventID == null);
+                return this.fullDeaths.data.filter(iter =>
+                    iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime()
+                    && iter.event.revivedEventID == null);
+            },
+
+            vehicleDestroyEvents: function(): ExpandedVehicleDestroyEvent[] {
+                if (this.vehicleDestroy.state != "loaded") {
+                    return [];
+                }
+
+                return this.vehicleDestroy.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime());
             },
 
             showEventProcessLag: function(): boolean {
@@ -731,7 +869,7 @@
                 }
 
                 return false;
-            }
+            },
 
         },
 
