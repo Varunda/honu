@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using watchtower.Code;
+using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Census;
 using watchtower.Models.Internal;
@@ -212,8 +213,13 @@ namespace watchtower.Controllers {
 
         public IActionResult RandomSession() {
             List<TrackedPlayer> chars = CharacterStore.Get().GetByFilter(iter => {
-                return iter.Online == true && iter.SessionID != null;
+                // genudine and ceres servers are not interested cause we don't track those events
+                return iter.Online == true && iter.SessionID != null && iter.WorldID != World.Genudine && iter.WorldID != World.Ceres;
             });
+
+            if (chars.Count == 0) {
+                return Redirect($"/s/1");
+            }
 
             int index = Random.Shared.Next(chars.Count - 1);
             TrackedPlayer players = chars.ElementAt(index);

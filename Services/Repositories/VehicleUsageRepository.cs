@@ -53,7 +53,7 @@ namespace watchtower.Services.Repositories {
                 data.Timestamp = DateTime.UtcNow;
 
                 // the ! is here cause c# doesn't like that a PsVehicle can become a PsVehicle?, which is fine
-                Dictionary<int, PsVehicle?> vehicles = (await _VehicleRepository.GetAll()).ToDictionary(iter => iter.ID)!;
+                Dictionary<int, PsVehicle?> vehicles = ((includeVehicles == true) ? (await _VehicleRepository.GetAll()).ToDictionary(iter => iter.ID) : [])!;
                 lock (CharacterStore.Get().Players) {
                     foreach (KeyValuePair<string, TrackedPlayer> iter in CharacterStore.Get().Players) {
                         TrackedPlayer p = iter.Value;

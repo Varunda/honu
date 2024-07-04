@@ -56,19 +56,12 @@ namespace watchtower.Services.Hosted {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
-            _Logger.LogInformation($"{SERVICE_NAME}> started");
+            _Logger.LogInformation($"service started");
 
             while (stoppingToken.IsCancellationRequested == false) {
                 try {
-
-                    ServiceHealthEntry? entry = _ServiceHealthMonitor.Get(SERVICE_NAME);
-                    if (entry == null) {
-                        entry = new ServiceHealthEntry() {
-                            Name = SERVICE_NAME
-                        };
-                    }
-
-                    // Useful for debugging on my laptop which can't handle running the queries and run vscode at the same time
+                    // useful for debugging on my laptop which can't handle running the queries and run vscode at the same time
+                    ServiceHealthEntry entry = _ServiceHealthMonitor.GetOrCreate(SERVICE_NAME);
                     if (entry.Enabled == false) {
                         await Task.Delay(1000, stoppingToken);
                         continue;
@@ -93,8 +86,8 @@ namespace watchtower.Services.Hosted {
                     bool errored = false;
                     DateTime timestamp = DateTime.UtcNow;
 
-                    _Logger.LogDebug($"updating stats for {itemID}");
-                    List<WeaponStatEntry> stats = (await _WeaponStatDb.GetByItemID($"{itemID}", 0))
+                    _Logger.LogDebug($"updating weapon stats [itemID={itemID}]");
+                    List<WeaponStatEntry> stats = (await _WeaponStatDb.GetByItemID($"{itemID}", minKills: 0))
                         .Where(iter => iter.SecondsWith >= 60).ToList();
 
                     long loadStatsMs = stepTimer.ElapsedMilliseconds; stepTimer.Restart();
@@ -108,7 +101,7 @@ namespace watchtower.Services.Hosted {
                         filtered = stats;
                     }
 
-                    _Logger.LogTrace($"loaded {stats.Count} entries for {itemID}");
+                    _Logger.LogTrace($"loaded character weapon stats [itemID={itemID}] [stats.Count={stats.Count}] [filtered.Count={filtered.Count}]");
 
                     if (stats.Count == 0) {
                         continue;
@@ -150,7 +143,7 @@ namespace watchtower.Services.Hosted {
                         _LastUpdated[itemID] = DateTime.UtcNow;
                     }
 
-                    string msg = $"updated weapon stats for {itemID} in {timer.ElapsedMilliseconds}ms, used {stats.Count} entries; ";
+                    string msg = $"weapon stats update complete [itemID={itemID}] [timer={timer.ElapsedMilliseconds}ms] [stats.Count={stats.Count}] ";
                     msg += $"[DB load={loadStatsMs}ms] [snapshot={snapshotMs}ms] [percentile={percentileMs}ms] [bucket={bucketMs}ms] [top={topMs}ms]";
 
                     if (errored == true) {
@@ -302,7 +295,7 @@ namespace watchtower.Services.Hosted {
             Dictionary<string, WeaponStatEntry> topVKills = GetTopWeaponStats(iter => iter.VehicleKills, 0, 200);
             AddToAll(topVKills, PercentileCacheType.VKILLS);
 
-            _Logger.LogDebug($"GenerateTop(itemID {itemID})> Setting {all.Count} entries");
+            _Logger.LogDebug($"generate top stats [itemID={itemID}] [acc.Count={all.Count}]");
 
             if (missingCharacters.Count > 0) {
                 string missingStr = string.Join(", ", missingCharacters.Take(25)) + (missingCharacters.Count > 25 ? $"+{missingCharacters.Count - 25} more..." : "");

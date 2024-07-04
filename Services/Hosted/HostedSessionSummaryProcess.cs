@@ -175,8 +175,8 @@ namespace watchtower.Services.Hosted {
                 vehicleKills[ev.AttackerCharacterID].Add(ev.Timestamp);
             }
             long dataLoadMs = loadTimer.ElapsedMilliseconds; loadTimer.Restart();
-            _Logger.LogInformation($"loaded data [start={firstSessionStart:u}] [end={lastSessionEnd:u}] [expLoad={expLoadMs}ms] "
-                + $"[killLoad={killLoadMs}ms] [vkill={vkillLoadMs}ms] [dataLoad={dataLoadMs}ms]");
+            _Logger.LogInformation($"loaded data [start={firstSessionStart:u}] [end={lastSessionEnd:u}] [expLoad={expLoadMs}ms/{expEvents.Count}] "
+                + $"[killLoad={killLoadMs}ms/{killEvents.Count}] [vkill={vkillLoadMs}ms/{vehicleKills.Count}] [dataLoad={dataLoadMs}ms]");
 
             int countProcessed = 0;
             int countUnended = 0;

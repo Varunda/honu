@@ -41,19 +41,15 @@ namespace watchtower {
         private static IHost _Host;
 #pragma warning restore CS8618 // Non-nullable field is uninitialized. Consider declaring as nullable.
 
-        private static void PrintD(string name, DateTime d) {
-            DateTimeOffset doo = new DateTimeOffset(d);
-            Console.WriteLine($"{name} => {d:u} ({d.Kind}) {doo:u} ({doo.Offset}) {doo.ToUnixTimeSeconds()} {d.GetDiscordFullTimestamp()}");
-        }
-
         public static async Task Main(string[] args) {
-            Console.WriteLine($"Honu starting at {DateTime.UtcNow:u}");
+            Console.WriteLine($"honu starting [timestamp={DateTime.UtcNow:u}] [cwd={Environment.CurrentDirectory}] [CLR version={Environment.Version}]");
 
             // mitigation for https://github.com/advisories/GHSA-5crp-9r3c-p9vr
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings() {
                 MaxDepth = 128
             };
 
+            // see below, where Task.Run calls CreateHostBuilder for why this variable is used
             bool hostBuilt = false;
 
             CancellationTokenSource stopSource = new();
@@ -66,10 +62,10 @@ namespace watchtower {
                         return c.Request.Path.StartsWithSegments("/api");
                     };
                 })
-                //.AddNpgsql()
                 .AddJaegerExporter(config => {
 
                 })
+                // add our activity source
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
                 .AddSource(HonuActivitySource.ActivitySourceName)
                 .Build();
@@ -87,7 +83,6 @@ namespace watchtower {
 
                     _Host = CreateHostBuilder(args).Build();
                     logger = _Host.Services.GetService(typeof(ILogger<Program>)) as ILogger<Program>;
-                    hostBuilt = true;
                     Console.WriteLine($"Took {timer.ElapsedMilliseconds}ms to build Honu");
                     timer.Stop();
                 } catch (Exception ex) {
@@ -99,8 +94,8 @@ namespace watchtower {
                 }
 
                 try {
-                    //await _Host.RunConsoleAsync();
                     await _Host.RunAsync(stopSource.Token);
+                    hostBuilt = true;
                 } catch (Exception ex) {
                     if (logger != null) {
                         logger.LogError(ex, $"error while running honu");
@@ -110,6 +105,7 @@ namespace watchtower {
                 }
             });
 
+            // wait for the host to be started, max 10 seconds
             for (int i = 0; i < 10; ++i) {
                 await Task.Delay(1000);
                 if (hostBuilt == true) {
@@ -132,7 +128,7 @@ namespace watchtower {
 
             // print both incase the logger is misconfigured or something
             logger.LogInformation($"ran host");
-            Console.WriteLine($"Ran host");
+            Console.WriteLine($"ran host");
 
             string? line = "";
             bool fastStop = false;
@@ -162,10 +158,8 @@ namespace watchtower {
                 CancellationTokenSource cts = new();
                 cts.CancelAfter(1000 * 1);
                 await _Host.StopAsync(cts.Token);
-                //stopSource.CancelAfter(1 * 1000);
             } else {
                 Console.WriteLine($"stopping without a token");
-                //stopSource.Cancel();
                 await _Host.StopAsync();
             }
 
@@ -174,11 +168,9 @@ namespace watchtower {
         public static IHostBuilder CreateHostBuilder(string[] args) {
             IHostBuilder? host = Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(logging => {
-                    // i don't like any of the provided default loggers
+                    // replace the logger with a one line logger instead
                     logging.AddConsole(options => options.FormatterName = "HonuLogger")
-                        .AddConsoleFormatter<HonuLogger, HonuFormatterOptions>(options => {
-
-                        });
+                        .AddConsoleFormatter<HonuLogger, HonuFormatterOptions>(options => { });
                 })
                 .ConfigureAppConfiguration(appConfig => {
                     appConfig.AddUserSecrets<Startup>();

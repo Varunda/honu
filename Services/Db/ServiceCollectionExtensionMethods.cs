@@ -104,6 +104,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<RealtimeMapStateDbStore>();
             services.AddSingleton<WorldZonePopulationDbStore>();
             services.AddSingleton<HonuMetadataDbStore>();
+            services.AddSingleton<VehicleUsageDbStore>();
         }
 
     }

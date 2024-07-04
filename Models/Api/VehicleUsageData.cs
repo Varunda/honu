@@ -8,6 +8,11 @@ namespace watchtower.Models.Api {
     public class VehicleUsageData {
 
         /// <summary>
+        ///     ID of the DB entry this data is saved under. Is 
+        /// </summary>
+        public ulong ID { get; set; }
+
+        /// <summary>
         ///     which world this data is for. a value of 0 means all worlds
         /// </summary>
         public short WorldID { get; set; }
