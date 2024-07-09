@@ -36,12 +36,12 @@ namespace watchtower.Services.Repositories {
         /// <summary>
         ///     Get all xtypes that exist
         /// </summary>
-        public async Task<List<FireGroupToFireMode>> GetAll() {
-            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<FireGroupToFireMode>? modes) == false) {
-                modes = await _Db.GetAll();
+        public async Task<List<FireGroupToFireMode>> GetAll(CancellationToken cancel = default) {
+            if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<FireGroupToFireMode>? modes) == false || modes == null) {
+                modes = await _Db.GetAll(cancel);
 
                 if (modes.Count == 0) {
-                    List<FireGroupToFireMode> censusEntries = await _Census.GetAll();
+                    List<FireGroupToFireMode> censusEntries = await _Census.GetAll(cancel);
                     if (censusEntries.Count > 0) {
                         foreach (FireGroupToFireMode entry in censusEntries) {
                             await _Db.Upsert(entry);
@@ -53,11 +53,6 @@ namespace watchtower.Services.Repositories {
                 _Cache.Set(CACHE_KEY_ALL, modes, new MemoryCacheEntryOptions() {
                     SlidingExpiration = TimeSpan.FromMinutes(30)
                 });
-            }
-
-            if (modes == null) {
-                _Logger.LogError($"im dumb, how is modes null here?");
-                modes = new List<FireGroupToFireMode>();
             }
 
             return modes;

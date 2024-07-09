@@ -339,10 +339,7 @@ namespace watchtower.Services.Repositories {
 
             outfits = outfits.DistinctBy(iter => iter.ID).ToList();
 
-            _Logger.LogDebug($"Timings to lookup '{tagOrName}':\n"
-                + $"\tDB search: {dbLookup}ms\n"
-                + $"\tCensus search: {censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}"
-            );
+            _Logger.LogDebug($"outfit search done [tagOrName={tagOnly}] [db={dbLookup}ms] [census=[{censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}");
 
             return outfits;
         }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Constants;
 using watchtower.Models;
@@ -113,6 +114,46 @@ namespace watchtower.Services.Repositories {
 
             return data;
         }
+
+        /// <summary>
+        ///     populate the <see cref="VehicleUsageEntry.Vehicle"/> field of a <see cref="VehicleUsageData"/>
+        /// </summary>
+        /// <param name="data">data to populate</param>
+        /// <param name="cancel">cancellation token. defaults to <see cref="CancellationToken.None"/></param>
+        /// <returns></returns>
+        public async Task AddVehicles(VehicleUsageData data, CancellationToken cancel = default) {
+            Dictionary<int, PsVehicle> vehicles = (await _VehicleRepository.GetAll(cancel)).ToDictionary(iter => iter.ID);
+
+            _UpdateVehicleFields(data.Vs, vehicles);
+            _UpdateVehicleFields(data.Nc, vehicles);
+            _UpdateVehicleFields(data.Tr, vehicles);
+            _UpdateVehicleFields(data.Other, vehicles);
+        }
+
+        public async Task AddVehicles(List<VehicleUsageData> data, CancellationToken cancel = default) {
+            Dictionary<int, PsVehicle> vehicles = (await _VehicleRepository.GetAll(cancel)).ToDictionary(iter => iter.ID);
+
+            foreach (VehicleUsageData datum in data) {
+                _UpdateVehicleFields(datum.Vs, vehicles);
+                _UpdateVehicleFields(datum.Nc, vehicles);
+                _UpdateVehicleFields(datum.Tr, vehicles);
+                _UpdateVehicleFields(datum.Other, vehicles);
+            }
+        }
+
+        private static void _UpdateVehicleFields(VehicleUsageFaction faction, Dictionary<int, PsVehicle> dict) {
+            foreach (KeyValuePair<int, VehicleUsageEntry> kvp in faction.Usage) {
+                if (kvp.Key == -1) {
+                    kvp.Value.VehicleName = "unknown";
+                } else if (kvp.Key == 0) {
+                    kvp.Value.VehicleName = "none";
+                } else {
+                    kvp.Value.Vehicle = dict.GetValueOrDefault(kvp.Key);
+                    kvp.Value.VehicleName = kvp.Value.Vehicle?.Name ?? $"<missing {kvp.Key}>";
+                }
+            }
+        }
+
 
 
     }

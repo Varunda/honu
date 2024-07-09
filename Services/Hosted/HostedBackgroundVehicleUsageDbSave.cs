@@ -36,7 +36,6 @@ namespace watchtower.Services.Hosted {
                 int skipped = 0;
                 int inserted = 0;
                 try {
-
                     foreach (short worldID in World.PcStreams) {
                         foreach (uint zoneID in Zone.StaticZones) {
                             stoppingToken.ThrowIfCancellationRequested();

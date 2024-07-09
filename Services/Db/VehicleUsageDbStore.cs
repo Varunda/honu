@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -77,6 +78,33 @@ namespace watchtower.Services.Db {
             await cmd.PrepareAsync();
 
             VehicleUsageData? data = await _Reader.ReadSingle(cmd);
+            await conn.CloseAsync();
+
+            return data;
+        }
+
+        /// <summary>
+        ///     get <see cref="VehicleUsageData"/> between 2 periods
+        /// </summary>
+        /// <param name="start">start of the period</param>
+        /// <param name="end">end of the period</param>
+        /// <param name="cancel">cancellation token, default to <see cref="CancellationToken.None"/></param>
+        /// <returns>
+        ///     a list of <see cref="VehicleUsageData"/> with <see cref="VehicleUsageData.Timestamp"/>
+        ///     between <paramref name="start"/> and <paramref name="end"/>
+        /// </returns>
+        public async Task<List<VehicleUsageData>> GetByTimestamp(DateTime start, DateTime end, CancellationToken cancel = default) {
+            using NpgsqlConnection conn = _Helper.Connection(Dbs.EVENTS);
+            using NpgsqlCommand cmd = await _Helper.Command(conn, @"
+                SELECT *
+                    FROM vehicle_usage
+                    WHERE timestamp BETWEEN @Start AND @End;
+            ");
+            cmd.AddParameter("Start", start);
+            cmd.AddParameter("End", end);
+            await cmd.PrepareAsync(cancel);
+
+            List<VehicleUsageData> data = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return data;

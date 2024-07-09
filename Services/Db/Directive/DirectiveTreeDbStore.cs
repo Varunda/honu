@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
@@ -24,14 +25,14 @@ namespace watchtower.Services.Db {
             _Reader = reader ?? throw new ArgumentNullException(nameof(reader));
         }
 
-        public async Task<List<DirectiveTree>> GetAll() {
+        public async Task<List<DirectiveTree>> GetAll(CancellationToken cancel = default) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *
                     FROM directive_tree; 
             ");
 
-            List<DirectiveTree> dirs = await _Reader.ReadList(cmd);
+            List<DirectiveTree> dirs = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return dirs;

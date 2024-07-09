@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -25,15 +26,15 @@ namespace watchtower.Services.Db {
             _DbHelper = helper;
         }
 
-        public async Task<List<T>> GetAll() {
+        public async Task<List<T>> GetAll(CancellationToken cancel = default) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, $@"
                 SELECT *
                     FROM {_TableName};
             ");
-            await cmd.PrepareAsync();
+            await cmd.PrepareAsync(cancel);
 
-            List<T> entries = await _Reader.ReadList(cmd);
+            List<T> entries = await _Reader.ReadList(cmd, cancel);
             await conn.CloseAsync();
 
             return entries;

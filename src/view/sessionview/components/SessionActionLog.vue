@@ -1,8 +1,8 @@
 ﻿<template>
     <div>
-        <div>
-            <h4>Filters</h4>
-            <div class="btn-group w-100 mb-3">
+        <div class="mb-3">
+            <h5>Filters</h5>
+            <div class="btn-group mb-2">
                 <toggle-button v-model="show.kills" class="flex-grow-0">Kills</toggle-button>
                 <toggle-button v-model="show.deaths" class="flex-grow-0">Deaths</toggle-button>
                 <toggle-button v-model="show.vehicleDestroy" class="flex-grow-0">Vehicle destroy</toggle-button>
@@ -12,17 +12,26 @@
                 <toggle-button v-model="show.shieldRepairs" class="flex-grow-0">Shield repairs</toggle-button>
                 <toggle-button v-model="show.maxRepairs" class="flex-grow-0">MAX repairs</toggle-button>
                 <toggle-button v-model="show.resupplies" class="flex-grow-0">Resupplies</toggle-button>
-                <toggle-button v-model="show.expOther" class="flex-grow-0">Other exp events</toggle-button>
-                <toggle-button v-model="show.expNpc" class="flex-grow-0">Other exp npc events</toggle-button>
-                <toggle-button v-model="show.expSelf" class="flex-grow-0">Other exp self events</toggle-button>
+                <toggle-button v-model="show.expOther" class="flex-grow-0">Misc exp events</toggle-button>
+                <toggle-button v-model="show.expNpc" class="flex-grow-0">Exp npc events</toggle-button>
+                <toggle-button v-model="show.expSelf" class="flex-grow-0">Exp self events</toggle-button>
+            </div>
+
+            <h5>Events performed on the session&apos;s character</h5>
+            <div class="btn-group">
+                <toggle-button v-model="show.revived">Revived</toggle-button>
+                <toggle-button v-model="show.healed">Healed</toggle-button>
+                <toggle-button v-model="show.shieldRepaired">Shield repaired</toggle-button>
+                <toggle-button v-model="show.resupplied">Resupplied</toggle-button>
+                <toggle-button v-model="show.maxRepaired">MAX repaired</toggle-button>
             </div>
         </div>
 
-        <div>
-            <h4>Options</h4>
-            <div class="btn-group w-100 mb-3">
-                <toggle-button v-model="options.useNpcID" class="flex-grow-0">Show NPC ID</toggle-button>
-            </div>
+        <div class="mb-3">
+            <h5>Options</h5>
+            <toggle-button v-model="options.useNpcID">Show NPC ID</toggle-button>
+            <toggle-button v-model="options.combineSupport">Combine similar</toggle-button>
+            <toggle-button v-model="options.showDebug">Show debug</toggle-button>
         </div>
 
         <div v-if="assistScoreMult != 1" class="bg-warning text-center">
@@ -58,6 +67,9 @@
             <a-col>
                 <a-header>
                     <b>Action</b>
+                    <span class="text-muted">
+                        [seconds since previous event]
+                    </span>
                 </a-header>
 
                 <a-body v-slot="entry">
@@ -68,6 +80,19 @@
                     <span v-if="entry.count > 1">
                         ({{entry.count}} times)
                     </span>
+
+                    <span v-if="entry.diff != undefined" class="text-muted">
+                        [{{entry.diff}}s]
+                    </span>
+
+                    <div v-if="options.showDebug">
+                        <span v-if="entry.event == undefined">
+                            --
+                        </span>
+                        <span v-else class="text-monospace" style="overflow-wrap: break-word">
+                            {{JSON.stringify(entry.event)}}
+                        </span>
+                    </div>
                 </a-body>
             </a-col>
 
@@ -117,6 +142,11 @@
         parts: LogPart[];
         count: number;
         otherID: string | null;
+
+        // when filtered and sorted, how many seconds in between actions
+        diff?: number;
+
+        event?: object;
     };
 
     type ZonedEvent = {
@@ -131,6 +161,7 @@
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             teamkills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
+            ExpOther: { type: Object as PropType<ExperienceBlock>, required: true },
             VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
         },
 
@@ -148,12 +179,19 @@
                     ["assist", "Assist"],
                     ["vehicle_destroy", "Vehicle destroy"],
 
-                    ["heal", "Heal"],
                     ["revive", "Revive"],
+                    ["heal", "Heal"],
                     ["shield_repair", "Shield repair"],
 
                     ["resupply", "Resupply"],
                     ["max_repair", "MAX repair"],
+
+                    // session character is other_id
+                    ["revived", "Revived"],
+                    ["healed", "Healed"],
+                    ["shield_repaired", "Shield repair"],
+                    ["resupplied", "Resupplied"],
+                    ["max_repaired", "MAX repaired"],
 
                     ["exp_other", "Experience (other)"],
                     ["exp_npc", "Experience (NPC)"],
@@ -164,19 +202,29 @@
                 assistScoreMult: 1 as number,
 
                 options: {
-                    useNpcID: false as boolean
+                    useNpcID: false as boolean,
+                    combineSupport: true as boolean,
+                    showDebug: false as boolean
                 },
 
                 show: {
                     kills: true as boolean,
                     assists: false as boolean,
                     deaths: true as boolean,
+                    vehicleDestroy: true as boolean,
+
                     revives: true as boolean,
                     heals: false as boolean,
                     shieldRepairs: false as boolean,
                     resupplies: false as boolean,
                     maxRepairs: false as boolean,
-                    vehicleDestroy: true as boolean,
+
+                    healed: false as boolean,
+                    revived: true as boolean,
+                    shieldRepaired: false as boolean,
+                    resupplied: false as boolean,
+                    maxRepaired: false as boolean,
+
                     expOther: false as boolean,
                     expNpc: false as boolean,
                     expSelf: false as boolean
@@ -202,7 +250,10 @@
             },
 
             makeAll: async function(): Promise<ActionLogEntry[]> {
-                await this.bindVehicles();
+                console.time("SessionActionLog> make action entries");
+                if (this.vehicles.state == "idle") {
+                    await this.bindVehicles();
+                }
 
                 const entries: ActionLogEntry[] = [];
 
@@ -210,6 +261,7 @@
                 entries.push(...this.makeDeaths());
                 entries.push(...this.makeTeamkills());
                 entries.push(...this.makeExp());
+                entries.push(...this.makeOtherExp());
                 entries.push(...this.makeZoneChange());
                 entries.push(...this.makeVehicleDestroy());
 
@@ -244,6 +296,7 @@
 
                 entries.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
+                console.timeEnd("SessionActionLog> make action entries");
                 return entries;
             },
 
@@ -269,7 +322,10 @@
                     console.warn(`SessionActionLog> vehicles isn't loaded`);
                 }
 
-                const entries: ActionLogEntry[] = events.map(iter => {
+                let lastKill: number | null = null;
+
+                const entries: ActionLogEntry[] = [];
+                for (const iter of events) {
                     const entry: ActionLogEntry = {
                         parts: [
                             this.createLoadoutIcon(iter.event.attackerLoadoutID),
@@ -283,7 +339,8 @@
                         timestamp: iter.event.timestamp,
                         type: (asKill == true) ? "kill" : "death",
                         count: 1,
-                        otherID: (asKill == true) ? iter.event.killedCharacterID : iter.event.attackerCharacterID
+                        otherID: (asKill == true) ? iter.event.killedCharacterID : iter.event.attackerCharacterID,
+                        event: iter.event
                     };
 
                     if (iter.event.attackerVehicleID != 0 && this.vehicles.state == "loaded") {
@@ -299,8 +356,10 @@
                         });
                     }
 
-                    return entry;
-                });
+                    lastKill = iter.event.timestamp.getTime();
+
+                    entries.push(entry);
+                }
 
                 return entries;
             },
@@ -400,8 +459,8 @@
                         parts.push(this.createLogText("healed"));
                         parts.push(this.createCharacterLink(other, iter.otherID));
 
-                        const amount: number = iter.amount / Math.max(1, scoreMult) * 25;
-                        parts.push(this.createLogText(`for ${amount}-${amount + 25} health`));
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 10;
+                        parts.push(this.createLogText(`for ${amount}-${amount + 10} health`));
                     } else if (Experience.isRevive(expID)) {
                         type = "revive";
 
@@ -433,7 +492,7 @@
                     }
 
                     // if the previous action log entry added is the same type and otherID, instead increment the count
-                    if (prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
+                    if (this.options.combineSupport == true && prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
                         ++prev.count;
                     } else {
                         const entry: ActionLogEntry = {
@@ -441,7 +500,117 @@
                             timestamp: iter.timestamp,
                             type: type,
                             count: 1,
-                            otherID: iter.otherID
+                            otherID: iter.otherID,
+                            event: iter
+                        };
+
+                        entries.push(entry);
+                        prev = entry;
+                    }
+                }
+
+                return entries;
+            },
+
+            makeOtherExp: function(): ActionLogEntry[] {
+                const entries: ActionLogEntry[] = [];
+
+                let scoreMult: number = 1;
+
+                // TODO: need this seperate for each character??
+                for (const ev of this.ExpOther.events) {
+                    const expID: number = ev.experienceID;
+
+                    let baseAmount: number | null = null;
+
+                    switch (expID) {
+                        case Experience.REVIVE: baseAmount = 75; break;
+                        case Experience.SQUAD_REVIVE: baseAmount = 100; break;
+
+                        case Experience.RESUPPLY: baseAmount = 10; break;
+                        case Experience.SQUAD_RESUPPLY: baseAmount = 15; break;
+
+                        case Experience.SQUAD_SPAWN: baseAmount = 10; break;
+                    }
+
+                    if (baseAmount != null) {
+                        scoreMult = ev.amount / baseAmount;
+                    }
+                }
+
+                this.assistScoreMult = scoreMult;
+
+                console.log(`SessionActionLog> Using a score mult of ${scoreMult.toFixed(2)}`);
+
+                let prev: ActionLogEntry | null = null;
+
+                const typeMap: Map<number, ExperienceType> = new Map(this.exp.experienceTypes.map(iter => [iter.id, iter]));
+
+                for (let i = 0; i < this.ExpOther.events.length; ++i) {
+                    const iter: ExpEvent = this.ExpOther.events[i];
+
+                    const expID: number = iter.experienceID;
+                    const expType: ExperienceType | undefined = typeMap.get(expID);
+
+                    let type: string = `Other (${expType?.name ?? `unknown ${expID}`})`;
+
+                    const source: PsCharacter | null = this.ExpOther.characters.find(c => c.id == iter.sourceID) || null;
+                    const other: PsCharacter | null = this.ExpOther.characters.find(c => c.id == iter.otherID) || null;
+
+                    const parts: LogPart[] = [
+                        this.createLoadoutIcon(iter.loadoutID),
+                        this.createCharacterLink(source, iter.sourceID)
+                    ];
+
+
+                    if (Experience.isKill(expID) || expID == Experience.HEADSHOT) {
+                        // skip exp for kill events, we have a Kill event for it
+                        // same with headshot, already shown in a Kill event
+                        continue;
+                    } else if (Experience.isMaxRepair(expID)) {
+                        type = "max_repaired";
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 25;
+
+                        parts.push({ html: `repaired` });
+                        parts.push(this.createCharacterLink(other, iter.otherID, { possessive: true }));
+                        parts.push(this.createLogText(`MAX suit for ${amount}-${amount + 25} health`));
+                    } else if (Experience.isShieldRepair(expID)) {
+                        type = "shield_repaired";
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 10;
+
+                        parts.push({ html: `repaired` });
+                        parts.push(this.createCharacterLink(other, iter.otherID, { possessive: true }));
+                        parts.push(this.createLogText(`shield for ${amount}-${amount + 10} shield`));
+                    } else if (Experience.isHeal(expID)) {
+                        type = "healed";
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 10;
+
+                        parts.push(this.createLogText("healed"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                        parts.push(this.createLogText(`for ${amount}-${amount + 10} health`));
+                    } else if (Experience.isRevive(expID)) {
+                        type = "revived";
+
+                        parts.push(this.createLogText("revived"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                    } else if (Experience.isResupply(expID)) {
+                        type = "resupplied";
+
+                        parts.push(this.createLogText("resupplied"));
+                        parts.push(this.createCharacterLink(other, iter.otherID));
+                    }
+
+                    // if the previous action log entry added is the same type and otherID, instead increment the count
+                    if (this.options.combineSupport == true && prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
+                        ++prev.count;
+                    } else {
+                        const entry: ActionLogEntry = {
+                            parts: parts,
+                            timestamp: iter.timestamp,
+                            type: type,
+                            count: 1,
+                            otherID: iter.otherID,
+                            event: iter
                         };
 
                         entries.push(entry);
@@ -473,7 +642,8 @@
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
                         count: 1,
-                        otherID: null
+                        otherID: null,
+                        event: iter.event
                     };
 
                     return entry;
@@ -518,7 +688,8 @@
                                 { html: `Changed continents to ${ZoneUtils.getZoneName(ev.zoneID)}` }
                             ],
                             count: 1,
-                            otherID: null
+                            otherID: null,
+                            event: ev
                         });
 
                         currentZoneID = ev.zoneID;
@@ -628,62 +799,49 @@
             tableActions: function(): Loading<ActionLogEntry[]> {
                 console.log(`Showing table actions with the following SHOW options: ${JSON.stringify(this.show)}`);
 
-                return Loadable.loaded(this.entries.filter(iter => {
+                const actions = this.entries.filter(iter => {
                     // These are always shown
                     if (iter.type == "start" || iter.type == "finish" || iter.type == "zone_change") {
                         return true;
                     }
 
-                    if (iter.type == "kill" && this.show.kills == true) {
-                        return true;
-                    }
+                    if (iter.type == "kill" && this.show.kills == true) { return true; }
+                    if (iter.type == "death" && this.show.deaths == true) { return true; }
+                    if (iter.type == "assist" && this.show.assists == true) { return true; }
+                    if (iter.type == "vehicle_destroy" && this.show.vehicleDestroy == true) { return true; }
 
-                    if (iter.type == "death" && this.show.deaths == true) {
-                        return true;
-                    }
+                    // session character is source
+                    if (iter.type == "heal" && this.show.heals == true) { return true; }
+                    if (iter.type == "shield_repair" && this.show.shieldRepairs == true) { return true; }
+                    if (iter.type == "revive" && this.show.revives == true) { return true; }
+                    if (iter.type == "resupply" && this.show.resupplies == true) { return true; }
+                    if (iter.type == "max_repair" && this.show.maxRepairs == true) { return true; }
 
-                    if (iter.type == "assist" && this.show.assists == true) {
-                        return true;
-                    }
+                    // session character is other_id
+                    if (iter.type == "healed" && this.show.healed == true) { return true; }
+                    if (iter.type == "revived" && this.show.revived == true) { return true; }
+                    if (iter.type == "shield_repaired" && this.show.shieldRepaired == true) { return true; }
+                    if (iter.type == "resupplied" && this.show.resupplied == true) { return true; }
+                    if (iter.type == "max_repaired" && this.show.maxRepaired == true) { return true; }
 
-                    if (iter.type == "heal" && this.show.heals == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "revive" && this.show.revives == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "resupply" && this.show.resupplies == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "max_repair" && this.show.maxRepairs == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "shield_repair" && this.show.shieldRepairs == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "vehicle_destroy" && this.show.vehicleDestroy == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "exp_other" && this.show.expOther == true) {
-                        return true;
-                    }
-
-                    if (iter.type == "exp_npc" && this.show.expNpc) {
-                        return true;
-                    }
-
-                    if (iter.type == "exp_self" && this.show.expSelf) {
-                        return true;
-                    }
+                    // uncategorized
+                    if (iter.type == "exp_other" && this.show.expOther == true) { return true; }
+                    if (iter.type == "exp_npc" && this.show.expNpc) { return true; }
+                    if (iter.type == "exp_self" && this.show.expSelf) { return true; }
 
                     return false;
-                }));
+                });
+
+                actions.forEach((iter, index, arr) => {
+                    if (index == 0) {
+                        return;
+                    }
+
+                    const time = arr[index - 1].timestamp;
+                    iter.diff = Math.floor((iter.timestamp.getTime() - time.getTime()) / 1000);
+                });
+
+                return Loadable.loaded(actions);
             },
 
             tableActionSource: function() {
@@ -701,9 +859,11 @@
         },
 
         watch: {
-            "options.useNpcID": function(): void {
-                // this option is only used duration generation, so we'll need to reset it
-                this.setAll();
+            options: {
+                deep: true,
+                handler: function(): void {
+                    this.setAll();
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
@@ -21,7 +22,7 @@ namespace watchtower.Services.Db {
             _Reader = reader;
         }
 
-        public async Task<List<FireGroupToFireMode>> GetAll() {
+        public async Task<List<FireGroupToFireMode>> GetAll(CancellationToken cancel = default) {
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 SELECT *

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MoreLinq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,14 +21,17 @@ namespace watchtower.Controllers.Api {
 
         private readonly VehicleRepository _VehicleRepository;
         private readonly VehicleUsageDbStore _VehicleUsageDb;
+        private readonly VehicleUsageRepository _VehicleUsageRepository;
 
-        public VehicleApiController( ILogger<VehicleApiController> logger,
-            VehicleRepository vehicleRepository, VehicleUsageDbStore vehicleUsageDb) {
+        public VehicleApiController(ILogger<VehicleApiController> logger,
+            VehicleRepository vehicleRepository, VehicleUsageDbStore vehicleUsageDb,
+            VehicleUsageRepository vehicleUsageRepository) {
 
             _Logger = logger;
 
             _VehicleRepository = vehicleRepository;
             _VehicleUsageDb = vehicleUsageDb;
+            _VehicleUsageRepository = vehicleUsageRepository;
         }
 
         /// <summary>
@@ -62,28 +66,54 @@ namespace watchtower.Controllers.Api {
             }
 
             if (includeVehicles == true) {
-                Dictionary<int, PsVehicle> vehicles = (await _VehicleRepository.GetAll()).ToDictionary(iter => iter.ID);
-
-                _UpdateVehicleFields(data.Vs, vehicles);
-                _UpdateVehicleFields(data.Nc, vehicles);
-                _UpdateVehicleFields(data.Tr, vehicles);
-                _UpdateVehicleFields(data.Other, vehicles);
+                await _VehicleUsageRepository.AddVehicles(data);
             }
 
             return ApiOk(data);
         }
 
-        private static void _UpdateVehicleFields(VehicleUsageFaction faction, Dictionary<int, PsVehicle> dict) {
-            foreach (KeyValuePair<int, VehicleUsageEntry> kvp in faction.Usage) {
-                if (kvp.Key == -1) {
-                    kvp.Value.VehicleName = "unknown";
-                } else if (kvp.Key == 0) {
-                    kvp.Value.VehicleName = "none";
-                } else {
-                    kvp.Value.Vehicle = dict.GetValueOrDefault(kvp.Key);
-                    kvp.Value.VehicleName = kvp.Value.Vehicle?.Name ?? $"<missing {kvp.Key}>";
-                }
+        /// <summary>
+        ///     get historical saved <see cref="VehicleUsageData"/> data, up to 7 days
+        /// </summary>
+        /// <param name="start">where the range will start (inclusive)</param>
+        /// <param name="end">where the range will end (exclusive)</param>
+        /// <param name="worldID">optional, filters based on <see cref="VehicleUsageData.WorldID"/></param>
+        /// <param name="includeVehicles">if the <see cref="VehicleUsageEntry.Vehicle"/> will be populated</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="VehicleUsageData"/>
+        ///     where <see cref="VehicleUsageData.Timestamp"/> is between
+        ///     <paramref name="start"/> and <paramref name="end"/>
+        /// </response>
+        /// <response code="400">
+        ///     one of the following validation errors occured:
+        ///     <ul>
+        ///         <li><paramref name="end"/> came before <paramref name="start"/></li>
+        ///         <li><paramref name="end"/> and <paramref name="start"/> are more than 7 days apart</li>
+        ///     </ul>
+        /// </response>
+        [HttpGet("usage/history")]
+        public async Task<ApiResponse<List<VehicleUsageData>>> GetHistoric(
+            [FromQuery] DateTime start, [FromQuery] DateTime end,
+            [FromQuery] int? worldID = null, [FromQuery] bool includeVehicles = true) {
+
+            if (end - start > TimeSpan.FromDays(7)) {
+                return ApiBadRequest<List<VehicleUsageData>>($"{nameof(start)} and {nameof(end)} can only be 7 days apart");
             }
+
+            if (end > start) {
+                return ApiBadRequest<List<VehicleUsageData>>($"{nameof(start)} must come before {nameof(end)}");
+            }
+
+            List<VehicleUsageData> data = await _VehicleUsageDb.GetByTimestamp(start, end);
+            if (worldID != null) {
+                data = data.Where(iter => iter.WorldID == worldID.Value).ToList();
+            }
+
+            if (includeVehicles == true) {
+                await _VehicleUsageRepository.AddVehicles(data);
+            }
+
+            return ApiOk(data);
         }
 
     }

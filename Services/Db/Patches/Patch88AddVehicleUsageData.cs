@@ -22,6 +22,8 @@ namespace watchtower.Services.Db.Patches {
                     usage_tr jsonb NOT NULL,
                     usage_other jsonb NOT NULL
                 );
+
+                CREATE INDEX idx_vehicle_usage_timestamp ON vehicle_usage(timestamp);
             ");
 
             await cmd.ExecuteNonQueryAsync();

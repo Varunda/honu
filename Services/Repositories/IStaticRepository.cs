@@ -15,7 +15,7 @@ namespace watchtower.Services.Repositories {
         ///     Get all data in this repository
         /// </summary>
         /// <returns></returns>
-        Task<List<T>> GetAll();
+        Task<List<T>> GetAll(CancellationToken cancel = default);
 
         /// <summary>
         ///     Get a specific <typeparamref name="T"/> with an ID of <paramref name="ID"/>

@@ -48,15 +48,15 @@ namespace watchtower.Services.Repositories {
         /// <returns>
         ///     A list of static PS2 data
         /// </returns>
-        public async Task<List<T>> GetAll() {
+        public async Task<List<T>> GetAll(CancellationToken cancel = default) {
             if (_Cache.TryGetValue(CACHE_KEY_ALL, out List<T>? entries) == false || entries == null) {
                 string method = "db";
                 _Logger.LogDebug($"loading static data, not cached [TypeName={TypeName}] [cacheKey={CACHE_KEY_ALL}]");
-                entries = await _Db.GetAll();
+                entries = await _Db.GetAll(cancel);
 
                 if (entries.Count == 0) {
                     _Logger.LogInformation($"loaded 0 entries from DB, loading from census [TypeName={TypeName}]");
-                    List<T> censusEntries = await _Census.GetAll();
+                    List<T> censusEntries = await _Census.GetAll(cancel);
                     method = "census";
                     if (censusEntries.Count > 0) {
                         foreach (T entry in censusEntries) {

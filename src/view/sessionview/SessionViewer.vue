@@ -409,9 +409,9 @@
                         Loading...
                     </div>
 
-                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded' && expOther.state == 'loaded'"
                         :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills"
-                        :exp="exp.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
+                        :exp="exp.data" :exp-other="expOther.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
                     </session-action-log>
                 </collapsible>
 
@@ -840,6 +840,17 @@
                     iter.event.timestamp.getTime() >= this.range.start.getTime()
                     && iter.event.timestamp.getTime() <= this.range.end.getTime()
                     && iter.event.revivedEventID == null);
+            },
+
+            // includes revived deaths, used in action-log for showing who revived a death
+            allDeaths: function(): FullKillEvent[] {
+                if (this.fullDeaths.state != "loaded") {
+                    return [];
+                }
+
+                return this.fullDeaths.data.filter(iter =>
+                    iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime());
             },
 
             vehicleDestroyEvents: function(): ExpandedVehicleDestroyEvent[] {
