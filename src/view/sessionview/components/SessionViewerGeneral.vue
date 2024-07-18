@@ -124,7 +124,7 @@
                 <th>KPM</th>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.infil.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_infil.png" height="24" />
                     Infiltrator
@@ -139,7 +139,7 @@
                 <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.lightAssault.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_light.png" height="24" />
                     Light Assault
@@ -154,7 +154,7 @@
                 <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.medic.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_medic.png" height="24" />
                     Medic
@@ -169,7 +169,7 @@
                 <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.engineer.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_engi.png" height="24" />
                     Engineer
@@ -184,7 +184,7 @@
                 <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.heavy.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_heavy.png" height="24" />
                     Heavy
@@ -199,7 +199,7 @@
                 <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
-            <tr>
+            <tr :class="{ 'text-muted': classPlaytime.max.secondsAs == 0 }">
                 <td>
                     <img src="/img/classes/icon_max.png" height="24" />
                     MAX
@@ -323,28 +323,35 @@
                     return;
                 }
 
+                const data: {name: string, value: number, color: string}[] = [];
+
+                if (this.classPlaytime.infil.secondsAs > 0) {
+                    data.push({ name: "Infiltrator", value: this.classPlaytime.infil.secondsAs, color: "#666699" });
+                }
+                if (this.classPlaytime.lightAssault.secondsAs > 0) {
+                    data.push({ name: "Light Assault", value: this.classPlaytime.lightAssault.secondsAs, color: "#0d239d" });
+                }
+                if (this.classPlaytime.medic.secondsAs > 0) {
+                    data.push({ name: "Medic", value: this.classPlaytime.medic.secondsAs, color: "#cc0000" });
+                }
+                if (this.classPlaytime.engineer.secondsAs > 0) {
+                    data.push({ name: "Engineer", value: this.classPlaytime.engineer.secondsAs, color: "#009900" });
+                }
+                if (this.classPlaytime.heavy.secondsAs > 0) {
+                    data.push({ name: "Heavy", value: this.classPlaytime.heavy.secondsAs, color: (this.usePalePink) ? "#fcd5e7" : "#ff69b4" });
+                }
+                if (this.classPlaytime.max.secondsAs > 0) {
+                    data.push({ name: "MAX", value: this.classPlaytime.max.secondsAs, color: "#663300" });
+                }
+
                 const ctx = (document.getElementById("chart-class-playtime") as any).getContext("2d");
                 this.chart = new Chart(ctx, {
                     type: "pie",
                     data: {
-                        labels: [ "Infiltrator", "Light Assault", "Medic", "Engineer", "Heavy Assault", "MAX" ],
+                        labels: data.map(iter => iter.name),
                         datasets: [{
-                            data: [
-                                this.classPlaytime.infil.secondsAs,
-                                this.classPlaytime.lightAssault.secondsAs,
-                                this.classPlaytime.medic.secondsAs,
-                                this.classPlaytime.engineer.secondsAs,
-                                this.classPlaytime.heavy.secondsAs,
-                                this.classPlaytime.max.secondsAs
-                            ],
-                            backgroundColor: [
-                                "#666699", // infil
-                                "#0d239d", // LA
-                                "#cc0000", // medic
-                                "#009900", // engi
-                                (this.usePalePink) ? "#fcd5e7" : "#ff69b4", // heavy
-                                "#663300", // max
-                            ]
+                            data: data.map(iter => iter.value),
+                            backgroundColor: data.map(iter => iter.color)
                         }]
                     },
                     options: {
@@ -370,7 +377,7 @@
                                                 return {
                                                     text: `${label as string} - ${TimeUtils.duration(datum)} (${(datum / sum * 100).toFixed(2)}%)`,
                                                     datasetIndex: 0,
-                                                    fillStyle: this.backgroundColors[index]
+                                                    fillStyle: data[index].color
                                                 }
                                             }
                                             throw `Invalid type of data '${typeof (datum)}': ${datum}`;

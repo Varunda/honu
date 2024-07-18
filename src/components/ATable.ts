@@ -91,9 +91,6 @@ export const ATable = Vue.extend({
         // How much padding will each row get
         RowPadding: { type: String, required: false, default: "normal" }, // "compact" | "normal" | "expanded"
 
-        // Will the <a-table> be displayed as a <div>.list-group or a <table>
-        //DisplayType: { type: String, required: false, default: "list" }, // "list" | "table",
-
         // Field to sort on by default, if undefined goes to first <a-col> with a sort-field
         DefaultSortField: { type: String, required: false, default: undefined },
 
@@ -106,13 +103,18 @@ export const ATable = Vue.extend({
         // Will the resulting table be rendered with .table-hover or no
         hover: { type: Boolean, required: false, default: false },
 
+        // array of valid page sizes
+        // example:
+        //     :page-sizes="[50, 100, 200, 500]"
         PageSizes: { type: Array as PropType<number[]>, required: false },
 
+        // default page size
         DefaultPageSize: { type: Number, required: false },
 
         // Will the pages also be shown above the data?
         ShowTopPages: { type: Boolean, required: false, default: false },
 
+        // if this is a named <a-table> or not
         name: { type: String, required: false, default: null }
     },
 
@@ -171,15 +173,6 @@ export const ATable = Vue.extend({
                 // Get the HTML class used to define the columns
                 const colClass: string = (column.componentOptions!.propsData as any).ColClass;
                 const sortField: string | undefined = (column.componentOptions.propsData as any).SortField;
-
-                const options: VNodeData = {};
-                options.staticClass = colClass;
-
-                if (sortField != undefined) {
-                    options.on = {
-                        click: this.sortTable.bind(this, sortField)
-                    }
-                }
 
                 const header: Header = {
                     colClass: colClass,
@@ -241,6 +234,10 @@ export const ATable = Vue.extend({
 
             const filterNode: VNode = filterNodes[0];
             filter.vnode = filterNode;
+
+            if ((filterNode.componentOptions?.children?.length ?? 0) > 0) {
+                throw `<a-filter> elements cannot have children nodes within them`;
+            }
 
             filter.width = (filterNode.componentOptions!.propsData as any).MaxWidth;
 
@@ -311,6 +308,7 @@ export const ATable = Vue.extend({
             this.filters.push(filter);
         }
 
+        // populate footer data
         for (const column of this.nodes.columns) {
             if (column.componentOptions?.children) {
                 // Finding the <a-footer> elements
@@ -337,7 +335,7 @@ export const ATable = Vue.extend({
     },
 
     render: function(createElement: CreateElement): VNode {
-        this.log("render");
+        this.log(`rendering [state=${this.entries.state}]`);
         let rows: VNode[] = [];
 
         try {
@@ -386,7 +384,6 @@ export const ATable = Vue.extend({
 
                 this.$emit("rerender", Loadable.loaded(this.displayedEntries));
             } else if (this.entries.state == "error") {
-
                 const err: ProblemDetails = this.entries.problem;
 
                 rows.push(createElement("tr",
@@ -452,17 +449,17 @@ export const ATable = Vue.extend({
             console.error(err);
         }
 
-		return createElement("table",
-			{
-				staticClass: "table a-table",
-				class: {
+        return createElement("table",
+            {
+                staticClass: "table a-table",
+                class: {
                     "table-sm": (this.RowPadding == "compact"),
                     "table-striped": (this.striped == true),
                     "table-hover": (this.hover == true)
-				}
-			},
-			rows
-		);
+                }
+            },
+            rows
+        );
     },
 
     methods: {
@@ -556,7 +553,10 @@ export const ATable = Vue.extend({
 
                 if (header.field != undefined) {
                     options.on = {
-                        click: this.sortTable.bind(this, header.field)
+                        click: (ev: MouseEvent) => {
+                            console.log(ev, ev.target);
+                            this.sortTable(header.field!);
+                        }
                     }
                 }
 
@@ -639,17 +639,6 @@ export const ATable = Vue.extend({
                         if (slot == undefined) {
                             throw `Missing default slot for a <a-body>`;
                         }
-
-                        let lineHeight: string = "1.5";
-                        /*
-                        switch (this.RowPadding) {
-                            case "compact": lineHeight = "1"; break;
-                            case "expanded": lineHeight = "2"; break;
-                            case "tiny": lineHeight = "0.8"; break;
-                            default: lineHeight = "1.5"; break;
-                        }
-                        */
-
 
                         // Copy listeners to the generated node
                         if (bodyNode.componentOptions?.listeners) {
@@ -1177,7 +1166,7 @@ export const ATable = Vue.extend({
                 throw `index was greater than number of filters (${this.filters.length}}: ${index}`;
             }
 
-            console.log(parameters);
+            console.log("<a-table>", parameters);
 
             for (const key in parameters) {
                 (this.filters[index] as any)[key] = (parameters as any)[key];

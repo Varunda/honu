@@ -120,7 +120,7 @@ namespace watchtower.Services.Repositories {
         /// </summary>
         /// <param name="data">data to populate</param>
         /// <param name="cancel">cancellation token. defaults to <see cref="CancellationToken.None"/></param>
-        /// <returns></returns>
+        /// <returns>a task for when the async operation is complete</returns>
         public async Task AddVehicles(VehicleUsageData data, CancellationToken cancel = default) {
             Dictionary<int, PsVehicle> vehicles = (await _VehicleRepository.GetAll(cancel)).ToDictionary(iter => iter.ID);
 
@@ -130,6 +130,12 @@ namespace watchtower.Services.Repositories {
             _UpdateVehicleFields(data.Other, vehicles);
         }
 
+        /// <summary>
+        ///     populate the <see cref="VehicleUsageEntry.Vehicle"/> fields of a <see cref="VehicleUsageData"/>
+        /// </summary>
+        /// <param name="data">list of data to populate</param>
+        /// <param name="cancel">cancellation token. defaults to <see cref="CancellationToken.None"/></param>
+        /// <returns>a task for when the async operation is complete</returns>
         public async Task AddVehicles(List<VehicleUsageData> data, CancellationToken cancel = default) {
             Dictionary<int, PsVehicle> vehicles = (await _VehicleRepository.GetAll(cancel)).ToDictionary(iter => iter.ID);
 

@@ -123,6 +123,7 @@ namespace watchtower.Services.Repositories {
                 string facName = $"{strippedName} {fac.TypeName}".ToLower();
                 if (facName.StartsWith(baseName) == true
                     || (facName + "s").StartsWith(baseName) == true
+                    || (strippedName + "s").StartsWith(baseName) == true // facility type is appended, check just the name
                     || facName.StartsWith("the " + baseName) == true
                     ) {
 

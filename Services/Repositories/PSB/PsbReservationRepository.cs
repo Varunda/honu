@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using watchtower.Code.Constants;
 using watchtower.Code.DiscordInteractions;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
@@ -44,20 +45,16 @@ namespace watchtower.Services.Repositories.PSB {
         /// <summary>
         ///     Possible time formats that can be used
         /// </summary>
-        private static readonly string[] TIME_FORMATS = new string[] {
-            "HH:mm",
-            "H:mm",
-            "HH",
-        };
+        private static readonly string[] TIME_FORMATS = [ "HH:mm", "H:mm", "HH", ];
 
         /// <summary>
         ///     possible formats a day is parsed from
         /// </summary>
-        private static readonly string[] DAY_FORMATS = new string[] {
-            "YYYY-MM-DD",
-            "dddd MMMM d",
-            "dddd MMM d",
-        };
+        private static readonly string[] DAY_FORMATS = [
+            "YYYY-MM-DD",   // 2024-01-01
+            "dddd MMMM d",  // Monday, January 1
+            "dddd MMM d"    // Monday, Jan 1st
+        ];
 
         public PsbReservationRepository(ILogger<PsbReservationRepository> logger,
             PsbContactSheetRepository contactRepository, FacilityRepository facilityRepository,
@@ -85,7 +82,7 @@ namespace watchtower.Services.Repositories.PSB {
         /// </returns>
         public async Task<ParsedPsbReservation> Parse(DiscordMessage message) {
             if (string.IsNullOrEmpty(message.Content) == true) {
-                _Logger.LogWarning($"message is empty, did you set the gateway intents? Needs message contents!");
+                _Logger.LogWarning($"message is empty, is the message contents gateway intent set?");
             }
 
             PsbReservation res = new();
@@ -123,11 +120,11 @@ namespace watchtower.Services.Repositories.PSB {
                 if (field.StartsWith("outfit") || field.StartsWith("team") || field.StartsWith("group")) {
                     feedback += $"Line `{line}` as outfits\n";
 
-                    List<string> outfits = value.Split(new string[] { ",", "&", "/", ";" }, StringSplitOptions.None).ToList();
+                    List<string> outfits = [.. value.Split(new string[] { ",", "&", "/", ";" }, StringSplitOptions.None)];
                     res.Outfits = outfits.Select(iter => iter.Trim().ToLower()).ToList();
 
                     feedback += $"\tOutfits: {string.Join(", ", outfits)}\n";
-                } else if (field == "accounts" || field == "number of accounts") {
+                } else if (field == "accounts" || field == "number of accounts" || field == "accounts needed") {
                     feedback += $"Line `{line}` as account number\n";
 
                     if (value.ToLower() == "none") {
@@ -151,7 +148,7 @@ namespace watchtower.Services.Repositories.PSB {
                     Regex mentions = new("<@(?<user>\\d*)>");
                     MatchCollection mentionMatches = mentions.Matches(message.Content);
 
-                    foreach (Match match in mentionMatches) {
+                    foreach (Match match in mentionMatches.Cast<Match>()) {
                         if (match.Groups.TryGetValue("user", out Group? userID) == false) {
                             errors.Add($"failed to get user from {match.Value}");
                             continue;
@@ -357,7 +354,7 @@ namespace watchtower.Services.Repositories.PSB {
             foreach (string name in names) {
                 Match match = r.Match(name);
 
-                Regex rgx = new Regex("[^a-zA-Z0-9 -]");
+                Regex rgx = new("[^a-zA-Z0-9 -]");
                 string baseName = rgx.Replace(name.Trim().ToLower(), "");
                 //string baseName = name.Trim().ToLower();
 
@@ -397,14 +394,28 @@ namespace watchtower.Services.Repositories.PSB {
                     List<PsFacility> possibleBases = await _FacilityRepository.SearchByName(baseName);
 
                     if (possibleBases.Count == 0) {
+                        _Logger.LogInformation($"failed to find base [baseName={baseName}]");
                         result.Errors.Add($"Failed to find base `{baseName}`");
                         continue;
                     } else if (possibleBases.Count > 1) {
-                        result.Errors.Add($"Ambigious base name `{baseName}`: {string.Join(", ", possibleBases.Select(iter => iter.Name))}");
+                        string ambigiousBaseNames = string.Join(", ", possibleBases.Take(5).Select(iter => iter.Name));
+                        if (possibleBases.Count > 5) {
+                            ambigiousBaseNames += $", plus {ambigiousBaseNames.Length - 5} more...";
+                        }
+
+                        result.Errors.Add($"Ambigious base name `{baseName}`: {ambigiousBaseNames}");
+                        continue;
+                    } else if (possibleBases[0].TypeID == FacilityType.WARPGATE) {
+                        if (parsed.Reservation.Contacts.FirstOrDefault(iter => iter.DiscordID == 291102854524174336) != null) {
+                            result.Errors.Add($"https://discord.com/channels/207168033918025729/1192591777635500163/1192687855164731452");
+                        } else {
+                            result.Errors.Add($"A warpgate (`{baseName}`) cannot be reserved");
+                        }
+
                         continue;
                     }
 
-                    book.Facilities = new List<PsFacility>() { possibleBases[0] };
+                    book.Facilities = [ possibleBases[0] ];
                     _Logger.LogDebug($"found {possibleBases[0].Name}/{possibleBases[0].FacilityID}");
                 }
 
@@ -558,7 +569,6 @@ namespace watchtower.Services.Repositories.PSB {
                 List<PsbCalendarEntry> entries = await _CalendarRepository.GetAll();
 
                 foreach (PsbBaseBooking booking in res.Bases) {
-
                     List<PsFacility> bookingFacilities;
                     if (booking.ZoneID != null) {
                         bookingFacilities = facs.Values.Where(iter => iter.ZoneID == booking.ZoneID.Value).ToList();

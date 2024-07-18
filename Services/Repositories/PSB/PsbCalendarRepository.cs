@@ -258,7 +258,7 @@ namespace watchtower.Services.Repositories.PSB {
                 if (inCurrentDay == true) {
                     // a blank row means the day has no reservations
                     if (row.Count == 1) {
-                        _Logger.LogDebug($"Day {booking.Start.Date:u} has no bookings");
+                        _Logger.LogDebug($"day has no bookings [booking.Start={booking.Start:u}] [booking.Start.Date={booking.Start.Date:u}]");
                         return i + 5;
                     }
 
@@ -275,6 +275,7 @@ namespace watchtower.Services.Repositories.PSB {
                     }
 
                     if (startDate < booking.Start) {
+                        _Logger.LogDebug($"booking is after start of new booking [startDate={startDate:u}] [booking.Start={booking.Start:u}] [i={i}] [row={i + 5}]");
                         continue;
                     }
 

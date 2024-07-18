@@ -67,7 +67,7 @@
 
             <collapsible header-text="Session" id="session-info">
                 <table class="table table-sm w-auto d-inline-block mr-4" style="vertical-align: top;">
-                    <tr>
+                    <tr class="table-secondary">
                         <td><b>ID</b></td>
                         <td>{{session.data.id}}</td>
                     </tr>
@@ -160,7 +160,7 @@
                 </table>
 
                 <table class="table table-sm w-auto d-inline-block">
-                    <tr>
+                    <tr class="table-secondary">
                         <th>Data</th>
                         <th>State</th>
                     </tr>
@@ -292,10 +292,10 @@
                             <info-hover text="Before 2022-07-31, only specific exp events were tracked"></info-hover>
                         </td>
                         <td>
-                            <span v-if="showFullExp == true">
+                            <span v-if="showFullExp == true" class="text-success">
                                 Yes
                             </span>
-                            <span v-else>
+                            <span v-else class="text-warning">
                                 No
                             </span>
                         </td>

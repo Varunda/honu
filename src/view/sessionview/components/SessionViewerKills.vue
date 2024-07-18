@@ -5,7 +5,7 @@
         </h3>
 
         <div class="d-flex">
-            <div class="mr-3">
+            <div class="mr-4">
                 <h3>Outfits</h3>
 
                 <table class="table table-sm" style="width: auto;">
@@ -110,26 +110,28 @@
                 Kills
             </h3>
 
-            <div class="d-flex flex-wrap">
-                <div class="mr-3">
+            <div class="d-flex flex-wrap justify-content-center">
+                <div class="flex-grow-1 flex-basis-0 mr-4">
                     <h3>Weapon kills</h3>
 
                     <session-view-kills-item-table :entries="uses.kill" :show-category="true" :total="kills.length">
                     </session-view-kills-item-table>
                 </div>
 
-                <div class="flex-grow-1">
-                    <canvas id="chart-kills-weapon-usage" style="max-height: 300px; max-width: 500px;" class="mb-2"></canvas>
+                <div class="flex-grow-1 flex-basis-0">
+                    <canvas id="chart-kills-weapon-usage" style="max-height: 300px; width: 500px; max-width: 500px;" class="mx-auto mb-2"></canvas>
                 </div>
             </div>
 
             <div class="d-flex">
-                <div>
+                <div class="flex-grow-1 flex-basis-0">
                     <h3>Weapon kill types</h3>
 
                     <session-view-kills-item-table :entries="uses.killType" :show-category="false" :total="kills.length">
                     </session-view-kills-item-table>
                 </div>
+
+                <div class="flex-grow-1"></div>
             </div>
         </div>
 
@@ -358,10 +360,9 @@
                         plugins: {
                             legend: {
                                 position: "right",
-                                align: "start",
                                 labels: {
                                     color: "#fff",
-                                    textAlign: "left"
+                                    textAlign: "left",
                                 }
                             }
                         },

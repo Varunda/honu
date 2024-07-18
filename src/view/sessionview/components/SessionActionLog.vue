@@ -1,7 +1,10 @@
 ﻿<template>
     <div>
         <div class="mb-3">
-            <h5>Filters</h5>
+            <h5>
+                Filters
+                <button class="btn btn-sm btn-secondary btn-outline-light" @click="resetShow" title="Reset shown actions">Reset</button>
+            </h5>
             <div class="btn-group mb-2">
                 <toggle-button v-model="show.kills" class="flex-grow-0">Kills</toggle-button>
                 <toggle-button v-model="show.deaths" class="flex-grow-0">Deaths</toggle-button>
@@ -77,7 +80,7 @@
 
                     </span>
 
-                    <span v-if="entry.count > 1">
+                    <span v-if="entry.count && entry.count > 1">
                         ({{entry.count}} times)
                     </span>
 
@@ -131,6 +134,7 @@
     import TimeUtils from "util/Time";
     import ColorUtils from "util/Color";
     import LoadoutUtils from "util/Loadout";
+    import UserStorageUtil from "util/UserStorage";
 
     type LogPart = {
         html: string;
@@ -140,8 +144,8 @@
         type: string;
         timestamp: Date;
         parts: LogPart[];
-        count: number;
-        otherID: string | null;
+        count?: number;
+        otherID?: string;
 
         // when filtered and sorted, how many seconds in between actions
         diff?: number;
@@ -235,10 +239,62 @@
         },
 
         created: function(): void {
+            this.loadFromStorage();
             this.setAll();
         },
 
         methods: {
+            loadFromStorage: function(): void {
+                if (UserStorageUtil.available() == false) {
+                    return;
+                }
+
+                const actions: any | null = UserStorageUtil.get<object>("ActionLog.Actions");
+                console.log("actions from storage", actions);
+
+                if (actions == null) {
+                    return;
+                }
+
+                for (const key of Object.keys(this.show)) {
+                    console.log("setting action view", key, actions[key]);
+                    (this.show as any)[key] = actions[key] == true;
+                }
+            },
+
+            saveToStorage: function(): void {
+                if (UserStorageUtil.available() == false) {
+                    return;
+                }
+
+                console.log(`saving shown actions to storage`, JSON.stringify(this.show));
+                UserStorageUtil.set("ActionLog.Actions", this.show);
+            },
+
+            resetShow: function(): void {
+                this.show = {
+                    kills: true as boolean,
+                    assists: false as boolean,
+                    deaths: true as boolean,
+                    vehicleDestroy: true as boolean,
+
+                    revives: true as boolean,
+                    heals: false as boolean,
+                    shieldRepairs: false as boolean,
+                    resupplies: false as boolean,
+                    maxRepairs: false as boolean,
+
+                    healed: false as boolean,
+                    revived: true as boolean,
+                    shieldRepaired: false as boolean,
+                    resupplied: false as boolean,
+                    maxRepaired: false as boolean,
+
+                    expOther: false as boolean,
+                    expNpc: false as boolean,
+                    expSelf: false as boolean
+                };
+            },
 
             bindVehicles: async function(): Promise<void> {
                 this.vehicles = Loadable.loading();
@@ -269,9 +325,7 @@
                 entries.push({
                     type: "start",
                     parts: [{ html: "<b>Session started</b>" }],
-                    timestamp: new Date(this.session.start.getTime() - 50), // If the session started because of an event, have the session start before that event
-                    count: 1,
-                    otherID: null
+                    timestamp: new Date(this.session.start.getTime() - 50) // If the session started because of an event, have the session start before that event
                 });
 
                 if (this.session.end != null) {
@@ -280,17 +334,13 @@
                     entries.push({
                         type: "finish",
                         parts: [{ html: `<b>Session finished</b> - lasted ${TimeUtils.duration((end.getTime() - this.session.start.getTime()) / 1000)}` }],
-                        timestamp: this.session.end ?? new Date(),
-                        count: 1,
-                        otherID: null
+                        timestamp: this.session.end ?? new Date()
                     });
                 } else {
                     entries.push({
                         type: "finish",
                         parts: [{ html: `<span class="text-warning">Session has not ended</span>` }],
-                        timestamp: this.session.end ?? new Date(),
-                        count: 1,
-                        otherID: null
+                        timestamp: this.session.end ?? new Date()
                     });
                 }
 
@@ -394,7 +444,7 @@
 
                 this.assistScoreMult = scoreMult;
 
-                console.log(`SessionActionLog> Using a score mult of ${scoreMult.toFixed(2)}`);
+                console.log(`SessionActionLog> using a score mult of ${scoreMult.toFixed(2)}`);
 
                 let prev: ActionLogEntry | null = null;
 
@@ -422,19 +472,19 @@
                         // same with headshot, already shown in a Kill event
                         continue;
                     } else if (Experience.isMaxRepair(expID)) {
-                        parts.push({ html: `repaired` });
                         type = "max_repair";
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 25;
 
-                        parts.push({
-                            html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s MAX suit`
-                        });
-                    } else if (Experience.isShieldRepair(expID)) {
                         parts.push({ html: `repaired` });
-                        type = "shield_repair";
+                        parts.push(this.createCharacterLink(other, iter.otherID, { possessive: true }));
+                        parts.push(this.createLogText(`MAX suit for ${amount}-${amount + 25} health`));
+                    } else if (Experience.isShieldRepair(expID)) {
+                        type = "shield_repaired";
+                        const amount: number = iter.amount / Math.max(1, scoreMult) * 10;
 
-                        parts.push({
-                            html: `<a href="/c/${iter.otherID}">${this.getCharacterName(other, iter.otherID)}</a>'s shield`
-                        });
+                        parts.push({ html: `repaired` });
+                        parts.push(this.createCharacterLink(other, iter.otherID, { possessive: true }));
+                        parts.push(this.createLogText(`shield for ${amount}-${amount + 10} shield`));
                     } else if (Experience.isAssist(expID)) {
                         type = "assist";
 
@@ -493,7 +543,7 @@
 
                     // if the previous action log entry added is the same type and otherID, instead increment the count
                     if (this.options.combineSupport == true && prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
-                        ++prev.count;
+                        prev.count = (prev.count ?? 1) + 1;
                     } else {
                         const entry: ActionLogEntry = {
                             parts: parts,
@@ -562,7 +612,6 @@
                         this.createCharacterLink(source, iter.sourceID)
                     ];
 
-
                     if (Experience.isKill(expID) || expID == Experience.HEADSHOT) {
                         // skip exp for kill events, we have a Kill event for it
                         // same with headshot, already shown in a Kill event
@@ -602,7 +651,7 @@
 
                     // if the previous action log entry added is the same type and otherID, instead increment the count
                     if (this.options.combineSupport == true && prev != null && prev.type == type && prev.otherID != null && prev.otherID == iter.otherID) {
-                        ++prev.count;
+                        prev.count = (prev.count ?? 1) + 1;
                     } else {
                         const entry: ActionLogEntry = {
                             parts: parts,
@@ -641,8 +690,6 @@
                         ],
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
-                        count: 1,
-                        otherID: null,
                         event: iter.event
                     };
 
@@ -687,8 +734,6 @@
                             parts: [
                                 { html: `Changed continents to ${ZoneUtils.getZoneName(ev.zoneID)}` }
                             ],
-                            count: 1,
-                            otherID: null,
                             event: ev
                         });
 
@@ -859,9 +904,17 @@
         },
 
         watch: {
+            show: {
+                deep: true,
+                handler: function(): void {
+                    this.saveToStorage();
+                }
+            },
+
             options: {
                 deep: true,
                 handler: function(): void {
+                    this.saveToStorage();
                     this.setAll();
                 }
             }

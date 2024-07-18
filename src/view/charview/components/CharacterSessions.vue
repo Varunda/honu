@@ -13,6 +13,7 @@
                 <div class="pl-3">
                     <h4 class="mb-1">
                         General
+                        <button class="btn btn-sm btn-secondary btn-outline-light" @click="resetShow" title="Reset shown columns">Reset</button>
                     </h4>
 
                     <div class="btn-group mb-3">
@@ -72,6 +73,7 @@
                         <toggle-button v-model="columns.healsPerMinute">
                             Heals/Min
                             <info-hover text="This is not per minute of medic, but minute of playtime due to data limitations"></info-hover>
+
                         </toggle-button>
 
                         <toggle-button v-model="columns.revives">
@@ -129,8 +131,8 @@
             </button>
         </div>
 
-        <a-table v-if="showTable"
-            display-type="table" row-padding="compact" :striped="false" :hover="true" :show-filters="true"
+        <a-table v-if="showTable" name="session-list"
+            display-type="table" row-padding="compact" :striped="false" :hover="true" :show-filters="false"
             default-sort-field="start" default-sort-order="desc"
             :entries="data" :page-sizes="[50, 100, 200, 500]" :default-page-size="200">
 
@@ -165,7 +167,7 @@
             <a-col sort-field="duration">
                 <a-header>
                     <b>Duration</b>
-                    <button type="button" class="btn btn-sm py-0 ml-2 mr-1 border" @click="showAll = !showAll" :class="[ showAll ? 'btn-success' : 'btn-secondary' ]">
+                    <button type="button" class="btn btn-sm py-0 ml-2 mr-1 border" @click="toggleShowAll" :class="[ showAll ? 'btn-success' : 'btn-secondary' ]">
                         All
                     </button>
 
@@ -529,6 +531,8 @@
     import "filters/LocaleFilter";
     import "filters/FixedFilter";
 
+    import UserStorageUtil from "util/UserStorage";
+
     import { PsCharacter } from "api/CharacterApi";
     import { PsOutfit } from "api/OutfitApi";
     import { Session, SessionBlock, SessionApi } from "api/SessionApi";
@@ -605,10 +609,67 @@
         },
 
         beforeMount: function(): void {
+            this.loadFromStorage();
             this.loadSessions();
         },
 
         methods: {
+            loadFromStorage: function(): void {
+                if (UserStorageUtil.available() == false) {
+                    return;
+                }
+
+                const actions: any | null = UserStorageUtil.get<object>("Character.Sessions.Columns");
+                console.log("actions from storage", actions);
+
+                if (actions == null) {
+                    return;
+                }
+
+                for (const key of Object.keys(this.columns)) {
+                    console.log("setting column", key, actions[key]);
+                    (this.columns as any)[key] = actions[key] == true;
+                }
+            },
+
+            saveToStorage: function(): void {
+                if (UserStorageUtil.available() == false) {
+                    return;
+                }
+
+                console.log(`saving columngs to storage`, JSON.stringify(this.columns));
+                UserStorageUtil.set("Character.Sessions.Columns", this.columns);
+            },
+
+            resetShow: function(): void {
+                this.columns = {
+                    exp: true as boolean,
+                    expPerMinute: true as boolean,
+                    kills: true as boolean,
+                    deaths: true as boolean,
+                    kd: true as boolean,
+                    kpm: true as boolean,
+
+                    vkills: false as boolean,
+                    vkpm: false as boolean,
+
+                    spawns: false as boolean,
+                    spawnsPerMinute: false as boolean,
+
+                    heals: false as boolean,
+                    revives: false as boolean,
+                    shieldRepairs: false as boolean,
+                    healsPerMinute: false as boolean,
+                    revivesPerMinute: false as boolean,
+                    shieldRepairsPerMinute: false as boolean,
+
+                    resupplies: false as boolean,
+                    maxRepairs: false as boolean,
+                    resuppliesPerMinute: false as boolean,
+                    maxRepairsPerMinute: false as boolean
+                };
+            },
+
             loadSessions: async function(): Promise<void> {
                 this.block = Loadable.loading();
                 this.block = await SessionApi.getBlockByCharacterID(this.character.id);
@@ -621,6 +682,11 @@
                         this.showTable = true;
                     });
                 }
+            },
+
+            toggleShowAll: function(): void {
+                console.log(`show all!`);
+                this.showAll = !this.showAll;
             }
         },
 
@@ -754,6 +820,8 @@
             columns: {
                 deep: true,
                 handler: async function(): Promise<void> {
+                    this.saveToStorage();
+
                     // force the table to be destroyed then re-created
                     this.showTable = false;
                     await this.$nextTick();

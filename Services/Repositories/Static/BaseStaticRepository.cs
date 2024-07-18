@@ -102,8 +102,7 @@ namespace watchtower.Services.Repositories {
                 });
             }
 
-            entries.TryGetValue(ID, out T? entry);
-            return entry;
+            return entries.GetValueOrDefault(ID);
         }
 
         /// <summary>
@@ -147,7 +146,7 @@ namespace watchtower.Services.Repositories {
 
             long dbMs = timer.ElapsedMilliseconds; timer.Restart();
 
-            _Logger.LogInformation($"Refreshed {TypeName} with {census.Count} entries in {censusMs + dbMs}ms. [Census={censusMs}ms] [Db={dbMs}ms]");
+            _Logger.LogInformation($"refreshed static data [TypeName={TypeName}] [timer={censusMs + dbMs}ms] [census.Count={census.Count}] [Census={censusMs}ms] [Db={dbMs}ms]");
 
             _Cache.Remove(CACHE_KEY_ALL);
             _Cache.Remove(CACHE_KEY_MAP);
