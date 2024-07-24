@@ -437,11 +437,39 @@
                 <outfit-kill-block :block="worldData.nc.outfitKills"></outfit-kill-block>
             </div>
 
+            <h4 class="grid-nc-title-classes">
+                Class usage
+                <info-hover text="This will always be behind a bit, as a player must do something as a class to be seen as that class"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowIcons" class="btn-sm" true-color="btn-primary">
+                        show class icon
+                    </toggle-button>
+                </span>
+            </h4>
+
             <div class="grid-nc-class-usage">
                 <realtime-class-usage-view :data="worldData.nc.classUsage"
                     :show-count="classUsageShowCount" :show-icons="classUsageShowIcons">
                 </realtime-class-usage-view>
             </div>
+
+            <h4 class="grid-nc-title-focus">
+                Current faction focus (5 mins)
+                <info-hover text="What percentage of kills have come from the other factions within the last 5 minutes"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="factionFocusShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
+            </h4>
 
             <div class="grid-nc-focus">
                 <faction-focus :focus="worldData.nc.factionFocus" :show-count="factionFocusShowCount"></faction-focus>
@@ -572,6 +600,23 @@
                 <outfit-kill-block :block="worldData.tr.outfitKills"></outfit-kill-block>
             </div>
 
+            <h4 class="grid-tr-title-classes">
+                Class usage
+                <info-hover text="This will always be behind a bit, as a player must do something as a class to be seen as that class"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="classUsageShowIcons" class="btn-sm" true-color="btn-primary">
+                        show class icon
+                    </toggle-button>
+                </span>
+            </h4>
+
             <div class="grid-tr-class-usage">
                 <realtime-class-usage-view :data="worldData.tr.classUsage"
                     :show-count="classUsageShowCount" :show-icons="classUsageShowIcons">
@@ -579,7 +624,14 @@
             </div>
 
             <h4 class="grid-tr-title-focus">
-                TR Focus
+                Current faction focus (5 mins)
+                <info-hover text="What percentage of kills have come from the other factions within the last 5 minutes"></info-hover>
+
+                <span class="ml-2 h6">
+                    <toggle-button v-model="factionFocusShowCount" class="btn-sm">
+                        show count
+                    </toggle-button>
+                </span>
             </h4>
 
             <div class="grid-tr-focus">

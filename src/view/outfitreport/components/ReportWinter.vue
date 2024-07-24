@@ -206,6 +206,7 @@
                 this.makeAssists();
                 this.makeMostMaxKills();
                 this.makeKillstreak();
+                this.makeKillParticipation();
                 this.makeSPM();
                 this.makeScore();
 
@@ -320,6 +321,46 @@
                     [Experience.ASSIST, Experience.HIGH_PRIORITY_ASSIST, Experience.PRIORITY_ASSIST, Experience.SPAWN_ASSIST],
                     (metadata) => metadata.timeAs)
                 );
+            },
+
+            makeKillParticipation: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Kill participation";
+                metric.funName = "Kill participation";
+                metric.description = "% of kills + assists of total kills";
+
+                const killCount: number = this.report.kills.length;
+
+                const killsAndAssists: Map<string, number> = new Map();
+                for (const ev of this.report.kills) {
+                    killsAndAssists.set(ev.attackerCharacterID, (killsAndAssists.get(ev.attackerCharacterID) || 0) + 1);
+                }
+
+                for (const ev of this.report.experience) {
+                    if (Experience.isAssist(ev.experienceID) == false) {
+                        continue;
+                    }
+
+                    killsAndAssists.set(ev.sourceID, (killsAndAssists.get(ev.sourceID) || 0) + 1);
+                }
+
+                const metrics: WinterEntry[] = Array.from(killsAndAssists.entries())
+                    .map(iter => {
+                        const entry: WinterEntry = new WinterEntry();
+                        entry.characterID = iter[0];
+                        entry.value = iter[1];
+                        entry.name = this.getCharacterName(iter[0]);
+
+                        const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
+                        if (metadata != undefined) {
+                            entry.display = `${LocaleUtil.locale(entry.value / killCount * 100, 2)}% (${entry.value})`;
+                        }
+                        return entry;
+                    }).sort((a, b) => b.value - a.value);
+
+                metric.entries = metrics;
+
+                this.catKills.metrics.push(metric);
             },
 
             makeMostMaxKills: function(): void {
