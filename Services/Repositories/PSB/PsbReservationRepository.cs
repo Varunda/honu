@@ -672,11 +672,11 @@ namespace watchtower.Services.Repositories.PSB {
             DateTimeStyles style = DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowTrailingWhite 
                 | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal;
 
-            string[] regexs = new string[] {
+            string[] regexs = [
                 @"^(?<day>.*?\d{1,2}).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // Month Day - Time
                 @"^(?<day>\d{4}-\d\d-\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // yyyy-mm-dd hh:mm
                 @"^(?<day>\d{4}/\d\d/\d\d).*?(?<start>\d{1,2}(:\d\d)?)\s?.*?(?<end>\d{1,2}(:\d\d)?).*$", // yyyy/mm/dd hh:mm
-            };
+            ];
 
             foreach (string reg in regexs) {
                 Regex r = new Regex(reg);

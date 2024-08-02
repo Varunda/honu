@@ -144,9 +144,11 @@ namespace watchtower.Services.Queues {
         /// </summary>
         /// <returns>A newly allocated list that contains a shallow-reference to the items in the list</returns>
         public List<T> ToList() {
-            T[] arr = new T[Count()];
-            _Items.CopyTo(arr, 0);
-            return arr.ToList();
+            lock (_Items) {
+                //T[] arr = new T[Count()];
+                //_Items.CopyTo(arr, 0);
+                return _Items.ToArray().ToList();
+            }
         }
 
     }

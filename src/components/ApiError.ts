@@ -39,6 +39,10 @@ export const ApiError = Vue.extend({
                 <div>
                     Erroring URL: <code>{{error.type}}</code>
                 </div>
+
+                <div>
+                    Error ID: <code>{{error.instance}}</code>
+                </div>
             </div>
 
             <div v-else-if="getErrorType == 'unknown'">

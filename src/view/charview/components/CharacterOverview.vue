@@ -232,6 +232,12 @@
                         Historical stats do not exist
                     </td>
                 </tr>
+
+                <tr v-else-if="history.state == 'error'">
+                    <td colspan="2">
+                        <api-error :error="history.problem"></api-error>
+                    </td>
+                </tr>
             </table>
 
             <div v-if="stats.state == 'loading'">
@@ -246,6 +252,8 @@
             <character-class-stats v-if="stats.state == 'loaded'" class="mr-4"
                 :data="stats.data" type="monthly" title="This month" :include-metadata="false">
             </character-class-stats>
+
+            <api-error v-if="stats.state == 'error'" :error="stats.problem"></api-error>
         </div>
 
         <collapsible header-text="History stats">
@@ -255,6 +263,9 @@
             </div>
             <div v-else-if="history.state == 'loading'">
                 <busy style="max-width: 5rem;"></busy>
+            </div>
+            <div v-else-if="history.state == 'error'">
+                <api-error :error="history.problem"></api-error>
             </div>
         </collapsible>
 
@@ -295,23 +306,25 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
-    import "filters/LocaleFilter";
-    import "filters/FixedFilter";
-    import "filters/FactionNameFilter";
-    import "filters/WorldNameFilter";
-    import "filters/TimeAgoFilter";
-    import "MomentFilter";
+    import InfoHover from "components/InfoHover.vue";
+    import Busy from "components/Busy.vue";
+    import Collapsible from "components/Collapsible.vue";
+    import ApiError from "components/ApiError";
 
     import { PsCharacter } from "api/CharacterApi";
     import { CharacterHistoryStat, CharacterHistoryStatApi } from "api/CharacterHistoryStatApi";
     import { CharacterStat, CharacterStatApi } from "api/CharacterStatApi";
     import { CharacterMetadata, CharacterMetadataApi } from "api/CharacterMetadataApi";
 
-    import InfoHover from "components/InfoHover.vue";
-    import Busy from "components/Busy.vue";
-    import Collapsible from "components/Collapsible.vue";
     import CharacterClassStats from "./CharacterClassStats.vue";
     import CharacterHistoryStats from "./CharacterHistoryStats.vue";
+
+    import "filters/LocaleFilter";
+    import "filters/FixedFilter";
+    import "filters/FactionNameFilter";
+    import "filters/WorldNameFilter";
+    import "filters/TimeAgoFilter";
+    import "MomentFilter";
 
     export const CharacterOverview = Vue.extend({
         props: {
@@ -379,9 +392,7 @@
         components: {
             CharacterClassStats,
             CharacterHistoryStats,
-            Busy,
-            InfoHover,
-            Collapsible
+            Busy, InfoHover, Collapsible, ApiError
         }
 
     });

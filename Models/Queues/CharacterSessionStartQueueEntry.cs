@@ -25,7 +25,16 @@ namespace watchtower.Models.Queues {
         /// </summary>
         public int FailCount { get; set; } = 0;
 
+        /// <summary>
+        ///     don't start a session until after this time. used for timeout in session starting
+        /// </summary>
         public DateTime Backoff { get; set; }
+
+        /// <summary>
+        ///     if Honu fails to get a character from Census, we do want to create the DB record as soon as the session starts,
+        ///     rather than once we get the character. this field lets the session start queue update a session instead of creating a new one
+        /// </summary>
+        public long? SessionID { get; set; }
 
     }
 }

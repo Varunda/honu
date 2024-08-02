@@ -176,17 +176,8 @@ namespace watchtower.Controllers {
         ///     The response will contain the <see cref="CharacterWeaponKillEntry"/>s for the character
         ///     passed in <paramref name="charID"/> and within the last 2 hours
         /// </response>
-        /// <response code="404">
-        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
-        /// </response>
         [HttpGet("character/{charID}")]
         public async Task<ApiResponse<List<CharacterWeaponKillEntry>>> CharacterKills(string charID, [FromQuery] bool useShort = false) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
-
-            if (c == null) {
-                return ApiNotFound<List<CharacterWeaponKillEntry>>($"{nameof(PsCharacter)} {charID}");
-            }
-
             List<KillEvent> kills = await _KillDbStore.GetRecentKillsByCharacterID(charID, useShort ? 60 :120);
 
             Dictionary<int, CharacterWeaponKillEntry> entries = new Dictionary<int, CharacterWeaponKillEntry>();
@@ -236,17 +227,8 @@ namespace watchtower.Controllers {
         ///     The response will contain a list of <see cref="OutfitKillerEntry"/>s for the
         ///     <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/>
         /// </response>
-        /// <response code="404">
-        ///     No <see cref="PsOutfit"/> with <see cref="PsOutfit.ID"/> of <paramref name="outfitID"/> exists
-        /// </response>
         [HttpGet("outfit/{outfitID}")]
         public async Task<ActionResult<List<OutfitKillerEntry>>> OutfitKills(string outfitID, [FromQuery] bool useShort = false) {
-            PsOutfit? outfit = await _OutfitRepository.GetByID(outfitID);
-
-            if (outfit == null) {
-                return NotFound($"outfit {outfitID}");
-            }
-
             List<KillEvent> kills = await _KillDbStore.GetKillsByOutfitID(outfitID, 120);
 
             Dictionary<string, OutfitKillerEntry> entries = new Dictionary<string, OutfitKillerEntry>();

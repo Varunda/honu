@@ -306,6 +306,35 @@ namespace watchtower.Services.Db {
         }
 
         /// <summary>
+        ///     update an existing <see cref="Session"/> with a new
+        ///     <see cref="Session.OutfitID"/> and <see cref="Session.TeamID"/>
+        /// </summary>
+        /// <param name="sessionID">ID of the <see cref="Session"/> to update</param>
+        /// <param name="outfitID">new value of <see cref="Session.OutfitID"/> to set</param>
+        /// <param name="teamID">new value of <see cref="Session.TeamID"/> to set</param>
+        /// <param name="cancel">cancellation token (defaults to none)</param>
+        /// <returns>
+        ///     a task for when the async operation is complete
+        /// </returns>
+        public async Task Update(long sessionID, string? outfitID, short teamID, CancellationToken cancel = default) {
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                UPDATE wt_session
+                    SET outfit_id = @OutfitID,
+                        team_id = @TeamID
+                    WHERE id = @SessionID;
+            ", cancel);
+
+            cmd.AddParameter("SessionID", sessionID);
+            cmd.AddParameter("OutfitID", outfitID);
+            cmd.AddParameter("TeamID", teamID);
+            await cmd.PrepareAsync(cancel);
+
+            long ID = await cmd.ExecuteNonQueryAsync(cancel);
+            await conn.CloseAsync();
+        }
+
+        /// <summary>
         ///     Set the <see cref="Session.End"/> of a session
         /// </summary>
         /// <param name="sessionID">ID of the session to update</param>
@@ -366,6 +395,12 @@ namespace watchtower.Services.Db {
             return f;
         }
 
+        /// <summary>
+        ///     update the summary fields of a <see cref="Session"/>
+        /// </summary>
+        /// <param name="sessionID">ID of the session to update</param>
+        /// <param name="s">the <see cref="Session"/> with the updated summary fields</param>
+        /// <returns>a task when the async operation is done</returns>
         public async Task UpdateSummary(long sessionID, Session s) {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"

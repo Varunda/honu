@@ -97,18 +97,19 @@ namespace watchtower.Services.Repositories {
         /// <param name="outfitID">ID of the outfit the character currently is</param>
         /// <param name="teamID">ID of the team the character is currently on</param>
         /// <returns>
-        ///     A task for when the task is completed
+        ///     the <see cref="Session.ID"/> of the newly created DB record,
+        ///     or <c>null</c> if the session could not be started
         /// </returns>
-        public async Task Start(string charID, DateTime when, string? outfitID, short teamID) {
+        public async Task<long?> Start(string charID, DateTime when, string? outfitID, short teamID) {
             TrackedPlayer? player = CharacterStore.Get().GetByCharacterID(charID);
             if (player == null) {
                 _Logger.LogError($"Cannot start session for {charID}, does not exist in CharacterStore");
-                return;
+                return null;
             }
 
             if (player.Online == true) {
                 //_Logger.LogWarning($"Not starting session for {player.ID}, logged in at {player.LastLogin}");
-                return;
+                return null;
             }
 
             Session s = new Session();
@@ -123,6 +124,12 @@ namespace watchtower.Services.Repositories {
             player.Online = true;
 
             CharacterStore.Get().SetByCharacterID(charID, player);
+
+            return ID;
+        }
+
+        public async Task Update(long sessionID, string? outfitID, short teamID) {
+            await _SessionDb.Update(sessionID, outfitID, teamID);
         }
 
         /// <summary>

@@ -10,7 +10,7 @@
 
         <div class="mb-2 mx-2">
             <div class="mb-1">
-                Honu estimates that <b>{{data.totalVehicles}}</b> of <b>{{data.total}}</b> players are in a vehicle of some kinda.
+                Honu estimates that <b>{{data.totalVehicles}}</b> of <b>{{data.total}}</b> players are in a vehicle of some kind
             </div>
             <div class="mb-1">
                 Honu this data based on kills (vehicle weapons), and experience events (gunner assists, repairing vehicles, etc.)

@@ -227,5 +227,9 @@ namespace watchtower.Controllers {
             return Redirect($"/s/{players.SessionID}");
         }
 
+        public IActionResult Online() {
+            return View();
+        }
+
     }
 }

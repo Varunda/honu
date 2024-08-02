@@ -123,7 +123,7 @@
             </collapsible>
         </div>
 
-        <div v-if="showSummaryNeedsCalculation == true" class="alert alert-dismissible alert-info text-center">
+        <div v-if="showSummaryNeedsCalculation == true" class="alert alert-dismissible alert-primary text-center">
             Session summary stats have not been calculated for some sessions in this list<br />
             This data is calculated once every hour
             <button type="button" class="close" data-dismiss="alert" aria-lable="Close">
@@ -143,7 +143,11 @@
 
                 <a-body v-slot="entry">
                     <a :href="'/s/' + entry.id" title="Open session">
-                        {{entry.start | moment}}
+                        {{entry.start | moment("YYYY-MM-DD hh:mm A")}}
+                        <!--
+                            {{entry.start | momentNoTz("ddd")}}
+                        -->
+                        ({{entry.start | timeAgo}} ago)
                     </a>
 
                     <span v-if="entry.summaryCalculated == null">
@@ -530,6 +534,7 @@
 
     import "filters/LocaleFilter";
     import "filters/FixedFilter";
+    import "filters/TimeAgoFilter";
 
     import UserStorageUtil from "util/UserStorage";
 

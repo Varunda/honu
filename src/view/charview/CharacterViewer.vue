@@ -25,7 +25,7 @@
 
         <div v-if="metadata.state == 'loaded' && metadata.data.notFoundCount > 2">
             <h4 class="text-warning text-center">
-                This character has likely been deleted (or you are viewing a PS4 character, which Honu does not support)
+                This character has likely been deleted (or this is a PS4 character, which Honu does not support)
             </h4>
             <small class="text-muted text-center d-block" :title="'Have found in DB ' + metadata.data.notFoundCount + ' times, but not in Census'">
                 This character exists in Honu's database, but not in the Planetside 2 API. Missed {{metadata.data.notFoundCount > 50 ? `50+` : `${metadata.data.notFoundCount}`}} times
@@ -70,9 +70,12 @@
         </div>
 
         <div v-else-if="character.state == 'nocontent'">
-            <span class="text-danger">
-                No character with ID {{charID}} exists
-            </span>
+            <div class="alert alert-danger my-3">
+                No character with ID {{charID}} exists. However, sessions may exist for this character (shown below)
+            </div>
+
+            <!-- the sessions component only needs a character ID, so a fake character is passed with only the id -->
+            <character-sessions :character="{ 'id': charID }"></character-sessions>
         </div>
 
         <div v-else-if="character.state == 'loaded'">
@@ -147,7 +150,13 @@
         </div>
 
         <div v-else-if="character.state == 'error'">
-            Failed to load character: {{character.message}}
+            Failed to load character: <api-error :error="character.problem"></api-error>
+
+            <div class="alert alert-danger my-3">
+                An error occured while loading this character. However, sessions may exist for this character (shown below)
+            </div>
+            <!-- the sessions component only needs a character ID, so a fake character is passed with only the id -->
+            <character-sessions :character="{ 'id': charID }"></character-sessions>
         </div>
 
         <div v-else>
@@ -165,8 +174,9 @@
     import { Loadable, Loading } from "Loading";
 
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
-
+    import ApiError from "components/ApiError";
     import Busy from "components/Busy.vue";
+
     import CharacterHeader from "./components/CharacterHeader.vue";
     import CharacterOverview from "./components/CharacterOverview.vue";
     import CharacterWeaponStats from "./components/CharacterWeaponStats.vue";
@@ -350,21 +360,11 @@
         },
 
         components: {
-            Busy,
-            CharacterHeader,
-            CharacterOverview,
-            CharacterWeaponStats,
-            CharacterSessions,
-            CharacterItems,
-            CharacterFriends,
-            CharacterDirectives,
-            CharacterExtraStats,
-            CharacterVehicleStats,
-            CharacterOutfitHistory,
-            CharacterKillboard,
-            CharacterAlerts,
-            CharacterAchievementView,
-            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
+            Busy, ApiError,
+            HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
+            CharacterHeader, CharacterOverview, CharacterWeaponStats, CharacterSessions, CharacterItems,
+            CharacterFriends, CharacterDirectives, CharacterExtraStats, CharacterVehicleStats, CharacterOutfitHistory,
+            CharacterKillboard, CharacterAlerts, CharacterAchievementView
         }
     });
     export default CharacterViewer;

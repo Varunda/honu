@@ -18,17 +18,15 @@ namespace watchtower.Services.Census {
 
         private readonly ICensusQueryFactory _Census;
         private readonly ICensusReader<PsCharacter> _Reader;
-        //private readonly HonuCensus _HCensus;
 
         private const int BATCH_SIZE = 50;
 
         public CharacterCollection(ILogger<CharacterCollection> logger,
-                ICensusQueryFactory factory, ICensusReader<PsCharacter> reader) { //, HonuCensus hc) {
+                ICensusQueryFactory factory, ICensusReader<PsCharacter> reader) {
 
             _Logger = logger;
             _Census = factory;
             _Reader = reader;
-            //_HCensus = hc ?? throw new ArgumentNullException(nameof(hc));
         }
 
         /// <summary>
@@ -40,18 +38,6 @@ namespace watchtower.Services.Census {
         ///     or <c>null</c> if it doesn't exist
         /// </returns>
         public async Task<PsCharacter?> GetByName(string name) {
-            /*
-            _HCensus.AddServiceId("asdf");
-            honu_census.Models.CensusQuery q = _HCensus.New("character");
-            q.WhereEquals("name.first_lower", name.ToLower());
-
-            JToken? ttt = await _HCensus.GetSingle(q, CancellationToken.None);
-            if (ttt != null) {
-                PsCharacter? cc = _ParseCharacter(ttt);
-                return cc;
-            }
-            */
-
             CensusQuery query = _Census.Create("character");
 
             query.Where("name.first_lower").Equals(name.ToLower());

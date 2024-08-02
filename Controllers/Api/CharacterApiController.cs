@@ -264,16 +264,8 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a list of all <see cref="Session"/>s for
         ///     the <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/>
         /// </response>
-        /// <response code="404">
-        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
-        /// </response>
         [HttpGet("character/{charID}/sessions")]
         public async Task<ApiResponse<List<Session>>> GetSessions(string charID, [FromQuery] int? limit = null) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
-            if (c == null) {
-                return ApiNotFound<List<Session>>($"{nameof(PsCharacter)} {charID}");
-            }
-
             List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
 
             if (limit != null && limit.Value > 0) {
@@ -298,16 +290,8 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a <see cref="SessionBlock"/>, which will contain
         ///     a list of sessions for the character, and a list of outfits those sessions were in
         /// </response> 
-        /// <response code="404">
-        ///     No <see cref="PsCharacter"/> with <see cref="PsCharacter.ID"/> of <paramref name="charID"/> exists
-        /// </response>
         [HttpGet("character/{charID}/sessions-block")]
         public async Task<ApiResponse<SessionBlock>> GetSessionsBlock(string charID, [FromQuery] int? limit = null) {
-            PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
-            if (c == null) {
-                return ApiNotFound<SessionBlock>($"{nameof(PsCharacter)} {charID}");
-            }
-
             List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
 
             if (limit != null && limit.Value > 0) {
@@ -768,6 +752,30 @@ namespace watchtower.Controllers.Api {
             List<PsCharacter> chars = await _CharacterRepository.GetByIDs(players.Select(iter => iter.ID), CensusEnvironment.PC, fast: true);
 
             return ApiOk(chars);
+        }
+
+        [HttpGet("character/online/players")]
+        [SearchBotBlock]
+        public async Task<ApiResponse<List<OnlinePlayer>>> GetOnlinePlayers(short? worldID = null) {
+            List<TrackedPlayer> players = CharacterStore.Get().GetByFilter((iter) => {
+                return iter.Online == true
+                    && (worldID == null || iter.WorldID == worldID);
+            });
+
+            Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(players.Select(iter => iter.ID), CensusEnvironment.PC, fast: true))
+                .ToDictionary(iter => iter.ID); ;
+
+            List<OnlinePlayer> online = [];
+            foreach (TrackedPlayer p in players) {
+                OnlinePlayer op = new();
+                op.CharacterID = p.ID;
+                op.Character = chars.GetValueOrDefault(p.ID);
+                op.Player = p;
+
+                online.Add(op);
+            }
+
+            return ApiOk(online);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 
@@ -19,11 +20,15 @@ namespace watchtower.Services.Db {
         NpgsqlConnection Connection(string server = Dbs.EVENTS, string? task = null, bool enlist = true);
 
         /// <summary>
-        /// Create a new command using the connection passed
+        ///     Create a new command using the connection passed
         /// </summary>
         /// <param name="connection">Connection the command will be executed on</param>
         /// <param name="text">Text of the command</param>
-        Task<NpgsqlCommand> Command(NpgsqlConnection connection, string text);
+        /// <param name="cancel">cancellation token</param>
+        /// <returns>
+        ///     a <see cref="NpgsqlCommand"/> with an opened connection that can be executed
+        /// </returns>
+        Task<NpgsqlCommand> Command(NpgsqlConnection connection, string text, CancellationToken cancel = default);
 
     }
 

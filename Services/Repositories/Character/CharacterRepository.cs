@@ -119,6 +119,8 @@ namespace watchtower.Services.Repositories {
                         if (censusChar != null) {
 
                             // if there is a character from the db, and a character from Census, lets compare the names
+                            // this is now handled by a DB trigger, catches a lot more changes
+                            /*
                             if (character != null) {
                                 //_Logger.LogDebug($"comparing {character.Name} to {censusChar.Name}");
                                 if (character.Name != censusChar.Name) {
@@ -139,6 +141,7 @@ namespace watchtower.Services.Repositories {
                                     }
                                 }
                             }
+                            */
 
                             // if we got a character from Census fine, turn the circuit breaker off
                             if (_CircuitBreakerErrors > 0) {
@@ -415,42 +418,53 @@ namespace watchtower.Services.Repositories {
 
             List<PsCharacter> census = new List<PsCharacter>();
 
-            // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
-            Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name, CancellationToken.None));
-            bool censusCancelled = wrapper.Wait((timeoutCensus == true) ? TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS) : TimeSpan.FromSeconds(60)) == false;
-            if (censusCancelled == false) {
-                census = wrapper.Result;
-            } else {
-                //_Logger.LogWarning($"Census search timed out after {SEARCH_CENSUS_TIMEOUT_MS}ms");
-            }
+            long censusLookup = 0;
+            bool censusCancelled = false;
 
-            long censusLookup = timer.ElapsedMilliseconds;
-            timer.Restart();
+            try {
+                // Setup a task that will be cancelled in the timeout period given, to ensure this method is fast
+                Task<List<PsCharacter>> wrapper = Task.Run(() => _Census.SearchByName(name, CancellationToken.None));
+                censusCancelled = wrapper.Wait((timeoutCensus == true) ? TimeSpan.FromMilliseconds(SEARCH_CENSUS_TIMEOUT_MS) : TimeSpan.FromSeconds(60)) == false;
+                if (censusCancelled == false) {
+                    census = wrapper.Result;
+                } else {
+                    //_Logger.LogWarning($"Census search timed out after {SEARCH_CENSUS_TIMEOUT_MS}ms");
+                }
 
-            if (census.Count > 0) {
-                new Thread(async () => {
-                    try {
-                        // Get all characters that exist in census, but don't exist in DB
-                        for (int i = 0; i < census.Count; ++i) {
-                            PsCharacter c = census[i];
-                            PsCharacter? d = db.FirstOrDefault(iter => iter.ID == c.ID);
-                            if (d == null) {
-                                await _Db.Upsert(c);
-                                _Queue.Queue(c.ID);
-                            } else {
-                                // If the DateLastLogin is the min value, it means the value isn't set, so lets get it from Census
-                                // Usually this would be dumb, cause then you'd have a bunch of deleted characters clogging the queue,
-                                //      but since this is an iteration thru a list that comes from Census, the character must exist,
-                                //      it's just that that character hasn't been updated in the DB yet
-                                if (d.DateLastLogin == DateTime.MinValue) {
-                                    _Queue.Queue(d.ID);
+                censusLookup = timer.ElapsedMilliseconds;
+                timer.Restart();
+
+                if (census.Count > 0) {
+                    new Thread(async () => {
+                        try {
+                            // Get all characters that exist in census, but don't exist in DB
+                            for (int i = 0; i < census.Count; ++i) {
+                                PsCharacter c = census[i];
+                                PsCharacter? d = db.FirstOrDefault(iter => iter.ID == c.ID);
+                                if (d == null) {
+                                    await _Db.Upsert(c);
+                                    _Queue.Queue(c.ID);
+                                } else {
+                                    // If the DateLastLogin is the min value, it means the value isn't set, so lets get it from Census
+                                    // Usually this would be dumb, cause then you'd have a bunch of deleted characters clogging the queue,
+                                    //      but since this is an iteration thru a list that comes from Census, the character must exist,
+                                    //      it's just that that character hasn't been updated in the DB yet
+                                    if (d.DateLastLogin == DateTime.MinValue) {
+                                        _Queue.Queue(d.ID);
+                                    }
                                 }
                             }
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"Error while performing update on {census.Count} characters");
                         }
-                    } catch (Exception ex) {
-                        _Logger.LogError(ex, $"Error while performing update on {census.Count} characters");
-                    }
-                }).Start();
+                    }).Start();
+                }
+            } catch (Exception ex) {
+                if (all.Count > 0) {
+                    _Logger.LogWarning($"failed to search characters by name [name={name}] [exception={ex.Message}]");
+                } else {
+                    throw;
+                }
             }
 
             all = all.Distinct()
@@ -460,8 +474,8 @@ namespace watchtower.Services.Repositories {
 
             _Logger.LogDebug($"Timings to lookup '{name}': "
                 + $"[DB search={dbLookup}ms] "
-                + $"[Census search={censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}] "
-                + $"[Sort={sortTime}ms]"
+                + $"[census search={censusLookup}ms {(censusCancelled ? "(cancelled)" : "")}] "
+                + $"[sort={sortTime}ms]"
             );
 
             return all;

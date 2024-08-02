@@ -91,7 +91,8 @@ namespace watchtower.Models {
             _JsonOptions.Converters.Add(new DateTimeJsonConverter());
         }
 
-        public ApiResponseExecutor(ILoggerFactory logger, IHttpResponseStreamWriterFactory writerFactory) { 
+        public ApiResponseExecutor(ILoggerFactory logger,
+            IHttpResponseStreamWriterFactory writerFactory) { 
 
             _Logger = logger.CreateLogger<ApiResponseExecutor>();
 
@@ -102,8 +103,7 @@ namespace watchtower.Models {
             if (context == null) { throw new ArgumentNullException(nameof(context)); }
             if (result == null) { throw new ArgumentNullException(nameof(result)); }
 
-            OutputFormatterWriteContext formatterContext =
-                new OutputFormatterWriteContext(context.HttpContext, _Writer, typeof(object), result.Data!); // Force is safe, cause null is a valid object
+            OutputFormatterWriteContext formatterContext = new(context.HttpContext, _Writer, typeof(object), result.Data);
 
             IOutputFormatter formatter = new SystemTextJsonOutputFormatter(_JsonOptions);//, ArrayPool<char>.Shared);
 

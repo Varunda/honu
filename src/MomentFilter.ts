@@ -1,6 +1,7 @@
 ﻿import Vue from "vue";
 
 import * as moment from "moment";
+import TimeUtils from "./util/Time";
 
 function vueMoment(input: Date | string | number | null | undefined, format: string = "YYYY-MM-DD hh:mmA") {
     // Who knew that you could assign properties to a function
@@ -44,6 +45,11 @@ function vueMoment(input: Date | string | number | null | undefined, format: str
 }
 
 Vue.filter("moment", vueMoment);
+
+
+Vue.filter("momentNoTz", (input: string, format: string): string => {
+    return TimeUtils.formatNoTimezone(new Date(input), format);
+});
 
 Vue.filter("duration", (input: string | number, format: string): string => {
     const val = (typeof(input) == "string") ? Number.parseInt(input) : input;

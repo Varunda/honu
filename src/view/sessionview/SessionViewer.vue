@@ -19,6 +19,10 @@
                 <a v-else-if="character.state == 'loaded'" :href="'/c/' + character.data.id + '/sessions'">
                     {{character.data.name}}
                 </a>
+
+                <a v-else-if="session.state == 'loaded' && (character.state == 'nocontent' || character.state == 'error')" :href="'/c/' + session.data.characterID + '/sessions'">
+                    &lt;missing {{session.data.characterID}}&gt;
+                </a>
             </li>
 
             <menu-sep></menu-sep>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Tracking;
 using watchtower.Models;
 using watchtower.Models.Api;
+using watchtower.Models.Db;
 using watchtower.Models.Queues;
 using watchtower.Services;
 using watchtower.Services.Queues;
@@ -130,6 +131,19 @@ namespace watchtower.Controllers.Api {
             List<CharacterUpdateQueueEntry> queued = _CharacterPriorityQueue.ToList();
 
             return ApiOk(queued.Select(iter => iter.CharacterID).ToList());
+        }
+
+        /// <summary>
+        ///     get a list of sessions that are being started
+        /// </summary>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="CharacterSessionStartQueueEntry"/>s
+        /// </response>
+        [HttpGet("session_start")]
+        public ApiResponse<List<CharacterSessionStartQueueEntry>> GetSessionStartQueue() {
+            List<CharacterSessionStartQueueEntry> queued = _SessionQueue.ToList();
+
+            return ApiOk(queued);
         }
 
     }

@@ -65,11 +65,12 @@ namespace watchtower.Services.Db.Implementations {
         /// </remarks>
         /// <param name="connection">Connection to create the command on</param>
         /// <param name="text">Command text</param>
+        /// <param name="cancel">cancellation token. defaults to <see cref="CancellationToken.None"/> if not given</param>
         /// <returns>
         ///     A new <see cref="NpgsqlCommand"/> ready to be used
         /// </returns>
-        public async Task<NpgsqlCommand> Command(NpgsqlConnection connection, string text) {
-            await connection.OpenAsync();
+        public async Task<NpgsqlCommand> Command(NpgsqlConnection connection, string text, CancellationToken cancel = default) {
+            await connection.OpenAsync(cancel);
 
             NpgsqlCommand cmd = connection.CreateCommand();
             cmd.CommandType = CommandType.Text;

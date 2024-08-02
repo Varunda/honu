@@ -1377,9 +1377,9 @@ export const ATable = Vue.extend({
                         const bv: string | null = b[this.sorting.field];
 
                         if (av == null && bv != null) { // 1 = B > A
-                            return -1;
-                        } else if (av != null && bv == null) {
                             return 1;
+                        } else if (av != null && bv == null) {
+                            return -1;
                         } else if (av == null && bv == null) {
                             return 0;
                         } else {

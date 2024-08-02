@@ -60,8 +60,10 @@ namespace watchtower.Services.Hosted {
                     // if the character is already online, no need to start the session (which will set Online true)
                     // while the queue doesn't allow duplicate character IDs, there is a period of time where the entry is queued,
                     //      that character performs and event while not in the queue, and gets queued again
+                    // HOWEVER: we don't want to skip this if SessionID is null, as we need to update the session once we try again
+                    //      this is fine, as honu doesn't create a new session
                     TrackedPlayer? p = CharacterStore.Get().GetByCharacterID(entry.CharacterID);
-                    if (p != null && p.Online == true) {
+                    if (p != null && p.Online == true && entry.SessionID == null) {
                         //_Logger.LogTrace($"character {entry.CharacterID} is already online, dropping from queue. Session ID {p.SessionID}");
                         continue;
                     }
@@ -80,36 +82,77 @@ namespace watchtower.Services.Hosted {
                     _LastCharacterId = entry.CharacterID;
 
                     using (Activity? start = HonuActivitySource.Root.StartActivity("session start")) {
+                        // if honu cannot find the character for some reason (census is down, character service is down, etc.)
+                        //      we want to start the session right away. if the session is not started, then it will stay
+                        //      in this loop until the FailCount is 10, which then the session will be inserted into the DB
+                        // this is bad, this can take like 30 minutes to timeout, so we want to show the session asap,
+                        //      and update once Census returns the data (or we never get it anyways)
+                        if (entry.FailCount > 0 && entry.SessionID == null) {
+                            using (Activity? repoCall = HonuActivitySource.Root.StartActivity("repo start")) {
+                                entry.SessionID = await _SessionRepository.Start(entry.CharacterID, entry.LastEvent, "0", 0);
+                            }
+                            _Logger.LogDebug($"character could not be found from Census, starting session anyways [characterID={entry.CharacterID}] [sessionID={entry.SessionID}]");
 
+                            if (entry.SessionID == null) {
+                                _Logger.LogWarning($"expected a session ID, why is this here? [charID={entry.CharacterID}] [sessionID={entry.SessionID}]");
+                            }
+                        }
+
+
+                        // load the character from our repo
                         PsCharacter? c = null;
                         try {
                             using (Activity? getCharacter = HonuActivitySource.Root.StartActivity("get char")) {
                                 c = await _CharacterRepository.GetByID(entry.CharacterID, entry.Environment);
                             }
+                            // if no character, queue it for a cache and retry after 5 minutes
                             if (c == null) {
                                 ++entry.FailCount;
-                                //_Logger.LogInformation($"Character {entry.CharacterID} does not exist locally, queue character cache and requeueing session start, failed {entry.FailCount} times");
+                                entry.Backoff = DateTime.UtcNow + TimeSpan.FromSeconds(10 * Math.Min(1, entry.FailCount));
 
-                                entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
-
+                                // only re-queue for 10 tries
                                 if (entry.FailCount <= 10) {
+                                    _Logger.LogTrace($"requeuing due to missing character [charID={entry.CharacterID}] [sessionID={entry.SessionID}] [failCount={entry.FailCount}] [backoff={entry.Backoff:u}]");
                                     _Queue.Queue(entry);
                                     _CharacterCacheQueue.Queue(entry.CharacterID, entry.Environment);
                                     continue;
                                 }
                             }
 
+                            // at this point, we either have the character, or we failed too many times
                             if (entry.FailCount > 0) {
-                                _Logger.LogDebug($"took {entry.FailCount} tries to find the character {entry.CharacterID}/{c?.Name} locally");
+                                _Logger.LogDebug($"found character after failed attempts [character={entry.CharacterID}/{c?.Name}] [failCount={entry.FailCount}] [sessionID={entry.SessionID}]");
                             }
                         } catch (Exception ex) {
+                            // if any exception occurs (such as as a CensusServiceUnavailable), then we also want to inc the FailCount
                             ++entry.FailCount;
-                            _Logger.LogWarning($"failed to find character when starting session. this will mean the outfit ID and faction ID are wrong"
-                                + $" [charID={entry.CharacterID}] [Exception={ex.Message}]");
+                            entry.Backoff = DateTime.UtcNow + TimeSpan.FromMinutes(Math.Min(5, entry.FailCount));
+
+                            string parms = $"[charID={entry.CharacterID}] [failCount={entry.FailCount}] [backoff={entry.Backoff:u}] [Exception={ex.Message}]";
+                            // after 10 tries, don't queue again
+                            if (entry.FailCount <= 10) {
+                                _Logger.LogWarning($"failed to get character due to exception, re-queueing " + parms);
+                                _Queue.Queue(entry);
+                                continue;
+                            }
+
+                            _Logger.LogError($"failed to find character due to exception, this causes wrong outfit ID and faction ID " + parms);
                         }
 
+                        // at this point, honu has either has the character data, or failed to get it (after 10 tries)
+                        //      so honu will either create the new session (if the session was found right away)
+                        //      or update the existing one (if honu failed to get the info the first time)
                         using (Activity? repoCall = HonuActivitySource.Root.StartActivity("repo start")) {
-                            await _SessionRepository.Start(entry.CharacterID, entry.LastEvent, c?.OutfitID ?? "0", c?.FactionID ?? 0);
+                            if (entry.SessionID == null) {
+                                repoCall?.AddTag("updated", false);
+                                _Logger.LogTrace($"started new session [charID={entry.CharacterID}] [delay={DateTime.UtcNow - entry.LastEvent}]");
+                                await _SessionRepository.Start(entry.CharacterID, entry.LastEvent, c?.OutfitID ?? "0", c?.FactionID ?? 0);
+                            } else {
+                                repoCall?.AddTag("updated", true);
+                                TimeSpan delay = DateTime.UtcNow - entry.LastEvent;
+                                _Logger.LogDebug($"updating session already started [charID={entry.CharacterID}] [sessionID={entry.SessionID}] [failCount={entry.FailCount}] [delay={delay}]");
+                                await _SessionRepository.Update(entry.SessionID.Value, c?.OutfitID ?? "0", c?.FactionID ?? 0);
+                            }
                         }
                     }
 
