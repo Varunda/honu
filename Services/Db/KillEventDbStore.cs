@@ -211,6 +211,8 @@ namespace watchtower.Services.Db {
             trace?.AddTag("honu.factionID", options.FactionID);
             trace?.AddTag("honu.duration", options.Interval);
 
+            // when a session is inserted with an unknown character (no faction known), they're given a team_id of 0
+            // we want to include those sessions, else it can appear that new players have insane KPMs (when Honu fails to set faction_id)
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH evs AS (
@@ -246,7 +248,7 @@ namespace watchtower.Services.Db {
                         ))
                         FROM wt_session s 
                         WHERE s.character_id = top_killers.attacker_character_id
-                            AND (s.team_id = @FactionID OR s.team_id = 4)
+                            AND (s.team_id = @FactionID OR s.team_id = 4 OR s.team_id = 0)
                             AND (s.finish IS NULL OR s.finish >= NOW() at time zone 'utc' - (@Interval || ' minutes')::INTERVAL)
                     ) AS seconds_online
                 FROM

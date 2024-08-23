@@ -153,11 +153,12 @@ namespace watchtower.Services.Repositories {
             }
 
             if (player.SessionID == null) {
-                _Logger.LogWarning($"player {player.ID} does not have a session?");
+                _Logger.LogWarning($"missing a session to end [charID={player.ID}]");
                 return;
             }
 
             await _SessionDb.SetSessionEndByID(player.SessionID.Value, when);
+            _Logger.LogDebug($"ending session [sessionID={player.SessionID}] [charID={player.ID}] [when={when:u}]");
 
             player.Online = false;
             player.ZoneID = 0;

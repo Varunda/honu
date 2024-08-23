@@ -582,13 +582,13 @@ namespace watchtower.Services.Repositories {
                 outfits = await _OutfitRepository.GetByIDs(entries.Select(iter => iter.ID).ToList()).TimeoutWithThrow(TimeSpan.FromSeconds(10));
             } catch (Exception ex) {
                 outfits = new List<PsOutfit>();
-                _Logger.LogWarning($"failed to get outfit for exp block [Exception={ex.Message}]");
+                _Logger.LogWarning($"failed to get outfits for exp block [world={options.WorldID}] [faction={options.FactionID}] [exception={ex.Message}]");
             }
 
             foreach (ExpDbEntry entry in entries) {
                 PsOutfit? outfit = outfits.FirstOrDefault(iter => iter.ID == entry.ID);
 
-                BlockEntry b = new BlockEntry() {
+                BlockEntry b = new() {
                     ID = entry.ID,
                     Name = (entry.ID == "0") ? "<no outfit>" : (outfit == null) ? $"<missing {entry.ID}>" : $"[{outfit.Tag}] {outfit.Name}",
                     Value = entry.Count,
@@ -602,7 +602,7 @@ namespace watchtower.Services.Repositories {
         }
 
         private async Task<OutfitsOnline> GetOutfitsOnline(Dictionary<string, TrackedPlayer> players, short teamID, short worldID) {
-            Dictionary<string, OutfitOnlineEntry> outfits = new Dictionary<string, OutfitOnlineEntry>();
+            Dictionary<string, OutfitOnlineEntry> outfits = new();
 
             int total = 0;
 
@@ -626,7 +626,7 @@ namespace watchtower.Services.Repositories {
                             psOutfit = await _OutfitRepository.GetByID(outfitID);
                         } catch (Exception ex) {
                             psOutfit = null;
-                            _Logger.LogWarning($"failed to get outfit for outfits online [outfitID={outfitID}] [Exception={ex.Message}]");
+                            _Logger.LogWarning($"failed to get outfit for outfits online [outfitID={outfitID}] [teamID={teamID}] [worldID={worldID}] [Exception={ex.Message}]");
                         }
                     }
 

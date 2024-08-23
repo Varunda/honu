@@ -763,7 +763,7 @@ namespace watchtower.Controllers.Api {
             });
 
             Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(players.Select(iter => iter.ID), CensusEnvironment.PC, fast: true))
-                .ToDictionary(iter => iter.ID); ;
+                .ToDictionary(iter => iter.ID);
 
             List<OnlinePlayer> online = [];
             foreach (TrackedPlayer p in players) {
