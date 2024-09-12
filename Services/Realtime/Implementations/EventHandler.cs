@@ -679,13 +679,13 @@ namespace watchtower.Realtime {
             }
 
             if (p != null) {
-                if (World.IsTrackedWorld(p.WorldID)) {
-                    _SessionEndQueue.Queue(new SessionEndQueueEntry() {
-                        CharacterID = p.ID,
-                        Timestamp = timestamp,
-                        SessionID = p.SessionID
-                    });
+                _SessionEndQueue.Queue(new SessionEndQueueEntry() {
+                    CharacterID = p.ID,
+                    Timestamp = timestamp,
+                    SessionID = p.SessionID
+                });
 
+                if (World.IsTrackedWorld(p.WorldID)) {
                     // Queue the character for an update
                     // Null if Honu was started when the character was online
                     if (p.LastLogin != null) {

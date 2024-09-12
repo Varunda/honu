@@ -28,30 +28,6 @@ namespace watchtower.Realtime {
 
         public static bool UseNss = true;
 
-        private readonly List<short> _Events = new List<short>() {
-            Experience.HEAL, Experience.SQUAD_HEAL,
-            Experience.REVIVE, Experience.SQUAD_REVIVE,
-            Experience.RESUPPLY, Experience.SQUAD_RESUPPLY,
-            Experience.MAX_REPAIR, Experience.SQUAD_MAX_REPAIR,
-            Experience.SHIELD_REPAIR, Experience.SQUAD_SHIELD_REPAIR,
-            Experience.VEHICLE_RESUPPLY, Experience.SQUAD_VEHICLE_RESUPPLY,
-
-            Experience.HARDLIGHT_COVER, Experience.DRAW_FIRE_AWARD,
-
-            Experience.GALAXY_SPAWN_BONUS, Experience.GENERIC_NPC_SPAWN, Experience.SQUAD_SPAWN,
-            Experience.SQUAD_VEHICLE_SPAWN_BONUS, Experience.SUNDERER_SPAWN_BONUS,
-
-            Experience.ASSIST, Experience.SPAWN_ASSIST, Experience.PRIORITY_ASSIST, Experience.HIGH_PRIORITY_ASSIST,
-
-            // I hope they don't add another vehicle cause this list is absurd
-            Experience.VKILL_FLASH, Experience.VKILL_GALAXY, Experience.VKILL_LIBERATOR,
-            Experience.VKILL_LIGHTNING, Experience.VKILL_MAGRIDER, Experience.VKILL_MOSQUITO,
-            Experience.VKILL_SUNDY, Experience.VKILL_PROWLER, Experience.VKILL_REAVER,
-            Experience.VKILL_SCYTHE, Experience.VKILL_VANGUARD, Experience.VKILL_HARASSER,
-            Experience.VKILL_VALKYRIE, Experience.VKILL_ANT, Experience.VKILL_COLOSSUS,
-            Experience.VKILL_JAVELIN, Experience.VKILL_CHIMERA, Experience.VKILL_DERVISH
-        };
-
         private readonly ILogger<RealtimeMonitor> _Logger;
         private readonly CensusRealtimeEventQueue _Queue;
         private readonly IServiceProvider _Services;

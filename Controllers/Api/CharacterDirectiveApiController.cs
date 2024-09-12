@@ -231,7 +231,8 @@ namespace watchtower.Controllers.Api {
                             }
                         }
                     } else if (achObj.Param6 != null) {
-                        _Logger.LogWarning($"do Param6 stuff");
+                        // 2024-09-04: we aren't given item classification data, which is what this is
+                        // _Logger.LogWarning($"do Param6 stuff");
                         return true;
                     } else {
                         _Logger.LogError($"Missing Param5 'Item' on objective id {achObj.ID}");
@@ -294,15 +295,20 @@ namespace watchtower.Controllers.Api {
 
                 switch (obj.TypeID) {
                     case 3: param = obj.Param1; break;
+                    case 10: param = obj.Param2; break; // token count
                     case 12: param = obj.Param1; break;
                     case 14: param = obj.Param1; break;
                     case 15: param = obj.Param1; break;
                     case 17: param = obj.Param1; break;
                     case 19: param = obj.Param2; break;
                     case 20: param = obj.Param1; break;
+                    case 23: param = obj.Param1; break; // character flag
+                    case 30: param = obj.Param1; break; // meters traveled
                     case 35: param = obj.Param1; break;
+                    case 40: param = obj.Param1; break; // item count
                     case 69: param = obj.Param1; break;
                     case 66: _Logger.LogError("what"); break;
+                    case 70: param = obj.Param1; break;
                     case 89: param = obj.Param5; break;
                     case 90: param = obj.Param1; break;
                     case 91: param = obj.Param1; break;

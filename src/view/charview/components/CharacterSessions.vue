@@ -574,7 +574,7 @@
             return {
                 block: Loadable.idle() as Loading<SessionBlock>,
 
-                showAll: false as boolean,
+                showAll: true as boolean,
                 showTable: true as boolean,
 
                 showChart: false as boolean,
@@ -758,7 +758,8 @@
                         const end: number = (iter.end ?? new Date()).getTime();
                         const start: number = iter.start.getTime();
 
-                        return (end - start) > 1000 * 60 * 5;
+                        // show sessions that have events within them, or are more than 5 minutes long
+                        return ((end - start) > 1000 * 60 * 5) || iter.kills > 0 || iter.deaths > 0 || iter.experienceGained > 0;
                     });
                 }
 

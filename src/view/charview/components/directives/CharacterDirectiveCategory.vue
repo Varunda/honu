@@ -1,15 +1,22 @@
 <template>
     <div class="border-bottom border-left border-right mb-3">
-        <h2 class="wt-header mb-0 border-bottom-0" data-toggle="collapse" :data-target="'#' + collapseID">
-            <span v-if="category.category != null">
-                {{category.category.name}}
-            </span>
-            <span v-else>
-                &lt;missing category {{category.categoryID}}&gt;
+        <h2 class="wt-header mb-0 border-bottom-0 d-flex align-items-center" data-toggle="collapse" :data-target="'#' + collapseID">
+            <span class="flex-grow-1">
+                <span v-if="category.category != null">
+                    {{category.category.name}}
+                </span>
+                <span v-else>
+                    &lt;missing category {{category.categoryID}}&gt;
+                </span>
+
+                <span v-if="showDebug == true">
+                    {{category.categoryID}}
+                </span>
             </span>
 
-            <span v-if="showDebug == true">
-                {{category.categoryID}}
+            <span class="flex-grow-0 h4">
+                {{category.trees.filter(iter => iter.entry.completionDate != null).length}} trees done of
+                {{category.trees.length}}
             </span>
         </h2>
 

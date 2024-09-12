@@ -169,7 +169,7 @@ namespace watchtower.Services.Repositories {
                     }
 
                     // if the timestamp would be rolled back more than 2 seconds, record this
-                    if (oldValue.LastEvent != null && ((oldValue.LastEvent - timestamp) >= TimeSpan.FromSeconds(1))) {
+                    if (oldValue.LastEvent != null && ((oldValue.LastEvent - timestamp) > TimeSpan.FromSeconds(1))) {
                         TimeSpan diff = oldValue.LastEvent.Value - timestamp;
                         _Logger.LogInformation($"out of order timestamp found! [worldID={worldID}] [what={what}] [diff={diff}] [timestamp={timestamp:u}] [LastEvent={oldValue.LastEvent:u}]");
 
@@ -215,10 +215,12 @@ namespace watchtower.Services.Repositories {
                 int threshold = (tolerance.Tolerance.Value * (entry.FailureCount + 1)) + (10 * Math.Min(3, entry.FailureCount));
 
                 int playerCount = CharacterStore.Get().GetWorldCount(tolerance.WorldID);
-                if (playerCount < 100) {
-                    threshold *= 4;
+                if (playerCount < 50) {
+                    threshold *= 16;
+                } else if (playerCount < 100) {
+                    threshold *= 8;
                 } else if (playerCount < 200) {
-                    threshold *= 2;
+                    threshold *= 4;
                 }
 
                 int timeWithout = Math.Max(0, (int) Math.Floor((DateTime.UtcNow - entry.LastEvent.Value).TotalSeconds)); 

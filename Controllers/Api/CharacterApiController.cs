@@ -754,6 +754,15 @@ namespace watchtower.Controllers.Api {
             return ApiOk(chars);
         }
 
+        /// <summary>
+        ///     get all online characters, optionally filtering by a world ID
+        /// </summary>
+        /// <param name="worldID">optional, ID of the world to filter results to</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="OnlinePlayer"/>s,
+        ///     and if <paramref name="worldID"/> was non-null, 
+        ///     this data will be limited to the world specified
+        /// </response>
         [HttpGet("character/online/players")]
         [SearchBotBlock]
         public async Task<ApiResponse<List<OnlinePlayer>>> GetOnlinePlayers(short? worldID = null) {
