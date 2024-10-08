@@ -50,6 +50,7 @@ namespace watchtower.Services.Hosted {
             "5428863393455241009", // njlivenso2
             "5429442030420230177", // elfysour3
             "5429449641265725457", // PuuuumbaaaaJ
+            "5429580830924341313", // Pastete14
         };
 
         public HostedJaegerSignInOutProcess(ILogger<HostedJaegerSignInOutProcess> logger,

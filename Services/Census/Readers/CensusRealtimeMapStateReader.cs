@@ -28,10 +28,10 @@ namespace watchtower.Services.Census.Readers {
             JsonElement? bound = token.GetChild("faction_population_upper_bound");
             if (bound != null) {
                 state.FactionBounds = new RealtimeMapStateFactionBounds();
-                state.FactionBounds.VS = bound.Value.GetRequiredInt32("VS");
-                state.FactionBounds.NC = bound.Value.GetRequiredInt32("NC");
-                state.FactionBounds.TR = bound.Value.GetRequiredInt32("TR");
-                state.FactionBounds.NS = bound.Value.GetRequiredInt32("NSO");
+                state.FactionBounds.VS = bound.Value.GetInt32("VS", 0);
+                state.FactionBounds.NC = bound.Value.GetInt32("NC", 0);
+                state.FactionBounds.TR = bound.Value.GetInt32("TR", 0);
+                state.FactionBounds.NS = bound.Value.GetInt32("NSO", 0);
             }
 
             JsonElement? percent = token.GetChild("faction_population_percentage");
