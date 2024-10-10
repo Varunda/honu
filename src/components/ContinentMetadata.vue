@@ -1,7 +1,7 @@
 ﻿<template>
     <span v-if="metadata != null">
         <span v-if="metadata.isOpened == false">
-            <span class="fas fa-lock" title="This continent is locked"></span>
+            <span class="ph-bold ph-lock" title="This continent is locked"></span>
         </span>
 
         <span v-if="metadata.unstableState == 1">
@@ -13,7 +13,7 @@
         </span>
 
         <span v-if="metadata.alertEnd != null">
-            <span class="fas fa-exclamation-triangle" title="Active alert!"></span>
+            <span class="ph-bold ph-exclamation-mark" title="Active alert!"></span>
 
             <span v-if="metadata.alertInfo != null && metadata.alertInfo.typeID == 9">
                 Locks in

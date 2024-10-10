@@ -25,7 +25,7 @@
                 <button v-for="zone in openedZones" class="btn btn-sm btn-primary mr-2">
                     {{zone.zoneID | zone}}
                     <span v-if="zone.alertEnd != null">
-                        <span class="fas fa-exclamation-triangle" title="Active alert!"></span>
+                        <span class="ph-bold ph-warning" title="Active alert!"></span>
                         {{(new Date(zone.alertEnd) - new Date()) / 1000 | duration}}
                     </span>
                 </button>
@@ -41,7 +41,7 @@
         <div class="mp-grid-links mp-grid-cell">
             <a :href="'/view/' + name" class="btn btn-primary">
                 Realtime
-                <span class="fas fa-external-link-alt"></span>
+                <span class="ph-bold ph-arrow-square-out"></span>
             </a>
         </div>
     </fragment>

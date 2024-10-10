@@ -84,22 +84,22 @@
 
                         <span v-if="options.showRelative == true && entry.recentCharacterKd != null">
                             <template v-if="entry.recentCharacterKd == 0">
-                                <span class="text-secondary fa-fw fas fa-question border rounded border-secondary"
+                                <span class="text-secondary ph-fw ph-bold ph-question-mark border rounded border-secondary"
                                       title="This character has a KD of 0, no useful info had here"></span>
                             </template>
 
                             <template v-else-if="Math.abs(entry.recentCharacterKd - entry.kdInverse) < 0.1">
-                                <span class="text-info fa-fw fas fa-equals border rounded border-info"
+                                <span class="text-info ph-fw ph-bold ph-equals border rounded border-info"
                                       title="Your KD is equal to the average against this character (within 0.1)"></span>
                             </template>
 
                             <template v-else-if="entry.kdInverse > entry.recentCharacterKd">
-                                <span class="text-danger fa-fw fas fa-caret-down border rounded border-danger"
+                                <span class="text-danger ph-fw ph-bold ph-caret-down border rounded border-danger"
                                       title="Your KD is lower than the average against this character"></span>
                             </template>
 
                             <template v-else-if="entry.kdInverse < entry.recentCharacterKd">
-                                <span class="text-success fa-fw fas fa-caret-up border rounded border-success"
+                                <span class="text-success ph-fw ph-bold ph-caret-up border rounded border-success"
                                       title="Your KD is higher than the average against this character"></span>
                             </template>
                         </span>

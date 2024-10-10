@@ -20,7 +20,7 @@
                         <div class="card-body">
                             <h5 class="card-title">
                                 {{stat.name}}
-                                <info-hover v-if="stat.description == null" icon="exclamation-circle" text="This stat has not been figured out"></info-hover>
+                                <info-hover v-if="stat.description == null" icon="warning-circle" text="This stat has not been figured out"></info-hover>
 
                                 <info-hover v-else :text=stat.description>
                                 </info-hover>

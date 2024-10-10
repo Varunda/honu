@@ -88,7 +88,7 @@
                                 </span>
 
                                 <span v-if="group.problems.length > 1">
-                                    <info-hover :allow-html="true" icon="exclamation-circle" class="text-danger"
+                                    <info-hover :allow-html="true" icon="warning-circle" class="text-danger"
                                         :text="'There are ' + group.problems.length + ' problems: <br>' + group.problems.join('<br>')">
 
                                     </info-hover>

@@ -281,7 +281,7 @@
                     <td>
                         <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/character?character_id=' + character.id" target="_blank">
                             Census
-                            <span class="fas fa-external-link-alt"></span>
+                            <span class="ph-bold ph-arrow-square-out"></span>
                         </a>
                     </td>
                 </tr>
@@ -292,7 +292,7 @@
                     <td>
                         <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/outfit?outfit_id=' + character.outfitID" target="_blank">
                             Census
-                            <span class="fas fa-external-link-alt"></span>
+                            <span class="ph-bold ph-arrow-square-out"></span>
                         </a>
                     </td>
                 </tr>

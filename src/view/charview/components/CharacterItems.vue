@@ -140,7 +140,7 @@
                 <a-body v-slot="entry">
                     <a :href="'https://census.daybreakgames.com/s:example/get/ps2:v2/item?item_id=' + entry.entry.itemID" target="_blank">
                         Census
-                        <span class="fas fa-external-link-alt"></span>
+                        <span class="ph-bold ph-arrow-square-out"></span>
                     </a>
                 </a-body>
             </a-col>

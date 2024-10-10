@@ -36,7 +36,7 @@
                 :download="'honu-character-weapons-' + character.name + '-' + character.id + '.json'">
 
                 Download JSON
-                <span class="fa-fw fas fa-download"></span>
+                <span class="ph-fw ph-bold ph-download"></span>
             </a>
         </div>
 

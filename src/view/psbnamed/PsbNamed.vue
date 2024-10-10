@@ -112,7 +112,7 @@
             <a-col>
                 <a-header>
                     <button @click="openCreateModal" type="button" class="btn btn-success">
-                        <span class="fas fa-plus"></span>
+                        <span class="ph-bold ph-plus"></span>
                     </button>
                 </a-header>
 
@@ -381,7 +381,7 @@
 
         template: `
             <span v-if="id == null" class="text-danger">
-                <info-hover icon="exclamation-circle" class="text-danger"
+                <info-hover icon="warning-circle" class="text-danger"
                     text="This character is missing">
                 </info-hover>
             </span>
@@ -392,19 +392,19 @@
                 </a>
                     
                 <span v-else>
-                    <info-hover v-if="character.worldID != 19" icon="exclamation" 
+                    <info-hover v-if="character.worldID != 19" icon="exclamation-mark" 
                         class="text-warning" text="This character is on the wrong server">
                     </info-hover>
 
-                    <info-hover v-if="status == 2" icon="exclamation"
+                    <info-hover v-if="status == 2" icon="exclamation-mark"
                         class="text-warning" text="This character does not exist">
                     </info-hover>
 
-                    <info-hover v-else-if="status == 3" icon="exclamation"
+                    <info-hover v-else-if="status == 3" icon="exclamation-mark"
                         class="text-warning" text="This character has been deleted">
                     </info-hover>
 
-                    <info-hover v-else-if="status == 4" icon="exclamation"
+                    <info-hover v-else-if="status == 4" icon="exclamation-mark"
                         class="text-warning" text="This character has been recreated">
                     </info-hover>
 

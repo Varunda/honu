@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <div class="wt-header d-flex" :class="SizeClass" data-toggle="collapse" :data-target="'#' + elementID">
-            <span :id="'icon-' + elementID" class="fas fa-caret-down"></span>
+            <span :id="'icon-' + elementID" class="ph-bold ph-fw ph-caret-down"></span>
             {{HeaderText}}
 
             <slot name="header"></slot>

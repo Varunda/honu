@@ -15,13 +15,13 @@ interface ConditionSettings {
 };
 
 const Conditions: Map<string, ConditionSettings> = new Map([
-    ["equals", { title: "Equals", icon: "fa-equals", color: "primary" }],
-    ["not_equal", { title: "Not equal", icon: "fa-not-equal", color: "warning" }],
-    ["less_than", { title: "Less than", icon: "fa-less-than", color: "info" }],
-    ["greater_than", { title: "Greater than", icon: "fa-greater-than", color: "success" }],
-    ["contains", { title: "Contains", icon: "fa-asterisk", color: "info" }],
-    ["not_empty", { title: "Not empty", icon: "fa-circle", color: "info" }],
-    ["empty", { title: "Empty", icon: "fa-empty-set", color: "info" }]
+    ["equals", { title: "Equals", icon: "ph-equals", color: "primary" }],
+    ["not_equal", { title: "Not equal", icon: "ph-not-equal", color: "warning" }],
+    ["less_than", { title: "Less than", icon: "ph-less-than", color: "info" }],
+    ["greater_than", { title: "Greater than", icon: "ph-greater-than", color: "success" }],
+    ["contains", { title: "Contains", icon: "ph-asterisk", color: "info" }],
+    ["not_empty", { title: "Not empty", icon: "ph-circle", color: "info" }],
+    ["empty", { title: "Empty", icon: "ph-empty", color: "info" }]
 ]);
 
 interface Header {
@@ -472,7 +472,7 @@ export const ATable = Vue.extend({
         },
 
         createIcon: function(createElement: CreateElement, icon: string, style: string = "fas"): VNode {
-            return createElement("span", { staticClass: `${style} fa-fw ${icon}` });
+            return createElement("span", { staticClass: `ph-bold ph-fw ${icon}` });
         },
 
         setPage: function(page: number): void {
@@ -945,7 +945,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.paging.page = 0; }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-circle-left", "fas")]
+                        [this.createIcon(createElement, "ph-caret-line-left")]
                     ),
 
                     // Previous page button
@@ -959,7 +959,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page - 1) }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-left", "fas")]
+                        [this.createIcon(createElement, "ph-caret-left", "fas")]
                     ),
 
                     // Page selection buttons, show 10 max
@@ -994,7 +994,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page + 1) }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-right", "fas")]
+                        [this.createIcon(createElement, "ph-caret-right", "fas")]
                     ),
 
                     // Last page button
@@ -1008,7 +1008,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.pageCount - 1); }
                             }
                         },
-                        [this.createIcon(createElement, "fa-chevron-circle-right", "fas")]
+                        [this.createIcon(createElement, "ph-caret-line-right", "fas")]
                     )]
                 ),
 
@@ -1119,7 +1119,7 @@ export const ATable = Vue.extend({
                                 }
                             },
                             [
-                                createElement("span", { staticClass: `fas fa-fw ${condIcon}` }),
+                                createElement("span", { staticClass: `ph ${condIcon}` }),
                                 condTitle
                             ]
                         )
@@ -1145,8 +1145,8 @@ export const ATable = Vue.extend({
             if (this.sorting.field == fieldName) {
                 return createElement("span", {
                     staticClass: (this.sorting.order == "asc")
-                        ? "fas fa-caret-square-up fa-fw mr-auto"
-                        : "fas fa-caret-square-down fa-fw mr-auto",
+                        ? "ph-bold ph-sort-descending mr-auto"
+                        : "ph-bold ph-sort-ascending mr-auto",
                 });
             }
 

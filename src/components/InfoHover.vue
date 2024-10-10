@@ -5,7 +5,7 @@
             :data-html="AllowHtml"
             :style="{ 'filter': !icon ? 'invert(1)' : ''}">
 
-        <span v-if="icon != null" :class="'fas fa-' + icon">
+        <span v-if="icon != null" :class="'ph-bold ph-' + icon">
 
         </span>
 

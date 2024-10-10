@@ -135,7 +135,7 @@
 
                                 <a-body v-slot="entry">
                                     <button type="button" class="btn btn-sm btn-danger" @click="removePermission(entry.id)">
-                                        <span class="fas fa-times"></span>
+                                        <span class="ph-bold ph-x"></span>
                                     </button>
                                 </a-body>
                             </a-col>

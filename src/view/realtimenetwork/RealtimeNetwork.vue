@@ -87,7 +87,7 @@
 
                 <div class="position-absolute" style="bottom: -1px; transform: translateY(100%)">
                     <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#graph-controls" title="Hide controls">
-                        <span class="fa-fw fas fa-arrows-alt-v"></span>
+                        <span class="ph-fw ph-bold ph-arrow-left"></span>
                     </button>
                 </div>
             </div>

@@ -151,7 +151,7 @@
                     </a>
 
                     <span v-if="entry.summaryCalculated == null">
-                        <info-hover text="Session summary stats have not been calculated yet!" icon="exclamation" class="fa-fw text-warning"></info-hover>
+                        <info-hover text="Session summary stats have not been calculated yet!" icon="exclamation-mark" class="ph-bold ph-exclamation-mark"></info-hover>
                     </span>
                 </a-body>
             </a-col>
@@ -229,7 +229,7 @@
                     </session-cell>
 
                     <span v-if="entry.start < cutoff.exp">
-                        <info-hover text="This value is not accurate before 2022-07-31" icon="exclamation" class="fa-fw text-warning"></info-hover>
+                        <info-hover text="This value is not accurate before 2022-07-31" icon="exclamation-mark" class="ph-fw text-warning"></info-hover>
                     </span>
                 </a-body>
             </a-col>
@@ -245,7 +245,7 @@
                     </session-cell>
 
                     <span v-if="entry.start < cutoff.exp">
-                        <info-hover text="This value is not accurate before 2022-07-31" icon="exclamation" class="fa-fw text-warning"></info-hover>
+                        <info-hover text="This value is not accurate before 2022-07-31" icon="exclamation-mark" class="ph-fw text-warning"></info-hover>
                     </span>
                 </a-body>
             </a-col>
@@ -309,7 +309,7 @@
                     </session-cell>
 
                     <span v-if="entry.start < cutoff.vkill">
-                        <info-hover text="This data was not collected before 2022-01-18" icon="exclamation" class="fa-fw text-warning"></info-hover>
+                        <info-hover text="This data was not collected before 2022-01-18" icon="exclamation-mark" class="ph-fw text-warning"></info-hover>
                     </span>
                 </a-body>
             </a-col>
@@ -325,7 +325,7 @@
                     </session-cell>
 
                     <span v-if="entry.start < cutoff.vkill">
-                        <info-hover text="This data was not collected before 2022-01-18" icon="exclamation" class="fa-fw text-warning"></info-hover>
+                        <info-hover text="This data was not collected before 2022-01-18" icon="exclamation-mark" class="ph-fw text-warning"></info-hover>
                     </span>
                 </a-body>
             </a-col>
@@ -495,7 +495,7 @@
                 :download="'honu-character-sessions-' + character.name + '-' + character.id + '.json'">
 
                 Export
-                <span class="fa-fw fas fa-download"></span>
+                <span class="ph-fw ph-bold ph-download"></span>
             </a>
         </div>
 
