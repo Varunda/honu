@@ -96,11 +96,11 @@ namespace watchtower.Controllers.Api {
             [FromQuery] DateTime start, [FromQuery] DateTime end,
             [FromQuery] int? worldID = null, [FromQuery] bool includeVehicles = true) {
 
-            if (end - start > TimeSpan.FromDays(7)) {
+            if (end - start > TimeSpan.FromDays(8)) {
                 return ApiBadRequest<List<VehicleUsageData>>($"{nameof(start)} and {nameof(end)} can only be 7 days apart");
             }
 
-            if (end > start) {
+            if (end < start) {
                 return ApiBadRequest<List<VehicleUsageData>>($"{nameof(start)} must come before {nameof(end)}");
             }
 

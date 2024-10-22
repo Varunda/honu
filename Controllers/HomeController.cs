@@ -231,5 +231,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult VehicleUsage() {
+            return View();
+        }
+
     }
 }

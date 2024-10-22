@@ -28,6 +28,7 @@ namespace watchtower.Code.Constants {
         public const int SUDDEN_DEATH_ESAMIR = 239;
         public const int SUDDEN_DEATH_OSHUR = 240;
         public const int SUDDEN_DEATH_UNKNOWN = 241;
+        public const int SUDDEN_DEATH_UNKNOWN2 = 260;
 
         public const int MAX_ALERT_INDAR = 198;
         public const int MAX_ALERT_ESAMIR = 199;
@@ -57,6 +58,10 @@ namespace watchtower.Code.Constants {
                 return TimeSpan.FromMinutes(30);
             }
 
+            // while this is a sudden death event, census says it has a duration of 5 minutes, not 15 like the rest
+            if (metagameEventID == SUDDEN_DEATH_UNKNOWN2) {
+                return TimeSpan.FromMinutes(5);
+            }
             if (IsSuddentDeath(metagameEventID)) {
                 return TimeSpan.FromMinutes(15);
             }

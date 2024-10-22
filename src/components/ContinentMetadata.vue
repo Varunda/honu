@@ -24,9 +24,14 @@
 
             {{metadata.alertEnd | til2}}
 
-            <span v-if="metadata.alertInfo != null">
-                ({{metadata.alertInfo.name}})
-            </span>
+            <a :href="'/alert/' + metadata.alert.id">
+                <span v-if="metadata.alertInfo != null">
+                    ({{metadata.alertInfo.name}})
+                </span>
+                <span v-else>
+                    (--)
+                </span>
+            </a>
         </span>
     </span>
 </template>

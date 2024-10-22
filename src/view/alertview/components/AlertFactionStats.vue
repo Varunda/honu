@@ -8,11 +8,18 @@
             </td>
         </tr>
 
-        <tr v-if="alert.zoneID != 0 && data.facilityCount > 0">
+        <tr v-if="alert.zoneID != 0 && data.facilityCount > 0 && alert.countVS <= 100 && alert.countNC <= 100 && alert.countTR <= 100">
             <td><b>Facilities</b></td>
             <td>
                 {{data.facilityCount}}
                 ({{data.facilityCount / alert.zoneFacilityCount * 100 | locale(0)}}%)
+            </td>
+        </tr>
+
+        <tr v-else-if="alert.countVS > 0 || alert.countNC > 0 || alert.countTR > 0">
+            <td><b>Score</b></td>
+            <td>
+                {{data.facilityCount}}
             </td>
         </tr>
 

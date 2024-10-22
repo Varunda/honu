@@ -805,11 +805,10 @@ namespace watchtower.Realtime {
                 PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
 
                 if (duration == null) {
-                    _Logger.LogWarning($"Failed to find a duration for MetagameEvent {metagameEventID}");
+                    _Logger.LogWarning($"Failed to find a duration for MetagameEvent {metagameEventID} [worldID={worldID}] [instanceID={instanceID}]");
                 }
 
                 PsMetagameEvent? metaEv = null;
-                    
                 try {
                     metaEv = await _MetagameRepository.GetByID(metagameEventID);
                 } catch (Exception ex) {
@@ -854,10 +853,10 @@ namespace watchtower.Realtime {
                             } else if (owner.Owner == Faction.TR) {
                                 alert.WarpgateTR = owner.FacilityID;
                             } else {
-                                _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: facility {fac.FacilityID} was unowned by 1|2|3, current owner: {owner.Owner}");
+                                _Logger.LogWarning($"In alert start, world {alert.WorldID}, zone {alert.ZoneID}: facility {fac.FacilityID} was unowned by 1|2|3, current owner: {owner.Owner}");
                             }
                         } else {
-                            _Logger.LogWarning($"In alert end, world {alert.WorldID}, zone {alert.ZoneID}: failed to get owner of {fac.FacilityID}, zone missing facility");
+                            _Logger.LogWarning($"In alert start, world {alert.WorldID}, zone {alert.ZoneID}: failed to get owner of {fac.FacilityID}, zone missing facility");
                         }
                     }
                 }
@@ -877,22 +876,23 @@ namespace watchtower.Realtime {
                 PsAlert? toRemove = null;
                 foreach (PsAlert alert in alerts) {
                     if (alert.ZoneID == zoneID && alert.WorldID == worldID) {
-                        _Logger.LogInformation($"Metagame event {alert.ID}/{alert.Name} finished on world {worldID} in zone {zoneID}");
                         toRemove = alert;
                         break;
                     }
                     if (alert.InstanceID == instanceID && alert.WorldID == worldID) {
-                        _Logger.LogInformation($"Metagame event {alert.ID}/{alert.Name} finished on world {worldID} in zone {zoneID}");
                         toRemove = alert;
                         break;
                     }
                 }
+
 
                 if (toRemove != null && World.IsTrackedWorld(toRemove.WorldID) == false) {
                     return;
                 }
 
                 if (toRemove != null) {
+
+                    _Logger.LogInformation($"metagame event ended [alert.ID={toRemove.ID}] [worldID={worldID}] [zoneID={zoneID}] [instanceID={toRemove.InstanceID}]");
                     AlertStore.Get().RemoveByID(toRemove.ID);
 
                     decimal countVS = payload.GetDecimal("faction_vs", 0m);
@@ -931,15 +931,18 @@ namespace watchtower.Realtime {
                     toRemove.VictorFactionID = factionID;
 
                     // Aerial anomalies can end early, update the duration if needed
-                    if (MetagameEvent.IsAerialAnomaly(metagameEventID) == true) {
+                    // 2024-10-21: more than just aerial anomalies can end early, not sure why it's restricted to just those
+                    //if (MetagameEvent.IsAerialAnomaly(metagameEventID) == true) {
                         TimeSpan duration = timestamp - toRemove.Timestamp;
-                        _Logger.LogDebug($"Aerial anomaly {toRemove.WorldID}-{toRemove.InstanceID} lasted {(int)duration.TotalSeconds} seconds");
+                        _Logger.LogDebug($"alert ended [displayID={toRemove.WorldID}-{toRemove.InstanceID}] [duration={(int)duration.TotalSeconds} seconds]"
+                            + $" [score vs={toRemove.CountVS}] [score nc={toRemove.CountNC}] [score tr={toRemove.CountTR}]");
 
                         toRemove.Duration = (int)duration.TotalSeconds;
                         await _AlertDb.UpdateByID(toRemove.ID, toRemove);
-                    }
+                    //}
 
                     // Get the count of each faction if it's not an aerial anomaly, a lockdown alert
+                    /* 2024-10-21: i don't remember why honu relies on it's data more than what the game server gives
                     if (MetagameEvent.IsAerialAnomaly(metagameEventID) == false) {
                         PsZone? zone = _MapRepository.GetZone(worldID, zoneID);
                         if (zone != null) {
@@ -951,11 +954,9 @@ namespace watchtower.Realtime {
                             decimal scoreNC = decimal.Round(toRemove.ZoneFacilityCount * countNC / 100);
                             decimal scoreTR = decimal.Round(toRemove.ZoneFacilityCount * countTR / 100);
 
-                            /*
-                            _Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
-                            _Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
-                            _Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
-                            */
+                            //_Logger.LogDebug($"VS own {factionVS}, have {toRemove.ZoneFacilityCount * countVS / 100}/{scoreVS}");
+                            //_Logger.LogDebug($"NC own {factionNC}, have {toRemove.ZoneFacilityCount * countNC / 100}/{scoreNC}");
+                            //_Logger.LogDebug($"TR own {factionTR}, have {toRemove.ZoneFacilityCount * countTR / 100}/{scoreTR}");
 
                             toRemove.CountVS = (int)scoreVS;
                             toRemove.CountNC = (int)scoreNC;
@@ -965,6 +966,7 @@ namespace watchtower.Realtime {
                             _Logger.LogWarning($"Cannot assign score for alert {toRemove.WorldID}-{toRemove.InstanceID} (in zone {toRemove.ZoneID}), missing zone");
                         }
                     }
+                    */
 
                     // finally, now that all of the immediate information that could change (such as facility ownership) has been saved
                     //      to the DB, lets queue the alert creation, which includes creating the alert player data and sending Discord alerts
@@ -992,14 +994,10 @@ namespace watchtower.Realtime {
             uint zoneID = payload.GetZoneID();
 
             lock (ZoneStateStore.Get().Zones) {
-                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID);
-
-                if (state == null) {
-                    state = new() {
-                        ZoneID = zoneID,
-                        WorldID = worldID,
-                    };
-                }
+                ZoneState? state = ZoneStateStore.Get().GetZone(worldID, zoneID) ?? new ZoneState() {
+                    ZoneID = zoneID,
+                    WorldID = worldID,
+                };
 
                 state.IsOpened = true;
 
@@ -1395,7 +1393,7 @@ namespace watchtower.Realtime {
         }
 
         private async Task _ProcessItemAdded(JToken payload) {
-            ItemAddedEvent ev = new ItemAddedEvent();
+            ItemAddedEvent ev = new();
             ev.CharacterID = payload.GetRequiredString("character_id");
             ev.Context = payload.GetString("context", "");
             ev.ItemCount = payload.GetInt32("item_count", 0);
@@ -1405,6 +1403,17 @@ namespace watchtower.Realtime {
             ev.ZoneID = payload.GetZoneID();
 
             await _ItemAddedDb.Insert(ev);
+
+            lock (CharacterStore.Get().Players) {
+                // Default false for |Online| to ensure a session is started
+                TrackedPlayer? p = CharacterStore.Get().Players.GetValueOrDefault(ev.CharacterID);
+                if (p == null) {
+                    return;
+                }
+
+                p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                p.ZoneID = ev.ZoneID;
+            }
 
             /*
                 {
@@ -1430,6 +1439,17 @@ namespace watchtower.Realtime {
             ev.WorldID = payload.GetWorldID();
 
             await _AchievementEarnedDb.Insert(ev);
+
+            lock (CharacterStore.Get().Players) {
+                // Default false for |Online| to ensure a session is started
+                TrackedPlayer? p = CharacterStore.Get().Players.GetValueOrDefault(ev.CharacterID);
+                if (p == null) {
+                    return;
+                }
+
+                p.LatestEventTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                p.ZoneID = ev.ZoneID;
+            }
 
             /*
                 {

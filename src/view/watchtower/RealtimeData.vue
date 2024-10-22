@@ -43,8 +43,14 @@
         </div>
 
         <div class="mb-2">
-            <a :href="'/realtimenetwork/' + worldID">
+            <a :href="'/realtimenetwork/' + worldID" class="btn btn-secondary" target="_blank">
                 View interaction map
+                <span class="ph-bold ph-arrow-square-out"></span>
+            </a>
+
+            <a :href="'/online?worldID=' + worldID" class="btn btn-secondary" target="_blank">
+                Online players
+                <span class="ph-bold ph-arrow-square-out"></span>
             </a>
         </div>
 
@@ -130,23 +136,23 @@
                             Server
                             <info-hover text="Players currently online"></info-hover>
                         </th>
-                        <th colspan="5" v-if="indarCount > 19 || worldID == 19" class="border-right">
+                        <th colspan="5" v-if="showIndar" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=2&showUI=true'">Indar</a>
                             <continent-metadata :metadata="worldData.continentCount.indar.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="hossinCount > 19 || worldID == 19" class="border-right">
+                        <th colspan="5" v-if="showHossin" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=4&showUI=true'">Hossin</a>
                             <continent-metadata :metadata="worldData.continentCount.hossin.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="amerishCount > 19 || worldID == 19" class="border-right">
+                        <th colspan="5" v-if="showAmerish" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=6&showUI=true'">Amerish</a>
                             <continent-metadata :metadata="worldData.continentCount.amerish.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="esamirCount > 19 || worldID == 19" class="border-right">
+                        <th colspan="5" v-if="showEsamir" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=8&showUI=true'">Esamir</a>
                             <continent-metadata :metadata="worldData.continentCount.esamir.metadata"></continent-metadata>
                         </th>
-                        <th colspan="5" v-if="oshurCount > 19 || worldID == 19" class="border-right">
+                        <th colspan="5" v-if="showOshur" class="border-right">
                             <a :href="'/realtimemap?worldID=' + worldID + '&zoneID=344&showUI=true'">Oshur</a>
                             <continent-metadata :metadata="worldData.continentCount.oshur.metadata"></continent-metadata>
                         </th>
@@ -164,7 +170,7 @@
                         <td>{{totalTRCount}} TR</td>
                         <td class="border-right">{{totalNSCount}} NS</td>
 
-                        <template v-if="indarCount > 19 || worldID == 19">
+                        <template v-if="showIndar">
                             <td>All: {{indarCount}}</td>
                             <td>{{worldData.continentCount.indar.vs}} VS</td>
                             <td>{{worldData.continentCount.indar.nc}} NC</td>
@@ -172,7 +178,7 @@
                             <td class="border-right">{{worldData.continentCount.indar.ns}} NS</td>
                         </template>
 
-                        <template v-if="hossinCount > 19 || worldID == 19">
+                        <template v-if="showHossin">
                             <td>All: {{hossinCount}}</td>
                             <td>{{worldData.continentCount.hossin.vs}} VS</td>
                             <td>{{worldData.continentCount.hossin.nc}} NC</td>
@@ -180,7 +186,7 @@
                             <td class="border-right">{{worldData.continentCount.hossin.ns}} NS</td>
                         </template>
 
-                        <template v-if="amerishCount > 19 || worldID == 19">
+                        <template v-if="showAmerish">
                             <td>All: {{amerishCount}}</td>
                             <td>{{worldData.continentCount.amerish.vs}} VS</td>
                             <td>{{worldData.continentCount.amerish.nc}} NC</td>
@@ -188,7 +194,7 @@
                             <td class="border-right">{{worldData.continentCount.amerish.ns}} NS</td>
                         </template>
 
-                        <template v-if="esamirCount > 19 || worldID == 19">
+                        <template v-if="showEsamir">
                             <td>All: {{esamirCount}}</td>
                             <td>{{worldData.continentCount.esamir.vs}} VS</td>
                             <td>{{worldData.continentCount.esamir.nc}} NC</td>
@@ -196,7 +202,7 @@
                             <td class="border-right">{{worldData.continentCount.esamir.ns}} NS</td>
                         </template>
 
-                        <template v-if="oshurCount > 19 || worldID == 19">
+                        <template v-if="showOshur">
                             <td>All: {{oshurCount}}</td>
                             <td>{{worldData.continentCount.oshur.vs}} VS</td>
                             <td>{{worldData.continentCount.oshur.nc}} NC</td>
@@ -217,23 +223,23 @@
                             <world-zone-population-chart :world-id="worldID" :zone-id="-1" :data="populationAll" :show-teams="false">
                             </world-zone-population-chart>
                         </td>
-                        <td colspan="5" v-if="indarCount > 19 || worldID == 19" class="border-right">
+                        <td colspan="5" v-if="showIndar" class="border-right">
                             <world-zone-population-chart :world-id="worldID" :zone-id="2" :data="populationIndar" :show-teams="true">
                             </world-zone-population-chart>
                         </td>
-                        <td colspan="5" v-if="hossinCount > 19 || worldID == 19" class="border-right">
+                        <td colspan="5" v-if="showHossin" class="border-right">
                             <world-zone-population-chart :world-id="worldID" :zone-id="4" :data="populationHossin" :show-teams="true">
                             </world-zone-population-chart>
                         </td>
-                        <td colspan="5" v-if="amerishCount > 19 || worldID == 19" class="border-right">
+                        <td colspan="5" v-if="showAmerish" class="border-right">
                             <world-zone-population-chart :world-id="worldID" :zone-id="6" :data="populationAmerish" :show-teams="true">
                             </world-zone-population-chart>
                         </td>
-                        <td colspan="5" v-if="esamirCount > 19 || worldID == 19" class="border-right">
+                        <td colspan="5" v-if="showEsamir" class="border-right">
                             <world-zone-population-chart :world-id="worldID" :zone-id="8" :data="populationEsamir" :show-teams="true">
                             </world-zone-population-chart>
                         </td>
-                        <td colspan="5" v-if="oshurCount > 19 || worldID == 19" class="border-right">
+                        <td colspan="5" v-if="showOshur" class="border-right">
                             <world-zone-population-chart :world-id="worldID" :zone-id="344" :data="populationOshur" :show-teams="true">
                             </world-zone-population-chart>
                         </td>
@@ -942,14 +948,14 @@
 
             this.connection.start().then(() => {
                 this.socketState = "opened";
-                console.log(`connected`);
+                console.log(`connected to signalR hub`);
                 this.subscribeBasedOnWorldPath();
             }).catch(err => {
                 console.error(err);
             });
 
             this.connection.onreconnected(() => {
-                console.log(`reconnected`);
+                console.log(`reconnected to signalR`);
                 this.socketState = "opened";
                 this.subscribeBasedOnWorldPath();
             });
@@ -962,7 +968,7 @@
             });
 
             this.connection.onreconnecting((err?: Error) => {
-                this.socketState = "reconnecting";
+                this.socketState = "reconnecting to hub";
                 if (err) {
                     console.error("onreconnecting: ", err);
                 }
@@ -1000,8 +1006,9 @@
 
                 this.worldID = worldID;
 
+                console.log(`subscribing to world data [worldID=${worldID}] [useShort=${useShort}]`);
                 this.connection.invoke("SubscribeToWorld", worldID, useShort).then(() => {
-                    console.log(`Successfully subscribed to ${worldID} ${useShort}`);
+                    console.log(`successfully subscribed to [worldID=${worldID}] [useShort=${useShort}]`);
                 }).catch((err: any) => {
                     console.error(`Error subscribing to world ${worldID}: ${err}`);
                 });
@@ -1056,52 +1063,6 @@
             getFactionColor: function (factionID: number): string {
                 return FactionColors.getFactionColor(factionID);
             },
-
-            setModalData: function (modalData: PopperModalData): void {
-                this.modalData = modalData;
-
-                if (this.modalData.root == null) {
-                    console.error(`Missing root element`);
-                    return;
-                }
-
-                console.log(`updating data!`);
-
-                const tooltip: HTMLElement | null = document.getElementById("stat-table");
-                if (tooltip == null) {
-                    console.error(`Missing tooltip element '#stat-table'`);
-                    return;
-                }
-
-                tooltip.style.display = "block";
-
-                if (this.popperInstance != null) {
-                    this.popperInstance.destroy();
-                    this.popperInstance = null;
-                }
-
-                const popper: Instance = createPopper(this.modalData.root, tooltip, {
-                    placement: "auto",
-                });
-                this.popperInstance = popper;
-
-                tooltip.style.display = "block";
-            },
-
-            closeStatTooltip: function(): void {
-                if (this.popperInstance == null) {
-                    return console.warn(`popperInstance is null, no stat tooltip to close`);
-                }
-
-                this.popperInstance.destroy();
-
-                const tooltip: HTMLElement | null = document.getElementById("stat-table");
-                if (tooltip != null) {
-                    tooltip.style.display = "none";
-                } else {
-                    console.log(`#stat-table is null, cannot close`);
-                }
-            }
 
         },
 
@@ -1186,6 +1147,31 @@
                     + this.worldData.continentCount.esamir.ns
                     + this.worldData.continentCount.oshur.ns
                     + this.worldData.continentCount.other.ns;
+            },
+
+            showIndar: function(): boolean {
+                return this.worldID == 19 || this.indarCount > 20
+                    || (this.indarCount > 0 && this.hossinCount < 20 && this.amerishCount < 20 && this.esamirCount < 20 && this.oshurCount < 20);
+            },
+
+            showHossin: function(): boolean {
+                return this.worldID == 19 || this.hossinCount > 20
+                    || (this.indarCount < 20 && this.hossinCount > 0 && this.amerishCount < 20 && this.esamirCount < 20 && this.oshurCount < 20);
+            },
+
+            showAmerish: function(): boolean {
+                return this.worldID == 19 || this.amerishCount > 20
+                    || (this.indarCount < 20 && this.hossinCount < 20 && this.amerishCount > 0 && this.esamirCount < 20 && this.oshurCount < 20);
+            },
+
+            showEsamir: function(): boolean {
+                return this.worldID == 19 || this.esamirCount > 20
+                    || (this.indarCount < 20 && this.hossinCount < 20 && this.amerishCount < 20 && this.esamirCount > 0 && this.oshurCount < 20);
+            },
+
+            showOshur: function(): boolean {
+                return this.worldID == 19 || this.oshurCount > 20
+                    || (this.indarCount < 20 && this.hossinCount < 20 && this.amerishCount < 20 && this.esamirCount < 20 && this.oshurCount > 0);
             },
 
             populationAll: function(): WorldZonePopulation[] {

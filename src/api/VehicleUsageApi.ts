@@ -1,4 +1,7 @@
-﻿import { PsVehicle, VehicleApi } from "./VehicleApi";
+﻿import ApiWrapper from "./ApiWrapper";
+import { Loading, Loadable } from "Loading";
+
+import { PsVehicle, VehicleApi } from "./VehicleApi";
 
 export class VehicleUsageData {
     public worldID: number = 0;
@@ -26,7 +29,10 @@ export class VehicleUsageEntry {
     public count: number = 0;
 }
 
-export class VehicleDataApi {
+export class VehicleDataApi extends ApiWrapper<VehicleUsageData> {
+
+    private static _instance: VehicleDataApi = new VehicleDataApi();
+    public static get(): VehicleDataApi { return VehicleDataApi._instance; }
 
     public static parse(elem: any): VehicleUsageData {
         return {
@@ -61,6 +67,10 @@ export class VehicleDataApi {
             ...elem,
             vehicle: elem.vehicle == null ? null : VehicleApi.parse(elem.vehicle)
         }
+    }
+
+    public static getHistory(start: Date, end: Date, worldID?: number, includeVehicles?: boolean): Promise<Loading<VehicleUsageData[]>> {
+        return VehicleDataApi.get().readList(`/api/vehicle/usage/history?start=${start.toISOString()}&end=${end.toISOString()}`, VehicleDataApi.parse);
     }
 
 }

@@ -39,7 +39,7 @@
                     <b>Zone</b>
                 </a-header>
 
-                <a-filter method="dropdown" type="string" field="zoneID" :source="filterSources.zone" source-key="key" source-value="value"
+                <a-filter method="dropdown" type="string" field="zoneID" :source="filterSources.zone" source-key="key" source-value="value" :sort-values="false"
                     :conditions="[ 'equals' ]">
                 </a-filter>
 

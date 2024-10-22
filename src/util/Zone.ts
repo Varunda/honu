@@ -30,6 +30,8 @@ export default class ZoneUtils {
             case 96: return "VR training (NC)";
             case 97: return "VR training (TR)";
             case 98: return "VR training (VS)";
+
+            case 364: return (instanceID > 0) ? `Tutorial (instance ${instanceID})` : "Tutorial";
         }
 
         return `Unchecked zone ID ${zoneID}`;

@@ -11,11 +11,11 @@
         </honu-menu>
 
         <div class="mb-3 border-bottom pb-3">
-            <h2>
+            <h3>
                 Server
-            </h2>
+            </h3>
 
-            <select v-model="worldID" class="form-control">
+            <select v-model="worldID" class="form-control mb-2">
                 <option :value="null">All</option>
                 <option :value="13">Cobalt</option>
                 <option :value="1">Connery</option>
@@ -24,6 +24,8 @@
                 <option :value="10">Miller</option>
                 <option :value="40">SolTech</option>
             </select>
+
+            <toggle-button v-model="groupFaction" false-color="btn-secondary">Group factions</toggle-button>
         </div>
 
         <div v-if="online.state == 'idle'">
@@ -35,33 +37,40 @@
             loading...
         </div>
 
-        <div v-else-if="online.state == 'loaded'" class="d-flex" style="gap: 1rem;">
-            <div class="flex-grow-1">
-                <h2 class="text-center rounded" style="background-color: var(--color-bg-vs)">
-                    <faction :faction-id="1" style="height: 3rem;"></faction>
-                    VS
-                </h2>
+        <div v-else-if="online.state == 'loaded'">
+            <div v-if="groupFaction == true" class="d-flex" style="gap: 1rem">
+                <div class="flex-grow-1">
+                    <h2 class="text-center rounded" style="background-color: var(--color-bg-vs)">
+                        <faction :faction-id="1" style="height: 3rem;"></faction>
+                        VS ({{onlineVs.length}})
+                    </h2>
+                    <online-faction :data="onlineVs" :show-world="showWorld"></online-faction>
+                </div>
+                <div class="flex-grow-1">
+                    <h2 class="text-center rounded" style="background-color: var(--color-bg-nc)">
+                        <faction :faction-id="2" style="height: 3rem;"></faction>
+                        NC ({{onlineNc.length}})
+                    </h2>
+                    <online-faction :data="onlineNc" :show-world="showWorld"></online-faction>
+                </div>
+                <div class="flex-grow-1">
+                    <h2 class="text-center rounded" style="background-color: var(--color-bg-tr)">
+                        <faction :faction-id="3" style="height: 3rem;"></faction>
+                        TR ({{onlineTr.length}})
+                    </h2>
+                    <online-faction :data="onlineTr" :show-world="showWorld"></online-faction>
+                </div>
+            </div>
 
-                <online-faction :data="onlineVs"></online-faction>
-            </div>
-            <div class="flex-grow-1">
-                <h2 class="text-center rounded" style="background-color: var(--color-bg-nc)">
-                    <faction :faction-id="2" style="height: 3rem;"></faction>
-                    NC
-                </h2>
-                <online-faction :data="onlineNc"></online-faction>
-            </div>
-            <div class="flex-grow-1">
-                <h2 class="text-center rounded" style="background-color: var(--color-bg-tr)">
-                    <faction :faction-id="3" style="height: 3rem;"></faction>
-                    TR
-                </h2>
-                <online-faction :data="onlineTr"></online-faction>
-            </div>
+            <online-faction v-else :show-faction="true" :data="worldMatch" :show-world="showWorld"></online-faction>
         </div>
 
         <div v-else-if="online.state == 'error'">
             <api-error :error="online.problem"></api-error>
+        </div>
+
+        <div v-else>
+            unchecked state of <code>online</code>: <code>{{online.state}}</code>
         </div>
 
     </div>
@@ -76,6 +85,7 @@
     import Busy from "components/Busy.vue";
     import ApiError from "components/ApiError";
     import Faction from "components/FactionImage";
+    import ToggleButton from "components/ToggleButton";
 
     import "filters/FactionNameFilter";
 
@@ -94,7 +104,8 @@
             return {
                 online: Loadable.idle() as Loading<FlatOnlinePlayer[]>,
 
-                worldID: null as number | null
+                worldID: null as number | null,
+                groupFaction: false as boolean
             }
         },
 
@@ -132,6 +143,10 @@
                 return this.online.data.filter(iter => iter.worldID == this.worldID);
             },
 
+            showWorld: function(): boolean {
+                return this.worldID == null;
+            },
+
             onlineVs: function(): FlatOnlinePlayer[] {
                 return this.worldMatch.filter(iter => iter.teamID == FactionUtils.VS);
             },
@@ -148,6 +163,8 @@
                 const url = new URL(location.href);
                 if (this.worldID != null) {
                     url.searchParams.set("worldID", `${this.worldID}`);
+                } else {
+                    url.searchParams.delete("worldID");
                 }
 
                 history.pushState({ path: url.href }, "", `/online?${url.searchParams.toString()}`);
@@ -157,7 +174,7 @@
         components: {
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage,
             ATable, ACol, AHeader, ABody, AFilter, Busy, ApiError,
-            OnlineFaction, Faction
+            OnlineFaction, Faction, ToggleButton
         }
 
     });

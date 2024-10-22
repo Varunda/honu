@@ -160,6 +160,14 @@ export const MenuRandomSession = Vue.extend({
     `
 });
 
+export const MenuOnline = Vue.extend({
+    template: `
+        <li>
+            <a class="dropdown-item" href="/online">Online</a>
+        </li>
+    `
+});
+
 export const MenuDropdown = Vue.extend({
     template: `
         <li class="nav-item dropdown">
@@ -178,6 +186,7 @@ export const MenuDropdown = Vue.extend({
                     <menu-realtime-network></menu-realtime-network>
                     <menu-items></menu-items>
                     <menu-population></menu-population>
+                    <menu-online></menu-online>
                     <menu-random-session></menu-random-session>
                 </slot>
             </ul>
@@ -187,6 +196,6 @@ export const MenuDropdown = Vue.extend({
     components: {
         MenuImage, MenuHomepage, MenuRealtime, MenuCharacters, MenuOutfits, MenuLedger,
         MenuRealTimeMap, MenuItems, MenuAlerts, MenuRealtimeNetwork, MenuPopulation, MenuOutfitwars, MenuWrapped,
-        MenuRandomSession
+        MenuRandomSession, MenuOnline
     }
 });

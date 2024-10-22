@@ -46,6 +46,7 @@ interface Filter {
     source: undefined | FilterKeyValue[];
     sourceKey: string | undefined;
     sourceValue: string | undefined;
+    sortValues: boolean;
 
     width: string | undefined;
     vnode: VNode | undefined;
@@ -224,7 +225,8 @@ export const ATable = Vue.extend({
                 sourceValue: undefined,
                 placeholder: undefined,
                 vnode: undefined,
-                width: undefined
+                width: undefined,
+                sortValues: false
             };
 
             if (filterNodes.length == 0) {
@@ -234,6 +236,8 @@ export const ATable = Vue.extend({
 
             const filterNode: VNode = filterNodes[0];
             filter.vnode = filterNode;
+            // if the prop is undefined, use the default value of true
+            filter.sortValues = (filterNode.componentOptions!.propsData as any).SortValues ?? true;
 
             if ((filterNode.componentOptions?.children?.length ?? 0) > 0) {
                 throw `<a-filter> elements cannot have children nodes within them`;
@@ -471,7 +475,7 @@ export const ATable = Vue.extend({
             console.log(`<a-table:${this.name}> ${msg}`);
         },
 
-        createIcon: function(createElement: CreateElement, icon: string, style: string = "fas"): VNode {
+        createIcon: function(createElement: CreateElement, icon: string, style: string = "ph"): VNode {
             return createElement("span", { staticClass: `ph-bold ph-fw ${icon}` });
         },
 
@@ -872,6 +876,32 @@ export const ATable = Vue.extend({
         },
 
         createDropdownFilter(createElement: CreateElement, filter: Filter): VNode {
+
+            // if the sort-values prop is true (which is the default), sort the keys alphabetically (a->z)
+            let filterOptions = filter.source ?? [];
+            if (filter.sortValues == true) {
+                console.log(`<a-filter> sorting values`);
+                filterOptions = [...filterOptions].sort((a, b) => {
+                    if (a.value == null && b.value != null) { // make sure that "All" comes first
+                        return -1;
+                    }
+                    if (a.value != null && b.value == null) {
+                        return 1;
+                    }
+
+                    if (typeof (a.key) != "string") {
+                        throw `Expected to find string for ${a.key}, got type ${typeof (a.key)} instead!`;
+                    }
+                    if (typeof (b.key) != "string") {
+                        throw `Expected to find string for ${b.key}, got type ${typeof (b.key)} instead!`;
+                    }
+
+                    return a.key.localeCompare(b.key);
+                });
+            } else {
+                console.log(`<a-filter> not sorting values`);
+            }
+
             return createElement("select",
                 {
                     staticClass: "form-control a-table-filter-select",
@@ -890,23 +920,7 @@ export const ATable = Vue.extend({
                         }
                     }
                 },
-                [...(filter.source ?? [])].sort((a: any, b: any) => {
-                    if (a.value == null && b.value != null) { // make sure that "All" comes first
-                        return -1;
-                    }
-                    if (a.value != null && b.value == null) {
-                        return 1;
-                    }
-
-                    if (typeof (a.key) != "string") {
-                        throw `Expected to find string for ${a.key}, got type ${typeof(a.key)} instead!`;
-                    }
-                    if (typeof (b.key) != "string") {
-                        throw `Expected to find string for ${b.key}, got type ${typeof(b.key)} instead!`;
-                    }
-
-                    return a.key.localeCompare(b.key);
-                }).map((iter: any) => {
+                filterOptions.map((iter: any) => {
                     if (typeof (iter.key) != "string") {
                         throw `Expected to find string for ${iter.key}, got type ${typeof(iter.key)} instead!`;
                     }
@@ -959,7 +973,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page - 1) }
                             }
                         },
-                        [this.createIcon(createElement, "ph-caret-left", "fas")]
+                        [this.createIcon(createElement, "ph-caret-left")]
                     ),
 
                     // Page selection buttons, show 10 max
@@ -994,7 +1008,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.paging.page + 1) }
                             }
                         },
-                        [this.createIcon(createElement, "ph-caret-right", "fas")]
+                        [this.createIcon(createElement, "ph-caret-right")]
                     ),
 
                     // Last page button
@@ -1008,7 +1022,7 @@ export const ATable = Vue.extend({
                                 click: (): void => { this.setPage(this.pageCount - 1); }
                             }
                         },
-                        [this.createIcon(createElement, "ph-caret-line-right", "fas")]
+                        [this.createIcon(createElement, "ph-caret-line-right")]
                     )]
                 ),
 
@@ -1086,7 +1100,7 @@ export const ATable = Vue.extend({
                     },
                     [
                         createElement("span", {
-                            staticClass: `fas ${Conditions.get(filter.selectedCondition)!.icon}`
+                            staticClass: `ph-bold ${Conditions.get(filter.selectedCondition)!.icon}`
                         })
                     ]
                 ),
@@ -1517,7 +1531,8 @@ const AFilter = Vue.extend({
         MaxWidth: { type: String, required: false, default: undefined },
         source: { type: Object, required: true },
         SourceKey: { type: String, required: false },
-        SourceValue: { type: String, required: false }
+        SourceValue: { type: String, required: false },
+        SortValues: { type: Boolean, required: false, default: true }
     },
     template: `<div></div>`
 });

@@ -222,7 +222,20 @@
 
             this.updateHealth();
             this.timerID = setInterval(async () => {
-                if (this.loadingData == true) {
+
+                /*
+                // if the last update was most than 5 seconds ago, always get new health data
+                // this can happen if the HTTP request failed, 
+                let refreshAnyways: boolean = false;
+                if (this.latestUpdate != null) {
+                    const diff: number = new Date().getTime() - this.latestUpdate.getTime();
+                    if (diff > (1000 * 5)) {
+                        refreshAnyways = true;
+                    }
+                }
+                */
+
+                if (this.loadingData == true) { // && refreshAnyways == false) {
                     console.log(`Health> health data is already being updated, not performing update again`);
                     return;
                 }
@@ -258,8 +271,8 @@
             updateHealth: async function(): Promise<void> {
                 this.loadingData = true;
                 this.health = await HonuHealthApi.getHealth();
+                this.loadingData = false;
                 if (this.health.state == "loaded") {
-                    this.loadingData = false;
                     this.latestUpdate = new Date();
                 }
             },

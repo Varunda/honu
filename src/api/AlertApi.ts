@@ -47,14 +47,25 @@ export class AlertApi extends ApiWrapper<PsAlert> {
             alert.displayID = alert.name;
         }
 
+        // 2024-10-21 TODO: this is stupid. load this from census instead
         if (alert.alertID == 0 && alert.zoneID == 0) {
             alert.type = "Daily";
         } else if (alert.alertID == 0 && alert.zoneID != 0) {
             alert.type = "Event";
+        } else if ([176, 177, 178, 179, 186, 187, 188, 189, 190, 191, 192, 193, 248, 249, 250].indexOf(alert.alertID) > -1) {
+            alert.type = "Meltdown Lock";
+        } else if ([198, 199, 200, 201].indexOf(alert.alertID) > -1) {
+            alert.type = "Maximum Pressure";
         } else if ([228, 229, 230, 231, 232].indexOf(alert.alertID) > -1) {
             alert.type = "Aerial Anomaly";
-        } else {
+        } else if ([236, 237, 238, 239, 240, 241].indexOf(alert.alertID) > -1) { // no idea why 6 of them
+            alert.type = "Sudden Death";
+        } else if ([242, 243, 244, 245, 246].indexOf(alert.alertID) > -1) {
+            alert.type = "Forgotten Fleet Carrier";
+        } else if (alert.duration == 90 * 60) {
             alert.type = "Continent Lock";
+        } else {
+            alert.type = `unchecked type ${alert.alertID}`;
         }
 
         return alert;

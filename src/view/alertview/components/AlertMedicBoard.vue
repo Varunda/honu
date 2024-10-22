@@ -29,7 +29,7 @@
                 <b>Faction</b>
             </a-header>
 
-            <a-filter field="factionID" type="number" method="dropdown" :source="sources.factions" source-key="key" source-value="value"
+            <a-filter field="factionID" type="number" method="dropdown" :source="sources.factions" source-key="key" source-value="value" :sort-values="false"
                 :conditions="['equals']">
             </a-filter>
 

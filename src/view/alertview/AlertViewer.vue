@@ -130,7 +130,7 @@
 
                 <div class="col-6">
                     <span class="text-warning text-center align-middle">
-                        map soon
+                        map soon (lol)
                     </span>
                 </div>
 
