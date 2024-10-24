@@ -717,10 +717,6 @@
                     return;
                 }
 
-    type ExpandedItemAddedEvent = {
-        event: ItemAddedEvent;
-        item: PsItem | null;
-    }
                 this.fullKills = Loadable.loaded(block.data.kills.map((iter: KillEvent): FullKillEvent => {
                     const item: PsItem | null = block.data.weapons.get(iter.weaponID) ?? null;
                     return {
@@ -777,10 +773,6 @@
                     const worldID: number = this.character.data.worldID;
                     this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == worldID);
                 }
-    type ExpandedItemAddedEvent = {
-        event: ItemAddedEvent;
-        item: PsItem | null;
-    }
             },
 
             bindEventProcessLag: async function(): Promise<void> {
