@@ -51,9 +51,60 @@
             </div>
         </div>
 
-        <div class="m-2" @click="showSnapshot = !showSnapshot">
-            Show WIP
+        <div class="d-flex border rounded">
+            <div style="width: 256px;" class="align-content-center m-2">
+                <census-image v-if="item.state == 'loaded'" :image-id="item.data.imageID" style="max-width: 256px; max-height: 256px;"></census-image>
+            </div>
+
+            <div class="flex-grow-1 align-content-center">
+                <div v-if="item.state == 'idle'"></div>
+                
+                <div v-else-if="item.state == 'loading'">
+                    Loading...
+                </div>
+
+                <div v-else-if="item.state == 'nocontent'">
+                    Item {{itemID}} does not exist! (404 returned from API)
+                </div>
+
+                <div v-else-if="item.state == 'loaded'" class="d-inline-block">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td><b>Name</b></td>
+                                <td>{{item.data.name}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Description</b></td>
+                                <td>{{item.data.description}}</td>
+                            </tr>
+                            <tr>
+                                <td><b>Faction</b></td>
+                                <td>
+                                    <span v-if="item.data.factionID == 0 || item.data.factionID == -1">
+                                        All ({{item.data.factionID}})
+                                    </span>
+                                    <span v-else>
+                                        {{item.data.factionID | faction}}
+
+                                        <span v-if="item.data.factionID == 4" class="text-muted">
+                                            (this can mean all factions too)
+                                        </span>
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+
+                <api-error v-else-if="item.state == 'error'" :error="item.problem"></api-error>
+            </div>
         </div>
+
+        <toggle-button v-model="showSnapshot" class="m-2">
+            Show snapshot data
+        </toggle-button>
 
         <div v-show="showSnapshot" class="w-100 mw-100">
             <collapsible header-text="Snapshots">
@@ -83,6 +134,9 @@
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
     import InfoHover from "components/InfoHover.vue";
     import Collapsible from "components/Collapsible.vue";
+    import CensusImage from "components/CensusImage";
+    import ApiError from "components/ApiError";
+    import ToggleButton from "components/ToggleButton";
 
     import { PsItem, ItemApi } from "api/ItemApi";
     import { WeaponStatTopApi } from "api/WeaponStatTopApi";
@@ -93,6 +147,7 @@
     import ItemSnapshot from "./components/ItemSnapshot.vue";
 
     import "MomentFilter";
+    import "filters/FactionNameFilter";
 
     export const ItemStatViewer = Vue.extend({
         props: {
@@ -209,7 +264,7 @@
 
         components: {
             ItemPercentileViewer, ItemTopViewer, ItemSnapshot,
-            InfoHover, Collapsible,
+            InfoHover, Collapsible, CensusImage, ApiError, ToggleButton,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
     });

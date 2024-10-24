@@ -83,6 +83,31 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     Get the alert with the corresponding ID
+        /// </summary>
+        /// <param name="alertID">ID of the alert</param>
+        /// <response code="200">
+        ///     The response will contain the <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/>
+        /// </response> 
+        /// <response code="204">
+        ///     No <see cref="PsAlert"/> with <see cref="PsAlert.ID"/> of <paramref name="alertID"/> exists
+        /// </response>
+        [HttpGet("{alertID}/expanded")]
+        public async Task<ApiResponse<ExpandedAlert>> GetExpandedAlertByID(long alertID) {
+            PsAlert? alert = await _AlertDb.GetByID(alertID);
+
+            if (alert == null) {
+                return ApiNoContent<ExpandedAlert>();
+            }
+
+            ExpandedAlert ex = new();
+            ex.Alert = alert;
+            ex.MetagameEvent = await _MetagameEventRepository.GetByID(ex.Alert.AlertID);
+
+            return ApiOk(ex);
+        }
+
+        /// <summary>
         ///     Get all alerts
         /// </summary>
         /// <response code="200">
@@ -93,6 +118,23 @@ namespace watchtower.Controllers.Api {
             List<PsAlert> alerts = await _AlertDb.GetAll();
 
             return ApiOk(alerts);
+        }
+
+        /// <summary>
+        ///     Get all alerts as a <see cref="AlertListBlock"/>
+        /// </summary>
+        /// <response code="200">
+        ///     Get all alerts Honu has tracked
+        /// </response>
+        [HttpGet("block")]
+        public async Task<ApiResponse<AlertListBlock>> GetAllBlock() {
+            List<PsAlert> alerts = await _AlertDb.GetAll();
+
+            AlertListBlock block = new();
+            block.Alerts = alerts;
+            block.MetagameEvents = await _MetagameEventRepository.GetByIDs(block.Alerts.Select(iter => iter.AlertID));
+
+            return ApiOk(block);
         }
 
         /// <summary>
@@ -109,6 +151,26 @@ namespace watchtower.Controllers.Api {
             List<PsAlert> alerts = await _AlertDb.GetWithinPeriod(periodStart, periodEnd);
 
             return ApiOk(alerts);
+        }
+
+        /// <summary>
+        ///     Get all alerts that have ocurred within the last 2 weeks
+        /// </summary>
+        /// <response code="200">
+        ///     A list of <see cref="PsAlert"/>s that have a <see cref="PsAlert.Timestamp"/> within 2 weeks from now
+        /// </response>
+        [HttpGet("recent/block")]
+        public async Task<ApiResponse<AlertListBlock>> GetRecentBlock() {
+            DateTime periodEnd = DateTime.UtcNow;
+            DateTime periodStart = periodEnd - TimeSpan.FromDays(14);
+
+            List<PsAlert> alerts = await _AlertDb.GetWithinPeriod(periodStart, periodEnd);
+
+            AlertListBlock block = new();
+            block.Alerts = alerts;
+            block.MetagameEvents = await _MetagameEventRepository.GetByIDs(block.Alerts.Select(iter => iter.AlertID));
+
+            return ApiOk(block);
         }
 
         /// <summary>

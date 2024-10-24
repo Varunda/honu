@@ -51,7 +51,6 @@
     import Vue, { PropType } from "vue";
 
     import { Loading, Loadable } from "Loading";
-    import { AchievementEarned, AchievementEarnedBlock } from "api/AchievementEarnedApi";
     import { Session } from "api/SessionApi";
     import { ItemAddedEventBlock, ItemAddedEventApi, ItemAddedEvent } from "api/ItemAddedEventApi";
     import { PsItem } from "api/ItemApi";

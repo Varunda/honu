@@ -292,6 +292,27 @@
 
                     <tr>
                         <td>
+                            Item Added
+                        </td>
+
+                        <td>
+                            <span v-if="itemAddedBlock.state == 'loading'" class="text-warning">
+                                Loading...
+                            </span>
+                            <span v-else-if="itemAddedBlock.state == 'loaded'" class="text-info">
+                                loaded
+                            </span>
+                            <span v-else>
+                                {{itemAddedBlock.state}}
+                            </span>
+                            <span v-if="itemAddedBlock.state == 'loaded'">
+                                ({{itemAddedBlock.data.events.length}})
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
                             Full xp?
                             <info-hover text="Before 2022-07-31, only specific exp events were tracked"></info-hover>
                         </td>
@@ -414,7 +435,8 @@
                     </div>
 
                     <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded' && expOther.state == 'loaded'"
-                        :session="session.data" :kills="kills" :deaths="deaths" :teamkills="teamkills"
+                        :session="session.data" :character="character.data"
+                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :item-added="itemAddedEvents"
                         :exp="exp.data" :exp-other="expOther.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
                     </session-action-log>
                 </collapsible>
@@ -467,11 +489,17 @@
     import { ItemCategory } from "api/ItemCategoryApi";
     import { PsItem } from "api/ItemApi";
     import { HonuHealthApi, HealthEventProcessLag } from "api/HonuHealthApi";
+    import { ItemAddedEventBlock, ItemAddedEventApi, ItemAddedEvent } from "api/ItemAddedEventApi";
 
     import * as ds from "node_modules/nouislider/dist/nouislider";
     import "node_modules/nouislider/dist/nouislider.css";
 
     type FullKillEvent = ExpandedKillEvent & { itemCategory: ItemCategory | null };
+
+    type ExpandedItemAddedEvent = {
+        event: ItemAddedEvent;
+        item: PsItem | null;
+    }
 
     // 2024-06-17 TODO: yeah this code is kinda bad
 
@@ -513,6 +541,7 @@
                 allOtherExp: [] as ExpEvent[],
                 vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
+                itemAddedBlock: Loadable.idle() as Loading<ItemAddedEventBlock>,
 
                 reconnects: Loadable.idle() as Loading<RealtimeReconnectEntry[]>,
                 processLag: Loadable.idle() as Loading<HealthEventProcessLag>
@@ -555,6 +584,7 @@
                 this.bindExpOther();
                 this.bindVehicleDestroy();
                 this.bindAchievementsEarned();
+                this.bindItemAdded();
             },
 
             bindSession: async function(): Promise<void> {
@@ -687,6 +717,10 @@
                     return;
                 }
 
+    type ExpandedItemAddedEvent = {
+        event: ItemAddedEvent;
+        item: PsItem | null;
+    }
                 this.fullKills = Loadable.loaded(block.data.kills.map((iter: KillEvent): FullKillEvent => {
                     const item: PsItem | null = block.data.weapons.get(iter.weaponID) ?? null;
                     return {
@@ -726,6 +760,11 @@
                 this.checkAllAndScroll();
             },
 
+            bindItemAdded: async function(): Promise<void> {
+                this.itemAddedBlock = Loadable.loading();
+                this.itemAddedBlock = await ItemAddedEventApi.getBySessionID(this.sessionID);
+            },
+
             bindReconnects: async function(): Promise<void> {
                 if (this.session.state != "loaded" || this.character.state != "loaded") {
                     this.reconnects = Loadable.idle();
@@ -738,6 +777,10 @@
                     const worldID: number = this.character.data.worldID;
                     this.reconnects.data = this.reconnects.data.filter(iter => iter.worldID == worldID);
                 }
+    type ExpandedItemAddedEvent = {
+        event: ItemAddedEvent;
+        item: PsItem | null;
+    }
             },
 
             bindEventProcessLag: async function(): Promise<void> {
@@ -864,6 +907,22 @@
 
                 return this.vehicleDestroy.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
                     && iter.event.timestamp.getTime() <= this.range.end.getTime());
+            },
+
+            itemAddedEvents: function(): ExpandedItemAddedEvent[] {
+                if (this.itemAddedBlock.state != "loaded") {
+                    return [];
+                }
+
+                return this.itemAddedBlock.data.events.map((iter: ItemAddedEvent): ExpandedItemAddedEvent => {
+                    if (this.itemAddedBlock.state != "loaded") {
+                        throw `how is itemAddedBlock not loaded here?`;
+                    }
+                    return {
+                        event: iter,
+                        item: this.itemAddedBlock.data.items.find(i => i.id == iter.itemID) ?? null
+                    };
+                }).sort((a, b) => a.event.timestamp.getTime() - b.event.timestamp.getTime());
             },
 
             showEventProcessLag: function(): boolean {

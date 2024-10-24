@@ -145,197 +145,7 @@ export const ATable = Vue.extend({
     },
 
     created: function(): void {
-        this.nodes.columns = (this.$slots["default"] || [])
-            .filter((iter: VNode) => iter.tag != undefined && iter.componentOptions != undefined);
-
-        console.log(`<a-table>: Found ${this.nodes.columns.length} columns`);
-
-        if (this.DefaultSortField != undefined) {
-            this.sorting.field = this.DefaultSortField;
-        }
-        if (this.DefaultSortOrder == "asc" || this.DefaultSortOrder == "desc") {
-            this.sorting.order = this.DefaultSortOrder;
-        } else {
-            throw `default-sort-order must be 'asc' | 'desc': Is '${this.DefaultSortOrder}'`;
-        }
-
-        // Iterate through all the columns and find any <a-header> elements
-        for (const column of this.nodes.columns) {
-            if (column.componentOptions?.children) {
-                // Finding the <a-header> elements
-                const headerNodes: VNode[] = column.componentOptions.children
-                    .filter((iter: VNode) => iter.componentOptions?.tag == "a-header");
-
-                // Ensure at most one exists for each column, cannot have multiple
-                if (headerNodes.length > 1) {
-                    throw "Cannot define multiple <a-header> elements in a single <a-col>";
-                }
-
-                // Get the HTML class used to define the columns
-                const colClass: string = (column.componentOptions!.propsData as any).ColClass;
-                const sortField: string | undefined = (column.componentOptions.propsData as any).SortField;
-
-                const header: Header = {
-                    colClass: colClass,
-                    field: sortField,
-                    empty: true,
-                    children: []
-                };
-
-                // A child <a-header> exists, use those options given
-                if (headerNodes.length == 1) {
-                    header.children = headerNodes[0].componentOptions?.children ?? [];
-                    header.empty = false;
-
-                    // Sort by the first field set
-                    if (sortField != undefined && this.sorting.field == "") {
-                        this.sorting.field = sortField;
-                    }
-                }
-
-                this.nodes.headers.push(header);
-            }
-        }
-
-        // Find the filters and create them
-        for (const column of this.nodes.columns) {
-            if (!column.componentOptions?.children) {
-                continue;
-            }
-
-            const filterNodes: VNode[] = column.componentOptions.children
-                .filter((iter: VNode) => iter.componentOptions?.tag == "a-filter");
-
-            if (filterNodes.length > 1) {
-                throw `Cannot define multiple <a-filter> elements in a single <a-col>`;
-            }
-
-            const colClass: string = (column.componentOptions.propsData as any).ColClass;
-
-            const filter: Filter = {
-                method: "empty",
-                type: "empty",
-                conditions: [],
-                selectedCondition: "",
-                colClass: colClass,
-                field: "",
-                value: "",
-                source: undefined,
-                sourceKey: undefined,
-                sourceValue: undefined,
-                placeholder: undefined,
-                vnode: undefined,
-                width: undefined,
-                sortValues: false
-            };
-
-            if (filterNodes.length == 0) {
-                this.filters.push(filter);
-                continue;
-            }
-
-            const filterNode: VNode = filterNodes[0];
-            filter.vnode = filterNode;
-            // if the prop is undefined, use the default value of true
-            filter.sortValues = (filterNode.componentOptions!.propsData as any).SortValues ?? true;
-
-            if ((filterNode.componentOptions?.children?.length ?? 0) > 0) {
-                throw `<a-filter> elements cannot have children nodes within them`;
-            }
-
-            filter.width = (filterNode.componentOptions!.propsData as any).MaxWidth;
-
-            // Validate method prop
-            filter.method = (filterNode.componentOptions!.propsData as any).method;
-            if (typeof filter.method != "string") {
-                throw `Needed string for method of <a-filter>, got ${typeof filter.method}`;
-            }
-            if (filter.method == "reset" || filter.method == "template") {
-                this.filters.push(filter);
-                continue;
-            }
-
-            // Validate a correct source for a dropdown filter
-            if (filter.method == "dropdown") {
-                filter.source = (filterNode.componentOptions!.propsData as any).source;
-
-                // A function was passed as the source, validate and begin the
-                if (typeof (filter.source) == "function") {
-                    filter.sourceKey = (filterNode.componentOptions!.propsData as any).SourceKey;
-                    if (filter.sourceKey == undefined) {
-                        throw `Missing source-key for <a-filter>`;
-                    }
-
-                    filter.sourceValue = (filterNode.componentOptions!.propsData as any).SourceValue;
-                    if (filter.sourceValue == undefined) {
-                        throw `Missing source-value for <a-filter>`;
-                    }
-
-                    const sourceRet: any = (filter.source as Function)();
-                    if (typeof (sourceRet.ok) != "function") {
-                        throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
-                    }
-                } else if (filter.source != undefined && Array.isArray(filter.source) == false) {
-                    throw `<a-filter> source was given but was not an array`;
-                }
-            }
-
-            // Validate type prop
-            filter.type = (filterNode.componentOptions!.propsData as any).type;
-            if (typeof filter.type != "string") {
-                throw `Needed string for type of <a-filter>, got ${typeof filter.type}`;
-            }
-            if (ValidFilterTypes.indexOf(filter.type) == -1) {
-                throw `Invalid filter type '${filter.type}'`;
-            }
-
-            // Validate conditions prop
-            filter.conditions = (filterNode.componentOptions!.propsData as any).conditions;
-            if (!Array.isArray(filter.conditions) && filter.method != "empty") {
-                throw `Needed array for conditions of <a-filter>, got ${typeof filter.conditions} on field ${filter.field}`;
-            }
-            if (filter.conditions.length == 0) {
-                throw `No conditions of <a-filter> given, need at least one`;
-            }
-
-            // Validate field prop
-            filter.field = (filterNode.componentOptions!.propsData as any).field;
-            if (typeof filter.field != "string") {
-                throw `Need string for field of <a-filter>, got ${typeof filter.field}`;
-            }
-
-            filter.placeholder = (filterNode.componentOptions!.propsData as any).placeholder;
-
-            filter.value = (filter.type == "number") ? null : "";
-            filter.selectedCondition = filter.conditions[0];
-
-            this.filters.push(filter);
-        }
-
-        // populate footer data
-        for (const column of this.nodes.columns) {
-            if (column.componentOptions?.children) {
-                // Finding the <a-footer> elements
-                const footerNodes: VNode[] = column.componentOptions.children
-                    .filter((iter: VNode) => iter.componentOptions?.tag == "a-footer");
-
-                // Ensure at most one exists for each column, cannot have multiple
-                if (footerNodes.length > 1) {
-                    throw "Cannot define multiple <a-footer> elements in a single <a-col>";
-                }
-
-                const footer: Footer = {
-                    children: []
-                };
-
-                // A child <a-header> exists, use those options given
-                if (footerNodes.length == 1) {
-                    footer.children = footerNodes[0].componentOptions?.children ?? [];
-                }
-
-                this.nodes.footers.push(footer);
-            }
-        }
+        this.bindStructure();
     },
 
     render: function(createElement: CreateElement): VNode {
@@ -473,6 +283,209 @@ export const ATable = Vue.extend({
             }
 
             console.log(`<a-table:${this.name}> ${msg}`);
+        },
+
+        bindStructure: function(): void {
+            this.filters = [];
+            this.nodes.columns = [];
+            this.nodes.headers = [];
+            this.nodes.footers = [];
+
+            console.time(`a-table:${this.ID} bind structure`);
+
+            this.nodes.columns = (this.$slots["default"] || [])
+                .filter((iter: VNode) => iter.tag != undefined && iter.componentOptions != undefined);
+
+            console.log(`<a-table>: Found ${this.nodes.columns.length} columns`);
+
+            if (this.DefaultSortField != undefined) {
+                this.sorting.field = this.DefaultSortField;
+            }
+            if (this.DefaultSortOrder == "asc" || this.DefaultSortOrder == "desc") {
+                this.sorting.order = this.DefaultSortOrder;
+            } else {
+                throw `default-sort-order must be 'asc' | 'desc': Is '${this.DefaultSortOrder}'`;
+            }
+
+            // Iterate through all the columns and find any <a-header> elements
+            for (const column of this.nodes.columns) {
+                if (column.componentOptions?.children) {
+                    // Finding the <a-header> elements
+                    const headerNodes: VNode[] = column.componentOptions.children
+                        .filter((iter: VNode) => iter.componentOptions?.tag == "a-header");
+
+                    // Ensure at most one exists for each column, cannot have multiple
+                    if (headerNodes.length > 1) {
+                        throw "Cannot define multiple <a-header> elements in a single <a-col>";
+                    }
+
+                    // Get the HTML class used to define the columns
+                    const colClass: string = (column.componentOptions!.propsData as any).ColClass;
+                    const sortField: string | undefined = (column.componentOptions.propsData as any).SortField;
+
+                    const header: Header = {
+                        colClass: colClass,
+                        field: sortField,
+                        empty: true,
+                        children: []
+                    };
+
+                    // A child <a-header> exists, use those options given
+                    if (headerNodes.length == 1) {
+                        header.children = headerNodes[0].componentOptions?.children ?? [];
+                        header.empty = false;
+
+                        // Sort by the first field set
+                        if (sortField != undefined && this.sorting.field == "") {
+                            this.sorting.field = sortField;
+                        }
+                    }
+
+                    this.nodes.headers.push(header);
+                }
+            }
+
+            // Find the filters and create them
+            for (const column of this.nodes.columns) {
+                if (!column.componentOptions?.children) {
+                    continue;
+                }
+
+                const filterNodes: VNode[] = column.componentOptions.children
+                    .filter((iter: VNode) => iter.componentOptions?.tag == "a-filter");
+
+                if (filterNodes.length > 1) {
+                    throw `Cannot define multiple <a-filter> elements in a single <a-col>`;
+                }
+
+                const colClass: string = (column.componentOptions.propsData as any).ColClass;
+
+                const filter: Filter = {
+                    method: "empty",
+                    type: "empty",
+                    conditions: [],
+                    selectedCondition: "",
+                    colClass: colClass,
+                    field: "",
+                    value: "",
+                    source: undefined,
+                    sourceKey: undefined,
+                    sourceValue: undefined,
+                    placeholder: undefined,
+                    vnode: undefined,
+                    width: undefined,
+                    sortValues: false
+                };
+
+                if (filterNodes.length == 0) {
+                    this.filters.push(filter);
+                    continue;
+                }
+
+                const filterNode: VNode = filterNodes[0];
+                filter.vnode = filterNode;
+                // if the prop is undefined, use the default value of true
+                filter.sortValues = (filterNode.componentOptions!.propsData as any).SortValues ?? true;
+
+                if ((filterNode.componentOptions?.children?.length ?? 0) > 0) {
+                    throw `<a-filter> elements cannot have children nodes within them`;
+                }
+
+                filter.width = (filterNode.componentOptions!.propsData as any).MaxWidth;
+
+                // Validate method prop
+                filter.method = (filterNode.componentOptions!.propsData as any).method;
+                if (typeof filter.method != "string") {
+                    throw `Needed string for method of <a-filter>, got ${typeof filter.method}`;
+                }
+                if (filter.method == "reset" || filter.method == "template") {
+                    this.filters.push(filter);
+                    continue;
+                }
+
+                // Validate a correct source for a dropdown filter
+                if (filter.method == "dropdown") {
+                    filter.source = (filterNode.componentOptions!.propsData as any).source;
+
+                    // A function was passed as the source, validate and begin the
+                    if (typeof (filter.source) == "function") {
+                        filter.sourceKey = (filterNode.componentOptions!.propsData as any).SourceKey;
+                        if (filter.sourceKey == undefined) {
+                            throw `Missing source-key for <a-filter>`;
+                        }
+
+                        filter.sourceValue = (filterNode.componentOptions!.propsData as any).SourceValue;
+                        if (filter.sourceValue == undefined) {
+                            throw `Missing source-value for <a-filter>`;
+                        }
+
+                        const sourceRet: any = (filter.source as Function)();
+                        if (typeof (sourceRet.ok) != "function") {
+                            throw `Missing ok callback handler or is not a function. Did you pass a function that returns an ApiResponse?`;
+                        }
+                    } else if (filter.source != undefined && Array.isArray(filter.source) == false) {
+                        throw `<a-filter> source was given but was not an array`;
+                    }
+                }
+
+                // Validate type prop
+                filter.type = (filterNode.componentOptions!.propsData as any).type;
+                if (typeof filter.type != "string") {
+                    throw `Needed string for type of <a-filter>, got ${typeof filter.type}`;
+                }
+                if (ValidFilterTypes.indexOf(filter.type) == -1) {
+                    throw `Invalid filter type '${filter.type}'`;
+                }
+
+                // Validate conditions prop
+                filter.conditions = (filterNode.componentOptions!.propsData as any).conditions;
+                if (!Array.isArray(filter.conditions) && filter.method != "empty") {
+                    throw `Needed array for conditions of <a-filter>, got ${typeof filter.conditions} on field ${filter.field}`;
+                }
+                if (filter.conditions.length == 0) {
+                    throw `No conditions of <a-filter> given, need at least one`;
+                }
+
+                // Validate field prop
+                filter.field = (filterNode.componentOptions!.propsData as any).field;
+                if (typeof filter.field != "string") {
+                    throw `Need string for field of <a-filter>, got ${typeof filter.field}`;
+                }
+
+                filter.placeholder = (filterNode.componentOptions!.propsData as any).placeholder;
+
+                filter.value = (filter.type == "number") ? null : "";
+                filter.selectedCondition = filter.conditions[0];
+
+                this.filters.push(filter);
+            }
+
+            // populate footer data
+            for (const column of this.nodes.columns) {
+                if (column.componentOptions?.children) {
+                    // Finding the <a-footer> elements
+                    const footerNodes: VNode[] = column.componentOptions.children
+                        .filter((iter: VNode) => iter.componentOptions?.tag == "a-footer");
+
+                    // Ensure at most one exists for each column, cannot have multiple
+                    if (footerNodes.length > 1) {
+                        throw "Cannot define multiple <a-footer> elements in a single <a-col>";
+                    }
+
+                    const footer: Footer = {
+                        children: []
+                    };
+
+                    // A child <a-header> exists, use those options given
+                    if (footerNodes.length == 1) {
+                        footer.children = footerNodes[0].componentOptions?.children ?? [];
+                    }
+
+                    this.nodes.footers.push(footer);
+                }
+            }
+
+            console.timeEnd(`a-table:${this.ID} bind structure`);
         },
 
         createIcon: function(createElement: CreateElement, icon: string, style: string = "ph"): VNode {
@@ -889,11 +902,15 @@ export const ATable = Vue.extend({
                         return 1;
                     }
 
+                    if (a.value == null && b.value == null) {
+                        return 0;
+                    }
+
                     if (typeof (a.key) != "string") {
-                        throw `Expected to find string for ${a.key}, got type ${typeof (a.key)} instead!`;
+                        throw `error creating dropdown for ${filter.field}: Expected to find string for ${a.key}, got type ${typeof (a.key)} instead!`;
                     }
                     if (typeof (b.key) != "string") {
-                        throw `Expected to find string for ${b.key}, got type ${typeof (b.key)} instead!`;
+                        throw `error creating dropdown for ${filter.field}: Expected to find string for ${b.key}, got type ${typeof (b.key)} instead!`;
                     }
 
                     return a.key.localeCompare(b.key);
@@ -1493,6 +1510,14 @@ export const ATable = Vue.extend({
         defaultPageSize: function(): number {
             return this.DefaultPageSize || 50;
         }
+    },
+
+    watch: {
+        entries: function(): void {
+            console.log(`<a-table:${this.ID}> entries changed, rebinding structure`);
+            this.bindStructure();
+        }
+
     },
 
     components: {

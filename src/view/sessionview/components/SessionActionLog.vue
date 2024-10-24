@@ -9,6 +9,7 @@
                 <toggle-button v-model="show.kills" class="flex-grow-0">Kills</toggle-button>
                 <toggle-button v-model="show.deaths" class="flex-grow-0">Deaths</toggle-button>
                 <toggle-button v-model="show.vehicleDestroy" class="flex-grow-0">Vehicle destroy</toggle-button>
+                <toggle-button v-model="show.itemAdded" class="flex-grow-0">Item added</toggle-button>
                 <toggle-button v-model="show.assists" class="flex-grow-0">Assists</toggle-button>
                 <toggle-button v-model="show.revives" class="flex-grow-0">Revives</toggle-button>
                 <toggle-button v-model="show.heals" class="flex-grow-0">Heals</toggle-button>
@@ -93,7 +94,7 @@
                             --
                         </span>
                         <span v-else class="text-monospace" style="overflow-wrap: break-word">
-                            {{JSON.stringify(entry.event)}}
+                            <pre><code>{{JSON.stringify(entry.event, null, 2)}}</code></pre>
                         </span>
                     </div>
                 </a-body>
@@ -129,6 +130,8 @@
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
     import { PsVehicle, VehicleApi } from "api/VehicleApi";
+    import { PsItem } from "api/ItemApi";
+    import { ItemAddedEventBlock, ItemAddedEventApi, ItemAddedEvent } from "api/ItemAddedEventApi";
 
     import ZoneUtils from "util/Zone";
     import TimeUtils from "util/Time";
@@ -158,15 +161,22 @@
         timestamp: Date;
     }
 
+    type ExpandedItemAddedEvent = {
+        event: ItemAddedEvent;
+        item: PsItem | null;
+    }
+
     export const SessionActionLog = Vue.extend({
         props: {
             session: { type: Object as PropType<Session>, required: true },
+            character: { type: Object as PropType<PsCharacter>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             teamkills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             ExpOther: { type: Object as PropType<ExperienceBlock>, required: true },
             VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
+            ItemAdded: { type: Array as PropType<ExpandedItemAddedEvent[]>, required: true }
         },
 
         data: function() {
@@ -182,6 +192,7 @@
                     ["death", "Death"],
                     ["assist", "Assist"],
                     ["vehicle_destroy", "Vehicle destroy"],
+                    ["item_added", "Item added"],
 
                     ["revive", "Revive"],
                     ["heal", "Heal"],
@@ -216,6 +227,7 @@
                     assists: false as boolean,
                     deaths: true as boolean,
                     vehicleDestroy: true as boolean,
+                    itemAdded: true as boolean,
 
                     revives: true as boolean,
                     heals: false as boolean,
@@ -277,6 +289,7 @@
                     assists: false as boolean,
                     deaths: true as boolean,
                     vehicleDestroy: true as boolean,
+                    itemAdded: true as boolean,
 
                     revives: true as boolean,
                     heals: false as boolean,
@@ -320,6 +333,7 @@
                 entries.push(...this.makeOtherExp());
                 entries.push(...this.makeZoneChange());
                 entries.push(...this.makeVehicleDestroy());
+                entries.push(...this.makeItemAdded());
 
                 // Add the session start and end
                 entries.push({
@@ -675,8 +689,6 @@
              */
             makeVehicleDestroy: function(): ActionLogEntry[] {
                 const entries: ActionLogEntry[] = this.VehicleDestroy.map(iter => {
-                    const killedColor: string = ColorUtils.getFactionColor(iter.killed?.factionID ?? iter.event.killedFactionID);
-
                     const entry: ActionLogEntry = {
                         parts: [
                             this.createLoadoutIcon(iter.event.attackerLoadoutID),
@@ -690,6 +702,29 @@
                         ],
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
+                        event: iter.event
+                    };
+
+                    return entry;
+                });
+
+                return entries;
+            },
+
+            makeItemAdded: function(): ActionLogEntry[] {
+                const entries: ActionLogEntry[] = this.ItemAdded.map(iter => {
+                    const entry: ActionLogEntry = {
+                        parts: [
+                            // the only character that would show up for item added events is the character of the session
+                            this.createCharacterLink(this.character, iter.event.characterID),
+                            this.createLogText(`gained item`),
+                            {
+                                html: this.createLink(`${iter.item?.name}`, `/i/${iter.event.itemID}`)
+                            },
+                            this.createLogText(`(from context ${iter.event.context})`)
+                        ],
+                        timestamp: iter.event.timestamp,
+                        type: "item_added",
                         event: iter.event
                     };
 
@@ -854,6 +889,7 @@
                     if (iter.type == "death" && this.show.deaths == true) { return true; }
                     if (iter.type == "assist" && this.show.assists == true) { return true; }
                     if (iter.type == "vehicle_destroy" && this.show.vehicleDestroy == true) { return true; }
+                    if (iter.type == "item_added" && this.show.itemAdded == true) { return true; }
 
                     // session character is source
                     if (iter.type == "heal" && this.show.heals == true) { return true; }
@@ -873,6 +909,8 @@
                     if (iter.type == "exp_other" && this.show.expOther == true) { return true; }
                     if (iter.type == "exp_npc" && this.show.expNpc) { return true; }
                     if (iter.type == "exp_self" && this.show.expSelf) { return true; }
+
+                    //console.warn(`unchecked ActionLogEntry type: ${iter.type}`);
 
                     return false;
                 });

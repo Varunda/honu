@@ -62,10 +62,17 @@
         </div>
 
         <div v-else-if="participants.state == 'loaded'">
-            <div class="row mb-3" v-if="alert.state == 'loaded' && alert.data.zoneID != 0">
+            <div class="row mb-3" v-if="alert.state == 'loaded' && alert.data.zoneID != 0 && alert.data.metagameTypeID != 4">
                 <div class="col-12">
                     <hr class="border" />
-                    <h4 class="text-center">Territory control</h4>
+                    <h4 class="text-center">
+                        <span v-if="alert.data.countNC <= 100 && alert.data.countTR <= 100 && alert.data.countVS <= 100">
+                            Territory control
+                        </span>
+                        <span v-else>
+                            Score
+                        </span>
+                    </h4>
                 </div>
 
                 <div v-if="alert.state == 'idle'"></div>
@@ -125,16 +132,16 @@
 
             <div v-if="showControlComponent" class="row">
                 <div class="col-12">
-                    <h2 class="wt-header">Capture and Defense (Work in progress)</h2>
+                    <h2 class="wt-header">Captures (Work in progress)</h2>
                 </div>
 
-                <div class="col-6">
+                <div class="col-3">
                     <span class="text-warning text-center align-middle">
                         map soon (lol)
                     </span>
                 </div>
 
-                <div class="col-6">
+                <div class="col-9">
                     <alert-control-events v-if="control.state == 'loaded'" :control="control.data"></alert-control-events>
                 </div>
             </div>
@@ -200,7 +207,7 @@
     import { Loading, Loadable } from "Loading";
 
     import { AlertParticipantApi, FlattendParticipantDataEntry, AlertPlayerProfileData } from "api/AlertParticipantApi";
-    import { PsAlert, AlertApi } from "api/AlertApi";
+    import { PsAlert, AlertApi, FlatAlertBlockEntry } from "api/AlertApi";
     import { ExpandedFacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
 
     import "filters/LocaleFilter";
@@ -297,7 +304,7 @@
                     showPopTotal: false as boolean
                 },
 
-                alert: Loadable.idle() as Loading<PsAlert>,
+                alert: Loadable.idle() as Loading<FlatAlertBlockEntry>,
                 participants: Loadable.idle() as Loading<FlattendParticipantDataEntry[]>,
                 control: Loadable.idle() as Loading<ExpandedFacilityControlEvent[]>,
 
@@ -340,7 +347,7 @@
 
             loadAlert: async function(): Promise<void> {
                 this.alert = Loadable.loading();
-                this.alert = await AlertApi.getByID(this.alertID);
+                this.alert = await AlertApi.getExpandedByID(this.alertID);
 
                 if (this.alert.state == "loaded") {
                     document.title = `Honu / Alert / ${this.alert.data.displayID}`;

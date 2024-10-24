@@ -1,7 +1,7 @@
 ﻿<template>
     <div>
         <h1 class="text-center">
-            Alert {{alert.displayID}} // {{alert.type}}
+            Alert {{alert.displayID}} // {{alert.metagameName}}
         </h1>
 
         <h3 class="text-center">

@@ -1,6 +1,8 @@
 ﻿import { Loading } from "Loading";
 import ApiWrapper from "api/ApiWrapper";
 
+import { MetagameEventApi, PsMetagameEvent } from "api/MetagameEventApi";
+
 export class PsAlert {
     public id: number = 0;
     public type: string = "unset";
@@ -23,6 +25,41 @@ export class PsAlert {
     public countVS: number | null = null;
     public countNC: number | null = null;
     public countTR: number | null = null;
+}
+
+export class AlertListBlock {
+    public alerts: PsAlert[] = [];
+    public metagameEvents: PsMetagameEvent[] = [];
+}
+
+export class FlatAlertBlockEntry {
+    public id: number = 0;
+    public type: string = "unset";
+    public timestamp: Date = new Date();
+    public end: Date = new Date();
+    public duration: number = 0;
+    public zoneID: number = 0;
+    public worldID: number = 0;
+    public alertID: number = 0;
+    public victorFactionID: number | null = null;
+    public instanceID: number = 0;
+    public name: string = "";
+    public displayID: string = "";
+
+    public warpgateVS: number = 0;
+    public warpgateNC: number = 0;
+    public warpgateTR: number = 0;
+    public zoneFacilityCount: number = 0;
+
+    public countVS: number | null = null;
+    public countNC: number | null = null;
+    public countTR: number | null = null;
+
+    public metagameID: number = 0;
+    public metagameName: string = "";
+    public metagameDescription: string | null = null;
+    public metagameTypeID: number | null = null;
+    public metagameDurationMinutes: number | null = null;
 }
 
 export class AlertApi extends ApiWrapper<PsAlert> {
@@ -71,16 +108,78 @@ export class AlertApi extends ApiWrapper<PsAlert> {
         return alert;
     }
 
+    public static readBlock(elem: any): AlertListBlock {
+        return {
+            alerts: elem.alerts.map((iter: any) => AlertApi.readEntry(iter)),
+            metagameEvents: elem.metagameEvents.map((iter: any) => MetagameEventApi.parse(iter))
+        };
+    }
+
+    public static readFlat(elem: any): FlatAlertBlockEntry[] {
+        const block: AlertListBlock = AlertApi.readBlock(elem);
+
+        const map: Map<number, PsMetagameEvent> = new Map();
+        for (const ev of block.metagameEvents) {
+            map.set(ev.id, ev);
+        }
+
+        let entries: FlatAlertBlockEntry[] = [];
+        for (const alert of block.alerts) {
+            const type: PsMetagameEvent | undefined = map.get(alert.alertID);
+
+            let entry: FlatAlertBlockEntry = {
+                ...alert,
+
+                metagameID: alert.alertID,
+                metagameName: (alert.alertID == 0) ? "Daily (Honu generated)" : type?.name ?? `unknown metagame event ${alert.alertID}`,
+                metagameDescription: type?.description ?? null,
+                metagameTypeID: type?.typeID ?? null,
+                metagameDurationMinutes: type?.durationMinutes ?? null
+            };
+
+            entries.push(entry);
+        }
+
+        return entries;
+    }
+
+    public static readExpanded(elem: any): FlatAlertBlockEntry {
+        const alert: PsAlert = AlertApi.readEntry(elem.alert);
+        const type: PsMetagameEvent | null = (elem.metagameEvent == null) ? null : MetagameEventApi.parse(elem.metagameEvent);
+
+        return {
+            ...alert,
+
+            metagameID: alert.alertID,
+            metagameName: (alert.alertID == 0) ? "Daily (Honu generated)" : type?.name ?? `unknown metagame event ${alert.alertID}`,
+            metagameDescription: type?.description ?? null,
+            metagameTypeID: type?.typeID ?? null,
+            metagameDurationMinutes: type?.durationMinutes ?? null
+        }
+    }
+
     public static async getByID(alertID: number): Promise<Loading<PsAlert>> {
         return AlertApi.get().readSingle(`/api/alerts/${alertID}`, AlertApi.readEntry);
+    }
+
+    public static getExpandedByID(alertID: number): Promise<Loading<FlatAlertBlockEntry>> {
+        return AlertApi.get().readSingle(`/api/alerts/${alertID}/expanded`, AlertApi.readExpanded);
     }
 
     public static async getAll(): Promise<Loading<PsAlert[]>> {
         return AlertApi.get().readList(`/api/alerts/`, AlertApi.readEntry);
     }
 
+    public static getAllBlock(): Promise<Loading<FlatAlertBlockEntry[]>> {
+        return AlertApi.get().readSingle(`/api/alerts/block`, AlertApi.readFlat);
+    }
+
     public static async getRecent(): Promise<Loading<PsAlert[]>> {
         return AlertApi.get().readList(`/api/alerts/recent`, AlertApi.readEntry);
+    }
+
+    public static getRecentBlock(): Promise<Loading<FlatAlertBlockEntry[]>> {
+        return AlertApi.get().readSingle(`/api/alerts/recent/block`, AlertApi.readFlat);
     }
 
     public static async insert(alert: PsAlert): Promise<Loading<number>> {

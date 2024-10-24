@@ -53,17 +53,25 @@
                     <b>Type</b>
                 </a-header>
 
-                <a-filter field="type" type="string" method="dropdown"
+                <a-filter field="metagameName" type="string" method="dropdown"
                     :conditions="[ 'equals' ]">
                 </a-filter>
 
                 <a-body v-slot="entry">
-                    {{entry.type}}
+                    <span v-if="entry.alertID == 0">
+                        Daily (Honu generated)
+                    </span>
+                    <span v-else-if="entry.metagameName != null">
+                        {{entry.metagameName}}
+                    </span>
+                    <span v-else>
+                        unknown metagame event {{entry.alertID}}
+                    </span>
                 </a-body>
             </a-col>
 
-            <a-col>
-                <a-header sort-field="timestamp">
+            <a-col sort-field="timestamp">
+                <a-header>
                     <b>Start</b>
                 </a-header>
 
@@ -72,8 +80,8 @@
                 </a-body>
             </a-col>
 
-            <a-col>
-                <a-header sort-field="end">
+            <a-col sort-field="end">
+                <a-header>
                     <b>End</b>
                 </a-header>
 
@@ -82,7 +90,7 @@
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="duration">
                 <a-header>
                     <b>Duration</b>
                 </a-header>
@@ -126,7 +134,7 @@
                 </a-body>
             </a-col>
 
-            <a-col>
+            <a-col sort-field="participants">
                 <a-header>
                     <b>Players</b>
                 </a-header>
@@ -163,7 +171,7 @@
     import Vue from "vue";
 
     import { Loadable, Loading } from "Loading";
-    import { AlertApi, PsAlert } from "api/AlertApi";
+    import { AlertApi, FlatAlertBlockEntry, PsAlert } from "api/AlertApi";
 
     import ATable, { ACol, ABody, AFilter, AHeader } from "components/ATable";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
@@ -185,8 +193,8 @@
             return {
                 showAll: false as boolean,
 
-                all: Loadable.idle() as Loading<PsAlert[]>,
-                recent: Loadable.idle() as Loading<PsAlert[]>
+                all: Loadable.idle() as Loading<FlatAlertBlockEntry[]>,
+                recent: Loadable.idle() as Loading<FlatAlertBlockEntry[]>
             }
         },
 
@@ -201,14 +209,20 @@
         methods: {
             bindAllAlerts: async function(): Promise<void> {
                 this.showAll = true;
-                this.all = Loadable.loading();
-                this.all = await AlertApi.getAll();
+
+                if (this.all.state != "loaded") {
+                    this.all = Loadable.loading();
+                    this.all = await AlertApi.getAllBlock();
+                }
             },
 
             bindRecentAlerts: async function(): Promise<void> {
                 this.showAll = false;
-                this.recent = Loadable.loading();
-                this.recent = await AlertApi.getRecent();
+
+                if (this.recent.state != "loaded") {
+                    this.recent = Loadable.loading();
+                    this.recent = await AlertApi.getRecentBlock();
+                }
             }
         },
 
