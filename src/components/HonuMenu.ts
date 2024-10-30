@@ -48,7 +48,7 @@ export const MenuRealtime = Vue.extend({
         <li class="dropdown-submenu">
             <span class="dropdown-item dropdown-toggle">Realtime</span>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/view/cobalt">Cobalt</a></li>
+                <li><a class="dropdown-item" href="/view/cobalt">Cobalt &#x1FAE1;</a></li>
                 <li><a class="dropdown-item" href="/view/connery">Connery</a></li>
                 <li><a class="dropdown-item" href="/view/emerald">Emerald</a></li>
                 <li><a class="dropdown-item" href="/view/jaeger">Jaeger</a></li>

@@ -82,12 +82,12 @@
                 </div>
 
                 <div class="form-check form-check-inline">
-                    <input type="checkbox" value="10" class="form-check-input" v-model.number="filter.worldID" />
+                    <input type="checkbox" value="13" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">Cobalt</label>
                 </div>
 
                 <div class="form-check form-check-inline">
-                    <input type="checkbox" value="13" class="form-check-input" v-model.number="filter.worldID" />
+                    <input type="checkbox" value="10" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">Miller</label>
                 </div>
 

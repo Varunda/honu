@@ -352,6 +352,8 @@
                     ]
                 });
 
+                console.log(`created graph ${this.chart.series.length} series, ${this.chart.series.map(iter => iter.data.length).join(", ")}`);
+
             },
 
             generateSeries: function(entries: DiffedSnapshot[], colors: string[], name: string): hc.SeriesOptionsType[] {
@@ -373,7 +375,7 @@
                     }
 
                     const options: hc.SeriesOptionsType = {
-                        type: "line",
+                        type: "spline",
                         name: `${name} - ${field}`,
                         data: entries.map(iter => {
                             return {
@@ -387,10 +389,12 @@
                         id: field
                     };
 
-                    console.log(`Options for ${field} is on ${yaxisIndex}, showing? ${options.visible}`);
+                    console.log(`Options for ${field} is on ${yaxisIndex}, showing? ${options.visible}, data: ${options.data?.length}`);
 
                     arr.push(options);
                 }
+
+                console.log(`data ${arr.map(iter => iter.data.length).join(", ")}`);
 
                 return arr;
             },
@@ -451,6 +455,7 @@
                     }
 
                     const id: string = series.userOptions.id;
+                    console.log(`updating visilbity of ${id} with ${series.data.length} data points`);
 
                     // not ideal
                     series.setVisible(this.isVisible(series.userOptions.id! as any));

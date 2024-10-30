@@ -36,7 +36,9 @@ namespace watchtower.Code.Constants {
         ///     List of worlds that pc realtime streams are made for
         /// </summary>
         public static readonly List<short> PcStreams = new() {
-            Connery, Miller, Cobalt, Emerald, Jaeger, SolTech, Apex
+            Connery, Miller,
+            // Cobalt, // 2024-10-29: merged into Miller, RIP
+            Emerald, Jaeger, SolTech, Apex
         };
 
         /// <summary>
