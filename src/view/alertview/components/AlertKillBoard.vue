@@ -60,7 +60,7 @@
             </a-body>
         </a-col>
 
-        <a-col>
+        <a-col sort-field="deaths">
             <a-header>
                 <b>Deaths</b>
             </a-header>
