@@ -28,6 +28,8 @@ using watchtower.Services.Repositories;
 using watchtower.Models.Discord;
 using Microsoft.Extensions.Options;
 using watchtower.Models.PSB;
+using System.Diagnostics.Metrics;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Realtime {
 
@@ -79,6 +81,8 @@ namespace watchtower.Realtime {
         private readonly List<string> _Recent;
         private DateTime _MostRecentProcess = DateTime.UtcNow;
 
+        private readonly EventHandlerMetric _Metrics;
+
         public EventHandler(ILogger<EventHandler> logger,
             KillEventDbStore killEventDb, ExpEventDbStore expDb,
             CharacterCacheQueue cacheQueue, CharacterRepository charRepo,
@@ -96,7 +100,8 @@ namespace watchtower.Realtime {
             WeaponUpdateQueue weaponUpdateQueue, IOptions<JaegerNsaOptions> nsaOptions,
             SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb,
             AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue,
-            MetagameEventRepository metagameRepository, ExperienceTypeRepository experienceTypeRepository, VehicleRepository vehicleRepository) {
+            MetagameEventRepository metagameRepository, ExperienceTypeRepository experienceTypeRepository,
+            VehicleRepository vehicleRepository, EventHandlerMetric metrics) {
 
             _Logger = logger;
 
@@ -140,6 +145,9 @@ namespace watchtower.Realtime {
             _MetagameRepository = metagameRepository;
             _ExperienceTypeRepository = experienceTypeRepository;
             _VehicleRepository = vehicleRepository;
+
+            _Metrics = metrics;
+            _Metrics.SetEventHandler(this);
         }
 
         public DateTime MostRecentProcess() {
@@ -147,6 +155,11 @@ namespace watchtower.Realtime {
         }
 
         public async Task Process(JToken ev) {
+            //using var processTrace = HonuActivitySource.Root.StartActivity("EventProcess");
+
+            string? type = ev.Value<string?>("type");
+            //processTrace?.AddTag("type", type);
+
             // The default == for tokens seems like it's by reference, not value. Since the order of the keys in the JSON
             //      object is fixed and hasn't changed in the last 7 months, this is safe.
             // If the order of keys changes, this method of detecting duplicate events will have to change, as it relies
@@ -160,6 +173,15 @@ namespace watchtower.Realtime {
             //      event checking would not handle this correctly
             //
             if (_Recent.Contains(ev.ToString())) {
+                JToken? payload = ev.SelectToken("payload");
+                short? worldID = payload?.Value<short?>("world_id");
+
+                string duptype = type ?? "unknown";
+                if (duptype == "serviceMessage") {
+                    duptype = payload?.Value<string?>("event_name") ?? duptype;
+                }
+
+                _Metrics.RecordDuplicate(duptype, worldID);
                 //_Logger.LogError($"Skipping duplicate event {ev}");
                 return;
             }
@@ -168,11 +190,6 @@ namespace watchtower.Realtime {
             if (_Recent.Count > 50) {
                 _Recent.RemoveAt(0);
             }
-
-            //using var processTrace = HonuActivitySource.Root.StartActivity("EventProcess");
-
-            string? type = ev.Value<string?>("type");
-            //processTrace?.AddTag("type", type);
 
             if (type == "serviceMessage") {
                 JToken? payloadToken = ev.SelectToken("payload");
@@ -228,6 +245,8 @@ namespace watchtower.Realtime {
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
+
+                _Metrics.RecordEvent(eventName ?? "unknown", payloadToken.Value<short?>("world_id"));
             } else if (type == "heartbeat") {
                 //_Logger.LogInformation($"Heartbeat: {ev}");
             } else if (type == "connectionStateChanged") {
@@ -239,6 +258,7 @@ namespace watchtower.Realtime {
             } else {
                 _Logger.LogWarning($"Unchecked message type: '{type}'");
             }
+
         }
 
         private async Task _ProcessVehicleDestroy(JToken payload) {

@@ -2,10 +2,13 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusVehicleReader : ICensusReader<PsVehicle> {
+        public CensusVehicleReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override PsVehicle? ReadEntry(JsonElement token) {
             PsVehicle veh = new PsVehicle();

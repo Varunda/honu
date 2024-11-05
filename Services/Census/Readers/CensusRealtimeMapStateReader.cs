@@ -1,10 +1,13 @@
 ﻿using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Db;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusRealtimeMapStateReader : ICensusReader<RealtimeMapState> {
+        public CensusRealtimeMapStateReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override RealtimeMapState? ReadEntry(JsonElement token) {
             RealtimeMapState state = new();

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -16,12 +17,16 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly WorldDataRepository _WorldDataRepository;
 
+        private readonly HubMetric _Metrics;
+
         public WorldDataHub(ILogger<WorldDataHub> logger,
-            WorldDataRepository dataRepo) {
+            WorldDataRepository dataRepo, HubMetric metrics) {
 
             _Logger = logger;
 
-            _WorldDataRepository = dataRepo ?? throw new ArgumentNullException(nameof(dataRepo));
+            _WorldDataRepository = dataRepo;
+
+            _Metrics = metrics;
         }
 
         public override async Task OnConnectedAsync() {
@@ -33,6 +38,8 @@ namespace watchtower.Code.Hubs.Implementations {
                 });
             }
 
+            _Metrics.RecordConnect("realtime");
+
             await base.OnConnectedAsync();
         }
 
@@ -42,6 +49,8 @@ namespace watchtower.Code.Hubs.Implementations {
             lock (ConnectionStore.Get().Connections) {
                 ConnectionStore.Get().Connections.TryRemove(Context.ConnectionId, out _);
             }
+
+            _Metrics.RecordDisconnect("realtime");
 
             return base.OnDisconnectedAsync(exception);
         }

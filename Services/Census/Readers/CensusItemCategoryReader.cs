@@ -2,10 +2,13 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusItemCategoryReader : ICensusReader<ItemCategory> {
+        public CensusItemCategoryReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override ItemCategory? ReadEntry(JsonElement token) {
             ItemCategory cat = new ItemCategory();

@@ -2,10 +2,13 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusAchievementReader : ICensusReader<Achievement> {
+
+        public CensusAchievementReader(CensusMetric metrics) : base(metrics) { }
 
         public override Achievement? ReadEntry(JsonElement token) {
             Achievement ach = new();

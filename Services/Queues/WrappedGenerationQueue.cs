@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Wrapped;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -13,7 +14,7 @@ namespace watchtower.Services.Queues {
 
         private Dictionary<Guid, int> _QueuePosition = new();
 
-        public WrappedGenerationQueue(ILoggerFactory factory) : base(factory) { }
+        public WrappedGenerationQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) { }
 
         public new void Queue(WrappedEntry entry) {
             lock (_Pending) {

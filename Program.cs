@@ -22,6 +22,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using watchtower.Code;
@@ -62,12 +63,33 @@ namespace watchtower {
                         return c.Request.Path.StartsWithSegments("/api");
                     };
                 })
-                .AddJaegerExporter(config => {
+                .AddOtlpExporter(config => {
 
                 })
                 // add our activity source
                 .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(HonuActivitySource.ActivitySourceName))
                 .AddSource(HonuActivitySource.ActivitySourceName)
+                .Build();
+
+            using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddAspNetCoreInstrumentation()
+                .AddMeter("System.Runtime")
+                .AddMeter("Npgsql")
+                // TODO 2024-11-04: there's gotta be a better way to collect all meters used within Honu
+                .AddMeter("Honu.EventHandler")
+                .AddMeter("Honu.Hub")
+                .AddMeter("Honu.EventQueue")
+                .AddMeter("Honu.Census")
+                .AddMeter("Honu.Queue")
+                .AddMeter("Honu.ImageProxy")
+                .AddMeter("Honu.RealtimeStream")
+                .AddMeter("Honu.CharacterCache")
+                // 
+
+                .AddPrometheusHttpListener(opt => {
+                    // exposes prometheus metrics on 9184
+                    opt.UriPrefixes = [ "http://localhost:9184" ];
+                })
                 .Build();
 
             // Honu must be started in a background thread, as _Host.RunAsync will block until the whole server

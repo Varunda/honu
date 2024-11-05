@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 using Websocket.Client;
@@ -34,11 +36,14 @@ namespace watchtower.Realtime {
 
         private readonly CensusRealtimeHealthRepository _RealtimeHealthRepository;
 
+        private readonly RealtimeStreamMetric _Metrics;
+
         private readonly System.Timers.Timer _HealthCheckTimer;
         private readonly ConcurrentDictionary<string, RealtimeStream> _Streams = new();
 
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger, IServiceProvider services,
-            CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository) { 
+            CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository,
+            RealtimeStreamMetric metrics) {
 
             _Logger = logger;
             _Services = services;
@@ -50,6 +55,8 @@ namespace watchtower.Realtime {
             _HealthCheckTimer.Interval = 1000;
             _HealthCheckTimer.AutoReset = true;
             _HealthCheckTimer.Elapsed += async (sender, e) => await _HealthCheckTimer_Elapsed(sender, e);
+
+            _Metrics = metrics;
         }
 
         private async Task _HealthCheckTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) {
@@ -79,6 +86,7 @@ namespace watchtower.Realtime {
                         await iter.Value.Client.ReconnectAsync();
                         iter.Value.LastConnect = DateTime.UtcNow;
                         _Logger.LogDebug($"reconnected '{iter.Key}' due to bad stream");
+                        _Metrics.RecordReconnect(worldID);
                         break;
                     }
                 }

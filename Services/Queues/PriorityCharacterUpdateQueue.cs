@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -13,7 +14,7 @@ namespace watchtower.Services.Queues {
 
         private readonly HashSet<string> _Pending = new HashSet<string>();
 
-        public PriorityCharacterUpdateQueue(ILoggerFactory factory) : base(factory) { }
+        public PriorityCharacterUpdateQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) { }
 
         /// <summary>
         ///     Add a character ID to be updated

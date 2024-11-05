@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -32,8 +34,13 @@ namespace watchtower.Services.Queues {
         /// </summary>
         internal long _ProcessedCount = 0;
 
-        public BaseQueue(ILoggerFactory factory) {
-            _Logger = factory.CreateLogger($"watchtower.Services.Queues.BaseQueue<{typeof(T).Name}>");
+        private readonly QueueMetric _Metrics;
+        internal string _QueueName = typeof(T).Name;
+
+        public BaseQueue(ILoggerFactory factory, QueueMetric metrics) {
+            _Logger = factory.CreateLogger($"watchtower.Services.Queues.BaseQueue<{_QueueName}>");
+
+            _Metrics = metrics;
         }
 
         /// <summary>
@@ -95,6 +102,7 @@ namespace watchtower.Services.Queues {
         ///     Queue a new entry into the queue
         /// </summary>
         public void Queue(T entry) {
+            _Metrics.RecordCount(_QueueName);
             _Items.Enqueue(entry);
             _Signal.Release();
         }
@@ -104,6 +112,7 @@ namespace watchtower.Services.Queues {
         /// </summary>
         /// <param name="ms">How many milliseconds it took to process something that came from this queue</param>
         public void AddProcessTime(long ms) {
+            _Metrics.RecordDuration(_QueueName, ms / 1000d); // convert to seconds
             _ProcessTime.Enqueue(ms);
             while (_ProcessTime.Count > 100) {
                 _ = _ProcessTime.TryDequeue(out _);

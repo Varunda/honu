@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models.Discord;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -14,7 +15,7 @@ namespace watchtower.Services.Queues {
     /// </summary>
     public class DiscordMessageQueue : BaseQueue<HonuDiscordMessage> {
 
-        public DiscordMessageQueue(ILoggerFactory factory) : base(factory) { }
+        public DiscordMessageQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) { }
 
         public new void Queue(HonuDiscordMessage msg) {
             if ((msg.ChannelID == null || msg.ChannelID == 0)

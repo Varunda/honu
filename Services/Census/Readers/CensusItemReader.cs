@@ -4,10 +4,13 @@ using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusItemReader : ICensusReader<PsItem> {
+        public CensusItemReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override PsItem? ReadEntry(JsonElement token) {
             PsItem item = new PsItem();

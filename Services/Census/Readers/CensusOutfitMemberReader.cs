@@ -6,10 +6,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusOutfitMemberReader : ICensusReader<OutfitMember> {
+        public CensusOutfitMemberReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override OutfitMember? ReadEntry(JsonElement token) {
             OutfitMember member = new OutfitMember();

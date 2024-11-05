@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -14,7 +15,9 @@ namespace watchtower.Services.Queues {
     /// </summary>
     public class CensusRealtimeEventQueue : BaseQueue<JToken> {
 
-        public CensusRealtimeEventQueue(ILoggerFactory factory) : base(factory) { }
+        public CensusRealtimeEventQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) {
+            _QueueName = "event";
+        }
 
     }
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Models.Census;
 using watchtower.Models.Queues;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -18,7 +19,7 @@ namespace watchtower.Services.Queues {
 
         private readonly HashSet<string> _Pending = new HashSet<string>();
 
-        public CharacterCacheQueue(ILoggerFactory factory) : base(factory) { }
+        public CharacterCacheQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) { }
 
         /// <summary>
         ///     Queue a new character for caching

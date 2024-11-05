@@ -13,6 +13,7 @@ using watchtower.Models.Census;
 using watchtower.Models.Db;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Metrics;
 using watchtower.Services.Queues;
 
 namespace watchtower.Services.Repositories {
@@ -31,6 +32,8 @@ namespace watchtower.Services.Repositories {
 
         private readonly CharacterUpdateQueue _Queue;
         private readonly CharacterCacheQueue _CacheQueue;
+
+        private readonly CharacterCacheMetric _Metrics;
 
         private const string CACHE_KEY_ID = "Character.ID.{0}"; // {0} => char ID
         private const string CACHE_KEY_NAME = "Character.Name.{0}"; // {0} => char ID
@@ -57,7 +60,7 @@ namespace watchtower.Services.Repositories {
         public CharacterRepository(ILogger<CharacterRepository> logger, IMemoryCache cache,
             CharacterDbStore db, CharacterCollection census,
             CharacterUpdateQueue queue, CharacterCacheQueue cacheQueue,
-            CharacterNameChangeDbStore characterNameChangeDb) {
+            CharacterNameChangeDbStore characterNameChangeDb, CharacterCacheMetric metrics) {
 
             _Logger = logger;
             _Cache = cache;
@@ -68,6 +71,7 @@ namespace watchtower.Services.Repositories {
             _Queue = queue;
             _CacheQueue = cacheQueue;
             _CharacterNameChangeDb = characterNameChangeDb;
+            _Metrics = metrics;
         }
 
         /// <summary>
@@ -152,6 +156,7 @@ namespace watchtower.Services.Repositories {
 
                             character = censusChar;
                             await _Db.Upsert(censusChar);
+                            _Metrics.RecordCensus();
                         }
                     } catch (Exception ex) {
                         ++_CircuitBreakerErrors;
@@ -170,6 +175,8 @@ namespace watchtower.Services.Repositories {
                             _Logger.LogWarning($"rescued character from DB due to failed Census call [charID={charID}] [_CircuitBreakerErrors={_CircuitBreakerErrors}] [Exception={ex.Message}]");
                         }
                     }
+                } else {
+                    _Metrics.RecordDb();
                 }
 
                 _Cache.Set(key, character, new MemoryCacheEntryOptions() {
@@ -182,6 +189,8 @@ namespace watchtower.Services.Repositories {
                         SlidingExpiration = TimeSpan.FromHours(2)
                     });
                 }
+            } else {
+                _Metrics.RecordMemory();
             }
 
             return character;
@@ -248,6 +257,7 @@ namespace watchtower.Services.Repositories {
                         localIDs.Remove(ID);
                         ++inCache;
                         ++found;
+                        _Metrics.RecordMemory();
                     }
                 }
             }
@@ -269,6 +279,7 @@ namespace watchtower.Services.Repositories {
                         chars.Add(c);
                         ++inDb;
                         ++found;
+                        _Metrics.RecordDb();
                     } else {
                         if (HasExpired(c) == false) {
                             localIDs.Remove(c.ID);
@@ -328,6 +339,7 @@ namespace watchtower.Services.Repositories {
                         chars.Add(c);
                         ++inCensus;
                         ++found;
+                        _Metrics.RecordCensus();
                     }
                 } else {
                     foreach (string ID in localIDs) {
@@ -348,6 +360,7 @@ namespace watchtower.Services.Repositories {
                         chars.Add(c);
                         localIDs.Remove(c.ID);
                         ++found;
+                        _Metrics.RecordDb();
                     }
                 }
             }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -15,7 +16,9 @@ namespace watchtower.Services.Queues {
         private readonly HashSet<long> _Pending = new HashSet<long>();
         private long? _Last;
 
-        public WeaponUpdateQueue(ILoggerFactory factory) : base(factory) { }
+        public WeaponUpdateQueue(ILoggerFactory factory, QueueMetric metrics) : base(factory, metrics) {
+            _QueueName = "weapon_update";
+        }
 
         public new void Queue(long id) {
             lock (_Pending) {

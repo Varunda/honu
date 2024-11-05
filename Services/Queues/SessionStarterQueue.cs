@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Models.Queues;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Queues {
 
@@ -18,8 +19,10 @@ namespace watchtower.Services.Queues {
 
         private new readonly ILogger<SessionStarterQueue> _Logger;
 
-        public SessionStarterQueue(ILogger<SessionStarterQueue> logger, ILoggerFactory factory)
-                : base (factory) {
+        public SessionStarterQueue(ILogger<SessionStarterQueue> logger, 
+            ILoggerFactory factory, QueueMetric metrics)
+                : base (factory, metrics) {
+
             _Logger = logger;
         }
 

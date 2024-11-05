@@ -45,6 +45,7 @@ using watchtower.Services.Hosted.PSB;
 using watchtower.Code.DiscordInteractions;
 using Newtonsoft.Json.Linq;
 using watchtower.Code;
+using watchtower.Services.Metrics;
 
 //using honu_census;
 
@@ -161,6 +162,8 @@ namespace watchtower {
             services.Configure<PsbRoleMapping>(Configuration.GetSection("PsbRoleMapping"));
             services.Configure<InstanceOptions>(Configuration.GetSection("Instance"));
             services.Configure<HttpConfig>(Configuration.GetSection("Http"));
+
+            services.AddHonuMetrics();
 
             services.AddTransient<HttpUtilService>();
             services.AddSingleton<InstanceInfo>();

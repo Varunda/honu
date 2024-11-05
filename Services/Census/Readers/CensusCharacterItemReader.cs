@@ -2,6 +2,7 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
@@ -9,6 +10,8 @@ namespace watchtower.Services.Census.Readers {
     /// Read entries from the /characters_item collection
     /// </summary>
     public class CensusCharacterItemReader : ICensusReader<CharacterItem> {
+        public CensusCharacterItemReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override CharacterItem? ReadEntry(JsonElement token) {
             CharacterItem item = new CharacterItem();

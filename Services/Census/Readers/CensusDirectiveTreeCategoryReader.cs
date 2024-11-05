@@ -6,10 +6,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusDirectiveTreeCategoryReader : ICensusReader<DirectiveTreeCategory> {
+        public CensusDirectiveTreeCategoryReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override DirectiveTreeCategory? ReadEntry(JsonElement token) {
             DirectiveTreeCategory cat = new DirectiveTreeCategory();

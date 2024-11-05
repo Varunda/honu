@@ -5,20 +5,31 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Controllers {
 
+    /// <summary>
+    ///     proxies census images and caches them locally
+    /// </summary>
     public class ImageProxyController : Controller {
 
         private readonly ILogger<ImageProxyController> _Logger;
+
+        private readonly ImageProxyMetric _Metrics;
+
         private readonly HttpClient _HttpClient;
 
-        public ImageProxyController(ILogger<ImageProxyController> logger) {
+        public ImageProxyController(ILogger<ImageProxyController> logger, 
+            ImageProxyMetric metrics) {
+
             _Logger = logger;
 
             _HttpClient = new HttpClient() {
                 BaseAddress = new Uri("https://census.daybreakgames.com/files/ps2/images/static/")
             };
+
+            _Metrics = metrics;
         }
 
         public async Task<IActionResult> Get(long imageID) {
@@ -38,7 +49,10 @@ namespace watchtower.Controllers {
                 }
 
                 await System.IO.File.WriteAllBytesAsync(path, await response.Content.ReadAsByteArrayAsync());
-                _Logger.LogInformation($"saved proxy image to image ID {imageID} at {path}");
+                _Logger.LogInformation($"saved proxy image to image ID [imageID={imageID}] path=[{path}]");
+                _Metrics.RecordMiss();
+            } else {
+                _Metrics.RecordHit();
             }
 
             FileStream image = System.IO.File.OpenRead(path);

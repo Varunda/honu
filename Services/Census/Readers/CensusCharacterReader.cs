@@ -2,10 +2,13 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusCharacterReader : ICensusReader<PsCharacter> {
+        public CensusCharacterReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override PsCharacter? ReadEntry(JsonElement token) {
             PsCharacter player = new() {

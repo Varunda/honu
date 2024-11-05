@@ -1,10 +1,13 @@
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusCharacterDirectiveTierReader : ICensusReader<CharacterDirectiveTier> {
+        public CensusCharacterDirectiveTierReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override CharacterDirectiveTier? ReadEntry(JsonElement token) {
             CharacterDirectiveTier dir = new CharacterDirectiveTier();

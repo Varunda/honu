@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.Tracking;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census {
 
@@ -15,6 +16,12 @@ namespace watchtower.Services.Census {
     /// </summary>
     /// <typeparam name="T">What the query will be turned into</typeparam>
     public abstract class ICensusReader<T> where T : class {
+
+        private readonly CensusMetric _Metrics;
+
+        public ICensusReader(CensusMetric metrics) {
+            _Metrics = metrics;
+        }
 
         /// <summary>
         ///     Read an element from the response returned from Census, and turn it into <typeparamref name="T"/>
@@ -39,9 +46,13 @@ namespace watchtower.Services.Census {
             using Activity? start = HonuActivitySource.Root.StartActivity("Census");
             start?.AddTag("honu.census.url", query.GetUri());
 
+            Stopwatch timer = Stopwatch.StartNew();
             using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
             IEnumerable<JsonElement> tokens = await query.GetListAsync();
             makeRequest?.Stop();
+            timer.Stop();
+            _Metrics.RecordDuration(query.ServiceName, timer.ElapsedMilliseconds / 1000d);
+            _Metrics.RecordCount(query.ServiceName);
 
             using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
             List<T> list = new List<T>();
@@ -65,22 +76,25 @@ namespace watchtower.Services.Census {
         ///     A new type <typeparamref name="T"/>, or null if the read could not be completed 
         /// </returns>
         public async Task<T?> ReadSingle(CensusQuery query) {
-            using (Activity? start = HonuActivitySource.Root.StartActivity("Census")) {
-                start?.AddTag("honu.census.url", query.GetUri());
+            using Activity? start = HonuActivitySource.Root.StartActivity("Census");
+            start?.AddTag("honu.census.url", query.GetUri());
 
-                using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
-                JsonElement? token = await query.GetAsync();
-                makeRequest?.Stop();
+            Stopwatch timer = Stopwatch.StartNew();
+            using Activity? makeRequest = HonuActivitySource.Root.StartActivity("make request");
+            JsonElement? token = await query.GetAsync();
+            makeRequest?.Stop();
+            timer.Stop();
+            _Metrics.RecordDuration(query.ServiceName, timer.ElapsedMilliseconds / 1000d);
+            _Metrics.RecordCount(query.ServiceName);
 
-                // even if the request failed and did not return anything, there can still be an JsonElement without any value
-                using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
-                if (token != null && token.Value.ValueKind != JsonValueKind.Undefined) {
-                    return ReadEntry(token.Value);
-                }
-                parseData?.Stop();
-
-                return null;
+            // even if the request failed and did not return anything, there can still be an JsonElement without any value
+            using Activity? parseData = HonuActivitySource.Root.StartActivity("parse data");
+            if (token != null && token.Value.ValueKind != JsonValueKind.Undefined) {
+                return ReadEntry(token.Value);
             }
+            parseData?.Stop();
+
+            return null;
         }
 
     }

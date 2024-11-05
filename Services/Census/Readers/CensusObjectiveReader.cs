@@ -6,10 +6,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusObjectiveReader : ICensusReader<PsObjective> {
+        public CensusObjectiveReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override PsObjective? ReadEntry(JsonElement token) {
             PsObjective type = new PsObjective();

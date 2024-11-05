@@ -3,10 +3,13 @@ using System;
 using System.Text.Json;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Models.Census;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Census.Readers {
 
     public class CensusExperienceTypeReader : ICensusReader<ExperienceType> {
+        public CensusExperienceTypeReader(CensusMetric metrics) : base(metrics) {
+        }
 
         public override ExperienceType? ReadEntry(JsonElement token) {
             ExperienceType type = new ExperienceType();
