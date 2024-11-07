@@ -148,6 +148,7 @@ namespace watchtower {
             services.AddRazorPages();
             services.AddMemoryCache();
             services.AddHttpContextAccessor();
+            services.AddResponseCaching();
 
             services.AddCors(o => o.AddDefaultPolicy(builder => {
                 builder.AllowAnyOrigin();
@@ -294,6 +295,7 @@ namespace watchtower {
                 doc.DocumentTitle = "Honu API documentation";
             });
 
+            app.UseResponseCaching();
             app.UseAuthentication();
             app.UseAuthorization();
 

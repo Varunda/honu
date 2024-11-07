@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using System;
 using System.IO;
 using System.Net;
@@ -32,6 +33,7 @@ namespace watchtower.Controllers {
             _Metrics = metrics;
         }
 
+        [ResponseCache(Duration = 60 * 60)]
         public async Task<IActionResult> Get(long imageID) {
 
             if (Directory.Exists("./census-image-proxy/") == false) {
