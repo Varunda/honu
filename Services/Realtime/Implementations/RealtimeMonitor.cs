@@ -28,7 +28,7 @@ namespace watchtower.Realtime {
         /// </summary>
         private const int RECONNECT_MIN_SECONDS = 10;
 
-        public static bool UseNss = true;
+        public static bool UseNss = false;
 
         private readonly ILogger<RealtimeMonitor> _Logger;
         private readonly CensusRealtimeEventQueue _Queue;
@@ -132,6 +132,17 @@ namespace watchtower.Realtime {
 
         public async Task OnStartAsync(CancellationToken cancel) {
             // Initalized all the worlds to now, useful if a world isn't sending any events on the first connect, we'd like to know that
+            await CreateAllStreams(cancel);
+        }
+
+        public async Task CreateAllStreams(CancellationToken cancel = default) {
+
+            // clear previous streams
+            _Logger.LogInformation($"clearing previous streams [stream count={_Streams.Count}]");
+            foreach (KeyValuePair<string, RealtimeStream> s in _Streams) {
+                s.Value.Dispose();
+            }
+            _Streams.Clear();
 
             List<short> worlds = new();
             worlds.AddRange(World.PcStreams);
@@ -156,9 +167,9 @@ namespace watchtower.Realtime {
                         stream.Subscriptions.Add(sub);
 
                         try {
-                            _Logger.LogInformation($"connecting {stream.Name}...");
+                            _Logger.LogInformation($"stream connecting [name={stream.Name}]");
                             await stream.Client.ConnectAsync();
-                            _Logger.LogDebug($"connected {stream.Name}!");
+                            _Logger.LogDebug($"stream connected [name={stream.Name}]");
                         } catch (Exception ex) {
                             _Logger.LogError($"failed to create stream {stream.Name}: {ex.Message}", ex);
                         }
@@ -286,16 +297,16 @@ namespace watchtower.Realtime {
             }
             RealtimeStream wrapper = new RealtimeStream(name, stream);
 
-            _Logger.LogTrace($"Created new stream named '{name}', using platform {environment}");
+            _Logger.LogDebug($"created realtime stream [name={name}] [environment={environment}] [useNss={UseNss}]");
 
             if (serviceID != null) { stream.SetServiceId(serviceID); }
             stream.SetServiceNamespace(CensusEnvironmentHelper.ToNamespace(environment));
 
             stream.OnConnect((type) => {
                 if (type == ReconnectionType.Initial) {
-                    _Logger.LogInformation($"Stream '{wrapper.Name}' connected");
+                    _Logger.LogInformation($"stream connected [name={wrapper.Name}]");
                 } else {
-                    _Logger.LogInformation($"Stream '{wrapper.Name}' reconnected: {type}");
+                    _Logger.LogInformation($"stream reconnected [name={wrapper.Name}] [type={type}]");
                 }
 
                 foreach (CensusStreamSubscription sub in wrapper.Subscriptions) {

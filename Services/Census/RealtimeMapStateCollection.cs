@@ -2,8 +2,10 @@
 using DaybreakGames.Census.Exceptions;
 using DaybreakGames.Census.Operators;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -13,6 +15,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Code.ExtensionMethods;
 using watchtower.Constants;
+using watchtower.Models;
 using watchtower.Models.Db;
 
 namespace watchtower.Services.Census {

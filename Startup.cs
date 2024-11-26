@@ -420,6 +420,7 @@ namespace watchtower {
                     pattern: "/api/{controller}/{action}"
                 );
 
+                // disable metrics on hubs, as it really messes with the request duration histogram
                 endpoints.MapHub<WorldDataHub>("/ws/data");
                 endpoints.MapHub<WorldOverviewHub>("/ws/overview");
                 endpoints.MapHub<ReportHub>("/ws/report");

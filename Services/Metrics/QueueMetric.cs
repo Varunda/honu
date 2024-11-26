@@ -25,8 +25,20 @@ namespace watchtower.Services.Metrics {
                 /*
                 advice: new InstrumentAdvice<double> { 
                     HistogramBucketBoundaries = [ 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 ]
-                }*/
+                }
+                */
             );
+
+            /*
+            _Meter.CreateObservableCounter("honu_queue_duration",
+                () => {
+                    return 1;
+                },
+                unit: null,
+                description: null,
+                tags: [new KeyValuePair<string, object?>("name", "hi")]
+            );
+            */
         }
 
         public void RecordCount(string queue) {

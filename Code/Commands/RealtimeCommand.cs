@@ -53,6 +53,16 @@ namespace watchtower.Commands {
             }
         }
 
+        public async Task ToggleNss() {
+            RealtimeMonitor.UseNss = !RealtimeMonitor.UseNss;
+            _Logger.LogInformation($"NSS usage toggle [value={RealtimeMonitor.UseNss}]");
+            await _RealtimeMonitor.CreateAllStreams();
+        }
+
+        public void GetNss() {
+            _Logger.LogInformation($"nss flag [value={RealtimeMonitor.UseNss}]");
+        }
+
     }
 
 }
