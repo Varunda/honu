@@ -41,6 +41,8 @@ namespace watchtower.Realtime {
         private readonly System.Timers.Timer _HealthCheckTimer;
         private readonly ConcurrentDictionary<string, RealtimeStream> _Streams = new();
 
+        private readonly HashSet<string> _ReconnectingStream = new();
+
         public RealtimeMonitor(ILogger<RealtimeMonitor> logger, IServiceProvider services,
             CensusRealtimeEventQueue queue, CensusRealtimeHealthRepository realtimeHealthRepository,
             RealtimeStreamMetric metrics) {
@@ -77,15 +79,27 @@ namespace watchtower.Realtime {
                             continue;
                         }
 
+                        if (_ReconnectingStream.Contains(iter.Key)) {
+                            _Logger.LogDebug($"not reconnecting stream as it is already in progress [name={iter.Value.Name}]");
+                            continue;
+                        }
+
                         TimeSpan diff = DateTime.UtcNow - iter.Value.LastConnect;
                         if (diff <= TimeSpan.FromSeconds(RECONNECT_MIN_SECONDS)) {
                             _Logger.LogDebug($"Not reconnecting {iter.Key}: reconnected {iter.Value.LastConnect - DateTime.UtcNow} ago, min of {RECONNECT_MIN_SECONDS}s");
                             break;
                         }
 
+                        _Logger.LogDebug($"reconnecting stream [name={iter.Value.Name}]");
+                        lock (_ReconnectingStream) {
+                            _ReconnectingStream.Add(iter.Key);
+                        }
                         await iter.Value.Client.ReconnectAsync();
+                        lock (_ReconnectingStream) {
+                            _ReconnectingStream.Remove(iter.Key);
+                        }
                         iter.Value.LastConnect = DateTime.UtcNow;
-                        _Logger.LogDebug($"reconnected '{iter.Key}' due to bad stream");
+                        _Logger.LogDebug($"stream reconnected [name={iter.Value.Name}]");
                         _Metrics.RecordReconnect(worldID);
                         break;
                     }
@@ -313,6 +327,11 @@ namespace watchtower.Realtime {
                     stream.Subscribe(sub);
                 }
                 wrapper.LastConnect = DateTime.UtcNow;
+
+                lock (_ReconnectingStream) {
+                    _Logger.LogWarning($"the failsafe reconnecting streams logic was hit! this is not supposed to happen! [name={name}]");
+                    _ReconnectingStream.Remove(name);
+                }
 
                 return Task.CompletedTask;
             }).OnMessage(_OnMessageAsync).OnDisconnect(_OnDisconnectAsync);
