@@ -20,6 +20,7 @@ using watchtower.Services.CharacterViewer;
 using watchtower.Services.Db;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
+using watchtower.Services.Repositories.Character;
 using watchtower.Services.Repositories.Static;
 
 namespace watchtower.Controllers.Api {
@@ -45,6 +46,7 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterAchievementRepository _CharacterAchievementRepository;
         private readonly KillboardCollection _KillboardCollection;
         private readonly SessionDbStore _SessionDb;
+        private readonly CharacterWorldChangeRepository _CharacterWorldChangeRepository;
 
         private readonly ItemRepository _ItemRepository;
         private readonly OutfitRepository _OutfitRepository;
@@ -74,7 +76,7 @@ namespace watchtower.Controllers.Api {
             CharacterNameChangeDbStore characterNameChangeDb, CharacterAchievementRepository characterAchievementRepository,
             AchievementRepository achievementRepository, ObjectiveRepository objectiveRepository,
             ObjectiveTypeRepository objectiveTypeRepository, VehicleRepository vehicleRepository,
-            ExperienceAwardTypeRepository experienceAwardTypeRepository) {
+            ExperienceAwardTypeRepository experienceAwardTypeRepository, CharacterWorldChangeRepository characterWorldChangeRepository) {
 
             _Logger = logger;
 
@@ -104,6 +106,7 @@ namespace watchtower.Controllers.Api {
             _ObjectiveTypeRepository = objectiveTypeRepository;
             _VehicleRepository = vehicleRepository;
             _ExperienceAwardTypeRepository = experienceAwardTypeRepository;
+            _CharacterWorldChangeRepository = characterWorldChangeRepository;
         }
 
         /// <summary>
@@ -731,6 +734,21 @@ namespace watchtower.Controllers.Api {
             block.AwardTypes = await _ExperienceAwardTypeRepository.GetAll();
 
             return ApiOk(block);
+        }
+
+        /// <summary>
+        ///     get the <see cref="WorldChange"/>s a character has gone thru
+        /// </summary>
+        /// <param name="charID">ID of the character to get the changes of</param>
+        /// <response code="200">
+        ///     the response will contain a list of all <see cref="WorldChange"/>s
+        ///     a character has gone thru
+        /// </response>
+        [HttpGet("character/{charID}/world-changes")]
+        public async Task<ApiResponse<List<WorldChange>>> GetWorldChanges(string charID) {
+            List<WorldChange> changes = await _CharacterWorldChangeRepository.GetByCharacterID(charID);
+
+            return ApiOk(changes.OrderBy(iter => iter.Timestamp).ToList());
         }
 
         /// <summary>

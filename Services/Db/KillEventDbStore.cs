@@ -257,9 +257,11 @@ namespace watchtower.Services.Db {
                 ORDER BY kills DESC;
             ");
 
+            cmd.AddParameter("Timestamp", options.Timestamp);
             cmd.AddParameter("Interval", options.Interval);
             cmd.AddParameter("WorldID", options.WorldID);
             cmd.AddParameter("FactionID", options.FactionID);
+            await cmd.PrepareAsync();
 
             List<KillDbEntry> entries = await _KillDbReader.ReadList(cmd);
             await conn.CloseAsync();

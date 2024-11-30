@@ -5,6 +5,7 @@ using watchtower.Models.Db;
 using watchtower.Models.Events;
 using watchtower.Models.Queues;
 using watchtower.Models.Report;
+using watchtower.Services.Db.Character;
 using watchtower.Services.Db.Implementations;
 
 namespace watchtower.Services.Db {
@@ -43,6 +44,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<CharacterDirectiveObjectiveDbStore>();
             services.AddSingleton<CharacterAchievementDbStore>();
             services.AddSingleton<CharacterNameChangeDbStore>();
+            services.AddSingleton<CharacterWorldChangeDbStore>();
 
             // static data
             services.AddSingleton<IStaticDbStore<PsItem>, ItemDbStore>();

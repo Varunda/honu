@@ -56,6 +56,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<CharacterDirectiveTree>, CharacterDirectiveTreeReader>();
             services.AddSingleton<IDataReader<CharacterDirectiveTier>, CharacterDirectiveTierReader>();
             services.AddSingleton<IDataReader<CharacterDirectiveObjective>, CharacterDirectiveObjectiveReader>();
+            services.AddSingleton<IDataReader<WorldChange>, WorldChangeReader>();
 
             services.AddSingleton<IDataReader<PsObjective>, ObjectiveReader>();
             services.AddSingleton<IDataReader<ObjectiveType>, ObjectiveTypeReader>();

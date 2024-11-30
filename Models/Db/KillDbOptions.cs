@@ -7,6 +7,8 @@ namespace watchtower.Models.Db {
 
     public class KillDbOptions {
 
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
         public int Interval { get; set; }
 
         public short FactionID { get; set; }

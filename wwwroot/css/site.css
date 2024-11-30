@@ -220,3 +220,10 @@
     text-align: center;
     width: 1.28571429em;
 }
+
+.join-dashes:after {
+    content:"-";
+}
+.join-dashes:last-child:after {
+    content:"";
+}

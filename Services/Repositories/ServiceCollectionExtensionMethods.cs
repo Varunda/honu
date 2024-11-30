@@ -8,6 +8,7 @@ using watchtower.Models.Queues;
 using watchtower.Models.Report;
 using watchtower.Services.Db.Implementations;
 using watchtower.Services.Hosted;
+using watchtower.Services.Repositories.Character;
 using watchtower.Services.Repositories.PSB;
 using watchtower.Services.Repositories.Readers;
 using watchtower.Services.Repositories.Static;
@@ -36,6 +37,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<CharacterDirectiveObjectiveRepository>();
             services.AddSingleton<CharacterAchievementRepository>();
             services.AddSingleton<CharacterDataRepository>();
+            services.AddSingleton<CharacterWorldChangeRepository>();
 
             // Static repos
             services.AddSingleton<IStaticRepository<PsItem>, ItemRepository>();
