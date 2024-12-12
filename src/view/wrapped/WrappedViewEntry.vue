@@ -462,8 +462,10 @@
 
             onSendWrappedEntry: function(entry: WrappedEntry): void {
                 console.log(`wrapped parameters: ${JSON.stringify(entry)}`);
+                WRAPPED.id = entry.id;
                 WRAPPED.inputCharacterIDs = entry.inputCharacterIDs;
                 WRAPPED.timestamp = new Date(entry.timestamp);
+                WRAPPED.createdAt = new Date(entry.createdAt);
 
                 if (entry.status == 1) { // pending
                     console.log(`pending, hopefully get queue status`);

@@ -16,7 +16,7 @@ namespace watchtower.Models.Wrapped {
         public Guid ID { get; set; } = Guid.Empty;
 
         /// <summary>
-        ///     When this wrapped entry was created. Needed for viewing past data
+        ///     A timestamp used to indicate the year the wrapped takes period in
         /// </summary>
         public DateTime Timestamp { get; set; }
 
@@ -29,6 +29,11 @@ namespace watchtower.Models.Wrapped {
         ///     What status this wrapped entry is in. See <see cref="WrappedEntryStatus"/>
         /// </summary>
         public int Status { get; set; } = WrappedEntryStatus.UNKNOWN;
+
+        /// <summary>
+        ///     when this <see cref="Wrapped"/> was created
+        /// </summary>
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         ///     All characters that might be referenced while displaying the wrapped data
@@ -203,12 +208,6 @@ namespace watchtower.Models.Wrapped {
             }
 
         }
-
-    }
-
-    public class WrappedEntryApiInput {
-
-        public List<string> IDs { get; set; } = new();
 
     }
 

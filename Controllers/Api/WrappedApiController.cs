@@ -94,6 +94,7 @@ namespace watchtower.Controllers.Api {
         ///     from a list of IDs, returning the ID of the entry
         /// </summary>
         /// <param name="IDs">IDs of the characters to include. Only arrays of length 1 to 16 are allowed</param>
+        /// <param name="year">what year to make the events for</param>
         /// <response code="200">
         ///     The response will contain the <see cref="WrappedEntry.ID"/> of the entry that was just created
         /// </response>
@@ -106,10 +107,10 @@ namespace watchtower.Controllers.Api {
         ///     </ul>
         /// </response>
         [HttpPost]
-        public async Task<ApiResponse<Guid>> Insert([FromQuery] List<string> IDs) {
+        public async Task<ApiResponse<Guid>> Insert([FromQuery] List<string> IDs, int? year = null) {
             bool enabled = await _MetadataRepository.GetAsBoolean("wrapped.enabled") ?? true;
             if (enabled == false) {
-                return ApiBadRequest<Guid>($"Wrapped 2023 is currently being prepared");
+                return ApiBadRequest<Guid>($"Wrapped is currently not enabled. usually this means data is being prepared");
             }
 
             string? ip = _HttpUtil.GetHttpRemoteIp(_HttpContext.HttpContext);
@@ -130,6 +131,12 @@ namespace watchtower.Controllers.Api {
 
             if (IDs.Count > 16) {
                 return ApiBadRequest<Guid>($"{nameof(IDs)} cannot have more than 16 values");
+            }
+
+            if (year != null) {
+                if (year.Value < 2022 || year.Value > (DateTime.UtcNow.Year - 1)) {
+                    return ApiBadRequest<Guid>($"{nameof(year)} must be between 2022 and {DateTime.UtcNow.Year - 1}");
+                }
             }
 
             // validate the characters do exist
@@ -168,6 +175,17 @@ namespace watchtower.Controllers.Api {
             entry.ID = Guid.NewGuid();
             entry.InputCharacterIDs = IDs;
             entry.Status = WrappedEntryStatus.NOT_STARTED;
+            entry.CreatedAt = DateTime.UtcNow;
+            entry.Timestamp = DateTime.UtcNow;
+            if (year != null) {
+                _Logger.LogDebug($"year is manually set for wrapped [ID={entry.ID}] [year={year}]");
+                // why +1?
+                // originally, honu assumed that if the timestamp was in 2024, then data for 2023 was to be loaded
+                // now that honu accepts a year as an input, i don't want to go back and fix all the old data
+                // to match this fixed offset, so instead i'm gonna make the probably bad move to keep this offset
+                // and hopefully i don't forget i do this in the future :^)
+                entry.Timestamp = new DateTime(year.Value + 1, 6, 6);
+            }
 
             await _WrappedDb.Insert(entry);
 

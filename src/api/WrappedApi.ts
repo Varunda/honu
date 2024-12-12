@@ -21,6 +21,7 @@ export class WrappedEntry {
     public id: string = ""; // guid
     public inputCharacterIDs: string[] = [];
     public timestamp: Date = new Date();
+    public createdAt: Date = new Date();
 
     public status: number = 0;
 
@@ -71,13 +72,17 @@ export class WrappedApi extends ApiWrapper<WrappedEntry> {
     }
 
     public static getByID(id: string): Promise<Loading<WrappedEntry>> {
-        return WrappedApi.get().readSingle(`/api/wrapped/{id}`, WrappedApi.parse);
+        return WrappedApi.get().readSingle(`/api/wrapped/${id}`, WrappedApi.parse);
     }
 
-    public static insert(input: string[]): Promise<Loading<string>> {
+    public static insert(input: string[], year?: number): Promise<Loading<string>> {
         const parms: URLSearchParams = new URLSearchParams();
         for (const iter of input) {
             parms.append("IDs", iter);
+        }
+
+        if (year != undefined) {
+            parms.append("year", year.toString());
         }
 
         return WrappedApi.get().postReply(`/api/wrapped?${parms.toString()}`, (elem: any) => elem);

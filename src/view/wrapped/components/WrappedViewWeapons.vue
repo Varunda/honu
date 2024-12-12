@@ -116,7 +116,7 @@
                 </a-table>
 
                 <h3 class="wt-header mb-2 border-0" style="background-color: var(--green)">
-                    Weapon usage per week
+                    Weapon usage per month
                     <info-hover text="only weapons that are >=5% of total kills or at least 1'160 kills included"></info-hover>
                 </h3>
 

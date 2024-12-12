@@ -1,6 +1,6 @@
 ﻿<template>
     <div>
-        <div class="input-group">
+        <div class="input-group mb-3">
             <input class="form-control" v-model="characterInput" placeholder="Character name" @keyup.enter="findCharactersWrapped" />
 
             <button class="input-group-append btn btn-primary" @click="findCharactersWrapped">
@@ -130,7 +130,20 @@
                     </a-col>
                 </a-table>
             </div>
+        </div>
 
+        <div>
+            <label class="mb-1">
+                Year to make the wrapped for
+            </label>
+
+            <select class="form-control" v-model="year" placeholder="Select a year">
+                <option v-for="y in years" :value="y">{{y}}</option>
+            </select>
+
+            <div class="my-1">
+                This Wrapped will contain events between {{rangeStart | momentNoTz("YYYY-MM-DD")}} and {{rangeEnd | momentNoTz("YYYY-MM-DD")}}
+            </div>
         </div>
 
         <hr class="border" />
@@ -212,7 +225,7 @@
             </button>
 
             <div v-if="inputCharacters.length >= 16" class="alert alert-warning">
-                You can only create a Wrapped with at most 16 characters.
+                A Wrapped can have at most 16 characters
             </div>
 
             <div v-if="enabled.state == 'loaded' && enabled.data == false" class="alert alert-danger">
@@ -250,6 +263,8 @@
         data: function() {
             return {
                 enabled: Loadable.idle() as Loading<boolean>,
+                year: 2024 as number,
+                years: [] as number[],
 
                 characterInput: "" as string,
                 characters: Loadable.idle() as Loading<PsCharacter[]>,
@@ -262,6 +277,15 @@
 
         mounted: function(): void {
             this.loadEnabled();
+
+            // -1, as wrapped is only valid for the previous year
+            // so in 2024, only the full year of 2023 is completed
+            this.year = (new Date()).getFullYear() - 1;
+
+            for (let i = 2022; i <= this.year; ++i) {
+                this.years.push(i);
+            }
+
         },
 
         methods: {
@@ -322,7 +346,7 @@
 
             createWrapped: async function(): Promise<void> {
                 this.responseId = Loadable.loading();
-                this.responseId = await WrappedApi.insert(this.inputCharacters.map(iter => iter.id));
+                this.responseId = await WrappedApi.insert(this.inputCharacters.map(iter => iter.id), this.year);
 
                 if (this.responseId.state == "loaded") {
                     window.history.pushState({ path: `/wrapped/${this.responseId.data}` }, '', `/wrapped/${this.responseId.data}`);
@@ -372,6 +396,14 @@
                         { value: WorldUtils.SolTech, key: "SolTech" }
                     ]
                 }
+            },
+
+            rangeStart: function(): Date {
+                return new Date(this.year, 0, 1);
+            },
+
+            rangeEnd: function(): Date {
+                return new Date(this.year, 11, 31);
             }
         },
 

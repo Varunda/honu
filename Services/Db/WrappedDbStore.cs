@@ -60,17 +60,23 @@ namespace watchtower.Services.Db {
                 throw new ArgumentException($"not inserting {nameof(WrappedEntry)}: blank ID provided for characters: {string.Join(", ", entry.InputCharacterIDs)}");
             }
 
+            if (entry.Timestamp == default) {
+                throw new ArgumentException($"not inserting {nameof(WrappedEntry)} {entry.ID}: default timestamp provided");
+            }
+
             using NpgsqlConnection conn = _DbHelper.Connection();
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 INSERT INTO wrapped_entries (
-                    id, input_character_ids, timestamp, status
+                    id, input_character_ids, timestamp, created_at, status
                 ) VALUES (
-                    @ID, @IDs, NOW() AT TIME ZONE 'utc', @Status
+                    @ID, @IDs, @Timestamp, @CreatedAt, @Status
                 );
             ");
 
             cmd.AddParameter("ID", entry.ID);
             cmd.AddParameter("IDs", string.Join(",", entry.InputCharacterIDs));
+            cmd.AddParameter("Timestamp", entry.Timestamp);
+            cmd.AddParameter("CreatedAt", entry.CreatedAt);
             cmd.AddParameter("Status", entry.Status);
 
             await cmd.ExecuteNonQueryAsync();

@@ -63,7 +63,7 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
-        ///     Save wrapped character 
+        ///     Save wrapped character to disk
         /// </summary>
         /// <param name="charID">ID of the character</param>
         /// <param name="year">Year of the wrapped</param>
@@ -79,6 +79,8 @@ namespace watchtower.Services.Repositories {
             if (File.Exists(filepath) == true) {
                 _Logger.LogWarning($"Saved JSON for {charID} already exist! Overwritting");
             }
+
+            _Logger.LogInformation($"saving character data to JSON [charID={charID}] [path={filepath}]");
 
             JToken json = JToken.FromObject(data);
 

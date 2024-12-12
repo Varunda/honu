@@ -172,7 +172,7 @@ namespace watchtower.Services.Hosted {
             // LOADING_INPUT_CHARACTERS
             await HubUpdateStatus(entry, WrappedStatus.LOADING_INPUT_CHARACTERS);
             List<PsCharacter> inputCharacters = await _CharacterRepository.GetByIDs(entry.InputCharacterIDs, CensusEnvironment.PC, fast: false);
-            _Logger.LogDebug($"Loaded {inputCharacters.Count} of {entry.InputCharacterIDs.Count} requested");
+            _Logger.LogDebug($"loaded {inputCharacters.Count} of {entry.InputCharacterIDs.Count} requested [ID={entry.ID}]");
             AddCharactersToEntry(inputCharacters, entry);
 
             await _Hub.Clients.Group($"wrapped-{entry.ID}").UpdateInputCharacters(inputCharacters);
@@ -189,11 +189,10 @@ namespace watchtower.Services.Hosted {
                     entry.AchievementEarned.AddRange(data.AchievementEarned);
                     entry.Sessions.AddRange(data.Sessions);
                 } catch (Exception ex) {
-                    _Logger.LogError($"failed to process character {c.Name}/{c.ID}", ex);
+                    _Logger.LogError($"failed to process character {c.Name}/{c.ID} from wrapped {entry.ID}", ex);
                     entry.Status = WrappedEntryStatus.NOT_STARTED;
                     await _WrappedDb.UpdateStatus(entry.ID, entry.Status);
                 }
-
             }
 
             await HubUpdateStatus(entry, WrappedStatus.LOADING_EVENT_DATA);
@@ -332,8 +331,8 @@ namespace watchtower.Services.Hosted {
         ///     The data of a single character
         /// </returns>
         protected async Task<WrappedSavedCharacterData> ProcessCharacter(WrappedEntry entry, PsCharacter character) {
-            DateTime yearStart = new(DateTime.UtcNow.Year - 1, 1, 1);
-            DateTime yearEnd = new(DateTime.UtcNow.Year, 1, 1);
+            DateTime yearStart = new(entry.Timestamp.Year - 1, 1, 1);
+            DateTime yearEnd = new(entry.Timestamp.Year, 1, 1);
 
             using Activity? rootTrace = HonuActivitySource.Root.StartActivity("wrapped - Character");
             rootTrace?.AddTag("honu.wrapped.character_id", character.ID);
@@ -341,7 +340,7 @@ namespace watchtower.Services.Hosted {
             rootTrace?.AddTag("honu.wrapped.year_start", $"{yearStart:u}");
             rootTrace?.AddTag("honu.wrapped.year_end", $"{yearEnd:u}");
 
-            _Logger.LogDebug($"Character {character.ID}/{character.Name} will go from {yearStart:u} to {yearEnd:u}");
+            _Logger.LogDebug($"processing character in wrapped entry [ID={entry.ID}] [character={character.ID}/{character.Name}] [start={yearStart:u}] [end={yearEnd:u}]");
 
             WrappedSavedCharacterData? data = await _WrappedCharacterDataRepository.Get(yearStart, character.ID);
 
