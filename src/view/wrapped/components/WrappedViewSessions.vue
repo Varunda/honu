@@ -284,10 +284,12 @@
 
     // util
     import ColorUtils from "util/Color";
+    import CharacterUtils from "util/Character";
 
     // models
     import { WrappedSession } from "../common";
     import TimeUtils from "util/Time";
+    import TableUtils from "util/Table";
 
     class SessionWeekData {
         public weekStart: Date = new Date();
@@ -411,7 +413,7 @@
                                 }
                             }
                         }
-                    }
+                    },
                 });
             },
 
@@ -430,7 +432,7 @@
                     const durationSec: number = (session.end.getTime() - session.start.getTime()) / 1000;
                     const week: number = moment(session.start).utc().get("week") - 1;
 
-                    console.log(`${session.start} ${week}`);
+                    //console.log(`${session.start} ${week}`);
 
                     map.get(session.characterID)![week] += durationSec;
                 }
@@ -453,7 +455,8 @@
                         labels: [...Array(52)].map((iter, index) => `week ${index + 1}`),
                         datasets: this.wrapped.inputCharacterIDs.map((iter, index) => {
                             return {
-                                label: this.wrapped.characters.get(iter)?.name ?? `<missing ${iter}>`,
+                                //label: this.wrapped.characters.get(iter)?.name ?? `<missing ${iter}>`,
+                                label: CharacterUtils.display(iter, this.wrapped.characters.get(iter)),
                                 data: (map.get(iter) ?? []),
                                 borderColor: ColorUtils.randomColor(0.5, this.wrapped.inputCharacterIDs.length, index),
                                 cubicInterpolationMode: "monotone"
@@ -470,13 +473,27 @@
                         },
                         plugins: {
                             tooltip: {
+                                enabled: false,
+                                mode: "index",
+                                intersect: false,
+                                position: "nearest",
+                                external: (context) => TableUtils.chart("wrapped-view-session-char-perweek-tooltip", context, TimeUtils.duration)
+                                /*
                                 mode: "index",
                                 intersect: false,
                                 callbacks: {
                                     label: function(ctx) {
                                         return ctx.dataset.label + ": " + TimeUtils.duration(ctx.raw as number);
                                     }
+                                },
+                                position: "nearest",
+                                itemSort: (a, b) => {
+                                    return b.parsed.y - a.parsed.y;
+                                },
+                                bodyFont: {
+                                    family: "Consolas"
                                 }
+                                */
                             },
                         },
                         hover: {

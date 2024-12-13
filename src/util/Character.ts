@@ -9,7 +9,7 @@ export default class CharacterUtils {
         if (character == null || character == undefined) {
             return `<missing ${id}>`;
         }
-        return `${(character.outfitTag != null ? `[${character.outfitTag}] ` : ``)} ${character.name}`;
+        return `${(character.outfitTag != null ? `[${character.outfitTag}] ` : ``)}${character.name}`;
     }
 
 }

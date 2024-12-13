@@ -118,6 +118,9 @@
                 <h3 class="wt-header mb-2 border-0" style="background-color: var(--green)">
                     Weapon usage per month
                     <info-hover text="only weapons that are >=5% of total kills or at least 1'160 kills included"></info-hover>
+                    <toggle-button v-model="showRelative" class="btn btn-sm" false-color="btn-secondary" true-color="btn-primary">
+                        Show relative
+                    </toggle-button>
                 </h3>
 
                 <div>
@@ -155,6 +158,8 @@
 
     // util
     import ColorUtils from "util/Color";
+    import LocaleUtil from "util/Locale";
+    import TableUtils from "util/Table";
 
     class WrappedWeaponData {
         public id: number = 0;
@@ -180,6 +185,8 @@
         data: function() {
             return {
                 weaponData: Loadable.idle() as Loading<WrappedWeaponData[]>,
+
+                showRelative: false as boolean,
 
                 filter: {
                     infil: true as boolean,
@@ -227,6 +234,7 @@
                     return;
                 }
 
+                // <item ID, array of 12 (one for each month)>
                 const killsPerWeek: Map<number, number[]> = new Map();
                 mostUsed.forEach((iter) => {
                     killsPerWeek.set(iter.itemId, [...Array(12)].map(iter => 0));
@@ -239,6 +247,22 @@
 
                     const month: number = moment(ev.timestamp).get("month");
                     killsPerWeek.get(ev.weaponID)![month] += 1;
+                }
+
+                // for relative, show each weapon as a percent of each week
+                if (this.showRelative == true) {
+                    for (let i = 0; i < 12; ++i) {
+                        let weekCount: number = 0;
+                        killsPerWeek.forEach((value: number[], itemID: number) => {
+                            weekCount += value[i];
+                        });
+
+                        console.log(`week ${i}: [weekCount=${weekCount}]`);
+
+                        killsPerWeek.forEach((value: number[], itemID: number) => {
+                            value[i] = value[i] / weekCount * 100;
+                        });
+                    }
                 }
 
                 this.chart.instance = new Chart(ctx, {
@@ -267,8 +291,16 @@
                         },
                         plugins: {
                             tooltip: {
+                                enabled: false,
                                 mode: "index",
-                                intersect: false
+                                intersect: false,
+                                position: "nearest",
+                                external: (context) => TableUtils.chart("wrapped-view-weapon-perweek", context, (value: number) => {
+                                    if (this.showRelative == true) {
+                                        return LocaleUtil.locale(value, 2) + "%"
+                                    }
+                                    return `${value}`;
+                                })
                             },
                         },
                         hover: {
@@ -341,6 +373,13 @@
                 });
 
                 this.weaponData = Loadable.loaded(Array.from(map.values()));
+            }
+        },
+
+        watch: {
+            showRelative: function(): void {
+                console.log(`make relative changed, making chart again`);
+                this.makeChart();
             }
         },
 
