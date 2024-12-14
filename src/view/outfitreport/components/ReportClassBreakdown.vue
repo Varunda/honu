@@ -1,15 +1,17 @@
 ﻿<template>
     <collapsible header-text="Class stats">
-        <table class="table table-hover">
+        <table class="table table-hover border-bottom border-secondary">
             <tr class="table-secondary th-border-top-0">
                 <th>Class</th>
                 <th>Kills</th>
                 <th>Time</th>
                 <th>KPM</th>
-                <th>Deaths</th>
+                <th>HSR%</th>
+                <th>Deaths <info-hover text="Revives remove a death"></info-hover></th>
                 <th>KD</th>
                 <th>Exp</th>
                 <th>SPM</th>
+                <th>V.Kills</th>
                 <th>Players</th>
             </tr>
 
@@ -19,82 +21,96 @@
                     <td>{{all.kills}}</td>
                     <td>{{all.timeAs | mduration}}</td>
                     <td>{{all.kills / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{all.headshotKills / Math.max(1, all.kills) * 100 | locale(2)}}% ({{all.headshotKills}})</td>
                     <td>{{all.deaths}}</td>
                     <td>{{all.kills / Math.max(1, all.deaths) | locale(2)}}</td>
                     <td>{{all.exp | compact}}</td>
                     <td>{{all.exp / Math.max(1, all.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{all.vkills}}</td>
                     <td>{{all.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>Infiltrator</td>
+                    <td><img src="/img/classes/icon_infil.png" height="20" />Infiltrator</td>
                     <td>{{infil.kills}}</td>
                     <td>{{infil.timeAs | mduration}}</td>
                     <td>{{infil.kills / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{infil.headshotKills / Math.max(1, infil.kills) * 100 | locale(2)}}% ({{infil.headshotKills}})</td>
                     <td>{{infil.deaths}}</td>
                     <td>{{infil.kills / Math.max(1, infil.deaths) | locale(2)}}</td>
                     <td>{{infil.exp | compact}}</td>
                     <td>{{infil.exp / Math.max(1, infil.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{infil.vkills}}</td>
                     <td>{{infil.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>Light Assault</td>
+                    <td><img src="/img/classes/icon_light.png" height="20" />Light assault</td>
                     <td>{{lightAssault.kills}}</td>
                     <td>{{lightAssault.timeAs | mduration}}</td>
                     <td>{{lightAssault.kills / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{lightAssault.headshotKills / Math.max(1, lightAssault.kills) * 100 | locale(2)}}% ({{lightAssault.headshotKills}})</td>
                     <td>{{lightAssault.deaths}}</td>
                     <td>{{lightAssault.kills / Math.max(1, lightAssault.deaths) | locale(2)}}</td>
                     <td>{{lightAssault.exp | compact}}</td>
                     <td>{{lightAssault.exp / Math.max(1, lightAssault.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{lightAssault.vkills}}</td>
                     <td>{{lightAssault.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>Medic</td>
+                    <td><img src="/img/classes/icon_medic.png" height="20" />Medic</td>
                     <td>{{medic.kills}}</td>
                     <td>{{medic.timeAs | mduration}}</td>
                     <td>{{medic.kills / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{medic.headshotKills / Math.max(1, medic.kills) * 100 | locale(2)}}% ({{medic.headshotKills}})</td>
                     <td>{{medic.deaths}}</td>
                     <td>{{medic.kills / Math.max(1, medic.deaths) | locale(2)}}</td>
                     <td>{{medic.exp | compact}}</td>
                     <td>{{medic.exp / Math.max(1, medic.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{medic.vkills}}</td>
                     <td>{{medic.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>Engineer</td>
+                    <td><img src="/img/classes/icon_engi.png" height="20" />Engineer</td>
                     <td>{{engineer.kills}}</td>
                     <td>{{engineer.timeAs | mduration}}</td>
                     <td>{{engineer.kills / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{engineer.headshotKills / Math.max(1, engineer.kills) * 100 | locale(2)}}% ({{engineer.headshotKills}})</td>
                     <td>{{engineer.deaths}}</td>
                     <td>{{engineer.kills / Math.max(1, engineer.deaths) | locale(2)}}</td>
                     <td>{{engineer.exp | compact}}</td>
                     <td>{{engineer.exp / Math.max(1, engineer.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{engineer.vkills}}</td>
                     <td>{{engineer.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>Heavy</td>
+                    <td><img src="/img/classes/icon_heavy.png" height="20" />Heavy</td>
                     <td>{{heavy.kills}}</td>
                     <td>{{heavy.timeAs | mduration}}</td>
                     <td>{{heavy.kills / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{heavy.headshotKills / Math.max(1, heavy.kills) * 100 | locale(2)}}% ({{heavy.headshotKills}})</td>
                     <td>{{heavy.deaths}}</td>
                     <td>{{heavy.kills / Math.max(1, heavy.deaths) | locale(2)}}</td>
                     <td>{{heavy.exp | compact}}</td>
                     <td>{{heavy.exp / Math.max(1, heavy.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{heavy.vkills}}</td>
                     <td>{{heavy.count}}</td>
                 </tr>
 
                 <tr>
-                    <td>MAX</td>
+                    <td><img src="/img/classes/icon_max.png" height="20" />MAX</td>
                     <td>{{max.kills}}</td>
                     <td>{{max.timeAs | mduration}}</td>
                     <td>{{max.kills / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{max.headshotKills / Math.max(1, max.kills) * 100 | locale(2)}}% ({{max.headshotKills}})</td>
                     <td>{{max.deaths}}</td>
                     <td>{{max.kills / Math.max(1, max.deaths) | locale(2)}}</td>
                     <td>{{max.exp | compact}}</td>
                     <td>{{max.exp / Math.max(1, max.timeAs) * 60 | locale(2)}}</td>
+                    <td>{{max.vkills}}</td>
                     <td>{{max.count}}</td>
                 </tr>
             </tbody>
@@ -187,6 +203,8 @@
         public exp: number = 0;
         public count: number = 0;
         public timeAs: number = 0;
+        public headshotKills: number = 0;
+        public vkills: number = 0;
     }
 
     export const ReportClassBreakdown = Vue.extend({
@@ -218,6 +236,8 @@
                 this.setKills();
                 this.setDeaths();
                 this.setExp();
+                this.setHeadshot();
+                this.setVKills();
 
                 for (const metadata of Array.from(this.report.playerMetadata.values())) {
                     if (metadata.classes.mostPlayed == metadata.classes.infil) {
@@ -268,6 +288,41 @@
                 }
             },
 
+            setVKills: function(): void {
+
+                const charIDs: Set<string> = new Set();
+                for (const c of this.report.trackedCharacters) {
+                    charIDs.add(c);
+                }
+
+                for (const kill of this.report.vehicleDestroy) {
+                    if (kill.attackerTeamID == kill.killedTeamID) {
+                        continue;
+                    }
+                    if (charIDs.has(kill.attackerCharacterID) == false) {
+                        continue;
+                    }
+
+                    const id: number = kill.attackerLoadoutID;
+
+                    ++this.all.vkills;
+
+                    if (Loadout.isInfiltrator(id)) {
+                        ++this.infil.vkills;
+                    } else if (Loadout.isLightAssault(id)) {
+                        ++this.lightAssault.vkills;
+                    } else if (Loadout.isMedic(id)) {
+                        ++this.medic.vkills;
+                    } else if (Loadout.isEngineer(id)) {
+                        ++this.engineer.vkills;
+                    } else if (Loadout.isHeavy(id)) {
+                        ++this.heavy.vkills;
+                    } else if (Loadout.isMax(id)) {
+                        ++this.max.vkills;
+                    }
+                }
+            },
+
             setDeaths: function(): void {
                 for (const death of this.report.deaths) {
                     const id: number = death.killedLoadoutID;
@@ -308,6 +363,32 @@
                         this.heavy.exp += exp.amount;
                     } else if (Loadout.isMax(id)) {
                         this.max.exp += exp.amount;
+                    }
+                }
+            },
+
+            setHeadshot: function(): void {
+                for (const kill of this.report.kills) {
+                    if (kill.isHeadshot == false) {
+                        continue;
+                    }
+
+                    const id: number = kill.attackerLoadoutID;
+
+                    ++this.all.headshotKills;
+
+                    if (Loadout.isInfiltrator(id)) {
+                        ++this.infil.headshotKills;
+                    } else if (Loadout.isLightAssault(id)) {
+                        ++this.lightAssault.headshotKills;
+                    } else if (Loadout.isMedic(id)) {
+                        ++this.medic.headshotKills;
+                    } else if (Loadout.isEngineer(id)) {
+                        ++this.engineer.headshotKills;
+                    } else if (Loadout.isHeavy(id)) {
+                        ++this.heavy.headshotKills;
+                    } else if (Loadout.isMax(id)) {
+                        ++this.max.headshotKills;
                     }
                 }
             }

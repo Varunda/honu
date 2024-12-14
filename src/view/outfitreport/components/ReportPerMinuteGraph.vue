@@ -275,7 +275,8 @@
                         tooltip: {
                             mode: "nearest" as "nearest", // as "x", // tell typescript this isn't a string
                             intersect: false,
-                            axis: "x" as "x"
+                            axis: "x" as "x",
+                            position: "nearest",
                         }
                     }
                 }
@@ -290,14 +291,16 @@
                                 borderColor: "#00ff00",
                                 fill: true,
                                 backgroundColor: "#00770088",
-                                label: "Kills"
+                                label: "Kills",
+                                cubicInterpolationMode: "monotone"
                             },
                             {
                                 data: this.data.deaths.map(iter => iter.count),
                                 borderColor: "#ff0000",
                                 fill: true,
                                 backgroundColor: "#770000FF",
-                                label: "Deaths"
+                                label: "Deaths",
+                                cubicInterpolationMode: "monotone"
                             }
                         ]
                     },
@@ -314,7 +317,8 @@
                                 borderColor: "#ffff00",
                                 fill: true,
                                 backgroundColor: "#77770088",
-                                label: "Score"
+                                label: "Score",
+                                cubicInterpolationMode: "monotone"
                             }
                         ]
                     },
@@ -331,21 +335,24 @@
                                 borderColor: "#ff00ff",
                                 fill: true,
                                 backgroundColor: "#77007788",
-                                label: "Revives"
+                                label: "Revives",
+                                cubicInterpolationMode: "monotone"
                             },
                             {
                                 data: this.data.heal.map(iter => iter.count),
                                 borderColor: "#00ffff",
                                 fill: true,
                                 backgroundColor: "#00777788",
-                                label: "Heals"
+                                label: "Heals",
+                                cubicInterpolationMode: "monotone"
                             },
                             {
                                 data: this.data.shieldRepair.map(iter => iter.count),
                                 borderColor: "#0000ff",
                                 fill: true,
                                 backgroundColor: "#00007788",
-                                label: "Shield repair"
+                                label: "Shield repair",
+                                cubicInterpolationMode: "monotone"
                             }
                         ]
                     },
@@ -362,14 +369,16 @@
                                 borderColor: "#ff8888",
                                 fill: true,
                                 backgroundColor: "#77333388",
-                                label: "Resupplies"
+                                label: "Resupplies",
+                                cubicInterpolationMode: "monotone"
                             },
                             {
                                 data: this.data.maxRepair.map(iter => iter.count),
                                 borderColor: "#8888ff",
                                 fill: true,
                                 backgroundColor: "#33337788",
-                                label: "MAX repairs"
+                                label: "MAX repairs",
+                                cubicInterpolationMode: "monotone"
                             }
                         ]
                     },
