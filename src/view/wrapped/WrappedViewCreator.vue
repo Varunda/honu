@@ -163,9 +163,9 @@
                 </h2>
             </div>
 
-            This is likely because the database has not yet been setup to provide data for 2023.
+            This is likely because the database is being setup to support another year
             <br />
-            Please check back later.
+            Please check back later
         </div>
 
         <h2>Input characters</h2>
