@@ -12,8 +12,12 @@
             <menu-sep></menu-sep>
 
             <li class="nav-item h1 p-0">
-                <span v-if="character.state == 'loading' || character.state == 'idle'">
+                <span v-if="character.state == 'loading' || (character.state == 'idle' && session.state == 'loading')">
                     &lt;loading...&gt;
+                </span>
+
+                <span v-else-if="character.state == 'idle' && session.state != 'loading'">
+                    ?
                 </span>
 
                 <a v-else-if="character.state == 'loaded'" :href="'/c/' + character.data.id + '/sessions'">
@@ -171,26 +175,22 @@
 
                     <tr>
                         <td>Session</td>
-                        <td>{{session.state}}</td>
+                        <td>
+                            <data-load-cell :loading="session"></data-load-cell>
+                        </td>
                     </tr>
 
                     <tr>
                         <td>Character</td>
-                        <td>{{character.state}}</td>
+                        <td>
+                            <data-load-cell :loading="character"></data-load-cell>
+                        </td>
                     </tr>
 
                     <tr>
                         <td>Kills</td>
                         <td>
-                            <span v-if="fullKills.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="fullKills.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{fullKills.state}}
-                            </span>
+                            <data-load-cell :loading="fullKills"></data-load-cell>
                             <span v-if="fullKills.state == 'loaded'">
                                 ({{fullKills.data.length}})
                             </span>
@@ -200,15 +200,7 @@
                     <tr>
                         <td>Deaths</td>
                         <td>
-                            <span v-if="fullDeaths.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="fullDeaths.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{fullDeaths.state}}
-                            </span>
+                            <data-load-cell :loading="fullDeaths"></data-load-cell>
                             <span v-if="fullDeaths.state == 'loaded'">
                                 ({{deaths.length}})
                             </span>
@@ -218,15 +210,7 @@
                     <tr>
                         <td>Exp</td>
                         <td>
-                            <span v-if="exp.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="exp.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{exp.state}}
-                            </span>
+                            <data-load-cell :loading="exp"></data-load-cell>
                             <span v-if="exp.state == 'loaded'">
                                 ({{exp.data.events.length}})
                             </span>
@@ -236,15 +220,7 @@
                     <tr>
                         <td>Exp (target)</td>
                         <td>
-                            <span v-if="expOther.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="expOther.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{expOther.state}}
-                            </span>
+                            <data-load-cell :loading="expOther"></data-load-cell>
                             <span v-if="expOther.state == 'loaded'">
                                 ({{expOther.data.events.length}})
                             </span>
@@ -254,15 +230,7 @@
                     <tr>
                         <td>Vehicle destroy</td>
                         <td>
-                            <span v-if="vehicleDestroy.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="vehicleDestroy.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{vehicleDestroy.state}}
-                            </span>
+                            <data-load-cell :loading="vehicleDestroy"></data-load-cell>
                             <span v-if="vehicleDestroy.state == 'loaded'">
                                 ({{vehicleDestroy.data.length}})
                             </span>
@@ -275,15 +243,7 @@
                             <info-hover text="Not available before 2022-08-01"></info-hover>
                         </td>
                         <td>
-                            <span v-if="achievementsEarned.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="achievementsEarned.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{achievementsEarned.state}}
-                            </span>
+                            <data-load-cell :loading="achievementsEarned"></data-load-cell>
                             <span v-if="achievementsEarned.state == 'loaded'">
                                 ({{achievementsEarned.data.events.length}})
                             </span>
@@ -296,15 +256,7 @@
                         </td>
 
                         <td>
-                            <span v-if="itemAddedBlock.state == 'loading'" class="text-warning">
-                                Loading...
-                            </span>
-                            <span v-else-if="itemAddedBlock.state == 'loaded'" class="text-info">
-                                loaded
-                            </span>
-                            <span v-else>
-                                {{itemAddedBlock.state}}
-                            </span>
+                            <data-load-cell :loading="itemAddedBlock"></data-load-cell>
                             <span v-if="itemAddedBlock.state == 'loaded'">
                                 ({{itemAddedBlock.data.events.length}})
                             </span>
@@ -447,6 +399,19 @@
             </div>
 
         </div>
+
+        <div v-else-if="session.state == 'nocontent'" class="alert alert-danger text-center">
+            failed to find session {{sessionID}}
+        </div>
+
+        <div v-else-if="session.state == 'error'">
+            <api-error :error="session.problem"></api-error>
+        </div>
+
+        <div v-else>
+            unchecked state {{session.state}}
+        </div>
+
     </div>
 </template>
 
@@ -454,6 +419,7 @@
     import Vue from "vue";
     import { Loading, Loadable } from "Loading";
     import { HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage } from "components/HonuMenu";
+    import ApiError from "components/ApiError";
 
     import "MomentFilter";
     import "filters/FixedFilter";
@@ -500,6 +466,35 @@
         event: ItemAddedEvent;
         item: PsItem | null;
     }
+
+
+    const DataLoadCell = Vue.extend({
+        props: {
+            loading: { type: Object, required: true }
+        },
+
+        template: `
+            <span>
+                <span v-if="loading.state == 'loading'" class="text-warning">
+                    loading...
+                    <busy class="honu-busy honu-busy-sm" style="height: 20px;"></busy>
+                </span>
+                <span v-else-if="loading.state == 'loaded'" class="text-info">
+                    loaded
+                </span>
+                <span v-else-if="loading.state == 'error'" class="text-danger">
+                    error: {{loading.problem.title}}
+                </span>
+                <span v-else>
+                    {{loading.state}}
+                </span>
+            </span>
+        `,
+
+        components: {
+            Busy
+        }
+    });
 
     // 2024-06-17 TODO: yeah this code is kinda bad
 
@@ -575,16 +570,21 @@
                 document.title = `Honu / Session / ${this.sessionID}`;
             },
 
-            bindAll: function(): void {
+            bindAll: async function(): Promise<void> {
                 this.bindEventProcessLag();
-                this.bindSession();
-                // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
-                this.bindKills();
-                this.bindExp();
-                this.bindExpOther();
-                this.bindVehicleDestroy();
-                this.bindAchievementsEarned();
-                this.bindItemAdded();
+                await this.bindSession();
+
+                if (this.session.state == "loaded") {
+                    // Character is not bound, cause it uses the .characterID field from the session, so it's done when session is bound
+                    this.bindKills();
+                    this.bindExp();
+                    this.bindExpOther();
+                    this.bindVehicleDestroy();
+                    this.bindAchievementsEarned();
+                    this.bindItemAdded();
+                } else {
+                    console.error(`cannot load session data, session is in state '${this.session.state}', not 'loaded'`);
+                }
             },
 
             bindSession: async function(): Promise<void> {
@@ -605,51 +605,53 @@
                     this.range.max = ((this.session.data.end ?? new Date()).getTime() - this.session.data.start.getTime()) / 1000;
                     this.range.end = new Date(this.session.data.start.getTime() + (this.range.max * 1000));
 
-                    this.$nextTick(() => {
-                        const slider: HTMLElement | null = document.getElementById("range-slider");
-                        if (slider == null) {
-                            throw `failed to find #range-slider`;
-                        }
-
-                        const sliderObj = ds.create(slider, {
-                            range: {
-                                min: this.range.min,
-                                max: this.range.max
-                            },
-                            start: [0, this.range.max],
-                            connect: true,
-                            tooltips: {
-                                to: (value) => {
-                                    return TimeUtils.format(new Date(this.range.start.getTime() + value * 1000));
-                                },
+                    if (this.range.show == true) {
+                        this.$nextTick(() => {
+                            const slider: HTMLElement | null = document.getElementById("range-slider");
+                            if (slider == null) {
+                                throw `failed to find #range-slider`;
                             }
-                        });
-                        console.log(`SessionViewer: created range slider`);
 
-                        sliderObj.on("set", (values, handle) => {
-                            clearTimeout(this.range.timeout);
-
-                            this.range.timeout = setTimeout(() => {
-                                if (this.session.state != "loaded") {
-                                    throw `cannot change range, session is not loaded`;
+                            const sliderObj = ds.create(slider, {
+                                range: {
+                                    min: this.range.min,
+                                    max: this.range.max
+                                },
+                                start: [0, this.range.max],
+                                connect: true,
+                                tooltips: {
+                                    to: (value) => {
+                                        return TimeUtils.format(new Date(this.range.start.getTime() + value * 1000));
+                                    },
                                 }
+                            });
+                            console.log(`SessionViewer: created range slider`);
 
-                                const startv: number = typeof values[0] == "string" ? Number.parseInt(values[0]) : values[0];
-                                this.range.start = new Date(this.session.data.start.getTime() + (startv * 1000));
+                            sliderObj.on("set", (values, handle) => {
+                                clearTimeout(this.range.timeout);
 
-                                const endv: number = typeof values[1] == "string" ? Number.parseInt(values[1]) : values[1];
-                                this.range.end = new Date(this.session.data.start.getTime() + (endv * 1000));
+                                this.range.timeout = setTimeout(() => {
+                                    if (this.session.state != "loaded") {
+                                        throw `cannot change range, session is not loaded`;
+                                    }
 
-                                console.log(`SessionViewer> range changed to ${this.range.start} to ${this.range.end}`);
+                                    const startv: number = typeof values[0] == "string" ? Number.parseInt(values[0]) : values[0];
+                                    this.range.start = new Date(this.session.data.start.getTime() + (startv * 1000));
 
-                                this.showCharts = false;
-                                this.updateExp();
-                                this.$nextTick(() => {
-                                    this.showCharts = true;
-                                });
-                            }, 500) as unknown as number;
+                                    const endv: number = typeof values[1] == "string" ? Number.parseInt(values[1]) : values[1];
+                                    this.range.end = new Date(this.session.data.start.getTime() + (endv * 1000));
+
+                                    console.log(`SessionViewer> range changed to ${this.range.start} to ${this.range.end}`);
+
+                                    this.showCharts = false;
+                                    this.updateExp();
+                                    this.$nextTick(() => {
+                                        this.showCharts = true;
+                                    });
+                                }, 500) as unknown as number;
+                            });
                         });
-                    });
+                    }
                 }
             },
 
@@ -944,11 +946,10 @@
             SessionViewerSpawns, SessionViewerExpBreakdown, SessionAchievementsEarned, SessionItemAdded, SessionSupportedBy,
             ChartTimestamp,
             InfoHover,
-            Busy,
-            Collapsible,
+            Busy, ApiError,
+            Collapsible, DataLoadCell,
             HonuMenu, MenuSep, MenuCharacters, MenuOutfits, MenuLedger, MenuRealtime, MenuDropdown, MenuImage
         }
-
     });
     export default SessionViewer;
 </script>

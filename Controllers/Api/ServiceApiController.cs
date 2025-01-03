@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -64,6 +65,7 @@ namespace watchtower.Controllers.Api {
         ///     how many things are queued in each of these background queues
         /// </remarks>
         [HttpGet("queue_count")]
+        [DisableRateLimiting]
         public ApiResponse<List<ServiceQueueCount>> GetQueueCounts() {
             ServiceQueueCount c = new() { QueueName = "character_cache_queue", Count = _CharacterCache.Count() };
             ServiceQueueCount session = new() { QueueName = "session_start_queue", Count = _SessionQueue.Count() };
@@ -127,6 +129,7 @@ namespace watchtower.Controllers.Api {
         ///     The order of the list matches the order in which these characters will be updated,
         /// </response>
         [HttpGet("character_priority_queue")]
+        [DisableRateLimiting]
         public ApiResponse<List<string>> GetPriorityCharacterUpdateQueue() {
             List<CharacterUpdateQueueEntry> queued = _CharacterPriorityQueue.ToList();
 

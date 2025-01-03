@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 using watchtower.Models;
 using watchtower.Services;
@@ -33,6 +34,18 @@ namespace watchtower.Controllers.Api {
         public ApiResponse<string> GetRequestIp() {
             string? ip = _HttpUtil.GetHttpRemoteIp(_HttpContext.HttpContext);
             return ApiOk(ip ?? "missing?");
+        }
+
+        /// <summary>
+        ///     used to ensure the concurrency limits on requests is working.
+        ///     any request to this endpoint will timeout for 30 seconds
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("timeout")]
+        public async Task<ApiResponse> TestConcurrentLimit() {
+            await Task.Delay(TimeSpan.FromSeconds(30));
+
+            return ApiOk();
         }
 
     }

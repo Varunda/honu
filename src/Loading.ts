@@ -72,7 +72,7 @@ export class Loadable {
                     problem: pb
                 };
             } catch (ex) {
-                console.log(`failed to parse ${err} to a valid json object: ${ex}`);
+                console.log(`failed to parse '${err}' to a valid json object: ${ex}`);
                 return {
                     state: "error",
                     problem: {

@@ -6,6 +6,8 @@ import { Loadable, Loading, ProblemDetails } from "Loading";
  */
 export default class ApiWrapper<T> {
 
+	// TODO 2025-01-02: this code sucks lol
+
 	/**
 	 * Read a list of paramtype T from a URL
 	 * 
@@ -193,7 +195,13 @@ export default class ApiWrapper<T> {
 		} else if (response.status == 404) {
 			return Loadable.notFound(response.data);
 		} else if (response.status == 429) {
-			return Loadable.error(`you have been rate limited! more info: ${response.data}`);
+            const problem: ProblemDetails = new ProblemDetails();
+            problem.detail = "You have submitted too many requests, and have been rate limited. Please try again later";
+            problem.title = "You are being rate limited. Please try again later.";
+            problem.status = 429;
+            problem.instance = "";
+            problem.type = url;
+			return Loadable.error(problem);
 		} else if (response.status == 500) {
 			return Loadable.error(response.data);
         } else if (response.status == 524 || response.status == 504) {

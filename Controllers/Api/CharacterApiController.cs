@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System;
@@ -165,6 +166,7 @@ namespace watchtower.Controllers.Api {
         ///     There is no <see cref="TrackedPlayer"/> data
         /// </response>
         [HttpGet("character/{charID}/honu-data")]
+        [DisableRateLimiting]
         public ApiResponse<TrackedPlayer> GetHonuDataByID(string charID) {
             TrackedPlayer? data = CharacterStore.Get().GetByCharacterID(charID);
 
@@ -185,6 +187,7 @@ namespace watchtower.Controllers.Api {
         ///     each with a <see cref="TrackedPlayer.ID"/> within <paramref name="IDs"/>
         /// </response>
         [HttpGet("character/many/honu-data")]
+        [DisableRateLimiting]
         public ApiResponse<List<TrackedPlayer>> GetHonuDataByIDs([FromQuery] List<string> IDs) {
             List<TrackedPlayer> players = new(IDs.Count);
 
@@ -454,6 +457,7 @@ namespace watchtower.Controllers.Api {
         ///     If the player is not found, it is assumed they are offline as well
         /// </response>
         [HttpGet("character/{charID}/online")]
+        [DisableRateLimiting]
         public ApiResponse<bool> GetCurrentSession(string charID) {
             TrackedPlayer? player = null;
 
@@ -563,6 +567,16 @@ namespace watchtower.Controllers.Api {
             return ApiOk(expanded);
         }
 
+        /// <summary>
+        ///     get a <see cref="ExpandedCharacterAlerts"/> that contains all alerts a 
+        ///     character has participated in
+        /// </summary>
+        /// <param name="charID">ID of the <see cref="PsCharacter"/> to get the alerts of</param>
+        /// <response code="200">
+        ///     the response will contain a <see cref="ExpandedCharacterAlerts"/> that contains
+        ///     all <see cref="CharacterAlertPlayer"/>s a character has participated in,
+        ///     and all <see cref="PsMetagameEvent"/>s
+        /// </response>
         [HttpGet("character/{charID}/alerts")]
         public async Task<ApiResponse<ExpandedCharacterAlerts>> GetAlerts(string charID) {
             List<CharacterAlertPlayer> caps = await _AlertPlayerDb.GetByCharacterID(charID);
@@ -660,11 +674,12 @@ namespace watchtower.Controllers.Api {
 
             List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
 
+            // friends are sometimes not unique, someone can have 2 entries to the same character
             Dictionary<string, PsCharacter> chars = (await _CharacterRepository.GetByIDs(
                 IDs: friends.Select(iter => iter.FriendID).ToList(),
                 env: CensusEnvironment.PC,
                 fast: true
-            )).ToDictionary(iter => iter.ID);
+            )).DistinctBy(iter => iter.ID).ToDictionary(iter => iter.ID);
 
             foreach (CharacterFriend friend in friends) {
                 _ = chars.TryGetValue(friend.FriendID, out PsCharacter? c);

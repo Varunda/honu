@@ -12,6 +12,7 @@ namespace watchtower.Services.Metrics {
         private readonly Histogram<double> _EventDuration;
         private readonly Counter<long> _Duplicate;
         private readonly ObservableGauge<double> _ProcessLag;
+        private readonly Counter<long> _OutOfOrder;
 
         private IEventHandler? _EventHandler;
 
@@ -31,6 +32,11 @@ namespace watchtower.Services.Metrics {
             _Duplicate = _Meter.CreateCounter<long>(
                 name: "honu.realtime.duplicate",
                 description: "rate of duplicate events"
+            );
+
+            _OutOfOrder = _Meter.CreateCounter<long>(
+                name: "honu.realtime.out_of_order",
+                description: "how many events arrived out of order"
             );
 
             _ProcessLag = _Meter.CreateObservableGauge("honu.realtime.process_lag", () => {
@@ -60,6 +66,13 @@ namespace watchtower.Services.Metrics {
         }
 
         public void RecordDuplicate(string type, short? worldID) {
+            _Duplicate.Add(1,
+                new KeyValuePair<string, object?>("type", type),
+                new KeyValuePair<string, object?>("world", worldID)
+            );
+        }
+
+        public void RecordOutOfOrder(string type, short? worldID) {
             _Duplicate.Add(1,
                 new KeyValuePair<string, object?>("type", type),
                 new KeyValuePair<string, object?>("world", worldID)

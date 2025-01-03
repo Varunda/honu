@@ -329,8 +329,10 @@ namespace watchtower.Realtime {
                 wrapper.LastConnect = DateTime.UtcNow;
 
                 lock (_ReconnectingStream) {
-                    _Logger.LogWarning($"the failsafe reconnecting streams logic was hit! this is not supposed to happen! [name={name}]");
-                    _ReconnectingStream.Remove(name);
+                    if (_ReconnectingStream.Contains(name)) {
+                        _Logger.LogWarning($"the failsafe reconnecting streams logic was hit! this is not supposed to happen! [name={name}]");
+                        _ReconnectingStream.Remove(name);
+                    }
                 }
 
                 return Task.CompletedTask;

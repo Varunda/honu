@@ -10,6 +10,7 @@ using watchtower.Code.Constants;
 using watchtower.Models;
 using watchtower.Models.Health;
 using watchtower.Services.Db;
+using watchtower.Services.Metrics;
 
 namespace watchtower.Services.Repositories {
 
@@ -19,6 +20,7 @@ namespace watchtower.Services.Repositories {
 
         private readonly BadHealthRepository _BadHealthRepository;
         private readonly RealtimeReconnectDbStore _ReconnectDb;
+        private readonly EventHandlerMetric _Metric;
 
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Deaths = new();
         private ConcurrentDictionary<short, CensusRealtimeHealthEntry> _Exp = new();
@@ -27,13 +29,14 @@ namespace watchtower.Services.Repositories {
 
         public CensusRealtimeHealthRepository(ILogger<CensusRealtimeHealthRepository> logger,
             IOptions<CensusRealtimeHealthOptions> healthTolerances, BadHealthRepository badHealthRepository,
-            RealtimeReconnectDbStore reconnectDb) {
+            RealtimeReconnectDbStore reconnectDb, EventHandlerMetric metric) {
 
             _Logger = logger;
 
             _HealthTolerances = healthTolerances;
             _BadHealthRepository = badHealthRepository;
             _ReconnectDb = reconnectDb;
+            _Metric = metric;
         }
 
         /// <summary>
@@ -176,6 +179,8 @@ namespace watchtower.Services.Repositories {
                         if (oldValue.LastEventData != null) {
                             _Logger.LogDebug($"out of order event data [LastEventData={oldValue.LastEventData.ToString(Newtonsoft.Json.Formatting.None)}] [new event={data?.ToString(Newtonsoft.Json.Formatting.None)}]");
                         }
+
+                        _Metric.RecordOutOfOrder(what, worldID);
 
                         ret = true;
                     }

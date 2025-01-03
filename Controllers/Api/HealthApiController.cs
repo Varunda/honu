@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
@@ -80,6 +81,7 @@ namespace watchtower.Controllers.Api {
         ///     The response will contain a <see cref="HonuHealth"/> that represents the health of Honu at the time of being called
         /// </response>
         [HttpGet]
+        [DisableRateLimiting]
         public async Task<ApiResponse<HonuHealth>> GetRealtimeHealth() {
             if (_Cache.TryGetValue("Honu.Health", out HonuHealth? health) == false || health == null) {
                 health = new HonuHealth();
@@ -194,6 +196,7 @@ namespace watchtower.Controllers.Api {
         ///     accounts for any time differences between the honu server and whoever is calling this endpoint
         /// </response>
         [HttpGet("event-process-lag")]
+        [DisableRateLimiting]
         public ApiResponse<HealthEventProcessDelay> GetEventProcessLag() {
             DateTime mostRecent = _EventHandler.MostRecentProcess();
             int secondsBehind = (int) Math.Floor((DateTime.UtcNow - mostRecent).TotalSeconds);

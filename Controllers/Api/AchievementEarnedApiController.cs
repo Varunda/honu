@@ -35,6 +35,24 @@ namespace watchtower.Controllers.Api {
             _AchievementRepository = achievementRepository;
         }
 
+        /// <summary>
+        ///     get all <see cref="AchievementEarnedEvent"/>s for a character between a date range
+        /// </summary>
+        /// <param name="charID">ID of the character to get the achievement earned events of</param>
+        /// <param name="start">start of the range</param>
+        /// <param name="end">end of the range</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="AchievementEarnedEvent"/>s with
+        ///     <see cref="AchievementEarnedEvent.CharacterID"/> of <paramref name="charID"/>
+        ///     with a <see cref="AchievementEarnedEvent.Timestamp"/> between
+        ///     <paramref name="start"/> and <paramref name="end"/>
+        /// </response>
+        /// <response code="400">
+        ///     one of the following validation errors occured:
+        ///     <ul>
+        ///         <li><paramref name="start"/> came after <paramref name="end"/></li>
+        ///     </ul>
+        /// </response>
         [HttpGet("{charID}")]
         public async Task<ApiResponse<List<AchievementEarnedEvent>>> GetByCharacterIDAndRange(string charID,
             [FromQuery] DateTime start, [FromQuery] DateTime end) {
@@ -48,6 +66,17 @@ namespace watchtower.Controllers.Api {
             return ApiOk(events);
         }
 
+        /// <summary>
+        ///     get all <see cref="AchievementEarnedEvent"/>s that occured within a session
+        /// </summary>
+        /// <param name="sessionID">ID of the session</param>
+        /// <response code="200">
+        ///     the response will contain a list of <see cref="AchievementEarnedEvent"/>s that occured
+        ///     during the session with <see cref="Session.ID"/> of <paramref name="sessionID"/>
+        /// </response>
+        /// <response code="404">
+        ///     no <see cref="Session"/> with <see cref="Session.ID"/> of <paramref name="sessionID"/> exists
+        /// </response>
         [HttpGet("session/{sessionID}")]
         public async Task<ApiResponse<List<AchievementEarnedEvent>>> GetBySessionID(long sessionID) {
             Session? session = await _SessionDb.GetByID(sessionID);

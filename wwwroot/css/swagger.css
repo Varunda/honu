@@ -1,0 +1,22 @@
+﻿/*
+.swagger-ui .wrapper {
+    max-width: unset;
+}
+*/
+
+.swagger-ui table.responses-table tr.response {
+    border-bottom: 1px solid;
+}
+
+.swagger-ui table.responses-table .response-col_status {
+    vertical-align: middle;
+}
+
+.swagger-ui ul {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.swagger-ui .renderedMarkdown p {
+    margin: 0.5rem auto;
+}
