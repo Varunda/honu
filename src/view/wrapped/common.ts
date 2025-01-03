@@ -484,8 +484,10 @@ export class WrappedExtraData {
                 }
 
                 if (ev.type == "vkill") {
-                    ++currentSession.vehicleKills;
-                    ++vehicleKillStreak;
+                    if (ev.attackerCharacterID != ev.killedCharacterID && ev.attackerTeamID != ev.killedTeamID) {
+                        ++currentSession.vehicleKills;
+                        ++vehicleKillStreak;
+                    }
                 } else {
                     ++currentSession.vehicleDeaths;
                     if (currentSession.vehicleKillStreak < vehicleKillStreak) {
