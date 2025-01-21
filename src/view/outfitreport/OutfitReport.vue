@@ -278,13 +278,15 @@
 
                 <table class="table table-sm">
                     <tr class="table-secondary">
-                        <td colspan="2">Outfits</td>
+                        <td colspan="2">Outfits ({{outfits.length}})</td>
                     </tr>
 
                     <tr v-for="outfit in outfits">
                         <td>
-                            [{{outfit.tag}}]
-                            {{outfit.name}}
+                            <a :href="'/o/' + outfit.id" target="_blank">
+                                [{{outfit.tag}}]
+                                {{outfit.name}}
+                            </a>
                         </td>
                         <td>
                             <a @click="removeOutfit(outfit.id)">
@@ -296,19 +298,55 @@
 
                 <table class="table table-sm">
                     <tr class="table-secondary">
-                        <td colspan="2">Characters</td>
+                        <td colspan="2">Characters ({{characters.length}})</td>
                     </tr>
 
                     <tr v-for="char in characters">
                         <td>
-                            <span v-if="char.outfitID != null">
-                                [{{char.outfitTag}}]
-                            </span>
-                            {{char.name}}
+                            <a :href="'/c/' + char.id" target="_blank">
+                                <span v-if="char.outfitID != null">
+                                    [{{char.outfitTag}}]
+                                </span>
+                                {{char.name}}
+                            </a>
                         </td>
                         <td>
                             <a @click="removeCharacter(char.id)">
                                 &times;
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div v-if="possible.length > 0">
+                <hr class="border" />
+
+                <h5>Suggested characters</h5>
+                <h6>Based on squad experience events of a character added by name</h6>
+
+                <table class="table table-sm">
+                    <tr class="table-secondary">
+                        <td>Suggested character</td>
+                        <td>
+                            Supported count
+                            <info-hover text="How many exp events were found supporting this character"></info-hover>
+                        </td>
+                        <td></td>
+                    </tr>
+
+                    <tr v-for="suggested in possible">
+                        <td>
+                            <a :href="'/c/' + suggested.character.id" target="_blank">
+                                {{suggested.character | characterName}}
+                            </a>
+                        </td>
+                        <td>
+                            {{suggested.count}}
+                        </td>
+                        <td>
+                            <a href="javascript:void(0);" @click="addCharacters(suggested.character)">
+                                Add
                             </a>
                         </td>
                     </tr>
@@ -465,7 +503,7 @@
     import { Loading, Loadable } from "Loading";
 
     import { KillEvent, KillStatApi } from "api/KillStatApi";
-    import { ExperienceType, ExpEvent, ExpStatApi } from "api/ExpStatApi";
+    import { ExperienceType, ExpEvent, ExpStatApi, Experience } from "api/ExpStatApi";
     import { ItemApi, PsItem } from "api/ItemApi";
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -481,6 +519,7 @@
     import Report, { ReportParameters, PlayerMetadata, PlayerMetadataGenerator } from "./Report";
 
     import "MomentFilter";
+    import "filters/CharacterName";
     import DateUtil from "util/Date";
 
     import ReportClassBreakdown from "./components/ReportClassBreakdown.vue";
@@ -516,6 +555,12 @@
             && event.zoneID != 98;
     }
 
+    type SuggestedCharacter = {
+        character: PsCharacter;
+        event: ExpandedExpEvent;
+        count: number;
+    };
+
     export const OutfitReport = Vue.extend({
         data: function() {
             return {
@@ -546,6 +591,8 @@
                     characterName: "" as string,
                     characterID: "" as string
                 },
+
+                possible: [] as SuggestedCharacter[],
 
                 errors: {
                     badTime: false as boolean,
@@ -613,6 +660,8 @@
             },
 
             setRelativeStart: function(hours: number, minutes: number): void {
+                console.log(this.periodEnd.getYear());
+                this.periodStart.setFullYear(this.periodEnd.getFullYear());
                 this.periodStart.setMonth(this.periodEnd.getMonth());
                 this.periodStart.setDate(this.periodEnd.getDate());
                 this.periodStart.setHours(this.periodEnd.getHours() - hours);
@@ -640,7 +689,6 @@
                 }
             },
 
-
             searchOutfitTag: async function(): Promise<void> {
                 const outfits: Loading<PsOutfit[]> = await OutfitApi.getByTag(this.search.outfitTag);
                 if (outfits.state != "loaded") {
@@ -656,6 +704,7 @@
                 outfits.data.sort((a, b) => b.id.localeCompare(a.id));
                 this.addOutfits(outfits.data[0]);
                 this.search.outfitTag = "";
+                this.possible = [];
             },
 
             searchOutfitID: async function(): Promise<void> {
@@ -665,6 +714,7 @@
                     this.addOutfits(outfit.data);
                     this.search.outfitID = "";
                 }
+                this.possible = [];
             },
 
             searchOutfitOfCharacter: async function(): Promise<void> {
@@ -691,23 +741,63 @@
 
                 this.addOutfits(outfits.data);
                 this.search.outfitOfCharacter = "";
+                this.possible = [];
             },
 
             searchCharacterName: async function(): Promise<void> {
-                const characters: Loading<PsCharacter[]> = await CharacterApi.getByName(this.search.characterName);
+                const characters: Loading<PsCharacter[]> = await CharacterApi.getByName(this.search.characterName.trim());
                 if (characters.state != "loaded") {
-                    this.log(`Failed to search for ${this.search.characterName}, got state ${characters.state} from Honu API`);
+                    this.log(`Failed to search for ${this.search.characterName.trim()}, got state ${characters.state} from Honu API`);
                     return;
                 }
 
                 if (characters.data.length == 0) {
-                    this.log(`Found 0 characters with name ${this.search.characterName}`);
+                    this.log(`Found 0 characters with name ${this.search.characterName.trim()}`);
                     return;
                 }
 
                 characters.data.sort((a, b) => b.dateLastLogin.getTime() - a.dateLastLogin.getTime());
                 this.addCharacters(characters.data[0]);
                 this.search.characterName = "";
+                this.possible = [];
+
+                if (this.periodStart && this.periodEnd) {
+                    const c: PsCharacter = characters.data[0];
+                    console.log(`loading recommendations from ${c.id}`);
+                    const exp: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(c.id, this.periodStart, this.periodEnd);
+                    if (exp.state != "loaded") {
+                        console.log(`failed to load recommendations: exp was '${exp.state}', not 'loading'`);
+                        return;
+                    }
+
+                    for (const e of exp.data) {
+                        if (Experience.isSquadEvent(e.event.experienceID) == false) {
+                            continue;
+                        }
+
+                        if (e.other == null) {
+                            continue;
+                        }
+
+                        const already: SuggestedCharacter | undefined = this.possible.find(iter => iter.character.id == e.other.id);
+                        if (already != undefined) {
+                            ++already.count;
+                            console.log(`character ${e.other.id} already added, not adding again`);
+                            continue;
+                        }
+
+                        if (this.characters.find(iter => iter.id == e.other.id) != undefined) {
+                            console.log(`character ${e.other.id} is already in the report, not showing`);
+                            continue;
+                        }
+
+                        this.possible.push({
+                            character: e.other,
+                            event: e,
+                            count: 1
+                        });
+                    }
+                }
             },
 
             searchCharacterID: async function(): Promise<void> {
@@ -742,6 +832,8 @@
                     if (this.teamID == null) {
                         this.teamID = c.factionID;
                     }
+
+                    this.possible = this.possible.filter(iter => iter.character.id != c.id);
                 }
 
                 this.characters.sort((a, b) => a.name.localeCompare(b.name));

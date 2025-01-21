@@ -226,6 +226,12 @@ export class Experience {
         Experience.DRIVER_ASSIST_CORSAIR
     ];
 
+    public static SquadEvents: number[] = [
+        Experience.SQUAD_HEAL, Experience.SQUAD_MAX_REPAIR,
+        Experience.SQUAD_RESUPPLY, Experience.SQUAD_REVIVE,
+        Experience.SQUAD_SHIELD_REPAIR
+    ];
+
     /**
      * Is this exp ID a kill event?
      */
@@ -265,6 +271,7 @@ export class Experience {
 
     /**
      * Is this exp ID a max repair exp event
+
      */
     public static isMaxRepair(expID: number): boolean {
         return expID == this.MAX_REPAIR || expID == this.SQUAD_MAX_REPAIR;
@@ -330,6 +337,10 @@ export class Experience {
 
     public static isVehicleResupply(expID: number): boolean {
         return Experience.VEHICLE_RESUPPLY == expID || Experience.SQUAD_VEHICLE_RESUPPLY == expID;
+    }
+
+    public static isSquadEvent(expID: number): boolean {
+        return Experience.isSquadVehicleRepair(expID) || Experience.SquadEvents.indexOf(expID) > -1;
     }
 
 }

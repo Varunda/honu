@@ -51,6 +51,7 @@ namespace watchtower.Services.Repositories {
                             if (zs != null) {
                                 zs.UnstableState = _MapRepository.GetUnstableState(world.WorldID, zoneID);
                                 ZoneState copy = new ZoneState(zs);
+                                // player count is updated below
                                 copy.Players = new PlayerCount();
                                 copy.PlayerCount = 0;
                                 world.Zones.Add(copy);
@@ -71,7 +72,7 @@ namespace watchtower.Services.Repositories {
                     }
                 }
 
-                void UpdateZoneCount(WorldOverview wo, ref TrackedPlayer player) {
+                static void UpdateZoneCount(WorldOverview wo, ref TrackedPlayer player) {
                     uint zoneID = player.ZoneID;
 
                     ZoneState? state = wo.Zones.FirstOrDefault(iter => iter.ZoneID == zoneID);
