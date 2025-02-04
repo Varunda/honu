@@ -211,7 +211,8 @@ namespace watchtower {
                     ILogger? logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?
                         .CreateLogger("watchtower.Startup.Ratelimiter");
 
-                    logger?.LogInformation($"rate limit hit [ip={context.HttpContext.Connection.RemoteIpAddress}] [url='{context.HttpContext.Request.Path}']");
+                    logger?.LogInformation($"rate limit hit [ip={context.HttpContext.Connection.RemoteIpAddress}] [url='{context.HttpContext.Request.Path}'] "
+                        + $"[referrer='{context.HttpContext.Request.Headers.Referer}']");
 
                     if (context.Lease.TryGetMetadata(MetadataName.RetryAfter.Name, out object? retryAfter)) {
                         if (retryAfter is TimeSpan ts) {

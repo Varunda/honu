@@ -143,6 +143,37 @@ namespace watchtower.Code.ExtensionMethods {
         }
 
         /// <summary>
+        ///     Execute a command as a scalar, converting the returned object to a UInt64, then close the connection
+        /// </summary>
+        /// <param name="cmd">Command to execute as a scalar</param>
+        /// <param name="cancel">Cancellation token</param>
+        /// <returns>
+        ///     The result of executing <see cref="DbCommand.ExecuteScalarAsync()"/> parsed to a ulong
+        /// </returns>
+        /// <exception cref="NullReferenceException">
+        ///     Throw if the result from <see cref="DbCommand.ExecuteScalarAsync()"/> is null.
+        ///     SQL commands executed with this method must return a scalar
+        /// </exception>
+        /// <exception cref="InvalidCastException">
+        ///     Throw if the result from <see cref="DbCommand.ExecuteScalarAsync()"/> could
+        ///     not be parsed to a valid ulong
+        /// </exception>
+        public static async Task<ulong> ExecuteUInt64(this NpgsqlCommand cmd, CancellationToken cancel) {
+            object? objID = await cmd.ExecuteScalarAsync(cancel);
+
+            if (objID == null) {
+                throw new NullReferenceException(nameof(objID));
+            }
+
+            if (ulong.TryParse(objID.ToString(), out ulong ID) == true) {
+                await (cmd.Connection?.CloseAsync() ?? Task.CompletedTask);
+                return ID;
+            } else {
+                throw new InvalidCastException($"Missing or bad type on 'id': {objID} {objID?.GetType()}");
+            }
+        }
+
+        /// <summary>
         ///     Execute a single read from a command, using the reader to turn it into <typeparamref name="T"/>
         /// </summary>
         /// <typeparam name="T">What type will be returned</typeparam>

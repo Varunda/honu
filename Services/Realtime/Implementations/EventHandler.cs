@@ -30,6 +30,7 @@ using Microsoft.Extensions.Options;
 using watchtower.Models.PSB;
 using System.Diagnostics.Metrics;
 using watchtower.Services.Metrics;
+using System.Diagnostics.Eventing.Reader;
 
 namespace watchtower.Realtime {
 
@@ -50,6 +51,7 @@ namespace watchtower.Realtime {
         private readonly AlertPlayerDataRepository _ParticipantDataRepository;
         private readonly ContinentLockDbStore _ContinentLockDb;
         private readonly MetagameEventRepository _MetagameRepository;
+        private readonly FishCaughtDbStore _FishCaughtDb;
 
         private readonly CharacterCacheQueue _CacheQueue;
         private readonly SessionStarterQueue _SessionQueue;
@@ -101,7 +103,8 @@ namespace watchtower.Realtime {
             SessionEndQueue sessionEndQueue, ContinentLockDbStore continentLockDb,
             AlertEndQueue alertEndQueue, FacilityControlEventProcessQueue facilityControlQueue,
             MetagameEventRepository metagameRepository, ExperienceTypeRepository experienceTypeRepository,
-            VehicleRepository vehicleRepository, EventHandlerMetric metrics) {
+            VehicleRepository vehicleRepository, EventHandlerMetric metrics, 
+            FishCaughtDbStore fishCaughtDb) {
 
             _Logger = logger;
 
@@ -115,6 +118,7 @@ namespace watchtower.Realtime {
             _VehicleDestroyDb = vehicleDestroyDb ?? throw new ArgumentNullException(nameof(vehicleDestroyDb));
             _AlertDb = alertDb ?? throw new ArgumentNullException(nameof(alertDb));
             _ContinentLockDb = continentLockDb;
+            _FishCaughtDb = fishCaughtDb;
 
             _CacheQueue = cacheQueue ?? throw new ArgumentNullException(nameof(cacheQueue));
             _SessionQueue = sessionQueue ?? throw new ArgumentNullException(nameof(sessionQueue));
@@ -242,6 +246,8 @@ namespace watchtower.Realtime {
                     await _ProcessItemAdded(payloadToken);
                 } else if (eventName == "AchievementEarned") {
                     await _ProcessAchievementEarned(payloadToken);
+                } else if (eventName == "FishScan") {
+                    await _ProcessFishScan(payloadToken);
                 } else {
                     _Logger.LogWarning($"Untracked event_name: '{eventName}': {payloadToken}");
                 }
@@ -1143,10 +1149,10 @@ namespace watchtower.Realtime {
 
                 attacker.ZoneID = zoneID;
                 attacker.ProfileID = Profile.GetProfileID(ev.AttackerLoadoutID) ?? 0;
+                attacker.TeamID = ev.AttackerTeamID;
 
                 if (attacker.FactionID == Faction.UNKNOWN) {
                     attacker.FactionID = attackerFactionID; // If a tracked player was made from a login, no faction ID is given
-                    attacker.TeamID = ev.AttackerTeamID;
                 }
 
                 // if the attacker is in a vehicle, we're pretty confident about this being correct lol
@@ -1330,7 +1336,6 @@ namespace watchtower.Realtime {
 
                 if (p.FactionID == Faction.UNKNOWN) {
                     p.FactionID = factionID;
-                    p.TeamID = factionID;
                 }
 
                 // this is needed to update revive stats down below
@@ -1399,7 +1404,6 @@ namespace watchtower.Realtime {
             }
 
             if (expId == Experience.VKILL_SUNDY && worldID == World.Jaeger) {
-            //if (expId == Experience.VKILL_SUNDY) {// && worldID == World.Jaeger) {
                 RecentSundererDestroyExpStore.Get().Add(ev);
             }
 
@@ -1481,6 +1485,83 @@ namespace watchtower.Realtime {
                     "zone_id": "4"
                 }
             */
+        }
+
+        private async Task _ProcessFishScan(JToken payload) {
+            /*
+                // from PTS data
+                {
+                    "character_id":"223418335046796049",
+                    "event_name":"FishScan",
+                    "fish_id":"1",
+                    "loadout_id":"10",
+                    "team_id":"344", // HUH
+                    "timestamp":"1738609454",
+                    "world_id":"101",
+                    "zone_id":"344"
+                }
+            */
+
+            FishCaughtEvent ev = new();
+
+            ev.CharacterID = payload.GetRequiredString("character_id");
+            ev.WorldID = payload.GetWorldID();
+            ev.ZoneID = payload.GetZoneID();
+            ev.Timestamp = payload.CensusTimestamp("timestamp");
+            ev.FishID = payload.GetRequiredInt32("fish_id");
+            ev.TeamID = payload.GetRequiredInt16("team_id");
+            ev.LoadoutID = payload.GetRequiredInt16("loadout_id");
+
+            CensusEnvironment? plat = CensusEnvironmentHelper.FromWorldID(ev.WorldID);
+            if (plat == null) {
+                _Logger.LogError($"Failed to get the {nameof(CensusEnvironment)} for world ID {ev.WorldID} in fish caught event");
+            }
+
+            lock (CharacterStore.Get().Players) {
+                short factionID = Loadout.GetFaction(ev.LoadoutID);
+
+                // The default value for Online must be false, else when a new TrackedPlayer is constructed,
+                //      the session will never start, as the handler already sees the character online,
+                //      so no need to start a new session
+                TrackedPlayer player = CharacterStore.Get().Players.GetOrAdd(ev.CharacterID, new TrackedPlayer() {
+                    ID = ev.CharacterID,
+                    FactionID = factionID,
+                    TeamID = ev.TeamID,
+                    Online = false,
+                    WorldID = ev.WorldID
+                });
+
+                if (player.ID != "0" && player.Online == false) {
+                    if (plat != null) {
+                        _SessionQueue.Queue(new CharacterSessionStartQueueEntry() {
+                            CharacterID = player.ID,
+                            LastEvent = ev.Timestamp,
+                            Environment = plat.Value
+                        });
+                    }
+                }
+
+                if (plat != null) {
+                    _CacheQueue.Queue(player.ID, plat.Value);
+                }
+
+                player.ZoneID = ev.ZoneID;
+                player.ProfileID = Profile.GetProfileID(ev.LoadoutID) ?? 0;
+                player.TeamID = ev.TeamID;
+
+                if (player.FactionID == Faction.UNKNOWN) {
+                    player.FactionID = factionID; // If a tracked player was made from a login, no faction ID is given
+                }
+
+                long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                player.LatestEventTimestamp = nowSeconds;
+            }
+
+            if (World.IsTrackedWorld(ev.WorldID)) {
+                await _FishCaughtDb.Insert(ev, CancellationToken.None);
+            }
+
         }
 
     }

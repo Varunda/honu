@@ -22,6 +22,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<IWorldTotalDbStore, WorldTotalDbStore>();
             services.AddSingleton<ItemAddedDbStore>();
             services.AddSingleton<AchievementEarnedDbStore>();
+            services.AddSingleton<FishCaughtDbStore>();
 
             services.AddSingleton<SessionDbStore, SessionDbStore>();
             services.AddSingleton<FacilityControlDbStore>();
