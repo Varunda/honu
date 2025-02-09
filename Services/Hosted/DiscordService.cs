@@ -340,7 +340,7 @@ namespace watchtower.Services.Hosted {
         /// <param name="args"></param>
         /// <returns></returns>
         private Task Button_Command_Executed(ButtonCommandsExtension ext, ButtonCommandExecutionEventArgs args) {
-            _Logger.LogDebug($"{args.Context.User.GetDisplay()} used '{args.CommandName}': {args.ButtonId}");
+            _Logger.LogDebug($"discord button command executed [user={args.Context.User.GetDisplay()}] [command={args.CommandName}] [id={args.ButtonId}]");
             return Task.CompletedTask;
         }
 

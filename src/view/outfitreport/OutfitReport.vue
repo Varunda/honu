@@ -296,27 +296,31 @@
                     </tr>
                 </table>
 
-                <table class="table table-sm">
-                    <tr class="table-secondary">
-                        <td colspan="2">Characters ({{characters.length}})</td>
-                    </tr>
-
-                    <tr v-for="char in characters">
-                        <td>
+                <div class="wt-header mb-1">
+                    Characters ({{characters.length}})
+                </div>
+                <div class="input-grid-col3 mb-2" style="grid-template-columns: 1fr min-content max-content; align-items: center; grid-row-gap: 0.5rem">
+                    <template v-for="char in characters">
+                        <div class="mr-2">
                             <a :href="'/c/' + char.id" target="_blank">
                                 <span v-if="char.outfitID != null">
                                     [{{char.outfitTag}}]
                                 </span>
                                 {{char.name}}
                             </a>
-                        </td>
-                        <td>
-                            <a @click="removeCharacter(char.id)">
+                        </div>
+                        <div class="mr-2">
+                            <button class="btn btn-secondary" @click="removeCharacter(char.id)">
                                 &times;
-                            </a>
-                        </td>
-                    </tr>
-                </table>
+                            </button>
+                        </div>
+                        <div>
+                            <button @click="loadCharacterSuggestions(char.id)" class="btn btn-primary">
+                                load suggestions
+                            </button>
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <div v-if="possible.length > 0">
@@ -761,42 +765,51 @@
                 this.search.characterName = "";
                 this.possible = [];
 
-                if (this.periodStart && this.periodEnd) {
-                    const c: PsCharacter = characters.data[0];
-                    console.log(`loading recommendations from ${c.id}`);
-                    const exp: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(c.id, this.periodStart, this.periodEnd);
-                    if (exp.state != "loaded") {
-                        console.log(`failed to load recommendations: exp was '${exp.state}', not 'loading'`);
-                        return;
+                await this.loadCharacterSuggestions(characters.data[0].id);
+            },
+
+            loadCharacterSuggestions: async function(charID: string): Promise<void> {
+                if (!this.periodStart || !this.periodEnd) {
+                    return;
+                }
+
+                this.possible.length = 0;
+
+                console.log(`loading recommendations from ${charID}`);
+                const exp: Loading<ExpandedExpEvent[]> = await ExpStatApi.getByCharacterIDAndRange(charID, this.periodStart, this.periodEnd);
+                if (exp.state != "loaded") {
+                    console.log(`failed to load recommendations: exp was '${exp.state}', not 'loading'`);
+                    return;
+                }
+
+                console.log(`loaded suggestions from ${charID}`);
+
+                for (const e of exp.data) {
+                    if (Experience.isSquadEvent(e.event.experienceID) == false) {
+                        continue;
                     }
 
-                    for (const e of exp.data) {
-                        if (Experience.isSquadEvent(e.event.experienceID) == false) {
-                            continue;
-                        }
-
-                        if (e.other == null) {
-                            continue;
-                        }
-
-                        const already: SuggestedCharacter | undefined = this.possible.find(iter => iter.character.id == e.other.id);
-                        if (already != undefined) {
-                            ++already.count;
-                            console.log(`character ${e.other.id} already added, not adding again`);
-                            continue;
-                        }
-
-                        if (this.characters.find(iter => iter.id == e.other.id) != undefined) {
-                            console.log(`character ${e.other.id} is already in the report, not showing`);
-                            continue;
-                        }
-
-                        this.possible.push({
-                            character: e.other,
-                            event: e,
-                            count: 1
-                        });
+                    if (e.other == null) {
+                        continue;
                     }
+
+                    const already: SuggestedCharacter | undefined = this.possible.find(iter => iter.character.id == e.other.id);
+                    if (already != undefined) {
+                        ++already.count;
+                        console.log(`character ${e.other.id} already added, not adding again`);
+                        continue;
+                    }
+
+                    if (this.characters.find(iter => iter.id == e.other.id) != undefined) {
+                        console.log(`character ${e.other.id} is already in the report, not showing`);
+                        continue;
+                    }
+
+                    this.possible.push({
+                        character: e.other,
+                        event: e,
+                        count: 1
+                    });
                 }
             },
 
@@ -827,6 +840,11 @@
              */
             addCharacters: function(...characters: PsCharacter[]): void {
                 for (const c of characters) {
+                    if (this.characters.find(iter => iter.id == c.id)) {
+                        console.log(`not adding dup character ${c.id}`);
+                        continue;
+                    }
+
                     this.characters.push(c);
 
                     if (this.teamID == null) {

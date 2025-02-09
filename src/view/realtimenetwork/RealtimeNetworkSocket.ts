@@ -25,6 +25,9 @@ export default class RealtimeNetworkSocket {
     private pendingCharIDs: Set<string> = new Set();
     private pendingOutfitIDs: Set<string> = new Set();
 
+    private gettingCharIDs: Set<string> = new Set();
+    private gettingOutfitIDs: Set<string> = new Set();
+
     /**
      * Callback for when the socket sends new data
      */
@@ -180,10 +183,22 @@ export default class RealtimeNetworkSocket {
             }
         }
 
+        for (const id of outfitIDs) {
+            if (this.gettingOutfitIDs.has(id)) {
+                left.delete(id);
+            }
+        }
+
         const fetchApi: number = left.size;
 
         if (left.size > 0) {
-            const api: Loading<PsOutfit[]> = await OutfitApi.getByIDs(Array.from(left.values()));
+            const leftArr: string[] = Array.from(left.values());
+
+            for (const iter of leftArr) {
+                this.gettingOutfitIDs.add(iter);
+            }
+
+            const api: Loading<PsOutfit[]> = await OutfitApi.getByIDs(leftArr);
 
             if (api.state == "loaded") {
                 for (const o of api.data) {
@@ -201,6 +216,10 @@ export default class RealtimeNetworkSocket {
                         this.pendingOutfitIDs.delete(o.id);
                     }
                 }
+            }
+
+            for (const iter of leftArr) {
+                this.gettingOutfitIDs.delete(iter);
             }
         }
 
@@ -240,10 +259,21 @@ export default class RealtimeNetworkSocket {
             }
         }
 
+        for (const id of charIDs) {
+            if (this.gettingCharIDs.has(id)) {
+                left.delete(id);
+            }
+        }
+
         const fetchApi: number = left.size;
 
         if (left.size > 0) {
             const arr: string[] = Array.from(left.values());
+            const leftArr: string[] = Array.from(left.values());
+
+            for (const iter of leftArr) {
+                this.gettingCharIDs.add(iter);
+            }
 
             // There's an upper bound to how many characters you can get at once, causing getting like 700
             //      at once threw a HTTP2_NETWORK_ERROR. By capping how many can be requested at once,
@@ -269,6 +299,10 @@ export default class RealtimeNetworkSocket {
                         }
                     }
                 }
+            }
+
+            for (const iter of leftArr) {
+                this.gettingCharIDs.delete(iter);
             }
         }
 
