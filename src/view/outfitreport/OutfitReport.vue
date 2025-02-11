@@ -281,7 +281,7 @@
                         <td colspan="2">Outfits ({{outfits.length}})</td>
                     </tr>
 
-                    <tr v-for="outfit in outfits">
+                    <tr v-for="outfit in outfits" :key="outfit.id">
                         <td>
                             <a :href="'/o/' + outfit.id" target="_blank">
                                 [{{outfit.tag}}]
@@ -339,7 +339,7 @@
                         <td></td>
                     </tr>
 
-                    <tr v-for="suggested in possible">
+                    <tr v-for="suggested in possible" :key="suggested.character.id">
                         <td>
                             <a :href="'/c/' + suggested.character.id" target="_blank">
                                 {{suggested.character | characterName}}
@@ -507,7 +507,7 @@
     import { Loading, Loadable } from "Loading";
 
     import { KillEvent, KillStatApi } from "api/KillStatApi";
-    import { ExperienceType, ExpEvent, ExpStatApi, Experience } from "api/ExpStatApi";
+    import { ExperienceType, ExpEvent, ExpStatApi, Experience, ExpandedExpEvent } from "api/ExpStatApi";
     import { ItemApi, PsItem } from "api/ItemApi";
     import { OutfitApi, PsOutfit } from "api/OutfitApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -515,7 +515,7 @@
     import { FacilityControlEvent, FacilityControlEventApi } from "api/FacilityControlEventApi";
     import { PlayerControlEvent, PlayerControlEventApi } from "api/PlayerControlEventApi";
     import { PsFacility, MapApi } from "api/MapApi";
-    import { RealtimeReconnectEntry } from "api/RealtimeReconnectapi";
+    import { RealtimeReconnectEntry } from "api/RealtimeReconnectApi";
     import { ItemCategory } from "api/ItemCategoryApi";
     import { VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
     import { FireGroupToFireMode } from "api/FireGroupToFireModeApi";
@@ -664,7 +664,6 @@
             },
 
             setRelativeStart: function(hours: number, minutes: number): void {
-                console.log(this.periodEnd.getYear());
                 this.periodStart.setFullYear(this.periodEnd.getFullYear());
                 this.periodStart.setMonth(this.periodEnd.getMonth());
                 this.periodStart.setDate(this.periodEnd.getDate());
@@ -793,14 +792,16 @@
                         continue;
                     }
 
-                    const already: SuggestedCharacter | undefined = this.possible.find(iter => iter.character.id == e.other.id);
+                    const otherID: string = e.other.id;
+
+                    const already: SuggestedCharacter | undefined = this.possible.find(iter => iter.character.id == otherID);
                     if (already != undefined) {
                         ++already.count;
                         console.log(`character ${e.other.id} already added, not adding again`);
                         continue;
                     }
 
-                    if (this.characters.find(iter => iter.id == e.other.id) != undefined) {
+                    if (this.characters.find(iter => iter.id == otherID) != undefined) {
                         console.log(`character ${e.other.id} is already in the report, not showing`);
                         continue;
                     }

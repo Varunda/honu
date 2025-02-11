@@ -40,6 +40,29 @@ namespace watchtower.Services.Db {
             List<CharacterDirective> dirs = await _Reader.ReadList(cmd);
             await conn.CloseAsync();
 
+            // if there are no dirs in the character DB, see if we can rescue them from the events DB
+            if (dirs.Count == 0) {
+                _Logger.LogDebug($"checking for character directives in event db [charID={charID}]");
+                using NpgsqlConnection conn2 = _DbHelper.Connection(Dbs.EVENTS);
+                using NpgsqlCommand cmd2 = await _DbHelper.Command(conn2, @"
+                    SELECT *
+                        FROM character_directives
+                        WHERE character_id = @CharacterID;
+                ");
+
+                cmd2.AddParameter("CharacterID", charID);
+
+                dirs = await _Reader.ReadList(cmd2);
+
+                // save them back to the character DB
+                if (dirs.Count > 0) {
+                    _Logger.LogDebug($"found {dirs.Count} stats from events DB, putting back into character DB");
+                    await UpsertMany(charID, dirs);
+                } else {
+                    _Logger.LogDebug($"found 0 directives from events DB, probably never had any");
+                }
+            }
+
             return dirs;
         }
 
