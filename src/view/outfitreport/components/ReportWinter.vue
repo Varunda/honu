@@ -1480,6 +1480,23 @@
                 );
             },
 
+            makeTeamKills: function(): void {
+                let metric: WinterMetric = new WinterMetric();
+                metric.name = "Teamkills";
+                metric.funName = "Teamkills";
+                metric.description = "Most teamkills";
+
+                const map: Map<string, number> = new Map();
+
+                for (const kill of this.report.kills) {
+                    if (kill.attackerTeamID == kill.killedTeamID) {
+                        map.set(kill.attackerCharacterID, (map.get(kill.attackerCharacterID) ?? 0) + 1);
+                    }
+                }
+
+                this.catMisc.metrics.push(this.generateFromMap(metric, map));
+            },
+
             /**
              * Generate a winter metric from a map that contains a character ID an whatever value they got. An option to have a per time selector is given
              * @param metric
