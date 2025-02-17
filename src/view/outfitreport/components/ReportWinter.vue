@@ -254,6 +254,7 @@
                 this.makeRoadkills();
                 this.makeInfantryDamage();
                 this.makeInfantryDamagePerMinute();
+                this.makeTeamKills();
 
                 // get the world ID
                 let worldID: number = 0;
