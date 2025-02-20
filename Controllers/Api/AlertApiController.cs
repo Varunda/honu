@@ -174,6 +174,41 @@ namespace watchtower.Controllers.Api {
         }
 
         /// <summary>
+        ///     get all alerts between a time period, optionally filtering to a world ID
+        /// </summary>
+        /// <param name="start">start of the time range to get alerts</param>
+        /// <param name="end">end of the time range to get alerts</param>
+        /// <param name="worldID">optional, defaults to null. if non-null, filters the response to alerts in this world</param>
+        /// <response code="200">
+        ///     the response will contain a <see cref="AlertListBlock"/> that contains all alerts
+        ///     between <paramref name="start"/> and <paramref name="end"/>, and if <paramref name="worldID"/>
+        ///     was given, with <see cref="PsAlert.WorldID"/> of <paramref name="worldID"/>
+        /// </response>
+        /// <response code="400">
+        ///     <paramref name="end"/> came before <paramref name="start"/>
+        /// </response>
+        [HttpGet("time/block")]
+        public async Task<ApiResponse<AlertListBlock>> GetByTimeRange(
+            [FromQuery] DateTime start, [FromQuery] DateTime end, [FromQuery] int? worldID = null) {
+
+            if (end < start) {
+                return ApiBadRequest<AlertListBlock>($"{nameof(start)} must come before {nameof(end)}");
+            }
+
+            List<PsAlert> alerts = await _AlertDb.GetWithinPeriod(start, end);
+
+            if (worldID != null) {
+                alerts = alerts.Where(iter => iter.WorldID == worldID.Value).ToList();
+            }
+
+            AlertListBlock block = new();
+            block.Alerts = alerts;
+            block.MetagameEvents = await _MetagameEventRepository.GetByIDs(block.Alerts.Select(iter => iter.AlertID));
+
+            return ApiOk(block);
+        }
+
+        /// <summary>
         ///     Get an alert by it's instance ID, which is unique per world
         /// </summary>
         /// <param name="instanceID">Instance ID</param>

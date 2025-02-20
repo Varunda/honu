@@ -10,6 +10,7 @@
                 <toggle-button v-model="show.deaths" class="flex-grow-0">Deaths</toggle-button>
                 <toggle-button v-model="show.vehicleDestroy" class="flex-grow-0">Vehicle destroy</toggle-button>
                 <toggle-button v-model="show.itemAdded" class="flex-grow-0">Item added</toggle-button>
+                <toggle-button v-model="show.achievementEarned" class="flex-grow-0">Achievement earned</toggle-button>
                 <toggle-button v-model="show.assists" class="flex-grow-0">Assists</toggle-button>
                 <toggle-button v-model="show.revives" class="flex-grow-0">Revives</toggle-button>
                 <toggle-button v-model="show.heals" class="flex-grow-0">Heals</toggle-button>
@@ -132,6 +133,8 @@
     import { PsVehicle, VehicleApi } from "api/VehicleApi";
     import { PsItem } from "api/ItemApi";
     import { ItemAddedEventBlock, ItemAddedEventApi, ItemAddedEvent } from "api/ItemAddedEventApi";
+    import { AchievementEarnedBlock } from "api/AchievementEarnedApi";
+    import { Achievement } from "api/AchievementApi";
 
     import ZoneUtils from "util/Zone";
     import TimeUtils from "util/Time";
@@ -176,7 +179,8 @@
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             ExpOther: { type: Object as PropType<ExperienceBlock>, required: true },
             VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
-            ItemAdded: { type: Array as PropType<ExpandedItemAddedEvent[]>, required: true }
+            ItemAdded: { type: Array as PropType<ExpandedItemAddedEvent[]>, required: true },
+            AchievementEarned: { type: Object as PropType<AchievementEarnedBlock>, required: true }
         },
 
         data: function() {
@@ -193,6 +197,7 @@
                     ["assist", "Assist"],
                     ["vehicle_destroy", "Vehicle destroy"],
                     ["item_added", "Item added"],
+                    ["achievement_earned", "Achievement earned"],
 
                     ["revive", "Revive"],
                     ["heal", "Heal"],
@@ -228,6 +233,7 @@
                     deaths: true as boolean,
                     vehicleDestroy: true as boolean,
                     itemAdded: true as boolean,
+                    achievementEarned: true as boolean,
 
                     revives: true as boolean,
                     heals: false as boolean,
@@ -290,6 +296,7 @@
                     deaths: true as boolean,
                     vehicleDestroy: true as boolean,
                     itemAdded: true as boolean,
+                    achievementEarned: true as boolean,
 
                     revives: true as boolean,
                     heals: false as boolean,
@@ -334,6 +341,7 @@
                 entries.push(...this.makeZoneChange());
                 entries.push(...this.makeVehicleDestroy());
                 entries.push(...this.makeItemAdded());
+                entries.push(...this.makeAchievementEarned());
 
                 // Add the session start and end
                 entries.push({
@@ -616,7 +624,7 @@
                     const expID: number = iter.experienceID;
                     const expType: ExperienceType | undefined = typeMap.get(expID);
 
-                    let type: string = `Other (${expType?.name ?? `unknown ${expID}`})`;
+                    let type: string = `Other (${expType?.name ?? `unknown exp ${expID}`})`;
 
                     const source: PsCharacter | null = this.ExpOther.characters.find(c => c.id == iter.sourceID) || null;
                     const other: PsCharacter | null = this.ExpOther.characters.find(c => c.id == iter.otherID) || null;
@@ -702,7 +710,7 @@
                         ],
                         timestamp: iter.event.timestamp,
                         type: "vehicle_destroy",
-                        event: iter.event
+                        event: iter.event,
                     };
 
                     return entry;
@@ -725,8 +733,32 @@
                         ],
                         timestamp: iter.event.timestamp,
                         type: "item_added",
-                        event: iter.event
+                        event: iter.event,
                     };
+
+                    return entry;
+                });
+
+                return entries;
+            },
+
+            makeAchievementEarned: function(): ActionLogEntry[] {
+                const entries: ActionLogEntry[] = this.AchievementEarned.events.map(iter => {
+                    const ach: Achievement | undefined = this.AchievementEarned.achievements.get(iter.achievementID);
+
+                    const entry: ActionLogEntry = {
+                        parts: [
+                            this.createCharacterLink(this.character, iter.characterID),
+                            this.createLogText("earned"),
+                            this.createLogText(ach?.repeatable == true ? `ribbon` : "award"),
+                            //{ html: ach != undefined ? `<img src="/image-proxy/get/${ach?.imageID}" loading="lazy" style="max-height: 24px" />` : "<span></span>" },
+                            this.createLogText(ach != undefined ? ach.name : `&lt;missing achievement ${iter.achievementID}&gt;`),
+                            this.createHover(ach != undefined ? ach.description : "unknown"),
+                        ],
+                        timestamp: iter.timestamp,
+                        type: "achievement_earned",
+                        event: iter
+                    }
 
                     return entry;
                 });
@@ -860,6 +892,30 @@
                 };
             },
 
+            createHover: function(text: string, icon?: string): LogPart {
+                const ID: number = Math.floor(Math.random() * 100000);
+
+                let html: string = `
+                    <span id="info-hover-${ID}"
+                        class="d-inline-block action-log-hover"
+                        data-toggle="popover" data-trigger="hover" data-content="${text}"
+                `;
+
+                if (icon) {
+                    html += `>`;
+                    html += `<span class="ph-bold ph-${icon}"></span>`;
+                } else {
+                    html += `style="filter:invert(1)">`;
+                    html += `<img src="/img/question-circle.svg" />`;
+                }
+
+                html += `</span>`;
+
+                return {
+                    html: html
+                };
+            },
+
             getCharacterName: function(c: PsCharacter | null, id: string): string {
                 if (c == null) {
                     return `&lt;missing ${id}&gt;`;
@@ -890,6 +946,7 @@
                     if (iter.type == "assist" && this.show.assists == true) { return true; }
                     if (iter.type == "vehicle_destroy" && this.show.vehicleDestroy == true) { return true; }
                     if (iter.type == "item_added" && this.show.itemAdded == true) { return true; }
+                    if (iter.type == "achievement_earned" && this.show.achievementEarned == true) { return true; }
 
                     // session character is source
                     if (iter.type == "heal" && this.show.heals == true) { return true; }
@@ -922,6 +979,12 @@
 
                     const time = arr[index - 1].timestamp;
                     iter.diff = Math.floor((iter.timestamp.getTime() - time.getTime()) / 1000);
+                });
+
+                // once all actions are shown and rendered, add the popovers (hover text stuff)
+                this.$nextTick(() => {
+                    console.log(`adding popovers to add hover parts`);
+                    $(`.action-log-hover`).popover();
                 });
 
                 return Loadable.loaded(actions);

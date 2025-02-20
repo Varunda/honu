@@ -386,9 +386,9 @@
                         Loading...
                     </div>
 
-                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded' && expOther.state == 'loaded'"
+                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded' && expOther.state == 'loaded' && achievementsEarned.state == 'loaded'"
                         :session="session.data" :character="character.data"
-                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :item-added="itemAddedEvents"
+                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :item-added="itemAddedEvents" :achievement-earned="achievementsEarned.data"
                         :exp="exp.data" :exp-other="expOther.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
                     </session-action-log>
                 </collapsible>

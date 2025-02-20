@@ -429,7 +429,7 @@ namespace watchtower.Code.Hubs.Implementations {
                 await Clients.Caller.UpdateState(OutfitReportState.GETTING_CHARACTERS);
                 using (Activity? charTrace = HonuActivitySource.Root.StartActivity($"{TRACE_KEY} characters")) {
                     HashSet<string> charsToLoad = GetUniqueCharacters(report);
-                    report.Characters = await _CharacterRepository.GetByIDs(charsToLoad.ToList(), CensusEnvironment.PC, fast: true);
+                    report.Characters = await _CharacterRepository.GetByIDs(charsToLoad, CensusEnvironment.PC, fast: true);
                     await Clients.Caller.UpdateCharacters(report.Characters);
                 }
 

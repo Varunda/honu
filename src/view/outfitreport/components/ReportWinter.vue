@@ -1482,6 +1482,7 @@
             },
 
             makeTeamKills: function(): void {
+                // this doesn't actually work cause honu doesn't send the teamkill events
                 let metric: WinterMetric = new WinterMetric();
                 metric.name = "Teamkills";
                 metric.funName = "Teamkills";
