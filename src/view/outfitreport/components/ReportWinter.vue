@@ -9,6 +9,9 @@
                     <option :value="8">8</option>
                     <option :value="10">10</option>
                     <option :value="12">12</option>
+                    <option :value="24">24</option>
+                    <option :value="48">48</option>
+                    <option :value="96">96</option>
                 </select>
 
                 <toggle-button v-model="settings.showFunNames" class="mr-2">
