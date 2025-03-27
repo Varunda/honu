@@ -92,6 +92,19 @@
 
         <div>
             <h1 class="d-inline-block mr-2">
+                <a href="/namefight">
+                    Final Fight event tracker
+                </a>
+            </h1>
+            <h3 class="d-inline-block">
+                <small class="text-muted">View progress for the NA and EU Final Fight event</small>
+            </h3>
+        </div>
+
+        <hr class="border" />
+
+        <div>
+            <h1 class="d-inline-block mr-2">
                 <a href="/alerts">
                     Alerts
                 </a>
