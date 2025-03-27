@@ -103,6 +103,7 @@ namespace watchtower.Services.Db.Readers {
             services.AddSingleton<IDataReader<CharacterNameChange>, CharacterNameChangeReader>();
             services.AddSingleton<IDataReader<ExperienceAwardType>, ExperienceAwardTypeReader>();
             services.AddSingleton<IDataReader<VehicleUsageData>, VehicleUsageDataReader>();
+            services.AddSingleton<IDataReader<NameFightEntry>, NameFightEntryReader>();
         }
 
     }

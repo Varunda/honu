@@ -108,6 +108,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<WorldZonePopulationDbStore>();
             services.AddSingleton<HonuMetadataDbStore>();
             services.AddSingleton<VehicleUsageDbStore>();
+            services.AddSingleton<NameFightDbStore>();
         }
 
     }

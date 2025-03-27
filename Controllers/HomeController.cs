@@ -235,5 +235,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult NameFight() {
+            return View();
+        }
+
     }
 }
