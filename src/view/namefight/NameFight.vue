@@ -7,7 +7,7 @@
             <menu-sep></menu-sep>
 
             <li class="nav-item h1 p-0">
-                <a href="/namefight">Name fight</a>
+                <a href="/namefight">Final Fight tracker</a>
             </li>
         </honu-menu>
 
@@ -77,7 +77,7 @@
                 </div>
             </div>
 
-            <div>
+            <div class="mb-5">
                 <h1 class="wt-header">EU server (Miller and Cobalt)</h1>
 
                 <h2 class="mb-0">
@@ -109,8 +109,11 @@
                         <h3 class="mb-0">{{ euWinsTr }}</h3>
                     </div>
                 </div>
-
             </div>
+
+            <p class="mb-2">
+                This tracker is not officially endorsed, and is not a source of truth. This is a community made tracker that may be incorrect!
+            </p>
         </div>
     </div>
 

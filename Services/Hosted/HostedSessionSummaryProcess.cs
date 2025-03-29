@@ -122,6 +122,11 @@ namespace watchtower.Services.Hosted {
 
             _Logger.LogDebug($"updating sessions with aggregate stats [start={firstSessionStart:u}] [end={lastSessionEnd:u}]");
 
+            if (lastSessionEnd - firstSessionStart > TimeSpan.FromDays(1)) {
+                _Logger.LogWarning($"session block is too long! capping to 1 day [start={firstSessionStart:u}] [end={lastSessionEnd:u}]");
+                lastSessionEnd = firstSessionStart + TimeSpan.FromDays(1);
+            }
+
             // load all events that occur within this block
             List<SmallerExpEvent> expEvents = await _ExpDb.GetSmallerByRange(firstSessionStart, lastSessionEnd, cancel);
             long expLoadMs = loadTimer.ElapsedMilliseconds; loadTimer.Restart();
