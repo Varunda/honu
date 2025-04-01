@@ -32,7 +32,7 @@ namespace watchtower.Services.Db {
                     @CharacterID,
                     @FishID,
                     @TeamID, @LoadoutID
-                );
+                ) RETURNING id;
             ", cancel);
 
             cmd.AddParameter("WorldID", ev.WorldID);
