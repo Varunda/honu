@@ -345,10 +345,16 @@ namespace watchtower.Controllers.Api {
                 return ApiNotFound<List<ExpandedFacilityControlEvent>>($"{nameof(PsAlert)} {alertID}");
             }
 
+            // for alerts that aren't for a specific zone (daily alerts, etc.), don't bother going to the DB,
+            // as no capture has zone id of 0
+            if (alert.ZoneID == 0) {
+                return ApiOk(new List<ExpandedFacilityControlEvent>());
+            }
+
             List<FacilityControlEvent> controls = await _ControlDb.GetEvents(new FacilityControlOptions() {
                 PeriodStart = alert.Timestamp,
                 PeriodEnd = alert.Timestamp + TimeSpan.FromSeconds(alert.Duration),
-                WorldIDs = new List<short>() { alert.WorldID },
+                WorldIDs = [ alert.WorldID ],
                 PlayerThreshold = 0,
                 UnstableState = null,
                 ZoneID = alert.ZoneID

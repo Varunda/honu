@@ -80,6 +80,16 @@
             </a-body>
         </a-col>
 
+        <a-col sort-field="vehicleKills">
+            <a-header>
+                <b>V.Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{ entry.vehicleKills | locale(0) }}
+            </a-body>
+        </a-col>
+
         <a-col sort-field="secondsOnline">
             <a-header>
                 <b>Time online</b>
