@@ -282,6 +282,7 @@ namespace watchtower.Realtime {
                 .Append("PlayerLogin").Append("PlayerLogout")
                 .Append("BattleRankUp")
                 .Append("VehicleDestroy")
+                .Append("FishScan")
                 .Append("FacilityControl").Append("PlayerFacilityCapture").Append("PlayerFacilityDefend")
                 .Append("ContinentLock").Append("ContinentUnlock").Append("MetagameEvent");
 
