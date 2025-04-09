@@ -5,7 +5,7 @@
             {{entry.name}}
 
             <span v-if="showDebug == true">
-                {{entry.directive.id}}
+                directive id: {{entry.directive.id}}, obj set id: {{ entry.directive.objectiveSetID }}
             </span>
 
             <info-hover v-if="entry.description && entry.description.length > 0" :text="entry.description">

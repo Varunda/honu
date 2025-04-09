@@ -195,16 +195,23 @@ namespace watchtower.Controllers.Api {
             return obj;
         }
 
+        /// <summary>
+        ///     will this objective be included based on the faction, 
+        ///     i.e. don't include VS weapons on TR characters
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="factionID"></param>
+        /// <returns></returns>
         private async Task<bool> IncludeObjective(PsObjective obj, short factionID) {
             if (obj.TypeID == 66) {
                 if (int.TryParse(obj.Param1, out int achID) == false) {
-                    _Logger.LogWarning($"Failed to parse objective {obj.ID}'s Parm1 ({obj.Param1}) into a valid int");
+                    _Logger.LogWarning($"Failed to parse objective {obj.ID}'s Param1 ({obj.Param1}) into a valid int");
                     return true;
                 }
 
                 Achievement? ach = await _AchievementRepository.GetByID(achID);
                 if (ach == null) {
-                    _Logger.LogWarning($"Failed to get Achievement {achID}");
+                    _Logger.LogWarning($"Failed to get Achievement [id={achID}]");
                     return true;
                 }
 
@@ -218,6 +225,10 @@ namespace watchtower.Controllers.Api {
                 if (achObj.TypeID == 12) {
                     if (achObj.Param5 != null) {
                         string weaponID = achObj.Param5;
+
+                        if (weaponID == "0" || weaponID == "1") {
+                            return true;
+                        }
 
                         PsItem? weaponItem = await _ItemRepository.GetByID(int.Parse(weaponID));
 
@@ -252,7 +263,7 @@ namespace watchtower.Controllers.Api {
         private async Task<int?> GetObjectiveGoal(PsObjective obj) {
             string? param = null;
 
-            if (obj.TypeID == 66) {
+            if (obj.TypeID == 66) { // 66: achievement count
                 if (obj.Param1 == null) {
                     _Logger.LogWarning($"Param1 of {obj.ID} was null, cannot get Achievement");
                     return null;
@@ -289,7 +300,7 @@ namespace watchtower.Controllers.Api {
             } else {
                 ObjectiveType? type = await _ObjectiveTypeRepository.GetByID(obj.TypeID);
                 if (type == null) {
-                    _Logger.LogError($"Missing objective type {obj.TypeID}");
+                    _Logger.LogError($"missing objective type [typeID={obj.TypeID}]");
                     return null;
                 }
 
@@ -303,17 +314,25 @@ namespace watchtower.Controllers.Api {
                     case 19: param = obj.Param2; break;
                     case 20: param = obj.Param1; break;
                     case 23: param = obj.Param1; break; // character flag
+                    case 27: param = obj.Param1; break; // 27: Change profile, param1=goal count, param2=profile, param3=profile type
                     case 30: param = obj.Param1; break; // meters traveled
+                    case 31: param = "1"; break;        // 31: Join outfit, all params are null
+                    case 33: param = obj.Param1; break; // 33: Player design event, param1=goal count, param2=custom param1, param3=custom param3
+                    case 34: param = obj.Param2; break; // 34: Damage taken: param1=amount, param2=item, param3=item classification
                     case 35: param = obj.Param1; break;
-                    case 40: param = obj.Param1; break; // item count
+                    case 40: param = obj.Param2; break; // 40: Item Count, param1=item id, param2=item count
                     case 69: param = obj.Param1; break;
-                    case 66: _Logger.LogError("what"); break;
+                    case 66: _Logger.LogError("some logic broke here!"); break;
                     case 70: param = obj.Param1; break;
+                    case 74: param = obj.Param1; break; // 74: add friends, param1=count
                     case 89: param = obj.Param5; break;
                     case 90: param = obj.Param1; break;
                     case 91: param = obj.Param1; break;
                     case 92: param = obj.Param1; break;
                     case 93: param = obj.Param1; break;
+                    case 96: param = obj.Param2; break; // 96: Scan Fish, param1=fish, param2=count, param3=any fish
+                    case 97: param = obj.Param2; break; // 97: Earn Currency, param1=current, param2=count
+                    case 98: param = obj.Param2; break; // 98: Consume Item, param1=item, param2=count
 
                     default:
                         _Logger.LogError($"Unchecked objective type id {obj.TypeID}: {JToken.FromObject(type)}");
