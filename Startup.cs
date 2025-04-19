@@ -91,6 +91,8 @@ namespace watchtower {
                     options.CensusServiceNamespace = "ps2";
                     //options.LogCensusErrors = true;
                     options.LogCensusErrors = false;
+                    //options.CensusApiEndpoint = "census.daybreakgames.com";
+                    options.CensusApiEndpoint = "census-proxy.ps2.live";
                 });
             } else {
                 services.AddSingleton<ICensusQueryFactory, OfflineCensusQueryFactory>();
