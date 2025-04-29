@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DaybreakGames.Census" Version="6.0.1" />
+    <PackageReference Include="DaybreakGames.Census" Version="6.0.2" />
     <PackageReference Include="DSharpPlus" Version="4.4.6" />
     <PackageReference Include="DSharpPlus.SlashCommands" Version="4.4.6" />
     <PackageReference Include="Emzi0767.Common" Version="2.6.6" />

@@ -93,6 +93,8 @@ namespace watchtower {
                     options.LogCensusErrors = false;
                     //options.CensusApiEndpoint = "census.daybreakgames.com";
                     options.CensusApiEndpoint = "census-proxy.ps2.live";
+                    options.UserAgent = "honu (varunda on Discord)";
+                    options.UseHttps = true;
                 });
             } else {
                 services.AddSingleton<ICensusQueryFactory, OfflineCensusQueryFactory>();
