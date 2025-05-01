@@ -87,7 +87,7 @@
                     </ul>
 
                     <div id="reconnect-info" class="collapse hide border-top h6 mt-2 pt-2">
-                        <div v-for="reconnect in worldData.reconnects">
+                        <div v-for="reconnect in worldData.reconnects" :key="reconnect.id">
                             {{reconnect.streamType}}@{{reconnect.timestamp | moment("YYYY-MM-DD hh:mm:ssA")}} - {{reconnect.duration | mduration}}
                         </div>
                     </div>
@@ -1026,11 +1026,11 @@
                     const world: string = parts[2].toLowerCase();
                     this.useShort = params.has("short");
 
-                    if (world == "connery" || world == "1") {
-                        document.title = `Honu / Server / Connery`;
+                    if (world == "connery" || world == "osprey" || world == "1") {
+                        document.title = `Honu / Server / Osprey (US)`;
                         this.subscribeToWorld(1, this.useShort);
-                    } else if (world == "miller" || world == "10") {
-                        document.title = `Honu / Server / Miller`;
+                    } else if (world == "miller" || world == "wainwright" ||  world == "10") {
+                        document.title = `Honu / Server / Wainwright (EU)`;
                         this.subscribeToWorld(10, this.useShort);
                     } else if (world == "cobalt" || world == "13") {
                         document.title = `Honu / Server / Cobalt`;

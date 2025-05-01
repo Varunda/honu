@@ -241,10 +241,10 @@
 
                     world: [
                         { key: "All", value: null },
-                        { key: "Connery", value: 1 },
+                        { key: "Osprey (US)", value: 1 },
                         { key: "Cobalt", value: 13 },
                         { key: "Emerald", value: 17 },
-                        { key: "Miller", value: 10 },
+                        { key: "Wainwright (EU)", value: 10 },
                         { key: "Jaeger", value: 19 },
                         { key: "SolTech", value: 40 },
                     ]

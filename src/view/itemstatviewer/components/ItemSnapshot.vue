@@ -226,7 +226,7 @@
                 this.snapshots = await WeaponStatSnapshotApi.getByItemID(Number.parseInt(this.ItemId));
 
                 if (this.snapshots.state == "loaded") {
-                    const sorted: WeaponStatSnapshot[] = this.snapshots.data.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+                    const sorted: WeaponStatSnapshot[] = this.snapshots.data.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
                     this.data = sorted.map((iter: WeaponStatSnapshot, index: number) => {
                         let next: WeaponStatSnapshot | null = null;
@@ -389,7 +389,7 @@
                         id: field
                     };
 
-                    console.log(`Options for ${field} is on ${yaxisIndex}, showing? ${options.visible}, data: ${options.data?.length}`);
+                    console.log(`Options for ${field} is on index ${yaxisIndex}, showing? ${options.visible}, data: ${options.data?.length}`);
 
                     arr.push(options);
                 }

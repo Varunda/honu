@@ -146,7 +146,7 @@
 
                     <tr>
                         <td><b>Start</b></td>
-                        <td>{{session.data.start | moment("YYYY-MM-DD hh:mm:ss")}}</td>
+                        <td>{{session.data.start | moment("YYYY-MM-DD hh:mm:ss A")}}</td>
                     </tr>
 
                     <tr>
@@ -156,7 +156,7 @@
                                 &lt;In progress&gt;
                             </span>
                             <span v-else>
-                                {{session.data.end | moment("YYYY-MM-DD hh:mm:ss")}}
+                                {{session.data.end | moment("YYYY-MM-DD hh:mm:ss A")}}
                             </span>
                         </td>
                     </tr>

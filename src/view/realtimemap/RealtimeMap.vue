@@ -49,8 +49,8 @@
                 </span>
 
                 <select v-model.number="settings.worldID" class="form-control" style="width: 20ch; max-width: 20ch;">
-                    <option :value="1">Connery</option>
-                    <option :value="10">Miller</option>
+                    <option :value="1">Osprey (US)</option>
+                    <option :value="10">Wainwright (EU)</option>
                     <option :value="13">Cobalt</option>
                     <option :value="17">Emerald</option>
                     <option :value="19">Jaeger</option>

@@ -12,17 +12,11 @@
             <h5>Select server</h5>
 
             <div class="btn-group w-100">
-                <button class="btn btn-outline-light text-white" :class="[ worldID == 13 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 13">
-                    Cobalt
-                </button>
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 1 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 1">
-                    Connery
-                </button>
-                <button class="btn btn-outline-light text-white" :class="[ worldID == 17 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 17">
-                    Emerald
+                    Osprey (US)
                 </button>
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 10 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 10">
-                    Miller
+                    Wainwright (EU)
                 </button>
                 <button class="btn btn-outline-light text-white" :class="[ worldID == 40 ? 'btn-success' : 'btn-secondary' ]" @click="worldID = 40">
                     SolTech
@@ -210,9 +204,9 @@
 
                     world: [
                         { value: null, key: "All" },
-                        { value: WorldUtils.Connery, key: "Connery" },
+                        { value: WorldUtils.Osprey, key: "Osprey (US)" },
                         { value: WorldUtils.Cobalt, key: "Cobalt" },
-                        { value: WorldUtils.Miller, key: "Miller" },
+                        { value: WorldUtils.Wainwright, key: "Wainwright (EU)" },
                         { value: WorldUtils.Emerald, key: "Emerald" },
                         { value: WorldUtils.Jaeger, key: "Jaeger" },
                         { value: WorldUtils.SolTech, key: "SolTech" }

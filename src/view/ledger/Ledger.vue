@@ -73,9 +73,10 @@
                 
                 <div class="form-check form-check-inline">
                     <input type="checkbox" class="form-check-input" value="1" v-model.number="filter.worldID" />
-                    <label class="form-check-label">Connery</label>
+                    <label class="form-check-label">Osprey (US)</label>
                 </div>
 
+                <!--
                 <div class="form-check form-check-inline">
                     <input type="checkbox" value="17" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">Emerald</label>
@@ -85,10 +86,11 @@
                     <input type="checkbox" value="13" class="form-check-input" v-model.number="filter.worldID" />
                     <label class="form-check-label">Cobalt</label>
                 </div>
+                -->
 
                 <div class="form-check form-check-inline">
                     <input type="checkbox" value="10" class="form-check-input" v-model.number="filter.worldID" />
-                    <label class="form-check-label">Miller</label>
+                    <label class="form-check-label">Wainwright (EU)</label>
                 </div>
 
                 <div class="form-check form-check-inline">

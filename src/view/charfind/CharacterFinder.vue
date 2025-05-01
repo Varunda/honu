@@ -452,9 +452,9 @@
 
                     world: [
                         { value: null, key: "All" },
-                        { value: WorldUtils.Connery, key: "Connery" },
+                        { value: WorldUtils.Osprey, key: "Osprey (US)" },
                         { value: WorldUtils.Cobalt, key: "Cobalt" },
-                        { value: WorldUtils.Miller, key: "Miller" },
+                        { value: WorldUtils.Wainwright, key: "Wainwright (EU)" },
                         { value: WorldUtils.Emerald, key: "Emerald" },
                         { value: WorldUtils.Jaeger, key: "Jaeger" },
                         { value: WorldUtils.SolTech, key: "SolTech" }

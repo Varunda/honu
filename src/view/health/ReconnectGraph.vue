@@ -244,19 +244,19 @@
 
                 this.chart.data.datasets.forEach((dataset) => {
                     if (dataset.label == "Total") {
-                        dataset.data = this.data.map(iter => iter.total)
+                        dataset.data = this.data.map(iter => iter.total);
                     } else if (dataset.label == "Connery") {
-                        dataset.data = this.data.map(iter => iter.connery)
+                        dataset.data = this.data.map(iter => iter.connery);
                     } else if (dataset.label == "Cobalt") {
-                        dataset.data = this.data.map(iter => iter.cobalt)
+                        dataset.data = this.data.map(iter => iter.cobalt);
                     } else if (dataset.label == "Emerald") {
-                        dataset.data = this.data.map(iter => iter.emerald)
+                        dataset.data = this.data.map(iter => iter.emerald);
                     } else if (dataset.label == "Miller") {
-                        dataset.data = this.data.map(iter => iter.miller)
+                        dataset.data = this.data.map(iter => iter.miller);
                     } else if (dataset.label == "Jaeger") {
-                        dataset.data = this.data.map(iter => iter.jaeger)
+                        dataset.data = this.data.map(iter => iter.jaeger);
                     } else if (dataset.label == "SolTech") {
-                        dataset.data = this.data.map(iter => iter.soltech)
+                        dataset.data = this.data.map(iter => iter.soltech);
                     } else if (dataset.label == "Ceres") {
                         dataset.data = this.data.map(iter => iter.ceres);
                     } else if (dataset.label == "Genudine") {

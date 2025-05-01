@@ -45,8 +45,8 @@
             </div>
 
             <div class="btn-group input-cell">
-                <toggle-button v-model="world.connery">
-                    Connery
+                <toggle-button v-model="world.osprey">
+                    Osprey (US)
                 </toggle-button>
 
                 <toggle-button v-model="world.cobalt">
@@ -57,8 +57,8 @@
                     Emerald
                 </toggle-button>
 
-                <toggle-button v-model="world.miller">
-                    Miller
+                <toggle-button v-model="world.wainwright">
+                    Wainwright (EU)
                 </toggle-button>
 
                 <toggle-button v-model="world.soltech">
@@ -313,10 +313,10 @@
                 count: 50 as number,
 
                 world: {
-                    connery: true as boolean,
+                    osprey: true as boolean,
                     cobalt: true as boolean,
                     emerald: true as boolean,
-                    miller: true as boolean,
+                    wainwright: true as boolean,
                     soltech: true as boolean,
                     jaeger: true as boolean
                 },
@@ -444,10 +444,10 @@
             worlds: function(): number[] {
                 let worlds: number[] = [];
 
-                if (this.world.connery == true) { worlds.push(WorldUtils.Connery ); }
+                if (this.world.osprey == true) { worlds.push(WorldUtils.Osprey); }
                 if (this.world.cobalt == true) { worlds.push(WorldUtils.Cobalt); }
                 if (this.world.emerald == true) { worlds.push(WorldUtils.Emerald); }
-                if (this.world.miller == true) { worlds.push(WorldUtils.Miller); }
+                if (this.world.wainwright == true) { worlds.push(WorldUtils.Wainwright); }
                 if (this.world.soltech == true) { worlds.push(WorldUtils.SolTech); }
                 if (this.world.jaeger == true) { worlds.push(WorldUtils.Jaeger); }
 

@@ -1266,7 +1266,7 @@ namespace watchtower.Realtime {
 
             ExperienceType? expType = await _ExperienceTypeRepository.GetByID(ev.ExperienceID);
             if (timer.ElapsedMilliseconds > 100) {
-                _Logger.LogWarning($"took {timer.ElapsedMilliseconds} to get the exp type of {ev.ExperienceID}");
+                _Logger.LogWarning($"took longer than 100ms to load exp type from repo [expID={ev.ExperienceID}] [timer={timer.ElapsedMilliseconds}ms]");
             }
 
             // this is set below in the lock

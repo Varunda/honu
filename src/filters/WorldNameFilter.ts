@@ -2,11 +2,11 @@
 
 Vue.filter("world", (worldID: number): string => {
 	if (worldID == 1) {
-		return "Connery";
+		return "Osprey (US)";
 	} else if (worldID == 3) {
 		return "Helios (probably)";
 	} else if (worldID == 10) {
-		return "Miller";
+		return "Wainwright (EU)";
 	} else if (worldID == 13) {
 		return "Cobalt";
 	} else if (worldID == 17) {

@@ -8,8 +8,10 @@ namespace watchtower.Code.Constants {
     public class World {
 
         public const short Connery = 1;
+        public const short Osprey = 1;
         public const short Helios = 3; // Likely
         public const short Miller = 10;
+        public const short Wainwright = 10;
         public const short Cobalt = 13;
         public const short Emerald = 17;
         public const short Jaeger = 19;
@@ -38,7 +40,8 @@ namespace watchtower.Code.Constants {
         public static readonly List<short> PcStreams = new() {
             Connery, Miller,
             // Cobalt, // 2024-10-29: merged into Miller, RIP
-            Emerald, Jaeger, SolTech, Apex
+            // Emerald, // 2025-04-08: merged into Connery, RIP
+            Jaeger, SolTech, Apex
         };
 
         /// <summary>
@@ -65,9 +68,9 @@ namespace watchtower.Code.Constants {
         /// <returns></returns>
         public static string GetName(short worldID) {
             switch (worldID) {
-                case Connery: return "Connery";
+                case Osprey: return "Osprey (US)";
                 case Helios: return "Helios";
-                case Miller: return "Miller";
+                case Wainwright: return "Wainwright (EU)";
                 case Cobalt: return "Cobalt";
                 case Emerald: return "Emerald";
                 case Jaeger: return "Jaeger";

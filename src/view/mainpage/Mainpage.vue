@@ -31,19 +31,13 @@
 
         <div class="mb-4">
             <div class="mainpage-grid">
-                <world-overview name="cobalt" display-name="Cobalt" :data="cobalt"></world-overview>
-                <div class="mp-grid-line"></div>
-
-                <world-overview name="connery" display-name="Connery" :data="connery"></world-overview>
-                <div class="mp-grid-line"></div>
-
-                <world-overview name="emerald" display-name="Emerald" :data="emerald"></world-overview>
+                <world-overview name="osprey" display-name="Osprey (US)" :data="osprey"></world-overview>
                 <div class="mp-grid-line"></div>
 
                 <world-overview name="jaeger" display-name="Jaeger" :data="jaeger"></world-overview>
                 <div class="mp-grid-line"></div>
 
-                <world-overview name="miller" display-name="Miller" :data="miller"></world-overview>
+                <world-overview name="wainwright" display-name="Wainwright (EU)" :data="wainwright"></world-overview>
                 <div class="mp-grid-line"></div>
 
                 <world-overview name="soltech" display-name="SolTech" :data="soltech"></world-overview>
@@ -186,6 +180,20 @@
 
         },
 
+        data: function() {
+            return {
+                socketState: "unconnected" as string,
+                connection: null as sR.HubConnection | null,
+                lastUpdate: null as Date | null,
+                worlds: new Map() as Map<number, WorldOverviewData>,
+
+                osprey: null as any | null,
+                jaeger: null as any | null,
+                wainwright: null as any | null,
+                soltech: null as any | null
+            }
+        },
+
         created: function(): void {
             this.connection = new sR.HubConnectionBuilder()
                 .withUrl("/ws/overview")
@@ -203,11 +211,9 @@
 
                 //console.log(Array.from(this.worlds.values()));
 
-                this.cobalt = this.worlds.get(13) || null;
-                this.connery = this.worlds.get(1) || null;
-                this.emerald = this.worlds.get(17) || null;
+                this.osprey = this.worlds.get(1) || null;
                 this.jaeger = this.worlds.get(19) || null;
-                this.miller = this.worlds.get(10) || null;
+                this.wainwright = this.worlds.get(10) || null;
                 this.soltech = this.worlds.get(40) || null;
             });
 
@@ -238,21 +244,6 @@
             });
 
             document.title = "Honu / Homepage";
-        },
-
-        data: function() {
-            return {
-                socketState: "unconnected" as string,
-                connection: null as sR.HubConnection | null,
-                lastUpdate: null as Date | null,
-                worlds: new Map() as Map<number, WorldOverviewData>,
-                cobalt: null as any | null,
-                connery: null as any | null,
-                emerald: null as any | null,
-                jaeger: null as any | null,
-                miller: null as any | null,
-                soltech: null as any | null
-            }
         },
 
         methods: {

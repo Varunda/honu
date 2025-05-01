@@ -62,12 +62,12 @@
                         All servers
                     </toggle-button>
 
-                    <toggle-button class="w-100" v-model="worlds.connery" false-color="btn-secondary">
-                        Connery
+                    <toggle-button class="w-100" v-model="worlds.osprey" false-color="btn-secondary">
+                        Osprey (US)
                     </toggle-button>
 
-                    <toggle-button class="w-100" v-model="worlds.miller" false-color="btn-secondary">
-                        Miller
+                    <toggle-button class="w-100" v-model="worlds.wainwright" false-color="btn-secondary">
+                        Wainwright (EU)
                     </toggle-button>
 
                     <toggle-button class="w-100" v-model="worlds.cobalt" false-color="btn-secondary">
@@ -241,8 +241,8 @@
 
                 worlds: {
                     all: true as boolean,
-                    connery: false as boolean,
-                    miller: false as boolean,
+                    osprey: false as boolean,
+                    wainwright: false as boolean,
                     cobalt: false as boolean,
                     emerald: false as boolean,
                     soltech: false as boolean,
@@ -488,8 +488,8 @@
                 const w: number[] = [];
 
                 if (this.worlds.all == true) { w.push(0); } // 0 for aggregate of all
-                if (this.worlds.connery == true) { w.push(WorldUtils.Connery); }
-                if (this.worlds.miller == true) { w.push(WorldUtils.Miller); }
+                if (this.worlds.osprey == true) { w.push(WorldUtils.Osprey); }
+                if (this.worlds.wainwright == true) { w.push(WorldUtils.Wainwright); }
                 if (this.worlds.cobalt == true) { w.push(WorldUtils.Cobalt); }
                 if (this.worlds.emerald == true) { w.push(WorldUtils.Emerald); }
                 if (this.worlds.jaeger == true) { w.push(WorldUtils.Jaeger); }

@@ -158,11 +158,9 @@
 
                     worlds: [
                         { key: "All", value: null },
-                        { key: "Cobalt", value: WorldUtils.Cobalt },
-                        { key: "Connery", value: WorldUtils.Connery },
-                        { key: "Emerald", value: WorldUtils.Emerald },
+                        { key: "Osprey (US)", value: WorldUtils.Osprey },
                         { key: "Jaeger", value: WorldUtils.Jaeger },
-                        { key: "Miller", value: WorldUtils.Miller },
+                        { key: "Wainwright (EU)", value: WorldUtils.Wainwright },
                         { key: "SolTech", value: WorldUtils.SolTech },
                     ]
                 }

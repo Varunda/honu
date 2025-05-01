@@ -48,12 +48,12 @@ export const MenuRealtime = Vue.extend({
         <li class="dropdown-submenu">
             <span class="dropdown-item dropdown-toggle">Realtime</span>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/view/cobalt">Cobalt &#x1FAE1;</a></li>
-                <li><a class="dropdown-item" href="/view/connery">Connery</a></li>
-                <li><a class="dropdown-item" href="/view/emerald">Emerald</a></li>
+                <li><a class="dropdown-item" href="/view/osprey">Osprey (US)</a></li>
                 <li><a class="dropdown-item" href="/view/jaeger">Jaeger</a></li>
-                <li><a class="dropdown-item" href="/view/miller">Miller</a></li>
+                <li><a class="dropdown-item" href="/view/wainwright">Wainwright (EU)</a></li>
                 <li><a class="dropdown-item" href="/view/soltech">SolTech</a></li>
+                <li><a class="dropdown-item" href="/view/cobalt">Cobalt &#x1FAE1;</a></li>
+                <li><a class="dropdown-item" href="/view/emerald">Emerald &#x1FAE1;</a></li>
             </ul>
         </li>
     `,
@@ -85,10 +85,9 @@ export const MenuRealtimeNetwork = Vue.extend({
         <li class="dropdown-submenu">
             <span class="dropdown-item dropdown-toggle">Realtime Networks</span>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/realtimenetwork/1">Connery</a></li>
-                <li><a class="dropdown-item" href="/realtimenetwork/17">Emerald</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/1">Osprey (US)</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/19">Jaeger</a></li>
-                <li><a class="dropdown-item" href="/realtimenetwork/10">Miller</a></li>
+                <li><a class="dropdown-item" href="/realtimenetwork/10">Wainwright (EU)</a></li>
                 <li><a class="dropdown-item" href="/realtimenetwork/40">SolTech</a></li>
             </ul>
         </li>
