@@ -75,12 +75,17 @@ namespace watchtower.Controllers {
         }
 
         public IActionResult CharacterViewer(string charID) {
-            _Queue.Queue(charID);
+            // only put characters that are a valid character ID into the queue
+            if (long.TryParse(charID, out _) == true) {
+                _Queue.Queue(charID);
 
-            if (_HttpContextAccessor.HttpContext != null && _HttpUtil.IsSearchEngineBot(_HttpContextAccessor.HttpContext) == false) {
-                _PriorityQueue.Queue(charID);
+                if (_HttpContextAccessor.HttpContext != null && _HttpUtil.IsSearchEngineBot(_HttpContextAccessor.HttpContext) == false) {
+                    _PriorityQueue.Queue(charID);
+                } else {
+                    _Logger.LogInformation($"Not putting character into priority queue as it came from a search bot [charID={charID}]");
+                }
             } else {
-                _Logger.LogInformation($"Not putting {charID} into priority queue as it came from a search bot");
+                _Logger.LogWarning($"not queueing invalid charID [charID='{charID}']");
             }
 
             return View();
