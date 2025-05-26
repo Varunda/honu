@@ -70,6 +70,16 @@
                 </td>
             </tr>
 
+            <tr>
+                <td>Vehicle kills</td>
+                <td>
+                    {{ vehicleKills.length }}
+                </td>
+                <td>
+                    {{ vehicleKills.length / durationInSeconds * 60 | locale(2) }}
+                </td>
+            </tr>
+
             <tr v-if="classPlaytime.medic.secondsAs > 0">
                 <td>Revives</td>
                 <td>
@@ -122,6 +132,7 @@
                 <th>Deaths</th>
                 <th>K/D</th>
                 <th>KPM</th>
+                <th>V.Kills</th>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.infil.secondsAs == 0 }">
@@ -137,6 +148,7 @@
                 <td>{{classPlaytime.infil.deaths}}</td>
                 <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.infil.kills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.infil.vkills / Math.max(classPlaytime.infil.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.lightAssault.secondsAs == 0 }">
@@ -152,6 +164,7 @@
                 <td>{{classPlaytime.lightAssault.deaths}}</td>
                 <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.lightAssault.kills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.lightAssault.vkills / Math.max(classPlaytime.lightAssault.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.medic.secondsAs == 0 }">
@@ -167,6 +180,7 @@
                 <td>{{classPlaytime.medic.deaths}}</td>
                 <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.medic.kills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.medic.vkills / Math.max(classPlaytime.medic.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.engineer.secondsAs == 0 }">
@@ -182,6 +196,7 @@
                 <td>{{classPlaytime.engineer.deaths}}</td>
                 <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.engineer.kills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.engineer.vkills / Math.max(classPlaytime.engineer.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.heavy.secondsAs == 0 }">
@@ -197,6 +212,7 @@
                 <td>{{classPlaytime.heavy.deaths}}</td>
                 <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.heavy.kills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.heavy.vkills / Math.max(classPlaytime.heavy.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr :class="{ 'text-muted': classPlaytime.max.secondsAs == 0 }">
@@ -212,6 +228,7 @@
                 <td>{{classPlaytime.max.deaths}}</td>
                 <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.deaths, 1) | locale(2)}}</td>
                 <td>{{classPlaytime.max.kills / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
+                <td>{{classPlaytime.max.vkills / Math.max(classPlaytime.max.secondsAs, 1) * 60 | locale(2)}}</td>
             </tr>
 
             <tr class="table-secondary">
@@ -232,6 +249,9 @@
                 </td>
                 <td>
                     {{(kills.length / Math.max(1, durationInSeconds) * 60).toFixed(2)}}
+                </td>
+                <td>
+                    {{ (vehicleKills.length / Math.max(1, durationInSeconds) * 60) | locale(2) }}
                 </td>
             </tr>
         </table>
@@ -255,10 +275,12 @@
 
     import { ExpandedKillEvent, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
+    import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
     import { Session } from "api/SessionApi";
 
     import Loadout from "util/Loadout";
     import TimeUtils from "util/Time";
+    import { FullVehicleDestroyEvent } from "../common";
 
     interface LoadoutEvent {
         loadoutID: number;
@@ -270,6 +292,7 @@
         public kills: number = 0;
         public deaths: number = 0;
         public score: number = 0;
+        public vkills: number = 0;
     }
 
     export const SessionViewerGeneral = Vue.extend({
@@ -278,6 +301,8 @@
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             kills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             deaths: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
+            vehicleKills: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
+            vehicleDeaths: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
             duration: { type: Number, required: true },
             FullExp: { type: Boolean, required: true }
         },
@@ -440,26 +465,32 @@
 
                 this.classPlaytime.infil.kills = this.kills.filter(iter => Loadout.isInfiltrator(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.infil.deaths = this.deaths.filter(iter => Loadout.isInfiltrator(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.infil.vkills = this.vehicleKills.filter(iter => Loadout.isInfiltrator(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.infil.score = expFilter((ev: ExpEvent) => Loadout.isInfiltrator(ev.loadoutID));
 
                 this.classPlaytime.lightAssault.kills = this.kills.filter(iter => Loadout.isLightAssault(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.lightAssault.deaths = this.deaths.filter(iter => Loadout.isLightAssault(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.lightAssault.vkills = this.vehicleKills.filter(iter => Loadout.isLightAssault(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.lightAssault.score = expFilter((ev: ExpEvent) => Loadout.isLightAssault(ev.loadoutID));
 
                 this.classPlaytime.medic.kills = this.kills.filter(iter => Loadout.isMedic(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.medic.deaths = this.deaths.filter(iter => Loadout.isMedic(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.medic.vkills = this.vehicleKills.filter(iter => Loadout.isMedic(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.medic.score = expFilter((ev: ExpEvent) => Loadout.isMedic(ev.loadoutID));
 
                 this.classPlaytime.engineer.kills = this.kills.filter(iter => Loadout.isEngineer(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.engineer.deaths = this.deaths.filter(iter => Loadout.isEngineer(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.engineer.vkills = this.vehicleKills.filter(iter => Loadout.isEngineer(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.engineer.score = expFilter((ev: ExpEvent) => Loadout.isEngineer(ev.loadoutID));
 
                 this.classPlaytime.heavy.kills = this.kills.filter(iter => Loadout.isHeavy(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.heavy.deaths = this.deaths.filter(iter => Loadout.isHeavy(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.heavy.vkills = this.vehicleKills.filter(iter => Loadout.isHeavy(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.heavy.score = expFilter((ev: ExpEvent) => Loadout.isHeavy(ev.loadoutID));
 
                 this.classPlaytime.max.kills = this.kills.filter(iter => Loadout.isMax(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.max.deaths = this.deaths.filter(iter => Loadout.isMax(iter.event.killedLoadoutID)).length;
+                this.classPlaytime.max.vkills = this.vehicleKills.filter(iter => Loadout.isMax(iter.event.attackerLoadoutID)).length;
                 this.classPlaytime.max.score = expFilter((ev: ExpEvent) => Loadout.isMax(ev.loadoutID));
 
                 if (this.chart == null) {

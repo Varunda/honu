@@ -62,7 +62,7 @@
             </a-header>
 
             <a-body v-slot="entry">
-                {{entry.uses / total * 100 | locale(2)}}%
+                {{entry.uses / Math.max(1, total) * 100 | locale(2)}}%
             </a-body>
         </a-col>
 
@@ -73,7 +73,7 @@
 
             <a-body v-slot="entry">
                 {{entry.headshot | locale(0)}}
-                ({{entry.headshot / entry.uses * 100 | locale(2)}}%)
+                ({{entry.headshot / Math.max(1, entry.uses) * 100 | locale(2)}}%)
             </a-body>
         </a-col>
 
@@ -85,7 +85,7 @@
 
             <a-body v-slot="entry">
                 {{entry.hip}}
-                ({{entry.hip / entry.uses * 100 | locale(2)}}%)
+                ({{entry.hip / Math.max(1, entry.uses) * 100 | locale(2)}}%)
             </a-body>
         </a-col>
 
@@ -97,7 +97,17 @@
 
             <a-body v-slot="entry">
                 {{entry.ads}}
-                ({{entry.ads / entry.uses * 100 | locale(2)}}%)
+                ({{entry.ads / Math.max(1, entry.uses) * 100 | locale(2)}}%)
+            </a-body>
+        </a-col>
+
+        <a-col sort-field="vehicleUses">
+            <a-header>
+                <b>V.Kills</b>
+            </a-header>
+
+            <a-body v-slot="entry">
+                {{ entry.vehicleUses }}
             </a-body>
         </a-col>
     </a-table>

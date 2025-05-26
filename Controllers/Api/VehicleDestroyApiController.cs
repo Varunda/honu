@@ -27,11 +27,12 @@ namespace watchtower.Controllers.Api {
         private readonly CharacterRepository _CharacterRepository;
         private readonly VehicleRepository _VehicleRepository;
         private readonly ItemRepository _ItemRepository;
+        private readonly ItemCategoryRepository _ItemCategoryRepository;
 
         public VehicleDestroyApiController(ILogger<VehicleDestroyApiController> logger,
             VehicleDestroyDbStore vehicleDestroyDb, SessionDbStore sessionDb,
             CharacterRepository charRepo, VehicleRepository vehRepo,
-            ItemRepository itemRepo) {
+            ItemRepository itemRepo, ItemCategoryRepository itemCategoryRepository) {
 
             _Logger = logger;
 
@@ -40,6 +41,7 @@ namespace watchtower.Controllers.Api {
             _CharacterRepository = charRepo;
             _VehicleRepository = vehRepo;
             _ItemRepository = itemRepo;
+            _ItemCategoryRepository = itemCategoryRepository;
         }
 
         /// <summary>
@@ -90,6 +92,40 @@ namespace watchtower.Controllers.Api {
             }
 
             return ApiOk(exs);
+        }
+
+        [HttpGet("session/{sessionID}/block")]
+        public async Task<ApiResponse<VehicleKillDeathBlock>> GetBySessionIDBlock(long sessionID) {
+            Session? session = await _SessionDb.GetByID(sessionID);
+            if (session == null) {
+                return ApiNotFound<VehicleKillDeathBlock>($"{nameof(Session)} {sessionID}");
+            }
+
+            List<VehicleDestroyEvent> events = await _VehicleDestroyDb.GetByCharacterID(session.CharacterID, session.Start, session.End ?? DateTime.UtcNow);
+
+            VehicleKillDeathBlock block = new();
+            block.Kills = events.Where(iter => iter.AttackerCharacterID == session.CharacterID && iter.KilledCharacterID != session.CharacterID).ToList();
+            block.Deaths = events.Where(iter => iter.KilledCharacterID == session.CharacterID).ToList();
+
+            // load characters
+            List<string> IDs = events.Select(iter => iter.AttackerCharacterID).Distinct().ToList();
+            IDs.AddRange(events.Select(iter => iter.KilledCharacterID).Distinct());
+            block.Characters = await _CharacterRepository.GetByIDs(IDs, CensusEnvironment.PC);
+
+            // load items
+            IEnumerable<int> itemIDs = events.Select(iter => iter.AttackerWeaponID).Distinct();
+            block.Weapons = await _ItemRepository.GetByIDs(itemIDs);
+
+            // load item categories
+            IEnumerable<int> categoryIDs = block.Weapons.Select(iter => iter.CategoryID).Distinct();
+            block.ItemCategories = await _ItemCategoryRepository.GetByIDs(categoryIDs);
+
+            // load vehicles
+            List<int> vehicleIDs = events.Select(iter => int.Parse(iter.AttackerVehicleID)).Distinct().ToList();
+            vehicleIDs.AddRange(events.Select(iter => int.Parse(iter.KilledVehicleID)).Distinct());
+            block.Vehicles = await _VehicleRepository.GetByIDs(vehicleIDs);
+
+            return ApiOk(block);
         }
 
     }

@@ -141,6 +141,7 @@
     import ColorUtils from "util/Color";
     import LoadoutUtils from "util/Loadout";
     import UserStorageUtil from "util/UserStorage";
+import { FullVehicleDestroyEvent } from "../common";
 
     type LogPart = {
         html: string;
@@ -178,7 +179,8 @@
             teamkills: { type: Array as PropType<ExpandedKillEvent[]>, required: true },
             exp: { type: Object as PropType<ExperienceBlock>, required: true },
             ExpOther: { type: Object as PropType<ExperienceBlock>, required: true },
-            VehicleDestroy: { type: Array as PropType<ExpandedVehicleDestroyEvent[]>, required: true },
+            VehicleKills: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
+            VehicleDeaths: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
             ItemAdded: { type: Array as PropType<ExpandedItemAddedEvent[]>, required: true },
             AchievementEarned: { type: Object as PropType<AchievementEarnedBlock>, required: true }
         },
@@ -696,7 +698,7 @@
              * Make log entries for vehicle kills/deaths
              */
             makeVehicleDestroy: function(): ActionLogEntry[] {
-                const entries: ActionLogEntry[] = this.VehicleDestroy.map(iter => {
+                const entries: ActionLogEntry[] = this.VehicleKills.map(iter => {
                     const entry: ActionLogEntry = {
                         parts: [
                             this.createLoadoutIcon(iter.event.attackerLoadoutID),
@@ -715,6 +717,26 @@
 
                     return entry;
                 });
+
+                this.entries.push(...this.VehicleDeaths.map(iter => {
+                    const entry: ActionLogEntry = {
+                        parts: [
+                            this.createLoadoutIcon(iter.event.attackerLoadoutID),
+                            this.createCharacterLink(iter.attacker, iter.event.attackerCharacterID),
+                            this.createLogText(`destroyed`),
+                            this.createCharacterLink(iter.killed, iter.event.killedCharacterID, { possessive: true }),
+                            this.createLogText(`${iter.killedVehicle?.name ?? `&lt;missing vehicle ${iter.event.killedVehicleID}&gt;`}`),
+                            this.createLogText(`using the`),
+                            this.createLogText((iter.event.attackerVehicleID == "0") ? "": `${iter.attackerVehicle?.name ?? `&lt;missing vehicle ${iter.event.attackerVehicleID}&gt;`}'s`),
+                            { html: (iter.event.attackerWeaponID == 0) ? "no weapon" : this.createLink(iter.item?.name ?? `&lt;missing ${iter.event.attackerWeaponID}&gt;`, `/i/${iter.event.attackerWeaponID}`) },
+                        ],
+                        timestamp: iter.event.timestamp,
+                        type: "vehicle_destroy",
+                        event: iter.event,
+                    };
+
+                    return entry;
+                }));
 
                 return entries;
             },

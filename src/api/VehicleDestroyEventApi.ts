@@ -4,6 +4,7 @@ import { Loading, Loadable } from "Loading";
 import { PsCharacter, CharacterApi } from "api/CharacterApi";
 import { PsItem, ItemApi } from "api/ItemApi";
 import { PsVehicle, VehicleApi } from "api/VehicleApi";
+import { ItemCategory } from "./ItemCategoryApi";
 
 export class VehicleDestroyEvent {
     public id: number = 0;
@@ -32,6 +33,16 @@ export class ExpandedVehicleDestroyEvent {
     public item: PsItem | null = null;
 }
 
+export class VehicleKillDeathBlock {
+    public kills: VehicleDestroyEvent[] = [];
+    public deaths: VehicleDestroyEvent[] = [];
+
+    public characters: Map<string, PsCharacter> = new Map();
+    public weapons: Map<number, PsItem> = new Map();
+    public itemCategories: Map<number, ItemCategory> = new Map();
+    public vehicles: Map<number, PsVehicle> = new Map();
+}
+
 export class VehicleDestroyEventApi extends ApiWrapper<VehicleDestroyEvent> {
 
     private static _instance: VehicleDestroyEventApi = new VehicleDestroyEventApi();
@@ -55,8 +66,38 @@ export class VehicleDestroyEventApi extends ApiWrapper<VehicleDestroyEvent> {
         };
     }
 
-    public static getBySessionID(sessionID: number): Promise<Loading<ExpandedVehicleDestroyEvent[]>> {
-        return VehicleDestroyEventApi.get().readList(`/api/vehicle-destroy/session/${sessionID}`, VehicleDestroyEventApi.parseExpanded);
+    public static parseBlock(elem: any): VehicleKillDeathBlock {
+        const block: VehicleKillDeathBlock = new VehicleKillDeathBlock();
+
+        for (const cat of elem.itemCategories) {
+            block.itemCategories.set(cat.id, { ...cat });
+        }
+
+        for (const kill of elem.kills) {
+            block.kills.push(VehicleDestroyEventApi.parse(kill));
+        }
+
+        for (const death of elem.deaths) {
+            block.deaths.push(VehicleDestroyEventApi.parse(death));
+        }
+
+        for (const char of elem.characters) {
+            block.characters.set(char.id, CharacterApi.parse(char));
+        }
+
+        for (const weapon of elem.weapons) {
+            block.weapons.set(weapon.id, ItemApi.parse(weapon));
+        }
+
+        for (const veh of elem.vehicles) {
+            block.vehicles.set(veh.id, VehicleApi.parse(veh));
+        }
+
+        return block;
+    }
+
+    public static getBySessionID(sessionID: number): Promise<Loading<VehicleKillDeathBlock>> {
+        return VehicleDestroyEventApi.get().readSingle(`/api/vehicle-destroy/session/${sessionID}/block`, VehicleDestroyEventApi.parseBlock);
     }
 
 }

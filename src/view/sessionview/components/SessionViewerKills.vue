@@ -111,7 +111,7 @@
             </h3>
 
             <div class="d-flex flex-wrap justify-content-center">
-                <div class="flex-grow-1 flex-basis-0 mr-4">
+                <div class="flex-grow-1 flex-basis-0 mr-3">
                     <h3>Weapon kills</h3>
 
                     <session-view-kills-item-table :entries="uses.kill" :show-category="true" :total="kills.length">
@@ -164,7 +164,7 @@
     import Vue, { PropType } from "vue";
     import { Loading, Loadable } from "Loading";
 
-    import { FullKillEvent } from "../common";
+    import { FullKillEvent, FullVehicleDestroyEvent } from "../common";
 
     import "MomentFilter";
     import "filters/FixedFilter";
@@ -182,6 +182,7 @@
     import { Session } from "api/SessionApi";
     import { PsCharacter } from "api/CharacterApi";
     import { PsVehicle, VehicleApi } from "api/VehicleApi";
+    import { ExpandedVehicleDestroyEvent } from "api/VehicleDestroyEventApi";
 
     import ChartTimestamp from "./ChartTimestamp.vue";
     import SessionViewKillsItemTable from "./SessionViewKillsItemTable.vue";
@@ -220,6 +221,7 @@
         public headshot: number = 0;
         public hip: number = 0;
         public ads: number = 0;
+        public vehicleUses: number = 0;
     }
 
     export const SessionViewerKills = Vue.extend({
@@ -227,6 +229,8 @@
             session: { type: Object as PropType<Session>, required: true },
             kills: { type: Array as PropType<FullKillEvent[]>, required: true },
             deaths: { type: Array as PropType<FullKillEvent[]>, required: true },
+            vehicleKills: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
+            vehicleDeaths: { type: Array as PropType<FullVehicleDestroyEvent[]>, required: true },
         },
 
         data: function() {
@@ -269,15 +273,16 @@
             },
 
             generateAllWeaponUses: function(): void {
-                this.uses.kill = Loadable.loaded(this.generateWeaponUses(this.kills, "item"));
-                this.uses.killType = Loadable.loaded(this.generateWeaponUses(this.kills, "category"));
-                this.uses.death = Loadable.loaded(this.generateWeaponUses(this.deaths, "item"));
-                this.uses.deathType = Loadable.loaded(this.generateWeaponUses(this.deaths, "category"));
+                this.uses.kill = Loadable.loaded(this.generateWeaponUses({ weapon: this.kills, vehicle: this.vehicleKills }, "item"));
+                this.uses.killType = Loadable.loaded(this.generateWeaponUses({ weapon: this.kills, vehicle: this.vehicleKills }, "category"));
+                this.uses.death = Loadable.loaded(this.generateWeaponUses({ weapon: this.deaths, vehicle: this.vehicleDeaths }, "item"));
+                this.uses.deathType = Loadable.loaded(this.generateWeaponUses({ weapon: this.deaths, vehicle: this.vehicleDeaths }, "category"));
             },
 
-            generateWeaponUses: function(events: FullKillEvent[], selector: "item" | "category"): WeaponUses[] {
+            generateWeaponUses: function(events: { weapon: FullKillEvent[], vehicle: FullVehicleDestroyEvent[] }, selector: "item" | "category"): WeaponUses[] {
+
                 const map: Map<number, WeaponUses> = new Map();
-                for (const kill of events) {
+                for (const kill of events.weapon) {
                     let entryID: number;
 
                     if (selector == "item") {
@@ -323,6 +328,44 @@
                     } else if (kill.fireGroupToFireMode == null) {
                         console.warn(`missing fireGroupToFireMode for ${kill.event.attackerFireModeID}`);
                     }
+
+                    map.set(entryID, uses);
+                }
+
+                for (const vkill of events.vehicle) {
+                    let entryID: number;
+
+                    if (selector == "item") {
+                        entryID = vkill.event.attackerWeaponID;
+                    } else if (selector == "category") {
+                        entryID = vkill.item?.categoryID ?? -1;
+                    } else {
+                        throw `unchecked selector ${selector}`;
+                    }
+
+                    let uses: WeaponUses | undefined = map.get(entryID);
+
+                    if (uses == undefined) {
+                        uses = new WeaponUses();
+                        uses.id = entryID;
+
+                        if (vkill.event.attackerWeaponID == 0) {
+                            uses.name = "no weapon";
+                            uses.categoryID = -1;
+                            uses.categoryName = "no weapon";
+                        } else {
+                            if (selector == "item") {
+                                uses.name = vkill.item?.name ?? `<missing ${entryID}>`;
+                            } else if (selector == "category") {
+                                uses.name = vkill.itemCategory?.name ?? `$<missing ${vkill.item?.categoryID ?? -1}>`;
+                            }
+                            // this info is redundant for the category lists, but whatever lol
+                            uses.categoryID = vkill.item?.categoryID ?? -1;
+                            uses.categoryName = vkill.itemCategory?.name ?? `<missing ${vkill.item?.categoryID ?? -1}>`;
+                        }
+                    }
+
+                    ++uses.vehicleUses;
 
                     map.set(entryID, uses);
                 }

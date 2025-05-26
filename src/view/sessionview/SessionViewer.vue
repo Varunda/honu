@@ -232,7 +232,7 @@
                         <td>
                             <data-load-cell :loading="vehicleDestroy"></data-load-cell>
                             <span v-if="vehicleDestroy.state == 'loaded'">
-                                ({{vehicleDestroy.data.length}})
+                                ({{vehicleDestroy.data.kills.length + vehicleDestroy.data.deaths.length}})
                             </span>
                         </td>
                     </tr>
@@ -295,13 +295,14 @@
 
             <div v-if="showCharts == true">
                 <collapsible header-text="Summary" id="session-general" class="mb-3">
-                    <div v-if="exp.state == 'loading' || fullKills.state == 'loading'">
+                    <div v-if="exp.state == 'loading' || fullKills.state == 'loading' || vehicleDestroy.state == 'loading'">
                         <busy style="max-height: 1.25rem;"></busy>
                         Loading...
                     </div>
 
-                    <session-viewer-general v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded'"
-                        :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :full-exp="showFullExp" :duration="durationInSeconds2">
+                    <session-viewer-general v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                        :session="session.data" :exp="exp.data" :kills="kills" :deaths="deaths" :vehicle-kills="vehicleKills" :vehicle-deaths="vehicleDeaths"
+                        :full-exp="showFullExp" :duration="durationInSeconds2">
                     </session-viewer-general>
                 </collapsible>
 
@@ -311,8 +312,8 @@
                         Loading...
                     </div>
 
-                    <session-viewer-kills v-else-if="fullKills.state == 'loaded'"
-                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :session="session.data" :full-exp="showFullExp">
+                    <session-viewer-kills v-else-if="fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'"
+                        :kills="kills" :deaths="deaths" :teamkills="teamkills" :session="session.data" :vehicle-kills="vehicleKills" :vehicle-deaths="vehicleDeaths" :full-exp="showFullExp">
                     </session-viewer-kills>
                 </collapsible>
 
@@ -386,10 +387,12 @@
                         Loading...
                     </div>
 
-                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded' && expOther.state == 'loaded' && achievementsEarned.state == 'loaded'"
+                    <session-action-log v-else-if="exp.state == 'loaded' && fullKills.state == 'loaded' && vehicleDestroy.state == 'loaded'
+                        && expOther.state == 'loaded' && achievementsEarned.state == 'loaded' && character.state == 'loaded'"
+
                         :session="session.data" :character="character.data"
                         :kills="kills" :deaths="deaths" :teamkills="teamkills" :item-added="itemAddedEvents" :achievement-earned="achievementsEarned.data"
-                        :exp="exp.data" :exp-other="expOther.data" :vehicle-destroy="vehicleDestroyEvents" :full-exp="showFullExp">
+                        :exp="exp.data" :exp-other="expOther.data" :vehicle-kills="vehicleKills" :vehicle-deaths="vehicleDeaths" full-exp="showFullExp">
                     </session-action-log>
                 </collapsible>
 
@@ -447,7 +450,7 @@
 
     import { ExpandedKillEvent, KillDeathBlock, KillEvent, KillStatApi } from "api/KillStatApi";
     import { Experience, ExpandedExpEvent, ExpEvent, ExpStatApi, ExperienceBlock } from "api/ExpStatApi";
-    import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi } from "api/VehicleDestroyEventApi";
+    import { ExpandedVehicleDestroyEvent, VehicleDestroyEvent, VehicleDestroyEventApi, VehicleKillDeathBlock } from "api/VehicleDestroyEventApi";
     import { AchievementEarnedBlock, AchievementEarnedApi } from "api/AchievementEarnedApi";
     import { Session, SessionApi } from "api/SessionApi";
     import { PsCharacter, CharacterApi } from "api/CharacterApi";
@@ -459,6 +462,8 @@
 
     import * as ds from "node_modules/nouislider/dist/nouislider";
     import "node_modules/nouislider/dist/nouislider.css";
+
+    import { FullVehicleDestroyEvent } from "./common";
 
     type FullKillEvent = ExpandedKillEvent & { itemCategory: ItemCategory | null };
 
@@ -530,11 +535,16 @@
                 killBlock: Loadable.idle() as Loading<KillDeathBlock>,
                 fullKills: Loadable.idle() as Loading<FullKillEvent[]>,
                 fullDeaths: Loadable.idle() as Loading<FullKillEvent[]>,
+
                 exp: Loadable.idle() as Loading<ExperienceBlock>,
                 allExp: [] as ExpEvent[],
                 expOther: Loadable.idle() as Loading<ExperienceBlock>,
                 allOtherExp: [] as ExpEvent[],
-                vehicleDestroy: Loadable.idle() as Loading<ExpandedVehicleDestroyEvent[]>,
+
+                vehicleDestroy: Loadable.idle() as Loading<VehicleKillDeathBlock>,
+                fullVehicleKills: Loadable.idle() as Loading<FullVehicleDestroyEvent[]>,
+                fullVehicleDeaths: Loadable.idle() as Loading<FullVehicleDestroyEvent[]>,
+
                 achievementsEarned: Loadable.idle() as Loading<AchievementEarnedBlock>,
                 itemAddedBlock: Loadable.idle() as Loading<ItemAddedEventBlock>,
 
@@ -748,7 +758,41 @@
 
             bindVehicleDestroy: async function(): Promise<void> {
                 this.vehicleDestroy = Loadable.loading();
-                this.vehicleDestroy = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+                const block: Loading<VehicleKillDeathBlock> = await VehicleDestroyEventApi.getBySessionID(this.sessionID);
+                this.vehicleDestroy = block;
+
+                if (block.state != "loaded") {
+                    this.fullVehicleKills = Loadable.rewrap(this.vehicleDestroy);
+                    this.fullVehicleDeaths = Loadable.rewrap(this.vehicleDestroy);
+                    return;
+                }
+
+                this.fullVehicleKills = Loadable.loaded(block.data.kills.map((iter: VehicleDestroyEvent): FullVehicleDestroyEvent => {
+                    const item: PsItem | null = block.data.weapons.get(iter.attackerWeaponID) ?? null;
+                    return {
+                        event: iter,
+                        attacker: block.data.characters.get(iter.attackerCharacterID) ?? null,
+                        killed: block.data.characters.get(iter.killedCharacterID) ?? null,
+                        item: item,
+                        itemCategory: (item == null) ? null : block.data.itemCategories.get(item.categoryID) ?? null,
+                        attackerVehicle: block.data.vehicles.get(Number.parseInt(iter.attackerVehicleID)) ?? null,
+                        killedVehicle: block.data.vehicles.get(Number.parseInt(iter.killedVehicleID)) ?? null
+                    };
+                }));
+
+                this.fullVehicleDeaths = Loadable.loaded(block.data.deaths.map((iter: VehicleDestroyEvent): FullVehicleDestroyEvent => {
+                    const item: PsItem | null = block.data.weapons.get(iter.attackerWeaponID) ?? null;
+                    return {
+                        event: iter,
+                        attacker: block.data.characters.get(iter.attackerCharacterID) ?? null,
+                        killed: block.data.characters.get(iter.killedCharacterID) ?? null,
+                        item: item,
+                        itemCategory: (item == null) ? null : block.data.itemCategories.get(item.categoryID) ?? null,
+                        attackerVehicle: block.data.vehicles.get(Number.parseInt(iter.attackerVehicleID)) ?? null,
+                        killedVehicle: block.data.vehicles.get(Number.parseInt(iter.killedVehicleID)) ?? null
+                    };
+                }));
+
                 this.checkAllAndScroll();
             },
 
@@ -894,12 +938,21 @@
                     && iter.event.timestamp.getTime() <= this.range.end.getTime());
             },
 
-            vehicleDestroyEvents: function(): ExpandedVehicleDestroyEvent[] {
-                if (this.vehicleDestroy.state != "loaded") {
+            vehicleKills: function(): FullVehicleDestroyEvent[] {
+                if (this.fullVehicleKills.state != "loaded") {
                     return [];
                 }
 
-                return this.vehicleDestroy.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
+                return this.fullVehicleKills.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
+                    && iter.event.timestamp.getTime() <= this.range.end.getTime());
+            },
+
+            vehicleDeaths: function(): FullVehicleDestroyEvent[] {
+                if (this.fullVehicleDeaths.state != "loaded") {
+                    return [];
+                }
+
+                return this.fullVehicleDeaths.data.filter(iter => iter.event.timestamp.getTime() >= this.range.start.getTime()
                     && iter.event.timestamp.getTime() <= this.range.end.getTime());
             },
 
