@@ -507,6 +507,9 @@ namespace watchtower.Controllers.Api {
                 result.TR = alert.CountTR ?? 0;
             }
 
+            // if no victor, then it's a draw!
+            result.Draw = result.Victor == 0;
+
             info.Result = result;
 
             return ApiOk(info);
