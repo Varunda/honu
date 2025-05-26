@@ -129,8 +129,8 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}")]
         public async Task<ApiResponse<PsCharacter>> GetByID(string charID) {
-            if (charID.All(char.IsDigit) == false) {
-                return ApiBadRequest<PsCharacter>($"{nameof(charID)} was not all digits: '{charID}'");
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<PsCharacter>($"{nameof(charID)} is not a valid long: '{charID}'");
             }
 
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
@@ -168,6 +168,10 @@ namespace watchtower.Controllers.Api {
         [HttpGet("character/{charID}/honu-data")]
         [DisableRateLimiting]
         public ApiResponse<TrackedPlayer> GetHonuDataByID(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<TrackedPlayer>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             TrackedPlayer? data = CharacterStore.Get().GetByCharacterID(charID);
 
             if (data == null) {
@@ -218,6 +222,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/extra")]
         public async Task<ApiResponse<List<ExtraStatSet>>> GetExtraStats(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<ExtraStatSet>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<ExtraStatSet>>($"{nameof(PsCharacter)} {charID}");
@@ -245,6 +253,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/history_stats")]
         public async Task<ApiResponse<List<PsCharacterHistoryStat>>> GetHistoryStats(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<PsCharacterHistoryStat>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<PsCharacterHistoryStat>>($"{nameof(PsCharacter)} {charID}");
@@ -272,6 +284,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/sessions")]
         public async Task<ApiResponse<List<Session>>> GetSessions(string charID, [FromQuery] int? limit = null) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<Session>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
 
             if (limit != null && limit.Value > 0) {
@@ -298,6 +314,10 @@ namespace watchtower.Controllers.Api {
         /// </response> 
         [HttpGet("character/{charID}/sessions-block")]
         public async Task<ApiResponse<SessionBlock>> GetSessionsBlock(string charID, [FromQuery] int? limit = null) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<SessionBlock>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<Session> sessions = await _SessionDb.GetAllByCharacterID(charID);
 
             if (limit != null && limit.Value > 0) {
@@ -331,6 +351,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/items")]
         public async Task<ApiResponse<List<ExpandedCharacterItem>>> GetCharacterItems(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<ExpandedCharacterItem>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<ExpandedCharacterItem>>($"{nameof(PsCharacter)} {charID}");
@@ -371,6 +395,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/stats")]
         public async Task<ApiResponse<List<PsCharacterStat>>> GetCharacterStats(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<PsCharacterStat>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<List<PsCharacterStat>>($"{nameof(PsCharacter)} {charID}");
@@ -391,6 +419,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/outfit_history")]
         public async Task<ApiResponse<OutfitHistoryBlock>> GetOutfitHistory(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<OutfitHistoryBlock>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             OutfitHistoryBlock block = new();
             block.CharacterID = charID;
 
@@ -459,6 +491,10 @@ namespace watchtower.Controllers.Api {
         [HttpGet("character/{charID}/online")]
         [DisableRateLimiting]
         public ApiResponse<bool> GetCurrentSession(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<bool>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             TrackedPlayer? player = null;
 
             lock (CharacterStore.Get().Players) {
@@ -481,6 +517,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/killboard")]
         public async Task<ApiResponse<List<KillboardEntry>>> GetKillboard(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<KillboardEntry>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
 
             return ApiOk(entries);
@@ -500,6 +540,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/killboard/expanded")]
         public async Task<ApiResponse<List<ExpandedKillboardEntry>>> GetExpandedKillboard(string charID, [FromQuery] bool includeStats = false) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<ExpandedKillboardEntry>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<KillboardEntry> entries = await _KillboardCollection.GetByCharacterID(charID);
 
             List<string> characterIDs = entries.Select(iter => iter.OtherCharacterID).Distinct().ToList();
@@ -579,6 +623,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/alerts")]
         public async Task<ApiResponse<ExpandedCharacterAlerts>> GetAlerts(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<ExpandedCharacterAlerts>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<CharacterAlertPlayer> caps = await _AlertPlayerDb.GetByCharacterID(charID);
 
             ExpandedCharacterAlerts block = new();
@@ -620,6 +668,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/metadata")]
         public async Task<ApiResponse<CharacterMetadata>> GetMetadata(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<CharacterMetadata>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             CharacterMetadata? md = await _MetadataDb.GetByCharacterID(charID);
             if (md == null) {
                 return ApiNoContent<CharacterMetadata>();
@@ -670,6 +722,10 @@ namespace watchtower.Controllers.Api {
         [HttpGet("character/{charID}/friends")]
         [SearchBotBlock]
         public async Task<ApiResponse<List<ExpandedCharacterFriend>>> GetFriends(string charID, [FromQuery] bool fast = false) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<ExpandedCharacterFriend>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<CharacterFriend> friends = await _CharacterFriendRepository.GetByCharacterID(charID, fast);
 
             List<ExpandedCharacterFriend> expanded = new List<ExpandedCharacterFriend>(friends.Count);
@@ -720,6 +776,10 @@ namespace watchtower.Controllers.Api {
         /// <returns></returns>
         [HttpGet("character/{charID}/achievements")]
         public async Task<ApiResponse<CharacterAchievementBlock>> GetAchievements(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<CharacterAchievementBlock>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             PsCharacter? c = await _CharacterRepository.GetByID(charID, CensusEnvironment.PC);
             if (c == null) {
                 return ApiNotFound<CharacterAchievementBlock>($"{nameof(PsCharacter)} {charID}");
@@ -761,6 +821,10 @@ namespace watchtower.Controllers.Api {
         /// </response>
         [HttpGet("character/{charID}/world-changes")]
         public async Task<ApiResponse<List<WorldChange>>> GetWorldChanges(string charID) {
+            if (long.TryParse(charID, out long _) == false) {
+                return ApiBadRequest<List<WorldChange>>($"{nameof(charID)} is not a valid long: '{charID}'");
+            }
+
             List<WorldChange> changes = await _CharacterWorldChangeRepository.GetByCharacterID(charID);
 
             return ApiOk(changes.OrderBy(iter => iter.Timestamp).ToList());
