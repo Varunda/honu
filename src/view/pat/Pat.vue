@@ -22,6 +22,8 @@
 
                 <div v-if="loaded">
                     A certain cat <!-- silzz --> has been patted {{ count | locale(0) }} times
+                    <br>
+                    <span class="text-muted">{{ sessionCounter | locale(0) }} times this session</span>
                 </div>
                 <div v-else>
                     <busy class="honu-busy"></busy>
@@ -64,6 +66,7 @@
 
                 loaded: false as boolean,
                 count: 0 as number,
+                sessionCounter: 0 as number,
 
                 show: {
                     wtf: false as boolean,
@@ -144,6 +147,7 @@
 
                 this.connection.invoke("Press").then((value: number) => {
                     this.count = value;
+                    ++this.sessionCounter;
 
                     if (this.count % 100 == 0 && this.count % 1000 != 0) {
                         this.show.smol = true;
