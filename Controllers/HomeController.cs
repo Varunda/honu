@@ -244,5 +244,9 @@ namespace watchtower.Controllers {
             return View();
         }
 
+        public IActionResult Pat() {
+            return View();
+        }
+
     }
 }

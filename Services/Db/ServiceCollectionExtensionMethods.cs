@@ -109,6 +109,7 @@ namespace watchtower.Services.Db {
             services.AddSingleton<HonuMetadataDbStore>();
             services.AddSingleton<VehicleUsageDbStore>();
             services.AddSingleton<NameFightDbStore>();
+            services.AddSingleton<PatDbStore>();
         }
 
     }

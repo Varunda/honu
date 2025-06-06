@@ -525,6 +525,7 @@ namespace watchtower {
                 endpoints.MapHub<RealtimeNetworkHub>("/ws/realtime-network");
                 endpoints.MapHub<RealtimeAlertHub>("/ws/realtime-alert");
                 endpoints.MapHub<WrappedHub>("/ws/wrapped");
+                endpoints.MapHub<PatHub>("/ws/pat");
 
                 endpoints.MapSwagger();
             });

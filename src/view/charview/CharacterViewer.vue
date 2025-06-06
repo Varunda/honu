@@ -11,7 +11,11 @@
 
             <li class="nav-item h1 p-0 mx-2">
                 /
-                <span v-if="character.state == 'loading'">
+                <span v-if="pattable == true">
+                    <a href="/pat" target="_blank" ref="nofollow">Pat Silzz!</a>
+                </span>
+
+                <span v-else-if="character.state == 'loading'">
                     &lt;Loading...&gt;
                 </span>
 
@@ -355,6 +359,17 @@
 
                     this.queue.processingTime = queue.median;
                 }
+            },
+
+        },
+
+        computed: {
+
+            pattable: function(): boolean {
+                return [
+                    '5428013610429784257', '5429279320788215201', '5429012964656830481',
+                    '5428055175431676657', '5428057349744008929', '5428059164953037633', '5428861139969119601'
+                ].indexOf(this.charID) > -1;
             }
 
         },

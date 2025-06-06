@@ -99,6 +99,7 @@ namespace watchtower.Services.Repositories {
             services.AddSingleton<HonuMetadataRepository>();
             services.AddSingleton<VehicleUsageRepository>();
             services.AddSingleton<NameFightRepository>();
+            services.AddSingleton<PatRepository>();
 
             services.AddSingleton<PsbDriveRepository>();
             services.AddSingleton<PsbContactSheetRepository>();
