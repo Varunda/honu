@@ -14,6 +14,7 @@ namespace watchtower.Services.Metrics {
             services.AddSingleton<ImageProxyMetric>();
             services.AddSingleton<RealtimeStreamMetric>();
             services.AddSingleton<CharacterCacheMetric>();
+            services.AddSingleton<PatMetric>();
         }
 
     }

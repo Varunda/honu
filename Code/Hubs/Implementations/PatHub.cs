@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -11,22 +12,33 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private readonly ILogger<PatHub> _Logger;
         private readonly PatRepository _PatRepository;
+        private readonly HubMetric _HubMetric;
+        private readonly PatMetric _PatMetric;
 
         private static Dictionary<string, DateTime> _Velocity = new();
 
         private static long _ValueCache = 0;
 
         public PatHub(ILogger<PatHub> logger,
-            PatRepository patRepository) {
+            PatRepository patRepository, HubMetric hubMetric,
+            PatMetric patMetric) {
 
             _Logger = logger;
             _PatRepository = patRepository;
+            _HubMetric = hubMetric;
+            _PatMetric = patMetric;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("pat");
+            return base.OnConnectedAsync();
         }
 
         public override Task OnDisconnectedAsync(Exception? exception) {
             string connId = Context.ConnectionId;
             _Velocity.Remove(connId);
 
+            _HubMetric.RecordDisconnect("pat");
             return base.OnDisconnectedAsync(exception);
         }
 
@@ -43,6 +55,7 @@ namespace watchtower.Code.Hubs.Implementations {
             if (value > _ValueCache) {
                 _ValueCache = value;
             }
+            _PatMetric.RecordValue(value);
             _Velocity[connId] = DateTime.UtcNow;
 
             await Clients.All.SendValue(value);

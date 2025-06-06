@@ -84,6 +84,7 @@ namespace watchtower {
                 .AddMeter("Honu.ImageProxy")
                 .AddMeter("Honu.RealtimeStream")
                 .AddMeter("Honu.CharacterCache")
+                .AddMeter("Honu.Pat")
                 // 
 
                 .AddPrometheusHttpListener(opt => {
