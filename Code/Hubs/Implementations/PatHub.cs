@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Services.Metrics;
@@ -15,7 +16,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly HubMetric _HubMetric;
         private readonly PatMetric _PatMetric;
 
-        private static Dictionary<string, DateTime> _Velocity = new();
+        private static ConcurrentDictionary<string, DateTime> _Velocity = new();
 
         private static long _ValueCache = 0;
 
@@ -38,7 +39,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
         public override Task OnDisconnectedAsync(Exception? exception) {
             string connId = Context.ConnectionId;
-            _Velocity.Remove(connId);
+            _Velocity.Remove(connId, out _);
 
             _HubMetric.RecordDisconnect("pat");
             return base.OnDisconnectedAsync(exception);
