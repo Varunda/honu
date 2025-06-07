@@ -20,6 +20,7 @@ using watchtower.Models.Report;
 using watchtower.Realtime;
 using watchtower.Services.Census;
 using watchtower.Services.Db;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -55,6 +56,7 @@ namespace watchtower.Code.Hubs.Implementations {
         private readonly IEventHandler _EventHandler;
 
         private readonly ReportRepository _ReportRepository;
+        private readonly HubMetric _HubMetric;
 
         static ReportHub() {
             // create a listener that cares about these report activites being created
@@ -82,7 +84,7 @@ namespace watchtower.Code.Hubs.Implementations {
             ItemCategoryRepository itemCategoryRepository, VehicleDestroyDbStore vehicleDestroyDb,
             IEventHandler eventHandler, ExperienceTypeRepository experienceTypeRepository,
             AchievementEarnedDbStore achievementEarnedDbStore, AchievementRepository achievementRepository,
-            FireGroupToFireModeRepository fireGroupRepository) {
+            FireGroupToFireModeRepository fireGroupRepository, HubMetric hubMetric) {
 
             Interlocked.Increment(ref _InstanceCount);
 
@@ -110,6 +112,17 @@ namespace watchtower.Code.Hubs.Implementations {
             _AchievementEarnedDbStore = achievementEarnedDbStore;
             _AchievementRepository = achievementRepository;
             _FireGroupRepository = fireGroupRepository;
+            _HubMetric = hubMetric;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("report");
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception) {
+            _HubMetric.RecordDisconnect("report");
+            return base.OnDisconnectedAsync(exception);
         }
 
         /// <summary>

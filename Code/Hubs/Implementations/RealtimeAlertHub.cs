@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using watchtower.Models.RealtimeAlert;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -10,16 +12,29 @@ namespace watchtower.Code.Hubs.Implementations {
     public class RealtimeAlertHub : Hub<IRealtimeAlertHub> {
 
         private readonly ILogger<RealtimeAlertHub> _Logger;
+        private readonly HubMetric _HubMetric;
+
         private readonly RealtimeAlertRepository _RealtimeAlertRepository;
 
         private readonly Dictionary<string, string> _GroupMembership = new(); // <connection id, group>
         private readonly Dictionary<string, string> _ControlCodes = new(); // <connection id, code>
 
         public RealtimeAlertHub(ILogger<RealtimeAlertHub> logger,
-            RealtimeAlertRepository realtimeAlertRepository) {
+            RealtimeAlertRepository realtimeAlertRepository, HubMetric hubMetric) {
 
             _Logger = logger;
+            _HubMetric = hubMetric;
             _RealtimeAlertRepository = realtimeAlertRepository;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("realtime-alert");
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception) {
+            _HubMetric.RecordDisconnect("realtime-alert");
+            return base.OnDisconnectedAsync(exception);
         }
 
         /// <summary>

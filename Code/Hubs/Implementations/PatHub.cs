@@ -19,6 +19,8 @@ namespace watchtower.Code.Hubs.Implementations {
 
         private static long _ValueCache = 0;
 
+        private static DateTime _LastGlobalUpdate = DateTime.MinValue;
+
         public PatHub(ILogger<PatHub> logger,
             PatRepository patRepository, HubMetric hubMetric,
             PatMetric patMetric) {
@@ -48,6 +50,7 @@ namespace watchtower.Code.Hubs.Implementations {
 
             // max 20 per second per connection
             if (lastPat != null && ((DateTime.UtcNow - lastPat) <= TimeSpan.FromMilliseconds(50))) {
+                _PatMetric.RecordVelocityReject();
                 return _ValueCache;
             }
 
@@ -58,7 +61,13 @@ namespace watchtower.Code.Hubs.Implementations {
             _PatMetric.RecordValue(value);
             _Velocity[connId] = DateTime.UtcNow;
 
-            await Clients.All.SendValue(value);
+            // send at most 10 updates per second to other clients
+            if ((DateTime.UtcNow - _LastGlobalUpdate) >= TimeSpan.FromMilliseconds(100)) {
+                await Clients.Others.SendValue(value);
+                _LastGlobalUpdate = DateTime.UtcNow;
+            } else {
+                _PatMetric.RecordGlobalUpdateReject();
+            }
 
             return value;
         }

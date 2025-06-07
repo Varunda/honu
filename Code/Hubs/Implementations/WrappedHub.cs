@@ -10,6 +10,7 @@ using watchtower.Models.Events;
 using watchtower.Models.Wrapped;
 using watchtower.Services.Db;
 using watchtower.Services.Hosted;
+using watchtower.Services.Metrics;
 using watchtower.Services.Queues;
 using watchtower.Services.Repositories;
 
@@ -18,6 +19,8 @@ namespace watchtower.Code.Hubs.Implementations {
     public class WrappedHub : Hub<IWrappedHub> {
 
         private readonly ILogger<WrappedHub> _Logger;
+        private readonly HubMetric _HubMetric;
+
         private readonly WrappedSavedCharacterDataFileRepository _WrappedDataRepository;
         private readonly WrappedDbStore _WrappedDb;
         private readonly HostedWrappedGenerationProcess _WrappedProcessor;
@@ -25,13 +28,26 @@ namespace watchtower.Code.Hubs.Implementations {
 
         public WrappedHub(ILogger<WrappedHub> logger,
             WrappedSavedCharacterDataFileRepository wrappedDataRepository, WrappedDbStore wrappedDb,
-            HostedWrappedGenerationProcess wrappedProcessor, WrappedGenerationQueue wrappedQueue) {
+            HostedWrappedGenerationProcess wrappedProcessor, WrappedGenerationQueue wrappedQueue,
+            HubMetric hubMetric) {
 
             _Logger = logger;
+            _HubMetric = hubMetric;
+
             _WrappedDataRepository = wrappedDataRepository;
             _WrappedDb = wrappedDb;
             _WrappedProcessor = wrappedProcessor;
             _WrappedQueue = wrappedQueue;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("wrapped");
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception) {
+            _HubMetric.RecordDisconnect("wrapped");
+            return base.OnDisconnectedAsync(exception);
         }
 
         public async Task JoinGroup(Guid ID) {

@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading.Tasks;
 using watchtower.Models.Census;
 using watchtower.Models.Watchtower;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -13,6 +14,8 @@ namespace watchtower.Code.Hubs.Implementations {
     public class RealtimeNetworkHub : Hub<IRealtimeNetworkHub> {
 
         private readonly ILogger<RealtimeNetworkHub> _Logger;
+        private readonly HubMetric _HubMetric;
+
         private readonly RealtimeNetworkRepository _NetworkRepository;
         private readonly OutfitRepository _OutfitRepository;
         private readonly CharacterRepository _CharacterRepository;
@@ -21,12 +24,23 @@ namespace watchtower.Code.Hubs.Implementations {
 
         public RealtimeNetworkHub(ILogger<RealtimeNetworkHub> logger,
             RealtimeNetworkRepository networkRepository, OutfitRepository outfitRepo,
-            CharacterRepository charRepo) {
+            CharacterRepository charRepo, HubMetric hubMetric) {
 
             _Logger = logger;
+            _HubMetric = hubMetric;
             _NetworkRepository = networkRepository;
             _OutfitRepository = outfitRepo;
             _CharacterRepository = charRepo;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("realtime-network");
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception) {
+            _HubMetric.RecordDisconnect("realtime-network");
+            return base.OnDisconnectedAsync(exception);
         }
 
         public async Task Initalize(short worldID) {

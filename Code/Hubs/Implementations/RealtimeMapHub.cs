@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using watchtower.Code.Constants;
 using watchtower.Constants;
 using watchtower.Models;
+using watchtower.Services.Metrics;
 using watchtower.Services.Repositories;
 
 namespace watchtower.Code.Hubs.Implementations {
@@ -15,18 +16,32 @@ namespace watchtower.Code.Hubs.Implementations {
     public class RealtimeMapHub : Hub<IRealtimeMapHub> {
 
         private readonly ILogger<RealtimeMapHub> _Logger;
+        private readonly HubMetric _HubMetric;
+
         private readonly MapRepository _MapRepository;
 
         // hubs are transient and re-created every call, store this in cache instead
         private readonly IMemoryCache _Cache;
 
         public RealtimeMapHub(ILogger<RealtimeMapHub> logger,
-            MapRepository worldRepo, IMemoryCache cache) {
+            MapRepository worldRepo, IMemoryCache cache,
+            HubMetric hubMetric) {
 
             _Logger = logger;
+            _HubMetric = hubMetric;
             _Cache = cache;
 
             _MapRepository = worldRepo;
+        }
+
+        public override Task OnConnectedAsync() {
+            _HubMetric.RecordConnect("realtime-map");
+            return base.OnConnectedAsync();
+        }
+
+        public override Task OnDisconnectedAsync(Exception? exception) {
+            _HubMetric.RecordDisconnect("realtime-map");
+            return base.OnDisconnectedAsync(exception);
         }
 
         public async Task Initalize(short worldID, uint zoneID) {
