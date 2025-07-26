@@ -40,10 +40,10 @@
 
             <div class="col-10">
                 <div class="d-flex">
-                    <div class="flex-grow-1">
+                    <div class="flex-grow-1 border-right px-2">
                         <outfit-list :outfits="data" :faction-id="1"></outfit-list>
                     </div>
-                    <div class="flex-grow-1">
+                    <div class="flex-grow-1 border-right px-2">
                         <outfit-list :outfits="data" :faction-id="2"></outfit-list>
                     </div>
                     <div class="flex-grow-1">

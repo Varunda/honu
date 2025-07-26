@@ -13,7 +13,7 @@ namespace watchtower.Models.Db {
         /// <summary>
         ///     ID of the outfit
         /// </summary>
-        public string OutfitID { get; set; } = "";
+        public string? OutfitID { get; set; }
 
         /// <summary>
         ///     Tag of the outfit

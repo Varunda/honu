@@ -191,7 +191,7 @@ namespace watchtower.Services.Db {
             using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
             using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
                 WITH outfits AS (
-                SELECT wt_session.outfit_id, COUNT(wt_session.outfit_id)
+                SELECT wt_session.outfit_id, wt_session.team_id, COUNT(wt_session.outfit_id)
                     FROM wt_session
                         INNER JOIN wt_character c on c.id = wt_session.character_id
                     WHERE (
@@ -199,11 +199,11 @@ namespace watchtower.Services.Db {
                             OR (start <= @Time AND finish IS NULL)
                         )
                         AND c.world_id = @WorldID
-                    GROUP BY wt_session.outfit_id
+                    GROUP BY wt_session.outfit_id, wt_session.team_id
                 )
-                SELECT *
+                SELECT os.outfit_id, o.tag, o.name, os.count, os.team_id
                     FROM outfits os
-                    INNER JOIN wt_outfit o ON o.id = os.outfit_id
+                    LEFT JOIN wt_outfit o ON o.id = os.outfit_id
             ");
 
             cmd.AddParameter("Time", time);

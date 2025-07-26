@@ -12,13 +12,18 @@ namespace watchtower.Services.Db.Readers {
     public class OutfitPopulationReader : IDataReader<OutfitPopulation> {
 
         public override OutfitPopulation ReadEntry(NpgsqlDataReader reader) {
-            OutfitPopulation pop = new OutfitPopulation();
+            OutfitPopulation pop = new();
 
-            pop.OutfitID = reader.GetString("outfit_id");
+            pop.FactionID = reader.GetInt16("team_id");
+            pop.OutfitID = reader.GetNullableString("outfit_id");
+            if (pop.OutfitID == null || pop.OutfitID == "0") {
+                pop.OutfitName = $"No outfit {pop.FactionID}";
+            } else {
+                pop.OutfitName = reader.GetString("name");
+            }
+
             pop.OutfitTag = reader.GetNullableString("tag");
-            pop.OutfitName = reader.GetString("name");
             pop.Count = reader.GetInt32("count");
-            pop.FactionID = reader.GetInt16("faction_id");
 
             return pop;
         }
