@@ -430,7 +430,6 @@
                     const metadata: PlayerMetadata | undefined = this.report.playerMetadata.get(entry.characterID);
                     if (metadata != undefined) {
                         entry.display = `${LocaleUtil.locale(entry.value, 0)} (${(entry.value / Math.max(1, metadata.timeAs) * 60).toFixed(2)})`;
-                        console.log(`${entry.name} played for ${metadata.timeAs}s score is ${entry.value} (score)`);
                     }
                 }
 
@@ -469,7 +468,6 @@
                     entry.characterID = charID;
                     entry.name = this.getCharacterName(charID);
                     entry.value = score / Math.max(1, metadata.timeAs) * 60;
-                    console.log(`${entry.name} played for ${metadata.timeAs}s score is ${score} (spm)`);
                     entry.display = `${LocaleUtil.format(entry.value, this.compatFormat)} (${LocaleUtil.format(score, this.compatFormat)})`;
 
                     metric.entries.push(entry);
