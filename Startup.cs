@@ -89,12 +89,20 @@ namespace watchtower {
                 services.AddCensusServices(options => {
                     options.CensusServiceId = "asdf";
                     options.CensusServiceNamespace = "ps2";
-                    //options.LogCensusErrors = true;
                     options.LogCensusErrors = false;
-                    //options.CensusApiEndpoint = "census.daybreakgames.com";
-                    options.CensusApiEndpoint = "census-proxy.ps2.live";
                     options.UserAgent = "honu (varunda on Discord)";
                     options.UseHttps = true;
+
+                    string? censusProxy = Configuration["Census:ProxyUrl"];
+                    if (string.IsNullOrEmpty(censusProxy) == false) {
+                        if (censusProxy.StartsWith("http://") || censusProxy.StartsWith("https://")) {
+                            throw new Exception($"Census:ProxyUrl cannot start with http:// or https://, is '{censusProxy}'");
+                        }
+                        Console.WriteLine($"Census:ProxyUrl is set [url={censusProxy}]");
+                        options.CensusApiEndpoint = censusProxy;
+                    } else {
+                        Console.WriteLine($"Census:ProxyUrl is not set, using default");
+                    }
                 });
             } else {
                 services.AddSingleton<ICensusQueryFactory, OfflineCensusQueryFactory>();

@@ -1,7 +1,7 @@
 ﻿namespace watchtower.Code.Constants {
 
     /// <summary>
-    /// https://census.daybreakgames.com/s:asdf/get/ps2:v2/vehicle?c:limit=10000
+    /// https://census.daybreakgames.com/s:example/get/ps2:v2/vehicle?c:limit=10000
     /// </summary>
     public static class Vehicle {
 
