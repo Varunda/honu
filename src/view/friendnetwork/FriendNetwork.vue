@@ -202,7 +202,7 @@
                     linLogMode: true as boolean,
                     sameWorld: true as boolean,
                     orbit: false as boolean,
-                    strongGravity: true as boolean,
+                    strongGravity: false as boolean,
                     minConnections: 2 as number,
                     minFriends: 10 as number,
                     maxFriends: 5000 as number,
@@ -276,11 +276,32 @@
                         continue;
                     }
 
-                    let l: Loading<FlatExpandedCharacterFriend[]>;
+                    let l: Loading<FlatExpandedCharacterFriend[]> = Loadable.idle();
                     if (this.friendMap.has(iter.characterID) == true) {
                         l = Loadable.loaded(this.friendMap.get(iter.characterID)!);
                     } else {
-                        l = await CharacterFriendApi.getByCharacterID(iter.characterID, true);
+                        let failsafe: number = 10;
+                        while (l.state != "loaded") {
+                            if (failsafe--< 0) {
+                                console.warn(`FriendNetwork> failsafe tripped! failed to load characters for ${iter.characterID}`);
+                                break;
+                            }
+
+                            l = await CharacterFriendApi.getByCharacterID(iter.characterID, true);
+
+                            if (l.state == "notfound") {
+                                break;
+                            }
+
+                            if (l.state == "error") {
+                                if (l.problem.status == 429) {
+                                    console.log(`FriendNetwork> got rate limited, slowing down a bit`);
+                                    await new Promise(r => setTimeout(r, 1000 + (Math.random() * 1000))); // 1'000ms delay
+                                }
+                            } else {
+                                break;
+                            }
+                        }
 
                         if (l.state == "loaded") {
                             this.friendMap.set(iter.characterID, l.data);
