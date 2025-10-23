@@ -272,6 +272,26 @@ namespace watchtower.Services.Db {
             return sessions;
         }
 
+        public async Task<List<Session>> GetUnendedOverPeriod(TimeSpan timeAgo, CancellationToken cancel) {
+            using Activity? trace = HonuActivitySource.Root.StartActivity("session get by unded and period");
+            trace?.AddTag("honu.period", $"{timeAgo.GetRelativeFormat()}");
+
+            using NpgsqlConnection conn = _DbHelper.Connection(Dbs.CHARACTER);
+            using NpgsqlCommand cmd = await _DbHelper.Command(conn, @"
+                SELECT *
+                    FROM wt_session
+                    WHERE finish IS NULL
+                        AND start <= @When
+            ", cancel);
+
+            cmd.AddParameter("When", DateTime.UtcNow - timeAgo);
+
+            List<Session> sessions = await ReadList(cmd, cancel);
+            await conn.CloseAsync();
+
+            return sessions;
+        }
+
         /// <summary>
         ///     Insert a new <see cref="Session"/>
         /// </summary>

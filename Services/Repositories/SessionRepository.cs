@@ -90,6 +90,16 @@ namespace watchtower.Services.Repositories {
         }
 
         /// <summary>
+        ///     get all sessions with <see cref="Session.End"/> of <c>null</c> that are over <paramref name="period"/> ago
+        /// </summary>
+        /// <param name="period"></param>
+        /// <param name="cancel"></param>
+        /// <returns></returns>
+        public Task<List<Session>> GetUnendedOverPeriod(TimeSpan period, CancellationToken cancel) {
+            return _SessionDb.GetUnendedOverPeriod(period, cancel);
+        }
+
+        /// <summary>
         ///     Start a new session of a tracked player
         /// </summary>
         /// <param name="charID">ID of the character that is starting the session</param>
@@ -158,7 +168,7 @@ namespace watchtower.Services.Repositories {
             }
 
             await _SessionDb.SetSessionEndByID(player.SessionID.Value, when);
-            _Logger.LogDebug($"ending session [sessionID={player.SessionID}] [charID={player.ID}] [when={when:u}]");
+            _Logger.LogTrace($"ending session [sessionID={player.SessionID}] [charID={player.ID}] [when={when:u}]");
 
             player.Online = false;
             player.ZoneID = 0;

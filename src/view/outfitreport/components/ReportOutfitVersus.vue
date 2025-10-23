@@ -68,6 +68,25 @@
                 </a-body>
             </a-col>
 
+            <a-col sort-field="diff">
+                <a-header>
+                    <b>Kill diff</b>
+                    <info-hover text="Kill - Death difference"></info-hover>
+                </a-header>
+
+                <a-body v-slot="outfit">
+                    <span v-if="outfit.diff > 0" class="text-success">
+                        +{{ outfit.diff }}
+                    </span>
+                    <span v-else-if="outfit.diff < 0" class="text-danger">
+                        {{ outfit.diff }}
+                    </span>
+                    <span v-else>
+                        {{ outfit.diff }}
+                    </span>
+                </a-body>
+            </a-col>
+
             <a-col sort-field="assists">
                 <a-header>
                     <b>Assists</b>
@@ -142,7 +161,7 @@
                 </a-header>
 
                 <a-body v-slot="outfit">
-                    <a :href="'/i/' + outfit.mostUsedWeaponID">
+                    <a v-if="outfit.deaths > 0 && outfit.mostUsedWeaponID != 0" :href="'/i/' + outfit.mostUsedWeaponID">
                         <span v-if="outfit.mostUsedWeapon != null">
                             {{outfit.mostUsedWeapon.name}}
                         </span>
@@ -150,6 +169,12 @@
                             &lt;missing {{outfit.mostUsedWeaponID}}&gt;
                         </span>
                     </a>
+                    <span v-else-if="outfit.mostUsedWeaponID == 0">
+                        &lt;no weapon&gt;
+                    </span>
+                    <span v-else class="text-muted">
+                        no deaths!
+                    </span>
                 </a-body>
             </a-col>
         </a-table>
@@ -187,6 +212,7 @@
 
         public kills: number = 0;
         public deaths: number = 0;
+        public diff: number = 0;
         public assists: number = 0;
         public headshotKills: number = 0;
         public headshotDeaths: number = 0;
@@ -294,6 +320,7 @@
 
                     value.uniqueCount = value.uniquePlayers.length;
 
+                    value.diff = value.kills - value.deaths;
                     value.kd = value.kills / Math.max(1, value.deaths);
                     value.kda = (value.kills + value.assists) / Math.max(1, value.deaths);
                     value.killHsr = value.headshotKills / Math.max(1, value.kills) * 100;

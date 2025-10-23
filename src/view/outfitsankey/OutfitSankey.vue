@@ -483,9 +483,9 @@
                     throw `failed to find #page-root`;
                 }
 
-                console.log(pageRoot.clientWidth, pageRoot.clientHeight);
                 this.graph.width = pageRoot.clientWidth;
                 this.graph.height = pageRoot.clientHeight;
+                console.log(`OutfitSankey> width: ${this.graph.width}, height: ${this.graph.height}`);
 
                 this.progress.step = "parsing outfit ID";
                 this.parseOutfit();

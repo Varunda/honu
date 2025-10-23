@@ -301,6 +301,7 @@ namespace watchtower {
             services.AddHostedService<HostedWorldZonePopulationBuilder>();
             //services.AddHostedService<AggregateSessionPopulatorStartupService>(); // only needed as migration of data
             services.AddHostedService<HostedSessionSummaryProcess>(); // add this one the initial backfill is done
+            services.AddHostedService<HostedBackgroundLongSessionPreventionService>();
 
             // Hosted queues
             services.AddHostedService<HostedBackgroundCharacterCacheQueue>();

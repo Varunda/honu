@@ -2,6 +2,10 @@
     <collapsible header-text="Per minute graph">
         <canvas :id="canvasKillID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
 
+        <!--
+        <canvas :id="canvasKdID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
+        -->
+
         <canvas :id="canvasScoreID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
 
         <canvas :id="canvasMedicID" style="height: 20vh; max-height: 20vh;" class="mb-2 w-100"></canvas>
@@ -389,6 +393,8 @@
 
         computed: {
             canvasKillID: function(): string { return `chart-report-per-minute-kills`; },
+
+            canvasKdID: function(): string { return `chart-report-kill-death`; },
 
             canvasMedicID: function(): string { return `chart-report-per-minute-medic`; },
 
