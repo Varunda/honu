@@ -251,6 +251,18 @@ namespace watchtower.Services.Hosted {
                         }
 
                         foreach (WeaponStatEntry entry in list) {
+                            // do not overwrite a value if a character can exist in multiple leaderboards
+                            // for example, if a weapon stats exists for vehicle 0 and recon drone, 
+                            // and both of those entries are in the top
+                            WeaponStatEntry? exists = topDict.GetValueOrDefault(entry.CharacterID);
+                            if (exists != null) {
+                                if (selector(exists) > selector(entry)) {
+                                    _Logger.LogTrace($"skipping duplicate character id [charID={entry.CharacterID}]" 
+                                        + $" [exists={selector(exists)}] [current={selector(entry)}]");
+                                    continue;
+                                }
+                            }
+
                             topDict[entry.CharacterID] = entry;
                         }
                     }

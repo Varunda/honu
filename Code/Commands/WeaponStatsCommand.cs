@@ -26,6 +26,7 @@ namespace watchtower.Code.Commands {
         private readonly ItemRepository _ItemRepository;
         private readonly IWeaponStatPercentileCacheDbStore _PercentileDb;
         private readonly CharacterWeaponStatDbStore _StatDb;
+        private readonly WeaponUpdateQueue _Queue;
 
         public WeaponStatsCommand(IServiceProvider services) {
             _Logger = services.GetRequiredService<ILogger<WeaponStatsCommand>>();
@@ -35,6 +36,7 @@ namespace watchtower.Code.Commands {
             _ItemRepository = services.GetRequiredService<ItemRepository>();
             _PercentileDb = services.GetRequiredService<IWeaponStatPercentileCacheDbStore>();
             _StatDb = services.GetRequiredService<CharacterWeaponStatDbStore>();
+            _Queue = services.GetRequiredService<WeaponUpdateQueue>();
         }
 
         public async Task Char(string charName) {
@@ -177,6 +179,11 @@ namespace watchtower.Code.Commands {
                 + $"\n50% - 74%> {entry.Q50} {entry.Q55} {entry.Q60} {entry.Q65} {entry.Q70}"
                 + $"\n75% - MAX> {entry.Q75} {entry.Q85} {entry.Q90} {entry.Q95} {entry.Q100}"
             );
+        }
+
+        public void Queue(int itemID) {
+            _Logger.LogInformation($"inserting item into update queue [itemID={itemID}]");
+            _Queue.Queue(itemID);
         }
 
     }
