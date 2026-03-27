@@ -94,13 +94,22 @@ namespace watchtower.Realtime {
                         lock (_ReconnectingStream) {
                             _ReconnectingStream.Add(iter.Key);
                         }
-                        await iter.Value.Client.ReconnectAsync();
-                        lock (_ReconnectingStream) {
-                            _ReconnectingStream.Remove(iter.Key);
+
+                        try {
+                            await iter.Value.Client.ReconnectAsync();
+
+                            iter.Value.LastConnect = DateTime.UtcNow;
+                            _Logger.LogDebug($"stream reconnected [name={iter.Value.Name}]");
+                            _Metrics.RecordReconnect(worldID);
+                        } catch (Exception ex) {
+                            _Logger.LogError(ex, $"failed to reconnect stream [name={iter.Value.Name}]");
+                            _Metrics.RecordReconnectException(worldID);
+                        } finally {
+                            lock (_ReconnectingStream) {
+                                _ReconnectingStream.Remove(iter.Key);
+                            }
                         }
-                        iter.Value.LastConnect = DateTime.UtcNow;
-                        _Logger.LogDebug($"stream reconnected [name={iter.Value.Name}]");
-                        _Metrics.RecordReconnect(worldID);
+
                         break;
                     }
                 }
@@ -240,6 +249,7 @@ namespace watchtower.Realtime {
                     continue;
                 }
 
+                _Logger.LogInformation($"reconnecting stream [name={name}]");
                 await iter.Value.Client.ReconnectAsync();
                 iter.Value.LastConnect = DateTime.UtcNow;
             }
@@ -253,7 +263,7 @@ namespace watchtower.Realtime {
         }
 
         private Task _OnDisconnectAsync(DisconnectionInfo info) {
-            _Logger.LogInformation($"Stream disconnected: {info.Type}");
+            _Logger.LogInformation($"stream disconnected [type={info.Type}] [exception={info.Exception?.Message}]");
             return Task.CompletedTask;
         }
 
@@ -314,7 +324,9 @@ namespace watchtower.Realtime {
 
             _Logger.LogDebug($"created realtime stream [name={name}] [environment={environment}] [useNss={UseNss}]");
 
-            if (serviceID != null) { stream.SetServiceId(serviceID); }
+            if (serviceID != null) {
+                stream.SetServiceId(serviceID);
+            }
             stream.SetServiceNamespace(CensusEnvironmentHelper.ToNamespace(environment));
 
             stream.OnConnect((type) => {
