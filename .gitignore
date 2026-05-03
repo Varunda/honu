@@ -22,3 +22,4 @@ watchtower.xml
 /extra-stats
 /wrapped
 /census-image-proxy
+secrets.json

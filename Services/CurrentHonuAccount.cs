@@ -80,6 +80,17 @@ namespace watchtower.Services {
                 // Get the email claim of the authed user
                 Claim? emailClaim = claims.FindFirst(ClaimTypes.Email);
                 if (emailClaim == null || string.IsNullOrEmpty(emailClaim.Value)) {
+
+                    // no email claim, try account_id claim from JWTs
+                    Claim? accountIdClaim = claims.FindFirst("account_id");
+                    if (accountIdClaim != null && string.IsNullOrEmpty(accountIdClaim.Value) == false) {
+                        if (long.TryParse(accountIdClaim.Value, out long accountID) == true) {
+                            return await _HonuAccountDb.GetByID(accountID, CancellationToken.None);
+                        } else {
+                            throw new Exception($"failed to parse account_id claim to a valid int64");
+                        }
+                    }
+
                     return null;
                 }
 

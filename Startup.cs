@@ -52,6 +52,9 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Net.Mime;
 using watchtower.Code.Swagger;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Primitives;
 
 //using honu_census;
 
@@ -144,9 +147,13 @@ namespace watchtower {
             string? googleSecret = Configuration[gSecretKey];
 
             if (string.IsNullOrEmpty(googleClientID) == false && string.IsNullOrEmpty(googleSecret) == false) {
-                services.AddAuthentication(options => {
+                AuthenticationBuilder authBuilder = services.AddAuthentication(options => {
+                    options.DefaultScheme = "app-policy-auth";
+                    options.DefaultChallengeScheme = "app-policy-auth";
+                    /*
                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+                    */
                 }).AddCookie(options => {
                     //options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
                     //options.Cookie.SameSite = SameSiteMode.Lax;
@@ -154,6 +161,41 @@ namespace watchtower {
                     options.ClientId = googleClientID;
                     options.ClientSecret = googleSecret;
                     options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+                });
+
+                if (Configuration.GetValue<bool>("Jwt:Enabled") == true) {
+                    authBuilder.AddJwtBearer((JwtBearerOptions options) => {
+                        options.ForwardChallenge = CookieAuthenticationDefaults.AuthenticationScheme;
+
+                        options.Authority = Configuration.GetValue<string>("Jwt:Authority")
+                            ?? throw new Exception($"if Jwt:Enabled is true, then Jwt:Authority must be given as well");
+
+                        options.Events = new JwtBearerEvents() {
+                            OnMessageReceived = (MessageReceivedContext ctx) => {
+                                StringValues accessToken = ctx.Request.Query["access_token"];
+                                if (string.IsNullOrEmpty(accessToken) == false) {
+                                    ctx.Token = accessToken;
+                                }
+
+                                return Task.CompletedTask;
+                            }
+                        };
+                    });
+                }
+
+                authBuilder.AddPolicyScheme("app-policy-auth", displayName: null, options => {
+                    options.ForwardDefaultSelector = (HttpContext ctx) => {
+                        StringValues accessToken = ctx.Request.Query["access_token"];
+                        if (string.IsNullOrEmpty(accessToken) == true) {
+                            accessToken = ctx.Request.Headers.Authorization;
+                        }
+
+                        if (string.IsNullOrEmpty(accessToken) == false) {
+                            return JwtBearerDefaults.AuthenticationScheme;
+                        }
+
+                        return CookieAuthenticationDefaults.AuthenticationScheme;
+                    };
                 });
 
                 Console.WriteLine($"Added Google auth");

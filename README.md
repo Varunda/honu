@@ -175,4 +175,15 @@ Examples of valid generator strings
 - start the report at `1640055600` (`2021-12-21T03:00:00.000Z`), and go till `1640062800` (`2021-12-21T05:00:00.000Z`)
 - include all characters in the outfit `37567362753122235` ([T1DE] Tide)
 - include the character `5428011263335537297` (Wrel)
-- exclude the character `5428345446430485649` (varunda)t
+- exclude the character `5428345446430485649` (varunda)
+
+
+### JWTs
+
+can enable JWTs for 3rd party authed usage. enable in secrets.json
+
+how to make:
+```
+dotnet user-jwts create --name {NAME} --claim account_id={HONU ACCOUNT ID} --valid-for=720d
+```
+

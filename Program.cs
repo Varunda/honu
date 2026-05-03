@@ -197,6 +197,7 @@ namespace watchtower {
                 })
                 .ConfigureAppConfiguration(appConfig => {
                     appConfig.AddUserSecrets<Startup>();
+                    appConfig.AddJsonFile("secrets.json");
                 }).ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
                 });
