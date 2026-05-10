@@ -148,7 +148,7 @@ a generator string can be two different forms:
 
 - START: int - the unix epoch (in seconds) for when the report starts. cannot come after END
 - END: int - the unix epoch (in seconds) for when the report ends. cannot come before START
-- TEAM_ID: short - an optional short to filter the team_id of events. used for NSO outfits, or outfits with NSO. this is optional as often a valid team_id can be infered from the outfits are characters being added
+- TEAM_ID: short - what team_id events will be filtered on. must be 1, 2, 3 (i guess 4 works too)_
 - ENTITIES: many - there are many different entities that can be given, some change what characters are included in an outfit, some include extra information
 
 ##### ENTITIES
