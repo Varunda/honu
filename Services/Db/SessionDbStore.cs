@@ -437,6 +437,7 @@ namespace watchtower.Services.Db {
                     resupplies = @Resupplies,
                     repairs = @Repairs,
                     spawns = @Spawns,
+                    assists = @Assists,
                     experience_gained = @ExperienceGained
                 WHERE id = @SessionID;
             ");
@@ -453,6 +454,7 @@ namespace watchtower.Services.Db {
             cmd.AddParameter("Resupplies", s.Resupplies);
             cmd.AddParameter("Repairs", s.Repairs);
             cmd.AddParameter("Spawns", s.Spawns);
+            cmd.AddParameter("Assists", s.Assists);
             await cmd.PrepareAsync();
 
             await cmd.ExecuteNonQueryAsync();
@@ -480,6 +482,7 @@ namespace watchtower.Services.Db {
             s.Resupplies = reader.GetInt32("resupplies");
             s.Repairs = reader.GetInt32("repairs");
             s.Spawns = reader.GetInt32("spawns");
+            s.Assists = reader.GetInt32("assists");
 
             return s;
         }

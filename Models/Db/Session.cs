@@ -63,6 +63,8 @@ namespace watchtower.Models.Db {
 
         public int Repairs { get; set; } = 0;
 
+        public int Assists { get; set; } = 0;
+
     }
 
 }

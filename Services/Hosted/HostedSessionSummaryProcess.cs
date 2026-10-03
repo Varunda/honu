@@ -214,6 +214,7 @@ namespace watchtower.Services.Hosted {
                 s.Resupplies = 0;
                 s.Repairs = 0;
                 s.Spawns = 0;
+                s.Assists = 0;
                 s.ExperienceGained = 0;
 
                 foreach (DateTime ev in kills.GetValueOrDefault(s.CharacterID) ?? []) {
@@ -261,6 +262,8 @@ namespace watchtower.Services.Hosted {
                         s.Repairs += 1;
                     } else if (Experience.IsSpawn(expID) == true) {
                         s.Spawns += 1;
+                    } else if (Experience.IsAssist(expID) == true) {
+                        s.Assists += 1;
                     }
                 }
 

@@ -26,7 +26,20 @@ namespace watchtower.Services.Census {
             query.Where("character_id").Equals(charID);
             query.SetLimit(1000);
 
-            List<CharacterAchievement> achs = await _Reader.ReadList(query);
+            int offset = 0;
+            List<CharacterAchievement> achs = [];
+            do {
+                query.SetStart(offset);
+                List<CharacterAchievement> iter = await _Reader.ReadList(query);
+                offset += 1000;
+
+                achs.AddRange(iter);
+
+                if (iter.Count < 1000) {
+                    break;
+                }
+            } while (true);
+
             return achs;
         }
 

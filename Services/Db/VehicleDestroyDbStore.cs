@@ -68,7 +68,7 @@ namespace watchtower.Services.Db {
                         AND (attacker_character_id = ANY(@CharacterIDs) OR killed_character_id = ANY(@CharacterIDs))
             ");
 
-            cmd.AddParameter("CharacterID", IDs);
+            cmd.AddParameter("CharacterIDs", IDs);
             cmd.AddParameter("PeriodStart", start);
             cmd.AddParameter("PeriodEnd", end);
 
@@ -76,7 +76,6 @@ namespace watchtower.Services.Db {
             await conn.CloseAsync();
 
             return evs;
-
         }
 
         /// <summary>
