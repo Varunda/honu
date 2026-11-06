@@ -10,6 +10,22 @@ namespace watchtower.Code.Constants {
     /// </summary>
     public class MetagameEvent {
 
+        public const int BIO_LAB_AMERISH = 7;
+        public const int TECH_PLANT_AMERISH = 8;
+        public const int AMP_STATION_AMERISH = 9;
+
+        public const int BIO_LAB_INDAR = 10;
+        public const int TECH_PLANT_INDAR = 11;
+        public const int AMP_STATION_INDAR = 12;
+
+        public const int BIO_LAB_ESAMIR = 13;
+        public const int TECH_PLANT_ESAMIR = 164; // API says this is 60 minutes?
+        public const int AMP_STATION_ESAMIR = 14;
+
+        public const int BIO_LAB_HOSSIN = 16;
+        public const int TECH_PLANT_HOSSIN = 17;
+        public const int AMP_STATION_HOSSIN = 18;
+
         public const int AERIAL_ANOMALY_INDAR = 228;
         public const int AERIAL_ANOMALY_HOSSIN = 229;
         public const int AERIAL_ANOMALY_AMERISH = 230;
@@ -78,6 +94,10 @@ namespace watchtower.Code.Constants {
                 return TimeSpan.FromMinutes(65);
             }
 
+            if (IsFacilityAlert(metagameEventID) == true) {
+                return TimeSpan.FromMinutes(45);
+            }
+
             return metagameEventID switch {
                 147 or 148 or 149 // Indar
                     or 150 or 151 or 152 // Esamir
@@ -88,7 +108,8 @@ namespace watchtower.Code.Constants {
                     => TimeSpan.FromMinutes(90),
 
                 176 or 177 or 178 or 179 or 186 or 187 or 188 or 189 or 190 or 191 or 192 or 193 => TimeSpan.FromMinutes(45),
-                208 or 209 or 210 => TimeSpan.FromMinutes(1),
+                // koltyr lockdown
+                208 or 209 or 210 => TimeSpan.FromMinutes(45),
 
                 OSHUR_MELTDOWN_NC or OSHUR_MELTDOWN_TR or OSHUR_MELTDOWN_VS => TimeSpan.FromMinutes(45),
 
@@ -141,6 +162,21 @@ namespace watchtower.Code.Constants {
                 || metagameEventID == MAX_ALERT_AMERISH
                 || metagameEventID == MAX_ALERT_ESAMIR
                 || metagameEventID == MAX_ALERT_OSHUR;
+        }
+
+        public static bool IsFacilityAlert(int metagameEventID) {
+            return metagameEventID == AMP_STATION_AMERISH
+                || metagameEventID == AMP_STATION_AMERISH
+                || metagameEventID == AMP_STATION_ESAMIR
+                || metagameEventID == AMP_STATION_INDAR
+                || metagameEventID == TECH_PLANT_AMERISH
+                || metagameEventID == TECH_PLANT_ESAMIR
+                || metagameEventID == TECH_PLANT_HOSSIN
+                || metagameEventID == TECH_PLANT_INDAR
+                || metagameEventID == BIO_LAB_AMERISH
+                || metagameEventID == BIO_LAB_ESAMIR
+                || metagameEventID == BIO_LAB_HOSSIN
+                || metagameEventID == BIO_LAB_INDAR;
         }
 
     }

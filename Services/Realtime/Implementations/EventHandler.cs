@@ -209,7 +209,7 @@ namespace watchtower.Realtime {
                     if (timestamp > _MostRecentProcess && diff <= TimeSpan.FromSeconds(3)) {
                         _MostRecentProcess = timestamp;
                     } else if (diff > TimeSpan.FromSeconds(3)) {
-                        _Logger.LogWarning($"larger than 3 second diff! {diff}");
+                        _Logger.LogWarning($"larger than 3 second diff! [diff={diff}] [event timestamp={timestamp:u}]");
                     }
                 }
 
